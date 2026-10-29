@@ -33,7 +33,9 @@ const ROWS = [
 const withEntity = async (_e, fn) => { trips++; return fn({ query: async (sql) => {
   sqls.push(sql);
   if (/FROM stock_balance/.test(sql)) return { rows: ROWS };
-  if (/FROM catalogue_items/.test(sql)) return { rows: [{ id: 'rice', name: 'Ponni Rice', unit: 'kg' }, { id: 'dal', name: 'Toor Dal', unit: null }] };
+  /* R104: the ONE flags read (lib/stocked.FLAGS_SQL) — rice and dal say counted, the dosa says nothing (the trade decides) */
+  if (/item_data->'stocked'/.test(sql)) return { rows: [{ item_id: 'rice', batch_tracked: null, stocked: true }, { item_id: 'dal', batch_tracked: null, stocked: true }, { item_id: 'dosa', batch_tracked: null, stocked: null }] };
+  if (/FROM catalogue_items/.test(sql)) return { rows: [{ id: 'rice', name: 'Ponni Rice', unit: 'kg' }, { id: 'dal', name: 'Toor Dal', unit: null }, { id: 'dosa', name: 'Masala Dosa', unit: 'plate' }] };
   return { rows: [] };
 } }); };
 mock('/db', { withEntity, query: async () => ({ rows: [] }), readBatch: async () => [{ rows: [] }] });
@@ -72,7 +74,7 @@ function get(port, p) {
   let r = await get(port, '/api/till/stock?detail=1');
   t('detail: 200', r.status, 200);
   t('detail: name · unit · lots on each balance', [r.json.balances.rice.name, r.json.balances.rice.unit, r.json.balances.rice.lots.length, r.json.balances.dal.name], ['Ponni Rice', 'kg', 2, 'Toor Dal']);
-  t('detail: two reads — the shelf, then the names (never one per item)', r.trips, 2);
+  t('detail: three reads — the shelf, the counted flags (R104, one for every item), then the names (never one per item)', r.trips, 3);
   t('detail: the names read is the lifted ITEM_NAMES_SQL', sqls.filter((s) => s === require(API + '/lib/catalogue-read').ITEM_NAMES_SQL).length, 1);
   r = await get(port, '/api/till/stock');
   t('plain: the counter\'s shape is unchanged (no name, no lots)', Object.keys(r.json.balances.rice).sort(), ['avg_cost', 'qty']);
@@ -86,9 +88,27 @@ function get(port, p) {
   t('facts/operations: no ledger -> no lines, the reason given', [r.json.lines.length, !!r.json.unavailable], [0, true]);
   HAS_TABLE = true; r = await get(port, '/api/facts/operations');
   t('facts/operations: on the shelf · below zero', r.json.lines.map((l) => [l.text, l.tone || null]), [['1 item on the shelf', null], ['1 item below zero', 'dn']]);
-  t('facts/operations: one trip', r.trips, 1);
+  t('facts/operations: two trips — the shelf and the counted flags (R104), never one per item', r.trips, 2);
   t('facts/operations: no "low" figure (no reorder level is kept)', /\blow\b/i.test(JSON.stringify(r.json)), false);
   t('facts/operations is a card the route knows', typeof home.BUILD.operations, 'function');
+
+  /* ── R104: a tiffin shop — Masala Dosa sold 40 times, never received (−40), is NOT stock ── */
+  console.log('\nR104 · a dish made to order on Stock and the Home card\n');
+  const G = require(API + '/lib/govresolve');
+  G.verticalOf = async () => G.verticalFrom({ sectors: ['tiffin'] });
+  ROWS.push({ item_id: 'dosa', item_kind: 'catalogue', lot: '', expires_at: null, qty: '-40', value: '0', avg_cost: '0', last_at: new Date(), moves: 40 });
+  r = await get(port, '/api/till/stock?detail=1');
+  t('detail: the dosa STAYS with its old figure, marked counted:false; rice and dal counted:true', [r.json.balances.dosa.qty, r.json.balances.dosa.counted, r.json.balances.rice.counted, r.json.balances.dal.counted], [-40, false, true, true]);
+  t('detail: not_counted says how many — the screen says it, never silent', r.json.not_counted, 1);
+  t('detail: three reads — the shelf, the flags (one, for every item), the names', r.trips, 3);
+  r = await get(port, '/api/till/stock');
+  t('plain: the counter\'s shape is unchanged (no counted key, no extra read)', [Object.keys(r.json.balances.dosa).sort(), r.json.not_counted, r.trips], [['avg_cost', 'qty'], undefined, 1]);
+  r = await get(port, '/api/facts/operations');
+  t('facts/operations: the dosa is not "below zero" — Home agrees with Stock (1 on the shelf · dal below zero)', r.json.lines.map((l) => l.text), ['1 item on the shelf', '1 item below zero']);
+  t('facts/operations: two trips — the shelf and the one flags read', r.trips, 2);
+  G.verticalOf = async () => G.verticalFrom({ sectors: ['vegetables'] });
+  r = await get(port, '/api/facts/operations');
+  t('…a vegetable shop with the same rows: the unflagged dosa IS counted (2 below zero) — nothing changed for them', r.json.lines.map((l) => l.text), ['1 item on the shelf', '2 items below zero']);
 
   srv.close();
   console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');

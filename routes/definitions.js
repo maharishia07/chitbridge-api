@@ -47,6 +47,8 @@ const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a
 const regional = require('../lib/regional');
 const taxGov = require('../lib/tax-governance');
 const slabCites = require('../lib/slab-cites');
+const rateDoor = require('../lib/rate-door'); /* CAT-211: a category's rate (rules.default_slab) is owner or manager only, like every rate door */
+const { problem } = require('../lib/problem'); /* API-STANDARD S1: the one error writer (the new 403 only; this file's older refusals keep their legacy bodies) */
 const offerClash = require('../lib/offer-clash'); /* T2-LABS: a live offer that overlaps another live one is refused, in words (CBOffers.clashes) */
 
 const ctx = (req) => auth.entityOf(req);
@@ -254,8 +256,35 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+/** CAT-211: the 403 for a caller who may not set a rate (the whole request refused, nothing written) */
+const rateRefused = (req, res) => problem(req, res, { status: 403, ...rateDoor.refusal() });
+/** the rules the definition's current version holds (the one reader: the offer clash and the rate check both ask) */
+const currentRulesOf = async (db, definition) =>
+  ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`, [definition.definition_id, definition.current_version])).rows[0] || {}).rules || {};
+/** CAT-211: does this edit change the category's default rate? Only asked of a caller who may not set one (the owner and a manager never pay the read). */
+const editorChangesRate = async (req, db, definition, rules) => !rateDoor.setsRate(req) && !!rules && rateDoor.defaultSlabChanged(rules, await currentRulesOf(db, definition));
+/** the refusals an edit meets before anything is written: a rate the caller may not set, or a rule left without its value (null = go on) */
+async function editRefusal(req, db, definition, rules) {
+  if (await editorChangesRate(req, db, definition, rules)) return { rateRefused: true };
+  const bad = rules && require('../lib/definition-check').missingValue(definition.kind, definition.sub_kind, rules);
+  return bad ? { bad } : null;
+}
+
+/** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
+function answerEditRefusal(req, res, out) {
+  if (out.rateRefused) rateRefused(req, res);
+  else if (out.bad) res.status(422).json({ error: 'Incomplete rule', message: out.bad });
+  return !!(out.rateRefused || out.bad);
+}
+
+/** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
+const bornWithoutRate = (req, res, next) => {
+  const rules = req.body && typeof req.body.rules === 'object' && req.body.rules;
+  return !rateDoor.setsRate(req) && rateDoor.defaultSlabChanged(rules, {}) ? rateRefused(req, res) : next();
+};
+
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
-router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').isString().trim().notEmpty()], validate, async (req, res) => {
+router.post('/', auth, [body('kind').isString().trim().notEmpty(), body('name').isString().trim().notEmpty()], validate, bornWithoutRate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { kind, sub_kind, name, note } = req.body || {};
@@ -342,20 +371,14 @@ router.put('/:id', auth, async (req, res) => {
       const cur = await db.query(`SELECT * FROM definition WHERE definition_id = $1`, [req.params.id]);
       if (!cur.rows.length) return { missing: true };
       const d = cur.rows[0];
-      /* an edit that removes the value is refused like a create without one */
-      if (rules) {
-        const bad = require('../lib/definition-check').missingValue(d.kind, d.sub_kind, rules);
-        if (bad) return { bad };
-      }
+      /* a rate the caller may not set (CAT-211), or an edit that removes the value (refused like a create without one) */
+      const refused = await editRefusal(req, db, d, rules);
+      if (refused) return refused;
       /* ⭐ T2-LABS: a save that MAKES the offer live, or changes the rules of a live one, is asked whether it clashes with another
          live discount (lib/offer-clash — the engine's rule). A rename, a pause or a retire is never refused for it. */
       const after = status ? String(status) : d.status;
       if (d.kind === 'offer' && after === 'live' && (rules || d.status !== 'live')) {
-        const rulesNow =
-          rules ||
-          ((await db.query(`SELECT rules FROM definition_version WHERE definition_id = $1 AND version = $2`, [req.params.id, d.current_version])).rows[0] || {})
-            .rules ||
-          {};
+        const rulesNow = rules || (await currentRulesOf(db, d));
         const clash = await offerClash.check(db, entity_id, {
           definition_id: d.definition_id,
           kind: d.kind,
@@ -412,7 +435,7 @@ router.put('/:id', auth, async (req, res) => {
     });
 
     if (out.missing) return res.status(404).json({ error: 'Not found' });
-    if (out.bad) return res.status(422).json({ error: 'Incomplete rule', message: out.bad });
+    if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return res.status(out.clash.status).json(out.clash.body);
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
@@ -444,6 +467,12 @@ async function liveSlabById(db, entity_id, id) {
   );
   return r.rows.length ? slabCites.S.slabOf(r.rows[0]) : null;
 }
+/** CAT-211: would this retire hand the slab's citers (products and categories) to another slab? A takeover that moves nothing sets no rate, so it is not refused. */
+const editorTakesOver = async (req, db, slabId) => {
+  if (rateDoor.setsRate(req) || !req.query.takeover) return false;
+  const citers = await slabCites.cites(db, slabId);
+  return citers.products + citers.categories > 0;
+};
 router.delete('/:id', auth, async (req, res) => {
   try {
     if (taxGov.isGovernedId(req.params.id)) return governedRefusal(res);
@@ -456,6 +485,7 @@ router.delete('/:id', auth, async (req, res) => {
       if (cur.rows[0].kind === 'tax') {
         /* ⭐ A SLAB DOES NOT GO DARK UNDER ITS PRODUCTS. Refused with the counts; accepted with ?takeover=<slab id>,
            which re-points every citer first — all inside this one transaction (Athi, 2026-09-05). */
+        if (await editorTakesOver(req, db, req.params.id)) return { rateRefused: true }; /* CAT-211: a takeover re-points categories' rates */
         const g = await slabCites.guard(db, req.params.id, req.query.takeover, (id) => liveSlabById(db, entity_id, id));
         if (g && g.status) return g;
         moved = g ? g.moved : null;
@@ -475,6 +505,7 @@ router.delete('/:id', auth, async (req, res) => {
       shopChanged(entity_id, 'definition retired');
       return { status: 200, body: { message: 'Retired — not deleted. Chits that cite it stay explainable.', retired: true, moved } };
     });
+    if (out.rateRefused) return rateRefused(req, res);
     res.status(out.status).json(out.body);
   } catch (e) {
     if (notMigrated(e)) return gone(res);

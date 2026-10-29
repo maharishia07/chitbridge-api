@@ -722,6 +722,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CODE_ISSUE_LIMIT",
+   "status": "429",
+   "title": "Too many codes",
+   "shopkeeper": "Five codes were made for this person in the last 15 minutes.",
+   "hint": "Wait a few minutes, then make a new one.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
+  },
+  {
    "code": "CODE_NOT_ASKED",
    "status": "400",
    "title": "No code asked for",
@@ -729,6 +738,15 @@
    "hint": "Tap \"Send code\", then type the code you get.",
    "owner_area": "catalogue",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CODE_SHOW_NOT_READY",
+   "status": "503",
+   "title": "Showing a code is not ready",
+   "shopkeeper": "This environment cannot show a first code yet, so none was made.",
+   "hint": "Add their e-mail, or try again later.",
+   "owner_area": "employee-code",
+   "since": "2026-10-24"
   },
   {
    "code": "COMMENT_ONLY",
@@ -929,6 +947,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CTP_CHIT_ID_TAKEN",
+   "status": "409",
+   "title": "Chit id already here",
+   "shopkeeper": "A chit with this id is already here, from a different sender.",
+   "hint": "Chit ids are minted once; the sender should mint a new id, not reuse one.",
+   "owner_area": "ctp",
+   "since": "2026-10-28"
+  },
+  {
    "code": "CTP_CROSSING_REFUSED",
    "status": "409",
    "title": "Crossing refused",
@@ -945,6 +972,15 @@
    "hint": "Try again later; nothing was written.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_DRAFT",
+   "status": "409",
+   "title": "Draft stays here",
+   "shopkeeper": "A draft is not sent anywhere, and some of its copies belong to another installation.",
+   "hint": "Send it for real, or keep only this installation's copies.",
+   "owner_area": "rail",
+   "since": "2026-10-28"
   },
   {
    "code": "CTP_ENVELOPE_REFUSED",
@@ -1062,6 +1098,42 @@
    "hint": "Check the address of the business.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_REFUSED",
+   "status": "409",
+   "title": "Not delivered",
+   "shopkeeper": "Another installation did not take its copy of this chit. Nothing was written.",
+   "hint": "Try again later. If it keeps happening, check the two installations name each other as peers.",
+   "owner_area": "rail",
+   "since": "2026-10-28"
+  },
+  {
+   "code": "CTP_SENDER_NOT_AN_ID",
+   "status": "400",
+   "title": "Sender not named by an id",
+   "shopkeeper": "The chit names the business that sent it by something that is not an id.",
+   "hint": "The sending installation must name its sender by id.",
+   "owner_area": "ctp",
+   "since": "2026-10-28"
+  },
+  {
+   "code": "CTP_SENDER_NOT_THEIRS",
+   "status": "403",
+   "title": "Sender not theirs to name",
+   "shopkeeper": "The chit names a sender that does not belong to the installation that signed it.",
+   "hint": "The sending installation may only send for its own businesses.",
+   "owner_area": "ctp",
+   "since": "2026-10-28"
+  },
+  {
+   "code": "CTP_SENDER_UNCHECKABLE",
+   "status": "503",
+   "title": "Sender cannot be checked",
+   "shopkeeper": "We could not check whose business the sender is, so we did not take the chit.",
+   "hint": "Try again later.",
+   "owner_area": "ctp",
+   "since": "2026-10-28"
   },
   {
    "code": "CTP_STORE_FAILED",
@@ -1370,6 +1442,78 @@
    "since": "2026-10-22"
   },
   {
+   "code": "FORMS_ALREADY_SIGNED",
+   "status": "409",
+   "title": "Form already signed",
+   "shopkeeper": "This form is already signed.",
+   "hint": "Open it to see who signed it.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_BAD_CONTEXT",
+   "status": "400",
+   "title": "Not a deal",
+   "shopkeeper": "That is not a deal.",
+   "hint": "Pick the deal from the list.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_BAD_REQUEST",
+   "status": "400",
+   "title": "Form not done",
+   "shopkeeper": "The form could not be filled in or signed as asked.",
+   "hint": "Check what is missing, then try again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_NOT_FOUND",
+   "status": "404",
+   "title": "Form not found",
+   "shopkeeper": "We could not find that form.",
+   "hint": "Go back to the list of forms and pick again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_NOT_PARTICIPANT",
+   "status": "403",
+   "title": "Not on this chit",
+   "shopkeeper": "Your shop is not on that chit, so the form cannot be filed there.",
+   "hint": "Pick a chit your shop is on.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_REFUSED",
+   "status": "varies",
+   "title": "Form refused",
+   "shopkeeper": "The form could not be done.",
+   "hint": "Try again, or ask the person who set it up.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORMS_STORE_MISSING",
+   "status": "503",
+   "title": "Forms not set up",
+   "shopkeeper": "Forms are not available here yet.",
+   "hint": "Ask the platform operator to set them up.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "FORM_NOT_READY",
+   "status": "400",
+   "title": "Form not ready",
+   "shopkeeper": "The form is missing some details it needs.",
+   "hint": "Fill in the fields listed, then try again.",
+   "owner_area": "forms",
+   "since": "2026-10-23"
+  },
+  {
    "code": "FX_RATE_MISSING",
    "status": "422",
    "title": "Exchange rate missing",
@@ -1643,8 +1787,8 @@
    "code": "IN_USE",
    "status": "409",
    "title": "In use",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Products still hold a value in this column.",
+   "hint": "Clear it on those products first, or keep the column.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -1778,8 +1922,8 @@
    "code": "LOCKED",
    "status": "409",
    "title": "Locked",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "This column is one every catalogue keeps, so it cannot be changed that way.",
+   "hint": "Leave it as it is.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -1793,11 +1937,20 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MEMBERSHIP_SUSPENDED",
+   "status": "403",
+   "title": "Membership suspended",
+   "shopkeeper": "The network has suspended your membership, so you cannot send to it.",
+   "hint": "Ask the network to resume it, then send again.",
+   "owner_area": "network",
+   "since": "2026-10-24"
+  },
+  {
    "code": "MIGRATION",
    "status": "409",
-   "title": "Migration",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "title": "Not switched on yet",
+   "shopkeeper": "Unit and source are not switched on for your account yet.",
+   "hint": "Type, label and required still work; try again after the next update.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -2461,9 +2614,9 @@
   {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
-   "title": "Above the quoted amount",
-   "shopkeeper": "The amount received is above what the bill asked for.",
-   "hint": "Add a note saying why, or record the quoted amount.",
+   "title": "DEPRECATED 2026-10-29 (FIN-53): Above the quoted amount",
+   "shopkeeper": "No longer answered: money above what a bill owes is the books' one question (409 ALREADY_PAID, \"More than is owed\"), confirmed once as an advance.",
+   "hint": "Nothing to do; an old client reading this code should ask the 409's warnings instead.",
    "owner_area": "chits",
    "since": "2026-10-23"
   },
@@ -2657,6 +2810,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "QUICK_KEY_CHANGED",
+   "status": "409",
+   "title": "Group changed",
+   "shopkeeper": "Someone changed this group since you opened it.",
+   "hint": "Open the group again and make your change again.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "QUICK_KEY_INVALID",
+   "status": "400",
+   "title": "Quick key not valid",
+   "shopkeeper": "A group needs a name, and a key needs a product.",
+   "hint": "Fill in what is missing and try again.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "QUICK_KEY_SESSION_ONLY",
+   "status": "403",
+   "title": "Quick keys need a person",
+   "shopkeeper": "Quick-key groups are managed by a signed-in person, not by a key.",
+   "hint": "Sign in as the owner or a manager to change them.",
+   "owner_area": "quick-keys",
+   "since": "2026-10-23"
+  },
+  {
    "code": "READ_ONLY",
    "status": "403",
    "title": "View only",
@@ -2786,8 +2966,8 @@
    "code": "REQUIRED",
    "status": "409",
    "title": "Required",
-   "shopkeeper": "PENDING",
-   "hint": "-",
+   "shopkeeper": "Your catalogue requires this column.",
+   "hint": "Make it optional first, then remove it.",
    "owner_area": "schemas",
    "since": "2026-10-22"
   },
@@ -2834,6 +3014,51 @@
    "shopkeeper": "They said no to this.",
    "hint": "Leave them be, unless they say yes later.",
    "owner_area": "crm",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_COLUMN_NOT_NAMED",
+   "status": "400",
+   "title": "Column not named",
+   "shopkeeper": "Name the column you want to remove.",
+   "hint": "Pick a column from the list and try again.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_NOTHING_TO_ORDER",
+   "status": "400",
+   "title": "Nothing to order",
+   "shopkeeper": "None of those columns are in your catalogue.",
+   "hint": "Reload the page and try again.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_CHANNEL",
+   "status": "400",
+   "title": "Unknown channel",
+   "shopkeeper": "The channel must be ERP, IoT or AI.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_SOURCE",
+   "status": "400",
+   "title": "Unknown source",
+   "shopkeeper": "A value can come from the system, the customer, a computation or ChitBridge.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
+   "since": "2026-10-23"
+  },
+  {
+   "code": "SCHEMA_UNKNOWN_TYPE",
+   "status": "400",
+   "title": "Unknown column type",
+   "shopkeeper": "A column is text, number, choice or date.",
+   "hint": "Pick one of those.",
+   "owner_area": "schemas",
    "since": "2026-10-23"
   },
   {
@@ -2943,6 +3168,24 @@
    "hint": "A counter or device key cannot use the ledger.",
    "owner_area": "books",
    "since": "2026-10-23"
+  },
+  {
+   "code": "SIM_FEEDBACK_MESSAGE_MISSING",
+   "status": "400",
+   "title": "Feedback message missing",
+   "shopkeeper": "The feedback has no message in it.",
+   "hint": "Write what you thought, then send.",
+   "owner_area": "simulator",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "SIM_LEAD_FIELDS_MISSING",
+   "status": "400",
+   "title": "Name or e-mail missing",
+   "shopkeeper": "A name and a valid e-mail are needed to start the tour.",
+   "hint": "Type your name and an e-mail address, then try again.",
+   "owner_area": "simulator",
+   "since": "2026-10-24"
   },
   {
    "code": "SOURCE_STORE_MISSING",
@@ -3152,6 +3395,24 @@
    "since": "2026-10-23"
   },
   {
+   "code": "TILL_NO_TAX_SCHEME",
+   "status": "409",
+   "title": "Shop charges no tax",
+   "shopkeeper": "This shop charges no tax, so no rate is needed.",
+   "hint": "If that is wrong, check the registration in Country setup.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
+   "code": "TILL_RATE_OWNER_ONLY",
+   "status": "403",
+   "title": "Owner or manager sets the rate",
+   "shopkeeper": "Only the owner or a manager can set a tax rate.",
+   "hint": "Ask them to set it once; the sale goes on.",
+   "owner_area": "till",
+   "since": "2026-10-24"
+  },
+  {
    "code": "TILL_REFUSED",
    "status": "varies",
    "title": "Counter request refused",
@@ -3240,6 +3501,15 @@
    "hint": "Ask it to claim its place first.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "UNKNOWN_FIELD",
+   "status": "400",
+   "title": "Field not known here",
+   "shopkeeper": "Not saved: that detail cannot be changed here. Check the name and try again.",
+   "hint": "-",
+   "owner_area": "relationships",
+   "since": "2026-10-24"
   },
   {
    "code": "USER_ID_ENTITY_ONLY",

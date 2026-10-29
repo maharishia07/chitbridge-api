@@ -18,6 +18,7 @@
  *   node tests/api-problem-orders.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-orders.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-orders.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
+ *   node tests/api-problem-orders.test.cjs --compare F        the answers now against a capture F: byte for byte (status, content type, body)
  */
 'use strict';
 const path = require('path');
@@ -29,6 +30,8 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
@@ -69,7 +72,7 @@ const STAFF = actorOf('editor');
 const VIEWER = actorOf('viewer');
 const COMMENTER = actorOf('commenter');
 const CUSTOMER_LOGIN = { identity_id: 'c-1', identity_type: 'customer', parent_entity_id: SHOP, display_name: 'A buyer' };
-const FRESH = { realAuth: false, who: OWNER, asKey: false, db: 'ok', repeatMigrated: true, flags: null, bookedAll: false, mintFails: null, moveAnswer: null, noWork: false, jsonThrows: false };
+const FRESH = { tables: false, realAuth: false, who: OWNER, asKey: false, db: 'ok', repeatMigrated: true, flags: null, bookedAll: false, mintFails: null, moveAnswer: null, noWork: false, jsonThrows: false };
 const world = Object.assign({}, FRESH);
 
 /* ── stand-ins: auth, db, the repeat store, the counters register, the work rows ── */
@@ -85,6 +88,7 @@ const failing = (run) => async (...args) => {
 /** the counters' register: policy_flags of the entity that asks (identities.policy_flags, read FOR UPDATE), nothing for a shop that has none */
 const registryOf = (entity) => clone((world.flags && world.flags[entity]) || {});
 async function registryAnswer(sql, params) {
+  if (/FROM information_schema\.tables/.test(sql)) return { rows: world.tables ? [{ '?column?': 1 }] : [], rowCount: 1 }; /* lib/schema hasTable: the line, delivery and assignment tables are there or not */
   if (/FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ policy_flags: registryOf(params[0]) }], rowCount: 1 };
   return { rows: [], rowCount: 1 };
 }
@@ -184,6 +188,15 @@ const countered = { prep: () => seedAgreement({ state: 'countered', counter: { n
 const withBill = (body) => ({ body, prep: () => seedBill() });
 const SCHEDULE = { every: 1, unit: 'weekly', start_on: '2099-01-01', until: { runs: 3 }, mode: 'draft' };
 const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+/** S34: the tables of the line, delivery and assignment reads are there (lib/schema hasTable says yes), so lines_n, lines_open_n and the assignments are numbers */
+const MIGRATED = { tables: true };
+/** a prep that changes shop e1's copy n of the stand-in Tasks & Orders rows (tests/support/work-stub.cjs) */
+const changeCopy = (n, over) => (S) => Object.assign(S.D.copies.find((row) => row.chit_id === S.U(n) && row.entity_id === SHOP), over);
+/** copy 3 as the copies table can hold it with every nullable column empty: status (chit_status.current_status), created_at (chit_header.created_at), the summary, the counterparty */
+const BARE_COPY = { current_status: null, created_at: null, summary_json: null, counterparty_id: null, counterparty_name: null, currency: null, value: null, alt_value: null, assigned_to_actor_id: null };
+/** a shop that holds more copies than one read takes (lib/work-rows LIMIT): the answer says truncated and gives no counts */
+const MANY = (S) => { S.D.bigRows = Array.from({ length: 5000 }, (nothing, at) => S.copy(1 + (at % 5), { chit_id: S.U(500 + at) })); };
+const onSheet = (n, extra) => X('sheet-' + n[0], 'GET ' + WK + '/:chit_id', 200, Object.assign({ url: WK + '/' + chitOf(n[1]), setup: MIGRATED }, extra));
 const EXTRAS = [
   /* repeat supply: the seller's side */
   X('migrated-empty-list', 'GET ' + RS, 200, {}),
@@ -257,6 +270,25 @@ const EXTRAS = [
   X('sheet-not-an-id', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/nope' }),
   X('sheet-unknown-chit', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/20000000-0000-4000-8000-000000000999' }),
   X('sheet-of-another-shop', 'GET ' + WK + '/:chit_id', 404, { url: WK + '/' + chitOf(10) }),
+  /* S34: the READY branch of the work reads (the tables are there), and every nullable column held as null: the real handlers and libraries run over the stand-in rows */
+  X('list-orders-in-ready', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: MIGRATED }),
+  X('list-orders-out-ready', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_out', setup: MIGRATED }),
+  X('list-tasks-of-one-person', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=tasks&assigned=A1&status=pending', setup: MIGRATED }),
+  X('list-tasks-nobody-holds', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&assigned=none&q=customer', setup: MIGRATED }),
+  X('list-done', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=done', setup: MIGRATED }),
+  X('list-past-the-cap', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in&page=9&limit=9999', setup: MIGRATED }),
+  X('list-bare-copy', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_out', setup: MIGRATED, prep: changeCopy(3, BARE_COPY) }),
+  X('list-too-many-copies', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: MIGRATED, prep: MANY }),
+  X('facts-too-many-copies', 'GET ' + WK + '/facts', 200, { prep: MANY }),
+  X('facts-unbilled-nothing-open', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { noWork: true } }),
+  X('facts-unbilled-two-currencies', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', prep: (S) => S.D.copies.push(S.copy(11, { currency: 'AED' })) }),
+  onSheet(['ready', 1]),
+  onSheet(['delivery-order', 1], { prep: (S) => { changeCopy(1, { summary_json: { order_details: { channel: 'online', fulfilment: 'delivery', address: '12 Main Road', requested_delivery: null, remark: null, name: null } } })(S); S.D.detail[S.U(1)].line_items[0].price = null; } }),
+  onSheet(['task', 4]),
+  onSheet(['order-i-bought', 2]),
+  onSheet(['order-with-no-lines', 3]),
+  onSheet(['bare-copy', 3], { prep: changeCopy(3, BARE_COPY) }),
+  X('sheet-bare-copy-no-tables', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(3), prep: changeCopy(3, BARE_COPY) }),
   /* counters */
   X('counters-listed', 'GET ' + CT, 200, { setup: { flags: FREE } }),
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),
@@ -375,12 +407,25 @@ async function runScenario(port, scenario, S) {
   S.seed();
   if (world.noWork) S.D.copies = [];
   freshRepeat();
-  if (scenario.prep) await scenario.prep();
+  require(path.join(HERE, 'lib', 'schema'))._reset(); /* a table probe answered once is not remembered into the next scenario */
+  if (scenario.prep) await scenario.prep(S);
   const restore = applyPatch(scenario.setup || {});
   const method = scenario.route.split(' ')[0];
   const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body);
   restore();
   return answer;
+}
+
+/** a body's random ids and clock stamps are the same answer on every run: masked before a body is hashed */
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
+const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
+/** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
+function compare(captureFile, recording) {
+  const before = JSON.parse(fs.readFileSync(captureFile, 'utf8'));
+  const differing = Object.keys(before).filter((key) => !recording[key] || recording[key].status !== before[key].status || recording[key].type !== before[key].type || recording[key].sha !== before[key].sha);
+  console.log('compared ' + Object.keys(before).length + ' answers: ' + (Object.keys(before).length - differing.length) + ' identical, ' + differing.length + ' different');
+  differing.forEach((key) => console.log('  ' + key + ' [' + before[key].status + ' -> ' + (recording[key] && recording[key].status) + ']'));
+  return differing.length;
 }
 
 const legacyOf = (key, scenario) => (JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes[key] || { answers: [] }).answers.find((answer) => answer.scenario === scenario);
@@ -409,12 +454,13 @@ const allowedFor = () => require(path.join(HERE, 'lib', 'orders-contract.js')).a
 
 async function checkRoutes(port, scenarios, recording, S) {
   const tested = {};
-  const allowed = argv.includes('--capture') ? null : allowedFor();
+  const allowed = argv.includes('--capture') || argv.includes('--compare') ? null : allowedFor();
   for (const scenario of scenarios) {
     const answer = await runScenario(port, scenario, S);
     const label = scenario.route + ' · ' + scenario.id;
-    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, body: answer.json, after: !!scenario.after };
+    recording[scenario.route + '|' + scenario.id] = { route: scenario.route, status: answer.status, type: answer.type, body: answer.json, after: !!scenario.after, sha: shaOf(answer), request: { url: scenario.url, body: scenario.body } }; /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer */
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
+    if (argv.includes('--compare')) continue;
     if (argv.includes('--capture')) {
       if (scenario.expect !== undefined && answer.status !== scenario.expect) console.log('  built for ' + scenario.expect + ', answered ' + answer.status + ': ' + label + ' ' + answer.text.slice(0, 120));
       continue;
@@ -522,6 +568,43 @@ function checkContractShape() {
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
 }
 
+/**
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * and whose recorded 200s all fit it (types and nullable columns included) is proved here; the generator's proxy world holds no Tasks & Orders rows, so it answers the sheet 404.
+ * → { route: { output_allowlist: true } } for the routes that held
+ */
+function checkAllowList(recording) {
+  const proved = {};
+  const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].forEach((route) => { /* in the order the evidence file is read: sorted */
+    const shape = shapeOf(route);
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = shape && engine.compile(shape.schema);
+    const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body));
+    check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the work reads the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + WK + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter((route) => route.includes(' ' + WK + '/')).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
@@ -539,6 +622,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const port = server.address().port;
   const recording = {};
   const tested = await checkRoutes(port, scenariosOf(routes), recording, S);
+  if (flagValue('--compare')) {
+    server.close();
+    process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
+  }
   if (flagValue('--capture')) {
     server.close();
     fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -553,6 +640,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
+  check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  const allowed = checkAllowList(recording);
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
@@ -566,7 +655,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
+    writeAllowList(allowed);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }

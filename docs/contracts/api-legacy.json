@@ -4645,12 +4645,12 @@
      "scenario": "nothing-found",
      "status": 400,
      "body_keys": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      },
      "fixture": {
-      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal.",
-      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, contra, journal."
+      "error": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal.",
+      "message": "What happened? expense, other_income, capital, drawings, staff_advance, advance_recovered, debit_note, contra, journal."
      }
     }
    ]
@@ -7928,6 +7928,30 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "parent-below-itself",
+     "status": 400,
+     "body_keys": {
+      "error": "A folder cannot go inside a folder that is inside it",
+      "type": "https://chitbridge.com/problems/folder_bad_request",
+      "title": "Folder request not accepted",
+      "status": 400,
+      "code": "FOLDER_BAD_REQUEST",
+      "detail": "A folder cannot go inside a folder that is inside it",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "A folder cannot go inside a folder that is inside it",
+      "type": "https://chitbridge.com/problems/folder_bad_request",
+      "title": "Folder request not accepted",
+      "status": 400,
+      "code": "FOLDER_BAD_REQUEST",
+      "detail": "A folder cannot go inside a folder that is inside it",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -8709,6 +8733,58 @@
      },
      "fixture": {
       "error": "No such folder"
+     }
+    },
+    {
+     "scenario": "folder-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "folder_id",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/folder_invalid",
+      "title": "Folder details not valid",
+      "status": 400,
+      "code": "FOLDER_INVALID",
+      "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+      "request_id": "req-test",
+      "field": "folder_id",
+      "errors": [
+       {
+        "field": "folder_id",
+        "code": "WRONG_VALUE",
+        "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "folder_id",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/folder_invalid",
+      "title": "Folder details not valid",
+      "status": 400,
+      "code": "FOLDER_INVALID",
+      "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+      "request_id": "req-test",
+      "field": "folder_id",
+      "errors": [
+       {
+        "field": "folder_id",
+        "code": "WRONG_VALUE",
+        "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
      }
     }
    ]
@@ -10943,6 +11019,110 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "price-null",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price is required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price is required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "price-true",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price must be a number",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Price must be a number",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Price must be a number",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -16688,6 +16868,22 @@
       "error": "Update failed",
       "message": "This catalogue is priced in INR; a price in USD cannot be stored on it. The currency comes from the business, not the request."
      }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -16829,6 +17025,22 @@
      "fixture": {
       "error": "Add failed",
       "message": "Price must be a finite number, got \"abc\""
+     }
+    },
+    {
+     "scenario": "rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17424,6 +17636,22 @@
       "error": "Bulk add failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "bulk-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -17555,6 +17783,22 @@
      "fixture": {
       "error": "Bulk update failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "edit-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
      }
     }
    ]
@@ -17866,6 +18110,28 @@
         "field": "decisions",
         "message": "Invalid value"
        }
+      ]
+     }
+    },
+    {
+     "scenario": "import-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
+      ]
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "rows": [
+       2
       ]
      }
     }
@@ -19356,6 +19622,22 @@
       "error": "Save failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "face-rate-owner-only",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate."
+     }
     }
    ]
   },
@@ -20530,6 +20812,60 @@
       "error": "Failed to amend",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "amend-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "amend-price-not-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to amend",
+      "message": "\"price\" must be a number",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "\"price\" must be a number",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to amend",
+      "message": "\"price\" must be a number",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "\"price\" must be a number",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -20736,6 +21072,32 @@
       "error": "Failed to assign",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "assign-due-date-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to assign",
+      "message": "due_date must be YYYY-MM-DD",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "due_date must be YYYY-MM-DD",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to assign",
+      "message": "due_date must be YYYY-MM-DD",
+      "type": "https://chitbridge.com/problems/chit_bad_request",
+      "title": "Chit request not accepted",
+      "status": 400,
+      "code": "CHIT_BAD_REQUEST",
+      "detail": "due_date must be YYYY-MM-DD",
+      "hint": "Read the message, fix what it names and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -20904,6 +21266,32 @@
       "error": "Failed to record cost",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "cost-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -20960,7 +21348,7 @@
      },
      "fixture": {
       "error": "Failed to record delivery",
-      "message": "Something went wrong — please try again."
+      "message": "Each delivery needs a line_id"
      }
     },
     {
@@ -21012,7 +21400,7 @@
      },
      "fixture": {
       "error": "Failed to record delivery",
-      "message": "Something went wrong — please try again."
+      "message": "Nothing to record"
      }
     }
    ]
@@ -21756,20 +22144,6 @@
      }
     },
     {
-     "scenario": "payment-above-the-quote",
-     "status": 422,
-     "body_keys": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
-     },
-     "fixture": {
-      "error": "Above the quoted amount",
-      "message": "Received 500 against a quote of 100. Add a note saying why, or record the quoted amount.",
-      "quoted": 100
-     }
-    },
-    {
      "scenario": "payment-books-refuse",
      "status": 409,
      "body_keys": {
@@ -21821,6 +22195,110 @@
       "detail": "Paid on 1 Oct.",
       "hint": "Check the list, then confirm if it is really a new one.",
       "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-zero-amount",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must be > 0.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must be > 0."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must be > 0.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must be > 0."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "payment-zero-amount-as-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\".",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\".",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\"."
+       }
+      ]
      }
     }
    ]
@@ -22207,6 +22685,34 @@
      "fixture": {
       "error": "Reprice failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "reprice-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found or you do not have access",
+      "why": "not_participant",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found or you do not have access",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -40221,6 +40727,3796 @@
      "fixture": {
       "ok": false,
       "error": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/till/rate": {
+   "answers": [
+    {
+     "scenario": "counter-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "key-for-something-else",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "rate-key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-cashier-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Ask the owner or a manager to set the tax rate.",
+      "may": false,
+      "why": "Ask the owner or a manager to set the tax rate.",
+      "type": "https://chitbridge.com/problems/till_rate_owner_only",
+      "title": "Owner or manager sets the rate",
+      "status": 403,
+      "code": "TILL_RATE_OWNER_ONLY",
+      "detail": "Ask the owner or a manager to set the tax rate.",
+      "hint": "Ask them to set it once; the sale goes on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-unknown-key-in-body",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "rate-shop-charges-none",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "This shop charges no GST, so no rate is needed.",
+      "type": "https://chitbridge.com/problems/till_no_tax_scheme",
+      "title": "Shop charges no tax",
+      "status": 409,
+      "code": "TILL_NO_TAX_SCHEME",
+      "detail": "This shop charges no GST, so no rate is needed.",
+      "hint": "If that is wrong, check the registration in Country setup.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "This shop charges no GST, so no rate is needed.",
+      "type": "https://chitbridge.com/problems/till_no_tax_scheme",
+      "title": "Shop charges no tax",
+      "status": 409,
+      "code": "TILL_NO_TAX_SCHEME",
+      "detail": "This shop charges no GST, so no rate is needed.",
+      "hint": "If that is wrong, check the registration in Country setup.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-slab-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That rate is not one of this shop’s GST slabs.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That rate is not one of this shop’s GST slabs.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That rate is not one of this shop’s GST slabs.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That rate is not one of this shop’s GST slabs.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-item-not-there",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That product is not in this shop’s catalogue.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That product is not in this shop’s catalogue.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That product is not in this shop’s catalogue.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That product is not in this shop’s catalogue.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/simulator/content": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-one-table-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "content-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to load content",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/simulator/feedback": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-lead-unknown-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-36-hex-digits",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-lead-in-a-list",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-message-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-message-zero",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "A message is required."
+     },
+     "fixture": {
+      "error": "A message is required."
+     }
+    },
+    {
+     "scenario": "feedback-rating-decimal",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-rating-too-big-for-the-column",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "feedback-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/simulator/lead": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-name-too-short",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-name-short-after-trim",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-email-without-an-at-sign",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "A name and a valid email are required."
+     },
+     "fixture": {
+      "error": "A name and a valid email are required."
+     }
+    },
+    {
+     "scenario": "lead-insert-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-fails-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-insert-returns-no-row",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    },
+    {
+     "scenario": "lead-answer-throws-leaks-nothing",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not record that — please try again."
+     },
+     "fixture": {
+      "error": "Could not record that — please try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/schemas/fields/:field_key": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "drop-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "LOCKED",
+      "message": "\"name\" is one of the three columns every catalogue keeps — the cart, the storefront and the export all read it."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "LOCKED",
+      "message": "\"name\" is one of the three columns every catalogue keeps — the cart, the storefront and the export all read it."
+     }
+    },
+    {
+     "scenario": "drop-required",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "REQUIRED",
+      "message": "\"Grade\" is required by your catalogue definition. Make it optional first."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "REQUIRED",
+      "message": "\"Grade\" is required by your catalogue definition. Make it optional first."
+     }
+    },
+    {
+     "scenario": "drop-in-use",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 12,
+      "message": "12 products record a value in \"Grade\". Clear it on those first, or keep the column."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 12,
+      "message": "12 products record a value in \"Grade\". Clear it on those first, or keep the column."
+     }
+    },
+    {
+     "scenario": "drop-in-use-one",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Clear it on those first, or keep the column."
+     },
+     "fixture": {
+      "error": "Cannot remove",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Clear it on those first, or keep the column."
+     }
+    },
+    {
+     "scenario": "drop-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "drop-blank-key",
+     "status": 400,
+     "body_keys": {
+      "error": "No column",
+      "message": "Name the column to remove."
+     },
+     "fixture": {
+      "error": "No column",
+      "message": "Name the column to remove."
+     }
+    },
+    {
+     "scenario": "drop-count-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "drop-delete-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "drop-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to remove the column",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/schemas/fields": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "fields-declared-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "fields-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get fields",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/schemas/my": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "my-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to get schema",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/fields/:field_key": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-type-used",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 4,
+      "message": "4 products record a value in \"Grade\". Its type is fixed while they do."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 4,
+      "message": "4 products record a value in \"Grade\". Its type is fixed while they do."
+     }
+    },
+    {
+     "scenario": "patch-type-used-one",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Its type is fixed while they do."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "IN_USE",
+      "used_by": 1,
+      "message": "1 product record a value in \"Grade\". Its type is fixed while they do."
+     }
+    },
+    {
+     "scenario": "patch-type-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot change the type",
+      "code": "LOCKED",
+      "used_by": 0,
+      "message": "\"name\" keeps its type — the cart, the storefront and the export all read it as it is."
+     },
+     "fixture": {
+      "error": "Cannot change the type",
+      "code": "LOCKED",
+      "used_by": 0,
+      "message": "\"name\" keeps its type — the cart, the storefront and the export all read it as it is."
+     }
+    },
+    {
+     "scenario": "patch-type-unknown",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown type",
+      "message": "A column is text, number, choice or date — not \"blob\"."
+     },
+     "fixture": {
+      "error": "Unknown type",
+      "message": "A column is text, number, choice or date — not \"blob\"."
+     }
+    },
+    {
+     "scenario": "patch-required-off-locked",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot make optional",
+      "code": "LOCKED",
+      "message": "\"price\" is required by every catalogue."
+     },
+     "fixture": {
+      "error": "Cannot make optional",
+      "code": "LOCKED",
+      "message": "\"price\" is required by every catalogue."
+     }
+    },
+    {
+     "scenario": "patch-attr-not-ready",
+     "status": 409,
+     "body_keys": {
+      "error": "Not yet available",
+      "code": "MIGRATION",
+      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+     },
+     "fixture": {
+      "error": "Not yet available",
+      "code": "MIGRATION",
+      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+     }
+    },
+    {
+     "scenario": "patch-attr-leg-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown source",
+      "message": "A value comes from the system, the customer, a computation or ChitBridge."
+     },
+     "fixture": {
+      "error": "Unknown source",
+      "message": "A value comes from the system, the customer, a computation or ChitBridge."
+     }
+    },
+    {
+     "scenario": "patch-attr-via-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Unknown channel",
+      "message": "ERP, IoT or AI."
+     },
+     "fixture": {
+      "error": "Unknown channel",
+      "message": "ERP, IoT or AI."
+     }
+    },
+    {
+     "scenario": "patch-unknown-column",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-name-empty",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-name-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-type-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-type-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-required-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-required-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-unit-long",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-unit-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-leg-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-via-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-all-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       },
+       {
+        "field": "required",
+        "message": "Invalid value"
+       },
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       },
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       },
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "field_type",
+        "message": "Invalid value"
+       },
+       {
+        "field": "required",
+        "message": "Invalid value"
+       },
+       {
+        "field": "unit",
+        "message": "Invalid value"
+       },
+       {
+        "field": "leg",
+        "message": "Invalid value"
+       },
+       {
+        "field": "via",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-bad-and-missing-column",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "required",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "patch-count-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "patch-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "patch-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to update the column",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/fields/order": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-no-definition",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no definition."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no definition."
+     }
+    },
+    {
+     "scenario": "order-none-of-mine",
+     "status": 400,
+     "body_keys": {
+      "error": "Nothing to order",
+      "message": "None of those columns are in your catalogue."
+     },
+     "fixture": {
+      "error": "Nothing to order",
+      "message": "None of those columns are in your catalogue."
+     }
+    },
+    {
+     "scenario": "order-empty-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-not-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "order",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "order-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "order-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to save the order",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-no-catalogue",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No active catalogue to update"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No active catalogue to update"
+     }
+    },
+    {
+     "scenario": "visibility-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-shouted",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "visibility",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "visibility-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "visibility-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Visibility update failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "relation \"catalogue_items\" does not exist -- SELECT secret FROM vault"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Cannot read properties of undefined (reading 'schema_id')"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Cannot read properties of undefined (reading 'schema_id')"
+     }
+    },
+    {
+     "scenario": "create-bootstrap-refuses",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "the bootstrap said no"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "the bootstrap said no"
+     }
+    },
+    {
+     "scenario": "create-no-schema-id",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "no schema"
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "no schema"
+     }
+    },
+    {
+     "scenario": "create-bootstrap-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-read-back-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed to create schema",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/forms": {
+   "answers": [
+    {
+     "scenario": "list-forms-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List forms failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List forms failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-forms-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "List forms failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List forms failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/forms/:key": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Get form failed",
+      "message": "Unknown form: nope"
+     },
+     "fixture": {
+      "error": "Get form failed",
+      "message": "Unknown form: nope"
+     }
+    },
+    {
+     "scenario": "form-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Get form failed",
+      "message": "Unknown form: no-such-form"
+     },
+     "fixture": {
+      "error": "Get form failed",
+      "message": "Unknown form: no-such-form"
+     }
+    },
+    {
+     "scenario": "form-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get form failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/forms/instances/:id": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "instance-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "instance-not-an-id",
+     "status": 500,
+     "body_keys": {
+      "error": "Get instance failed",
+      "code": "22P02",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "code": "22P02",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "instance-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "instance-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Get instance failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/forms/instances/all": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "instances-bad-deal",
+     "status": 400,
+     "body_keys": {
+      "error": "List instances failed",
+      "code": "FORMS_BAD_CONTEXT",
+      "message": "Which deal? context_ref is the order's chit id."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "code": "FORMS_BAD_CONTEXT",
+      "message": "Which deal? context_ref is the order's chit id."
+     }
+    },
+    {
+     "scenario": "instances-deal-asked-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "List instances failed",
+      "code": "FORMS_BAD_CONTEXT",
+      "message": "Which deal? context_ref is the order's chit id."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "code": "FORMS_BAD_CONTEXT",
+      "message": "Which deal? context_ref is the order's chit id."
+     }
+    },
+    {
+     "scenario": "instances-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List instances failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "instances-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "instances-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "List instances failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/forms/:key/issue": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Unknown form: nope"
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Unknown form: nope"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "issue-not-ready",
+     "status": 400,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "issue-not-ready-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORM_NOT_READY",
+      "message": "Form is not ready — required fields unresolved: Applicant (legal name), Registered address, Authorised signatory, Purpose of application",
+      "unresolved": [
+       {
+        "id": "applicant",
+        "label": "Applicant (legal name)"
+       },
+       {
+        "id": "address",
+        "label": "Registered address"
+       },
+       {
+        "id": "signatory",
+        "label": "Authorised signatory"
+       },
+       {
+        "id": "purpose",
+        "label": "Purpose of application"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "issue-unknown-form",
+     "status": 404,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Unknown form: no-such-form"
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Unknown form: no-such-form"
+     }
+    },
+    {
+     "scenario": "issue-store-missing",
+     "status": 503,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-column-missing",
+     "status": 503,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "22P02",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "22P02",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-db-fails-on-the-write",
+     "status": 500,
+     "body_keys": {
+      "error": "Issue form failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "issue-library-says-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Clash."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Clash."
+     }
+    },
+    {
+     "scenario": "issue-library-throws-502",
+     "status": 502,
+     "body_keys": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Issue form failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/forms/:key/resolve": {
+   "answers": [
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Unknown form: nope"
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Unknown form: nope"
+     }
+    },
+    {
+     "scenario": "resolve-unknown-form",
+     "status": 404,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Unknown form: no-such-form"
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Unknown form: no-such-form"
+     }
+    },
+    {
+     "scenario": "resolve-name-of-an-object",
+     "status": 500,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "resolve-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "resolve-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "resolve-library-says-409",
+     "status": 409,
+     "body_keys": {
+      "error": "Resolve form failed",
+      "message": "Clash."
+     },
+     "fixture": {
+      "error": "Resolve form failed",
+      "message": "Clash."
+     }
+    }
+   ]
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "attach-no-chit",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "attach-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "chit_id is required"
+     }
+    },
+    {
+     "scenario": "attach-not-a-participant",
+     "status": 403,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "Not a participant on this chit"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "Not a participant on this chit"
+     }
+    },
+    {
+     "scenario": "attach-unknown-instance",
+     "status": 404,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "attach-store-missing",
+     "status": 503,
+     "body_keys": {
+      "error": "Attach form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "code": "FORMS_STORE_MISSING",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "attach-storage-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "attach-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "attach-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Attach form failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/forms/instances/:id/sign": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "code": "read_only",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "Read only",
+      "status": 403,
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "stranger-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "sign-body-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "No signatory — set an authorised signatory in the vault, or pass one"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "No signatory — set an authorised signatory in the vault, or pass one"
+     }
+    },
+    {
+     "scenario": "sign-no-signatory",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "No signatory — set an authorised signatory in the vault, or pass one"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "No signatory — set an authorised signatory in the vault, or pass one"
+     }
+    },
+    {
+     "scenario": "sign-already-signed",
+     "status": 409,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Form is already signed"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Form is already signed"
+     }
+    },
+    {
+     "scenario": "sign-not-ready",
+     "status": 400,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Cannot sign an unready form"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Cannot sign an unready form"
+     }
+    },
+    {
+     "scenario": "sign-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Form instance not found"
+     }
+    },
+    {
+     "scenario": "sign-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign form failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "code": "53300",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sign-answer-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sign-library-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Sign form failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "group-drop-stale",
+     "status": 409,
+     "body_keys": {
+      "error": "conflict",
+      "message": "changed since you last read it",
+      "current": {
+       "id": "00000000-0000-4000-8000-0000000000a1",
+       "entity_id": "11111111-1111-4111-8111-111111111111",
+       "name": "Morning",
+       "color": null,
+       "sort_order": 0,
+       "window_from": null,
+       "window_to": null,
+       "suggest_on_start": false,
+       "is_deleted": false,
+       "version": 1,
+       "updated_by": null,
+       "updated_at": "2026-10-23T00:00:00.000Z"
+      }
+     },
+     "fixture": {
+      "error": "conflict",
+      "message": "changed since you last read it",
+      "current": {
+       "id": "00000000-0000-4000-8000-0000000000a1",
+       "entity_id": "11111111-1111-4111-8111-111111111111",
+       "name": "Morning",
+       "color": null,
+       "sort_order": 0,
+       "window_from": null,
+       "window_to": null,
+       "suggest_on_start": false,
+       "is_deleted": false,
+       "version": 1,
+       "updated_by": null,
+       "updated_at": "2026-10-23T00:00:00.000Z"
+      }
+     }
+    },
+    {
+     "scenario": "group-drop-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "group-drop-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "key-remove-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/quick-keys/groups": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "groups-list-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/quick-keys/screen-config/default": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "screen-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "group-change-stale",
+     "status": 409,
+     "body_keys": {
+      "error": "conflict",
+      "message": "changed since you last read it",
+      "current": {
+       "id": "00000000-0000-4000-8000-0000000000a1",
+       "entity_id": "11111111-1111-4111-8111-111111111111",
+       "name": "Morning",
+       "color": null,
+       "sort_order": 0,
+       "window_from": null,
+       "window_to": null,
+       "suggest_on_start": false,
+       "is_deleted": false,
+       "version": 1,
+       "updated_by": null,
+       "updated_at": "2026-10-23T00:00:00.000Z"
+      }
+     },
+     "fixture": {
+      "error": "conflict",
+      "message": "changed since you last read it",
+      "current": {
+       "id": "00000000-0000-4000-8000-0000000000a1",
+       "entity_id": "11111111-1111-4111-8111-111111111111",
+       "name": "Morning",
+       "color": null,
+       "sort_order": 0,
+       "window_from": null,
+       "window_to": null,
+       "suggest_on_start": false,
+       "is_deleted": false,
+       "version": 1,
+       "updated_by": null,
+       "updated_at": "2026-10-23T00:00:00.000Z"
+      }
+     }
+    },
+    {
+     "scenario": "group-change-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "group-change-deleted",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "group-change-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PATCH /api/quick-keys/groups/:id/items": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "keys-reorder-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/quick-keys/groups": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name required"
+     }
+    },
+    {
+     "scenario": "group-make-no-name",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name required"
+     }
+    },
+    {
+     "scenario": "group-make-blank-name",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name required"
+     }
+    },
+    {
+     "scenario": "group-make-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "key-add-no-product",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "product_id required"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "key-add-unknown-group",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "key-add-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Quick-key groups are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "screen-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
      }
     }
    ]
