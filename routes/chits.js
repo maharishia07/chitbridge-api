@@ -3604,7 +3604,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
-    res.json(costView.chitAnswer({ /* ⭐ RAIL-146, LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone (lib/cost-view); the actions and docOf above read the real header */
+    res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
@@ -3617,7 +3617,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
          only way to discover that is to tap it and get a 503 — an affordance that exists solely to fail. */
       amendments_migrated: amd.migrated !== false,
       /* ⭐⭐ R01 — MAY I DO X ON THIS COPY, answered by the rail engine (lib/rail.js) over the facts of MY copy: one verdict per
-         action, { ok:true } or { ok:false, why } with why from the engine's vocabulary. The writing routes ask the same
+         action, { ok:true } or { ok:false, why } with why from the vocabulary of the engine. The writing routes ask the same
          engine before they write, so a ✓ here is never refused there. A host paints this; it never computes it. */
       actions: railActions.forBill(
         _doc,
@@ -3679,7 +3679,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
-    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); everyone else's options as before */
+    const opts = await costWrite.repriceOpts(req, entity_id, chit_id, { line_ids: ids, only_unpriced: !!req.body.only_unpriced }); /* RAIL-147: a cost-blind co-assist is refused on a cost-side chit (preview too); the options of everyone else are as before */
     /* S34: lib/reprice preview answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
     if (req.body.preview) {
       const previewed = await reprice.plan(entity_id, chit_id, opts);
