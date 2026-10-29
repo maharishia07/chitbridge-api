@@ -22030,6 +22030,110 @@
       "hint": "Check the list, then confirm if it is really a new one.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "payment-zero-amount",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must be > 0.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must be > 0."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must be > 0.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must be > 0."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "payment-zero-amount-as-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\".",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\".",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount",
+      "errors": [
+       {
+        "field": "amount",
+        "code": "WRONG_VALUE",
+        "detail": "amount must match pattern \"^\\+?(?=[0-9.]*[1-9])(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?$\"."
+       }
+      ]
+     }
     }
    ]
   },
