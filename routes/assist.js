@@ -368,7 +368,9 @@ router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), 
         }))
       )
     ).filter((item) => item.resolved);
-    res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
+    const answer = PL.pageOut('catalogues', catalogues, pg);
+    /* S34: the pager's keys named (capped and cap_note only when it cut the list); `resolved` is lib/catalogue-build's own record and stays open */
+    res.json({ ok: true, count: catalogues.length, catalogues: answer.catalogues, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));
@@ -547,7 +549,8 @@ router.get('/regions', async (req, res) => {
     } catch (e) {
       log.fellBack('assist GET /regions: the read failed — carried on without it', e); /* b81 absent */
     }
-    res.json({ ok: true, regions: rows });
+    /* S34: a region is the columns the statement selects (region_layer: migrations/000_baseline_2026-10-21.sql; jurisdiction is jsonb, any value) */
+    res.json({ ok: true, regions: rows.map((x) => ({ region_code: x.region_code, currency: x.currency, units: x.units, language: x.language, jurisdiction: x.jurisdiction })) });
   } catch (err) {
     problem(req, res, failed(err, req, FAULTS.plain));
   }
@@ -593,7 +596,8 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
     }
     const total_orders = rows.reduce((total, x) => total + x.orders, 0);
     const localities = Array.from(new Set(rows.map((x) => x.locality)));
-    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
+    /* S34: a locality is the four columns the statement selects (aggregates only: no customer, no distributor id) */
+    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows.map((x) => ({ source_key: x.source_key, locality: x.locality, orders: x.orders, distributors: x.distributors })) });
   } catch (err) {
     log.error('assist/penetration failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));
