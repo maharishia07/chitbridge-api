@@ -6131,6 +6131,9 @@
           },
           "selection_requested": {
             "type": "number"
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

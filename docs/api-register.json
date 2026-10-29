@@ -14221,8 +14221,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 849,
-   "hash": "6de17009cdef055b",
+   "line": 850,
+   "hash": "d090f0c5527ea986",
    "does": "",
    "errors": {
     "count": 0,
@@ -14278,7 +14278,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-10-29 PR#577 stage2 (RAIL-146g, 13 of 13 read)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -14481,7 +14481,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1000,
+   "line": 1002,
    "hash": "a7167645145a889c",
    "does": "",
    "errors": {
@@ -14569,7 +14569,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 899,
+   "line": 901,
    "hash": "ab50db137b09ad6d",
    "does": "",
    "errors": {
@@ -17744,8 +17744,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 120,
-   "hash": "74ddb436c62cd5b8",
+   "line": 122,
+   "hash": "6f1a9e2fc0be039d",
    "does": "",
    "errors": {
     "count": 1,
@@ -17807,8 +17807,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6f1a9e2fc0be039d"
    },
    "status": "partial",
    "callers": [],
@@ -18961,8 +18962,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 54,
-   "hash": "fc131eda6a1e8dca",
+   "line": 56,
+   "hash": "75e5cc9c3b5f0480",
    "does": "",
    "errors": {
     "count": 0,
@@ -22033,7 +22034,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 94,
+   "line": 96,
    "hash": "afc22463d8e3418e",
    "does": "",
    "errors": {
@@ -22123,8 +22124,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 33,
-   "hash": "ac773395a36d4b56",
+   "line": 35,
+   "hash": "52c89ebde0620b4c",
    "does": "",
    "errors": {
     "count": 1,
@@ -22184,8 +22185,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "52c89ebde0620b4c"
    },
    "status": "partial",
    "callers": [
@@ -22211,7 +22213,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 58,
+   "line": 60,
    "hash": "f20a0b794cbc7c41",
    "does": "",
    "errors": {
@@ -43745,7 +43747,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 31,
+   "line": 33,
    "hash": "ca164b350ae30031",
    "does": "",
    "errors": {
@@ -45545,7 +45547,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 210,
+   "line": 212,
    "hash": "d59f0da9b304d519",
    "does": "",
    "errors": {
@@ -45637,7 +45639,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 181,
+   "line": 183,
    "hash": "010892fd7215ad6f",
    "does": "",
    "errors": {
@@ -50087,7 +50089,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 173,
+   "line": 175,
    "hash": "4e3bb87304124c94",
    "does": "",
    "errors": {
@@ -50180,7 +50182,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 136,
+   "line": 138,
    "hash": "b9bff4e1944f3aa0",
    "does": "",
    "errors": {
