@@ -270,7 +270,10 @@ function declaredFields(schema, into, depth) {
 /** the url of a route with its path ids filled from its url schema (an id-like name gets a uuid), and its required query values */
 function urlOf(leaf, operation) {
   const urlSchema = urlSchemaOf(operation) || { properties: {}, required: [] };
-  const valueFor = (name) => (urlSchema.properties[name] ? fittingValue(urlSchema.properties[name]) : /id$/i.test(name) ? PATH_ID : 'x');
+  /* an id-like name whose schema states no shape (contract-kit's default { type: 'string', minLength: 1 }) gets a uuid too: a route that
+     refuses a non-uuid id at its door (POST /chits/:chit_id/payment) is then reached, as it is by a real caller */
+  const stated = (schema) => schema && (schema.format || schema.pattern || schema.enum || schema.examples);
+  const valueFor = (name) => (stated(urlSchema.properties[name]) || (urlSchema.properties[name] && !/id$/i.test(name)) ? fittingValue(urlSchema.properties[name]) : /id$/i.test(name) ? PATH_ID : 'x');
   const named = [];
   const filled = leaf.path.replace(/:(\w+)/g, (match, name) => named.push(name) && encodeURIComponent(valueFor(name)));
   const query = (urlSchema.required || []).filter((name) => !named.includes(name)).map((name) => name + '=' + encodeURIComponent(valueFor(name)));

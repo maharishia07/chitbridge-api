@@ -165,15 +165,20 @@ function extras() {
     X('record-of-another-shop', 'GET ' + C + '/parties/:id', 404, at('/parties/' + A.foreign)),
     X('record-by-staff', 'GET ' + C + '/parties/:id', 200, asOf('staff')),
     X('record-by-viewer', 'GET ' + C + '/parties/:id', 200, asOf('viewer')),
+    /* API-8 (S34): the record with every optional column empty (identities.user_id · status and the party number are nullable; the Ledger off gives no dues), and a customer holding points */
+    X('record-sparse', 'GET ' + C + '/parties/:id', 200, { data: (D) => { Object.assign(D.cust[0], { user_id: null, status: null, party_no: null }); D.stored.customer = {}; D.ledgerOn = false; } }),
+    X('record-with-points', 'GET ' + C + '/parties/:id', 200, { data: (D) => { D.points = { programme: { name: 'Gold' }, points: 120, worth: 60, entries: [] }; } }),
     /* the timeline */
     X('timeline-found', 'GET ' + C + '/parties/:id/timeline', 200),
     X('timeline-unknown', 'GET ' + C + '/parties/:id/timeline', 404, at('/parties/' + A.unknown + '/timeline')),
     X('timeline-bad-before', 'GET ' + C + '/parties/:id/timeline', 400, at('/parties/' + A.chola + '/timeline?before=whenever')),
     X('timeline-before-a-day', 'GET ' + C + '/parties/:id/timeline', 200, at('/parties/' + A.chola + '/timeline?before=2026-09-30&limit=5')),
     N('timeline-limit-given-twice', 'GET ' + C + '/parties/:id/timeline', 400, at('/parties/' + A.chola + '/timeline?limit=5&limit=6')),
+    X('timeline-next-page', 'GET ' + C + '/parties/:id/timeline', 200, at('/parties/' + A.chola + '/timeline?limit=1')),
     X('timeline-before-b276', 'GET ' + C + '/parties/:id/timeline', 200, Object.assign(noFollowups)),
     /* consent (b306) */
     X('prefs-found', 'GET ' + C + '/parties/:id/contact-prefs', 200),
+    X('prefs-with-history', 'GET ' + C + '/parties/:id/contact-prefs', 200, { world: (W) => { W.prefRows.push({ pref_id: '20000000-0000-4000-8000-000000000001', owner: SHOP, party_id: A.chola, channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent', notice_version: null, noted_by: SHOP, noted_at: '2026-10-01T00:00:00.000Z', withdrawn_at: null }); } }),
     X('prefs-unknown', 'GET ' + C + '/parties/:id/contact-prefs', 404, at('/parties/' + A.unknown + '/contact-prefs')),
     X('prefs-not-migrated', 'GET ' + C + '/parties/:id/contact-prefs', 503, { setup: { world: { prefs: false } } }),
     X('prefs-noted', 'POST ' + C + '/parties/:id/contact-prefs', 201, { body: { channel: 'whatsapp', purpose: 'marketing', allowed: true, basis: 'consent' } }),
@@ -261,6 +266,7 @@ function extras() {
     X('segment-send-db-fails', 'POST ' + C + '/segments/:key/send', 500, { url: C + '/segments/regular/send', body: { text: 'x', dry: true }, setup: { db: 'fail' } }),
     /* privacy requests (b307) */
     X('requests-listed', 'GET ' + C + '/privacy-requests', 200),
+    X('requests-listed-with-rows', 'GET ' + C + '/privacy-requests', 200, { world: (W) => { W.requestRows.push({ request_id: '30000000-0000-4000-8000-000000000001', owner: SHOP, party_id: null, who: 'Lata', kind: 'access', country: 'IN', received_at: '2026-10-01T00:00:00.000Z', due_at: '2026-10-31T00:00:00.000Z', answered_at: null }); } }),
     X('requests-open-only', 'GET ' + C + '/privacy-requests', 200, at('/privacy-requests?open=1&page=1&limit=5')),
     X('requests-not-migrated', 'GET ' + C + '/privacy-requests', 503, { setup: { world: { requests: false } } }),
     N('requests-open-given-twice', 'GET ' + C + '/privacy-requests', 400, at('/privacy-requests?open=1&open=0')),
