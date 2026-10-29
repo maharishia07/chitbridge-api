@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the test board's routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded
  *           from the code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json
  *           (the statuses each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in the path
- *           answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json.
+ *           answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json.
  *           Also: no answer outside the statuses the route's contract declares (lib/testing-contract.js), and that contract's words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs, scenes in tests/lib/testing-scenes.cjs).
  * FLOW      route list (read from the router itself) x world (signed out, staff, a failing db, an empty db, a bad id) + the named extras → real route → body →
@@ -15,7 +15,7 @@
  * CARD      28-platform-and-operations/testing
  *
  *   node tests/api-problem-testing.test.cjs                    check
- *   node tests/api-problem-testing.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-testing.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-testing.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-testing.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-testing.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -36,7 +36,7 @@ const MOUNT = '/api/testing';
 const OTHER_SHOP = '99999999-9999-4999-8999-999999999999';
 const STRANGER = { identity_id: OTHER_SHOP, identity_type: 'entity', display_name: 'Other shop' };
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const tools = { PARTY, OWNER, STAFF, SECRET_SQL, answering, firstOf };
 /** the scenes that are answers the sweep ADDS (the schema's refusal): never frozen */
@@ -46,11 +46,17 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: 'routes/testing.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
+  before: () => {
+    /* every scenario meets the project column as the first read of a fresh process does: not asked yet (routes/testing.js _proj is the cache of that one question) */
+    const cache = require(path.join(HERE, 'routes', 'testing.js'))._proj;
+    cache.has = null;
+    cache.at = 0;
+  },
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario)
 });
 const { check } = lab;
-const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')) });
+const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')), fs: require('fs') });
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
   { id: 'staff-asks', setup: { who: STAFF } },
@@ -171,7 +177,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/testing.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

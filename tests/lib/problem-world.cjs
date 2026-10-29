@@ -17,6 +17,8 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const express = require('express');
+process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+const allowlist = require('../../lib/output-allowlist');
 
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const PARTY = '22222222-2222-4222-8222-222222222222';
@@ -127,10 +129,10 @@ function harness(options) {
   }
 
   /** one request over http: the answer's status, headers that matter, bytes, and the body as JSON when it is */
-  function send(port, method, urlPath, body) {
+  function send(port, method, urlPath, body, extraHeaders) {
     return new Promise((resolve) => {
       const data = body === undefined ? null : JSON.stringify(body);
-      const request = http.request({ port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} }, (response) => {
+      const request = http.request({ port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, extraHeaders || {}) }, (response) => {
         const parts = [];
         response.on('data', (part) => parts.push(part));
         response.on('end', () => {
@@ -160,13 +162,22 @@ function harness(options) {
     return () => undo.forEach(([owner, name, original]) => (owner[name] = original));
   }
 
+  /** a scenario may switch process variables for its one request (`env`); the ones it set are put back (or removed) afterwards */
+  function setEnv(given) {
+    const before = Object.keys(given || {}).map((name) => [name, process.env[name]]);
+    Object.keys(given || {}).forEach((name) => (process.env[name] = given[name]));
+    return () => before.forEach(([name, was]) => (was === undefined ? delete process.env[name] : (process.env[name] = was)));
+  }
+
   async function runScenario(port, scenario, modules) {
     Object.assign(world, FRESH, scenario.setup);
     if (options.before) await options.before(scenario); /* a sweep whose world is a stand-in of its own (tests/support/crm-stub.cjs) sets it up here */
     const restore = applyPatch(scenario.patch, modules);
+    const unset = setEnv(scenario.env);
     const method = scenario.route.split(' ')[0];
     const body = scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body;
-    const answer = await send(port, method, scenario.url, body);
+    const answer = await send(port, method, scenario.url, body, scenario.headers);
+    unset();
     restore();
     return answer;
   }
@@ -224,7 +235,7 @@ function harness(options) {
       if (only && !(scenario.route + ' · ' + scenario.id).includes(only)) continue;
       const answer = await runScenario(port, scenario, modules);
       const label = scenario.route + ' · ' + scenario.id;
-      recording[scenario.route + '|' + scenario.id] = recordOf(scenario.route, answer);
+      recording[scenario.route + '|' + scenario.id] = Object.assign(recordOf(scenario.route, answer), { request: { url: scenario.url, body: scenario.body } }); /* the request is kept so tools/api-allowlist.cjs can hand the generated output_allowlist case a request known to reach the success answer */
       if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
       if (capturing) {
         if (scenario.expect !== undefined && scenario.expect !== answer.status) console.log('  NOTE ' + label + ': built to reach ' + scenario.expect + ' and answered ' + answer.status + ' ' + answer.text.slice(0, 120));
@@ -234,6 +245,8 @@ function harness(options) {
       if (scenario.expect !== undefined) check(label + ': answers the status it is built to reach (' + scenario.expect + ')', answer.status === scenario.expect, [answer.status, answer.text.slice(0, 200)]);
       if (answer.status >= 400) judgeRefusal(label, scenario, answer, allowed);
     }
+    /* S34: the output allow-list is the identity on every answer a scenario saw; a dropped key is a key a caller may read */
+    if (!capturing && !only) check('the output allow-list dropped no key from any answer', allowlist.droppedKeys().length === 0, allowlist.droppedKeys());
     return tested;
   }
 

@@ -199,6 +199,9 @@ it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a nam
     /* ⚠️ found BY this guard on the day it was written: built for the three-way match and wired to no caller. Left closed
        on purpose — a key should not reach a route nothing calls. Open it in KEY_ROUTES when something actually asks. */
     'GET /api/till/match': 'built, not yet called by anything — the key stays narrow until it is',
+    /* F5 A1: the "which rate?" door is answered by the signed-in OWNER or MANAGER (their hat, read from the DB), never by the
+       counter's key — a till key may not edit tax (POST /flags: "catalogue decisions"); the handler refuses a key 403 in words too */
+    'POST /api/till/rate': 'a key never edits tax — the door checks the signed-in person’s hat, and refuses a key itself (TILL_RATE_OWNER_ONLY)',
   };
 
   const re = /router\.(get|post)\(\s*'([^']+)'/g;

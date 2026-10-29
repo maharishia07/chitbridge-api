@@ -7,7 +7,7 @@
  *           code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json
  *           (the statuses each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in
  *           the path answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in
- *           docs/contracts/api-hardening-evidence.json. Also: no answer outside the statuses the contract declares (lib/crm-contract.js) and its words as units.
+ *           docs/contracts/api-hardening-evidence-areas.json. Also: no answer outside the statuses the contract declares (lib/crm-contract.js) and its words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes/crm.js and the real libraries over the in-memory stand-in (tests/support/crm-stub.cjs,
  *           the world and the scenes in tests/lib/crm-scenes.cjs).
  * FLOW      route list (read from the router) x world (signed out, a key, a viewer, staff, a failing db, an empty db, a bad id) + the named scenes → real route → body →
@@ -15,7 +15,7 @@
  * CARD      11-crm-and-marketing/crm-routes
  *
  *   node tests/api-problem-crm.test.cjs                    check
- *   node tests/api-problem-crm.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-crm.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-crm.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-crm.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-crm.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -33,7 +33,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/crm';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const ADDED = new Set(S.extras().filter((one) => one.after).map((one) => one.id));
 const { make, row } = require('./support/crm-stub.cjs');
@@ -150,6 +150,46 @@ function checkFrozen503(recording) {
   check('at least ten 503 answers were frozen and replayed (' + replayed + ')', replayed >= 10, replayed);
 }
 
+/**
+ * output_allowlist in the CRM's own world (API-8, S34): the generator's stand-in database answers 404 or 422 to a record read, so the routes addressed by a party id could not be proved
+ * there. Here every route whose 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and
+ * the allow-list filter drops nothing from it: a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  const proved = {};
+  const operations = contractModule().OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(operations).sort().forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the CRM routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => lab.mine(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(lab.mine).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 /** the "signed in as another shop" world: every route addressed by an id or a name in its path (API-STANDARD S35) */
 async function foreignWorld(port) {
   console.log('\n-- the 9th world: signed in as another shop --');
@@ -213,6 +253,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkContractShape(routes);
   checkFrozen503(recording);
   const proved = await foreignWorld(port);
+  const allowed200 = checkAllowList(recording);
   server.close();
   stub.close();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
@@ -228,9 +269,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
+    writeAllowList(allowed200);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the CRM routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/crm.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
