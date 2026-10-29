@@ -243,6 +243,8 @@ const INFRA_LIBS = [
   'kyb-contract.js',
   /* API-4 sweep, the channels: the contract of the routes/channels.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-channels.test.cjs */
   'channels-contract.js',
+  /* API-4 sweep, the relationships: the contract of the routes/relationships.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-relationships.test.cjs */
+  'relationships-contract.js',
   /* API-4 sweep, the quick-key groups: the contract of the routes/quick-keys.js routes (their OpenAPI operations and the words of their refusals) — tests/api-problem-quick-keys.test.cjs */
   'quick-keys-contract.js',
   /* API-1 slice 1c: the integrations routes' OpenAPI operations and legacy refusal bodies — the contract of a door, not a rule of the platform. (2026-10-23) */

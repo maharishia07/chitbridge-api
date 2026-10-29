@@ -16853,6 +16853,957 @@
       "example": {
         "url": "/api/capture/webhook/whatsapp"
       }
+    },
+    "DELETE /api/relationships/suppliers/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/suppliers/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
+      }
+    },
+    "GET /api/relationships/customers": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "groups_migrated",
+          "customers",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "groups_migrated": {
+            "type": "boolean"
+          },
+          "customers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "customer_list_id",
+                "customer_type",
+                "added_via",
+                "txn_count",
+                "last_txn_at",
+                "groups",
+                "customer_identity_id",
+                "bridge_id",
+                "user_id",
+                "display_name",
+                "email",
+                "phone",
+                "otp_contact",
+                "customer_since",
+                "identity_type",
+                "owner_scope",
+                "segment",
+                "on_rail",
+                "party_no",
+                "legal_name",
+                "credit_days",
+                "credit_limit_minor",
+                "state_code",
+                "merged_into",
+                "tax_ids"
+              ],
+              "properties": {
+                "customer_list_id": {
+                  "type": "string"
+                },
+                "customer_type": {
+                  "type": "string"
+                },
+                "added_via": {
+                  "type": "string"
+                },
+                "txn_count": {
+                  "type": "number"
+                },
+                "last_txn_at": {
+                  "type": "string"
+                },
+                "groups": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "customer_identity_id": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "user_id": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                },
+                "email": {},
+                "phone": {},
+                "otp_contact": {},
+                "customer_since": {
+                  "type": "string"
+                },
+                "identity_type": {
+                  "type": "string"
+                },
+                "owner_scope": {},
+                "segment": {
+                  "type": "string"
+                },
+                "on_rail": {
+                  "type": "boolean"
+                },
+                "party_no": {},
+                "legal_name": {},
+                "credit_days": {},
+                "credit_limit_minor": {},
+                "state_code": {},
+                "merged_into": {},
+                "tax_ids": {},
+                "count": {},
+                "groups_migrated": {},
+                "rows": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "rows": {},
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 9,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/customers"
+      }
+    },
+    "GET /api/relationships/customers/:id/rewards": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a computed key"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/customers/nope/rewards"
+      }
+    },
+    "GET /api/relationships/customers/groups": {
+      "status": "200",
+      "schema": {},
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/customers/groups"
+      }
+    },
+    "GET /api/relationships/scorecard": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "counterparties"
+        ],
+        "properties": {
+          "counterparties": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "counterparties[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/scorecard"
+      }
+    },
+    "GET /api/relationships/scorecard/:entity_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "counterparty_id",
+          "name",
+          "count",
+          "by_status",
+          "by_direction",
+          "open",
+          "closed",
+          "unread",
+          "overdue",
+          "overdue_days",
+          "clock",
+          "disputes",
+          "money",
+          "relationship",
+          "completion"
+        ],
+        "properties": {
+          "counterparty_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "count": {
+            "type": "number"
+          },
+          "by_status": {
+            "type": "object",
+            "properties": {
+              "unknown": {
+                "type": "number"
+              },
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "by_direction": {
+            "type": "object",
+            "properties": {
+              "unknown": {
+                "type": "number"
+              },
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "open": {
+            "type": "number"
+          },
+          "closed": {
+            "type": "number"
+          },
+          "unread": {
+            "type": "number"
+          },
+          "overdue": {
+            "type": "number"
+          },
+          "overdue_days": {
+            "type": "number"
+          },
+          "clock": {
+            "type": "object",
+            "required": [
+              "oldest_age_days",
+              "median_age_days",
+              "median_first_touch_days",
+              "median_to_close_days",
+              "never_read"
+            ],
+            "properties": {
+              "oldest_at": {},
+              "oldest_age_days": {},
+              "median_age_days": {},
+              "median_first_touch_days": {},
+              "median_to_close_days": {},
+              "never_read": {
+                "type": "number"
+              },
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "disputes": {
+            "type": "object",
+            "required": [
+              "open",
+              "ever",
+              "rate_pct"
+            ],
+            "properties": {
+              "open": {
+                "type": "number"
+              },
+              "ever": {
+                "type": "number"
+              },
+              "rate_pct": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "money": {
+            "type": "object",
+            "required": [
+              "by_currency",
+              "mixed",
+              "excluded",
+              "total"
+            ],
+            "properties": {
+              "by_currency": {},
+              "mixed": {
+                "type": "boolean"
+              },
+              "excluded": {
+                "type": "object",
+                "required": [
+                  "non_monetary",
+                  "awaiting_agreement"
+                ],
+                "properties": {
+                  "non_monetary": {
+                    "type": "number"
+                  },
+                  "awaiting_agreement": {
+                    "type": "number"
+                  },
+                  "counterparty_id": {},
+                  "name": {}
+                },
+                "additionalProperties": false
+              },
+              "total": {},
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "relationship": {
+            "type": "object",
+            "required": [
+              "you_sent",
+              "you_received",
+              "shape"
+            ],
+            "properties": {
+              "first_at": {},
+              "last_at": {},
+              "you_sent": {
+                "type": "number"
+              },
+              "you_received": {
+                "type": "number"
+              },
+              "shape": {
+                "type": "string"
+              },
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          },
+          "completion": {
+            "type": "object",
+            "required": [
+              "closed",
+              "completed",
+              "rejected_or_cancelled",
+              "completion_rate_pct"
+            ],
+            "properties": {
+              "closed": {
+                "type": "number"
+              },
+              "completed": {
+                "type": "number"
+              },
+              "rejected_or_cancelled": {
+                "type": "number"
+              },
+              "completion_rate_pct": {},
+              "counterparty_id": {},
+              "name": {}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/scorecard/nope"
+      }
+    },
+    "GET /api/relationships/suppliers": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "suppliers",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "suppliers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "supplier_list_id",
+                "category",
+                "nickname",
+                "preferred",
+                "notes",
+                "created_at",
+                "supply_kind",
+                "on_rail",
+                "bridge_id",
+                "user_id",
+                "display_name",
+                "supplier_entity_id",
+                "country",
+                "has_catalogue",
+                "facts",
+                "for_you",
+                "party_no",
+                "legal_name",
+                "credit_days",
+                "credit_limit_minor",
+                "state_code",
+                "merged_into",
+                "tax_ids"
+              ],
+              "properties": {
+                "supplier_list_id": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "nickname": {
+                  "type": "string"
+                },
+                "preferred": {
+                  "type": "boolean"
+                },
+                "notes": {},
+                "created_at": {
+                  "type": "string"
+                },
+                "supply_kind": {
+                  "type": "string"
+                },
+                "on_rail": {
+                  "type": "boolean"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "user_id": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                },
+                "supplier_entity_id": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": "string"
+                },
+                "has_catalogue": {
+                  "type": "boolean"
+                },
+                "facts": {
+                  "type": "object",
+                  "required": [
+                    "gstin",
+                    "gstin_rung",
+                    "state",
+                    "state_code",
+                    "reg_type",
+                    "country",
+                    "source",
+                    "as_of",
+                    "rung"
+                  ],
+                  "properties": {
+                    "gstin": {},
+                    "gstin_rung": {},
+                    "state": {},
+                    "state_code": {},
+                    "reg_type": {},
+                    "country": {
+                      "type": "string"
+                    },
+                    "source": {},
+                    "as_of": {},
+                    "rung": {},
+                    "count": {},
+                    "rows": {},
+                    "PAGE_DEFAULT": {}
+                  },
+                  "additionalProperties": false
+                },
+                "for_you": {},
+                "party_no": {},
+                "legal_name": {},
+                "credit_days": {},
+                "credit_limit_minor": {},
+                "state_code": {},
+                "merged_into": {},
+                "tax_ids": {},
+                "count": {},
+                "rows": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "rows": {},
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/suppliers"
+      }
+    },
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "supplier",
+          "items"
+        ],
+        "properties": {
+          "supplier": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "display_name",
+              "bridge_id",
+              "currency_code",
+              "business_status"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "currency_code": {
+                "type": "string"
+              },
+              "business_status": {
+                "type": "string"
+              },
+              "supplier": {},
+              "schema": {},
+              "fields": {},
+              "items": {},
+              "finishes": {},
+              "groups": {}
+            },
+            "additionalProperties": false
+          },
+          "schema": {
+            "type": "object",
+            "required": [
+              "fields"
+            ],
+            "properties": {
+              "fields": {},
+              "supplier": {},
+              "schema": {},
+              "items": {},
+              "finishes": {},
+              "groups": {}
+            },
+            "additionalProperties": false
+          },
+          "fields": {},
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "item_id"
+              ],
+              "properties": {
+                "item_id": {
+                  "type": "string"
+                },
+                "supplier": {},
+                "schema": {},
+                "fields": {},
+                "items": {},
+                "finishes": {},
+                "groups": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "finishes": {},
+          "groups": {},
+          "available": {
+            "type": "boolean"
+          },
+          "offers": {},
+          "categories": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/suppliers/nope/catalogue"
+      }
+    },
+    "GET /api/relationships/suppliers/availability": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "q",
+          "results",
+          "count",
+          "searched"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "supplier_list_id",
+                "supplier_entity_id",
+                "bridge_id",
+                "display_name",
+                "nickname",
+                "preferred",
+                "currency",
+                "state",
+                "hits"
+              ],
+              "properties": {
+                "supplier_list_id": {
+                  "type": "string"
+                },
+                "supplier_entity_id": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                },
+                "nickname": {
+                  "type": "string"
+                },
+                "preferred": {
+                  "type": "boolean"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "hits": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "item_id",
+                      "name",
+                      "unit",
+                      "price",
+                      "code"
+                    ],
+                    "properties": {
+                      "item_id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "unit": {
+                        "type": "string"
+                      },
+                      "price": {
+                        "type": "number"
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "q": {},
+                      "results": {},
+                      "count": {},
+                      "searched": {},
+                      "PAGE_DEFAULT": {}
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "total_items": {
+                  "type": "number"
+                },
+                "more": {
+                  "type": "number"
+                },
+                "error": {
+                  "type": "string"
+                },
+                "q": {},
+                "results": {},
+                "count": {},
+                "searched": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "count": {
+            "type": "number"
+          },
+          "searched": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 12,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/suppliers/availability?q=tea&page=1&limit=1"
+      }
+    },
+    "PATCH /api/relationships/customers/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "party": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "party",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/customers/cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+        "body": {
+          "legal_name": "Chola Auto Care Pvt",
+          "segment_override": "regular"
+        }
+      }
+    },
+    "PATCH /api/relationships/suppliers/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/suppliers/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        "body": {
+          "legal_name": "Corner Hardware Pvt",
+          "credit_days": 30,
+          "state_code": "29"
+        }
+      }
+    },
+    "POST /api/relationships/customers": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "customer"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "customer": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "customer",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/customers",
+        "body": {
+          "handle": "shop-b"
+        }
+      }
+    },
+    "POST /api/relationships/customers/:id/groups": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "groups"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "groups": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/relationships/customers/cccccccc-cccc-4ccc-8ccc-cccccccccccc/groups",
+        "body": {
+          "groups": [
+            "dealers",
+            " Wholesale  ",
+            "bad!name"
+          ]
+        }
+      }
+    },
+    "POST /api/relationships/suppliers": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "supplier"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "supplier": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "supplier",
+          "reason": "a spread (...x) adds keys the text does not name"
+        }
+      ],
+      "example": {
+        "url": "/api/relationships/suppliers",
+        "body": {
+          "supplier_bridge_id": "shop-b",
+          "category": "tea"
+        }
+      }
     }
   },
   "listed": {
@@ -17622,6 +18573,12 @@
     "POST /api/capture/:id/convert": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/capture/:id/dismiss": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/capture/:id/structure": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "POST /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/relationships/customers/:id/rewards": "open at (answer) — a computed key",
+    "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/relationships/customers/:id": "open at party — a value passed through (a name: its keys are not written in the handler)",
+    "PATCH /api/relationships/suppliers/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+    "POST /api/relationships/customers": "open at customer — a spread (...x) adds keys the text does not name",
+    "POST /api/relationships/suppliers": "open at supplier — a spread (...x) adds keys the text does not name"
   }
 }

@@ -146,6 +146,14 @@
     400
    ]
   },
+  "DELETE /api/relationships/suppliers/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "cases": 3,
    "failed": 0,
@@ -1018,6 +1026,62 @@
     400
    ]
   },
+  "GET /api/relationships/customers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/scorecard": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/scorecard/:entity_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/repeat/:id": {
    "cases": 3,
    "failed": 0,
@@ -1387,6 +1451,22 @@
    ]
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/relationships/suppliers/:id": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
@@ -2892,6 +2972,30 @@
   },
   "POST /api/quick-keys/groups/:id/items": {
    "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/customers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/customers/:id/groups": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/suppliers": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
