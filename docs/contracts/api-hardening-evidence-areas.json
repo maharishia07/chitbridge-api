@@ -22,6 +22,9 @@
   "DELETE /api/products/:id/media/:mid": {
    "output_allowlist": true
   },
+  "DELETE /api/products/:id/schedule/:sid": {
+   "output_allowlist": true
+  },
   "DELETE /api/quick-keys/groups/:id": {
    "foreign_id_404": true
   },
@@ -240,6 +243,9 @@
   "GET /api/products": {
    "output_allowlist": true
   },
+  "GET /api/products/:id/schedule": {
+   "output_allowlist": true
+  },
   "GET /api/products/:id/versions": {
    "output_allowlist": true
   },
@@ -247,6 +253,9 @@
    "output_allowlist": true
   },
   "GET /api/products/starter-columns": {
+   "output_allowlist": true
+  },
+  "GET /api/products/template": {
    "output_allowlist": true
   },
   "GET /api/repeat/:id": {
@@ -316,6 +325,9 @@
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/products/:id": {
+   "output_allowlist": true
+  },
   "PATCH /api/quick-keys/groups/:id": {
    "foreign_id_404": true
   },
@@ -382,6 +394,39 @@
   "POST /api/forms/instances/:id/sign": {
    "foreign_id_404": true
   },
+  "POST /api/products": {
+   "output_allowlist": true
+  },
+  "POST /api/products/:id/media": {
+   "output_allowlist": true
+  },
+  "POST /api/products/:id/schedule": {
+   "output_allowlist": true
+  },
+  "POST /api/products/availability/bulk": {
+   "output_allowlist": true
+  },
+  "POST /api/products/bulk": {
+   "output_allowlist": true
+  },
+  "POST /api/products/bulk-update": {
+   "output_allowlist": true
+  },
+  "POST /api/products/import": {
+   "output_allowlist": true
+  },
+  "POST /api/products/import/preflight": {
+   "output_allowlist": true
+  },
+  "POST /api/products/lists/adopt": {
+   "output_allowlist": true
+  },
+  "POST /api/products/starter-columns": {
+   "output_allowlist": true
+  },
+  "POST /api/products/status/bulk": {
+   "output_allowlist": true
+  },
   "POST /api/quick-keys/groups/:id/items": {
    "foreign_id_404": true
   },
@@ -444,6 +489,12 @@
   },
   "PUT /api/connections/:id/respond": {
    "foreign_id_404": true
+  },
+  "PUT /api/products/:id/availability": {
+   "output_allowlist": true
+  },
+  "PUT /api/products/:id/status": {
+   "output_allowlist": true
   }
  }
 }

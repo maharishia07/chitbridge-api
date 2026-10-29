@@ -7441,6 +7441,27 @@
         "url": "/api/network-design/stores"
       }
     },
+    "DELETE /api/products/:id/schedule/:sid": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "cancelled"
+        ],
+        "properties": {
+          "cancelled": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/schedule/22222222-2222-4222-8222-222222222222",
+        "body": {}
+      }
+    },
     "GET /api/products": {
       "status": "200",
       "schema": {
@@ -7511,6 +7532,28 @@
       ],
       "example": {
         "url": "/api/products"
+      }
+    },
+    "GET /api/products/:id/schedule": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "pending"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "pending": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/schedule"
       }
     },
     "GET /api/products/:id/versions": {
@@ -7700,6 +7743,737 @@
       ],
       "example": {
         "url": "/api/products/starter-columns"
+      }
+    },
+    "GET /api/products/template": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "columns",
+          "optional",
+          "csv",
+          "notes",
+          "preset",
+          "filename"
+        ],
+        "properties": {
+          "columns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "optional": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "csv": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preset": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/products/template"
+      }
+    },
+    "PATCH /api/products/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "item"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "item": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "item",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "merge": true,
+          "item_data": {
+            "unit": "g"
+          }
+        }
+      }
+    },
+    "POST /api/products": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "item",
+          "declared",
+          "warnings"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "item": {
+            "type": "object"
+          },
+          "declared": {},
+          "warnings": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "item",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products",
+        "body": {
+          "item_data": {
+            "name": "Tea"
+          }
+        }
+      }
+    },
+    "POST /api/products/:id/media": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "media": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "media[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/media",
+        "body": {
+          "name": "a.png",
+          "mime": "image/png",
+          "data_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        }
+      }
+    },
+    "POST /api/products/:id/schedule": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "scheduled"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "scheduled": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "scheduled",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/schedule",
+        "body": {
+          "effective_at": "2026-12-01T00:00:00Z",
+          "item_data": {
+            "name": "Tea2"
+          }
+        }
+      }
+    },
+    "POST /api/products/availability/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "written",
+          "unknown",
+          "bad"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "written": {
+            "type": "number"
+          },
+          "unknown": {
+            "type": "number"
+          },
+          "bad": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/products/availability/bulk",
+        "body": {
+          "items": [
+            {
+              "item_id": "22222222-2222-4222-8222-222222222222",
+              "qty": 3
+            },
+            {
+              "code": "zz",
+              "qty": 1
+            },
+            {
+              "item_id": "22222222-2222-4222-8222-222222222222",
+              "qty": -1
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/products/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "added",
+          "items",
+          "declared",
+          "warnings"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "added": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "declared": {},
+          "warnings": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "items[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/bulk",
+        "body": {
+          "items": [
+            {
+              "name": "Tea"
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/products/bulk-update": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "updated",
+          "missed"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "number"
+          },
+          "missed": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/products/bulk-update",
+        "body": {
+          "items": [
+            {
+              "id": "22222222-2222-4222-8222-222222222222",
+              "item_data": {
+                "name": "Tea"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/products/import": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "created_columns",
+          "outcome",
+          "summary"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "created_columns": {},
+          "outcome": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "summary": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "outcome[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "summary",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/import",
+        "body": {
+          "csv": "sku,name,unit,price\nA1,Tea,kg,10\n",
+          "decisions": [
+            {
+              "incoming": "sku",
+              "action": "map",
+              "field": "sku"
+            },
+            {
+              "incoming": "name",
+              "action": "map",
+              "field": "name"
+            },
+            {
+              "incoming": "unit",
+              "action": "map",
+              "field": "unit"
+            },
+            {
+              "incoming": "price",
+              "action": "map",
+              "field": "price"
+            }
+          ],
+          "confirm": true
+        }
+      }
+    },
+    "POST /api/products/import/preflight": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "report",
+          "accepted",
+          "optional",
+          "preset",
+          "identity",
+          "identity_problems",
+          "dry_run",
+          "cut",
+          "sheet",
+          "sheets",
+          "header_row",
+          "preview"
+        ],
+        "properties": {
+          "report": {
+            "type": "object"
+          },
+          "accepted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "optional": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "preset": {
+            "type": "string"
+          },
+          "identity": {
+            "type": "object"
+          },
+          "identity_problems": {},
+          "dry_run": {
+            "type": "boolean"
+          },
+          "cut": {},
+          "sheet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sheets": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "header_row": {
+            "type": "number"
+          },
+          "preview": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "report",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "identity",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "preview[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/import/preflight",
+        "body": {
+          "csv": "sku,name,unit,price\nA1,Tea,kg,10\n"
+        }
+      }
+    },
+    "POST /api/products/lists/adopt": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "added",
+          "skipped",
+          "pin",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "added": {
+            "type": "number"
+          },
+          "skipped": {},
+          "pin": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "list": {
+            "type": "string"
+          },
+          "languages": {},
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/products/lists/adopt",
+        "body": {
+          "list": "veg",
+          "names": [
+            {
+              "name": "Tomato (country)",
+              "unit": "kg",
+              "price": 40
+            }
+          ],
+          "status": "available"
+        }
+      }
+    },
+    "POST /api/products/starter-columns": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "vertical",
+          "added",
+          "rejected",
+          "unchanged"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "vertical": {
+            "type": "string"
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rejected": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "unchanged": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/products/starter-columns",
+        "body": {
+          "vertical": "gold",
+          "custom": [
+            {
+              "field_name": "Bar serial",
+              "field_type": "text"
+            },
+            {
+              "field_name": "Odd",
+              "field_type": "weird"
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/products/status/bulk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "updated",
+          "missed",
+          "status",
+          "reads_as"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "number"
+          },
+          "missed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string"
+          },
+          "reads_as": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/products/status/bulk",
+        "body": {
+          "ids": [
+            "22222222-2222-4222-8222-222222222222",
+            "no-such-id"
+          ],
+          "status": "unavailable"
+        }
+      }
+    },
+    "PUT /api/products/:id/availability": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "availability"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "availability": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "availability",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/availability",
+        "body": {
+          "qty": 3,
+          "source": "erp",
+          "as_of": "2026-10-01"
+        }
+      }
+    },
+    "PUT /api/products/:id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "status",
+          "reads_as",
+          "matchable",
+          "offerable",
+          "item_id",
+          "schema_org"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "reads_as": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "matchable": {
+            "type": "boolean"
+          },
+          "offerable": {
+            "type": "boolean"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "schema_org": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/products/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "status": "unavailable"
+        }
       }
     },
     "GET /api/quick-keys/groups": {
@@ -11274,6 +12048,14 @@
     "GET /api/products/:id/versions": "open at current — a value passed through (an expression: its keys are not written in the handler); versions[] — a value passed through (an expression: its keys are not written in the handler); version — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products/lists": "open at lists[] — a value passed through (an expression: its keys are not written in the handler); mine[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/products/starter-columns": "open at verticals[] — a value passed through (an expression: its keys are not written in the handler); starter — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/products/:id": "open at item — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products": "open at item — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products/:id/media": "open at media[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products/:id/schedule": "open at scheduled — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products/bulk": "open at items[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products/import": "open at outcome[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/products/import/preflight": "open at report — a value passed through (a name: its keys are not written in the handler); identity — a value passed through (an expression: its keys are not written in the handler); preview[] — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/testing/changes": "open at changes[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cmdb": "open at records[] — a value passed through (a name: its keys are not written in the handler)",
