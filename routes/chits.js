@@ -3407,7 +3407,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           prog: _lines0 ? await deliverline.progress(entity_id, chit_id, db, g.deliveries || []) : null,
           my_received: g.my_received || null,
           books_wait: g.books_wait || null,
-          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0])) /* RAIL-146: a blind actor's party role; {} for everyone else */,
+          order_billed: g.order_billed /* W36: orderBilledSql */, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], g.deliveries)) /* RAIL-146: a blind actor's party role and the delivery rows (his own adds); {} for everyone else */,
           /**
            * ⭐ THE ATTACHMENT LIST RIDES ALONG — it cost a whole transaction of its own, measured at 1074ms,
            * for a four-column SELECT. See lib/storage.listForChit: it takes a `db` now precisely so a caller
@@ -3482,7 +3482,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
               .then((reply) => (reply.rows[0] && reply.rows[0].w) || null),
           null
         );
-        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0])) };
+        return { participants: participants2, amd: nestedAmd, rows, assigned, prog, my_received, books_wait, ...(await costView.bundleExtras(db, blind, entity_id, data.header.rows[0], null)) };
       });
 
     _mark('bundle_6_reads');

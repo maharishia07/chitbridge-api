@@ -54,14 +54,14 @@ of file each thing is; this says what already does the job.
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 36 | `host` | `chit-sheet.js` |  |
 | 36 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 36 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
+| 37 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 35 | `modal` | `app.html` |  |
 | 35 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 33 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 34 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
@@ -107,7 +107,7 @@ of file each thing is; this says what already does the job.
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 23 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
+| 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 21 | `chart` | `fx-rates.js` |  |

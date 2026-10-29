@@ -256,6 +256,9 @@ const CHIT_BUNDLE = {
   deliveries: [{ line_id: PARTY, particulars: 'Rice', ordered_unit: 'kg', ordered: '2', removed: false, delivery_id: PARTY, dq: '1', du: 'kg', reference: 'GRN-1', note: null, recorded_by_entity_id: SHOP, recorded_by_name: 'Test shop', recorded_by_actor_name: 'Test staff', delivered_at: AT, dkind: 'deliver', damount: null, dparticulars: null }],
   my_received: 'pending', books_wait: null, order_billed: false
 };
+/** the same bundle with two delivery ADDITIONS on the line (an `add` event each, with an amount): one recorded by Test staff, one by another actor */
+const ADD_ROW = (id, actorId, actorName, amount) => Object.assign({}, CHIT_BUNDLE.deliveries[0], { delivery_id: id, dq: '1', du: 'piece', reference: null, recorded_by_actor_id: actorId, recorded_by_actor_name: actorName, dkind: 'add', damount: amount, dparticulars: 'Gunny bag' });
+const CHIT_BUNDLE_ADDS = Object.assign({}, CHIT_BUNDLE, { deliveries: CHIT_BUNDLE.deliveries.concat([ADD_ROW(OTHER, STAFF_ID, 'Test staff', '12.50'), ADD_ROW(STAFF_ID, OTHER, 'Someone else', '7.25')]) });
 const DISPUTE_OPEN = { dispute_id: PARTY, chit_id: PARTY, raised_by_entity_id: SHOP, category: 'quality', status: 'open' };
 const TRACE_SEED = { chit_id: PARTY, entity_id: SHOP, sender_entity_display_name: 'Test shop', all_recipients: CHIT_ROW.all_recipients, trace: { product: 'Rice', qty: 5, unit: 'kg', base_qty: 5, base_unit: 'kg', is_origin: false, parents: [OTHER], network: { id: 'net1' } } };
 const TRACE_CHILD = { chit_id: OTHER, entity_id: OTHER, sender_entity_display_name: 'Other shop', all_recipients: [], trace: { product: 'Rice', qty: 6, unit: 'kg', base_qty: 6, base_unit: 'kg', parents: [PARTY], network: { id: 'net1' } } };
@@ -538,6 +541,10 @@ const EXTRAS = [
   X('messages-paged', 'GET ' + C + '/:chit_id/messages', 200, { url: C + '/' + PARTY + '/messages?page=1&limit=1', setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_status/, [COPY_ROW]], [/FROM chit_messages/, [{ message_id: OTHER, message_text: 'Hello' }]]]) } }),
   X('chit-read', 'GET ' + C + '/:chit_id', 200, { setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
   X('chit-read-timing', 'GET ' + C + '/:chit_id', 200, { url: C + '/' + PARTY + '?timing=1', setup: { sqlRows: answering(/SELECT \* FROM chit_header/, [CHIT_HEADER]) } }),
+  /* RAIL-146: a chit with a delivery ADDITION (an `add` event carrying an amount) — the owner's bytes must not move (line_delivery[].added[] is as deliverline shaped it), and a
+     blind actor keeps only his own add (the row's recorded_by_actor_id is his) */
+  X('chit-read-with-adds', 'GET ' + C + '/:chit_id', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE_ADDS]]]) } }),
+  X('chit-read-with-adds-cost-blind', 'GET ' + C + '/:chit_id', 200, { setup: { who: STAFF, migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE_ADDS]]]) } }),
   X('chit-read-with-lines', 'GET ' + C + '/:chit_id', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT \* FROM chit_header/, [CHIT_HEADER]], [/FROM chit_detail/, [CHIT_DETAIL]], [/AS participants,/, [CHIT_BUNDLE]]]) } }),
   X('disputes-listed', 'GET ' + C + '/:chit_id/disputes', 200, { setup: { sqlRows: answeringAll([[/SELECT entity_id FROM chit_status/, [COPY_ROW]], [/SELECT \* FROM chit_disputes/, [DISPUTE_ROW, DISPUTE_BARE]], [/SELECT all_recipients FROM chit_header/, [CHIT_ROW]]]) } }),
   X('payment-cleared-books-named', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/- 'payment' WHERE/, [{ chit_id: PARTY }]], [/FROM books_payment WHERE/, [{ payment_id: OTHER, amount_minor: '1000', currency: 'INR', client_ref: 'chitpay:x' }, { payment_id: STAFF_ID, amount_minor: '500', currency: 'INR', client_ref: 'chitpay:x:2' }]], [/FROM journal_entry WHERE entity_id = \$1 AND source_ref/, [{ entry_no: 'JV-7' }]]]) } }),

@@ -114,7 +114,9 @@ function unitCases() {
     ['a credit note I received (purchase return)', header({ purpose: 'credit_note' }), null, 'buy'],
     ['a credit note I issued', header({ purpose: 'credit_note', sender_entity_id: SHOP }), null, 'sell'],
     ['an expense', header({ purpose: 'expense', sender_entity_id: SHOP }), null, 'buy'],
-    ['a payment received', header({ purpose: 'general', business_json: { kind: 'payment_received' } }), null, 'sell'],
+    ['a payment "received" on a RECEIVED copy from a party on no list: the sender wrote the kind — hidden', header({ purpose: 'general', business_json: { kind: 'payment_received' } }), null, 'unknown'],
+    ['a payment received I recorded myself (sent by me)', header({ purpose: 'general', sender_entity_id: SHOP, business_json: { kind: 'payment_received' } }), null, 'sell'],
+    ['a received chit from a party on my customer list only: a sale by MY list, whatever the sender wrote', header({ purpose: 'general', business_json: { kind: 'payment_received' } }), CUS, 'sell'],
     ['a payment made', header({ purpose: 'general', business_json: { kind: 'payment_made' } }), null, 'buy'],
     ['stock to own use', header({ purpose: 'own_use', sender_entity_id: SHOP }), null, 'buy'],
     ['an order from a supplier', header({}), SUP, 'buy'],
@@ -127,10 +129,11 @@ function unitCases() {
     ['a subscription from a brand on my supplier list', header({ purpose: 'subscription' }), SUP, 'buy'],
     ['a despatch note I received', header({ purpose: 'delivery_note' }), null, 'buy'],
     ['a despatch note I sent', header({ purpose: 'delivery_note', sender_entity_id: SHOP }), null, 'sell'],
-    ['income: money in, whoever holds it', header({ purpose: 'income' }), null, 'sell'],
-    ['a service chit received from a supplier: not positively a sale, hidden', header({ purpose: 'service' }), SUP, 'unknown'],
+    ['income I sent: money in', header({ purpose: 'income', sender_entity_id: SHOP }), null, 'sell'],
+    ['"income" on a RECEIVED copy from a party on no list: the sender wrote the purpose — hidden', header({ purpose: 'income' }), null, 'unknown'],
+    ['a service chit received from a supplier: a supplier\'s chit, hidden', header({ purpose: 'service' }), SUP, 'buy'],
     ['an inquiry received from a party on no list: hidden', header({ purpose: 'inquiry' }), null, 'unknown'],
-    ['a resale chit received from a supplier: hidden', header({ purpose: 'resale' }), SUP, 'unknown'],
+    ['a resale chit received from a supplier: hidden', header({ purpose: 'resale' }), SUP, 'buy'],
     ['general with no kind, received: hidden', header({ purpose: 'general' }), null, 'unknown'],
     ['a priced invoice with NO sender (docOf null): hidden', header({ purpose: 'invoice', sender_entity_id: null }), null, 'unknown'],
     ['a service chit I SENT to a customer: a sale', Object.assign(sentTo(CUSTOMER), { purpose: 'service' }), CUS, 'sell'],
@@ -142,26 +145,30 @@ function unitCases() {
   t('counterpartyOf | the sender when not me; else the first recipient that is not me; a self chit has none', [view.counterpartyOf(BILL, SHOP), view.counterpartyOf(sentTo(CUSTOMER), SHOP), view.counterpartyOf(RECEIPT, SHOP)], [SUPPLIER, CUSTOMER, null]);
   console.log('   lib/cost-view · hideChitCosts never changes what it was given (the sealed body stays)');
   const fatLine = { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', price: 1, total: 2, unit_price: 1, line_total: 2, cgst: 0.05, sgst: 0.05, igst: 0, cess: 0, mrp: 3, rate: 1, amount: 2, taxable: 2, discount: 0, item_data: { lot: 'L1', mrp: 3, unit_cost: 0.5, tax_amount: 0.1 } };
-  const answer = { header: Object.assign(structuredClone(BILL), { business_json: { their_bill: { no: 'INV-7', total: 9, tax: 1, taxable: 8 }, invoice: { total: 9 }, order: { from: 'ORD-1' } } }), detail: structuredClone(DETAIL), live_set: [{ live: structuredClone(fatLine), original: { total: 2 }, history: [{ price: 3 }] }], amendments: [{ line: { price: 4 } }], line_delivery: { [CHIT]: { charged: 17, added: [{ delivery_id: CHIT, amount: 10, by_id: BLIND_ID }, { delivery_id: SUPPLIER, amount: 7, by_id: GRANTED_ID }] } }, delivery_summary: { charged: 17 } };
+  const answer = { header: Object.assign(structuredClone(BILL), { business_json: { their_bill: { no: 'INV-7', total: 9, tax: 1, taxable: 8 }, invoice: { total: 9 }, order: { from: 'ORD-1' } } }), detail: structuredClone(DETAIL), live_set: [{ live: structuredClone(fatLine), original: { total: 2 }, history: [{ price: 3 }] }], amendments: [{ line: { price: 4 } }], line_delivery: { [CHIT]: { charged: 17, added: [{ delivery_id: CHIT, amount: 10 }, { delivery_id: SUPPLIER, amount: 7 }] } }, delivery_summary: { charged: 17 }, books_wait: { todo: 'accept', short: { theirs_minor: 294000, ours_minor: 291000, short_minor: 3000 } }, some_new_block: { note: 'kept', grand_total: 4242, nested: { price_minor: 1 } } };
   const before = JSON.stringify(answer);
-  const hidden = view.hideChitCosts(answer, { side: 'buy', actorId: BLIND_ID });
+  const hidden = view.hideChitCosts(answer, { side: 'buy', mine: new Set([CHIT]) });
+  t('hideChitCosts | the walk is GENERAL: books_wait.short goes, a planted unknown block loses its money keys and keeps its words', [hidden.books_wait, hidden.some_new_block], [{ todo: 'accept' }, { note: 'kept', nested: {} }]);
   t('hideChitCosts | the input is untouched, byte for byte', JSON.stringify(answer) === before, true);
   t('hideChitCosts | buy: a line keeps the ALLOWLIST only (name · quantity · unit · gst_rate · hsn · item_data sans money); cgst, sgst, mrp, unit_price, line_total, rate, amount, taxable, discount all go', hidden.live_set[0].live, { line_id: CHIT, particulars: 'x', quantity: 2, unit: 'kg', gst_rate: 5, hsn: '1006', item_data: { lot: 'L1' } });
   t('hideChitCosts | buy: every other line shape loses its money; the header its money, the invoice and their bill\'s total/tax (their number and the order link stay)', [hidden.live_set[0].original, hidden.live_set[0].history[0], hidden.amendments[0].line, hidden.header.summary_json, hidden.header.business_json], [{}, {}, {}, { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, { their_bill: { no: 'INV-7' }, order: { from: 'ORD-1' } }]);
-  t('hideChitCosts | buy: my own add stays (by_id), the other goes; charged above my own is refused, the chit sum with it; cost_hidden says money was withheld', [hidden.line_delivery[CHIT].added.map((a) => a.amount), hidden.line_delivery[CHIT].charged, hidden.delivery_summary.charged, hidden.cost_hidden], [[10, undefined], undefined, undefined, true]);
-  const own = view.hideChitCosts({ line_delivery: { [CHIT]: { charged: 10, added: [{ delivery_id: CHIT, amount: 10, by_id: BLIND_ID }] } }, delivery_summary: { charged: 10 } }, { side: 'buy', actorId: BLIND_ID });
-  t('hideChitCosts | buy: charged that is exactly my own sum stays, and so does the chit\'s', [own.line_delivery[CHIT].charged, own.delivery_summary.charged], [10, 10]);
+  t('hideChitCosts | buy: my own add stays (the delivery rows say it is mine), the other goes; charged above my own is refused, the chit sum with it; cost_hidden says money was withheld', [hidden.line_delivery[CHIT].added.map((a) => a.amount), hidden.line_delivery[CHIT].charged, hidden.delivery_summary.charged, hidden.cost_hidden], [[10, undefined], undefined, undefined, true]);
+  const own = view.hideChitCosts({ line_delivery: { [CHIT]: { charged: 10, added: [{ delivery_id: CHIT, amount: 10 }] } }, delivery_summary: { charged: 10 } }, { side: 'buy', mine: new Set([CHIT]) });
+  t('hideChitCosts | buy: charged that is exactly my own sum stays, and so does the chit\'s — and nothing removed means NO marker', [own.line_delivery[CHIT].charged, own.delivery_summary.charged, own.cost_hidden], [10, 10, undefined]);
+  t('mineDeliveries | the rows recorded by this actor, by id', [...view.mineDeliveries([DELIVERY(CHIT, BLIND_ID, 1), DELIVERY(SUPPLIER, GRANTED_ID, 2)], BLIND_ID)], [CHIT]);
   const sell = view.hideChitCosts({ header: structuredClone(SALE), detail: structuredClone(DETAIL) }, { side: 'sell' });
   t('hideChitCosts | sell: the price and the money stay, only the cost-named keys go, and cost_hidden is ABSENT (no money was withheld)', [sell.detail.line_items[0].price, sell.header.summary_json.money.total, costKeys(sell), sell.cost_hidden], [SECRET.price, SECRET.money_total, [], undefined]);
   t('hideChitCosts | unknown side is treated as buy (fails closed): the price goes', view.hideChitCosts({ detail: structuredClone(DETAIL) }, { side: 'unknown' }).detail.line_items[0].price, undefined);
   t('isMoneyKey | money words and suffixes yes; a rate, a name, a count, the marker no', ['price', 'cgst', 'tax_amount', 'amount_minor', 'their_total', 'unit_cost'].map(view.isMoneyKey).concat(['gst_rate', 'tax_name', 'line_item_count', 'cost_hidden', 'quantity'].map(view.isMoneyKey)), [true, true, true, true, true, true, false, false, false, false, false]);
-  t('hideRowCosts | a buy row loses money and total_value and says cost_hidden; a sell row with nothing named is as it was', [view.hideRowCosts({ summary_json: structuredClone(SUMMARY) }, 'buy'), view.hideRowCosts({ summary_json: { total_value: 5 } }, 'sell')], [{ summary_json: { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, cost_hidden: true }, { summary_json: { total_value: 5 } }]);
+  t('hideRowCosts | a buy row loses money and total_value and says cost_hidden; a sell row with nothing named is as it was; a buy row with NO money says nothing', [view.hideRowCosts({ summary_json: structuredClone(SUMMARY) }, 'buy'), view.hideRowCosts({ summary_json: { total_value: 5 } }, 'sell'), view.hideRowCosts({ summary_json: { purpose: 'order' } }, 'unknown')], [{ summary_json: { line_item_count: 2, currency_code: 'INR', purpose: 'order' }, cost_hidden: true }, { summary_json: { total_value: 5 } }, { summary_json: { purpose: 'order' } }]);
   t('rollupGroup | the sum keeps the sales members only, the count stays, cost_hidden when one was left out', view.rollupGroup({ key: 'k', chits: 2, members: [{ total_value: '5', purpose: 'invoice', sender_entity_id: SUPPLIER, all_recipients: [] }, { total_value: '7.5', purpose: 'order', sender_entity_id: CUSTOMER, all_recipients: [] }] }, SHOP, new Map([[CUSTOMER, { customer: true, supplier: false }]])), { key: 'k', chits: 2, total_value: '7.50', cost_hidden: true });
   const many = Array.from({ length: view.ROLLUP_MEMBER_CAP + 1 }, () => ({ total_value: '1', purpose: 'order', sender_entity_id: CUSTOMER, all_recipients: [] }));
   t('rollupGroup | a group above the member cap answers no sum at all (null, cost_hidden), never a plausible wrong number', view.rollupGroup({ key: 'k', chits: many.length, members: many }, SHOP, new Map([[CUSTOMER, { customer: true, supplier: false }]])), { key: 'k', chits: many.length, total_value: null, cost_hidden: true });
   t('rollupMembersSql | the wire is capped at the member cap + 1', /\[1:201\] AS members/.test(view.rollupMembersSql('ch', true)) && view.rollupMembersSql('ch', false) === '', true);
   const asked = { query: { amount_min: '1', amount_max: '9', sort: 'amount', q: 'tea' } };
   t('moneyParams | a blind reader\'s amount filter and sort are taken off and named; the rest stays; everyone else keeps theirs', [view.moneyParams(asked, true), asked.query, view.moneyParams({ query: { sort: 'amount' } }, false)], [['amount_min', 'amount_max', 'sort'], { q: 'tea' }, []]);
+  const arrays = { query: { amount_min: [''], amount_max: { gt: '1' }, sort: ['amount'], dir: 'asc' } };
+  t('moneyParams | the ARRAY and OBJECT forms (?sort[]=amount, ?amount_min[]=) go the same way: nothing that is not a plain string reaches the consumer', [view.moneyParams(arrays, true), arrays.query, view.moneyParams({ query: { sort: ['date'] } }, true), view.moneyParams({ query: { sort: 'date' } }, true)], [['amount_min', 'amount_max', 'sort'], { dir: 'asc' }, ['sort'], []]);
 }
 
 (async () => {
@@ -244,14 +251,22 @@ function unitCases() {
     t(name + ' | nobody asked for an amount filter: no cost_params_ignored', [owner.body.cost_params_ignored, blind.body.cost_params_ignored], [undefined, undefined]);
   }
   /* 5b · the ORACLE: an amount filter or an amount sort over the hidden total would let a blind reader search for it — taken off, named back; the owner's statement keeps them */
+  /* the ARRAY form (?sort[]=amount, ?amount_min[]=) never reaches a statement: the routes' own schema (lib/chits-contract, strict query) refuses it 422 for everyone;
+     moneyParams drops a non-string anyway (unit case above), so the consumer's map is never indexed by an array even if the schema were loosened */
+  for (const [p, name] of [['/api/chits/inbox?sort[]=amount&amount_min[]=100', 'inbox'], ['/api/chits/sent?sort[]=amount&amount_max[]=1', 'sent'], ['/api/chits/folder?view=archive&amount_min[]=1', 'folder']]) {
+    LAST_LIST_SQL = '';
+    const ownerArr = await call(port, p, OWNER);
+    const blindArr = await call(port, p, BLIND);
+    t(name + ' array form | refused 422 for owner and blind alike, no list statement ran', [ownerArr.status, blindArr.status, LAST_LIST_SQL], [422, 422, '']);
+  }
   for (const [p, name] of [['/api/chits/inbox?sort=amount&amount_min=100&amount_max=9000', 'inbox'], ['/api/chits/sent?sort=amount&dir=asc&amount_min=100', 'sent'], ['/api/chits/folder?view=archive&amount_max=9000', 'folder']]) {
     SCENE = { rows: [listRow(BILL)] };
     const ownerAsked = await call(port, p, OWNER);
     const ownerSql = LAST_LIST_SQL;
     const blindAsked = await call(port, p, BLIND);
     const blindSql = LAST_LIST_SQL;
-    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(ownerSql), /ORDER BY \(?.*total_value.*numeric/.test(ownerSql) || !/sort=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
-    t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(blindSql), /ORDER BY[^;]*total_value/.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0]).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
+    t(name + ' oracle | owner: the filter and the amount order are in the statement, nothing ignored', [ownerAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(ownerSql), /ORDER BY \(?.*total_value.*numeric/.test(ownerSql) || !/sort(\[\])?=amount/.test(p), ownerAsked.body.cost_params_ignored], [200, true, true, undefined]);
+    t(name + ' oracle | blind: no amount filter, no amount order, and the ask named back', [blindAsked.status, /total_value'\)::numeric,0\) (>=|<=)/.test(blindSql), /ORDER BY[^;]*total_value/.test(blindSql), (blindAsked.body.cost_params_ignored || []).slice().sort()], [200, false, false, p.split('?')[1].split('&').map((kv) => kv.split('=')[0].replace('[]', '')).filter((k) => k === 'amount_min' || k === 'amount_max' || k === 'sort').sort()]);
   }
 
   /* 6 · the rollup: the blind actor's sum leaves out the supplier's bill, the count stays, the group says cost_hidden */
