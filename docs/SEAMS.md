@@ -16,7 +16,7 @@ of file each thing is; this says what already does the job.
 | 85 | `words` | `variant.browser.js` |  |
 | 76 | `money` | `bill-privacy.js` |  |
 | 78 | `answer` | `availability.js` | from March; then nearest. |
-| 70 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 71 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 69 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 65 | `list` | `cap-settings.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
@@ -98,7 +98,7 @@ of file each thing is; this says what already does the job.
 | 23 | `opts` | `cap-stock.js` |  |
 | 23 | `view` | `country-ready.js` |  |
 | 23 | `customer` | `mintuserid.js` | silently becomes a second identity. |
-| 23 | `hold` | `orders.js` |  |
+| 24 | `hold` | `orders.js` |  |
 | 23 | `owner` | `books.js` |  |
 | 22 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |

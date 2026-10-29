@@ -114,7 +114,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2281,
+   "line": 2282,
    "hash": "fa90a54eadb1101c",
    "columns": {
     "schema_in": true,
@@ -258,7 +258,7 @@
    "path": "/api/chits/:chit_id",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5983,
+   "line": 5969,
    "hash": "b1621a61d6a1f385",
    "columns": {
     "schema_in": true,
@@ -308,7 +308,7 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4595,
+   "line": 4581,
    "hash": "f1e5c5ac7a0e6422",
    "columns": {
     "schema_in": true,
@@ -358,7 +358,7 @@
    "path": "/api/chits/:chit_id/purge",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6244,
+   "line": 6230,
    "hash": "045463184137e6f1",
    "columns": {
     "schema_in": true,
@@ -2169,7 +2169,7 @@
    "path": "/api/books/assets",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2329,
+   "line": 2330,
    "hash": "8b75d91ef31f4602",
    "columns": {
     "schema_in": true,
@@ -2220,7 +2220,7 @@
    "path": "/api/books/bank/rail",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1286,
+   "line": 1287,
    "hash": "80e95fa15dc3a719",
    "columns": {
     "schema_in": true,
@@ -2373,7 +2373,7 @@
    "path": "/api/books/cheques",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1467,
+   "line": 1468,
    "hash": "2c69506810995f71",
    "columns": {
     "schema_in": true,
@@ -2424,7 +2424,7 @@
    "path": "/api/books/compare",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1872,
+   "line": 1873,
    "hash": "f419e5ec00191334",
    "columns": {
     "schema_in": true,
@@ -2474,7 +2474,7 @@
    "path": "/api/books/compare/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2041,
+   "line": 2042,
    "hash": "d9ff2645f0a73015",
    "columns": {
     "schema_in": true,
@@ -2525,7 +2525,7 @@
    "path": "/api/books/compare/:id/csv",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2049,
+   "line": 2050,
    "hash": "4c3448af6a2b5ce3",
    "columns": {
     "schema_in": true,
@@ -2677,7 +2677,7 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1618,
+   "line": 1619,
    "hash": "0e14a98c10067c83",
    "columns": {
     "schema_in": true,
@@ -2727,7 +2727,7 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2399,
+   "line": 2400,
    "hash": "c9bfdc8ac640cf30",
    "columns": {
     "schema_in": true,
@@ -2778,7 +2778,7 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2445,
+   "line": 2446,
    "hash": "6e55385dcb5b72b0",
    "columns": {
     "schema_in": true,
@@ -2929,7 +2929,7 @@
    "path": "/api/books/move-in/imports",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1837,
+   "line": 1838,
    "hash": "775a71cd90a0f681",
    "columns": {
     "schema_in": true,
@@ -2979,7 +2979,7 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2136,
+   "line": 2137,
    "hash": "8588a456a55569eb",
    "columns": {
     "schema_in": true,
@@ -3029,7 +3029,7 @@
    "path": "/api/books/packs/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2174,
+   "line": 2175,
    "hash": "45c769474fcd5fa8",
    "columns": {
     "schema_in": true,
@@ -3080,7 +3080,7 @@
    "path": "/api/books/packs/:id/file",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2203,
+   "line": 2204,
    "hash": "eab6f7f4c79c78d9",
    "columns": {
     "schema_in": true,
@@ -3183,7 +3183,7 @@
    "path": "/api/books/payments/:id/advice",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1261,
+   "line": 1262,
    "hash": "282ceafe3ac10580",
    "columns": {
     "schema_in": true,
@@ -3234,7 +3234,7 @@
    "path": "/api/books/periods",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2102,
+   "line": 2103,
    "hash": "bbd37012f11252a0",
    "columns": {
     "schema_in": true,
@@ -3334,7 +3334,7 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2256,
+   "line": 2257,
    "hash": "3531bce9d5ea96a8",
    "columns": {
     "schema_in": true,
@@ -3384,7 +3384,7 @@
    "path": "/api/books/returns",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2360,
+   "line": 2361,
    "hash": "86ac77872e8da2ec",
    "columns": {
     "schema_in": true,
@@ -3535,7 +3535,7 @@
    "path": "/api/books/todo",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2307,
+   "line": 2308,
    "hash": "084f040c2a23476b",
    "columns": {
     "schema_in": true,
@@ -3635,7 +3635,7 @@
    "path": "/api/books/year/:fy/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2085,
+   "line": 2086,
    "hash": "038f3eafdf01ef77",
    "columns": {
     "schema_in": true,
@@ -4580,7 +4580,7 @@
    "path": "/api/chits/:chit_id/diagnosis",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5664,
+   "line": 5650,
    "hash": "7e98f37bdd0dc87c",
    "columns": {
     "schema_in": true,
@@ -4631,7 +4631,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5618,
+   "line": 5604,
    "hash": "91a00366bd0f4221",
    "columns": {
     "schema_in": true,
@@ -4682,7 +4682,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5295,
+   "line": 5281,
    "hash": "670ecd88a1125b2d",
    "columns": {
     "schema_in": true,
@@ -4834,7 +4834,7 @@
    "path": "/api/chits/:id/children",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6543,
+   "line": 6529,
    "hash": "9a799395dd8f1699",
    "columns": {
     "schema_in": true,
@@ -4885,7 +4885,7 @@
    "path": "/api/chits/:id/trace",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6570,
+   "line": 6556,
    "hash": "a0f99f89575d52a5",
    "columns": {
     "schema_in": true,
@@ -4936,7 +4936,7 @@
    "path": "/api/chits/disputes/queue",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5884,
+   "line": 5870,
    "hash": "7f93cf1c14e1278e",
    "columns": {
     "schema_in": true,
@@ -5481,7 +5481,7 @@
    "path": "/api/chits/trace/batches",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6770,
+   "line": 6756,
    "hash": "e4d84f8cefe1d1a4",
    "columns": {
     "schema_in": true,
@@ -5531,7 +5531,7 @@
    "path": "/api/chits/trace/by-batch",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6814,
+   "line": 6800,
    "hash": "f15e538c4e88a8b4",
    "columns": {
     "schema_in": true,
@@ -5582,7 +5582,7 @@
    "path": "/api/chits/trace/networks",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6995,
+   "line": 6981,
    "hash": "8f9238406a761e84",
    "columns": {
     "schema_in": true,
@@ -14091,7 +14091,7 @@
    "path": "/api/books/payments/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1334,
+   "line": 1335,
    "hash": "c2056588c3d995f4",
    "columns": {
     "schema_in": true,
@@ -14145,7 +14145,7 @@
    "path": "/api/books/recurring/:id",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2272,
+   "line": 2273,
    "hash": "0ce7c534396ee714",
    "columns": {
     "schema_in": true,
@@ -16322,7 +16322,7 @@
    "path": "/api/books/cheques/:id/status",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1570,
+   "line": 1571,
    "hash": "65ac31190460ccb4",
    "columns": {
     "schema_in": true,
@@ -16425,7 +16425,7 @@
    "path": "/api/books/compare/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1893,
+   "line": 1894,
    "hash": "54621b1fd79e80be",
    "columns": {
     "schema_in": true,
@@ -16476,7 +16476,7 @@
    "path": "/api/books/compare/snapshots",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1909,
+   "line": 1910,
    "hash": "f5ed9d633f115e0c",
    "columns": {
     "schema_in": true,
@@ -16680,7 +16680,7 @@
    "path": "/api/books/entries",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1648,
+   "line": 1649,
    "hash": "1564297b273ba204",
    "columns": {
     "schema_in": true,
@@ -16731,7 +16731,7 @@
    "path": "/api/books/entries/:id/reverse",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1675,
+   "line": 1676,
    "hash": "35fbf3eb40416780",
    "columns": {
     "schema_in": true,
@@ -16783,7 +16783,7 @@
    "path": "/api/books/events",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1638,
+   "line": 1639,
    "hash": "494300b4ee1d7346",
    "columns": {
     "schema_in": true,
@@ -16834,7 +16834,7 @@
    "path": "/api/books/fx-rates",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2419,
+   "line": 2420,
    "hash": "b05b0f0230066690",
    "columns": {
     "schema_in": true,
@@ -16885,7 +16885,7 @@
    "path": "/api/books/fx-rates/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2428,
+   "line": 2429,
    "hash": "9a3d5d69e21dbb3e",
    "columns": {
     "schema_in": true,
@@ -16936,7 +16936,7 @@
    "path": "/api/books/fx-revalue",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2472,
+   "line": 2473,
    "hash": "5a2ed58f14ceef80",
    "columns": {
     "schema_in": true,
@@ -17192,7 +17192,7 @@
    "path": "/api/books/move-in/import",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1819,
+   "line": 1820,
    "hash": "56d6afde4e313771",
    "columns": {
     "schema_in": true,
@@ -17244,7 +17244,7 @@
    "path": "/api/books/move-in/preflight",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1771,
+   "line": 1772,
    "hash": "679662015358c708",
    "columns": {
     "schema_in": true,
@@ -17295,7 +17295,7 @@
    "path": "/api/books/move-in/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1809,
+   "line": 1810,
    "hash": "5512554f5ed56bc5",
    "columns": {
     "schema_in": true,
@@ -17346,7 +17346,7 @@
    "path": "/api/books/opening",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1721,
+   "line": 1722,
    "hash": "ba9df7ea59ede6fb",
    "columns": {
     "schema_in": true,
@@ -17449,7 +17449,7 @@
    "path": "/api/books/packs",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2158,
+   "line": 2159,
    "hash": "938b00be4063353f",
    "columns": {
     "schema_in": true,
@@ -17500,7 +17500,7 @@
    "path": "/api/books/packs/:id/ack",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2233,
+   "line": 2234,
    "hash": "35799e987b3f43e5",
    "columns": {
     "schema_in": true,
@@ -17552,7 +17552,7 @@
    "path": "/api/books/parties/:id/dispute",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1592,
+   "line": 1593,
    "hash": "0650e9adf6bc5fd4",
    "columns": {
     "schema_in": true,
@@ -17605,8 +17605,8 @@
    "path": "/api/books/payments",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1159,
-   "hash": "f21314a0d066f27a",
+   "line": 1160,
+   "hash": "207b9363787fe564",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -17645,8 +17645,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "207b9363787fe564"
    },
    "status": "partial"
   },
@@ -17656,7 +17657,7 @@
    "path": "/api/books/payments/:id/confirm",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1421,
+   "line": 1422,
    "hash": "8b20bd11a34618f4",
    "columns": {
     "schema_in": true,
@@ -17707,7 +17708,7 @@
    "path": "/api/books/payments/:id/propose",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1390,
+   "line": 1391,
    "hash": "222dd4edbbb114d2",
    "columns": {
     "schema_in": true,
@@ -17758,7 +17759,7 @@
    "path": "/api/books/payments/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1109,
+   "line": 1110,
    "hash": "03344b8d3767b3e9",
    "columns": {
     "schema_in": true,
@@ -17809,7 +17810,7 @@
    "path": "/api/books/periods/:fy/:p/:act",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2060,
+   "line": 2061,
    "hash": "846470aee92b23d6",
    "columns": {
     "schema_in": true,
@@ -17860,7 +17861,7 @@
    "path": "/api/books/preview",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1630,
+   "line": 1631,
    "hash": "5642f28d53e53ef9",
    "columns": {
     "schema_in": true,
@@ -17911,7 +17912,7 @@
    "path": "/api/books/recurring",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2264,
+   "line": 2265,
    "hash": "ea64835563d82a93",
    "columns": {
     "schema_in": true,
@@ -17962,7 +17963,7 @@
    "path": "/api/books/recurring/:id/post",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2290,
+   "line": 2291,
    "hash": "e86f80702fc4ce0e",
    "columns": {
     "schema_in": true,
@@ -18013,7 +18014,7 @@
    "path": "/api/books/recurring/:id/skip",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2298,
+   "line": 2299,
    "hash": "592300a405e4e0eb",
    "columns": {
     "schema_in": true,
@@ -18167,7 +18168,7 @@
    "path": "/api/books/write-off",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 1688,
+   "line": 1689,
    "hash": "0eba96facf73332e",
    "columns": {
     "schema_in": true,
@@ -18219,7 +18220,7 @@
    "path": "/api/books/year/:fy/close",
    "owner_area": "books",
    "file": "routes/books.js",
-   "line": 2073,
+   "line": 2074,
    "hash": "f6198cb5a768e48f",
    "columns": {
     "schema_in": true,
@@ -19374,7 +19375,7 @@
    "path": "/api/chits/:chit_id/archive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6136,
+   "line": 6122,
    "hash": "bb57518baa5d6aee",
    "columns": {
     "schema_in": true,
@@ -19475,7 +19476,7 @@
    "path": "/api/chits/:chit_id/books-request",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4646,
+   "line": 4632,
    "hash": "f1261716ab50b218",
    "columns": {
     "schema_in": true,
@@ -19628,7 +19629,7 @@
    "path": "/api/chits/:chit_id/disputes",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5380,
+   "line": 5366,
    "hash": "b751da3f4c8f8917",
    "columns": {
     "schema_in": true,
@@ -19679,7 +19680,7 @@
    "path": "/api/chits/:chit_id/messages",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5118,
+   "line": 5104,
    "hash": "caeca2235a33877a",
    "columns": {
     "schema_in": true,
@@ -19730,8 +19731,8 @@
    "path": "/api/chits/:chit_id/payment",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4552,
-   "hash": "d593da94e87ba876",
+   "line": 4544,
+   "hash": "3d98f0240c735ee5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -19772,7 +19773,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d593da94e87ba876"
+    "stale_since": "3d98f0240c735ee5"
    },
    "status": "partial"
   },
@@ -19983,7 +19984,7 @@
    "path": "/api/chits/:chit_id/restore",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6215,
+   "line": 6201,
    "hash": "bff670d16c1973fc",
    "columns": {
     "schema_in": true,
@@ -20033,7 +20034,7 @@
    "path": "/api/chits/:chit_id/unarchive",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6194,
+   "line": 6180,
    "hash": "53214e1f816dbb5d",
    "columns": {
     "schema_in": true,
@@ -20083,7 +20084,7 @@
    "path": "/api/chits/:chit_id/unread",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6176,
+   "line": 6162,
    "hash": "cc6a9bccb319682e",
    "columns": {
     "schema_in": true,
@@ -20133,7 +20134,7 @@
    "path": "/api/chits/assign-bulk",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6446,
+   "line": 6432,
    "hash": "a5ce4d89eefc0a51",
    "columns": {
     "schema_in": true,
@@ -29694,7 +29695,7 @@
    "path": "/api/chits/:chit_id/disputes/:dispute_id/resolve",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 5743,
+   "line": 5729,
    "hash": "c2325cbe73f259fc",
    "columns": {
     "schema_in": true,
@@ -29745,7 +29746,7 @@
    "path": "/api/chits/:chit_id/priority",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6028,
+   "line": 6014,
    "hash": "59600f5511771cf4",
    "columns": {
     "schema_in": true,
@@ -29795,7 +29796,7 @@
    "path": "/api/chits/:chit_id/priority-flag",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6084,
+   "line": 6070,
    "hash": "bdcc6791026b87ae",
    "columns": {
     "schema_in": true,
@@ -29846,7 +29847,7 @@
    "path": "/api/chits/:chit_id/star",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6159,
+   "line": 6145,
    "hash": "63dac164e0864b45",
    "columns": {
     "schema_in": true,
@@ -29896,7 +29897,7 @@
    "path": "/api/chits/:chit_id/status",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 4975,
+   "line": 4961,
    "hash": "bdc0ab6cc433cce6",
    "columns": {
     "schema_in": true,
@@ -29997,7 +29998,7 @@
    "path": "/api/chits/:chit_id/void",
    "owner_area": "chits",
    "file": "routes/chits.js",
-   "line": 6289,
+   "line": 6275,
    "hash": "66ea83dae3a68cd1",
    "columns": {
     "schema_in": true,
