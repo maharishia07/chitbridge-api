@@ -65,7 +65,7 @@ of file each thing is; this says what already does the job.
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `live` | `receivables.js` | the allocations that still count: |
+| 33 | `live` | `receivables.js` | the allocations that still count: |
 | 31 | `facts` | `bill-steps.js` | MY state_log — |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
@@ -181,7 +181,7 @@ of file each thing is; this says what already does the job.
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 13 | `verdict` | `rail-thread.js` |  |
-| 13 | `says` | `adopt.js` |  |
+| 14 | `says` | `adopt.js` |  |
 | 13 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 14 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
