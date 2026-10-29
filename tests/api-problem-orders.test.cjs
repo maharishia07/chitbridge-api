@@ -342,6 +342,10 @@ const EXTRAS = [
   onSheet(['order-with-no-lines', 3]),
   onSheet(['bare-copy', 3], { prep: changeCopy(3, BARE_COPY) }),
   X('sheet-bare-copy-no-tables', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(3), prep: changeCopy(3, BARE_COPY) }),
+  /* RAIL-146b: a co-assist WITHOUT can_see_costs — the cost-side rows lose their money (cost_hidden), the sheet and the unbilled figure too; no party is on a list here, so every row is unknown and hides */
+  X('list-orders-in-cost-blind', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('sheet-cost-blind', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(1), setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('facts-unbilled-cost-blind', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { who: STAFF }, prep: (S) => { S.D.canSeeCosts = false; } }),
   /* counters */
   X('counters-listed', 'GET ' + CT, 200, { setup: { flags: FREE } }),
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),

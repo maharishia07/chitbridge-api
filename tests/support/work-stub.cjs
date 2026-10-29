@@ -12,7 +12,7 @@ const stubMod = (rel, exports) => { const p = require.resolve(path.join(API, rel
 
 const E1 = 'e1', E2 = 'e2';
 const U = (n) => '20000000-0000-4000-8000-' + String(n).padStart(12, '0');
-const D = { copies: [], detail: {}, marks: [], progress: [], assign: [], tables: true, statements: [], trips: 0, batches: 0, bigRows: null };
+const D = { roles: {}, bj: {}, canSeeCosts: true, copies: [], detail: {}, marks: [], progress: [], assign: [], tables: true, statements: [], trips: 0, batches: 0, bigRows: null };
 const reset = () => { D.statements = []; D.trips = 0; D.batches = 0; };
 
 const copy = (n, o) => Object.assign({ chit_id: U(n), current_status: 'pending', direction: 'received', folder_id: null, read_at: null, archived_at: null,
@@ -58,7 +58,7 @@ function seed() {
     { chit_id: U(1), line_id: U(101), seq: 1, assignee_actor_id: 'A9', assignee_name: 'Ravi', assignee_type: 'human', task: 'pick', due_date: '2026-10-11', note: null, created_at: '2026-10-09T00:00:00Z', state: 'open' },
     { chit_id: U(1), line_id: U(101), seq: 2, assignee_actor_id: 'A1', assignee_name: 'Asha', assignee_type: 'human', task: 'pack', due_date: '2026-10-12', note: 'fragile', created_at: '2026-10-10T00:00:00Z', state: 'open' },
   ];
-  D.tables = true; D.bigRows = null;
+  D.tables = true; D.bigRows = null; D.roles = {}; D.bj = {}; D.canSeeCosts = true;
 }
 
 /* the select resolver's one statement: filtered by the entity param, like the RLS it runs under */
@@ -68,6 +68,10 @@ function selectAnswer(sql, p) {
   /* RAIL-LAB-SRV1: GET /api/facts/rail (routes/facts over lib/home-facts) also runs here for the contract — CB CRM's two list reads and its
      shop-rule / zone reads (lib/crm.rows) answer no parties; the chit rows are the same copies the Task page reads */
   if (/FROM customer_list cl JOIN identities|FROM supplier_list sl JOIN identities|policy_flags'->'crm'|COALESCE\(timezone, country\) AS zone/.test(sql)) return { rows: [] };
+  /* RAIL-146b: a co-assist's can_see_costs flag (D.canSeeCosts), the counterparties' roles on the shop's lists (D.roles: id → { customer, supplier }) and the small business_json a blind reader's side read takes (D.bj: chit_id → jsonb) */
+  if (/SELECT can_see_costs FROM identities/.test(sql)) return { rows: [{ can_see_costs: D.canSeeCosts !== false }] };
+  if (/EXISTS [(]SELECT 1 FROM customer_list/.test(sql)) return { rows: p[1].map((id) => ({ id, customer: !!(D.roles[id] || {}).customer, supplier: !!(D.roles[id] || {}).supplier })) };
+  if (/FROM chit_header h WHERE h[.]entity_id/.test(sql)) return { rows: p[1].filter((id) => D.bj[id]).map((id) => ({ chit_id: id, business_json: D.bj[id] })) };
   let rows = D.copies.filter((r) => r.entity_id === p[0]);
   if (/cs\.chit_id = \$/.test(sql)) { const id = p.find((v) => /^[0-9a-f-]{36}$/.test(String(v)) && v !== p[0]); rows = rows.filter((r) => r.chit_id === id); }
   return { rows: rows.map((r) => Object.assign({}, r)) };
