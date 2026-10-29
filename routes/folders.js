@@ -117,7 +117,10 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       sysErr = safeErr(e2);
       console.error('system folders:', e2.message);
     }
-    res.json(Object.assign(PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
+    const answer = PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a system folder (lib/folder-views systemFolders) and a shop's folder (the statement above) each carry the keys they always did, in their own order; the pager adds capped and cap_note only when it cut the list; system_error only when the system folders failed */
+    // prettier-ignore
+    res.json({ folders: answer.folders.map((x) => (x.system ? { folder_id: x.folder_id, parent_id: x.parent_id, name: x.name, code: x.code, kind: x.kind, system: x.system, scope: x.scope, side: x.side, ledger: x.ledger, sort: x.sort, count: x.count, total: x.total } : { folder_id: x.folder_id, parent_id: x.parent_id, name: x.name, sort: x.sort, scope: x.scope, kind: x.kind, count: x.count })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, system_error: sysErr || undefined });
   } catch (err) {
     problem(req, res, failed(err, req, 'List failed'));
   }
@@ -578,7 +581,10 @@ router.get('/rules/vocabulary', auth, (req, res) => {
 router.get('/rules', auth, ...checked('GET /rules'), async (req, res) => {
   try {
     const found = await rules.list(ent(req), null);
-    res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    const answer = PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a rule is the columns lib/folder-rules list selects (folder_rule: migrations/000_baseline_2026-10-21.sql), then what the list adds (note only when b132 is not run; capped and cap_note only when the pager cut the list) */
+    // prettier-ignore
+    res.json({ rules: answer.rules.map((x) => ({ rule_id: x.rule_id, folder_id: x.folder_id, name: x.name, when: x.when, enabled: x.enabled, sort: x.sort, stop_processing: x.stop_processing, last_matched_at: x.last_matched_at, match_count: x.match_count, created_at: x.created_at })), migrated: found.migrated, note: found.note, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
@@ -646,14 +652,11 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
                                WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`)
       : '';
     /**
-     * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
-     * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
-     * badge that counted it would never fall to zero while anything was pinned.
+     * ⭐ ?count=1 — the badge, without the payload (called on every app boot: one integer, not 200 rows and two joins).
+     * Unread only: a KEPT message is not news, and a badge that counted it would never fall to zero while anything was pinned.
      */
     if (req.query.count === '1' || req.query.count === 'true') {
-      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST. A badge counting conversations the actor cannot open would send
-         them to a screen that says "nothing new" — and worse, it would leak HOW MANY customer conversations the
-         business is having, which is the thing the scope exists to withhold. */
+      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST: a badge counting what the actor cannot open would leak HOW MANY customer conversations the business has. */
       const c = await withEntity(ent(req), (db) =>
         db.query(
           `SELECT count(*)::int AS n FROM chit_messages m
@@ -749,7 +752,10 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
       );
       return q.rows;
     });
-    res.json(Object.assign({ count: rows.length }, PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    const answer = PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a message is the columns the statement above selects (chit_messages: migrations/000_baseline_2026-10-21.sql, read_at and kept through to_jsonb), then the pager's keys (capped and cap_note only when it cut the list) */
+    // prettier-ignore
+    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     console.error('messages inbox:', err);
     problem(req, res, failed(err, req, 'Failed'));
@@ -802,14 +808,15 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
      */
     const isActor = req.identity.identity_type === 'actor';
     const aid = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
-    res.json(
-      await assign.byPerson(ent(req), {
-        due_on: due || undefined,
-        actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
-        /* So the screen can say "your work" honestly rather than guessing from the row count. */
-        _scoped_to_self: isActor
-      })
-    );
+    const answer = await assign.byPerson(ent(req), {
+      due_on: due || undefined,
+      actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
+      /* So the screen can say "your work" honestly rather than guessing from the row count. */
+      _scoped_to_self: isActor
+    });
+    /* S34: every key lib/assign byPerson answers (scoped_to_self is absent when b153 is not run); the people and their lines are the library's own literals, left open and listed */
+    // prettier-ignore
+    res.json({ people: answer.people, lines: answer.lines, migrated: answer.migrated, scoped_to_self: answer.scoped_to_self });
   } catch (err) {
     console.error('worklist:', err.message);
     problem(req, res, failed(err, req, 'Worklist failed'));
@@ -831,15 +838,16 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
       .map((item) => item.trim())
       .filter((item) => /^[0-9a-f-]{36}$/i.test(item))
       .slice(0, 500);
-    res.json(
-      await groupsum.requirement(me, {
-        scope: req.query.scope === 'order' ? 'order' : 'task',
-        folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
-        archived: req.query.archived === '1',
-        chit_ids: ids.length ? ids : undefined,
-        overdue_days: flags.overdue_days
-      })
-    );
+    const sum = await groupsum.requirement(me, {
+      scope: req.query.scope === 'order' ? 'order' : 'task',
+      folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
+      archived: req.query.archived === '1',
+      chit_ids: ids.length ? ids : undefined,
+      overdue_days: flags.overdue_days
+    });
+    /* S34: every key lib/groupsum requirement answers (selected and selection_requested only for a ticked selection) */
+    // prettier-ignore
+    res.json({ scope: sum.scope, folder_id: sum.folder_id, selected: sum.selected, selection_requested: sum.selection_requested, chits: sum.chits, chits_with_lines: sum.chits_with_lines, chits_without_lines: sum.chits_without_lines, has_catalogue: sum.has_catalogue, requirement: sum.requirement, flags: sum.flags, money: sum.money });
   } catch (err) {
     console.error('groupsum:', err.message);
     problem(req, res, failed(err, req, 'Group sum failed'));
@@ -893,7 +901,12 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
     folders.forEach((item) => {
       (kids[item.parent_id || 'root'] = kids[item.parent_id || 'root'] || []).push(item);
     });
-    const treeRows = (fid) => (byFolder.get(fid) || []).concat((kids[fid] || []).flatMap((item) => treeRows(item.folder_id)));
+    /* a folder that is its own ancestor (a parent_id loop) is counted once, not followed round again: the loop used to overflow the stack and answer 500 */
+    const treeRows = (fid, walked = new Set()) => {
+      if (walked.has(fid)) return [];
+      walked.add(fid);
+      return (byFolder.get(fid) || []).concat((kids[fid] || []).flatMap((item) => treeRows(item.folder_id, walked)));
+    };
 
     const seg = (list) =>
       Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
@@ -931,7 +944,8 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
       // ⚠️ The assertion, returned rather than described: `filed` counted from the chits must equal the sum of the
       //    folders' own counts. If it does not, a chit is filed into a folder this entity cannot see.
       reconciles: filed === summed && inbox + inBills + filed === rows.length,
-      ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } })
+      /* S34: named, not spread: present only when a chit is unaccounted for (undefined is left out of the answer) */
+      discrepancy: filed === summed ? undefined : { filed, sum_of_folders: summed, missing: filed - summed }
     });
   } catch (err) {
     problem(req, res, failed(err, req, 'Reconcile failed'));
