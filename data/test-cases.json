@@ -64627,6 +64627,31 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-schemas.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE SCHEMA ENGINE ROUTES (ROUTES/SCHEMAS.JS: MY, CREATE-DEFAULT, FIELDS, FIELD DROP, ORDER, FIELD PATCH, VISIBILITY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; EVERY BODY IS CLOSED AND THE WEB'S KEYS ARE ACCEPTED; ANOTHER SHOP'S COLUMN KEY ANSWERS AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE SCHEMA ENGINE ROUTES (ROUTES/SCHEMAS.JS: MY, CREATE-DEFAULT, FIELDS, FIELD DROP, ORDER, FIELD PATCH, VISIBILITY) IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO SUCCESS ANSWER MOVED; EVERY BODY IS CLOSED AND THE WEB'S KEYS ARE ACCEPTED; ANOTHER SHOP'S COLUMN KEY ANSWERS AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 313 lines. Run: node chitbridge-api/tests/api-problem-schemas.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 313,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-testing.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -75215,6 +75240,37 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-14T14:44:36Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/schemas-truth.realstack.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SCHEMA ENGINE TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/schemas.js).",
+   "claim": "SCHEMA ENGINE TRUTH, on the LOCAL stack (T2: real Postgres; API-STANDARD R2-10, API-4 sweep of routes/schemas.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 74 lines. Run: node chitbridge-api/tests/schemas-truth.realstack.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 74,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/truth-harness.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-23T00:00:00Z",
+   "needs": [
+    "the API running (via truth-harness.cjs)"
+   ]
   },
   {
    "case_key": "chitbridge-api/tests/settings-truth.realstack.cjs",

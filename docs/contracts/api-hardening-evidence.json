@@ -342,12 +342,23 @@
   "POST /api/keys": {
    "output_allowlist": true
   },
+  "POST /api/schemas/create-default": {
+   "strict_input": true
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
+  "PATCH /api/schemas/fields/order": {
+   "strict_input": true
+  },
   "PATCH /api/schemas/fields/:field_key": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/schemas/visibility": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
    "output_allowlist": true

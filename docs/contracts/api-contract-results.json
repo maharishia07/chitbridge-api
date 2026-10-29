@@ -2163,7 +2163,7 @@
    ]
   },
   "POST /api/folders/move": {
-   "cases": 5,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3184,6 +3184,46 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "DELETE /api/schemas/fields/:field_key": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "PATCH /api/schemas/fields/:field_key": {
+   "cases": 9,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/fields/order": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   }
  }

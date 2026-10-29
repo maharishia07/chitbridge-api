@@ -22,6 +22,9 @@
   "DELETE /api/products/:id/media/:mid": {
    "output_allowlist": true
   },
+  "DELETE /api/schemas/fields/:field_key": {
+   "foreign_id_404": true
+  },
   "GET /api/actors/:id/tasks": {
    "foreign_id_404": true
   },
@@ -296,6 +299,9 @@
    "foreign_id_404": true
   },
   "PATCH /api/crm/followups/:id": {
+   "foreign_id_404": true
+  },
+  "PATCH /api/schemas/fields/:field_key": {
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
