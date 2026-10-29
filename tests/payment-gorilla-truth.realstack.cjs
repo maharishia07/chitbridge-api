@@ -37,6 +37,8 @@
  *   GP-10 gap FIN-53 · a press the route lets through (½% over, inside its tolerance · over the quote WITH a note) is recorded.
  *         TODAY the books' duplicate rule raises `excess` on it and answers 409 "Already paid?": two gates, two meanings. REPORTED
  *         here, not asserted either way — cb-finance decides which gate is right (GP-4 leaves these two kinds to GP-10).
+ *   GP-11 gap FIN-55 · a stranger's bill pressed "other" is refused 422 and never marked. TODAY the books queue "other" ("no ledger
+ *         yet") before the stranger refusal, so it answers 200 and marks my copy paid (GP-8 leaves this pair to GP-11).
  *   GP-9  the duplicate rule: the same amount again on a new press is a 409 ALREADY_PAID that leaves one payment and the first mark;
  *         acknowledged, it is recorded as a second payment
  *
@@ -188,6 +190,8 @@ const recorded = (seen) => seen.status === 200 && seen.body && seen.body.message
 /* a second press that may itself mark the copy (a new press, not a replay of the first) */
 const marksAgain = (record) => record.again === 'second' || record.again === 'same' || record.again === 'sameAck';
 const own = (record) => record.target === 'own';
+/* FIN-55: a stranger's bill pressed "other" is queued before the stranger refusal — GP-11 holds it, GP-8 the rest */
+const strangerOther = (record) => record.target === 'stranger' && record.press.method === 'other';
 const nothingFor = (seen, press) => seen.payments.some((pay) => pay.key === keyOf(seen, press));
 
 const CHECKS = [
@@ -250,7 +254,7 @@ const CHECKS = [
     return seen.mark && !marksAgain(record) ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : null;
   } },
   { id: 'GP-8', title: 'a bill I may not mark is refused (stranger 422 · counter bill 422 · not mine 404 · no such bill), nothing marked or recorded', check: (record, seen) => {
-    if (seen.thrown || own(record)) return null;
+    if (seen.thrown || own(record) || strangerOther(record)) return null;
     const code = seen.body && seen.body.code;
     const want = { stranger: [422], counter: [422], notMine: [404], badId: [400, 404], unknownId: [404] }[record.target];
     if (want.indexOf(seen.status) < 0) return record.target + ' answered HTTP ' + seen.status + ' ' + (code || '') + ' "' + (seen.said || '').slice(0, 80) + '"';
@@ -269,6 +273,11 @@ const CHECKS = [
     }
     if (seen.againStatus !== 200) return 'acknowledged, the same amount answered HTTP ' + seen.againStatus + ' ' + (seen.againBody && seen.againBody.code) + ' "' + (seen.againSaid || '').slice(0, 80) + '"';
     return mine(record.press) === 1 && mine(record.second) === 1 ? null : 'acknowledged: ' + mine(record.press) + ' + ' + mine(record.second) + ' books payments, not 1 + 1';
+  } },
+  { id: 'GP-11', title: 'a bill to a stranger pressed "other" is refused 422, never marked paid', gap: 'FIN-55 · the books queue "other" before the stranger refusal is reached', check: (record, seen) => {
+    if (seen.thrown || !strangerOther(record)) return null;
+    if (seen.status !== 422) return 'a stranger, "other", answered HTTP ' + seen.status + ' "' + (seen.said || '').slice(0, 60) + '"' + (seen.mark ? ' and my copy is marked paid' : '');
+    return seen.mark ? 'refused, but the copy is marked ' + JSON.stringify(seen.mark) : seen.payments.length ? 'refused, but the books hold it' : null;
   } },
   { id: 'GP-10', title: 'a press the route lets through (inside the ½% tolerance · over the quote with a note) is recorded, not refused by the books', gap: 'FIN-53 · the route lets it through (tolerance · a note), then the books\' excess rule answers 409', check: (record, seen) => {
     if (seen.thrown || !own(record) || !LET_THROUGH.has(record.kind)) return null;
