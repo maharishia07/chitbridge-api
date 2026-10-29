@@ -15,8 +15,8 @@ const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
 const baseline = JSON.parse(fs.readFileSync(path.join(ROOT, 'db', 'rls-baseline.json'), 'utf8')).tables;
 
-/** open non-dictionary tables in production's census (26 Sep, supplier_list corrected). Lower it when Athi has run a migration and the baseline is re-saved. */
-const CEILING = 33;
+/** open non-dictionary tables: 33 at the 26 Sep census; 20 after Athi ran b779 + b783 in production (29 Oct, no rows) and the baseline was re-saved. Lower it when a migration has run and the baseline is re-saved. */
+const CEILING = 20;
 const CLASSES = ['dictionary', 'entity', 'shared', 'platform-private'];
 
 let pass = 0, fail = 0;
