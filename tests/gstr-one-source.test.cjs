@@ -83,6 +83,11 @@ const minor = (rupees) => Math.round(rupees * 100);
   add(13, { purpose: 'order', sender_entity_id: CUST, all_recipients: [{ role: 'sender', entity_id: CUST }, { role: 'receiver', entity_id: SHOP }], business_json: {},
     at: '2026-09-19T05:00:00.000Z', line_items: [{ line_id: 'l1', particulars: 'Brake pad', quantity: 2, price: 500, total: 1000, gst_rate: 18 }] }); /* a storefront order RECEIVED: classify posts nothing */
   buy(14, [line('Disputed stock', 900, 18)], { at: '2026-09-17T05:00:00.000Z', current_status: 'accepted', disputed: true }); /* accepted but the books hold it for a dispute */
+  /* ACC-202 (lifecycle B3 S9-8): a cash walk-in counter bill that arrived AFTER its day was posted — the books hold it as a late entry (walkin-late:<id>,
+     books-hooks postChit), and the return must read it as it reads a day entry's bills */
+  add(15, { purpose: 'order', sender_entity_id: SHOP, all_recipients: [{ role: 'sender', entity_id: SHOP }, { role: 'receiver', entity_id: SHOP }], at: '2026-09-25T05:00:00.000Z',
+    business_json: { bill_no: 'C1/26-27/0015', till: { id: 'C1' }, customer: { name: 'Walk-in' }, payment: { parts: [{ how: 'cash', amount: 210 }] },
+      invoice: T.determine({ seller: party(SHOP), buyer: { LglNm: 'Walk-in', Gstin: '', State: '33', Pos: '33', RegType: 'unregistered' }, lines: [line('Late tea', 200, 5)] }) } }); /* taxable 200 · GST 5 + 5 */
 
   /* ── the two reads tax-copy makes, answered from the fixture (the books' own SQL stays in memory) ── */
   const momentOf = (r, newRule) => Date.parse((newRule && r.business_json && r.business_json.billed_at) || r.sent_at || r.created_at);
@@ -99,7 +104,7 @@ const minor = (rupees) => Math.round(rupees * 100);
         to = Date.parse(params[2]);
       /* the SQL's EXISTS (tax-copy POSTED_IN_BOOKS_SQL), modelled on the in-memory journal: an unreversed entry of the chit's own, or one that covers it */
       const held = (r) => !/journal_entry/.test(sql) || X.T.entries.some((j) => j.entity_id === SHOP && !j.reverses_entry_id &&
-        (String(j.source_ref || '').indexOf('chit:' + r.chit_id) === 0 || j.source_ref === 'bill:' + r.chit_id || (j.source_chit_ids || []).indexOf(r.chit_id) >= 0) &&
+        (String(j.source_ref || '').indexOf('chit:' + r.chit_id) === 0 || j.source_ref === 'bill:' + r.chit_id || j.source_ref === 'walkin-late:' + r.chit_id || (j.source_chit_ids || []).indexOf(r.chit_id) >= 0) &&
         !X.T.entries.some((v) => v.entity_id === SHOP && v.reverses_entry_id === j.entry_id));
       return { rows: rows.filter((r) => r.role !== 'Draft' && held(r) && momentOf(r, newRule) >= from && momentOf(r, newRule) < to) };
     }
@@ -118,13 +123,20 @@ const minor = (rupees) => Math.round(rupees * 100);
   for (const r of rows.filter((x) => x.role !== 'Draft')) {
     const entry = await TC.entryFor(r, SHOP);
     const k = K.classify({ chit: r, entry, setting: S, status: r.current_status, disputed: !!r.disputed });
+    if (k.kind === 'walkin' && r.chit_id === uuid(15)) { /* its day is already posted: the late-bill entry, exactly as postChit writes it */
+      const ev = require(path.join(H.API, 'lib', 'books-engines')).posting().daySummary([k.bill], { ref: 'late ' + r.chit_id, date: '2026-09-25', counter: 'C1' }, { pack: require(path.join(H.API, 'lib', 'regulation')).packFor('IN') });
+      const late = await X.B.postEntry(X.db, SHOP, Object.assign(ev, { source_ref: 'walkin-late:' + r.chit_id, source_chit_id: r.chit_id }));
+      if (!late.ok) throw new Error('late walk-in did not post: ' + JSON.stringify(late));
+      posted.push(r.chit_id);
+      continue;
+    }
     if (k.kind !== 'post') continue;
     const out = await X.B.postEntry(X.db, SHOP, Object.assign({}, k.event, { source_chit_id: r.chit_id }));
     if (!out.ok) throw new Error('fixture did not post: ' + JSON.stringify(out));
     posted.push(r.chit_id);
     if (r.current_status === 'cancelled') await K.chitWithdrawn(X.db, SHOP, r.chit_id, 'cancelled by the seller', SHOP);
   }
-  ok('the books posted the six sales/purchases they would post (cancelled one reversed; rejected + waiting purchases never)', posted.length === 8, JSON.stringify(posted.map((p) => p.slice(-2))));
+  ok('the books posted the sales/purchases they would post, the late walk-in among them (cancelled one reversed; rejected + waiting purchases never)', posted.length === 9, JSON.stringify(posted.map((p) => p.slice(-2))));
 
   /* ── the books' home (what GST close reads) and the return ── */
   const pack = X.B.packOf(S);
@@ -141,15 +153,15 @@ const minor = (rupees) => Math.round(rupees * 100);
   eq('OUTPUT TAX = GST close\'s output balance, per head, to the paisa', [minor(o.camt), minor(o.samt), minor(o.iamt)], [books.output.cgst, books.output.sgst, books.output.igst]);
   eq('INPUT CREDIT = GST close\'s input balance, per head, to the paisa', [minor(i.camt), minor(i.samt), minor(i.iamt)], [books.input.cgst, books.input.sgst, books.input.igst]);
   eq('…so net payable agrees too', minor(ledger.net.total), books.output.cgst + books.output.sgst + books.output.igst - books.input.cgst - books.input.sgst - books.input.igst);
-  eq('the tax is the three September sales that stand: 90+90 (18%) + 10+10 (5%) = 100 + 100, and ITC only the accepted purchase 54 + 54',
-    [books.output.cgst, books.output.sgst, books.input.cgst, books.input.sgst], [10000, 10000, 5400, 5400]);
+  eq('the tax is the September sales that stand: 90+90 (18%) + 10+10 (5%) + the late walk-in 5+5 = 105 + 105, and ITC only the accepted purchase 54 + 54',
+    [books.output.cgst, books.output.sgst, books.input.cgst, books.input.sgst], [10500, 10500, 5400, 5400]);
 
   const rowIds = ledger.rows.map((r) => r.chit_id.slice(-2)).sort();
-  eq('rows: sales 1 3 4 5 6 and the accepted purchase 10 — not the cancelled (reversed) sale, the rejected, waiting or dispute-held purchase, the payment advice, the received storefront order, next month\'s bill, nor the draft', rowIds, ['01', '03', '04', '05', '06', '10']);
+  eq('rows: sales 1 3 4 5 6, the late walk-in 15 (ACC-202: walkin-late:<id> is a home) and the accepted purchase 10 — not the cancelled (reversed) sale, the rejected, waiting or dispute-held purchase, the payment advice, the received storefront order, next month\'s bill, nor the draft', rowIds, ['01', '03', '04', '05', '06', '10', '15']);
   eq('the 23:30 IST bill is September\'s and its document date is the 30th', ledger.rows.filter((r) => r.chit_id.endsWith('03')).map((r) => r.day), ['2026-09-30']);
 
   /* ── 3.1: the boxes add up to the taxable value and split by supply kind ── */
-  eq('3.1(a) taxable: 1,000 + 400', o.txval, 1400);
+  eq('3.1(a) taxable: 1,000 + 400 + the late walk-in 200', o.txval, 1600);
   eq('3.1(b) zero-rated (the SEZ sale)', ret.sup_details.osup_zero.txval, 700);
   eq('3.1(c) nil-rated / exempt: the 300 nil line + the 250 exempt service', ret.sup_details.osup_nil_exmp.txval, 550);
   eq('3.1(e) non-GST (the line the pack names non-GST)', ret.sup_details.osup_nongst.txval, 150);
