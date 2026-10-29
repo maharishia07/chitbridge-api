@@ -8734,6 +8734,58 @@
      "fixture": {
       "error": "No such folder"
      }
+    },
+    {
+     "scenario": "folder-not-an-id",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "folder_id",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/folder_invalid",
+      "title": "Folder details not valid",
+      "status": 400,
+      "code": "FOLDER_INVALID",
+      "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+      "request_id": "req-test",
+      "field": "folder_id",
+      "errors": [
+       {
+        "field": "folder_id",
+        "code": "WRONG_VALUE",
+        "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "folder_id",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/folder_invalid",
+      "title": "Folder details not valid",
+      "status": 400,
+      "code": "FOLDER_INVALID",
+      "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Give the folder a name of 1 to 60 characters, then try again.",
+      "request_id": "req-test",
+      "field": "folder_id",
+      "errors": [
+       {
+        "field": "folder_id",
+        "code": "WRONG_VALUE",
+        "detail": "folder_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
     }
    ]
   },
