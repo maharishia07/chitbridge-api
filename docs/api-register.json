@@ -13215,8 +13215,8 @@
    "path": "/api/till/bills",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2929,
-   "hash": "1945c21369b18d68",
+   "line": 3421,
+   "hash": "65e21f5bc15efa97",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13255,7 +13255,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1945c21369b18d68"
+    "stale_since": "65e21f5bc15efa97"
    },
    "status": "partial"
   },
@@ -13265,8 +13265,8 @@
    "path": "/api/till/catalogue/blueprints",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2827,
-   "hash": "5cf00422dcf7810f",
+   "line": 3309,
+   "hash": "580dd67ae75db296",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13305,7 +13305,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5cf00422dcf7810f"
+    "stale_since": "580dd67ae75db296"
    },
    "status": "partial"
   },
@@ -13315,7 +13315,7 @@
    "path": "/api/till/counters",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1471,
+   "line": 1803,
    "hash": "73bccfc6825b5345",
    "columns": {
     "schema_in": true,
@@ -13365,8 +13365,8 @@
    "path": "/api/till/engine/:name",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3355,
-   "hash": "4a422f34f38b13a0",
+   "line": 3950,
+   "hash": "6300606e4b8b2243",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13404,8 +13404,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6300606e4b8b2243"
    },
    "status": "partial"
   },
@@ -13415,8 +13416,8 @@
    "path": "/api/till/match",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3065,
-   "hash": "20024d37f920395f",
+   "line": 3586,
+   "hash": "636ab609f3d52f5a",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13455,7 +13456,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "20024d37f920395f"
+    "stale_since": "636ab609f3d52f5a"
    },
    "status": "partial"
   },
@@ -13465,8 +13466,8 @@
    "path": "/api/till/quick-keys/groups",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1480,
-   "hash": "be24ae66894afb1b",
+   "line": 1812,
+   "hash": "0bff2e63e7484466",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13505,7 +13506,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "be24ae66894afb1b"
+    "stale_since": "0bff2e63e7484466"
    },
    "status": "partial"
   },
@@ -13515,8 +13516,8 @@
    "path": "/api/till/quick-keys/hidden",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1518,
-   "hash": "0bcf0daa6041ee3f",
+   "line": 1852,
+   "hash": "7740ad9694b51c90",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13555,7 +13556,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0bcf0daa6041ee3f"
+    "stale_since": "7740ad9694b51c90"
    },
    "status": "partial"
   },
@@ -13565,8 +13566,8 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1562,
-   "hash": "e26cae6b0b11294e",
+   "line": 1898,
+   "hash": "48d6577e91db52fc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13605,7 +13606,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e26cae6b0b11294e"
+    "stale_since": "48d6577e91db52fc"
    },
    "status": "partial"
   },
@@ -13615,8 +13616,8 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1490,
-   "hash": "bb5a05b81f6827fa",
+   "line": 1822,
+   "hash": "33abfecde62a9004",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13656,7 +13657,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bb5a05b81f6827fa"
+    "stale_since": "33abfecde62a9004"
    },
    "status": "partial"
   },
@@ -13666,8 +13667,8 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1961,
-   "hash": "f58b9ba9cf19212d",
+   "line": 2335,
+   "hash": "aa600c76b31c1ee2",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13707,7 +13708,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f58b9ba9cf19212d"
+    "stale_since": "aa600c76b31c1ee2"
    },
    "status": "partial"
   },
@@ -13717,8 +13718,8 @@
    "path": "/api/till/screens",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2269,
-   "hash": "d718fc97d7bce5b7",
+   "line": 2686,
+   "hash": "e3553ae3b95bfdec",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13757,7 +13758,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d718fc97d7bce5b7"
+    "stale_since": "e3553ae3b95bfdec"
    },
    "status": "partial"
   },
@@ -13767,8 +13768,8 @@
    "path": "/api/till/snapshot",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 186,
-   "hash": "ac32c7133a65c697",
+   "line": 203,
+   "hash": "c11004366487df50",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13807,7 +13808,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ac32c7133a65c697"
+    "stale_since": "c11004366487df50"
    },
    "status": "partial"
   },
@@ -13817,8 +13818,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2655,
-   "hash": "65d59798e49ce45d",
+   "line": 3114,
+   "hash": "3f644a8715faf625",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13858,7 +13859,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "65d59798e49ce45d"
+    "stale_since": "3f644a8715faf625"
    },
    "status": "partial"
   },
@@ -13868,8 +13869,8 @@
    "path": "/api/till/summary",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2893,
-   "hash": "6cd0bd3be7ba6c1f",
+   "line": 3377,
+   "hash": "66e7008f8895ac0f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13909,7 +13910,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6cd0bd3be7ba6c1f"
+    "stale_since": "66e7008f8895ac0f"
    },
    "status": "partial"
   },
@@ -13919,8 +13920,8 @@
    "path": "/api/till/tasks",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3036,
-   "hash": "1c7e8c1b00bc51dd",
+   "line": 3557,
+   "hash": "6cbf69fcbc8067fc",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -13959,7 +13960,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1c7e8c1b00bc51dd"
+    "stale_since": "6cbf69fcbc8067fc"
    },
    "status": "partial"
   },
@@ -13969,8 +13970,8 @@
    "path": "/api/till/verify",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2428,
-   "hash": "240f5759fbcaeb96",
+   "line": 2861,
+   "hash": "46d43e49b67a6e84",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14009,7 +14010,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "240f5759fbcaeb96"
+    "stale_since": "46d43e49b67a6e84"
    },
    "status": "partial"
   },
@@ -14019,8 +14020,8 @@
    "path": "/api/till/worth-an-offer",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1627,
-   "hash": "bc39dfecdf201d9b",
+   "line": 1963,
+   "hash": "eb4695b2dc715bd6",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -14060,7 +14061,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bc39dfecdf201d9b"
+    "stale_since": "eb4695b2dc715bd6"
    },
    "status": "partial"
   },
@@ -28512,8 +28513,8 @@
    "path": "/api/till/alias",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3246,
-   "hash": "7825ce2b547ead00",
+   "line": 3823,
+   "hash": "7f57a63b3c02d9b5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28553,7 +28554,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7825ce2b547ead00"
+    "stale_since": "7f57a63b3c02d9b5"
    },
    "status": "partial"
   },
@@ -28563,8 +28564,8 @@
    "path": "/api/till/catalogue",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2718,
-   "hash": "f3ac3182bac23fb1",
+   "line": 3188,
+   "hash": "c2fcf94d63ba8662",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28606,7 +28607,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f3ac3182bac23fb1"
+    "stale_since": "c2fcf94d63ba8662"
    },
    "status": "partial"
   },
@@ -28616,8 +28617,8 @@
    "path": "/api/till/close",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1310,
-   "hash": "cd6fc6eea04b5bcd",
+   "line": 1619,
+   "hash": "3d4156e8d5761ea1",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28658,7 +28659,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cd6fc6eea04b5bcd"
+    "stale_since": "3d4156e8d5761ea1"
    },
    "status": "partial"
   },
@@ -28668,8 +28669,8 @@
    "path": "/api/till/diagnostic",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1260,
-   "hash": "6984c683d8f3205a",
+   "line": 1549,
+   "hash": "45c60afb8f7027fd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28710,7 +28711,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6984c683d8f3205a"
+    "stale_since": "45c60afb8f7027fd"
    },
    "status": "partial"
   },
@@ -28720,8 +28721,8 @@
    "path": "/api/till/enrol",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2170,
-   "hash": "cdfe3e37906d659c",
+   "line": 2581,
+   "hash": "9635845899566c81",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28761,7 +28762,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cdfe3e37906d659c"
+    "stale_since": "9635845899566c81"
    },
    "status": "partial"
   },
@@ -28771,8 +28772,8 @@
    "path": "/api/till/flags",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1397,
-   "hash": "28ad7328db52d52d",
+   "line": 1714,
+   "hash": "e9d78734c2d72a27",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28813,7 +28814,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "28ad7328db52d52d"
+    "stale_since": "e9d78734c2d72a27"
    },
    "status": "partial"
   },
@@ -28823,8 +28824,8 @@
    "path": "/api/till/listen",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 3289,
-   "hash": "80215b80dce49435",
+   "line": 3884,
+   "hash": "734d38d90b89c85f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28871,8 +28872,8 @@
    "path": "/api/till/offer-item",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1738,
-   "hash": "8af7da4fd996a8dc",
+   "line": 2089,
+   "hash": "1d9130b0517f5ff5",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28913,7 +28914,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8af7da4fd996a8dc"
+    "stale_since": "1d9130b0517f5ff5"
    },
    "status": "partial"
   },
@@ -28923,8 +28924,8 @@
    "path": "/api/till/pair",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2117,
-   "hash": "f248c9eccb2db79f",
+   "line": 2514,
+   "hash": "975031f9e6f3132f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -28964,7 +28965,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f248c9eccb2db79f"
+    "stale_since": "975031f9e6f3132f"
    },
    "status": "partial"
   },
@@ -28974,8 +28975,8 @@
    "path": "/api/till/pair/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2224,
-   "hash": "4b833daf70517ce7",
+   "line": 2623,
+   "hash": "8b9badf062074f20",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29014,7 +29015,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4b833daf70517ce7"
+    "stale_since": "8b9badf062074f20"
    },
    "status": "partial"
   },
@@ -29024,8 +29025,8 @@
    "path": "/api/till/price",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1801,
-   "hash": "46e34503cf571ad2",
+   "line": 2162,
+   "hash": "6fec02b5eceaa360",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29067,7 +29068,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "46e34503cf571ad2"
+    "stale_since": "6fec02b5eceaa360"
    },
    "status": "partial"
   },
@@ -29077,8 +29078,8 @@
    "path": "/api/till/quick-keys/hide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1534,
-   "hash": "23036463434fb173",
+   "line": 1868,
+   "hash": "9c2950ba40367324",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29118,7 +29119,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "23036463434fb173"
+    "stale_since": "9c2950ba40367324"
    },
    "status": "partial"
   },
@@ -29128,8 +29129,8 @@
    "path": "/api/till/quick-keys/screen-config",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1573,
-   "hash": "9ae6416285c6bbf3",
+   "line": 1909,
+   "hash": "283e393814d50723",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29169,7 +29170,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9ae6416285c6bbf3"
+    "stale_since": "283e393814d50723"
    },
    "status": "partial"
   },
@@ -29179,8 +29180,8 @@
    "path": "/api/till/quick-keys/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1504,
-   "hash": "c77e2525cf96d570",
+   "line": 1836,
+   "hash": "5230ea984d547e38",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29220,7 +29221,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c77e2525cf96d570"
+    "stale_since": "5230ea984d547e38"
    },
    "status": "partial"
   },
@@ -29230,8 +29231,8 @@
    "path": "/api/till/quick-keys/unhide",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1548,
-   "hash": "9ca9ba273dded12e",
+   "line": 1884,
+   "hash": "e5d1a467750c1412",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29271,7 +29272,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9ca9ba273dded12e"
+    "stale_since": "e5d1a467750c1412"
    },
    "status": "partial"
   },
@@ -29281,8 +29282,8 @@
    "path": "/api/till/rate",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1905,
-   "hash": "dc5f3afec5d1eae1",
+   "line": 2279,
+   "hash": "5f71957087f910fd",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29322,7 +29323,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-29 PR#503",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) (re-sign, 29 Oct: only the 400 writer became refuseBad, same words) 2026-10-29 PR#361",
     "lifecycle": "stable"
    },
    "status": "meets standard"
@@ -29333,8 +29334,8 @@
    "path": "/api/till/reconcile",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2389,
-   "hash": "373c4c3a3167c3fe",
+   "line": 2809,
+   "hash": "7f41c36afe975fa0",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29374,7 +29375,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "373c4c3a3167c3fe"
+    "stale_since": "7f41c36afe975fa0"
    },
    "status": "partial"
   },
@@ -29384,8 +29385,8 @@
    "path": "/api/till/reward",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1996,
-   "hash": "d08942fb4cfdaf53",
+   "line": 2375,
+   "hash": "e642cdc099e3ff92",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29426,7 +29427,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d08942fb4cfdaf53"
+    "stale_since": "e642cdc099e3ff92"
    },
    "status": "partial"
   },
@@ -29436,8 +29437,8 @@
    "path": "/api/till/reward/claim",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2052,
-   "hash": "ef1cea6dc14f5a3b",
+   "line": 2447,
+   "hash": "3feb8aa60d1ccdf7",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29478,7 +29479,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ef1cea6dc14f5a3b"
+    "stale_since": "3feb8aa60d1ccdf7"
    },
    "status": "partial"
   },
@@ -29488,8 +29489,8 @@
    "path": "/api/till/screens/rename",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2321,
-   "hash": "022bce8fc2be7c40",
+   "line": 2753,
+   "hash": "e109663d0e9f925f",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29530,7 +29531,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "022bce8fc2be7c40"
+    "stale_since": "e109663d0e9f925f"
    },
    "status": "partial"
   },
@@ -29540,8 +29541,8 @@
    "path": "/api/till/screens/revoke",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2288,
-   "hash": "425adde036c7269e",
+   "line": 2733,
+   "hash": "7b0c71c3c783dc7c",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29582,7 +29583,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "425adde036c7269e"
+    "stale_since": "7b0c71c3c783dc7c"
    },
    "status": "partial"
   },
@@ -29592,8 +29593,8 @@
    "path": "/api/till/shop",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 2518,
-   "hash": "7024338af49d4865",
+   "line": 2959,
+   "hash": "b44c17f20fe86803",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29633,7 +29634,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7024338af49d4865"
+    "stale_since": "b44c17f20fe86803"
    },
    "status": "partial"
   },
@@ -29643,8 +29644,8 @@
    "path": "/api/till/state",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1371,
-   "hash": "c9212390a49efb45",
+   "line": 1685,
+   "hash": "bb7f77e7a12dfc72",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29684,7 +29685,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c9212390a49efb45"
+    "stale_since": "bb7f77e7a12dfc72"
    },
    "status": "partial"
   },
@@ -29694,8 +29695,8 @@
    "path": "/api/till/stock",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1150,
-   "hash": "5782eb8c74e3f880",
+   "line": 1418,
+   "hash": "cf0146e11b0b4f1e",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29736,7 +29737,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5782eb8c74e3f880"
+    "stale_since": "cf0146e11b0b4f1e"
    },
    "status": "partial"
   },
@@ -29746,8 +29747,8 @@
    "path": "/api/till/stock/bulk",
    "owner_area": "till",
    "file": "routes/till.js",
-   "line": 1196,
-   "hash": "e98b58ee6450ce38",
+   "line": 1476,
+   "hash": "dc8cf5329bd6be6b",
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -29787,7 +29788,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e98b58ee6450ce38"
+    "stale_since": "dc8cf5329bd6be6b"
    },
    "status": "partial"
   },

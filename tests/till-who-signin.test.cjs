@@ -135,9 +135,12 @@ function world(o) {
   await it('wire · the snapshot staff row carries the sign-in user ID, and still no contact detail', () => {
     const R = read('routes/till.js');
     assert.ok(/SELECT identity_id, display_name, hat, user_id FROM identities/.test(R));
-    assert.ok(/staff = st\.rows\.map\(\(item\) => \(\{ id: item\.identity_id, name: item\.display_name, hat: item\.hat \|\| null, user_id: item\.user_id \|\| null \}\)\)/.test(R));
-    const sel = R.slice(R.indexOf('let staff = [];'), R.indexOf('let all = (itemRows'));
-    assert.ok(!/email|phone|mobile/i.test(sel), 'a contact column joined the staff row');
+    /* API-4d (#361) moved the staff read into readStaff(); the row it returns is the same shape */
+    assert.ok(/return found\.rows\.map\(\(item\) => \(\{ id: item\.identity_id, name: item\.display_name, hat: item\.hat \|\| null, user_id: item\.user_id \|\| null \}\)\)/.test(R));
+    const start = R.indexOf('async function readStaff(');
+    assert.ok(start > 0, 'readStaff() is where the snapshot reads the people who may stand at a counter');
+    const sel = R.slice(start, R.indexOf('\n}\n', start));
+    assert.ok(sel.length > 0 && !/email|phone|mobile/i.test(sel), 'a contact column joined the staff row');
   });
   await it('copy · the F7 panel promises PIN or first code, in words that match', () => {
     assert.ok(PAGE.includes('Picking a name asks that person for their counter PIN, or the first code from the owner.'));
