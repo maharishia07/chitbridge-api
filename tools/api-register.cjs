@@ -9,6 +9,7 @@
  *   node tools/api-register.cjs            write docs/API-REGISTER.md and docs/api-register.json
  *   node tools/api-register.cjs --check    exit 1 when either file differs from what the code says (and when the error-code table fails its own check)
  *   node tools/api-register.cjs --json F   write the register as JSON to file F (the ratchet reads base and head this way); --root <dir> runs it over another checkout
+ * Sign-offs (S15): the human columns are read from docs/api-signoffs.json, a hand file this tool never writes; docs/api-register.json only shows them.
  * API-STANDARD S15. Stage "2" adds the six hardening columns (S33-S38, API-3) to the seven of stage "1b": all thirteen are live (schema_in and schema_out from the route's OpenAPI operation and its schemaValidate check; missing_input_answer from
  * docs/contracts/api-contract-results.json, which tools/api-contract-tests.cjs writes). "meets standard" = all thirteen AND a cb-api sign-off in the json.
  */
@@ -334,15 +335,49 @@ function statusOf(columns, human) {
   return MACHINE_COLUMNS.slice(0, MACHINE_COLUMNS.length - HARDENING_COLUMNS.length).some((name) => columns[name]) ? 'partial' : 'not started';
 }
 
-/** the human columns are kept from the committed json by route key; a changed hash drops a sign-off to stale */
-function mergeHuman(rows, previous) {
+/** the sign-off hand file (route key -> human block with the hash it was signed against), or null when this checkout has none yet */
+const readSignoffs = () => readJson('docs/api-signoffs.json', null);
+
+const blankHuman = () => Object.fromEntries(HUMAN_COLUMNS.map((name) => [name, null]));
+
+/** a hand-file entry as the human block of a row: signed while its hash is the row's hash, stale (date null, stale_since = the row's hash) once the code moved; the entry itself is never touched */
+function humanFromEntry(entry, row) {
+  const { hash, ...block } = entry;
+  const human = Object.assign(blankHuman(), block);
+  return hash === row.hash ? human : Object.assign(human, { signed_off_by_date: null, stale_since: row.hash });
+}
+
+/** the human columns come from docs/api-signoffs.json by route key (S15); a base checkout with no hand file yet falls back to the committed register's blocks (removed in the next api PR) */
+function mergeHuman(rows, previous, signoffs) {
+  if (signoffs) {
+    rows.forEach((row) => {
+      const entry = signoffs.routes && signoffs.routes[row.key];
+      row.human = entry ? humanFromEntry(entry, row) : blankHuman();
+      row.status = statusOf(row.columns, row.human);
+    });
+    return;
+  }
+  console.log('docs/api-signoffs.json not found: human columns taken from the committed docs/api-register.json (fallback until the hand file lands)');
   const before = new Map((previous.routes || []).map((row) => [row.key, row]));
   rows.forEach((row) => {
     const old = before.get(row.key);
-    const human = old && old.human ? old.human : Object.fromEntries(HUMAN_COLUMNS.map((name) => [name, null]));
+    const human = old && old.human ? old.human : blankHuman();
     const stale = !!(human.signed_off_by_date && old.hash !== row.hash);
     row.human = stale ? Object.assign({}, human, { signed_off_by_date: null, stale_since: row.hash }) : human;
     row.status = statusOf(row.columns, row.human);
+  });
+}
+
+/** hand-file problems for --check: an entry whose key no route has (a rename is a fresh sign-off, never a carry), or with no hash or no date */
+function signoffProblems(signoffs, rows) {
+  if (!signoffs) return [];
+  const keys = new Set(rows.map((row) => row.key));
+  return Object.entries(signoffs.routes || {}).flatMap(([key, entry]) => {
+    const found = [];
+    if (!keys.has(key)) found.push('docs/api-signoffs.json: "' + key + '" is not a route of the app (a rename needs a fresh sign-off, not a carried one): delete the entry');
+    if (!entry || !entry.hash) found.push('docs/api-signoffs.json: "' + key + '" has no hash');
+    if (!entry || !entry.signed_off_by_date) found.push('docs/api-signoffs.json: "' + key + '" has no signed_off_by_date');
+    return found;
   });
 }
 
@@ -361,7 +396,7 @@ function buildRegister() {
     .filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path))
     .map((leaf) => rowOf(leaf, context))
     .sort((left, right) => (left.key < right.key ? -1 : 1));
-  mergeHuman(rows, readJson('docs/api-register.json', {}));
+  mergeHuman(rows, readJson('docs/api-register.json', {}), readSignoffs());
   return { version: 1, stage: STAGE, counts: countsOf(rows), machine_columns: MACHINE_COLUMNS, human_columns: HUMAN_COLUMNS, routes: rows };
 }
 
@@ -392,7 +427,7 @@ function renderMarkdown(register) {
     '',
     '**API standard: ' + counts.meets + ' of ' + counts.routes + ' meet** - partial ' + counts.partial + ' - not started ' + counts.not_started + '.',
     '',
-    'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs live in `docs/api-register.json`.',
+    'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
     '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
@@ -419,7 +454,7 @@ function check(register) {
   const unsaid = unclassifiedMoney(register.routes, hardeningScope()).map((key) => key + ' looks like a money write but is in neither list of docs/contracts/api-hardening-scope.json (money_writes or money_reviewed_not)');
   const overrides = evidenceOverrides(readJson('docs/contracts/api-hardening-results.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
   if (overrides.length) console.log(overrides.length + ' column(s) proved by an area test where the generated case failed (review each):\n  ' + overrides.join('\n  '));
-  return problems.concat(codes.problems, unsaid);
+  return problems.concat(codes.problems, unsaid, signoffProblems(readSignoffs(), register.routes));
 }
 
 /** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
@@ -442,4 +477,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { mergeHuman, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
