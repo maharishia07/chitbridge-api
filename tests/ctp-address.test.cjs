@@ -147,6 +147,45 @@ function loadAddress(dbStub) {
     });
   }
 
+  /* ── RAIL-142 (c): THE LIFT (CTP-DESIGN §10) — one row flips, invalidate(), and the same party is now remote ── */
+  {
+    let lifted = false;
+    let reads = 0;
+    const stub = {
+      query: async (sql, args) => {
+        if (/FROM installation/i.test(sql)) {
+          reads++;
+          return { rows: [
+            { installation_key: 'platform-0', ctp_endpoint: null, region: 'IN', active: true, hosted_locally: true },
+            { installation_key: 'platform-ae', ctp_endpoint: lifted ? 'https://ae.example/ctp' : null, region: 'AE', active: true, hosted_locally: !lifted },
+          ] };
+        }
+        if (/ops\.f_installation_of/.test(sql)) return { rows: [{ installation_key: args[0] === 'dubai-shop' ? 'platform-ae' : 'platform-0' }] };
+        return { rows: [] };
+      },
+    };
+    const A = loadAddress(stub);
+    await okAsync('before the lift: a party stamped on platform-ae is here (it is hosted here)', async () => {
+      const a = await A.resolve('dubai-shop');
+      assert.strictEqual(a.local, true, JSON.stringify(a));
+    });
+    lifted = true; /* the one row changes: hosted_locally false, an endpoint */
+    await okAsync('within the memo, the flip is not seen yet (why invalidate exists)', async () => {
+      assert.strictEqual((await A.resolve('dubai-shop')).local, true);
+    });
+    A.invalidate();
+    await okAsync('after invalidate(): the SAME party resolves remote, at the new endpoint', async () => {
+      const a = await A.resolve('dubai-shop');
+      assert.strictEqual(a.local, false, JSON.stringify(a));
+      assert.strictEqual(a.endpoint, 'https://ae.example/ctp');
+    });
+    await okAsync('…and nothing else changed: a party on platform-0 is still here, and no extra read per party', async () => {
+      const before = reads;
+      assert.strictEqual((await A.resolve('india-shop')).local, true);
+      assert.strictEqual(reads, before, 'the topology is one memoised read, not one per party');
+    });
+  }
+
   /* ── RAIL-142 (b): a switched-off installation, or a stamp naming none, is not "here" ─────────────────────── */
   {
     const stub = {
