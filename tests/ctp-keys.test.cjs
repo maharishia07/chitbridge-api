@@ -95,6 +95,44 @@ try {
     if (saved === undefined) delete process.env.CTP_PRIVATE_KEY; else process.env.CTP_PRIVATE_KEY = saved;
     keys._reset();
   }
+
+  /* RAIL-142 (h) · Q19: what the far end says, and where it lives, never inside the sentence the shopkeeper reads */
+  const realFetch = global.fetch;
+  const sendTo = async (fetchStub) => {
+    process.env.CTP_PRIVATE_KEY = keys.generate().CTP_PRIVATE_KEY;
+    keys._reset();
+    global.fetch = fetchStub;
+    const transport = require(path.join(API, 'lib', 'ctptransport'));
+    return transport.send('https://8.8.8.8/api/ctp/deliver', { chit_id: 'c1', from: {}, to: {}, header: {}, lines: [] });
+  };
+  const cases = [
+    ['a far refusal is our sentence, with their words in far_why (text, capped)', async () => {
+      const out = await sendTo(async () => ({ ok: false, status: 403, json: async () => ({ accepted: false, why: '<img src=x onerror=alert(1)>' + 'x'.repeat(5000) }) }));
+      assert.strictEqual(out.why, 'the far installation refused this chit');
+      assert.strictEqual(out.far_why.length, 300);
+      assert.strictEqual(out.status, 403);
+    }],
+    ['a far why that is not text is not quoted at all', async () => {
+      const out = await sendTo(async () => ({ ok: false, status: 400, json: async () => ({ why: { nested: 'object' } }) }));
+      assert.strictEqual(out.far_why, null);
+    }],
+    ['an unreachable far end names no url and no error text', async () => {
+      const out = await sendTo(async () => { throw new Error('getaddrinfo ENOTFOUND 8.8.8.8 <b>'); });
+      assert.strictEqual(out.why, 'the far installation could not be reached — nothing was sent');
+    }],
+    ['an accepted copy still says accepted', async () => {
+      const out = await sendTo(async () => ({ ok: true, status: 200, json: async () => ({ accepted: true }) }));
+      assert.strictEqual(out.accepted, true);
+      assert.strictEqual(out.why, 'accepted');
+    }],
+  ];
+  for (const [label, fn] of cases) {
+    try { await fn(); pass++; console.log('   ok   ' + label); }
+    catch (e) { fail++; console.log('   FAIL ' + label + '\n          ' + e.message); }
+  }
+  global.fetch = realFetch;
+  if (saved === undefined) delete process.env.CTP_PRIVATE_KEY; else process.env.CTP_PRIVATE_KEY = saved;
+  keys._reset();
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();
