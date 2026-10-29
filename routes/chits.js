@@ -2514,9 +2514,9 @@ async function sendAnswer(st, req, res) {
     summary: summary_json,
     /* ⚠ present only when something is wrong, so a caller can treat its absence as silence rather than as
        a claim that the number was checked and approved. */
-    ...(number_check ? { number_check } : {}),
+    number_check: number_check || undefined,
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
-    ...(oneSided ? { one_sided: oneSided } : {})
+    one_sided: oneSided || undefined
   });
 
   /**
@@ -3673,13 +3673,16 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
 
     const ids = Array.isArray(req.body.line_ids) ? req.body.line_ids.filter((x) => /^[0-9a-f-]{36}$/i.test(x)) : null;
     const opts = { line_ids: ids, only_unpriced: !!req.body.only_unpriced };
-    if (req.body.preview) return res.json(await reprice.plan(entity_id, chit_id, opts));
-    res.json(
-      await reprice.apply(entity_id, chit_id, opts, {
-        actor_id: req.identity.identity_id,
-        actor_name: req.identity.display_name
-      })
-    );
+    /* S34: lib/reprice plan() answers the first five keys; apply() adds `applied` (how many amendments it wrote) */
+    if (req.body.preview) {
+      const plan = await reprice.plan(entity_id, chit_id, opts);
+      return res.json({ has_catalogue: plan.has_catalogue, will_price: plan.will_price, needs_price: plan.needs_price, unchanged: plan.unchanged, totals: plan.totals });
+    }
+    const done = await reprice.apply(entity_id, chit_id, opts, {
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
+    res.json({ has_catalogue: done.has_catalogue, will_price: done.will_price, needs_price: done.needs_price, unchanged: done.unchanged, totals: done.totals, applied: done.applied });
   } catch (err) {
     cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Reprice failed'));
@@ -3702,12 +3705,11 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
     const chit_id = req.params.chit_id;
     const held = await holdsCopy(entity_id, chit_id);
     if (!held) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
-    res.json(
-      await cost.record(entity_id, chit_id, req.body.rows || req.body, {
-        actor_id: req.identity.identity_id,
-        actor_name: req.identity.display_name
-      })
-    );
+    const recorded = await cost.record(entity_id, chit_id, req.body.rows || req.body, {
+      actor_id: req.identity.identity_id,
+      actor_name: req.identity.display_name
+    });
+    res.json({ costs: recorded.costs });
   } catch (err) {
     cbLog.error('chits/costs record failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, faultOf(err, req, 'Failed to record cost'));
@@ -3721,7 +3723,8 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
     const permitted = await cost.canRead(req, entity_id);
     const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
     if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: 'Cost is not migrated on this environment (b145).' }, 'CHIT_NOT_MIGRATED') });
-    res.json(out);
+    /* S34: the owner's answer holds the totals; a worker's holds only the rows (mine_only), and mixed_currency appears only when two currencies were summed */
+    res.json({ costs: out.costs, mine_only: out.mine_only, can_see_totals: out.can_see_totals, by_kind: out.by_kind, by_currency: out.by_currency, invoiced: out.invoiced, currency: out.currency, spent: out.spent, margin: out.margin, margin_pct: out.margin_pct, mixed_currency: out.mixed_currency });
   } catch (err) {
     cbLog.error('chits/costs read failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
     problem(req, res, failed(err, req, 'Failed to read costs'));
@@ -3769,14 +3772,13 @@ router.get('/register/subjects', auth, ...checked('GET /register/subjects'), asy
 
 router.post('/register/subjects', auth, ...checked('POST /register/subjects'), async (req, res) => {
   try {
-    res.json(
-      await raida.subjectFor(entityId(req), {
-        type_key: req.body.type_key,
-        ref_id: req.body.ref_id,
-        ref_label: req.body.ref_label,
-        name: req.body.name
-      })
-    );
+    const subject = await raida.subjectFor(entityId(req), {
+      type_key: req.body.type_key,
+      ref_id: req.body.ref_id,
+      ref_label: req.body.ref_label,
+      name: req.body.name
+    });
+    res.json({ subject_id: subject.subject_id, closed_at: subject.closed_at });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to open the register', { words: true }));
   }
@@ -3788,7 +3790,8 @@ router.post('/register/subjects', auth, ...checked('POST /register/subjects'), a
  */
 router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
-    res.json(await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name }));
+    const closed = await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name });
+    res.json({ closed: closed.closed, at: closed.at, migrated: closed.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Cannot close yet', { words: true, extra: err.outstanding ? { outstanding: err.outstanding } : undefined }));
   }
@@ -3808,7 +3811,8 @@ router.get('/register/templates', auth, async (req, res) => {
 
 router.post('/register/templates', auth, ...checked('POST /register/templates'), async (req, res) => {
   try {
-    res.json(await raida.addTemplate(entityId(req), req.body || {}));
+    const added = await raida.addTemplate(entityId(req), req.body || {});
+    res.json({ template_id: added.template_id, migrated: added.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to save it', { words: true }));
   }
@@ -3828,16 +3832,16 @@ router.post('/register/templates', auth, ...checked('POST /register/templates'),
  */
 router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
-    res.json(
-      await raida.add(
-        entityId(req),
-        null,
-        Object.assign({}, req.body, {
-          subject_id: req.params.subject_id,
-          by_name: req.identity.display_name
-        })
-      )
+    const made = await raida.add(
+      entityId(req),
+      null,
+      Object.assign({}, req.body, {
+        subject_id: req.params.subject_id,
+        by_name: req.identity.display_name
+      })
     );
+    /* S34: an entry as lib/raida add() answers it; subject_id and standards only on a b185 register */
+    res.json({ raida_id: made.raida_id, at: made.at, kind: made.kind, subject_id: made.subject_id, standards: made.standards, migrated: made.migrated, full: made.full });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
   }
@@ -3851,7 +3855,9 @@ router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /re
  */
 router.post('/register/entries/:raida_id/close', auth, ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
-    res.json(await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    const ended = await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
+    /* S34: an ending as lib/raida close() answers it; disposition only on a b185 register */
+    res.json({ closed: ended.closed, closing_row: ended.closing_row, disposition: ended.disposition, at: ended.at, migrated: ended.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
   }
@@ -3859,7 +3865,9 @@ router.post('/register/entries/:raida_id/close', auth, ...checked('POST /registe
 
 router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
-    res.json(await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth }));
+    const walked = await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth });
+    /* S34: lib/impact walk() answers hops · depth_reached · truncated · backwards; a register not on this environment answers hops [] and migrated false */
+    res.json({ hops: walked.hops, depth_reached: walked.depth_reached, truncated: walked.truncated, backwards: walked.backwards, migrated: walked.migrated });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to walk it'));
   }
@@ -3868,7 +3876,8 @@ router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'),
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
 router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
-    res.json(await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name })));
+    const revised = await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
+    res.json({ revised: revised.revised, revision: revised.revision, changed: revised.changed, migrated: revised.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to revise it', { words: true }));
   }
@@ -3877,14 +3886,13 @@ router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /regist
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
 router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
-    res.json(
-      await raida.accept(entityId(req), req.params.raida_id, {
-        accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
-        authority_level: req.body.authority_level,
-        rationale: req.body.rationale,
-        review_by: req.body.review_by
-      })
-    );
+    const accepted = await raida.accept(entityId(req), req.params.raida_id, {
+      accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
+      authority_level: req.body.authority_level,
+      rationale: req.body.rationale,
+      review_by: req.body.review_by
+    });
+    res.json({ acceptance_id: accepted.acceptance_id, at: accepted.at, entry_severity: accepted.entry_severity, migrated: accepted.migrated });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to record the acceptance', { words: true }));
   }
@@ -3921,7 +3929,9 @@ router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (re
     const entity_id = entityId(req);
     /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
     const line_id = req.query.line_id ? String(req.query.line_id) : undefined;
-    res.json(await raida.list(entity_id, req.params.chit_id, line_id));
+    const listed = await raida.list(entity_id, req.params.chit_id, line_id);
+    /* S34: entries · open · closed come from the fold (absent when the register is not on this environment: migrated false); full says which column set was read */
+    res.json({ entries: listed.entries, open: listed.open, closed: listed.closed, migrated: listed.migrated, full: listed.full });
   } catch (err) {
     console.error('Raida read error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to read the register'));
@@ -3974,7 +3984,7 @@ router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (
         db
       });
     });
-    res.json(out);
+    res.json({ raida_id: out.raida_id, at: out.at, kind: out.kind, subject_id: out.subject_id, standards: out.standards, migrated: out.migrated, full: out.full });
   } catch (err) {
     console.error('Raida add error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to record it', { words: true }));
@@ -3989,8 +3999,9 @@ router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
        them every close of a full register answered 400 "An ending needs a disposition" (cap-worklist sends { body, disposition }) */
     const { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash } = req.body || {};
-    res.json(await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
-      { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name }));
+    const ended = await raida.close(entityId(req), req.params.chit_id, req.params.raida_id,
+      { body, disposition, carried_to_subject_id, evidence_ref, evidence_hash, by_name: req.identity.display_name });
+    res.json({ closed: ended.closed, closing_row: ended.closing_row, disposition: ended.disposition, at: ended.at, migrated: ended.migrated });
   } catch (err) {
     console.error('Raida close error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to close it', { words: true }));
@@ -4005,7 +4016,8 @@ router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/
  */
 router.post('/:chit_id/raida/:raida_id/dispute', auth, ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
-    res.json(await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id));
+    const linked = await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id);
+    res.json({ raida_id: linked.raida_id, dispute_id: linked.dispute_id, migrated: linked.migrated });
   } catch (err) {
     console.error('Raida dispute link error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to link the dispute', { words: true }));
@@ -4031,12 +4043,17 @@ router.get('/:chit_id/use', auth, ...checked('GET /:chit_id/use'), async (req, r
     if (!taxCopy.billReceived(copy, entity_id))
       return problem(req, res, { status: 409, ...said({ error: 'Not a bill', message: 'Only a bill you received says what its goods are for' }, 'CHIT_NOT_A_BILL') });
     const eff = await require('../lib/bill-use').forCopy(entity_id, copy);
-    res.json(
-      Object.assign(
-        { chit_id: req.params.chit_id, status: copy.current_status, changeable: railActions.BUCKETS.open.includes(String(copy.current_status || '')) },
-        eff
-      )
-    );
+    /* S34: bill · lines · uses are always there; asset_class and put_to_use only when the buyer chose them (lib/bill-use effective) */
+    res.json({
+      chit_id: req.params.chit_id,
+      status: copy.current_status,
+      changeable: railActions.BUCKETS.open.includes(String(copy.current_status || '')),
+      bill: eff.bill,
+      lines: eff.lines,
+      uses: eff.uses,
+      asset_class: eff.asset_class,
+      put_to_use: eff.put_to_use
+    });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -4045,7 +4062,8 @@ router.put('/:chit_id/use', auth, ...checked('PUT /:chit_id/use'), async (req, r
   try {
     const r = await require('../lib/bill-use').set(entityId(req), req.params.chit_id, req.body || {}, { name: req.identity && req.identity.display_name });
     if (!r.ok) return problem(req, res, { status: r.status || 400, ...said({ error: 'Not saved', message: r.message }, codeOfStatus(r.status || 400)) });
-    res.json(r);
+    /* S34: lib/bill-use set() answers ok · use · effective, and party when a supplier was named */
+    res.json({ ok: r.ok, use: r.use, effective: r.effective, party: r.party });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed'));
   }
@@ -4083,12 +4101,13 @@ router.post('/:chit_id/deliver-lines', auth, ...checked('POST /:chit_id/deliver-
       private: _bill
     });
     /* H6 — a replay of rows already recorded is answered with the first result and does not announce, advance or accept again */
-    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ ...out, replayed: true });
+    if (out.delivered.length && out.delivered.every((row) => row.replayed)) return res.json({ delivered: out.delivered, replayed: true });
     await deliverAnnounce(req, entity_id, chit_id, out, _mineCopy, _bill);
     await deliverProgress(entity_id, chit_id, out);
     await goodsInAccept(req, entity_id, chit_id, out);
     if (useSaid) out.use = useSaid.ok ? useSaid.use : { refused: useSaid.message };
-    res.json(out);
+    /* S34: delivered from the library, then what each step wrote on it in its order: step · progress · summary · accepted · use */
+    res.json({ delivered: out.delivered, step: out.step, progress: out.progress, summary: out.summary, accepted: out.accepted, use: out.use });
   } catch (err) {
     /* RAIL-133: a library's own 400 ('quantity must be a non-zero number') reaches the person; a fault still says the safe sentence, and faultOf logs it */
     problem(req, res, faultOf(err, req, 'Failed to record delivery', { words: true }));
@@ -4278,7 +4297,7 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
       cbLog.fellBack('chits assign-lines: the history line was not written — the assignment stands without it', e);
     }
 
-    res.json(out);
+    res.json({ assignments: out.assignments });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Failed to assign', { words: true })); /* RAIL-133: the library's own 400 reaches the person */
   }
@@ -4362,7 +4381,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
       .filter((item) => item.was && item.now && norm(item.was) !== norm(item.now))
       .map((item) => ({ amendment_id: item.amendment_id, term: item.was, means: item.now }));
 
-    res.json({ ...out, ...(candidates.length ? { synonym_candidates: candidates } : {}) });
+    res.json({ amendments: out.amendments, synonym_candidates: candidates.length ? candidates : undefined });
   } catch (err) {
     /**
      * ⚠️ A CHECK-CONSTRAINT VIOLATION IS NOT AN INTERNAL FAILURE, AND REPORTING IT AS ONE COST THREE ROUNDS OF
@@ -4405,6 +4424,12 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
 //
 // ⚠️ READS THE CATALOGUE, WRITES NOTHING TO IT. Standing rule since the raise path: a message never creates a
 // product. Here it does not create one either — a human picks from what exists, or types free text.
+/** S34: the three keys the overlay adds only when the matcher could not pick one item: ambiguous (how many answer to the name), candidates (the shortlist), unmatched (why); each undefined, so absent, otherwise */
+function overlayPicks(found, shortlist) {
+  if (!found) return {};
+  return { ambiguous: found.ambiguous ? found.matches : undefined, candidates: found.ambiguous || found.variant_unspecified ? shortlist(found) : undefined, unmatched: found.unmatched ? found.reason : undefined };
+}
+
 router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalogue-overlay'), async (req, res) => {
   try {
     const entity_id = entityId(req);
@@ -4455,7 +4480,7 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
         .filter(Boolean);
 
     const m = q ? itemmatch.match(q, req.query.comment || '', cat) : null;
-    const nq = itemmatch.norm(q);
+    const nq = itemmatch.norm(q), picks = overlayPicks(m, shortlist);
     const items = (
       nq
         ? cat.items.filter(
@@ -4487,10 +4512,10 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
          "matches 2 catalogue lines", leaving the person to hunt those two out of a 200-row picker themselves. The
          matcher knew which two; it just did not say. `shortlist()` shapes them exactly like every other pickable
          row, so the picker renders one kind of thing whether it is a shortlist or the whole catalogue. */
-      ...(m && m.ambiguous ? { ambiguous: m.matches, candidates: shortlist(m) } : {}),
+      ambiguous: picks.ambiguous,
       /* Same treatment for "the catalogue has grades and you named none" — one picker, two causes. */
-      ...(m && m.variant_unspecified ? { candidates: shortlist(m) } : {}),
-      ...(m && m.unmatched ? { unmatched: m.reason } : {})
+      candidates: picks.candidates,
+      unmatched: picks.unmatched
     });
   } catch (err) {
     console.error('Catalogue overlay error:', err.message);
