@@ -75,7 +75,16 @@
   "GET /api/chits/register/subjects": {
    "output_allowlist": true
   },
+  "POST /api/chits/register/subjects": {
+   "output_allowlist": true
+  },
   "GET /api/chits/register/templates": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/templates": {
+   "output_allowlist": true
+  },
+  "POST /api/chits/register/subjects/:subject_id/entries": {
    "output_allowlist": true
   },
   "GET /api/chits/register/walk/:from": {
@@ -92,6 +101,9 @@
   },
   "POST /api/chits/:chit_id/raida": {
    "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "output_allowlist": true
   },
   "GET /api/chits/:chit_id/use": {
    "foreign_id_404": true
@@ -243,7 +255,16 @@
   "GET /api/till/snapshot": {
    "output_allowlist": true
   },
+  "POST /api/till/stock": {
+   "output_allowlist": true
+  },
+  "POST /api/till/stock/bulk": {
+   "output_allowlist": true
+  },
   "POST /api/till/state": {
+   "output_allowlist": true
+  },
+  "POST /api/till/flags": {
    "output_allowlist": true
   },
   "GET /api/till/counters": {
@@ -258,8 +279,20 @@
   "GET /api/till/worth-an-offer": {
    "output_allowlist": true
   },
+  "POST /api/till/price": {
+   "output_allowlist": true
+  },
   "POST /api/till/rate": {
    "strict_input": true
+  },
+  "GET /api/till/reward": {
+   "output_allowlist": true
+  },
+  "POST /api/till/reward": {
+   "output_allowlist": true
+  },
+  "POST /api/till/reward/claim": {
+   "output_allowlist": true
   },
   "POST /api/till/pair": {
    "output_allowlist": true
@@ -292,6 +325,9 @@
    "output_allowlist": true
   },
   "GET /api/till/match": {
+   "output_allowlist": true
+  },
+  "POST /api/till/alias": {
    "output_allowlist": true
   },
   "POST /api/till/listen": {
@@ -500,6 +536,9 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/products/status/bulk": {
+   "output_allowlist": true
+  },
   "GET /api/products/workbook.xlsx": {
    "output_allowlist": true
   },
@@ -509,7 +548,16 @@
   "GET /api/products/template": {
    "output_allowlist": true
   },
+  "POST /api/products/import/preflight": {
+   "output_allowlist": true
+  },
+  "POST /api/products/import": {
+   "output_allowlist": true
+  },
   "GET /api/products/starter-columns": {
+   "output_allowlist": true
+  },
+  "POST /api/products/starter-columns": {
    "output_allowlist": true
   },
   "PATCH /api/products/:id": {
@@ -524,9 +572,18 @@
   "POST /api/products/availability/bulk": {
    "output_allowlist": true
   },
+  "PUT /api/products/:id/availability": {
+   "output_allowlist": true
+  },
+  "PUT /api/products/:id/status": {
+   "output_allowlist": true
+  },
   "DELETE /api/products/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/products/:id/media": {
+   "output_allowlist": true
   },
   "DELETE /api/products/:id/media/:mid": {
    "output_allowlist": true,
@@ -541,7 +598,13 @@
   "POST /api/governance/conformance": {
    "output_allowlist": true
   },
+  "GET /api/governance/boilerplate/:key": {
+   "output_allowlist": true
+  },
   "POST /api/governance/boilerplate/:key/adopt": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/source/:key": {
    "output_allowlist": true
   },
   "GET /api/governance/readiness": {
@@ -584,6 +647,18 @@
    "output_allowlist": true
   },
   "GET /api/governance/readiness/:bridge_id": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/compliance": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/verify": {
+   "output_allowlist": true
+  },
+  "POST /api/governance/supplier-acceptance": {
+   "output_allowlist": true
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
    "output_allowlist": true
   },
   "GET /api/attachments/:id": {
@@ -684,6 +759,9 @@
   "GET /api/assist/whoami": {
    "output_allowlist": true
   },
+  "POST /api/testing/cases/close": {
+   "output_allowlist": true
+  },
   "POST /api/testing/trace": {
    "output_allowlist": true
   },
@@ -696,6 +774,9 @@
   "GET /api/testing/cases": {
    "output_allowlist": true
   },
+  "POST /api/testing/cases/import": {
+   "output_allowlist": true
+  },
   "GET /api/testing/engine": {
    "output_allowlist": true
   },
@@ -705,7 +786,16 @@
   "GET /api/testing/cmdb": {
    "output_allowlist": true
   },
+  "GET /api/testing/cmdb/:ci": {
+   "output_allowlist": true
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "output_allowlist": true
+  },
   "POST /api/testing/cmdb/seed": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/results": {
    "output_allowlist": true
   },
   "GET /api/testing/results": {
@@ -714,13 +804,34 @@
   "GET /api/testing/runs": {
    "output_allowlist": true
   },
+  "POST /api/testing/results/junit": {
+   "output_allowlist": true
+  },
   "GET /api/testing/cases/gherkin": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/cases/gherkin": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/requirements": {
    "output_allowlist": true
   },
   "GET /api/testing/requirements": {
    "output_allowlist": true
   },
+  "PATCH /api/testing/requirements/:id": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/incidents": {
+   "output_allowlist": true
+  },
   "GET /api/testing/incidents": {
+   "output_allowlist": true
+  },
+  "PATCH /api/testing/incidents/:id": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/evidence": {
    "output_allowlist": true
   },
   "GET /api/testing/stale": {
@@ -735,7 +846,13 @@
   "GET /api/testing/reliability": {
    "output_allowlist": true
   },
+  "POST /api/testing/changes": {
+   "output_allowlist": true
+  },
   "GET /api/testing/changes": {
+   "output_allowlist": true
+  },
+  "POST /api/testing/releases": {
    "output_allowlist": true
   },
   "GET /api/testing/releases": {
