@@ -4,8 +4,8 @@
  "counts": {
   "routes": 634,
   "not_started": 35,
-  "partial": 573,
-  "meets": 26,
+  "partial": 538,
+  "meets": 61,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -557,11 +557,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4684ff50ad88ec07"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/crm/groups/:name",
@@ -609,11 +608,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7001297d46e5ab68"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/crm/parties/:id",
@@ -661,11 +659,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f4d14e5eef58c55b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/definitions/:id",
@@ -711,13 +708,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/folders/:id",
@@ -915,11 +912,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "65c79891d0d65e2b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/products/:id/media/:mid",
@@ -966,11 +962,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4b7298a6835be858"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "DELETE /api/products/:id/schedule/:sid",
@@ -1415,11 +1410,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8c0f3b62f8a5d36a"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/actors/check-login",
@@ -1506,11 +1500,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "67ab400b5c2716dc"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/adopt/:chit_id",
@@ -1601,11 +1594,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0c2c7c81bc7f741b"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/catalogue-source/:key",
@@ -1888,11 +1880,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "081cd5e34de055c2"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/questions",
@@ -1982,11 +1973,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1bf6dc5f485082e6"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/assist/resolve",
@@ -3783,13 +3773,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/capture/pending",
@@ -3972,11 +3962,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ee712191c3c054d0"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/catalogue/:bridge_id",
@@ -5060,11 +5049,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7f93cf1c14e1278e"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/folder",
@@ -5110,11 +5098,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "572705a3b3d06594"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/inbox",
@@ -5160,11 +5147,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "045a326ed39e1c35"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/pulse",
@@ -5257,11 +5243,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "aa60ca38a2849a85"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/register/attachables",
@@ -5306,11 +5291,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6c723ef8908ee772"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/register/subjects",
@@ -5356,11 +5340,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "211750c4fabb452d"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/register/templates",
@@ -5405,11 +5388,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "077c4a340f489f7d"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/register/walk/:from",
@@ -5505,11 +5487,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6263db31de91eae7"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/sent",
@@ -5555,11 +5536,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c4148c7638d93022"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/trace/batches",
@@ -5605,11 +5585,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e4d84f8cefe1d1a4"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/trace/by-batch",
@@ -5656,11 +5635,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f15e538c4e88a8b4"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/trace/networks",
@@ -5705,11 +5683,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8f9238406a761e84"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/chits/unread",
@@ -5754,11 +5731,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1524b1fea6fa0ce1"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/combo-templates",
@@ -6203,11 +6179,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "13508e79399781eb"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/followups",
@@ -6254,11 +6229,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b0ff2a933d7638b5"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties",
@@ -6305,11 +6279,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c875fc097db090de"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id",
@@ -6357,11 +6330,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "79a5f828e3213138"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id/contact-prefs",
@@ -6409,11 +6381,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e66b014ff4cfc9a3"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/parties/:id/timeline",
@@ -6461,11 +6432,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6cbf9daf9774ff55"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/privacy-requests",
@@ -6512,11 +6482,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "136ea55e4853f93d"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/crm/segments",
@@ -6562,11 +6531,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1f991ac5f33714b8"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/ctp/.well-known/ctp.json",
@@ -6800,11 +6768,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "30f43a715550a15a"
+    "signed_off_by_date": "cb-api 2026-10-29 PR#XXX stage2 (B6 batch 1)",
+    "lifecycle": "stable"
    },
-   "status": "partial"
+   "status": "meets standard"
   },
   {
    "key": "GET /api/entities/header",
