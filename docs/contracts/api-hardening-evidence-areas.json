@@ -276,6 +276,12 @@
   "GET /api/till/quick-keys/screen-config": {
    "output_allowlist": true
   },
+  "GET /api/till/quick-keys/state": {
+   "output_allowlist": true
+  },
+  "GET /api/till/reward": {
+   "output_allowlist": true
+  },
   "GET /api/till/screens": {
    "output_allowlist": true
   },
@@ -415,10 +421,49 @@
   "POST /api/repeat/:id/skip": {
    "foreign_id_404": true
   },
+  "POST /api/till/alias": {
+   "output_allowlist": true
+  },
+  "POST /api/till/catalogue": {
+   "output_allowlist": true
+  },
+  "POST /api/till/close": {
+   "output_allowlist": true
+  },
+  "POST /api/till/diagnostic": {
+   "output_allowlist": true
+  },
+  "POST /api/till/enrol": {
+   "output_allowlist": true
+  },
+  "POST /api/till/flags": {
+   "output_allowlist": true
+  },
   "POST /api/till/listen": {
    "output_allowlist": true
   },
+  "POST /api/till/offer-item": {
+   "output_allowlist": true
+  },
   "POST /api/till/pair": {
+   "output_allowlist": true
+  },
+  "POST /api/till/pair/claim": {
+   "output_allowlist": true
+  },
+  "POST /api/till/price": {
+   "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/hide": {
+   "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/state": {
+   "output_allowlist": true
+  },
+  "POST /api/till/quick-keys/unhide": {
    "output_allowlist": true
   },
   "POST /api/till/rate": {
@@ -427,10 +472,28 @@
   "POST /api/till/reconcile": {
    "output_allowlist": true
   },
+  "POST /api/till/reward": {
+   "output_allowlist": true
+  },
+  "POST /api/till/reward/claim": {
+   "output_allowlist": true
+  },
+  "POST /api/till/screens/rename": {
+   "output_allowlist": true
+  },
+  "POST /api/till/screens/revoke": {
+   "output_allowlist": true
+  },
   "POST /api/till/shop": {
    "output_allowlist": true
   },
   "POST /api/till/state": {
+   "output_allowlist": true
+  },
+  "POST /api/till/stock": {
+   "output_allowlist": true
+  },
+  "POST /api/till/stock/bulk": {
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
