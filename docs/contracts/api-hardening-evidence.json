@@ -835,6 +835,9 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/definitions/freeze": {
+   "output_allowlist": true
+  },
   "GET /api/tax/invoice/:chit_id": {
    "output_allowlist": true,
    "foreign_id_404": true
