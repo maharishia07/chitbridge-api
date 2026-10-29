@@ -127,6 +127,48 @@ function checkFrozenFiveHundreds(recording, legacy) {
   return frozen.length;
 }
 
+/* the routes this file's API-8 sweep closed (2026-10-29); the other assist shapes predate the sweep and are judged in their own pass */
+const SWEPT = ['GET /catalogue-mine', 'GET /penetration', 'GET /regions'].map((key) => key.replace(' /', ' ' + MOUNT + '/'));
+/**
+ * output_allowlist in the shop's own world (API-8, S34), as tests/api-problem-entities.test.cjs: the generator's stand-in database cannot reach catalogue-mine's rows (it answers 503), so here every
+ * swept route whose 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and the allow-list filter drops
+ * nothing from it: a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  const proved = {};
+  const operations = contractModule().OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  SWEPT.forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the swept routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => SWEPT.includes(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write the swept routes' output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  SWEPT.filter((route) => routes[route]).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 /* ── the foreign-id world (API-STANDARD S35): shop B asks for shop A's record by its id ── */
 const BRAND_ROW = { source_key: 'brand-x@v1', version: 'v1', for_vertical: null, title: 'T', collection: 'C', schema: {}, items: [{ name: 'Tussar', combinations: [] }], commercials_fields: [], owner_entity_id: scenes.OTHER, experience: {}, formatting: {}, pending: null };
 const CONTAINER_ROW = { container_id: 'a/b', owner_entity_id: scenes.OTHER, source_key: 's', name: 'N', current_version: 1 };
@@ -199,14 +241,20 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   const judged = coverage;
+  const allowed200 = checkAllowList(recording);
   if (lab.argv.includes('--write')) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, judged);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    writeAllowList(allowed200);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/assist.js', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
+    /* the area test writes this file (--write) and the register reads it: it is committed with the sweep, and checked exactly (laptop1, 29 Oct) */
+    const claimed = Object.keys(allowListEvidenceOnDisk()).sort();
+    const held = Object.keys(allowed200).filter((route) => allowed200[route]).sort();
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the swept routes whose 200 held closed here', sameValue(claimed, held), { claimed, held });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

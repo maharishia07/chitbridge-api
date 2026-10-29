@@ -35,6 +35,7 @@ const GUARDS = [
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
   'endpoint-usage.test.cjs', // janitor (23 Oct): the wide endpoint run: a comment is no call, a dynamic segment meets only a :param, a bucket follows its best evidence
   'till-vendor.test.js', // the counter and its vendored engines agree, byte for byte
+  'amend-live-set.test.cjs', // RAIL-128: b138 liveSet / liveLines / shape check (scripts/prove-amend.js), pure, no DB
   'till-who-signin.test.cjs', // R132: a picked name carries who they are (PIN or first code, never "type your ID"), the refusal names what to use, one PIN ask, no "connect to a shop" under a signed-in box
   't3-fixes.test.cjs', // T3-FIXES: one cost gate on every price write · each received batch its own lot · profile writes the shop · sign-in keeps the constitution
   'till-rcv-batches.test.cjs', // STK-FIX1b: at the till a second scanned batch of the same product is its own receiving line (rcvLineFor), never merged onto line 1
@@ -42,6 +43,7 @@ const GUARDS = [
   'shop-clock-guard.test.cjs', // ⭐⭐ Y1: one shop clock — no raw new Date()/Date.now() in the ledger files; set/advance/reset proven
   'natdef-guard.test.cjs', // ⭐ T2-NATDEF: zero `|| 'INR'` / `|| 'IN'` (lib · routes · till master); one date reader (books-engines ymd · addDays), NOW labels allow-listed
   'shop-day-tz.test.cjs', // ⭐⭐ M210: a midnight sale lands in the SHOP's day on every server clock, before and after b299; Sydney across DST
+  'line-rules.test.cjs', // RAIL-133 (e): the line-model rules that had none — a delivery row's check, progress arithmetic (mine is the headline, other units beside, adds never delivered, pending ≥ 0, agree/divergent/unacknowledged), an assignment's check and bounds, a person's done ≠ the events' done
   'till-t2a.test.cjs', // round T2a: bills-only count, an online order billed, the mode menu, no 403 on quick-keys/hidden
   'till-fix2.test.cjs', // ⭐ TILL-FIX2 (review H5 M6 L4): a reward queued behind its bill and carried by a renumber · one series lock, no duplicate number · the close's last SALE by series number
   'till-shippable.test.cjs', // the installable till carries only modules with no database behind them
@@ -75,6 +77,7 @@ const GUARDS = [
   'counter-gates.test.cjs', // ⭐⭐⭐ ONE door to a shop (becomeShop), ONE for a person (sign-in, offline PIN), lock/break = that sign-in
   /* ⚠️ "A GUARD NOBODY RUNS" (BACKLOG, 2026-09-18) — the suite ran it, the gate never did. Added 2026-09-28. */
   'tdz-guard.test.js', // no const/let read above its declaration in the same function (node -c cannot see a TDZ)
+  'gorilla-lib.test.cjs', // the gorilla generator: one seed is one run, one record replays alone, every failure carries its replay line (COLUMN-13 §4a)
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
@@ -83,6 +86,7 @@ const GUARDS = [
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   'ctp-ssrf-guard.test.cjs', // SEC-80: CTP outbound fetches refuse non-https and any private, loopback, link-local or CGNAT address (DNS stubbed)
+  'mint-ctp-refusal.test.cjs', // RAIL-129: a refused crossing or a crossing draft is a 409 in words (lib/knownerr), the far end's why never in the sentence, nothing local written
   'products-safe-errors.test.cjs', // SEC-83: products.js sends no raw error text; a 5xx 'Bad status' gets the safeErr line
   /* ⚠️ both red since b250/b262/b264 and outside the gate — accepted with docs/drafts/fk_b250_b262_b264_draft.sql waiting (2026-09-28) */
   'chit-status-check.test.cjs', // b773's CHECK list equals the rail's status list (DB-72)
@@ -443,6 +447,9 @@ const GUARDS = [
   'till-t2c.test.cjs',
   /* QA (24 Oct): two landed walk fixes no runner reached - R14 a party's phone and e-mail are kept or refused in words; R58 the shop's sales offer never cuts a supplier's receipt */
   'party-contact-patch.test.cjs',
+  /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
+  'party-merge-target.test.cjs',
+  'party-merge-guard-sql.test.cjs',
   'r58-no-sales-offer-on-receipt.test.js'
 ];
 
