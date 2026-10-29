@@ -519,6 +519,15 @@
   },
   "POST /api/connectors/:actorId/regenerate-key": {
    "foreign_id_404": true
+  },
+  "DELETE /api/definitions/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/definitions/:id": {
+   "foreign_id_404": true
+  },
+  "PUT /api/definitions/:id": {
+   "foreign_id_404": true
   }
  }
 }

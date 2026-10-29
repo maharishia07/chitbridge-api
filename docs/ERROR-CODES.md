@@ -117,6 +117,13 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
+| DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Your saved offers, slabs and models are not set up here yet. | Try again after the next update. | definitions | 2026-10-23 |
+| DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
+| DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
+| DEFINITION_INCOMPLETE | 422 | Rule has no value | This rule has no value yet, so it would do nothing. | Fill in the value, then save again. | definitions | 2026-10-23 |
+| DEFINITION_NAME_TAKEN | 409 | Name already used | You already have one of this kind with that name. | Choose another name. | definitions | 2026-10-23 |
+| DEFINITION_TAKEOVER_NOT_LIVE | 400 | Slab cannot take over | The slab chosen to take over is not a live slab here. | Choose one of your live slabs. | definitions | 2026-10-23 |
+| DEFINITION_TAKEOVER_SAME | 400 | Same slab chosen | The slab chosen to take over is the one being retired. | Choose a different slab. | definitions | 2026-10-23 |
 | DEVICE_MISMATCH | 401 | Device mismatch | PENDING | - | auth | 2026-10-22 |
 | DEVICE_REVOKED | 401/403 | Device revoked | PENDING | - | person-session | 2026-10-22 |
 | DEVICE_TO_REFUSED | 403 | Device may not send there | A device can send only to its own shop and the shop’s own customers or suppliers. | Send to one of those, or leave the recipient out. | connectors | 2026-10-22 |
@@ -253,7 +260,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_SUCH_NETWORK | 400/404 | No such network | There is no network store by that name. | Check the link you were given. | catalogue | 2026-10-22 |
 | NO_TEMPLATE | varies | No template | PENDING | - | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | PENDING | - | marketing-results | 2026-10-22 |
-| OFFER_CLASH | 409 | Offer clash | PENDING | - | offer-clash | 2026-10-22 |
+| OFFER_CLASH | 409 | Offer clash | Another live offer already covers some of the same items. | Pause the other offer, or take those items out of this one. | offer-clash | 2026-10-22 |
 | OFFLINE | varies | Offline | PENDING | - | verdict | 2026-10-22 |
 | OK | varies | Ok | PENDING | - | crm-groups | 2026-10-22 |
 | ORIGIN_NOT_ALLOWED | 403 | Origin not allowed | This address is not allowed to call the service. | Use the shop app, or ask us to allow your address. | platform | 2026-10-22 |

@@ -53514,6 +53514,1078 @@
      }
     }
    ]
+  },
+  "DELETE /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "retire-a-governed-slab",
+     "status": 403,
+     "body_keys": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     },
+     "fixture": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     }
+    },
+    {
+     "scenario": "retire-a-slab-that-is-cited",
+     "status": 409,
+     "body_keys": {
+      "error": "cited",
+      "products": 3,
+      "categories": 3,
+      "message": "3 product(s) and 3 categories cite this slab. Pick the slab that takes over, or they lose their rate."
+     },
+     "fixture": {
+      "error": "cited",
+      "products": 3,
+      "categories": 3,
+      "message": "3 product(s) and 3 categories cite this slab. Pick the slab that takes over, or they lose their rate."
+     }
+    },
+    {
+     "scenario": "retire-takeover-is-the-same-slab",
+     "status": 400,
+     "body_keys": {
+      "error": "same",
+      "message": "The takeover slab is the one being retired."
+     },
+     "fixture": {
+      "error": "same",
+      "message": "The takeover slab is the one being retired."
+     }
+    },
+    {
+     "scenario": "retire-takeover-is-not-a-live-slab",
+     "status": 400,
+     "body_keys": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     },
+     "fixture": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     }
+    },
+    {
+     "scenario": "retire-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "retire-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "retire-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "retire-takeover-given-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     },
+     "fixture": {
+      "error": "no_takeover",
+      "message": "The takeover slab is not a live slab here."
+     }
+    },
+    {
+     "scenario": "retire-guard-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/definitions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "list-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "read-one-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "read-one-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "read-one-history-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/definitions": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-kind-only",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-only",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-both-blank",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-both-null",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-kind-is-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "kind",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       },
+       {
+        "field": "name",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-offer-without-its-percent",
+     "status": 422,
+     "body_keys": {
+      "error": "Incomplete rule",
+      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+     },
+     "fixture": {
+      "error": "Incomplete rule",
+      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+     }
+    },
+    {
+     "scenario": "create-offer-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "create-name-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     },
+     "fixture": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     }
+    },
+    {
+     "scenario": "create-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "create-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-version-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-clash-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "create-rule-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/definitions/freeze": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-nothing-sent",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-ids-are-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-ids-are-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-body-is-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "definition_ids",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "freeze-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "freeze-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "freeze-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "freeze-governed-read-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "PUT /api/definitions/:id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "save-a-governed-slab",
+     "status": 403,
+     "body_keys": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     },
+     "fixture": {
+      "error": "Governed",
+      "message": "This slab is declared by the jurisdiction and cannot be edited or retired here. To differ from it, declare a slab of your own."
+     }
+    },
+    {
+     "scenario": "save-incomplete-slab",
+     "status": 422,
+     "body_keys": {
+      "error": "Incomplete rule",
+      "message": "The rate is needed (0 for a zero-rated slab)."
+     },
+     "fixture": {
+      "error": "Incomplete rule",
+      "message": "The rate is needed (0 for a zero-rated slab)."
+     }
+    },
+    {
+     "scenario": "save-offer-clash",
+     "status": 409,
+     "body_keys": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Offer clash",
+      "code": "OFFER_CLASH",
+      "message": "This offer overlaps \"Flat 10\" on the same items. An item takes one discount at a time — pause \"Flat 10\", or take those items out of this offer.",
+      "clashes": [
+       {
+        "definition_id": "33333333-3333-4333-8333-333333333333",
+        "name": "Flat 10",
+        "items": []
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "save-name-taken",
+     "status": 409,
+     "body_keys": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     },
+     "fixture": {
+      "error": "Name taken",
+      "message": "You already have a definition of this kind with that name."
+     }
+    },
+    {
+     "scenario": "save-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     },
+     "fixture": {
+      "error": "Not provisioned",
+      "message": "Definitions need migration b160. Ask the operator to run it."
+     }
+    },
+    {
+     "scenario": "save-id-is-not-a-uuid",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-update-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-clash-check-throws",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

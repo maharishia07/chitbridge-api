@@ -14109,6 +14109,368 @@
         "url": "/api/connectors/reissue-code",
         "body": {}
       }
+    },
+    "DELETE /api/definitions/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "retired",
+          "moved"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "retired": {
+            "type": "boolean"
+          },
+          "moved": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "moved",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/definitions/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/definitions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "definitions",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "definition_id",
+                "entity_id",
+                "kind",
+                "sub_kind",
+                "name",
+                "note",
+                "status",
+                "current_version",
+                "created_at",
+                "updated_at",
+                "rules"
+              ],
+              "properties": {
+                "definition_id": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "sub_kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "type": "string"
+                },
+                "note": {},
+                "status": {
+                  "type": "string"
+                },
+                "current_version": {
+                  "type": "number"
+                },
+                "created_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "updated_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "created_by": {
+                  "type": "string"
+                },
+                "rules": {
+                  "type": "object",
+                  "properties": {
+                    "percent": {
+                      "type": "number"
+                    },
+                    "rate": {
+                      "type": "number"
+                    },
+                    "cess": {
+                      "type": "number"
+                    },
+                    "effective_from": {},
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "hsn": {},
+                    "count": {},
+                    "governed_why": {},
+                    "rows": {},
+                    "PAGE_DEFAULT": {}
+                  },
+                  "additionalProperties": false
+                },
+                "version_at": {
+                  "type": "string"
+                },
+                "governance": {
+                  "type": "object",
+                  "required": [
+                    "jurisdiction",
+                    "scheme",
+                    "authority"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "type": "string"
+                    },
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "authority": {},
+                    "count": {},
+                    "governed_why": {},
+                    "rows": {},
+                    "PAGE_DEFAULT": {}
+                  },
+                  "additionalProperties": false
+                },
+                "network": {
+                  "type": "object",
+                  "required": [
+                    "stores",
+                    "released",
+                    "at",
+                    "changed"
+                  ],
+                  "properties": {
+                    "stores": {
+                      "type": "number"
+                    },
+                    "released": {
+                      "type": "boolean"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "changed": {
+                      "type": "boolean"
+                    },
+                    "count": {},
+                    "governed_why": {},
+                    "rows": {},
+                    "PAGE_DEFAULT": {}
+                  },
+                  "additionalProperties": false
+                },
+                "count": {},
+                "governed_why": {},
+                "rows": {},
+                "PAGE_DEFAULT": {}
+              },
+              "additionalProperties": false
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "governed_why": {
+            "type": "string"
+          },
+          "rows": {},
+          "PAGE_DEFAULT": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 9,
+      "open": [],
+      "example": {
+        "url": "/api/definitions?kind=tax,category,offer"
+      }
+    },
+    "GET /api/definitions/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/definitions/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "POST /api/definitions": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "definition",
+          "version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "object"
+          },
+          "version": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "definition",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/definitions",
+        "body": {
+          "kind": "pricing",
+          "name": "  Carton of 6  ",
+          "note": "six to a box",
+          "rules": {
+            "qty": 6
+          }
+        }
+      }
+    },
+    "POST /api/definitions/freeze": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "frozen",
+          "missing",
+          "frozen_at"
+        ],
+        "properties": {
+          "frozen": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "missing": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "frozen_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [
+        {
+          "path": "frozen[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/definitions/freeze",
+        "body": {
+          "definition_ids": [
+            "IN-GST-18",
+            "IN-GST-99"
+          ]
+        }
+      }
+    },
+    "PUT /api/definitions/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "definition",
+          "version",
+          "new_version"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "object"
+          },
+          "version": {
+            "type": "number"
+          },
+          "new_version": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "definition",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/definitions/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "name": "Diwali"
+        }
+      }
     }
   },
   "listed": {
@@ -14341,6 +14703,11 @@
     "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/connectors/erp-ingest": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "POST /api/connectors/reissue-code": "open at (answer) — a computed key"
+    "POST /api/connectors/reissue-code": "open at (answer) — a computed key",
+    "DELETE /api/definitions/:id": "open at moved — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/definitions/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/definitions": "open at definition — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/definitions/freeze": "open at frozen[] — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/definitions/:id": "open at definition — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
