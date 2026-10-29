@@ -254,18 +254,9 @@ const isActor = (req) => !!(req.identity && req.identity.identity_type === 'acto
 const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity_id)) ? cost.costKeysPlanned : undefined);
 /** CAT-237: the stored keys a replace erases (the body leaves them out); [] for a merge (nothing else moves) or with no stored row. PATCH /:id and POST /bulk-update ask it. */
 const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
-/** CAT-234/236: deletes `cost` and every `cost_*` key at ANY depth of a value, in place (modifiers[].options[].cost, a variants block …) */
-function dropCostKeys(value) {
-  if (!value || typeof value !== 'object') return value;
-  Object.keys(value).forEach((key) => {
-    if (cost.isCostKey(key)) delete value[key];
-    else dropCostKeys(value[key]);
-  });
-  return value;
-}
 /** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
 function stripCosts(items) {
-  items.forEach((item) => item && dropCostKeys(item.item_data));
+  items.forEach((item) => item && cost.dropCostKeys(item.item_data));
   return items;
 }
 /**

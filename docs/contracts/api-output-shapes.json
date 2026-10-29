@@ -2717,6 +2717,9 @@
           "lines_from"
         ],
         "properties": {
+          "cost_hidden": {
+            "type": "boolean"
+          },
           "header": {
             "type": "object"
           },
@@ -3575,6 +3578,12 @@
           "limit"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {
@@ -3618,6 +3627,12 @@
           "next"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {
@@ -4029,7 +4044,13 @@
                   "type": "number"
                 },
                 "total_value": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "cost_hidden": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false
@@ -4059,6 +4080,12 @@
           "next"
         ],
         "properties": {
+          "cost_params_ignored": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "chits": {
             "type": "array",
             "items": {
@@ -10654,10 +10681,7 @@
           "party_id",
           "channel",
           "fulfilment",
-          "address",
           "requested_for",
-          "remark",
-          "total_minor",
           "currency",
           "lines_n",
           "lines_open_n",
@@ -10808,9 +10832,31 @@
             "items": {
               "type": "object"
             }
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "required": [
+              "address",
+              "remark",
+              "total_minor"
+            ]
+          },
+          {
+            "required": [
+              "cost_hidden"
+            ],
+            "properties": {
+              "cost_hidden": {
+                "const": true
+              }
+            }
+          }
+        ]
       },
       "observed": 10,
       "open": [

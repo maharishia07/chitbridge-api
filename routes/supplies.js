@@ -34,11 +34,8 @@ const ctx = (req) => auth.entityOf(req);
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     const list = await supplies.list(ctx(req), withEntity, { all: req.query.all === '1' });
-    /* [OFFR-04] last_cost is what the shop paid: an actor without can_see_costs does not get it */
-    if (!(await require('../lib/cost').canReadSafe(req, ctx(req))))
-      list.forEach((item) => {
-        delete item.last_cost;
-      });
+    /* [OFFR-04] last_cost is what the shop paid: an actor without can_see_costs does not get it — the ONE strip (lib/cost dropCostKeys; last_cost is on its list, RAIL-146) */
+    if (!(await require('../lib/cost').canReadSafe(req, ctx(req)))) list.forEach(require('../lib/cost').dropCostKeys);
     res.json({ supplies: list });
   } catch (e) {
     /* ⚠️ BEFORE b217 THE TABLE DOES NOT EXIST, and a screen must not break because a migration is pending */

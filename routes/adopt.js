@@ -35,6 +35,7 @@ const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const adopt = require('../lib/adopt');
 const { mintProduct } = require('../lib/mint-product');
+const cost = require('../lib/cost');
 
 const ctx = (req) => auth.entityOf(req);
 const fail = (res, e, what) => res.status(500).json({ error: what, message: safeErr(e) });
@@ -155,6 +156,8 @@ router.get('/:chit_id', auth, async (req, res) => {
     const me = await receiverOf(entity_id);
 
     const out = adopt.considerAll(chit.line_items || [], from, me, {});
+    /* [OFFR-04] seed.cost is the supplier's price to this shop: an actor without can_see_costs reads the offer without it, at any depth (the owner is untouched) */
+    if (!(await cost.canReadSafe(req, entity_id))) out.rows.forEach(cost.dropCostKeys);
     res.json({
       chit_id: chit.chit_id,
       from: { name: from.name, vertical: adopt.verticalOf(from.sectors), supply_kind: from.supply_kind || null },
