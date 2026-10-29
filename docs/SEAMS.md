@@ -165,7 +165,7 @@ of file each thing is; this says what already does the job.
 | 15 | `orders` | `home-facts.js` | the till said 2 — |
 | 15 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 15 | `report` | `raida.js` | register at the one moment it must not. |
-| 15 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 16 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 14 | `offers` | `network-app.js` |  |
