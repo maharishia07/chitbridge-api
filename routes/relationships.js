@@ -978,6 +978,18 @@ function offerMoney(amount, currency) {
   return stated ? stated + ' ' + figure : figure;
 }
 
+/**
+ * S35: has this shop a chit with the counterparty at all? A scorecard is drawn only from the chits both sides hold, so an id this shop
+ * never traded with (an unknown id, another shop's stranger, a real business it has not met) is one answer, the unknown id's 404, and says
+ * nothing of whether that business exists. The window's own rows answer it; only an empty window (since=) asks once more, without the window,
+ * so a real counterparty with nothing in the window keeps its empty card.
+ * (Kept above GET /scorecard: tests/list-paging-guard reads a route's body up to the next route, so a helper between the two would count as the list's.)
+ */
+async function tradedWith(shop, counterparty_id, since, windowRows) {
+  if (windowRows.length || !since) return windowRows.length > 0;
+  return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
+}
+
 router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -989,17 +1001,6 @@ router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) =>
     problem(req, res, failed(err, req, 'Scorecard list failed'));
   }
 });
-
-/**
- * S35: has this shop a chit with the counterparty at all? A scorecard is drawn only from the chits both sides hold, so an id this shop
- * never traded with (an unknown id, another shop's stranger, a real business it has not met) is one answer, the unknown id's 404, and says
- * nothing of whether that business exists. The window's own rows answer it; only an empty window (since=) asks once more, without the window,
- * so a real counterparty with nothing in the window keeps its empty card.
- */
-async function tradedWith(shop, counterparty_id, since, windowRows) {
-  if (windowRows.length || !since) return windowRows.length > 0;
-  return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
-}
 
 router.get('/scorecard/:entity_id', auth, ...checked('GET /scorecard/:entity_id'), async (req, res) => {
   try {
