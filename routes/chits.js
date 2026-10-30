@@ -18,6 +18,8 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
+const { moveStatus } = require('../lib/chit-move'); // the ONE status writer (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
+const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
@@ -102,30 +104,6 @@ function checked(route) {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptionsFor(route))] : [];
 }
 
-// ── B1 RLS — the crossing helper ─────────────────────────────────────────────────────────────────────────
-// A few chit operations legitimately cross the entity boundary (log an event into every/selected participant,
-// propagate a cancel/void, set the customer flag). Under RLS those are served by the b50/b51 SECURITY DEFINER
-// "delivery-agent" fns. `crossing()` runs the definer inside withEntity(caller); if the delivery layer isn't
-// applied yet (pre-b50), it runs a legacy direct-SQL fallback in its OWN transaction — so a missing-function
-// error can't poison a shared tx, and the feature keeps working before/after the migration. Under FORCE without
-// the fn the fallback fails closed (degraded, never a cross-tenant leak). Once b50 is applied the definer wins.
-// Are the b50/b51/b52 delivery-agent fns installed? Latches true once seen; keeps re-probing while false, so it
-// self-heals when the migration lands (no restart needed). A tenant-table-free probe -> the RLS guard stays silent.
-let _definersReady = false;
-async function definersReady() {
-  if (_definersReady) return true;
-  try {
-    const r = await query(
-      `SELECT (to_regprocedure('chit_deliver(uuid,boolean,jsonb)') IS NOT NULL
-           AND to_regprocedure('chit_log_targets(uuid,uuid[],text,uuid,text,text)') IS NOT NULL
-           AND to_regprocedure('chit_participant_parity(uuid,uuid)') IS NOT NULL) AS ok`
-    );
-    _definersReady = !!(r.rows[0] && r.rows[0].ok);
-  } catch (e) {
-    cbLog.fellBack('chits definersReady: the read failed — carried on without it', e); /* leave false — fall back to legacy */
-  }
-  return _definersReady;
-}
 
 /**
  * ⭐⭐ THE ONE THING A TILL KEY MAY SEND BEYOND ITSELF — the two-sided counter bill (Athi, 2026-10-01: *"naming a connected
@@ -198,13 +176,6 @@ async function folderColReady() {
   return _folderColReady;
 }
 
-async function crossing(entity, definerSql, definerParams, fallback) {
-  return await withEntity(entity, (db) => crossingIn(db, definerSql, definerParams, fallback));
-}
-/** crossing on a tx client the caller already holds, so the crossing write and the writes before it commit or roll back together */
-async function crossingIn(db, definerSql, definerParams, fallback) {
-  return (await definersReady()) ? await db.query(definerSql, definerParams) : await fallback(db);
-}
 
 // Connection check removed — existence check only
 // Sender can send to any entity that exists in the system
@@ -4792,290 +4763,6 @@ function withdrawFailure(req, res, err) {
     message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
   }, 'CHIT_CANNOT_WITHDRAW') });
 }
-/**
- * the sender's own cancel leg (T1-RAIL + H3): my SENT copy goes through the same rail gate, the sale it posted is reversed in that SAME
- * transaction (a books refusal is SAID on the answer — { refused }, never swallowed), and the withdrawal message goes to the recipients.
- * → the books' answer for the cancel (the reversal · { none } · { refused }) or undefined. A sent copy the rail will not cancel stays, said in the log.
- */
-async function cancelSentCopy(entity_id, chit_id, viewer, note, by) {
-  const hooks = require('../lib/books-hooks');
-  const sent = await withEntity(entity_id, async (db) => {
-    const gate = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', viewer, { copy: 'sent' });
-    if (!gate.ok) return gate;
-    await gate.write();
-    gate.books = await hooks.chitWithdrawnSaid(db, entity_id, chit_id, note, by.id);
-    return gate;
-  });
-  if (!sent.ok && sent.why !== 'not_received') log.warn('sent copy not cancelled', { chit_id, from: sent.from, why: sent.why });
-  await postMessageCopies({
-    chit_id,
-    sender_entity_id: entity_id,
-    sender_display_name: by.name,
-    thread_type: 'external',
-    msg_type: 'action',
-    message_text: `[cancel requested] ${note || 'The sender has cancelled and requests you cancel your copy.'}`
-  });
-  return sent.books;
-}
-/**
- * ⭐⭐ ONE TRANSITION, MANY DOORS (Athi, 2026-10-01: "one fact, three doors"). The body of PUT /:chit_id/status, lifted
- * out unchanged so that goods-in (POST /:chit_id/deliver-lines, all lines received) moves a bill to `accepted` through the
- * SAME validation, timeline row, ledger hook and cancel legs as Intake — never a second status writer.
- * → { code, body, moved?, noop? }  — the caller answers with code/body; `moved` = a status actually changed.
- */
-/** ORD-FIX O6: write the caller's OWN received copy (the gate said yes) — compare-and-set, so someone who moved it a moment ago wins; → `done` for the writer, a `conflict` stop for the loser */
-async function writeOrConflict(verdict, done) {
-  try {
-    await verdict.write();
-    return done;
-  } catch (e) {
-    if (e && e.code === 'status_conflict') return { stop: 'conflict', message: e.message };
-    throw e;
-  }
-}
-/** the first half of a status move, inside the transaction: the verdict (rail-status statusGate), the open-dispute count, the copy the freeze reads, then the write — or a marker saying why it stopped */
-/** the copy the freeze reads, or the narrow header read: one statement either way */
-async function readMoveHeader(db, chit_id, entity_id, new_status) {
-  /**
-   * ⭐ THE FREEZE'S COPY, READ HERE RATHER THAN IN ITS OWN TRANSACTION. G3 stamps the invoice when this
-   * copy reaches `completed`, and it was re-reading the very row this transaction has open — a second
-   * BEGIN · set_config · SELECT · COMMIT for chit_header, four trips to fetch what was already in hand.
-   * ⚠️ Only on `completed`; every other status takes the narrow read below and nothing more.
-   */
-  const copy = new_status === 'completed' ? await taxCopy.copyOn(db, chit_id, entity_id) : undefined;
-  /* ⚠️ AND THE NARROW READ IS THE ELSE, NOT AN EXTRA. The wide copy already carries sender_entity_id, so
-     reading chit_header twice in one transaction — which is what the first cut of this left behind — was
-     a statement spent on a column already on the row above. */
-  const header =
-    copy !== undefined
-      ? { rows: copy ? [copy] : [] }
-      : await db.query(
-          /* purpose + business_json: what lib/bill-privacy needs to know this copy is a bill (same row, same trip) */
-          `SELECT sender_entity_id, purpose, business_json FROM chit_header WHERE chit_id = $1 AND entity_id = $2`,
-          [chit_id, entity_id]
-        );
-  return { copy, header };
-}
-async function readThenWriteMove(db, press) {
-  const { entity_id, chit_id, new_status, note, checkDisputes } = press;
-  /* B1 RLS: own received-copy read — and the gate for everything below it */
-  /* ⭐ R01 — THE ENGINE DECIDES (lib/rail.js move): level → my received copy → the transition table. This route reads
-     ONLY my received copy, so "no copy" and "only the sent copy" are one answer here: not_received, said as the 404 it
-     always was. ⭐ T1-RAIL: the read, the verdict and the write are lib/rail-status statusGate — the same one every door uses. */
-  const verdict = await railStatus.statusGate(db, entity_id, chit_id, new_status, press.me);
-  const previous_status = verdict.from;
-  if (!verdict.ok && verdict.why === 'not_received') return { stop: 'missing', why: verdict.why };
-  if (!verdict.ok && verdict.why !== 'wrong_step') return { stop: 'level', why: verdict.why };
-
-  /* Idempotent: advancing to the status it is already in is a no-op success, not a 400. Fixes the
-     "Cannot move from accepted to accepted" error when a self-chit's displayed copy diverges. */
-  if (verdict.noop) return { stop: 'noop', previous_status };
-
-  if (!verdict.ok) return { stop: 'invalid', previous_status, allowed: verdict.allowed, why: verdict.why };
-
-  /* the ONE open-dispute count (lib/dispute-may openOn, W2-RAIL R2). Closing never blocks on a dispute (C1 above), so an
-     unreadable count (null, logged there) only loses the warning — delete and archive, which DO block, refuse on it. */
-  const openCount = checkDisputes ? (await disputeMay.openOn(db, chit_id)) || 0 : 0;
-  const { copy, header } = await readMoveHeader(db, chit_id, entity_id, new_status);
-  /* ⭐ FX-F10W2: REJECTING A BILL SAYS WHY (lib/workflow needsOf: reject → reason; the chit read answers actions.reject.needs). The
-     reason is the note — it goes on the chit's history. Refused before the write, said; a task keeps its own ask. */
-  if (new_status === 'rejected' && !String(note || '').trim() && FOLDER_INV.docOf(header.rows[0], entity_id) === 'bill_received')
-    return { stop: 'reason', previous_status };
-  return writeOrConflict(verdict, { previous_status, openCount, header, copy });
-}
-async function moveStatus(entity_id, chit_id, new_status, by, note, me) {
-  const action_by_id = by.id,
-    action_by_name = by.name;
-  let disputeWarning = null;
-  let booksOnCancel = null; /* H3: what the books did with a sender's cancel (the reversal, or its refusal in words) */
-  /* ⭐ R01: the transition table that lived here (validTransitions) is the rail engine's TRANSITIONS now, verbatim, and the
-         decision is rail.move — the same function GET /chits/:id answers `actions` with. `me` = railActions.meOf(req). */
-  if (!me) throw new Error('moveStatus: who is moving it (railActions.meOf(req)) is required');
-
-  // C1 (per Athi 2026-07-05): closing a DISPUTED chit (completed/cancelled) is ALLOWED, but we WARN + record WHO did it
-  // (surfaced to the UI + written to the timeline). Archive/delete still hard-block — a separate, stricter rule.
-  const _checkDisputes = ['completed', 'cancelled'].includes(new_status) && (await schema.hasTable('chit_disputes'));
-
-  const _pre = await withEntity(entity_id, (db) => readThenWriteMove(db, { entity_id, chit_id, new_status, me, note, checkDisputes: _checkDisputes }));
-
-  /* ⭐ the early returns, OUTSIDE the transaction — see the note above on why they are markers */
-  if (_pre.stop === 'missing') {
-    return { code: 404, body: { error: 'Not found', message: 'Chit not found', why: _pre.why } };
-  }
-  /* the hat gate refuses a viewer / commenter before this route runs; the engine says the same if one ever gets here */
-  if (_pre.stop === 'level') {
-    return { code: 403, body: { error: 'Not permitted', message: railActions.WHY[_pre.why], why: _pre.why } };
-  }
-  if (_pre.stop === 'noop') {
-    return { code: 200, noop: true, body: { message: `Already ${new_status}`, chit_id, status: new_status, noop: true } };
-  }
-  if (_pre.stop === 'conflict') return { code: 409, body: { error: 'Status changed', code: 'status_conflict', message: _pre.message } };
-  if (_pre.stop === 'reason') {
-    return {
-      code: 400,
-      body: {
-        error: 'Reason required',
-        code: 'reason_required',
-        message: 'Say why you are rejecting this bill — the reason goes on the bill.',
-        why: 'reason_required'
-      }
-    };
-  }
-  if (_pre.stop === 'invalid') {
-    return {
-      code: 400,
-      body: {
-        error: 'Invalid transition',
-        message: `Cannot move from ${_pre.previous_status} to ${new_status}`,
-        allowed_transitions: _pre.allowed,
-        why: _pre.why
-      }
-    };
-  }
-  const previous_status = _pre.previous_status;
-  /* ⭐ G3 — THE STAMP. `completed` freezes the invoice on MY copy (lib/tax-copy.freezeOnComplete); fails open. */
-  if (new_status === 'completed') {
-    try {
-      await taxCopy.freezeOnComplete(chit_id, entity_id, _pre.copy);
-    } catch (e) {
-      cbLog.fellBack('chits moveStatus: failed — carried on without it', e);
-    }
-  }
-  /**
-   * ⭐⭐ THE BUYER'S ACCEPTANCE REACHES THE LEDGER (Athi, 2026-10-01: "a checking mechanism in the rail to allow it to the
-   * sundry creditor"). A bill I RECEIVED posts as my purchase only once MY copy is accepted / in_progress / completed
-   * (lib/books-hooks buyerGate) — and THIS is the one transition that says so. After the commit, never awaited, never
-   * able to fail the status change; off it is one cached read. Idempotent on the chit (source_ref chit:<id>), so a
-   * second door firing the same acceptance posts nothing twice.
-   */
-  /* FX-F10W2: a rejection / cancellation reaches the books too — it never posts, and the bill's Waiting row closes as "Rejected — not posted" */
-  if (/^(accepted|in_progress|completed|rejected|cancelled)$/.test(new_status)) {
-    try {
-      const hooks = require('../lib/books-hooks');
-      setImmediate(() => hooks.afterChit(entity_id, chit_id, action_by_id));
-    } catch (e) {
-      require('../lib/logger').warn('books.hook-not-reached', {
-        entity_id,
-        chit_id,
-        status: new_status,
-        error: String((e && e.message) || e),
-        then: 'the nightly sweep posts or closes it'
-      });
-    }
-  }
-
-  if (_pre.openCount > 0) disputeWarning = `Chit closed with an OPEN dispute — by ${action_by_name}.`;
-
-  // (chit_status was updated inside the transaction above)
-
-  // One log row per participant — a CROSS-entity write, so via the b50 delivery-agent fn chit_log_all
-  // (validated: caller must be a participant). Fallback = the legacy INSERT...SELECT when b50 isn't applied.
-  const detail = (note || `Status changed from ${previous_status} to ${new_status} by ${action_by_name}`) + (disputeWarning ? ` ⚠ ${disputeWarning}` : '');
-
-  /**
-   * ⭐⭐ A BILL'S STATUS IS THE HOLDER'S OWN STEP (Athi, 2026-10-01: "goods verified and accounted are internal status, not
-   * between two shops"). On a bill copy the change is written ONCE, as a bill_step at the level of the folder that owns it
-   * (B-2100 for a bill I received, B-1300 for one I issued — internal by default, never external): my history only, or
-   * nothing. It is no longer fanned into the other shop's timeline, feed or bell. Every other chit logs as it always did.
-   */
-  const _hrow = (_pre.header && _pre.header.rows && _pre.header.rows[0]) || null;
-  if (_hrow && billPrivacy.isBill(_hrow, entity_id)) {
-    try {
-      await billPrivacy.writeStep(
-        entity_id,
-        chit_id,
-        { code: billPrivacy.ownerCode(_hrow, entity_id), step: new_status, label: billPrivacy.STATUS_LABEL[new_status] || new_status, note: note || undefined },
-        { id: action_by_id, name: action_by_name }
-      );
-    } catch (e) {
-      cbLog.fellBack('chits status: the bill step was not written — the status change stands without it', e);
-    }
-  } else
-    await crossing(
-      entity_id,
-      `SELECT chit_log_all($1,$2,$3,$4,$5,$6,$7)`,
-      [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail],
-      (db) =>
-        db.query(
-          `INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id,
-            action_by_display_name, previous_status, new_status, detail)
-           SELECT $1, entity_id, $2, $3, $4, $5, $6, $7
-           FROM (SELECT DISTINCT entity_id FROM chit_status WHERE chit_id = $1) cs`,
-          [chit_id, `status_${new_status}`, action_by_id, action_by_name, previous_status, new_status, detail]
-        )
-    );
-
-  // The header came back with the same transaction, above — read to check sender and propagate a cancel.
-  const header = _pre.header;
-
-  const isSender = header.rows.length > 0 && header.rows[0].sender_entity_id === entity_id;
-
-  // Sender cancel = a REQUEST, never a cross-entity write (Athi): the sender cancels ITS OWN copy and delivers a
-  // flagged "[cancel requested]" message to the recipients; each recipient cancels its own copy at its own will.
-  if (isSender && new_status === 'cancelled') booksOnCancel = await cancelSentCopy(entity_id, chit_id, me, note, by);
-
-  /**
-   * ⭐⭐ THE RETURN LEG (b197) — Athi, 2026-09-02: *"on cancelling the requester should be notified as well
-   * and his flag to set as cancelled, change from cancel requested to cancelled in the order copy as well."*
-   *
-   * A withdrawal without this is a request with no reply: the sender could see that they had ASKED and never
-   * that anyone AGREED. b195 answers "somebody asked me"; this answers the opposite question, which is the
-   * one the person who withdrew is actually holding.
-   *
-   * ⚠️ ONLY WHEN THIS COPY WAS ACTUALLY ASKED. A recipient may cancel for their own reasons and that is not a
-   * reply to anything — reporting it to the sender as a confirmation would credit them with an agreement
-   * nobody made. `cancel_requested_at` being set is what makes this an answer rather than a coincidence.
-   *
-   * ⚠️ WITHIN THE SENDER'S CONTEXT, NOT A NULL ONE. The b49 policy is `entity_id = NULLIF(current_setting(…),
-   * '')::uuid`, so a null context matches NOTHING and the UPDATE would write nowhere, silently — the exact
-   * mistake b195 shipped with, caught only by the end-to-end spec.
-   */
-  if (!isSender && new_status === 'cancelled') {
-    try {
-      if (await schema.hasColumn('chit_status', 'cancel_confirmed_at')) {
-        const senderId = header.rows.length ? header.rows[0].sender_entity_id : null;
-        const asked = await withEntity(entity_id, (db) =>
-          db.query(`SELECT cancel_requested_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
-        );
-        const wasAsked = !!(asked.rows[0] && asked.rows[0].cancel_requested_at);
-        if (senderId && senderId !== entity_id && wasAsked) {
-          await withEntity(senderId, (db) =>
-            db.query(
-              `UPDATE chit_status
-                    SET cancel_confirmed_at = NOW(), cancel_confirmed_by = $2
-                  WHERE chit_id = $1 AND entity_id = $3`,
-              [chit_id, action_by_name, senderId]
-            )
-          );
-          await postMessageCopies({
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: action_by_name,
-            thread_type: 'external',
-            msg_type: 'action',
-            message_text: `[cancel confirmed] ${action_by_name} has cancelled their copy.`
-          });
-        }
-      }
-    } catch (e) {
-      cbLog.fellBack('chits status: the cancel confirm was not stamped — the cancel stands without it', e);
-    }
-  }
-
-  return {
-    code: 200,
-    moved: true,
-    body: {
-      message: `Chit ${new_status}`,
-      warning: disputeWarning, // C1: set when a disputed chit was closed anyway (UI shows who + that it was open)
-      chit_id,
-      previous_status,
-      new_status,
-      ...(booksOnCancel ? { books: booksOnCancel } : {}) // H3 (only when the cancel touched the books — every other move answers as it always did): the reversal the cancel posted (entry_no · reverses), { none } when nothing was posted, { refused } in words
-    }
-  };
-}
 
 /** the answer of PUT /status: a refusal of the rail as a Problem (its old body kept), else the 200 of a move or of the no-op of a status already held; true when the status really moved */
 function answerMoved(req, res, moved) {
@@ -5186,45 +4873,6 @@ router.put(
 
 // ─── POST /chits/:chit_id/messages ───────────────────────────
 // thread_type: 'external' (all parties see) | 'internal' (sender entity only)
-// ── b67: post a message as PER-ENTITY copies via the SECURITY DEFINER deliver fn (audience computed server-side:
-//   internal → author only · external → all chit participants · dispute → the dispute roster). One logical message_id,
-//   replicated per audience entity; reads are RLS-scoped to "my own copies". Pass a tx `db` client to stay atomic.
-async function postMessageCopies(msg, db) {
-  const message_id = uuidv4();
-  // ROOT FIX (reviewer 2026-07-13): the deliver definer must run with the sender's TRUSTED context set, so it can
-  // verify the claimed sender = the caller (b50 pattern) instead of trusting the parameter. When no tx client is
-  // passed, establish withEntity(sender) here (all callers pass sender = their authenticated entity_id).
-  /* b155 — a message may name the LINE it is about. The audience is decided by the 9-arg form exactly as before;
-     the 10-arg form only stamps line_id onto the copies it created, so this cannot widen who sees anything. */
-  const args = [
-    message_id,
-    msg.chit_id,
-    msg.sender_entity_id,
-    msg.sender_display_name || null,
-    msg.thread_type,
-    msg.message_text,
-    msg.msg_type || 'info',
-    !!msg.is_dispute,
-    msg.dispute_id || null
-  ];
-  const call = (runner) => runner(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) AS created_at`, args.concat([msg.line_id || null]));
-  /* ⚠️ FALL BACK TO THE 9-ARG FORM ONLY WHEN NO LINE WAS NAMED. Code ships before the migration by standing
-     order, so between this deploy and b155 the 10-arg function does not exist (42883). Retrying without it is
-     right for a chit-level message and WRONG for a line-scoped one — that would post the message to the thread
-     while silently losing which line it was about, which is worse than refusing it. */
-  const run = async (q) => {
-    try {
-      return await call(q);
-    } catch (e) {
-      if (e && e.code === '42883' && !msg.line_id) {
-        return q(`SELECT chit_message_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9) AS created_at`, args);
-      }
-      throw e;
-    }
-  };
-  const r = db ? await run((t, p) => db.query(t, p)) : await withEntity(msg.sender_entity_id, (c) => run((t, p) => c.query(t, p)));
-  return { message_id, created_at: r.rows[0] && r.rows[0].created_at };
-}
 
 /** an EXTERNAL message's timeline line, on the tx that posted its copies: every participant's timeline (chit_log_all,
  *  validated: the caller must be a participant), or a dispute reply's roster only (chit_log_targets). Fallback = the legacy
@@ -7148,7 +6796,6 @@ router.get('/trace/networks', auth, async (req, res) => {
 });
 
 router.openapi = { paths: pathsOf(), schemas: {} };
-router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

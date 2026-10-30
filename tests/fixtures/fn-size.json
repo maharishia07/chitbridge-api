@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 224,
+  "long_functions": 223,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -384,7 +384,6 @@
       "PUT /:chit_id/status",
       "PUT /:chit_id/void",
       "chitFilters",
-      "moveStatus",
       "sendCopies",
       "sendCopyPolicy",
       "sendLegacyReceiverRows",

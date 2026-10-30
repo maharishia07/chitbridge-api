@@ -47,7 +47,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { exports: {
   const src = fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8');
   const n = (src.match(/closeDone\(entity/g) || []).length;
   ok('every end is wired: day post, day already posted, covered, late, bill-grain, day summary chit, week/month summary (>= 7 call sites)', n >= 7, 'sites ' + n);
-  ok('it goes through the route\'s moveStatus (no second status writer)', /require\('\.\.\/routes\/chits'\)\.moveStatus/.test(src) && /router\.moveStatus = moveStatus/.test(fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8')));
+  ok('it goes through lib/chit-move moveStatus (no second status writer, no route reached from lib)', /require\('\.\/chit-move'\)\.moveStatus/.test(src) && !/require\('\.\.\/routes\/chits'\)/.test(src) && /^module\.exports = \{ moveStatus \}/m.test(fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8')) && !/router\.moveStatus/.test(fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8')));
 
   console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
