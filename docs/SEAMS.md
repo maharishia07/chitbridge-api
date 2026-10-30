@@ -108,7 +108,7 @@ of file each thing is; this says what already does the job.
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 23 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 21 | `chart` | `fx-rates.js` |  |

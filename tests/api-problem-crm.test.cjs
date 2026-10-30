@@ -152,22 +152,24 @@ function checkFrozen503(recording) {
 
 /**
  * output_allowlist in the CRM's own world (API-8, S34): the generator's stand-in database answers 404 or 422 to a record read, so the routes addressed by a party id could not be proved
- * there. Here every route whose 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and
+ * there. Here every route whose success schema (its one 2xx: 200, or 201 for a write that makes a row) is closed (additionalProperties false, derived from the answers and
+ * the handler's own keys) has every recorded answer of that status fit it, and
  * the allow-list filter drops nothing from it: a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
  */
 function checkAllowList(recording) {
-  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  console.log('\n-- the closed success schemas hold every recorded success answer --');
   const proved = {};
   const operations = contractModule().OPERATIONS;
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   Object.keys(operations).sort().forEach((route) => {
-    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    const success = Object.keys(operations[route].responses).find((status) => status >= 200 && status < 300);
+    const schema = (((operations[route].responses[success] || {}).content || {})['application/json'] || {}).schema;
     if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const answers = Object.values(recording).filter((one) => one.route === route && String(one.status) === success && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
-    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    check(route + ': every recorded ' + success + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
   return proved;
@@ -271,7 +273,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
     writeAllowList(allowed200);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the CRM routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the CRM routes whose success answer held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/crm.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }

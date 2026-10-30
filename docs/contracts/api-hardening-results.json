@@ -5260,7 +5260,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": true
@@ -5277,8 +5277,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "PATCH /api/crm/followups/:id": {
@@ -5287,8 +5286,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -5319,7 +5317,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    }
   },
   "GET /api/crm/calls": {
@@ -5334,7 +5332,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
@@ -5347,8 +5345,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/crm/parties/:id/stage": {
@@ -5358,7 +5355,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    },
    "foreign_id_404": {
     "pass": false,
@@ -5372,7 +5369,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    }
   },
   "GET /api/crm/parties/:id/contact-prefs": {
@@ -5389,8 +5386,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -5407,8 +5403,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/crm/privacy-requests/:id/answer": {
@@ -5417,8 +5412,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -5436,8 +5430,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "DELETE /api/crm/groups/:name": {
@@ -5454,8 +5447,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,

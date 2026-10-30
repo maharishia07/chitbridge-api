@@ -5071,6 +5071,586 @@
         "url": "/api/crm/segments"
       }
     },
+    "PATCH /api/crm/followups/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "followup"
+        ],
+        "properties": {
+          "followup": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "followup",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/followups/10000000-0000-4000-8000-000000000021",
+        "body": {
+          "done": true
+        }
+      }
+    },
+    "POST /api/crm/followups": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "followup"
+        ],
+        "properties": {
+          "followup": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "followup",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/followups",
+        "body": {
+          "party_id": "10000000-0000-4000-8000-000000000002",
+          "what": "Ring about the quote",
+          "due_at": "2026-11-01T06:25:40.823Z"
+        }
+      }
+    },
+    "POST /api/crm/groups": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "name",
+          "added",
+          "removed",
+          "count"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "added": {
+            "type": "number"
+          },
+          "removed": {
+            "type": "number"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/crm/groups",
+        "body": {
+          "name": "Dealers",
+          "add": [
+            "10000000-0000-4000-8000-000000000004"
+          ],
+          "remove": []
+        }
+      }
+    },
+    "POST /api/crm/leads": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "party"
+        ],
+        "properties": {
+          "party": {
+            "type": "object",
+            "required": [
+              "party_id",
+              "display_name",
+              "party_no",
+              "kind",
+              "on_chitbridge",
+              "lead"
+            ],
+            "properties": {
+              "party_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "party_no": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "kind": {
+                "type": "string"
+              },
+              "on_chitbridge": {
+                "type": "boolean"
+              },
+              "lead": {
+                "type": "object",
+                "required": [
+                  "stage",
+                  "since"
+                ],
+                "properties": {
+                  "stage": {
+                    "type": "string"
+                  },
+                  "since": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/crm/leads",
+        "body": {
+          "name": "Ravi Jewellers",
+          "phone": "+91 98400 12321",
+          "stage": "demo"
+        }
+      }
+    },
+    "POST /api/crm/leads/import": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dry",
+          "added",
+          "merged",
+          "skipped",
+          "rows"
+        ],
+        "properties": {
+          "dry": {
+            "type": "boolean"
+          },
+          "added": {
+            "type": "number"
+          },
+          "merged": {
+            "type": "number"
+          },
+          "skipped": {},
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/leads/import",
+        "body": {
+          "rows": [
+            {
+              "name": "Kala Stores",
+              "phone": "+91 98400 11111"
+            }
+          ],
+          "dry": true
+        }
+      }
+    },
+    "POST /api/crm/parties/:id/contact-prefs": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "pref"
+        ],
+        "properties": {
+          "pref": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "pref",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/parties/10000000-0000-4000-8000-000000000002/contact-prefs",
+        "body": {
+          "channel": "whatsapp",
+          "purpose": "marketing",
+          "allowed": true,
+          "basis": "consent"
+        }
+      }
+    },
+    "POST /api/crm/parties/:id/interactions": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "interaction"
+        ],
+        "properties": {
+          "interaction": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "interaction",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/parties/10000000-0000-4000-8000-000000000002/interactions",
+        "body": {
+          "kind": "note",
+          "body": "Spoke at the counter"
+        }
+      }
+    },
+    "POST /api/crm/parties/:id/outcome": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "interaction",
+          "followup",
+          "stage",
+          "suggest"
+        ],
+        "properties": {
+          "interaction": {
+            "type": "object"
+          },
+          "followup": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "stage": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "suggest": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "interaction",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "followup",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "stage",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/parties/10000000-0000-4000-8000-000000000003/outcome",
+        "body": {
+          "outcome": "wrong_number"
+        }
+      }
+    },
+    "POST /api/crm/parties/:id/stage": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "party_id",
+          "lead"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "party_id": {
+            "type": "string"
+          },
+          "lead": {
+            "type": "object",
+            "required": [
+              "stage",
+              "since"
+            ],
+            "properties": {
+              "stage": {
+                "type": "string"
+              },
+              "since": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/crm/parties/10000000-0000-4000-8000-000000000003/stage",
+        "body": {
+          "stage": "trial"
+        }
+      }
+    },
+    "POST /api/crm/privacy-requests": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "properties": {
+          "request": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "request",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/privacy-requests",
+        "body": {
+          "kind": "access",
+          "who": "Lata",
+          "party_id": "10000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    "POST /api/crm/privacy-requests/:id/answer": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "request"
+        ],
+        "properties": {
+          "request": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "request",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/privacy-requests/30000000-0000-4000-8000-000000000001/answer",
+        "body": {
+          "outcome": "done",
+          "answer": "Sent the copy."
+        }
+      }
+    },
+    "POST /api/crm/segments/:key/send": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "key",
+          "send_ref",
+          "dry",
+          "channel",
+          "purpose",
+          "members",
+          "may",
+          "refused",
+          "refused_by",
+          "sent",
+          "sent_n",
+          "failed_n",
+          "refused_n"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "send_ref": {
+            "type": "string"
+          },
+          "dry": {
+            "type": "boolean"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "members": {
+            "type": "number"
+          },
+          "may": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "refused_by": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "sent": {},
+          "sent_n": {
+            "type": "number"
+          },
+          "failed_n": {
+            "type": "number"
+          },
+          "refused_n": {
+            "type": "number"
+          },
+          "refusals_logged": {},
+          "refusals_unlogged": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "refused[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "refused_by[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/crm/segments/regular/send",
+        "body": {
+          "text": "A new offer",
+          "dry": true
+        }
+      }
+    },
+    "POST /api/crm/walk-ins/add": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "party",
+          "points_claimed"
+        ],
+        "properties": {
+          "party": {
+            "type": "object",
+            "required": [
+              "party_id",
+              "user_id",
+              "display_name",
+              "party_no",
+              "kind",
+              "on_chitbridge"
+            ],
+            "properties": {
+              "party_id": {
+                "type": "string"
+              },
+              "user_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "party_no": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "kind": {
+                "type": "string"
+              },
+              "on_chitbridge": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          },
+          "points_claimed": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/crm/walk-ins/add",
+        "body": {
+          "phone": "+91 98400 55555",
+          "name": "Corner shop"
+        }
+      }
+    },
     "GET /api/entities/entitlements": {
       "status": "200",
       "schema": {
@@ -31492,6 +32072,15 @@
     "GET /api/crm/parties/:id/timeline": "open at entries[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/privacy-requests": "open at requests[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/crm/segments": "open at segments[] — a value passed through (an expression: its keys are not written in the handler); groups[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/crm/followups/:id": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/followups": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/leads/import": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/parties/:id/contact-prefs": "open at pref — a value passed through (a name: its keys are not written in the handler)",
+    "POST /api/crm/parties/:id/interactions": "open at interaction — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/parties/:id/outcome": "open at interaction — a value passed through (an expression: its keys are not written in the handler); followup — a value passed through (an expression: its keys are not written in the handler); stage — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/privacy-requests": "open at request — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/privacy-requests/:id/answer": "open at request — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/crm/segments/:key/send": "open at refused[] — a value passed through (an expression: its keys are not written in the handler); refused_by[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/definitions/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/entities/entitlements": "open at quotas — a value passed through (a name: its keys are not written in the handler); envelope — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/entities/header": "open at business — a value passed through (an expression: its keys are not written in the handler); licences[] — a value passed through (an expression: its keys are not written in the handler); trade_ready — a value passed through (an expression: its keys are not written in the handler)",
