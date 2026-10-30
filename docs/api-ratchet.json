@@ -3,18 +3,18 @@
  "stage": "2",
  "updated": "2026-10-30",
  "total": 634,
- "not_meeting": 497,
+ "not_meeting": 483,
  "codes_total": 485,
  "codes_pending": 37,
  "raw_error_writes": 3,
  "routes_without_does": 624,
  "columns_failing": {
-  "strict_input": 317,
+  "strict_input": 309,
   "output_allowlist": 237,
-  "foreign_id_404": 100,
+  "foreign_id_404": 89,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
-  "trips_budgeted": 164
+  "trips_budgeted": 163
  },
  "debt": []
 }
