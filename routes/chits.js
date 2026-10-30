@@ -1328,9 +1328,8 @@ async function sendMoney(st, req, res) {
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
 async function sendIssued(st, req, res) {
   const { currency_code, is_draft, counterBill } = st;
-  let { moneyBlock, business_json } = st;
   /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
-  if (!business_json && st.originInvoice && !is_draft) business_json = {};
+  const business_json = st.business_json || (st.originInvoice && !is_draft ? {} : st.business_json);
   /**
    * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
    * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
@@ -1347,11 +1346,12 @@ async function sendIssued(st, req, res) {
   const carried = business_json && business_json.invoice;
   /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
      counter's is checked, because only the counter computed it somewhere other than here */
-  const mapped = !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal));
-  if (mapped) moneyBlock = moneyOfInvoice(carried, currency_code);
+  const mapped = !is_draft && hasInvoiceTotal(carried);
+  Object.assign(st, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : st.moneyBlock, business_json });
   if (counterBill && mapped) await checkCounterInvoice(st);
-  Object.assign(st, { moneyBlock, business_json });
 }
+/** does this invoice carry the engine's total? (the one test before a chit's header is mapped off it) */
+const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' && !!invoice.ValDtls && Number.isFinite(Number(invoice.ValDtls.TotInvVal));
 
 /**
  * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
@@ -1363,10 +1363,10 @@ async function sendIssued(st, req, res) {
  * the books post it at the issued figures and list it as an item to address (money_unbalanced, ACC-206 B); it never disappears into the books.
  * A draft is never stopped (it is not issued). An invoice frozen before v1.74.0 carries no bridge: nothing to read, nothing to stop.
  */
-async function sendBridge(st, req, res) {
-  const { business_json, is_draft } = st;
+async function sendBridge(sendState, req, res) {
+  const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
-  const invoice = business_json.invoice || st.originInvoice;
+  const invoice = business_json.invoice || sendState.originInvoice;
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1382,7 +1382,7 @@ async function sendBridge(st, req, res) {
     });
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
-  cbLog.warn('money.override', { entity_id: st.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+  cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
 }
 
 /**

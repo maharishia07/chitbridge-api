@@ -24,7 +24,7 @@ const money = fnBody(chits, 'async function sendMoney(');
 const issued = fnBody(chits, 'async function sendIssued(');
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
-  assert.ok(/originInvoice = invoice/.test(money) && /await invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice it computed at send');
+  assert.ok(/originInvoice: invoice/.test(money) && /await sendMoneyScope\.invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice the engine answered at send (lib/send-money)');
   assert.ok(/business_json\.invoice = st\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
   assert.ok(/!business_json\.invoice && st\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
 });
@@ -34,7 +34,7 @@ ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', 
   assert.ok(/moneyOfInvoice\(carried/.test(issued));
 });
 ok('only the counter\'s invoice is checked against the server (only it was computed elsewhere)', () => {
-  assert.ok(/if \(counterBill && issuedTotal != null\)/.test(issued));
+  assert.ok(/if \(counterBill && mapped\)/.test(issued));
 });
 ok('the books read a carried invoice as it is and never recompute it', () => {
   const entry = fnBody(copy, 'async function entryFor(');

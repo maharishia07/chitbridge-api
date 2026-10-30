@@ -34,7 +34,7 @@ require.cache[dbPath] = {
   loaded: true,
   exports: { query: async () => ({ rows: [{ bridge_id: 'CB-SHOP', display_name: 'Test Shop', population: 'live' }] }), withEntity: async (id, fn) => fn({ query: async () => ({ rows: [] }) }) }
 };
-const CB = require(path.join(API, 'lib', 'counter-bill'));
+const CB = require('../lib/counter-bill');
 const inv = (total) => ({ ValDtls: { TotInvVal: total } });
 const pick = (summary_json, business_json) => CB.pickOf({ summary_json, business_json });
 const STAMPS = { money: { by: 'chits send' }, total_value: { by: 'chits send' } };
@@ -63,8 +63,8 @@ ok('a chit with no money at all → none (not applicable), agree', p.source === 
 ok('paidOf keeps its callers: money.total, else money.net, else total_value', CB.paidOf({ money: { total: 5, net: 4 } }) === 5 && CB.paidOf({ money: { net: 4 } }) === 4 && CB.paidOf({ total_value: 3 }) === 3);
 
 console.log('\n══ 2 · THE RAISE THAT REACHES US ══\n');
-const raiseticket = require(path.join(API, 'lib', 'raiseticket'));
-const notify = require(path.join(API, 'lib', 'notify'));
+const raiseticket = require('../lib/raiseticket');
+const notify = require('../lib/notify');
 const tickets = [];
 const mails = [];
 const seen = new Set();
@@ -78,7 +78,7 @@ notify.sendSupportAlert = async (to, ticket) => {
   mails.push({ to, ticket });
   return { delivered: false };
 };
-const MC = require(path.join(API, 'lib', 'money-check'));
+const MC = require('../lib/money-check'); /* a failed raise is refused in words and logged, never swallowed (503-class: the desk or the database unavailable → { raised: false, why }) */
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const header = (id) => ({ chit_id: id, summary_json: { total_value: 180, money: { total: 189 }, stamps: { money: { by: 'chits send', engine: 'tax@1.74.0', where: 'send' }, total_value: { by: 'chits send', from: 'money.total', at: 'T' } } }, business_json: { invoice: inv(189) } });
 (async () => {
@@ -88,7 +88,7 @@ const header = (id) => ({ chit_id: id, summary_json: { total_value: 180, money: 
   ok('a mismatch raises ONE ticket from the shop to the platform desk, naming a client_ref that is unique per chit and field', first.raised === true && tickets[0].t.audience === 'platform' && tickets[0].t.client_ref === 'mismatch:' + h1.chit_id + ':total' && tickets[0].from.entity_id === SHOP && tickets[0].t.severity === 'Sev-2', J(tickets[0]));
   const facts = tickets[0].t.money_mismatch;
   ok('…it names the chit, the field, EACH value with its field and WRITER, the reader that saw it, and the time', facts.chit_id === h1.chit_id && facts.reader === 'books-hooks classify' && facts.values.length === 2 && facts.values.some((v) => v.value === 180 && v.field === 'summary_json.total_value' && v.writer.by === 'chits send') && facts.values.some((v) => v.value === 189 && v.field === 'business_json.invoice.ValDtls.TotInvVal' && v.writer.by === 'tax engine') && !!facts.at, J(facts));
-  ok('…the subject reads "Figures disagree on chit …: TotInvVal 189 (tax engine) ≠ total_value 180 (chits send)"', /^Figures disagree on chit aaaaaaaa: total_value 180 \(chits send\) ≠ TotInvVal 189 \(tax engine\)$/.test(tickets[0].t.subject), tickets[0].t.subject);
+  ok('…the subject reads "Figures disagree on chit …: TotInvVal 189 (tax engine) ≠ total_value 180 (chits send)"', /^Figures disagree on chit aaaaaaaa: TotInvVal 189 \(tax engine\) ≠ total_value 180 \(chits send\)$/.test(tickets[0].t.subject), tickets[0].t.subject);
   ok('…the /health counter reads 1 and ONE mail went to SUPPORT_ALERT_TO carrying the ticket id', MC.count() === 1 && mails.length === 1 && mails[0].to === 'support@example.test' && mails[0].ticket.ticket_id === 'ticket-1' && mails[0].ticket.chit_id === h1.chit_id, J([MC.count(), mails.length]));
   const again = await MC.raise(SHOP, h1, CB.pickOf(h1), 'GET /api/chits');
   ok('a SECOND sighting of the same fault raises nothing (the database says duplicate): same count, no second mail', again.duplicate === true && MC.count() === 1 && mails.length === 1, J([again, MC.count(), mails.length]));

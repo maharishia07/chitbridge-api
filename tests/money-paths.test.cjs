@@ -144,6 +144,22 @@ app.use(express.json());
 app.use('/api/chits', require(path.join(API, 'routes', 'chits')));
 const costView = require(path.join(API, 'lib', 'cost-view'));
 
+/* ═══ 0 · lib/send-money, unit by unit (the route tests below drive it end to end) ═══ */
+const SM = require('../lib/send-money');
+{
+  const base = { purpose: 'invoice', business_json: {}, counterBill: false, orderLike: false, toIds: ['b'], line_items: [{ name: 'x', price: 1 }] };
+  const kind = (over) => SM.scopeOf(Object.assign({}, base, over)).kind;
+  ok('scopeOf: an invoice to one buyer → engine; a carried invoice → carried; a counter bill without one → none (unknown, never a sum)', kind({}) === 'engine' && kind({ business_json: { invoice: { ValDtls: {} } } }) === 'carried' && kind({ counterBill: true }) === 'none');
+  ok('scopeOf: no lines · a removed line only · an expense · several recipients → none (not applicable)', kind({ line_items: [] }) === 'none' && kind({ line_items: [{ removed: true }] }) === 'none' && kind({ purpose: 'expense' }) === 'none' && kind({ toIds: ['a', 'b'] }) === 'none');
+  ok('scopeOf: an order with several recipients is still billed (the walk-in); a captured sale (general via a channel) is billed', kind({ purpose: 'order', orderLike: true, toIds: ['a', 'b'] }) === 'engine' && kind({ purpose: 'general', business_json: { via: 'whatsapp' } }) === 'engine');
+  ok('unreadableLine: a blank is "no figure given" (fine); text where a number belongs is refused naming the line and the field', SM.unreadableLine([{ price: '' }, { price: null }, { price: '12.5' }]) === null && J(SM.unreadableLine([{ price: 1 }, { quantity: 'two' }])) === '{"line":1,"field":"quantity"}');
+  ok('stopOf: a bridge that balanced, or an invoice from before v1.74.0 (no bridge), is not a stop — nothing to refuse', SM.stopOf({ _cb: { bridge: { ok: true } } }) === null && SM.stopOf({ _cb: {} }) === null && SM.stopOf(null) === null);
+  const stop = SM.stopOf({ _cb: { bridge: { ok: false, step: 'tax', unexplained_minor: 7, words: 'Does not add up at tax', steps: [{ name: 'gross', amount_minor: 100 }, { name: 'total', amount_minor: 107 }] } } });
+  ok('stopOf: refused in the engine own words — step, amount, gross and total READ off its steps (nothing worked out here)', stop.step === 'tax' && stop.unexplained_minor === 7 && stop.gross_minor === 100 && stop.total_minor === 107, J(stop));
+  const stamps = SM.stampsOf('2026-10-30T00:00:00Z', 'send');
+  ok('stampsOf: names the writer of each figure and the engine pin it came from', stamps.money.by === 'chits send' && /^tax@[0-9]/.test(stamps.money.engine) && stamps.money.where === 'send' && stamps.total_value.from === 'money.total', J(stamps));
+}
+
 let PORT = 0;
 let N = 0;
 /** one send through the real route; returns the answer and the copies the route handed to the definer */

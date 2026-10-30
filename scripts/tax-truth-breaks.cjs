@@ -45,11 +45,11 @@ const BREAKS = [
   [
     'tax-truth',
     'routes/chits.js',
-    '      total: m.total,',
-    '      total: m.net,',
+    '  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.total,',
+    '  return { gross: m.gross, savings: m.savings, net: m.net, taxable: m.taxable, tax: m.tax, total: m.net,',
     "the header's total is taken from a field the engine did not name total"
   ],
-  ['tax-truth', 'routes/chits.js', '  summary.total_value = moneyBlock && Number.isFinite(Number(moneyBlock.total)) ? moneyBlock.total : null;', '  summary.total_value = moneyBlock ? moneyBlock.net : null;', 'the stored total is the net before tax, not the engine total'],
+  ['tax-truth', 'routes/chits.js', '      if (issuedTotal != null) summary.total_value = issuedTotal;', '', 'the stored total is the sum of line nets'],
   [
     'tax-truth',
     'lib/tax-copy.js',
