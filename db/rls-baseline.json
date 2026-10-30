@@ -524,9 +524,9 @@
    "app_reads": true
   },
   "governance_exceptions": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
+   "rls": true,
+   "forced": true,
+   "policies": 1,
    "app_reads": true,
    "class": "entity",
    "why": "entity_id; one insert, set under the new shop (b778)",
