@@ -103,7 +103,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   const s4 = await q('GET', '/year/' + FY + '/status');
   ok('no-ABN shop: no return_open (it files no BAS); months_open is what stops it', !returnOpen(s4.body) && s4.body.refusals.some((r) => r.name === 'months_open'), JSON.stringify(s4.body.refusals));
   const per4 = await q('GET', '/periods?fy=' + FY);
-  ok('no-ABN shop: no month carries a return key', per4.body.periods.length === 13 && per4.body.periods.every((p) => !('return' in p)));
+  ok('no-ABN shop: no month carries a return field', per4.body.periods.length === 13 && per4.body.periods.every((p) => !('return' in p)));
   srv.close();
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
