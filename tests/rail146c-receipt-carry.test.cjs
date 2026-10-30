@@ -152,6 +152,17 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
     assert.deepStrictEqual(keys.filter((k) => /total|amount|price|money|cost$|commercial|trace|governed|clearances|number_check|offers/.test(k)), [], raw);
     assert.ok(r.body.chit_id && r.body.summary && r.body.summary.line_item_count === 1, 'the fixed keys stay: ' + raw);
   });
+  await it('RAIL-149c (a): a blind sender with a WRONG number still hears why (number_check ok:false + reason), and no money rides along', async () => {
+    const { hideSendAnswer } = require(path.join(API, 'lib', 'cost-write.js'));
+    const answer = { message: 'sent', chit_id: ORDER, number_check: { ok: false, reason: 'number already used', verified: false, number: 'PO-17' },
+      summary: { line_item_count: 1, currency_code: 'INR', money: { net: STORED, total: STORED }, total_value: STORED, commercial: { terms: 'net 30' } } };
+    const out = hideSendAnswer('[]', answer);
+    const raw = JSON.stringify(out);
+    assert.deepStrictEqual(out.number_check, { ok: false, reason: 'number already used', verified: false, number: 'PO-17' }, raw);
+    assert.strictEqual(out.cost_hidden, true, raw);
+    assert.ok(!/4242|net 30|money|total_value|commercial/.test(raw), raw);
+    assert.strictEqual(hideSendAnswer(null, answer), answer, 'not carried: the answer is the same object');
+  });
   await it('the owner send answer is as it was: no cost_hidden', async () => {
     const r = await send(OWNER, receipt([hiddenLine({ price: TRIED })], { commercial: { price_basis: 'ex works' } }));
     assert.strictEqual(r.status, 200, JSON.stringify(r.body));

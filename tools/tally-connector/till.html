@@ -22194,7 +22194,7 @@ function rcvHiddenSum(){
 }
 /** the rate cell of a receive line: the input, or the word "hidden" when the server withheld this order's money (RAIL-146c) */
 function rcvRateCell(line, position){
-  if (RCV.hidden) return '<span class="u" data-testid="rcv-rate-hidden-' + position + '">hidden</span>';
+  if (RCV.hidden) return '<span class="u" data-testid="rcv-rate-veiled-' + position + '">hidden</span>';
   return '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (line.rate == null ? '' : line.rate) + '" data-testid="rcv-rate-' + position + '" onchange="rcvSet(' + position + ',\'rate\',this.value)">';
 }
 function rcvBlank(){ return { task:null, vendor:'', vendor_party:null, vendor_state:'', bill_no:'', bill_date:'', bill_total:null,
