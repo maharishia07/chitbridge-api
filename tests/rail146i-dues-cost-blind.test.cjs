@@ -41,6 +41,7 @@ function partOne() {
   t('R5 | terms with no supplier side come back as they are (same reference)', (() => { const x = { customer: { credit_days: 15, credit_limit_minor: 50000 } }; return DV.blindTerms(x) === x; })(), true);
   t('hideParty | a party with dues null and no terms.supplier is unchanged', DV.hideParty({ party_id: 'p', dues: null, terms: {} }), { party_id: 'p', dues: null, terms: {} });
   t('hideParty | a party without a dues key gains none', DV.hideParty({ party_id: 'p' }), { party_id: 'p' });
+  t('hideParties | options without blind (or none) leave the rows as they are; blind hides each', [DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], undefined)[0].dues.balance_minor, DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], { blind: false })[0].dues.balance_minor, DV.hideParties([{ dues: { side: 'supplier', balance_minor: 1 } }], { blind: true })[0].dues], [1, 1, { side: 'supplier', balance_minor: null, cost_hidden: true }]);
   const page = { currency: 'INR', asOf: '2026-10-30', parties: [
     { party_id: 'b', name: 'Zed Both', side: 'both', balance_minor: SECRET.both_sup, disputed_minor: 0, buckets: { not_due: SECRET.both_sup }, oldest_due: '2026-10-01' },
     { party_id: 'c', name: 'Ravi', side: 'customer', balance_minor: 118000, disputed_minor: 0, buckets: { not_due: 118000 }, oldest_due: '2026-09-15' },
@@ -103,6 +104,11 @@ async function partCrm() {
   noLeak('blind actor | record: the supplier and the both-sides party', [money(bOne.body), money(bBoth.body)]);
   t('blind actor | the record keeps the rest of the row (name, roles, may, relationship key)', [bOne.body.display_name, bOne.body.roles, typeof bOne.body.may, 'relationship' in bOne.body], ['Anand', { customer: false, supplier: true }, 'object', true]);
 
+  /* the permission read fails CLOSED: no can_see_costs row (the column missing before b145, or the read down) reads as blind */
+  D.pre = async (sql) => (/SELECT can_see_costs FROM identities/.test(sql) ? { rows: [] } : null);
+  const closed = await stub.get('/parties/' + SUP);
+  t('fail-closed | no can_see_costs row (column missing / read down): the supplier is hidden, 200 not a refusal', [closed.status, closed.body.dues.balance_minor, closed.body.dues.cost_hidden], [200, null, true]);
+  D.pre = async (sql) => { if (/SELECT can_see_costs FROM identities/.test(sql)) { flagReads++; return { rows: [{ can_see_costs: flag }] }; } return null; };
   D.ledgerOn = false; flag = false;
   const off = await stub.get('/parties/' + SUP);
   t('blind actor | ledger off: dues stays null (no object invented), terms.supplier limit still hidden', [off.body.dues, off.body.terms.supplier.credit_limit_minor], [null, null]);
