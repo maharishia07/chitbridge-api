@@ -560,13 +560,18 @@
   "POST /api/crm/leads": {
    "output_allowlist": true
   },
+  "POST /api/crm/leads/import": {
+   "output_allowlist": true
+  },
   "POST /api/crm/privacy-requests": {
    "output_allowlist": true
   },
   "POST /api/crm/privacy-requests/:id/answer": {
+   "foreign_id_404": true,
    "output_allowlist": true
   },
   "POST /api/crm/segments/:key/send": {
+   "foreign_id_404": true,
    "output_allowlist": true
   },
   "POST /api/crm/walk-ins/add": {

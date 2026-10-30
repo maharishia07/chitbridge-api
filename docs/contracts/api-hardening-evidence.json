@@ -1013,15 +1013,18 @@
    "output_allowlist": true
   },
   "POST /api/crm/parties/:id/interactions": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
   "POST /api/crm/followups": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/crm/followups/:id": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -1029,17 +1032,31 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/crm/leads": {
+   "strict_input": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
   },
+  "POST /api/crm/parties/:id/outcome": {
+   "strict_input": true
+  },
   "POST /api/crm/leads/import": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/crm/parties/:id/stage": {
+   "strict_input": true
+  },
+  "POST /api/crm/walk-ins/add": {
+   "strict_input": true
   },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/contact-prefs": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -1047,15 +1064,18 @@
    "output_allowlist": true
   },
   "POST /api/crm/privacy-requests": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/crm/privacy-requests/:id/answer": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/crm/segments": {
    "output_allowlist": true
   },
   "POST /api/crm/groups": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
@@ -1063,6 +1083,7 @@
    "foreign_id_404": true
   },
   "POST /api/crm/segments/:key/send": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/marketing/came-back": {
