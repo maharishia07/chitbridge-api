@@ -79,7 +79,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('…no India word anywhere in the answer', !/challan|cpin|cgst/i.test(JSON.stringify(r.body)), JSON.stringify(r.body));
   const closeId = r.body.entry_id;
   eq('…the entry: Dr 2200 GST collected 30.00 · Cr GST paid 30.00, dated the quarter end, narrated as the pack says', [linesOf(AU, closeId), String(entryOf(AU, closeId).posting_date).slice(0, 10), entryOf(AU, closeId).narration],
-    [[['2200', 3000, 0], [codeOfRole(AU, 'gst_paid'), 0, 3000]], '2026-09-30', 'GST set-off 2026-27 Q1 (Jul–Sep 2026)']);
+    [[['2200', 3000, 0], [codeOfRole(AU, 'gst_paid'), 0, 3000]], '2026-09-30', 'GST set-off FY27 Q1 (Jul–Sep 2026)']);
   const again = await q('POST', '/gst/close', { period: '2026-Q1', client_ref: 'c2' });
   ok('closing Q1 again is the SAME entry (duplicate: true), with the figures', again.status === 200 && again.body.duplicate === true && again.body.entry_id === closeId && again.body.pay_total_minor === 7000, JSON.stringify(again.body));
 
