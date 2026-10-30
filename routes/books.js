@@ -914,12 +914,13 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       }
       return Array.from(rows.values()).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
-    res.json(
-      Object.assign(
-        { currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0) },
-        payables ? { payables } : {}
-      )
+    const answer = Object.assign(
+      { currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0) },
+      payables ? { payables } : {}
     );
+    /* RAIL-146i: ONE can_see_costs read; an actor without it sees no supplier-side money (lib/dues-view R1-R6) — the owner's bytes are untouched */
+    const blind = await require('../lib/cost').isCostBlind(req, e);
+    res.json(blind ? require('../lib/dues-view').blindDuesAnswer(answer) : answer);
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
