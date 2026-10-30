@@ -57,7 +57,7 @@ require.cache[schemaPath] = { id: schemaPath, filename: schemaPath, loaded: true
   exports: { hasColumn: async () => true, has: async () => true, hasTable: async () => true, columns: async () => [], table: async () => ({}) } };
 
 const keys = require(path.join(API, 'lib', 'api-keys'));
-const counters = require(path.join(API, 'routes', 'counters'));
+const counters = require(path.join(API, 'lib', 'counters-store'));
 const docs = require(path.join(API, 'routes', 'identity-docs'));
 const { holderOf, tillClaimOf } = require(path.join(API, 'lib', 'holder'));
 

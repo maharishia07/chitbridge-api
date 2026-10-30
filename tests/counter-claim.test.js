@@ -27,7 +27,7 @@
 const assert = require('assert'), fs = require('fs'), path = require('path');
 
 const API = path.join(__dirname, '..');
-const COUNTERS = fs.readFileSync(path.join(API, 'routes', 'counters.js'), 'utf8');
+const COUNTERS = fs.readFileSync(path.join(API, 'lib', 'counters-store.js'), 'utf8');
 const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
 const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
 
@@ -36,7 +36,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 
 /** the body of the one shared claim */
 const CLAIM = (function () {
-  const at = COUNTERS.indexOf('router.claim = async');
+  const at = COUNTERS.indexOf('const claim = async');
   assert.ok(at > 0, 'counters.claim is gone — this guard is measuring nothing');
   const end = COUNTERS.indexOf('module.exports', at);
   return COUNTERS.slice(at, end > 0 ? end : COUNTERS.length);
@@ -84,7 +84,7 @@ it('enrol claims, and never mints on its own', () => {
   const at = TILL.indexOf("router.post('/enrol'");
   assert.ok(at > 0, 'the enrol route is gone');
   const body = TILL.slice(at, TILL.indexOf('\n});', at));
-  assert.ok(/require\('\.\/counters'\)\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
+  assert.ok(/require\('\.\.\/lib\/counters-store'\)\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
   assert.ok(!/keys\.mint\(/.test(body), 'enrol still mints its own key');
   assert.ok(/claimed\.status !== 200/.test(body), 'enrol does not relay the refusal');
 });

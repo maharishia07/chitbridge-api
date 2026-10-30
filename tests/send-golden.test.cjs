@@ -73,7 +73,7 @@ const F = require(path.join(API, 'lib', 'finance-terms'));
 const realCredit = F.creditSaleCheck;
 F.creditSaleCheck = async (eid, bj) => (h.state.ctx.over ? { over: true, party_id: CUST, limit_minor: 1000, owed_minor: 900, after_minor: 1500 } : realCredit(eid, bj));
 F.noteOverride = async (...a) => { h.note('credit.noteOverride', a); };
-require(path.join(API, 'routes', 'counters')).noteBill = async (...a) => { h.note('counters.noteBill', a); };
+require(path.join(API, 'lib', 'counters-store')).noteBill = async (...a) => { h.note('counters.noteBill', a); };
 
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 

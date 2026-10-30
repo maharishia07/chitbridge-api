@@ -150,7 +150,7 @@ const DIAG_HEARD = ['lib/api-keys.js', 'setDiag', async (entity, jti, patch) => 
 const KEY_WITHOUT_COUNTER = ['lib/api-keys.js', 'listOf', async () => [{ jti: 'j1', scopes: ['till'] }]];
 const COUNTER_WITH_PREFIX = ['lib/api-keys.js', 'listOf', async () => [{ jti: 'j1', counter: 'c1', scopes: ['till'], till: { id: 'AB' } }]];
 const COUNTER_ROW = (sql) => (/policy_flags->'counters'/.test(sql) ? rowsOf([{ c: { held_by: 'j1', next: 3, period: '2026-10' } }]) : undefined);
-const ENROL_OK = (released) => ['routes/counters.js', 'claim', async () => ({ status: 200, key: 'cbk_test', counter: 'C1', released })];
+const ENROL_OK = (released) => ['lib/counters-store.js', 'claim', async () => ({ status: 200, key: 'cbk_test', counter: 'C1', released })];
 const MINT_OK = ['lib/api-keys.js', 'mint', async () => ({ key: 'cbk_screen' })];
 /** the read selects three columns; the write returns the whole row (RETURNING *) */
 const QK_STATE_ROWS = (shift) => (sql) => {
@@ -268,13 +268,13 @@ const EXTRAS = [
   X('pair-lookup-breaks', 'POST /api/till/pair', 500, { setup: { db: 'fail' }, body: {} }),
   X('enrol-counter-held', 'POST /api/till/enrol', 409, {
     body: { counter: 'C1' },
-    patch: [['routes/counters.js', 'claim', async () => ({ status: 409, body: { error: 'conflict', code: 'COUNTER_HELD', message: 'C1 is open on another PC.' } })]]
+    patch: [['lib/counters-store.js', 'claim', async () => ({ status: 409, body: { error: 'conflict', code: 'COUNTER_HELD', message: 'C1 is open on another PC.' } })]]
   }),
   X('enrol-library-says-no', 'POST /api/till/enrol', 400, {
     body: { counter: 'C1' },
-    patch: [['routes/counters.js', 'claim', async () => { throw Object.assign(new Error('That counter name is not allowed.'), { status: 400 }); }]]
+    patch: [['lib/counters-store.js', 'claim', async () => { throw Object.assign(new Error('That counter name is not allowed.'), { status: 400 }); }]]
   }),
-  X('enrol-claim-breaks', 'POST /api/till/enrol', 500, { body: { counter: 'C1' }, patch: [['routes/counters.js', 'claim', throwsLater]] }),
+  X('enrol-claim-breaks', 'POST /api/till/enrol', 500, { body: { counter: 'C1' }, patch: [['lib/counters-store.js', 'claim', throwsLater]] }),
   X('claim-key-breaks', 'POST /api/till/pair/claim', 500, { body: { code: 'ZZZZZZ' }, patch: [['lib/api-keys.js', 'mint', throwsLater]], before: 'pair-code' }),
   /* API-8 (till): a pairing success; it clears this address's count of wrong codes, so 'too-many-wrong-codes' below spends the count itself */
   X('pair-claimed', 'POST /api/till/pair/claim', 200, { body: { code: 'ZZZZZZ' }, before: 'pair-code', patch: [MINT_OK] }),
@@ -332,12 +332,12 @@ const EXTRAS = [
   X('close-a-counter', 'POST /api/till/close', 200, {
     setup: { key: ['till'], sqlRows: COUNTER_ROW },
     body: { last_no: 'C1-0007', bills: 7, next: 8, period: '2026-10' },
-    patch: [COUNTER_WITH_PREFIX, ['lib/api-keys.js', 'patchTill', async () => undefined], ['routes/counters.js', 'patchCounter', async () => undefined]]
+    patch: [COUNTER_WITH_PREFIX, ['lib/api-keys.js', 'patchTill', async () => undefined], ['lib/counters-store.js', 'patchCounter', async () => undefined]]
   }),
   X('close-a-counter-no-prefix', 'POST /api/till/close', 200, {
     setup: { key: ['till'], sqlRows: COUNTER_ROW },
     body: {},
-    patch: [COUNTER_KEYS, ['lib/api-keys.js', 'patchTill', async () => undefined], ['routes/counters.js', 'patchCounter', async () => undefined]]
+    patch: [COUNTER_KEYS, ['lib/api-keys.js', 'patchTill', async () => undefined], ['lib/counters-store.js', 'patchCounter', async () => undefined]]
   }),
   X('enrol-opened', 'POST /api/till/enrol', 200, { body: { counter: 'C1', name: 'Front' }, setup: { sqlRows: SHOP_NAMES }, patch: [ENROL_OK(false)] }),
   X('enrol-took-over-unnamed-shop', 'POST /api/till/enrol', 200, { body: { counter: 'C1', takeover: true }, patch: [ENROL_OK(true)] }),
