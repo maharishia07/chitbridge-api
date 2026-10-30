@@ -187,10 +187,13 @@ const shapeOf = (route) => route.replace(/\{[^}]+\}|:[A-Za-z_]\w*/g, ':');
 /** the client's api('key') registry: key -> { method, path } (the same pattern tools/endpoint-usage.cjs reads) */
 function webRegistry(webRoot) {
   const registry = {};
-  const dir = path.join(webRoot, 'public', 'app');
+  /* the SAME files tools/endpoint-usage.cjs reads its registry from: app.html and shop.html hold registry entries too (52 routes read as 'no caller' while this read public/app/*.js only, W2 30 Oct) */
+  const pub = path.join(webRoot, 'public');
+  const dir = path.join(pub, 'app');
   if (!fs.existsSync(dir)) return registry;
-  fs.readdirSync(dir).filter((name) => name.endsWith('.js')).forEach((name) => {
-    for (const match of fs.readFileSync(path.join(dir, name), 'utf8').matchAll(/(\w+):\s*\{\s*m:\s*["'](\w+)["']\s*,\s*p:\s*["']([^"']+)["']/g)) registry[match[1]] = { method: match[2], path: match[3] };
+  const files = ['app.html', 'shop.html'].map((name) => path.join(pub, name)).concat(fs.readdirSync(dir).filter((name) => name.endsWith('.js')).map((name) => path.join(dir, name)));
+  files.filter((file) => fs.existsSync(file)).forEach((file) => {
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(/(\w+):\s*\{\s*m:\s*["'](\w+)["']\s*,\s*p:\s*["']([^"']+)["']/g)) registry[match[1]] = { method: match[2], path: match[3] };
   });
   return registry;
 }

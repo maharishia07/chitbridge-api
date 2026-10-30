@@ -120,8 +120,7 @@ const argOf = (flag) => (process.argv.indexOf(flag) >= 0 ? process.argv[process.
 if (process.argv.indexOf('--buckets') >= 0 || process.argv.indexOf('--md') >= 0) {
   const webRoot = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR) : path.join(API, '..', 'chitbridge-web');
   const engRoot = process.env.CB_ENGINES_DIR ? path.resolve(process.env.CB_ENGINES_DIR) : path.join(API, '..', 'chitbridge-engines');
-  /* ⚠️ the wide run reads server.js WITHOUT its comment lines: server.js:438 keeps a commented-out mount of src/routes/catalogue under /api/network, and server-mounts.cjs
-     (shared with the round-trip harness, whose budget would then fail on 7 catalogue routes it has no line for) reads it as live. Reported, not changed here. */
+  /* ⚠️ the wide run reads server.js WITHOUT its comment lines: server.js:438 keeps a commented-out mount of src/routes/catalogue under /api/network; server-mounts.cjs now skips comment lines itself (W2, 30 Oct), this strip stays as a belt. */
   const liveText = fs.readFileSync(path.join(API, 'server.js'), 'utf8').replace(/^\s*\/\/.*$/gm, '');
   const allMounts = require('./server-mounts.cjs').serverMountsAll(liveText);
   const wide = require('./endpoint-usage-run.cjs').runWide({
@@ -147,6 +146,7 @@ if (process.argv.indexOf('--buckets') >= 0 || process.argv.indexOf('--md') >= 0)
     JSON.stringify({
       called: called.map((item) => ({ file: item.file, route: item.route, calls: item.calls })),
       mounts,
+      mountsAll: (() => { try { return require('./server-mounts.cjs').serverMountsAll(fs.readFileSync(path.join(API, 'server.js'), 'utf8')); } catch (_) { return {}; } })() /* every prefix a route file is mounted at (ctp.js: '' and /api/ctp) — the graph reads one route per mount */,
       registry: reg,
       routes: rows.map((item) => ({ file: item.file, route: item.route, keys: item.keys, calls: item.calls }))
     }),
