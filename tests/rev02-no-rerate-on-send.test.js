@@ -13,6 +13,7 @@
  * sets it) — gating whether routes/chits.js calls `applyLiveOffers` AT ALL for that chit. A captured/typed sale
  * (no billed_at) is unaffected; that path is what the live-offers call exists for.
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -88,7 +89,7 @@ console.log('\n── the exact reproduction: Monday\'s plain line, Tuesday\'s n
     'routes/chits.js reads exactly this before deciding whether to call applyLiveOffers()');
 
   console.log('\n── routes/chits.js\'s OWN call site must keep asking alreadyBilled() before offers-live runs ──\n');
-  const chitsSrc = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const chitsSrc = CF.read(path.join(__dirname, '..'));
   ok('the send route calls offers-live.alreadyBilled(business_json)',
     /alreadyBilled\s*\(\s*bj\s*\)/.test(chitsSrc) && /offers-live['"]\)\.alreadyBilled/.test(chitsSrc));
   ok('the applyLiveOffers guard is gated on !alreadyBilled',

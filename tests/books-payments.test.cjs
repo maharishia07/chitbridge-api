@@ -19,6 +19,7 @@
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-payments.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
 const http = require('http');
@@ -373,7 +374,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     } finally { TCp.entryFor = wasEntryFor; }
 
     /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
-    const csrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+    const csrc = CF.read(H.API);
     const route = csrc.slice(routeAt(csrc, 'post', '/:chit_id/payment'), routeAt(csrc, 'delete', '/:chit_id/payment'));
     /* PAY-FIX shrink: the one-handle body is markChitPaid (called inside ONE withEntity by the route); the refusals are payFailure */
     const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'post', '/:chit_id/payment'));

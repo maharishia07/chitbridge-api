@@ -5,6 +5,7 @@ const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const R = process.argv[2] || path.join(__dirname, '..');
+const CHITS = require('../tools/chits-files.cjs'); /* the ONE list of chits files: a break finds its anchor wherever the code lives now */
 const T = 'bills-folder';
 const BREAKS = [
   /* the inventory and the one classification (lib/folder-inventory.js) */
@@ -137,7 +138,7 @@ const BREAKS = [
 let caught = 0;
 const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
-  const abs = path.join(R, file),
+  const abs = path.join(R, CHITS.anchorFile(R, file, from)),
     copy = abs + '.breakcopy';
   const orig = fs.readFileSync(abs, 'utf8');
   fs.writeFileSync(copy, orig);

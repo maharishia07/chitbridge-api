@@ -18,6 +18,7 @@
  *
  * Run:  node tests/policy-defaults.test.js
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -46,7 +47,7 @@ t('★★ self_copy_pref defaults to `received`, the value the engine implements
  * to be reminded that a second file states the same rule.
  */
 t('★★ the engine still reads `received` as its fallback — the two have not drifted again', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   const m = /self_copy_pref\s*\|\|\s*'([a-z]+)'/.exec(src);
   assert.ok(m, "could not find the self_copy_pref fallback in routes/chits.js — if it moved, this test must be "
     + "pointed at the new place, NOT deleted");
