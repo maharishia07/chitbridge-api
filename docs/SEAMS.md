@@ -13,10 +13,10 @@ of file each thing is; this says what already does the job.
 | 110 | `rows` | `crm.js` | still in them: |
 | 105 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 93 | `words` | `variant.browser.js` |  |
+| 94 | `words` | `variant.browser.js` |  |
 | 90 | `read` | `books-cashflow.js` | Trips: |
 | 83 | `answer` | `availability.js` | from March; then nearest. |
-| 78 | `money` | `bill-privacy.js` |  |
+| 79 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 71 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -30,7 +30,7 @@ of file each thing is; this says what already does the job.
 | 58 | `next` | `dayopen.js` | the next thing to do — |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `items` | `books-store.js` | PERF1: |
-| 55 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 56 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
