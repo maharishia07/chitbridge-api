@@ -27,7 +27,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 /* a top-level function's text: to its closing `}` — or `});` for a router.x = async (…) => withTransaction(…) */
 const body = (src, sig) => {
   const a = src.indexOf(sig); assert.ok(a >= 0, sig + ' is gone');
-  const ends = ['\n}\n', '\n});\n'].map((e) => src.indexOf(e, a)).filter((i) => i > a);
+  const ends = ['\n}\n', '\n});\n', '\n  });\n'].map((e) => src.indexOf(e, a)).filter((i) => i > a);
   assert.ok(ends.length, sig + ' has no end this test can find');
   return src.slice(a, Math.min.apply(null, ends) + 4);
 };
