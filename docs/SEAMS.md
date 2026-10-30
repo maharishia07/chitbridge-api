@@ -29,8 +29,8 @@ of file each thing is; this says what already does the job.
 | 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 58 | `next` | `dayopen.js` | the next thing to do — |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 55 | `items` | `books-store.js` | PERF1: |
 | 56 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 55 | `items` | `books-store.js` | PERF1: |
 | 54 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
@@ -39,8 +39,8 @@ of file each thing is; this says what already does the job.
 | 50 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 48 | `pack` | `books-store.js` |  |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 48 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 47 | `again` | `signin-ui.js` |  |
-| 47 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
@@ -62,10 +62,10 @@ of file each thing is; this says what already does the job.
 | 34 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
+| 33 | `facts` | `bill-steps.js` | MY state_log — |
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `facts` | `bill-steps.js` | MY state_log — |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 33 | `live` | `receivables.js` | the allocations that still count: |
 | 30 | `ensureCap` | `app.html` |  |
@@ -96,10 +96,10 @@ of file each thing is; this says what already does the job.
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `money` | `cart.js` |  |
 | 25 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 25 | `hold` | `orders.js` |  |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `view` | `country-ready.js` |  |
 | 24 | `account` | `home-facts.js` | OMITTED: |
-| 24 | `hold` | `orders.js` |  |
 | 24 | `owner` | `books.js` |  |
 | 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 23 | `call` | `cap-assist.js` |  |
@@ -150,6 +150,7 @@ of file each thing is; this says what already does the job.
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `send` | `rail-thread.js` | a send with no screen of its own (Answer & publish · Remind): |
 | 16 | `panel` | `sides.js` |  |
+| 16 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 16 | `connectors` | `home-facts.js` | declare (said in words — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 16 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
@@ -160,7 +161,6 @@ of file each thing is; this says what already does the job.
 | 15 | `fmtMoney` | `helpers.js` |  |
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
-| 15 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
@@ -185,12 +185,12 @@ of file each thing is; this says what already does the job.
 | 13 | `verdict` | `rail-thread.js` |  |
 | 14 | `says` | `adopt.js` |  |
 | 13 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `post` | `books-manual.js` | POST /events — |
-| 12 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |

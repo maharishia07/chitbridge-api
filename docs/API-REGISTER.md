@@ -13,7 +13,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:754 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/books/recurring/:id | books | routes/books.js:2296 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
+| DELETE | /api/books/recurring/:id | books | routes/books.js:2301 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1927 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | DELETE | /api/channels/:id | channels | routes/channels.js:136 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:6067 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -56,7 +56,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/assist/whoami | assist | routes/assist.js:744 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:83 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/books/accounts | books | routes/books.js:311 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/assets | books | routes/books.js:2347 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/assets | books | routes/books.js:2352 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/bank/rail | books | routes/books.js:1289 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/bs | books | routes/books.js:1035 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/cashflow | books | routes/books.js:939 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -67,25 +67,25 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/books/daybook | books | routes/books.js:508 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/dues | books | routes/books.js:772 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/events | books | routes/books.js:1623 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/fx-rates | books | routes/books.js:2417 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/fx-revalue | books | routes/books.js:2464 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/fx-rates | books | routes/books.js:2422 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/fx-revalue | books | routes/books.js:2469 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/health | books | routes/books.js:262 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/ledger/:account | books | routes/books.js:581 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/books/move-in/imports | books | routes/books.js:1848 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/packs | books | routes/books.js:2148 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/packs/:id | books | routes/books.js:2186 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/books/packs/:id/file | books | routes/books.js:2215 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/books/packs | books | routes/books.js:2153 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/packs/:id | books | routes/books.js:2191 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/books/packs/:id/file | books | routes/books.js:2220 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/books/party/:id/statement | books | routes/books.js:658 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/books/payments/:id/advice | books | routes/books.js:1264 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/books/periods | books | routes/books.js:2114 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/periods | books | routes/books.js:2117 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/pl | books | routes/books.js:981 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/recurring | books | routes/books.js:2268 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/returns | books | routes/books.js:2378 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/recurring | books | routes/books.js:2273 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/books/returns | books | routes/books.js:2383 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/status | books | routes/books.js:150 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/terms | books | routes/books.js:200 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/todo | books | routes/books.js:2325 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/books/todo | books | routes/books.js:2330 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/trial-balance | books | routes/books.js:955 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/books/year/:fy/status | books | routes/books.js:2097 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/books/year/:fy/status | books | routes/books.js:2100 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/capture/consolidate | capture | routes/capture.js:277 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/capture/pending | capture | routes/capture.js:59 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/capture/stores | capture | routes/capture.js:301 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -303,7 +303,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | OPTIONS | * | server | server.js:163 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | PATCH | /api/actors/:id | actors | routes/actors.js:506 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1337 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | no | yes | yes | partial |
-| PATCH | /api/books/recurring/:id | books | routes/books.js:2286 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
+| PATCH | /api/books/recurring/:id | books | routes/books.js:2291 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:103 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/counters/:id | counters | routes/counters.js:206 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -358,9 +358,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/entries | books | routes/books.js:1655 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/entries/:id/reverse | books | routes/books.js:1682 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/books/events | books | routes/books.js:1644 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-rates | books | routes/books.js:2437 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-rates/import | books | routes/books.js:2446 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/fx-revalue | books | routes/books.js:2491 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-rates | books | routes/books.js:2442 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-rates/import | books | routes/books.js:2451 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/books/fx-revalue | books | routes/books.js:2496 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/gst/close | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/books/gst/pay | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | no | partial |
 | POST | /api/books/loans | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
@@ -370,8 +370,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/move-in/preview | books | routes/books.js:1820 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/books/opening | books | routes/books.js:1727 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/outbox/retry | books | routes/books.js:300 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/packs | books | routes/books.js:2170 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/packs/:id/ack | books | routes/books.js:2245 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
+| POST | /api/books/packs | books | routes/books.js:2175 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/books/packs/:id/ack | books | routes/books.js:2250 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/books/parties/:id/dispute | books | routes/books.js:1596 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/books/payments | books | routes/books.js:1162 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | partial |
 | POST | /api/books/payments/:id/confirm | books | routes/books.js:1424 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | no | yes | no | partial |
@@ -379,9 +379,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/payments/preview | books | routes/books.js:1112 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/periods/:fy/:p/:act | books | routes/books.js:2072 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | partial |
 | POST | /api/books/preview | books | routes/books.js:1635 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/recurring | books | routes/books.js:2276 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/books/recurring/:id/post | books | routes/books.js:2306 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | partial |
-| POST | /api/books/recurring/:id/skip | books | routes/books.js:2315 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | partial |
+| POST | /api/books/recurring | books | routes/books.js:2281 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/books/recurring/:id/post | books | routes/books.js:2311 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | partial |
+| POST | /api/books/recurring/:id/skip | books | routes/books.js:2320 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | partial |
 | POST | /api/books/setting | books | routes/books.js:174 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/terms | books | routes/books.js:241 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/write-off | books | routes/books.js:1695 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
@@ -1401,7 +1401,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/books/year/:fy/close** · books · cb-accounting · partial
 - does: _not yet written_
-- errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
+- errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, PERIOD_RETURN_OPEN, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
