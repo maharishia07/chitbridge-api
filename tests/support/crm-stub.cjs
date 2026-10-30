@@ -125,7 +125,7 @@ function make() {
     SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => 'P-00099',
     decorate: async (withEntity, owner, rows, idKey, side) => {
       for (const r of rows) { const s = data.stored[side][String(r[idKey])] || {};
-        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: null, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
+        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: s.credit_limit_minor == null ? null : s.credit_limit_minor, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
         if (side === 'customer') r.nickname = s.nickname || null;
         if (data.ledgerOn !== false) { r.balance_minor = s.balance_minor || 0; r.oldest_due = s.oldest_due || null; } }
       return rows;

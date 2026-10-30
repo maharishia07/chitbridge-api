@@ -765,6 +765,10 @@ function termsFigures(docs, asOf, currency, eff) {
     early: earlyOfferRow(docs, asOf, currency, eff && eff.early.value)
   };
 }
+/** RAIL-146i: the /dues answer for THIS reader — ONE can_see_costs read (lib/cost.isCostBlind, fail-closed); an actor without it sees no supplier-side money (lib/dues-view R1-R6); the owner's bytes are untouched */
+async function forReader(req, e, answer) {
+  return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindDuesAnswer(answer) : answer;
+}
 /*
  * ⭐ THE ONE DUE FIGURE (R73/R76): a party's open documents below are the NETTED bills (E.dues → books-engines.netOpen — net of its receipts on
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
@@ -915,10 +919,9 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       return Array.from(rows.values()).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
     res.json(
-      Object.assign(
-        { currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0) },
-        payables ? { payables } : {}
-      )
+      await forReader(req, e, {
+        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...(payables ? { payables } : {})
+      })
     );
   } catch (err) {
     problem(req, res, refusalOf(err, req));

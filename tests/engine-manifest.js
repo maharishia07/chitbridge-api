@@ -385,6 +385,7 @@ const INFRA_LIBS = [
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
   'cost-view.js',          // RAIL-146: what a cost-blind co-assist may READ of a chit — an answer-side filter over the shop's own permission, never a rule about what the chit means
+  'dues-view.js',          // RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
   'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
