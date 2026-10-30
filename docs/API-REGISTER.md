@@ -21,9 +21,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6314 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:257 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1002 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/crm/followups/:id | crm | routes/crm.js:416 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/crm/groups/:name | crm | routes/crm.js:699 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/crm/parties/:id | crm | routes/crm.js:432 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/crm/followups/:id | crm | routes/crm.js:417 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/crm/groups/:name | crm | routes/crm.js:700 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/crm/parties/:id | crm | routes/crm.js:433 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/definitions/:id | definitions | routes/definitions.js:468 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/folders/:id | folders | routes/folders.js:326 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:562 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
@@ -135,14 +135,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/connectors/:actorId/provisioning | connectors | routes/connectors.js:793 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connectors/:actorId/receipts | connectors | routes/connectors.js:709 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/counters | counters | routes/counters.js:163 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/crm/calls | crm | routes/crm.js:488 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/followups | crm | routes/crm.js:376 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/calls | crm | routes/crm.js:489 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/followups | crm | routes/crm.js:377 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/crm/parties | crm | routes/crm.js:93 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/parties/:id | crm | routes/crm.js:114 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:608 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/parties/:id/timeline | crm | routes/crm.js:174 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/privacy-requests | crm | routes/crm.js:638 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/crm/segments | crm | routes/crm.js:679 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/parties/:id | crm | routes/crm.js:115 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:609 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/parties/:id/timeline | crm | routes/crm.js:175 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/privacy-requests | crm | routes/crm.js:639 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/crm/segments | crm | routes/crm.js:680 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/ctp/.well-known/ctp.json | ctp | routes/ctp.js:137 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/definitions | definitions | routes/definitions.js:76 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/definitions/:id | definitions | routes/definitions.js:217 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -307,7 +307,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:103 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/counters/:id | counters | routes/counters.js:206 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/crm/followups/:id | crm | routes/crm.js:406 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/crm/followups/:id | crm | routes/crm.js:407 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/entities/:id/erase | entities | routes/entities.js:1280 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | PATCH | /api/entities/me/exposure | entities | routes/entities.js:867 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/entities/me/locale | entities | routes/entities.js:907 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -449,18 +449,18 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/counters/:id/assign | counters | routes/counters.js:235 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/counters/:id/open | counters | routes/counters.js:263 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/counters/:id/release | counters | routes/counters.js:327 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/followups | crm | routes/crm.js:390 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/groups | crm | routes/crm.js:689 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/leads | crm | routes/crm.js:448 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/leads/import | crm | routes/crm.js:520 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:625 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/parties/:id/interactions | crm | routes/crm.js:354 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/parties/:id/outcome | crm | routes/crm.js:503 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/parties/:id/stage | crm | routes/crm.js:533 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/privacy-requests | crm | routes/crm.js:648 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/crm/privacy-requests/:id/answer | crm | routes/crm.js:662 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/crm/segments/:key/send | crm | routes/crm.js:710 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
-| POST | /api/crm/walk-ins/add | crm | routes/crm.js:559 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/followups | crm | routes/crm.js:391 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/groups | crm | routes/crm.js:690 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/leads | crm | routes/crm.js:449 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/leads/import | crm | routes/crm.js:521 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/parties/:id/contact-prefs | crm | routes/crm.js:626 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/parties/:id/interactions | crm | routes/crm.js:355 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/parties/:id/outcome | crm | routes/crm.js:504 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/parties/:id/stage | crm | routes/crm.js:534 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/privacy-requests | crm | routes/crm.js:649 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/crm/privacy-requests/:id/answer | crm | routes/crm.js:663 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/crm/segments/:key/send | crm | routes/crm.js:711 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | yes | partial |
+| POST | /api/crm/walk-ins/add | crm | routes/crm.js:560 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/csp-report | csp-report | routes/csp-report.js:80 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/ctp/deliver | ctp | routes/ctp.js:234 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/ctp/query | ctp | routes/ctp.js:436 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
