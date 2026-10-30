@@ -36,7 +36,8 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 
 /** the body of the one shared claim */
 const CLAIM = (function () {
-  const at = COUNTERS.indexOf('const claim = async');
+  /* S7: the refusal and the release are named steps (heldRefusal, releaseHolder) written just above claim — the claim is read from the first of them */
+  const at = COUNTERS.indexOf('function heldRefusal(');
   assert.ok(at > 0, 'counters.claim is gone — this guard is measuring nothing');
   const end = COUNTERS.indexOf('module.exports', at);
   return COUNTERS.slice(at, end > 0 ? end : COUNTERS.length);
@@ -65,6 +66,8 @@ it('a takeover releases the holder BEFORE it claims, in one transaction', () => 
   assert.ok(release > 0, 'a takeover no longer closes the previous key');
   assert.ok(claim > 0, 'the claim no longer records the new holder');
   assert.ok(release < claim, 'the release happens after the claim — two keys would hold one counter');
+  const inClaim = CLAIM.slice(CLAIM.indexOf('const claim = async'));
+  assert.ok(inClaim.indexOf('await releaseHolder(') > 0 && inClaim.indexOf('await releaseHolder(') < inClaim.indexOf('patchCounter(db, entity_id, want'), 'claim no longer calls releaseHolder before it records the new holder');
 });
 
 it('and the released key stops working at once', () => {
