@@ -161,6 +161,9 @@ const breaking = (pattern) => (sql) => {
   if (pattern.test(sql)) throw new Error(SECRET_SQL);
   return null;
 };
+/** the seller's identity row the engine reads at send (ACC-206: a billing document asks the engine, and a seller that is not on record is a 503 — it used to send with no money) */
+const SELLER_ROW = { identity_id: SHOP, gstn: null, display_name: 'Test shop', policy_flags: {}, country: 'IN' };
+const knowsSeller = (sql) => (/FROM identities WHERE identity_id = ANY/.test(sql) ? { rows: [SELLER_ROW], rowCount: 1 } : null);
 const SELF_BILL = { recipients: [{ self: true }], purpose: 'order', line_items: [{ particulars: 'Tea', quantity: 1, price: 10 }] };
 /** a counter bill that carries its series number and the till that made it */
 const TILL_BILL = (till) => ({ recipients: [{ self: true }], purpose: 'order', client_ref: 'B-1', business_json: { till: { id: till }, billed_at: '2026-10-23T10:00:00Z' } });
@@ -346,7 +349,7 @@ const EXTRAS = [
   X('dispute-link-unknown-entry', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 400, { body: { dispute_id: OTHER }, setup: { migrated: true } }),
   X('dispute-link-fails', 'POST ' + C + '/:chit_id/raida/:raida_id/dispute', 500, { body: { dispute_id: OTHER }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
   /* ── send ── */
-  X('send-to-self', 'POST ' + C + '/send', 200, { body: SELF_BILL }),
+  X('send-to-self', 'POST ' + C + '/send', 200, { body: SELF_BILL, setup: { sqlRows: knowsSeller } }),
   X('send-draft-saved', 'POST ' + C + '/send', 200, { body: { is_draft: true, purpose: ' order ' } }),
   X('send-fails', 'POST ' + C + '/send', 500, { body: SELF_BILL, setup: { db: 'fail' } }),
   X('send-purpose-not-known', 'POST ' + C + '/send', 400, { body: { recipients: [{ self: true }], purpose: 'nope' } }),
@@ -358,7 +361,7 @@ const EXTRAS = [
   X('send-replayed', 'POST ' + C + '/send', 200, { body: TILL_BILL('T-A'), patch: { 'counter-bill': { byRef: async () => ({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
   X('send-race-lost-is-a-duplicate', 'POST ' + C + '/send', 200, { body: TILL_BILL('T-A'), setup: { sqlRows: racing() }, patch: { 'counter-bill': { byRef: firstNothingThen({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
   X('send-race-lost-to-another-counter', 'POST ' + C + '/send', 409, { body: TILL_BILL('T-B'), setup: { sqlRows: racing() }, patch: { 'counter-bill': { byRef: firstNothingThen({ chit_id: PARTY, till_id: 'T-A', billed_at: null }) } } }),
-  X('send-across-test-and-live', 'POST ' + C + '/send', 409, { body: SELF_BILL, setup: { sqlRows: (sql) => { if (/INSERT INTO chit_header/.test(sql)) throw Object.assign(new Error('a test entity cannot trade with a live one'), { code: '23514' }); return null; } } }),
+  X('send-across-test-and-live', 'POST ' + C + '/send', 409, { body: SELF_BILL, setup: { sqlRows: (sql) => { if (/INSERT INTO chit_header/.test(sql)) throw Object.assign(new Error('a test entity cannot trade with a live one'), { code: '23514' }); return knowsSeller(sql); } } }),
   X('send-shop-has-no-address', 'POST ' + C + '/send', 409, { body: SELF_BILL, setup: { who: { identity_id: SHOP, identity_type: 'entity', display_name: 'Test shop' } } }),
   X('send-country-not-set', 'POST ' + C + '/send', 422, { body: SELF_BILL, patch: { 'country-setup': { documentRefusal: () => ({ status: 422, code: 'COUNTRY_SETUP_PENDING', message: 'Say your country first.' }) } } }),
   X('send-lab-chit-on-a-live-shop', 'POST ' + C + '/send', 409, { body: Object.assign({}, SELF_BILL, { business_json: { lab: true } }), setup: { sqlRows: answering(/->>'population'/, [{ population: 'live' }]) } }),
@@ -372,8 +375,8 @@ const EXTRAS = [
   X('send-handoff-without-parents', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { trace: { is_origin: false } }) }),
   X('send-recipient-not-found', 'POST ' + C + '/send', 404, { body: { recipients: [{ entity_id: OTHER }], purpose: 'order' } }),
   X('send-recipient-is-a-local-record', 'POST ' + C + '/send', 404, { body: { recipients: [{ display_name: '~acmetraders.sup-0001' }], purpose: 'order' } }),
-  X('send-draft-to-promote-not-found', 'POST ' + C + '/send', 404, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }) }),
-  X('send-draft-already-sent', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }), setup: { sqlRows: answering(/SELECT role, business_json->>'page' AS page/, [{ role: 'Sent', page: null }]) } }),
+  X('send-draft-to-promote-not-found', 'POST ' + C + '/send', 404, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }), setup: { sqlRows: knowsSeller } }),
+  X('send-draft-already-sent', 'POST ' + C + '/send', 400, { body: Object.assign({}, SELF_BILL, { promote_draft_id: PARTY }), setup: { sqlRows: answeringAll([[/SELECT role, business_json->>'page' AS page/, [{ role: 'Sent', page: null }]], [/FROM identities WHERE identity_id = ANY/, [SELLER_ROW]]]) } }),
   /* ── the one status writer ── */
   X('status-chit-not-received', 'PUT ' + C + '/:chit_id/status', 404, { body: { status: ' accepted ' } }),
   X('status-fails', 'PUT ' + C + '/:chit_id/status', 500, { body: { status: 'accepted' }, setup: { db: 'fail' } }),

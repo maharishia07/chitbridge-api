@@ -2405,6 +2405,14 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/money-check/resolve": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
       "trips": 1,

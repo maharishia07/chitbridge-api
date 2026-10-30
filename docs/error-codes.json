@@ -2351,6 +2351,33 @@
    "since": "2026-10-22"
   },
   {
+   "code": "MONEY_INPUT_UNREADABLE",
+   "status": "422",
+   "title": "A line could not be read",
+   "shopkeeper": "A line has a price or quantity that is not a number, so the money could not be worked out.",
+   "hint": "Fix that line and send again.",
+   "owner_area": "chits",
+   "since": "2026-10-30"
+  },
+  {
+   "code": "MONEY_NOT_COMPUTED",
+   "status": "503",
+   "title": "The money could not be worked out",
+   "shopkeeper": "The money could not be worked out.",
+   "hint": "Try again; if it repeats, tell us.",
+   "owner_area": "chits",
+   "since": "2026-10-30"
+  },
+  {
+   "code": "MONEY_UNBALANCED",
+   "status": "409",
+   "title": "The money does not add up",
+   "shopkeeper": "The bill does not add up, so it was not sent.",
+   "hint": "Check the bill, or the owner can let it through and say why.",
+   "owner_area": "chits",
+   "since": "2026-10-30"
+  },
+  {
    "code": "MSG_ABOVE_CEILING",
    "status": "409",
    "title": "Messaging level too high",
@@ -3330,6 +3357,24 @@
    "hint": "Sign in as the owner or a manager to change them.",
    "owner_area": "quick-keys",
    "since": "2026-10-23"
+  },
+  {
+   "code": "R132 (re-walk)",
+   "status": "Counter › F7 › Asha Devi, 16:50",
+   "title": "Picking a name asks that person's PIN",
+   "shopkeeper": "HALF: once Asha has a counter PIN, re-picking her opens \"Counter PIN\" and 2468 signs her in ✅. Still open: (1) her mobile 9000000004 is still refused (\"That sign-in didn't work\"); (2) a first pick asks to TYPE the user ID although her name was just picked; (3) first sign-in asks for a PIN twice (\"Choose a PIN\", then \"Counter PIN\"); (4) the signed-in box also says \"Sign in to connect this counter to a shop\", contradicting itself.",
+   "hint": "w741-w746",
+   "owner_area": "P1 (1,2) · P2 (3) · P3 (4)",
+   "since": "cb-counter (api kit till master)"
+  },
+  {
+   "code": "R85✅ / CAT-210 (re-walk)",
+   "status": "Catalogue › Veg Meals (CTG001), 17:15, on web #405 + api #429",
+   "title": "Category chips on the item form; the rate set in one place, by owner/manager",
+   "shopkeeper": "PASS for the chips: Edit shows Categories Drinks · Meals · Packed · Tiffin; the sheet reads \"GST 5% on this item · Change\" for the owner. NEW (CAT-212): the same form ALSO shows a raw column \"gst_rate 5\" under More about this product (sheet: \"GST_RATE 5\"), a free text box that is a second door to the rate with no confirm and no role check (the declared column from catalogue-blueprint.js:96, which is how a slab travels on import). One home for the rate: hide gst_rate from the item form (import keeps it) or show it read-only as the chip. Not saved; form cancelled. Folded into CAT-211 (l2).",
+   "hint": "w747, w748",
+   "owner_area": "P1",
+   "since": "cb-catalogue"
   },
   {
    "code": "READ_ONLY",

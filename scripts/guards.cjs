@@ -222,6 +222,9 @@ const GUARDS = [
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
+  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
+  'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
+  'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a

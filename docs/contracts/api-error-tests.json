@@ -41,6 +41,11 @@
   409,
   500
  ],
+ "DELETE /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
  "DELETE /api/connectors/:actorId": [
   400,
   401,
@@ -563,6 +568,10 @@
   401,
   500
  ],
+ "GET /api/combo-templates": [
+  401,
+  500
+ ],
  "GET /api/connections/list": [
   401,
   500
@@ -975,6 +984,11 @@
   401,
   500
  ],
+ "GET /api/marketing/came-back": [
+  401,
+  403,
+  500
+ ],
  "GET /api/network-design": [
   401,
   500
@@ -1015,6 +1029,12 @@
  ],
  "GET /api/notifications": [
   401,
+  500
+ ],
+ "GET /api/offers/kinds": [
+  500
+ ],
+ "GET /api/offers/openapi.json": [
   500
  ],
  "GET /api/pricing/kinds": [
@@ -1136,6 +1156,10 @@
   500
  ],
  "GET /api/simulator/content": [
+  500
+ ],
+ "GET /api/supplies": [
+  401,
   500
  ],
  "GET /api/tax/gstr": [
@@ -1354,6 +1378,11 @@
   404,
   500
  ],
+ "PATCH /api/combo-templates/:id": [
+  401,
+  404,
+  500
+ ],
  "PATCH /api/connectors/:actorId/connections/:connId": [
   400,
   401,
@@ -1476,6 +1505,11 @@
  ],
  "PATCH /api/schemas/visibility": [
   400,
+  401,
+  404,
+  500
+ ],
+ "PATCH /api/supplies/:id": [
   401,
   404,
   500
@@ -1715,6 +1749,14 @@
   401,
   403,
   404,
+  500
+ ],
+ "POST /api/books/money-check/resolve": [
+  400,
+  401,
+  403,
+  404,
+  422,
   500
  ],
  "POST /api/books/move-in/import": [
@@ -2167,6 +2209,18 @@
   404,
   409,
   422,
+  500
+ ],
+ "POST /api/combo-templates": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/combo-templates/:id/push": [
+  400,
+  401,
+  403,
+  404,
   500
  ],
  "POST /api/connections/request": [
@@ -2687,6 +2741,18 @@
   500,
   503
  ],
+ "POST /api/offers/evaluate": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/offers/explain": [
+  400,
+  401,
+  403,
+  500
+ ],
  "POST /api/pricing/price": [
   400,
   401,
@@ -2908,6 +2974,23 @@
  "POST /api/simulator/lead": [
   400,
   500
+ ],
+ "POST /api/supplies": [
+  400,
+  401,
+  500,
+  503
+ ],
+ "POST /api/supplies/:id/issue": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/supplies/purchase": [
+  400,
+  401,
+  500,
+  503
  ],
  "POST /api/tax/compute": [
   400,
@@ -3395,81 +3478,6 @@
   500
  ],
  "PUT /api/testing/cmdb/:ci": [
-  400,
-  401,
-  403,
-  500
- ],
- "GET /api/supplies": [
-  401,
-  500
- ],
- "PATCH /api/supplies/:id": [
-  401,
-  404,
-  500
- ],
- "POST /api/supplies": [
-  400,
-  401,
-  500,
-  503
- ],
- "POST /api/supplies/:id/issue": [
-  400,
-  401,
-  500
- ],
- "POST /api/supplies/purchase": [
-  400,
-  401,
-  500,
-  503
- ],
- "DELETE /api/combo-templates/:id": [
-  401,
-  404,
-  500
- ],
- "GET /api/combo-templates": [
-  401,
-  500
- ],
- "GET /api/marketing/came-back": [
-  401,
-  403,
-  500
- ],
- "GET /api/offers/kinds": [
-  500
- ],
- "GET /api/offers/openapi.json": [
-  500
- ],
- "PATCH /api/combo-templates/:id": [
-  401,
-  404,
-  500
- ],
- "POST /api/combo-templates": [
-  400,
-  401,
-  500
- ],
- "POST /api/combo-templates/:id/push": [
-  400,
-  401,
-  403,
-  404,
-  500
- ],
- "POST /api/offers/evaluate": [
-  400,
-  401,
-  403,
-  500
- ],
- "POST /api/offers/explain": [
   400,
   401,
   403,

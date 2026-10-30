@@ -1003,6 +1003,9 @@
   "GET /api/books/status": {
    "output_allowlist": true
   },
+  "POST /api/books/money-check/resolve": {
+   "strict_input": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },

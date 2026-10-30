@@ -61,7 +61,7 @@ async function captureBooks() {
   const Assets = require(path.join(H.API, 'lib', 'books-assets')); Assets.use(memoryRegister());
   const R = require(path.join(H.API, 'lib', 'books-recurring')); R.use(memoryTemplates());
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
   const srv = app.listen(0); const port = srv.address().port;
   let DAY = '2027-04-10'; const realDay = K.dayOf;
   K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? DAY : realDay(ts, c));
@@ -90,6 +90,9 @@ async function captureBooks() {
     await X.store.queue(X.db, SHOP, { source_chit_id: null, source_ref: 'chit:bill1', event: { job: 'chit', chit_id: 'bill1', waiting: 'acceptance' }, why: 'Waiting for you to confirm the goods (bill 7 from Kumar Traders)' });
     await q('GET', '/health', null, '/health');      /* …now with a post waiting for the owner */
     await q('POST', '/accruals', { ref: 'ELEC-8', kind: 'outstanding', class: 'electricity', amount_minor: 120000, date: '2026-09-30', client_ref: 'acc-early' }, '/accruals');
+    /* ACC-206 B: a sale the owner let through unbalanced is an open item; resolving it is one insert in the change log */
+    X.T.chits.push({ chit_id: '66666666-6666-4666-8666-666666666666', entity_id: SHOP, bill_no: 'INV-OV-1', purpose: 'invoice', business_json: { bill_no: 'INV-OV-1', money_override: { by: SHOP, at: '2027-04-10T06:00:00Z', why: 'checked by hand', step: 'gross', unexplained_minor: 5000 } } });
+    await q('POST', '/money-check/resolve', { chit_id: '66666666-6666-4666-8666-666666666666', how: 'confirmed', note: 'Customer checked the bill' }, '/money-check/resolve');
     await q('POST', '/recurring', { name: 'Early rent', event: { kind: 'expense', class: 'rent', amount_minor: 500000, paid_from: 'bank' }, frequency: 'monthly', next_on: '2026-11-01' }, '/recurring');
     await q('GET', '/todo', null, '/todo');
     DAY = '2027-04-10';

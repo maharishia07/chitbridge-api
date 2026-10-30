@@ -49,7 +49,7 @@ const call = (port, method, p, body) => new Promise((done) => {
 /** the routes on a port the OS chose, against a fresh in-memory shop */
 function serve(X) {
   const express = require('express');
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
   const srv = app.listen(0); const port = srv.address().port;
   return { srv, q: (m, p, b) => call(port, m, '/api/books' + p, b) };
 }
@@ -215,7 +215,8 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
     const door = (copy, o) => X.dbStub.withEntity(SHOP, (db) => K.chitPaid(db, SHOP, copy, Object.assign({ by: SHOP, acknowledge: [], name: 'Mala' }, o || {})));
     const AT = '2026-10-05T06:00:00Z';
-    const chitOf = (n, pay, more) => Object.assign({ chit_id: BILL(n), purpose: 'order', sender_entity_id: MALA, created_at: AT, currency_code: 'INR', summary_json: { total_value: 1180 },
+    const chitOf = (n, pay, more) => Object.assign({ chit_id: BILL(n), purpose: 'order', sender_entity_id: MALA, created_at: AT, currency_code: 'INR', summary_json: { total_value: 1180, money: { net: 1000, tax: 180, total: 1180 } }, // ACC-206: a bill the books hold at 1,180 carries the engine's total in its header too; the old fixture assumed a rule the writer did not keep
+     
       business_json: { payment: Object.assign({ method: 'upi', ref: 'UPI-TXN-' + n, amount: null, note: null, at: AT, by: SHOP }, pay || {}) } }, more || {});
     try {
       stamp(X, AGO_2D());
@@ -392,6 +393,68 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       });
     }
     eq('no code path outside lib/books.js writes "paid" (routes/*.js, lib/*.js)', offenders, []);
+  });
+
+  /* ═══ 5b · ACC-206 B: "Mark paid" settles the bill's ENGINE total on EVERY shape of copy; the to-do item of an overridden sale; the resolve route ═══ */
+  await section('5b · ACC-206 B · the amount a bare Mark-paid settles is the one pick of the stored engine total — old shapes, frozen invoice, new shape, legacy, stamped disagreement; the open item and its resolve', async () => {
+    const K = require(path.join(H.API, 'lib', 'books-hooks'));
+    const TCp = require(path.join(H.API, 'lib', 'tax-copy')); const wasEntryFor = TCp.entryFor;
+    TCp.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
+    const AT = '2026-10-05T06:00:00Z';
+    const door = (copy, o) => X.dbStub.withEntity(SHOP, (db) => K.chitPaid(db, SHOP, copy, Object.assign({ by: SHOP, acknowledge: [], name: 'Mala' }, o || {})));
+    const markPaid = (n, summary_json, more) => Object.assign({ chit_id: BILL(n), purpose: 'invoice', sender_entity_id: SHOP, created_at: AT, currency_code: 'INR', summary_json,
+      business_json: { payment: { method: 'upi', ref: 'T' + n, amount: null, note: null, at: AT, by: SHOP } } }, more || {});
+    try {
+      /* the B2B invoice the books hold at 189.00: Cr sales 180 + Cr IGST 9, Dr debtors 189 — what the engine issued, what mark-paid must settle */
+      const bill = async (n) => {
+        stamp(X, AGO_2D());
+        await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-05', currency: 'INR', party: MALA, source_chit_id: BILL(n), source_ref: 'chit:' + n,
+          by_rate: [{ rate: 5, taxable: 180, cgst: 0, sgst: 0, igst: 9 }], paid: {}, round_off: 0 });
+        X.T.chits.push({ chit_id: BILL(n), bill_no: 'INV-' + n, entity_id: SHOP, purpose: 'invoice', business_json: { bill_no: 'INV-' + n } });
+      };
+      const settle = async (n, summary_json, more) => { await bill(n); return door(markPaid(n, summary_json, more)); };
+      const paidOf = (r) => (X.T.payments.find((p) => p.payment_id === r.payment.payment_id) || {}).amount_minor; /* the payment ROW is what the books keep */
+      const old = await settle('1', { total_value: 180, money: { net: 180, tax: 9, total: 189 } });
+      ok('an OLD-shape copy { total_value: 180, money: { net 180, tax 9, total 189 } }: a Mark-paid with no amount posts 189.00 and settles the bill whole (0 open) — it settled 180 of 189 before',
+        old.payment && paidOf(old) === 18900 && JSON.stringify(old.allocation.settled) === JSON.stringify([{ against_ref: BILL('1'), amount_minor: 18900 }]) && old.outcome.on_account_minor === 0, JSON.stringify(old));
+      const frozen = await settle('2', { total_value: 180 }, { business_json: { payment: { method: 'upi', ref: 'T2', amount: null, at: AT, by: SHOP }, invoice: { ValDtls: { TotInvVal: 189 } } } });
+      ok('a frozen invoice (TotInvVal 189) beside total_value 180 and no money block → 189.00', paidOf(frozen) === 18900, JSON.stringify(frozen.payment));
+      const fresh = await settle('3', { total_value: 189, money: { total: 189 } });
+      ok('a NEW-shape copy (total_value = money.total = 189) → 189.00, nothing asked', paidOf(fresh) === 18900 && fresh.outcome.on_account_minor === 0, JSON.stringify(fresh.payment));
+      const legacy = await settle('4', { total_value: 180 });
+      ok('neither an invoice nor a money block (a chit from before 7 Sep) → total_value as placed: 180.00 (source legacy)', paidOf(legacy) === 18000, JSON.stringify(legacy.payment));
+      /* the FIN-53 excess ask compares against the same quote: pressing the TRUE 189 on an old-shape copy is not "more than is owed" */
+      await bill('5');
+      const press = await door(markPaid('5', { total_value: 180, money: { net: 180, tax: 9, total: 189 } }, { business_json: { payment: { method: 'upi', ref: 'T5', amount: 189, at: AT, by: SHOP } } })).then((r) => r, (e) => e);
+      ok('a press of 189 on the old-shape copy is NOT refused as excess (quoted_minor 18900)', !(press instanceof Error) && press.payment && paidOf(press) === 18900, press instanceof Error ? press.message : JSON.stringify(press.payment));
+      /* a STAMPED chit whose copies differ is a mismatch: classify queues it in words and hands the pick to postChit, which raises ONE ticket to us */
+      const stampedBad = { chit_id: BILL('6'), purpose: 'invoice', sender_entity_id: SHOP, created_at: AT, currency_code: 'INR', summary_json: { total_value: 180, money: { net: 180, tax: 9, total: 189 }, stamps: { money: { by: 'chits send' }, total_value: { by: 'chits send' } } }, business_json: {} };
+      const verdict = K.classify({ chit: stampedBad, entry: { sells: true, buyer: { entity_id: MALA }, invoice: null }, setting: { country: 'IN' } });
+      ok('a STAMPED chit whose total_value ≠ money.total QUEUES in words naming both figures, and carries the pick postChit raises from',
+        verdict.kind === 'queue' && /did not get the right value/.test(verdict.why) && /money 189/.test(verdict.why) && /total_value 180/.test(verdict.why) && verdict.mismatch && verdict.mismatch.agree === false, JSON.stringify(verdict));
+      const legacyNet = K.classify({ chit: Object.assign({}, stampedBad, { summary_json: { total_value: 180, money: { net: 180, tax: 9, total: 189 } } }), entry: { sells: true, buyer: { entity_id: MALA }, invoice: null }, setting: { country: 'IN' } });
+      ok('…the SAME figures on a chit with NO stamps (every B2B chit since 7 Sep) are legacy_net: not a mismatch, nothing queued or raised', !legacyNet.mismatch, JSON.stringify(legacyNet));
+      /* the books to-do: an overridden sale is a loud open item until someone resolves it */
+      const over = { step: 'gross', unexplained_minor: 5000, by: SHOP, at: AT, why: 'checked by hand' };
+      X.T.chits.push({ chit_id: BILL('7'), bill_no: 'INV-7', entity_id: SHOP, purpose: 'invoice', business_json: { bill_no: 'INV-7', money_override: over } });
+      const td = (await q('GET', '/todo')).body.find((x) => x.kind === 'money_unbalanced');
+      ok('To-do money_unbalanced lists the overridden sale with step, amount, who, when and why', td && td.count === 1 && td.items[0].chit_id === BILL('7') && td.items[0].step === 'gross' && td.items[0].unexplained_minor === 5000 && td.items[0].why === 'checked by hand', JSON.stringify(td));
+      const before = WHO;
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
+      const viewer = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'fine' });
+      WHO = before;
+      ok('a VIEWER cannot resolve it (403 in the rail\'s words); the item stays', viewer.status === 403 && (await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced'), JSON.stringify(viewer.body));
+      WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+      const noNote = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed' });
+      ok('"confirmed" with no reason is a 400 (the person says why)', noNote.status === 400, JSON.stringify(noNote.body));
+      const done = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'Customer checked the bill' });
+      WHO = before;
+      ok('an EDITOR resolves it: 200, one books_change_log row (money_override · resolved · how · note) naming who; the chit itself is untouched',
+        done.status === 200 && done.body.resolved === true && done.body.duplicate === false && X.T.changes.some((c) => c.table_name === 'money_override' && c.field === 'resolved' && c.row_id === BILL('7') && c.old === 'confirmed' && c.new === 'Customer checked the bill' && c.by === '55555555-5555-4555-8555-555555555555')
+        && JSON.stringify(X.T.chits.find((c) => c.chit_id === BILL('7')).business_json.money_override) === JSON.stringify(over), JSON.stringify(done.body));
+      ok('…the to-do drops it; resolving again is a no-op that says so; an unknown chit is a 404', !(await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced')
+        && (await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'again' })).body.duplicate === true && (await q('POST', '/money-check/resolve', { chit_id: BILL('8'), how: 'confirmed', note: 'x' })).status === 404);
+    } finally { TCp.entryFor = wasEntryFor; }
   });
 
   /* ═══ 6 · spec test 5 (M29): reverse from the row — the statement line names its entry; the reversal mirrors, never edits; the bills reopen in the SAME transaction ═══ */

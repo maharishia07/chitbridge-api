@@ -5521,6 +5521,262 @@
     }
    ]
   },
+  "POST /api/books/money-check/resolve": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "MISSING_FIELD",
+        "detail": "chit_id is needed."
+       },
+       {
+        "field": "how",
+        "code": "MISSING_FIELD",
+        "detail": "how is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "MISSING_FIELD",
+        "detail": "chit_id is needed."
+       },
+       {
+        "field": "how",
+        "code": "MISSING_FIELD",
+        "detail": "how is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "MISSING_FIELD",
+        "detail": "chit_id is needed."
+       },
+       {
+        "field": "how",
+        "code": "MISSING_FIELD",
+        "detail": "how is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "MISSING_FIELD",
+        "detail": "chit_id is needed."
+       },
+       {
+        "field": "how",
+        "code": "MISSING_FIELD",
+        "detail": "how is needed."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "money-resolve-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No sale let through unbalanced has that id.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No sale let through unbalanced has that id.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No sale let through unbalanced has that id.",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No sale let through unbalanced has that id.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "money-resolve-no-reason",
+     "status": 400,
+     "body_keys": {
+      "error": "Say why the sale is right as issued.",
+      "message": "Say why the sale is right as issued.",
+      "type": "https://chitbridge.com/problems/books_bad_request",
+      "title": "Ledger needs an answer",
+      "status": 400,
+      "code": "BOOKS_BAD_REQUEST",
+      "detail": "Say why the sale is right as issued.",
+      "hint": "Read the question shown and answer it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Say why the sale is right as issued.",
+      "message": "Say why the sale is right as issued.",
+      "type": "https://chitbridge.com/problems/books_bad_request",
+      "title": "Ledger needs an answer",
+      "status": 400,
+      "code": "BOOKS_BAD_REQUEST",
+      "detail": "Say why the sale is right as issued.",
+      "hint": "Read the question shown and answer it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
   "POST /api/books/outbox/retry": {
    "answers": [
     {

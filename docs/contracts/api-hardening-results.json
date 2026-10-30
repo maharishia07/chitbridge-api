@@ -5192,6 +5192,15 @@
     "why": "not reached: answered 422"
    }
   },
+  "POST /api/books/money-check/resolve": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 422"
+   }
+  },
   "GET /api/facts/rail/chits": {
    "output_allowlist": {
     "pass": false,

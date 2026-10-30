@@ -77,6 +77,7 @@ const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
+const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
@@ -225,33 +226,13 @@ const generateAutoSubject = (purpose, senderName, date, clock) => {
   return `${label} from ${senderName} — ${dateStr}`;
 };
 
-// ─── Helper: Calculate summary ───────────────────────────────
-const calculateSummary = (lineItems) => {
-  if (!lineItems || !Array.isArray(lineItems)) {
-    return { line_item_count: 0, total_value: 0 };
-  }
-  /**
-   * ⚠️⚠️ A TOTAL OF ZERO IS A TOTAL. `item.total || item.price * item.quantity` treats 0 as absent and falls
-   * through to the full price — so a line given away FREE was silently charged for in the chit's value.
-   *
-   * Athi, 2026-09-03: *"many of the products are sold based on what is coming as free… the chit should
-   * automatically make the oil price as zero and should be informed as freebie."* A freebie is exactly the line
-   * whose total is 0, so this coalesce was wrong precisely where it mattered most, and nowhere else — which is
-   * why nothing caught it: every line anyone had ever sent had a non-zero total.
-   *
-   * ⭐ Same rule this codebase keeps re-learning: ABSENT IS NOT ZERO, and the inverse is just as true — zero is
-   * not absent. `availability.countedZero`, `sheet.fromSheet`'s blank cell, `itemstatus`: same line, drawn again.
-   */
-  const total = lineItems.reduce((sum, item) => {
-    const explicit = item.total !== undefined && item.total !== null && String(item.total).trim() !== '';
-    const t = explicit ? parseFloat(item.total) : (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
-    return sum + (Number.isFinite(t) ? t : 0);
-  }, 0);
-  return {
-    line_item_count: lineItems.length,
-    total_value: roundMoney(total)
-  };
-};
+// ─── Helper: summary counts ──────────────────────────────────
+/**
+ * ⭐ ACC-206 (Athi 2026-10-30): "if you compute anything anywhere, it is wrong." This used to add up the lines' totals into total_value — a SECOND
+ * calculator beside the engine, with its own meaning (the lines' basis: ex-tax for one shop, tax-in for another). The chit's money is the ENGINE'S,
+ * computed once at send (sendMoney) and copied; the only figure counted here is how many lines there are.
+ */
+const calculateSummary = (lineItems) => ({ line_item_count: Array.isArray(lineItems) ? lineItems.length : 0 });
 
 // ─── D1 auto-assign on receipt ─────────────────────────────────
 // Walk the delegate chain when the chosen actor is on leave / not-assignable. Returns an assignable
@@ -451,6 +432,7 @@ const SEND_STEPS = [
   sendMoney,
   sendIssued,
   sendPaper,
+  sendBridge,
   sendCopyPolicy,
   sendPromote,
   sendParticipants,
@@ -621,18 +603,22 @@ function refOf(req) {
  */
 function moneyOfInvoice(inv, currency_code) {
   const m = taxEngine.moneyOf(inv, currency_code);
-  return {
-    gross: m.gross,
-    savings: m.savings,
-    net: m.net,
-    taxable: m.taxable,
-    tax: m.tax,
-    total: m.total,
-    round_off: m.round_off,
-    currency_code,
-    provisional: false,
-    issued: true
-  };
+  return Object.assign(
+    {
+      gross: m.gross,
+      savings: m.savings,
+      net: m.net,
+      taxable: m.taxable,
+      tax: m.tax,
+      total: m.total,
+      round_off: m.round_off,
+      currency_code,
+      provisional: false,
+      issued: true
+    },
+    /* ACC-206 (engines v1.74.0): the engine's own walk from gross to total — each applied offer, and its verdict (ok, or the first step that does not add up). COPIED, never rebuilt. */
+    m.bridge ? { offers: m.offers, bridge: m.bridge } : {}
+  );
 }
 /**
  * ⭐⭐⭐ ONE TIE-BREAK, TWO CALLERS — lifted 2026-09-26 per the external review's §22. This verdict (same till id
@@ -1308,83 +1294,42 @@ async function sendOffers(st, req, res) {
   Object.assign(st, { line_items, offersApplied });
 }
 
-/** the header's money — gross · savings · net · tax · total, provisional */
+/**
+ * ⭐⭐⭐ THE MONEY THE HEADER CARRIES — THE ENGINE'S, COMPUTED ONCE, HERE AT THE ORIGIN (ACC-206 A, Athi 2026-10-30 and ACC-192, 2026-10-25).
+ * "it cannot compute, the compute engine does it, afterwards, everything is data, no computation anywhere." A billing document that carries no
+ * invoice gets the engine's invoice now (lib/send-money): the seller's own flags, the buyer's identity — or the walk-in of the seller's country
+ * when nobody is named — and the header's gross · savings · net · taxable · tax · total · round-off are COPIED off that answer by moneyOfInvoice.
+ * There is no gross/net/savings/total arithmetic in this route any more (the 7 Sep note that called the pre-tax total "right" is retired: that was
+ * the second calculator, and it made one field mean two things). total_value is money.total, held in two places (sendRetention).
+ *   · not a billing document (an offer, a note, a receipt), no lines, or several recipients → money is NOT APPLICABLE: null, never 0 (mint.js:35)
+ *   · a draft carries provisional figures and never carries an invoice (sendIssued)
+ *   · the engine could not be READ (a party missing, the engine threw) → 503 MONEY_NOT_COMPUTED: a chit with no engine figures is a chit with no
+ *     money, and "a chit never fails to send over its summary" was the rule Athi overruled; a line the engine cannot read → 422 first
+ */
 async function sendMoney(st, req, res) {
-  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
-  /**
-   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
-   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
-   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
-   *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
-   *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
-   *     ONE query for both identities (his "why do you need another query?"), never one per line.
-   * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
-   * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
-   * "—" is honest, a column showing zero tax is a lie.
-   */
-  let moneyBlock = null;
-  try {
-    const r2m = (n) => roundMoney(Number(n) || 0);
-    const li = Array.isArray(line_items) ? line_items : [];
-    const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
-    const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
-    const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
-    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
-    let tax = null,
-      total = null;
-    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-    const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
-      const ids = [String(sellerId), String(buyerId)];
-      const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
-      const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-      const sRow = rowOf(sellerId),
-        bRow = rowOf(buyerId);
-      if (sRow && bRow) {
-        /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
-           so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
-           if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
-           the SELLER's own setting from it, no second query. */
-        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
-        /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
-           reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
-           later must say when it was actually billed, same reasoning as the offers guard just above. */
-        const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-        const inv = taxLines.invoiceFor({
-          lines: li,
-          seller: taxLines.partyOf(sRow),
-          buyer: taxLines.partyOf(bRow),
-          currency: currency_code,
-          at: invAt,
-          priceIncludesTax
-        });
-        const h = taxLines.heads(inv.invoice);
-        if (h && Number.isFinite(h.tax)) {
-          tax = r2m(h.tax);
-          total = r2m(h.total || net + tax);
-        }
-      }
-    }
-    moneyBlock = {
-      gross,
-      savings: r2m(gross - net),
-      net,
-      tax,
-      total: total != null ? total : tax != null ? r2m(net + tax) : null,
-      currency_code,
-      provisional: true
-    };
-  } catch (e) {
-    cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
+  const scope = sendMoneyScope.scopeOf(st);
+  st.moneyScope = scope;
+  if (scope.kind !== 'engine') return;
+  const unreadable = sendMoneyScope.unreadableLine(st.line_items);
+  if (unreadable) {
+    return problem(req, res, { status: 422, ...said({ code: 'MONEY_INPUT_UNREADABLE', error: 'A line could not be read', message: 'Line ' + (unreadable.line + 1) + ' has a ' + unreadable.field + ' that is not a number, so the money could not be worked out. Fix that line and send again.', line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') });
   }
-  Object.assign(st, { moneyBlock });
+  let invoice;
+  try {
+    invoice = await sendMoneyScope.invoiceAtSend(st);
+  } catch (e) {
+    cbLog.fellBack('chits sendMoney: the engine was not read — the send is refused (503 MONEY_NOT_COMPUTED)', e);
+    return problem(req, res, { status: 503, ...said({ code: 'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: ' + String((e && e.message) || 'the tax engine did not answer') + '. Try again; if it repeats, tell us.' }, codeOfStatus(503)) });
+  }
+  const block = moneyOfInvoice(invoice, st.currency_code);
+  Object.assign(st, { originInvoice: invoice, moneyBlock: st.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
 }
 
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
 async function sendIssued(st, req, res) {
-  const { sender_id, purpose, line_items, business_json, currency_code, is_draft, receiverDetails, counterBill } = st;
-  let { moneyBlock } = st;
+  const { currency_code, is_draft, counterBill } = st;
+  /* the invoice the engine computed at send travels in business_json — a send that came with none gets the object to carry it */
+  const business_json = st.business_json || (st.originInvoice && !is_draft ? {} : st.business_json);
   /**
    * ⭐⭐⭐ A COUNTER BILL CARRIES ITS INVOICE, AND THE SERVER ONLY READS IT (Athi, 2026-10-02: "the computation should happen
    * in only one place like billing, rest all the places the value has to only read … recomputation can be done, but
@@ -1394,36 +1339,78 @@ async function sendIssued(st, req, res) {
    * (lib/tax-copy entryFor → lib/issued-invoice check): a difference is named on the chit (business_json.tax_check) and in
    * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
    */
-  let issuedTotal = null;
+  /* ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
+     a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
+     tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. */
+  if (business_json && !business_json.invoice && st.originInvoice && !is_draft) business_json.invoice = st.originInvoice;
   const carried = business_json && business_json.invoice;
-  if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
-    moneyBlock = moneyOfInvoice(carried, currency_code);
-    issuedTotal = moneyBlock.total;
-    try {
-      const e = await taxCopy.entryFor(
-        {
-          chit_id: null,
-          sender_entity_id: sender_id,
-          purpose,
-          business_json,
-          line_items,
-          currency_code,
-          all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-            receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-          ),
-          sent_at: business_json.billed_at || null
-        },
-        sender_id
-      );
-      if (e && e.tax_check && !e.tax_check.ok) {
-        business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-        require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-      }
-    } catch (e) {
-      cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+  /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
+     counter's is checked, because only the counter computed it somewhere other than here */
+  const mapped = !is_draft && hasInvoiceTotal(carried);
+  Object.assign(st, { moneyBlock: mapped ? moneyOfInvoice(carried, currency_code) : st.moneyBlock, business_json });
+  if (counterBill && mapped) await checkCounterInvoice(st);
+}
+/** does this invoice carry the engine's total? (the one test before a chit's header is mapped off it) */
+const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' && !!invoice.ValDtls && Number.isFinite(Number(invoice.ValDtls.TotInvVal));
+
+/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
+async function checkCounterInvoice(sendState) {
+  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
+  try {
+    const e = await taxCopy.entryFor(
+      {
+        chit_id: null,
+        sender_entity_id: sender_id,
+        purpose,
+        business_json,
+        line_items,
+        currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+        ),
+        sent_at: business_json.billed_at || null
+      },
+      sender_id
+    );
+    if (e && e.tax_check && !e.tax_check.ok) {
+      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
     }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
   }
-  Object.assign(st, { moneyBlock, issuedTotal });
+}
+
+/**
+ * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
+ * The ENGINE checked its own bridge (gross → offers → net → taxable → tax → round-off → total, in minor units) before it answered; this step
+ * only READS that verdict (lib/send-money stopOf — no sum here). An invoice whose bridge did not balance is refused BEFORE anything is written:
+ * 409 MONEY_UNBALANCED { step, unexplained_minor, words, gross_minor, total_minor } — the OVER_LIMIT shape. The OWNER may let it through
+ * (the owner's own login, or a counter key after the owner's counter PIN — finance-terms.overrideBy, the credit-limit helper, widened to need a typed
+ * reason): business_json.money_override = { by, at, why, step, unexplained_minor }, written once, sealed with the chit. The chit is then SENT AND OPEN —
+ * the books post it at the issued figures and list it as an item to address (money_unbalanced, ACC-206 B); it never disappears into the books.
+ * A draft is never stopped (it is not issued). An invoice frozen before v1.74.0 carries no bridge: nothing to read, nothing to stop.
+ */
+async function sendBridge(sendState, req, res) {
+  const { business_json, is_draft } = sendState;
+  if (!business_json || typeof business_json !== 'object') return;
+  const invoice = business_json.invoice || sendState.originInvoice;
+  const stop = sendMoneyScope.stopOf(invoice);
+  const asked = business_json.money_override;
+  if (!stop || is_draft) {
+    if (asked !== undefined && !is_draft) delete business_json.money_override; /* an override claimed on a bill that balances means nothing and opens no item */
+    return;
+  }
+  const allowedBy = require('../lib/finance-terms').overrideBy(req, asked, { needWhy: true });
+  if (!allowedBy) {
+    res.locals.code = 'MONEY_UNBALANCED';
+    return problem(req, res, {
+      status: 409,
+      ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: stop.words + ' Check the bill, or the owner can let it through.', step: stop.step, line: stop.line, unexplained_minor: stop.unexplained_minor, words: stop.words, gross_minor: stop.gross_minor, total_minor: stop.total_minor }, 'CHIT_CONFLICT')
+    });
+  }
+  business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
+  cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
 }
 
 /**
@@ -1660,14 +1647,14 @@ async function sendParticipants(st, req, res) {
 
 /** the subject, the summary, the priority and the retention each copy keeps */
 async function sendRetention(st, req, res) {
-  const { sender_display_name, purpose, line_items, issuedTotal, now } = st;
+  const { sender_display_name, purpose, line_items, moneyBlock, now } = st;
   // Generate auto subject
   const auto_subject = generateAutoSubject(purpose, sender_display_name, now, st.clock);
 
-  // Calculate summary from line items
+  /* ⭐ ACC-206: total_value IS the engine's total — money.total, the same number held in two places (and in the chit_detail column). Not applicable
+     (no money block: an offer, a note, no lines) is null, never 0 (mint.js:35). The lines are only COUNTED here. */
   const summary = calculateSummary(line_items);
-  /* ⭐ a counter bill's value is its invoice's TotInvVal (above), never the sum of its line nets */
-  if (issuedTotal != null) summary.total_value = issuedTotal;
+  summary.total_value = moneyBlock && Number.isFinite(Number(moneyBlock.total)) ? moneyBlock.total : null;
   // External priority: set by the drafter at compose, immutable once sent (rides on the shared header summary).
   const ext_priority = PRIORITIES.includes((req.body.external_priority || '').trim()) ? req.body.external_priority.trim() : 'normal';
   // ── chit expiry (Phase 1, NON-DESTRUCTIVE) — record an optional retention/expiry on the chit; nothing auto-retires
@@ -1919,6 +1906,8 @@ async function sendSummary(st, req, res) {
     line_item_count: summary.line_item_count,
     total_value: summary.total_value,
     money: moneyBlock,
+    /* ACC-206: the figures name their writer (who computed, who copied, when) — what a later disagreement is reported from */
+    stamps: moneyBlock ? sendMoneyScope.stampsOf(now.toISOString(), st.moneyScope && st.moneyScope.kind === 'carried' ? 'counter' : 'send') : undefined,
     offers: offersApplied,
     currency_code,
     priority_external: ext_priority,

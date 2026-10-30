@@ -64,6 +64,7 @@ function rowsFor(sql, p) {
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/SELECT role, business_json->>'page' AS page FROM chit_header/.test(s)) return DRAFT ? [DRAFT] : [];
   if (/SELECT self_copy_pref/.test(s)) return [{ self_copy_pref: null }];
+  if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean); /* ACC-206: the engine reads seller and buyer at send */
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p && p[0]]; return r ? [r] : []; }
   return [];
 }

@@ -190,6 +190,11 @@ const PAID = { party_id: PARTY, amount_minor: 1000, mode: 'cash' };
 const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recorded, paymentOutcome: async () => OUTCOME, adviceFor: async () => ADVICE(true) }, store: { adviceReady: async () => true, payment: async () => PAY_ROW } });
 const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
 const WRITES_READY = [
+  /* ACC-206 B: closing an overridden sale's open item (routes/books-money.js) — one insert in the change log */
+  X('money-resolved', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'Customer checked the bill' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: false }), logChange: async () => undefined } } }),
+  X('money-resolve-already', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'again' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: true }) } } }),
+  X('money-resolve-unknown', 'POST /api/books/money-check/resolve', 404, { body: { chit_id: CHIT, how: 'confirmed', note: 'x' }, patch: { store: { moneyOverrideState: async () => ({ held: false, resolved: false }) } } }),
+  X('money-resolve-no-reason', 'POST /api/books/money-check/resolve', 400, { body: { chit_id: CHIT, how: 'confirmed' } }),
   X('setting-grain-shift', 'POST /api/books/setting', 200, { body: { walkin_grain: 'shift' } }),
   X('setting-switched-off', 'POST /api/books/setting', 200, { body: { enabled: false } }),
   X('terms-shop-saved', 'POST /api/books/terms', 200, { body: { credit_days: 30 }, patch: { terms: { migrated: async () => true, saveShop: async () => SHOP_TERMS } } }),
@@ -565,6 +570,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();
   app.use((req, res, next) => {
