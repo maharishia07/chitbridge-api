@@ -7284,6 +7284,36 @@
       "error": "Delete failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
     }
    ]
   },
@@ -7355,6 +7385,42 @@
         "message": "Invalid value"
        }
       ]
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
+     },
+     "fixture": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
+     },
+     "fixture": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
+     },
+     "fixture": {
+      "error": "Rule delete failed",
+      "message": "Rule not found"
      }
     }
    ]
@@ -7586,6 +7652,36 @@
       "error": "Not found",
       "message": "That folder is switched off."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
     }
    ]
   },
@@ -7636,6 +7732,36 @@
       "error": "Not found",
       "message": "That folder is switched off."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
     }
    ]
   },
@@ -7673,6 +7799,36 @@
      "fixture": {
       "error": "Rules list failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
      }
     }
    ]
@@ -50057,6 +50213,36 @@
      "fixture": {
       "error": "Scorecard failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
      }
     }
    ]

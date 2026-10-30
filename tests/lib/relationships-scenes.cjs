@@ -263,7 +263,10 @@ function extras(tools) {
     X('scorecard-list-fails', 'GET ' + at('/scorecard'), 500, { patch: { select: { counterparties: async () => boom() } } }),
     X('scorecard-db-fails', 'GET ' + at('/scorecard'), 500, { setup: failing }),
     N('scorecard-since-twice', 'GET ' + at('/scorecard'), 400, { url: at('/scorecard?since=2026-01-01&since=2026-02-01') }),
-    X('scorecard-one-unknown', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    /* S35: an id this shop shares no chit with is the unknown id's 404 (before: 200 with an empty card), in the window or out of it; a real counterparty with nothing in the window keeps its empty card */
+    N('scorecard-one-unknown', 'GET ' + at('/scorecard/:entity_id'), 404, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    N('scorecard-one-unknown-in-a-window', 'GET ' + at('/scorecard/:entity_id'), 404, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    X('scorecard-one-empty-window', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async (owner, sel) => (sel.since ? [] : [{ counterparty_name: 'Corner Hardware', status: 'paid', total: 100 }]) } } }),
     X('scorecard-one', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [{ counterparty_name: 'Corner Hardware', status: 'paid', total: 100 }] } } }),
     X('scorecard-one-fails', 'GET ' + at('/scorecard/:entity_id'), 500, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => boom() } } }),
     X('scorecard-one-rows-fail', 'GET ' + at('/scorecard/:entity_id'), 500, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({}) }, select: { rows: async () => boom() } } })

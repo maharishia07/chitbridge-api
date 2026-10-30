@@ -82,11 +82,13 @@
  "DELETE /api/folders/:id": [
   400,
   401,
+  404,
   500
  ],
  "DELETE /api/folders/rules/:rule_id": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -771,6 +773,7 @@
  "GET /api/folders/:id/rules": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/folders/groupsum": [
@@ -1099,6 +1102,7 @@
  ],
  "GET /api/relationships/scorecard/:entity_id": [
   401,
+  404,
   500
  ],
  "GET /api/relationships/suppliers": [
@@ -2334,6 +2338,7 @@
   400,
   401,
   403,
+  404,
   409,
   500,
   503
@@ -2342,6 +2347,7 @@
   400,
   401,
   403,
+  404,
   500
  ],
  "POST /api/crm/walk-ins/add": [

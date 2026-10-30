@@ -459,33 +459,52 @@
    "output_allowlist": true
   },
   "PUT /api/folders/inventory/:code": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/folders": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "PATCH /api/folders/:id": {
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "DELETE /api/folders/:id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/folders/move": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "GET /api/folders/:id/chits": {
+   "foreign_id_404": true
   },
   "GET /api/folders/:id/metrics": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/folders/:id/rules": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/folders/:id/rules": {
-   "output_allowlist": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PATCH /api/folders/rules/:rule_id": {
-   "output_allowlist": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "DELETE /api/folders/rules/:rule_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/folders/rules/preview": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/folders/rules/vocabulary": {
@@ -496,6 +515,11 @@
   },
   "GET /api/folders/messages": {
    "output_allowlist": true
+  },
+  "POST /api/folders/messages/:message_id/mark": {
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/folders/worklist": {
    "output_allowlist": true
@@ -535,7 +559,8 @@
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/catalogue/network-store/:networkId": {
    "output_allowlist": true
@@ -1013,15 +1038,18 @@
    "output_allowlist": true
   },
   "POST /api/crm/parties/:id/interactions": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
   "POST /api/crm/followups": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/crm/followups/:id": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -1029,17 +1057,31 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/crm/leads": {
+   "strict_input": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
   },
+  "POST /api/crm/parties/:id/outcome": {
+   "strict_input": true
+  },
   "POST /api/crm/leads/import": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/crm/parties/:id/stage": {
+   "strict_input": true
+  },
+  "POST /api/crm/walk-ins/add": {
+   "strict_input": true
   },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/contact-prefs": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -1047,15 +1089,18 @@
    "output_allowlist": true
   },
   "POST /api/crm/privacy-requests": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/crm/privacy-requests/:id/answer": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/crm/segments": {
    "output_allowlist": true
   },
   "POST /api/crm/groups": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
@@ -1063,6 +1108,7 @@
    "foreign_id_404": true
   },
   "POST /api/crm/segments/:key/send": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/marketing/came-back": {
