@@ -52,7 +52,7 @@ function seed(D, W, row) {
       { owner: OTHER_SHOP, party_id: IDS.foreign, followup_id: P(29), what: 'Not yours', due_at: day(1), created_at: '2026-09-08T01:00:00.000Z', done_at: null, assignee_user_id: OTHER_SHOP, source: 'manual' }
     ],
     migrated: true, team: [SHOP, 'A1', 'A2', 'A3'], country: null, points: null, memberships: [], queries: [], appended: [], pre: null, shopCountry: 'IN',
-    hiddenColumn: true, ledgerOn: true
+    hiddenColumn: true, ledgerOn: true, noSeries: false
   });
 }
 
@@ -222,6 +222,8 @@ function extras() {
     X('party-remove-with-dues', 'DELETE ' + C + '/parties/:id', 409, { data: (D) => { D.stored.customer[A.chola] = { party_no: 'P-0002', balance_minor: 50000, oldest_due: '2026-09-01' }; }, url: C + '/parties/' + A.chola }),
     /* leads */
     X('lead-added', 'POST ' + C + '/leads', 201, { body: { name: 'Ravi Jewellers', phone: '+91 98400 12321', stage: 'demo' } }),
+    /* API-8 (S34): before b272 there is no number series, so a new party has no number (party_no null) */
+    X('lead-added-before-the-number-series', 'POST ' + C + '/leads', 201, { body: { name: 'Ravi Jewellers', stage: 'demo' }, data: (D) => { D.noSeries = true; } }),
     X('lead-no-name', 'POST ' + C + '/leads', 400, { body: { phone: '+91 98400 12321' } }),
     X('lead-bad-phone', 'POST ' + C + '/leads', 400, { body: { name: 'X', phone: 'abc' } }),
     X('lead-bad-stage', 'POST ' + C + '/leads', 400, { body: { name: 'X', stage: 'customer' } }),
@@ -240,6 +242,7 @@ function extras() {
     N('calls-scope-given-twice', 'GET ' + C + '/calls', 400, at('/calls?scope=mine&scope=all')),
     X('outcome-logged', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested' } }),
     X('outcome-moves-the-stage', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'demo_booked', due_at: day(3).slice(0, 10) } }),
+    X('outcome-ends-the-lead', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'wrong_number' } }), /* API-8 (S34): no next follow-up (followup null) */
     X('outcome-bad-pick', 'POST ' + C + '/parties/:id/outcome', 400, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'nope' } }),
     X('outcome-unknown', 'POST ' + C + '/parties/:id/outcome', 404, { url: C + '/parties/' + A.unknown + '/outcome', body: { outcome: 'interested' } }),
     X('outcome-before-b297', 'POST ' + C + '/parties/:id/outcome', 503, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'not_now' }, setup: { world: { leads: false } } }),
@@ -254,6 +257,7 @@ function extras() {
     X('import-before-b297', 'POST ' + C + '/leads/import', 503, { body: { rows: [{ name: 'A' }] }, setup: { world: { leads: false } } }),
     /* the walk-in */
     X('walk-in-added', 'POST ' + C + '/walk-ins/add', 201, { body: { phone: '+91 98400 55555', name: 'Corner shop' } }),
+    X('walk-in-added-before-the-number-series', 'POST ' + C + '/walk-ins/add', 201, { body: { phone: '+91 98400 55555', name: 'Corner shop' }, data: (D) => { D.noSeries = true; } }),
     X('walk-in-no-phone', 'POST ' + C + '/walk-ins/add', 400, { body: {} }),
     /* a database that fails under a request that is otherwise fine: a 500 that says nothing of its cause */
     X('followup-made-db-fails', 'POST ' + C + '/followups', 500, { body: { party_id: A.chola, what: 'x' }, setup: { db: 'fail' } }),

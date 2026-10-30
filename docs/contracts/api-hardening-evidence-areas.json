@@ -360,7 +360,8 @@
    "foreign_id_404": true
   },
   "PATCH /api/crm/followups/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id": {
    "foreign_id_404": true
@@ -487,16 +488,41 @@
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/contact-prefs": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/interactions": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/outcome": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "POST /api/crm/parties/:id/stage": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "POST /api/crm/followups": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/groups": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/leads": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/privacy-requests": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/privacy-requests/:id/answer": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/segments/:key/send": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/walk-ins/add": {
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/attach": {
    "foreign_id_404": true

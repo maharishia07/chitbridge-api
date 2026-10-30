@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 263
+    "failing": 251
    },
    "foreign_id_404": {
     "applies": 227,
@@ -999,7 +999,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 701,
+   "line": 698,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -11256,7 +11256,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 490,
+   "line": 484,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -11620,7 +11620,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 610,
+   "line": 606,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -11816,7 +11816,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 640,
+   "line": 636,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -11906,7 +11906,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 681,
+   "line": 677,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -26284,7 +26284,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 408,
-   "hash": "e01d0a861a4d98d1",
+   "hash": "3807752ffc0ea320",
    "does": "",
    "errors": {
     "count": 0,
@@ -26317,7 +26317,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26346,8 +26346,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3807752ffc0ea320"
    },
    "status": "partial",
    "callers": [
@@ -39410,7 +39411,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 392,
-   "hash": "dc7dfb64216aa0f1",
+   "hash": "2735a124451b9667",
    "does": "",
    "errors": {
     "count": 0,
@@ -39445,7 +39446,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39473,8 +39474,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2735a124451b9667"
    },
    "status": "partial",
    "callers": [
@@ -39506,8 +39508,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 691,
-   "hash": "7adbe776b050e48e",
+   "line": 687,
+   "hash": "561e32b62e23278d",
    "does": "",
    "errors": {
     "count": 0,
@@ -39541,7 +39543,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39569,8 +39571,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "561e32b62e23278d"
    },
    "status": "partial",
    "callers": [
@@ -39599,7 +39602,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 450,
-   "hash": "9141c846d5e2fb1a",
+   "hash": "8e03f370f91e4af9",
    "does": "",
    "errors": {
     "count": 0,
@@ -39635,7 +39638,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39663,8 +39666,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8e03f370f91e4af9"
    },
    "status": "partial",
    "callers": [
@@ -39692,8 +39696,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 522,
-   "hash": "c0c22340d0b000d9",
+   "line": 518,
+   "hash": "ef4ac76e1a6196bf",
    "does": "",
    "errors": {
     "count": 0,
@@ -39751,8 +39755,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ef4ac76e1a6196bf"
    },
    "status": "partial",
    "callers": [
@@ -39780,8 +39785,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 627,
-   "hash": "ecde3a9059d69190",
+   "line": 623,
+   "hash": "3848a257e43bdb19",
    "does": "",
    "errors": {
     "count": 0,
@@ -39814,7 +39819,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39843,8 +39848,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3848a257e43bdb19"
    },
    "status": "partial",
    "callers": [
@@ -39873,7 +39879,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 356,
-   "hash": "d4f89601249d1679",
+   "hash": "e67247d514cbd3b9",
    "does": "",
    "errors": {
     "count": 0,
@@ -39909,7 +39915,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39938,8 +39944,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e67247d514cbd3b9"
    },
    "status": "partial",
    "callers": [
@@ -39969,8 +39976,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 505,
-   "hash": "68c43ef1411b1293",
+   "line": 499,
+   "hash": "554d7425788f3463",
    "does": "",
    "errors": {
     "count": 0,
@@ -40001,7 +40008,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40030,8 +40037,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "554d7425788f3463"
    },
    "status": "partial",
    "callers": [
@@ -40059,8 +40067,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 535,
-   "hash": "f65b2d9f487257f3",
+   "line": 531,
+   "hash": "cb3ac46e6f44931f",
    "does": "",
    "errors": {
     "count": 0,
@@ -40096,7 +40104,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40125,8 +40133,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cb3ac46e6f44931f"
    },
    "status": "partial",
    "callers": [
@@ -40154,8 +40163,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 650,
-   "hash": "143f2fc0c8f269c8",
+   "line": 646,
+   "hash": "31efec9d4fc2cf15",
    "does": "",
    "errors": {
     "count": 0,
@@ -40187,7 +40196,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40215,8 +40224,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "31efec9d4fc2cf15"
    },
    "status": "partial",
    "callers": [
@@ -40244,8 +40254,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 664,
-   "hash": "573a81c87496219e",
+   "line": 660,
+   "hash": "0fab3142f48afd1c",
    "does": "",
    "errors": {
     "count": 0,
@@ -40278,7 +40288,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40336,8 +40346,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 712,
-   "hash": "e6d8b5df5f81521b",
+   "line": 709,
+   "hash": "7848f5d1450e2f0b",
    "does": "",
    "errors": {
     "count": 0,
@@ -40368,7 +40378,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40426,8 +40436,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 561,
-   "hash": "8b85518c2880e72e",
+   "line": 557,
+   "hash": "d97fec1b8ac442c4",
    "does": "",
    "errors": {
     "count": 0,
@@ -40460,7 +40470,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -40488,8 +40498,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#373",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d97fec1b8ac442c4"
    },
    "status": "partial",
    "callers": [
