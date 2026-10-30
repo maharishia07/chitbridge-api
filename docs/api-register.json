@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 35,
-  "partial": 476,
-  "meets": 123,
+  "partial": 475,
+  "meets": 124,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -6123,11 +6123,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a025e197a54c16cc"
+    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib; periods[].return additive and optional, form/period/label/closed read against books.periodAdvice and the contract) 2026-10-30 PR#599",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
