@@ -71,9 +71,12 @@ const callsOf = (key) => {
 /* ⚠️ THE MOUNT LINE HAS MORE SHAPES THAN THE OBVIOUS ONE — inline require, or a router VARIABLE (actors, entities, governance…). Both are
    read by tools/server-mounts.cjs (EFF-TRIPS: one helper for this scanner and the round-trip harness; the old regex here knew only the first
    shape and reported its own blindness as "not called by the client" / "no mount in server.js"). */
-let mounts = {};
+let mounts = {},
+  mountsAll = {}; /* every prefix a route file is mounted at (ctp.js: '' and /api/ctp) — the graph reads one route per mount */
 try {
-  mounts = require('./server-mounts.cjs').serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));
+  const serverText = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+  mounts = require('./server-mounts.cjs').serverMounts(serverText);
+  mountsAll = require('./server-mounts.cjs').serverMountsAll(serverText);
 } catch (_) {
   /* no server.js — paths degrade to the route file's own path */
 }
@@ -120,8 +123,7 @@ const argOf = (flag) => (process.argv.indexOf(flag) >= 0 ? process.argv[process.
 if (process.argv.indexOf('--buckets') >= 0 || process.argv.indexOf('--md') >= 0) {
   const webRoot = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR) : path.join(API, '..', 'chitbridge-web');
   const engRoot = process.env.CB_ENGINES_DIR ? path.resolve(process.env.CB_ENGINES_DIR) : path.join(API, '..', 'chitbridge-engines');
-  /* ⚠️ the wide run reads server.js WITHOUT its comment lines: server.js:438 keeps a commented-out mount of src/routes/catalogue under /api/network, and server-mounts.cjs
-     (shared with the round-trip harness, whose budget would then fail on 7 catalogue routes it has no line for) reads it as live. Reported, not changed here. */
+  /* ⚠️ the wide run reads server.js WITHOUT its comment lines: server.js:438 keeps a commented-out mount of src/routes/catalogue under /api/network; server-mounts.cjs now skips comment lines itself (W2, 30 Oct), this strip stays as a belt. */
   const liveText = fs.readFileSync(path.join(API, 'server.js'), 'utf8').replace(/^\s*\/\/.*$/gm, '');
   const allMounts = require('./server-mounts.cjs').serverMountsAll(liveText);
   const wide = require('./endpoint-usage-run.cjs').runWide({
@@ -147,6 +149,7 @@ if (process.argv.indexOf('--buckets') >= 0 || process.argv.indexOf('--md') >= 0)
     JSON.stringify({
       called: called.map((item) => ({ file: item.file, route: item.route, calls: item.calls })),
       mounts,
+      mountsAll,
       registry: reg,
       routes: rows.map((item) => ({ file: item.file, route: item.route, keys: item.keys, calls: item.calls }))
     }),

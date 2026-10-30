@@ -129,6 +129,30 @@ const webCalled = new Set(called.map((r) => r.route));
 const webCalls = (k) => webCalled.has(k);
 for (const k of Object.keys(budget.routes)) if (budget.routes[k].awaiting_client && !called.some((r) => r.route === k)) called.push({ route: k, file: budget.routes[k].file });
 
+/* ⭐ W2 (30 Oct): ONE NAME PER ROUTE. The client's registry spells a route its own way (`/api/facts/account` for the code's `/:card`, `:id` for the code's `:chit_id`), so the budget
+   held 26 rows no api-register route had and the register's trips_budgeted column read the route as unbudgeted. A called route that is not a register key is renamed to the register
+   route that serves it (the one with the most literal segments; a `:param` matches any segment); EVERY client spelling is fired and the dearest one sets the ceiling (the facts cards cost 1 to 4 trips; the route is the dearest card). The register is read, never written. */
+const REGISTER_FILE = path.join(API, 'docs', 'api-register.json');
+if (fs.existsSync(REGISTER_FILE)) {
+  const regKeys = JSON.parse(fs.readFileSync(REGISTER_FILE, 'utf8')).routes.map((r) => r.key);
+  const regSet = new Set(regKeys);
+  const segs = (k) => k.slice(k.indexOf(' ') + 1).split('/');
+  const fits = (reg, got) => { const a = segs(reg), b = segs(got); return reg.split(' ')[0] === got.split(' ')[0] && a.length === b.length && a.every((x, i) => x === b[i] || x[0] === ':' || b[i][0] === ':'); };
+  const literals = (k) => segs(k).filter((x) => x[0] !== ':').length;
+  const renamed = new Map();
+  for (const r of called) {
+    if (regSet.has(r.route)) { if (!renamed.has(r.route)) renamed.set(r.route, r); continue; }
+    const hits = regKeys.filter((k) => fits(k, r.route)).sort((x, y) => literals(y) - literals(x));
+    const to = hits.length && (hits.length === 1 || literals(hits[0]) > literals(hits[1])) ? hits[0] : null;
+    if (!to) { if (!renamed.has(r.route)) renamed.set(r.route, r); continue; }
+    if (!renamed.has(to)) renamed.set(to, Object.assign({}, r, { route: to, fireAs: [] }));
+    const into = renamed.get(to); into.fireAs = into.fireAs || [to]; into.fireAs.push(r.route);
+    if (budget.routes[r.route] && budget.routes[r.route].extra) { if (!budget.routes[to]) budget.routes[to] = Object.assign({}, budget.routes[r.route]); delete budget.routes[r.route]; } /* the old spelling is not a second row (the 'extra' loop below would add it back) */
+  }
+  called = [...renamed.values()];
+  for (const r of called) webCalled.add(r.route);
+}
+
 const express = require('express');
 const app = express();
 app.use(require(path.join(API, 'lib', 'trips')).middleware());
@@ -173,7 +197,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       let m;
       if (!mountedFiles.has(r.file)) m = { error: mountErr[r.file] || 'no mount' };
       else {
-        m = await fire(srv.address().port, r.route);
+        { m = null; for (const spelling of r.fireAs || [r.route]) { const one = await fire(srv.address().port, spelling); if (!m || one.error || (!m.error && ((one.trips || 0) > (m.trips || 0) || ((one.trips || 0) === (m.trips || 0) && (one.wire || 0) > (m.wire || 0))))) m = one; if (one.error) break; } }
         if (!m.error && m.trips === null) m = { error: 'no X-DB-Trips header (status ' + m.status + ')' };
         else if (!m.error && m.status >= 500) m = { error: 'answered ' + m.status + ' on the stub' };
       }

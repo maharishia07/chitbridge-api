@@ -511,18 +511,18 @@
     },
     "GET /api/catalogue/:bridge_id": {
       "file": "catalogue.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 404,
       "extra": true
     },
     "GET /api/catalogue/enquiry": {
       "file": "catalogue.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 4,
       "fired": true,
-      "status": 404,
+      "status": 200,
       "extra": true
     },
     "GET /api/channels": {
@@ -1102,206 +1102,10 @@
       "extra": true,
       "why": "event stream held open: the ticket is checked in memory, no database read"
     },
-    "GET /api/facts/account": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/accounts": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/assist": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/combo-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/compare": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/connectors": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/counters": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/country-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/crm": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 14,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/disputes": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/finance": {
-      "file": "facts.js",
-      "trips": 4,
-      "wire": 9,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/governance": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/marketing": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "MKT web round: the Marketing card on Home / CB CRM",
-        "since": "2026-10-28",
-        "redated": "re-dated 2026-10-28 (Athi): web round in BACKLOG this week"
-      }
-    },
-    "GET /api/facts/offer-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/operations": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/orders": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 10,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/people": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/plan": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 2,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/product-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/rail": {
-      "file": "facts.js",
-      "trips": 3,
-      "wire": 19,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
     "GET /api/facts/rail/chits": {
       "file": "facts.js",
       "trips": 2,
       "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/reports": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/storefront": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/tax-lab": {
-      "file": "facts.js",
-      "trips": 4,
-      "wire": 13,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/till": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -2531,7 +2335,7 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 404,
+      "status": 400,
       "extra": true
     },
     "POST /api/channels": {
@@ -3662,14 +3466,6 @@
       "status": 400,
       "extra": true
     },
-    "PUT /api/chits/:id/use": {
-      "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 404,
-      "extra": true
-    },
     "PUT /api/definitions/:id": {
       "file": "definitions.js",
       "trips": 1,
@@ -3764,20 +3560,41 @@
       "fired": true,
       "status": 404
     },
-    "GET /api/facts/trend": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
     "POST /api/books/parties/:id/dispute": {
       "file": "books.js",
       "trips": 1,
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "GET /api/catalogue/:bridge_id/my-orders": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "GET /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/catalogue/:bridge_id/login/verify": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/facts/:card": {
+      "file": "facts.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
     }
   }
 }

@@ -17,7 +17,8 @@
  */
 function serverMounts(src) {
   const mounts = {};
-  const s = String(src || '');
+  /* a commented-out mount is not a mount (server.js:438 keeps one for src/routes/catalogue under /api/network; reading it as live put 18 catalogue routes at the wrong path in the trace) */
+  const s = String(src || '').replace(/^\s*\/\/.*$/gm, '');
   /* shape 1 — the require sits in the mount. ⚠️ [^;] not [\s\S]: a single app.use() statement never contains a ';', so a routerless mount
      (`app.use('/api/governance', governanceRouter);`) must not run past its ';' and pair its path with the NEXT line's require. */
   for (const m of s.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
@@ -43,7 +44,7 @@ module.exports = { serverMounts };
  * twice, or at '/', is two sets of endpoints). serverMounts above keeps only the first, which is all its two callers need.
  */
 function serverMountsAll(serverSource) {
-  const text = String(serverSource || '');
+  const text = String(serverSource || '').replace(/^\s*\/\/.*$/gm, '');
   const vars = {};
   for (const m of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
   const all = {};
