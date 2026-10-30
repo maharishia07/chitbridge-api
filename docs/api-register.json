@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 35,
-  "partial": 448,
-  "meets": 151,
+  "partial": 447,
+  "meets": 152,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 634,
-    "failing": 163
+    "failing": 159
    }
   }
  },
@@ -7385,8 +7385,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 0,
-    "wire": 0,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -7606,7 +7606,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -7636,8 +7636,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -7804,8 +7804,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 0,
-    "wire": 0,
+    "trips": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -7859,7 +7859,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -7890,8 +7890,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -13712,7 +13712,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -13744,8 +13744,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 4,
+    "wire": 13,
     "screens": []
    },
    "measured": {
@@ -34417,7 +34417,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -34443,12 +34443,12 @@
     "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
