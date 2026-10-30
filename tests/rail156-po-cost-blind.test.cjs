@@ -18,17 +18,19 @@ const G = require('./support/route-golden.cjs');
 const API = G.API;
 
 const SHOP = '11111111-1111-4111-8111-111111111111', SUPPLIER = '22222222-2222-4222-8222-222222222222', CUSTOMER = '33333333-3333-4333-8333-333333333333';
-const STRANGER = '44444444-4444-4444-8444-444444444444', BLIND_ID = '55555555-5555-4555-8555-555555555555', GRANTED_ID = '66666666-6666-4666-8666-666666666666';
+const BOTH = '77777777-7777-4777-8777-777777777777', STRANGER = '44444444-4444-4444-8444-444444444444', BLIND_ID = '55555555-5555-4555-8555-555555555555', GRANTED_ID = '66666666-6666-4666-8666-666666666666';
 const TRIED = 9797.25;
 const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: name });
-const ROWS = { [SHOP]: row(SHOP, 'Mayur Traders', 'CBSHOP0001'), [SUPPLIER]: row(SUPPLIER, 'Rice Mill', 'CBMILL0001'), [CUSTOMER]: row(CUSTOMER, 'Venkat', 'CBCUST0001'), [STRANGER]: row(STRANGER, 'Nobody', 'CBNONE0001') };
+const ROWS = { [SHOP]: row(SHOP, 'Mayur Traders', 'CBSHOP0001'), [SUPPLIER]: row(SUPPLIER, 'Rice Mill', 'CBMILL0001'), [CUSTOMER]: row(CUSTOMER, 'Venkat', 'CBCUST0001'), [STRANGER]: row(STRANGER, 'Nobody', 'CBNONE0001'), [BOTH]: row(BOTH, 'Partner', 'CBBOTH0001') };
 const OWNER = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
 const BLIND = { identity_id: BLIND_ID, identity_type: 'actor', access_level: 'editor', parent_entity_id: SHOP, hat: 'manager', bridge_id: 'CBSHOP0001', display_name: 'Blind' };
 const GRANTED = Object.assign({}, BLIND, { identity_id: GRANTED_ID, display_name: 'Granted' });
-const ROLE_OF = { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' };
+const ROLE_OF = { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer', [BOTH]: 'supplier' };
+const BOTH_ROLE = { customer: true, supplier: true };
+/* the unnest stand-in answers one role per id; BOTH is customer AND supplier */
 let delivered = [];
 function rows(s, p) {
-  if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return p[1].map((id) => ({ id, customer: ROLE_OF[id] === 'customer', supplier: ROLE_OF[id] === 'supplier' }));
+  if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return p[1].map((id) => ({ id, customer: ROLE_OF[id] === 'customer' || id === BOTH, supplier: ROLE_OF[id] === 'supplier' }));
   if (/WITH s AS \(SELECT c\.id, c\.path FROM identities/.test(s)) return [{ brand_id: SUPPLIER, built: false, edge_id: null }];
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/can_see_costs FROM identities/.test(s)) return [{ can_see_costs: p[0] === GRANTED_ID }];
@@ -76,10 +78,27 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
     });
   }
   console.log('\nRAIL-156 · P2 the other spend-side documents take the same door');
-  await it('an invoice to a listed supplier with a price', async () => refused(await send(BLIND, chit('invoice', SUPPLIER, [quiet({ price: TRIED })])), 'invoice'));
+  await it('an invoice the shop SENDS is its sale (RAIL-156 KNOWN_SELL): priced, to a supplier-listed or a customer-and-supplier partner, it goes 200 and the answer is untouched', async () => {
+    for (const who of [SUPPLIER, BOTH]) {
+      const r = await send(BLIND, chit('invoice', who, [quiet({ price: TRIED })]));
+      assert.strictEqual(r.status, 200, ROWS[who].display_name + ' ' + JSON.stringify(r.body));
+      assert.ok(!('cost_hidden' in r.body), ROWS[who].display_name);
+    }
+  });
   await it('a supplier bill (receipt carrying their bill no and total)', async () => refused(await send(BLIND, selfChit('receipt', [quiet()], { their_bill: { no: 'B1', total: TRIED } })), 'bill'));
   await it('a goods receipt with a price (the RAIL-146c refusal still holds)', async () => refused(await send(BLIND, selfChit('receipt', [quiet({ price: TRIED })])), 'receipt'));
   await it('an expense with a typed amount (docOf expense is a buy)', async () => refused(await send(BLIND, selfChit('expense', [quiet({ price: TRIED })])), 'expense'));
+
+  console.log('\nRAIL-156 q10/q11 · by the party, not the document kind alone');
+  for (const purpose of ['credit_note', 'general', 'delivery_note', 'inquiry']) {
+    await it(purpose + ' with a price to a SUPPLIER: 403 COST_BLIND, nothing delivered', async () => refused(await send(BLIND, chit(purpose, SUPPLIER, [quiet({ price: TRIED })])), purpose));
+    await it(purpose + ' with a price to a CUSTOMER: sent 200, answer untouched', async () => {
+      const r = await send(BLIND, chit(purpose, CUSTOMER, [quiet({ price: TRIED })]));
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+      assert.strictEqual(r.wrote, 1);
+      assert.ok(!('cost_hidden' in r.body), JSON.stringify(r.body));
+    });
+  }
 
   console.log('\nRAIL-156 · what must still go');
   await it('a quantity-only PO (the till hidden-rate line) goes 200 to the supplier, and its answer holds no money', async () => {
@@ -119,6 +138,22 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
   });
   await it('CROSSING: the refusal comes before mint.deliver, the only door to another installation (wrote 0)', async () => {
     refused(await send(BLIND, chit('order', SUPPLIER, [quiet({ price: TRIED })])), 'crossing');
+  });
+
+  console.log('\nRAIL-156 · READ side agrees (bite for KNOWN_SELL): the blind reader of a SENT invoice to a customer-and-supplier partner sees its total and no cost');
+  const view = require(path.join(API, 'lib', 'cost-view'));
+  const sentInvoice = (sender) => ({ header: { chit_id: 'C1', purpose: 'invoice', sender_entity_id: sender, all_recipients: [{ entity_id: SHOP }, { entity_id: BOTH }], total_value: 5900, business_json: {} }, cost: 3000, margin: 2900 });
+  await it('sent by the shop: total_value kept, cost and margin gone, not cost_hidden', () => {
+    const header = sentInvoice(SHOP).header, out = view.chitAnswer(sentInvoice(SHOP), true, header, SHOP, { party: BOTH_ROLE, deliveryRows: [] }, BLIND_ID);
+    assert.strictEqual(view.costSideOf(header, SHOP, BOTH_ROLE), 'sell');
+    assert.strictEqual(out.header.total_value, 5900, JSON.stringify(out));
+    assert.ok(!('cost' in out) && !('margin' in out), JSON.stringify(out));
+    assert.ok(!out.cost_hidden, JSON.stringify(out));
+  });
+  await it('the SAME invoice RECEIVED from a partner who is a supplier is still a buy: total hidden', () => {
+    const header = sentInvoice(BOTH).header, out = view.chitAnswer(sentInvoice(BOTH), true, header, SHOP, { party: BOTH_ROLE, deliveryRows: [] }, BLIND_ID);
+    assert.notStrictEqual(out.header.total_value, 5900, JSON.stringify(out));
+    assert.strictEqual(out.cost_hidden, true);
   });
 
   console.log('\n  ' + (fail ? '✗' : '✓') + ' ' + pass + ' passed · ' + fail + ' failed\n');
