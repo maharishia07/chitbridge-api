@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 35,
-  "partial": 475,
-  "meets": 124,
+  "partial": 474,
+  "meets": 125,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -20976,13 +20976,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-30 PR#617 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
