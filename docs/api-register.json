@@ -10,15 +10,15 @@
   "columns": {
    "strict_input": {
     "applies": 346,
-    "failing": 330
+    "failing": 322
    },
    "output_allowlist": {
     "applies": 634,
     "failing": 238
    },
    "foreign_id_404": {
-    "applies": 227,
-    "failing": 102
+    "applies": 226,
+    "failing": 92
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 634,
-    "failing": 164
+    "failing": 163
    }
   }
  },
@@ -1285,8 +1285,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 335,
-   "hash": "ef0c6f78fb5c9c0d",
+   "line": 341,
+   "hash": "19db281b1b056633",
    "does": "",
    "errors": {
     "count": 0,
@@ -1317,11 +1317,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -1379,8 +1379,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 598,
-   "hash": "d435e755da79001a",
+   "line": 608,
+   "hash": "0f950ed6f05d88ea",
    "does": "",
    "errors": {
     "count": 0,
@@ -1411,11 +1411,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -13850,7 +13850,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 73,
+   "line": 79,
    "hash": "3aa7dc583807a82a",
    "does": "",
    "errors": {
@@ -13941,8 +13941,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 475,
-   "hash": "038229b12c4e1107",
+   "line": 482,
+   "hash": "cb977f1f071be92d",
    "does": "",
    "errors": {
     "count": 0,
@@ -13978,7 +13978,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -14007,7 +14007,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "038229b12c4e1107"
+    "stale_since": "cb977f1f071be92d"
    },
    "status": "partial",
    "callers": [
@@ -14037,8 +14037,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 532,
-   "hash": "0b82178f8d51641e",
+   "line": 540,
+   "hash": "0a9799fceae934b2",
    "does": "",
    "errors": {
     "count": 0,
@@ -14071,7 +14071,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -14100,7 +14100,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0b82178f8d51641e"
+    "stale_since": "0a9799fceae934b2"
    },
    "status": "partial",
    "callers": [
@@ -14128,8 +14128,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 556,
-   "hash": "1b9af23bbbfb67e6",
+   "line": 565,
+   "hash": "c9015e5f5ab99f12",
    "does": "",
    "errors": {
     "count": 0,
@@ -14158,11 +14158,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -14218,7 +14218,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 889,
+   "line": 900,
    "hash": "d090f0c5527ea986",
    "does": "",
    "errors": {
@@ -14304,7 +14304,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 135,
+   "line": 141,
    "hash": "b6e727a5f02eaf0b",
    "does": "",
    "errors": {
@@ -14384,7 +14384,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 697,
+   "line": 708,
    "hash": "60877e20b8df1857",
    "does": "",
    "errors": {
@@ -14478,7 +14478,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1042,
+   "line": 1053,
    "hash": "b8e56b8a1d3641a8",
    "does": "",
    "errors": {
@@ -14566,7 +14566,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 940,
+   "line": 951,
    "hash": "24556c31722fa718",
    "does": "",
    "errors": {
@@ -14654,7 +14654,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 643,
+   "line": 654,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -14742,7 +14742,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 622,
+   "line": 633,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -14821,7 +14821,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 856,
+   "line": 867,
    "hash": "9cf17566745c9c6b",
    "does": "",
    "errors": {
@@ -26931,8 +26931,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 278,
-   "hash": "b6c1b4c01100ae5c",
+   "line": 284,
+   "hash": "007ce890480821fb",
    "does": "",
    "errors": {
     "count": 0,
@@ -26965,9 +26965,9 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -26996,7 +26996,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b6c1b4c01100ae5c"
+    "stale_since": "007ce890480821fb"
    },
    "status": "partial",
    "callers": [
@@ -27026,8 +27026,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 588,
-   "hash": "4d1404b7382300a4",
+   "line": 598,
+   "hash": "24e27419f0177ff2",
    "does": "",
    "errors": {
     "count": 0,
@@ -27056,9 +27056,9 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -27087,7 +27087,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4d1404b7382300a4"
+    "stale_since": "24e27419f0177ff2"
    },
    "status": "partial",
    "callers": [
@@ -41338,8 +41338,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 189,
-   "hash": "46d14826628a8040",
+   "line": 195,
+   "hash": "a35c61b13fd33d04",
    "does": "",
    "errors": {
     "count": 0,
@@ -41372,7 +41372,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -41403,7 +41403,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "46d14826628a8040"
+    "stale_since": "a35c61b13fd33d04"
    },
    "status": "partial",
    "callers": [
@@ -41433,8 +41433,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 575,
-   "hash": "d4cb12d4f7e4a454",
+   "line": 585,
+   "hash": "b022225c5bd68eb7",
    "does": "",
    "errors": {
     "count": 0,
@@ -41463,9 +41463,9 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -41521,8 +41521,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 835,
-   "hash": "6475ef0d1713bdc8",
+   "line": 846,
+   "hash": "e27c9a3090cd4d06",
    "does": "",
    "errors": {
     "count": 0,
@@ -41553,9 +41553,9 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -41586,7 +41586,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6475ef0d1713bdc8"
+    "stale_since": "e27c9a3090cd4d06"
    },
    "status": "partial",
    "callers": [
@@ -41614,8 +41614,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 350,
-   "hash": "0961eae0eaa6eac6",
+   "line": 357,
+   "hash": "036e66b26b2d9570",
    "does": "",
    "errors": {
     "count": 0,
@@ -41647,7 +41647,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -41677,7 +41677,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0961eae0eaa6eac6"
+    "stale_since": "036e66b26b2d9570"
    },
    "status": "partial",
    "callers": [
@@ -41707,8 +41707,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 610,
-   "hash": "d71abe90d95ce4c1",
+   "line": 621,
+   "hash": "3a864d8cf722d2b5",
    "does": "",
    "errors": {
     "count": 0,
@@ -41736,7 +41736,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -41766,7 +41766,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d71abe90d95ce4c1"
+    "stale_since": "3a864d8cf722d2b5"
    },
    "status": "partial",
    "callers": [
@@ -56063,8 +56063,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 152,
-   "hash": "b644de49f85a1d71",
+   "line": 158,
+   "hash": "8651504faa64e8e9",
    "does": "",
    "errors": {
     "count": 0,
@@ -56102,17 +56102,17 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
@@ -56136,14 +56136,14 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b644de49f85a1d71"
+    "stale_since": "8651504faa64e8e9"
    },
    "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {

@@ -38,6 +38,7 @@
   "GET /api/governance/readiness/:bridge_id": "counterparty door: the readiness passport is built for outsiders (Athi 2026-08-20); a stranger gets status and rung only, evidence_ref stripped (SEC-FIX3 S6)",
   "GET /api/assist/container/:id": "platform reference: a container is shared catalogue reference that chits pin by version",
   "POST /api/integrations/ask/:handle/stock": "public door: a shop's published handle answers stock to an asking peer",
-  "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer"
+  "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer",
+  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy"
  }
 }

@@ -224,6 +224,8 @@ const FILED_CHIT_BARE = { chit_id: '33333333-3333-4333-8333-333333333333', sende
 /** a bill of a view folder as lib/folder-views members answers it: a lib/select row with its lifecycle (lib/bill-steps) */
 const VIEW_BILL = CHIT({ doc_kind: 'bill_received', bill: { step: 'received', code: 'B1', label: 'Received', by: null, at: AT, open: true, history: [] } });
 const MEMBERS = (chits) => ({ views: { members: async () => ({ chits, counts: { open: chits.length, closed: 0, total: chits.length }, state: 'open' }) } });
+/** S35: the folder read of routes/folders.js viewFolder finds a FILED folder of this shop (no row there is the unknown id's 404) */
+const FILED_HERE = answering(/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/, [{ folder_id: PARTY, name: 'Mayur', kind: null }]);
 const SHOP_VIEW = answering(/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/, [{ folder_id: PARTY, name: 'From Asha', kind: 'view' }]);
 const SUBJECT_CHIT = CHIT({ chit_id: '77777777-7777-4777-8777-777777777777', manual_subject: 'Rice for Diwali', auto_subject: 'Order 7' });
 /** a matched chit with every nullable column of its sample NULL: no counterparty name (lib/select: no recipient name), no status, no created_at */
@@ -234,16 +236,22 @@ const SWEEP_2 = [
   X('chit-filed', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: 'task' }]), answering(/UPDATE chit_status SET folder_id/, [{}])) } }),
   X('chit-filed-in-a-folder-without-a-side', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: null }]), answering(/UPDATE chit_status SET folder_id/, [{}, {}])) } }),
   X('chit-unfiled', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: null } }),
-  X('chits-listed', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: answering(/AS _total/, [FILED_CHIT, FILED_CHIT_BARE]) } }),
-  X('chits-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?limit=9999&archived=1', setup: { sqlRows: answering(/AS _total/, [Object.assign({}, FILED_CHIT, { _total: '900' })]) } }),
+  X('chits-listed', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [FILED_CHIT, FILED_CHIT_BARE])) } }),
+  X('chits-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?limit=9999&archived=1', setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [Object.assign({}, FILED_CHIT, { _total: '900' })])) } }),
   X('chits-of-a-system-view', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits', patch: MEMBERS([VIEW_BILL]) }),
   X('chits-of-a-shops-view', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: SHOP_VIEW }, patch: MEMBERS([VIEW_BILL, CHIT({})]) }),
   X('chits-of-a-view-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits?limit=1', patch: MEMBERS([VIEW_BILL, VIEW_BILL]) }),
-  X('metrics-of-a-task-folder', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: answering(/SELECT scope FROM folder/, [{ scope: 'task' }]) }, patch: withChits(CHITS) }),
+  X('metrics-of-a-task-folder', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: firstOf(FILED_HERE, answering(/SELECT scope FROM folder/, [{ scope: 'task' }])) }, patch: withChits(CHITS) }),
   X('metrics-of-a-system-view', 'GET ' + F + '/:id/metrics', 200, { url: F + '/' + sysId('B-2100') + '/metrics', patch: withChits(CHITS) }),
-  X('metrics-scope-read-fails', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: raising(/SELECT scope FROM folder/, 'XX000') }, patch: withChits(CHITS) }),
-  X('rules-of-a-folder', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),
-  X('rules-of-a-folder-not-migrated', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: raising(/FROM folder_rule/, '42P01') } }),
+  X('metrics-scope-read-fails', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: firstOf(FILED_HERE, raising(/SELECT scope FROM folder/, 'XX000')) }, patch: withChits(CHITS) }),
+  X('rules-of-a-folder', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: firstOf(OWN_FOLDER, answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY])) } }),
+  X('rules-of-a-folder-not-migrated', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: firstOf(OWN_FOLDER, raising(/FROM folder_rule/, '42P01')) } }),
+  /* S35: an id no folder, rule or message of this shop has is a 404 (before: 200 with an empty list, or { deleted: 0 }); another shop's id is the same answer (tools/api-contract-tests.cjs foreign_id_404) */
+  N('chits-folder-not-here', 'GET ' + F + '/:id/chits', 404, {}),
+  N('metrics-folder-not-here', 'GET ' + F + '/:id/metrics', 404, {}),
+  N('rules-folder-not-here', 'GET ' + F + '/:id/rules', 404, {}),
+  N('folder-delete-not-here', 'DELETE ' + F + '/:id', 404, {}),
+  N('rule-delete-not-here', 'DELETE ' + F + '/rules/:rule_id', 404, {}),
   X('rule-updated', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { enabled: false, sort: 2 }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED]) } }),
   X('rule-updated-bare', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { name: '' }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED_BARE]) } }),
   X('rule-deleted', 'DELETE ' + F + '/rules/:rule_id', 200, { setup: { sqlRows: answering(/DELETE FROM folder_rule/, [{}]) } }),
@@ -251,7 +259,7 @@ const SWEEP_2 = [
   X('preview-matched-a-nameless-chit', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'invoice' } }, patch: withChits([NAMELESS_CHIT]) }),
   X('preview-matched-nothing', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'quote' } }, patch: withChits(CHITS) }),
   X('level-set', 'PUT ' + F + '/inventory/:code', 200, { url: F + '/inventory/RT-4090', body: { msg: 'none' } }),
-  X('message-kept', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { kept: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ n: '1' }]) } }),
+  X('message-kept', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { kept: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ marked_count: '1' }]) } }),
   /* RAIL-146g: a co-assist without can_see_costs reads the sum of the sales only, with cost_hidden: the closed groupsum shape holds the blind answer too */
   X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
 ];
@@ -329,7 +337,7 @@ const EXTRAS = [
   X('message-not-an-id', 'POST ' + F + '/messages/:message_id/mark', 400, { url: F + '/messages/nope/mark', body: { read: true } }),
   X('message-not-mine', 'POST ' + F + '/messages/:message_id/mark', 404, { body: { read: true } }),
   X('read-state-not-migrated', 'POST ' + F + '/messages/:message_id/mark', 503, { body: { read: true }, setup: { sqlRows: raising(/chit_message_mark/, '42883') } }),
-  X('message-marked', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { read: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ n: 1 }]) } }),
+  X('message-marked', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { read: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ marked_count: 1 }]) } }),
   X('badge-count', 'GET ' + F + '/messages', 200, { url: F + '/messages?count=1' }),
   X('actor-sees-theirs', 'GET ' + F + '/messages', 200, { setup: { who: STAFF } }),
   X('due-date-not-a-date', 'GET ' + F + '/worklist', 400, { url: F + '/worklist?due_on=tomorrow' }),
@@ -655,6 +663,50 @@ function checkKitWidening() {
   check('kit: a row that says nothing still declares 422', '422' in contract.OPERATIONS['GET /api/x/thing'].responses);
 }
 
+/**
+ * S33 strict input: each of the eight folders writes refuses a body key no one reads, by name (UNKNOWN_FIELD, middleware/validate.js), in the route's own refusal
+ * (400 FOLDER_INVALID with the chain's old body where the route had a chain, else 422), while every key a web caller sends (app/cap-folders.js · app/cap-messages.js · app.html) is still let through.
+ */
+const STRICT_WRITES = [
+  ['PUT', F + '/inventory/B-2100', { on: true }, 422],
+  ['POST', F, { name: 'Mayur' }, 400],
+  ['PATCH', F + '/' + PARTY, { name: 'Mayur' }, 400],
+  ['POST', F + '/move', { chit_id: PARTY }, 400],
+  ['POST', F + '/' + PARTY + '/rules', { when: { doc: 'invoice' } }, 400],
+  ['PATCH', F + '/rules/' + PARTY, { enabled: true }, 400],
+  ['POST', F + '/rules/preview', { when: { doc: 'invoice' } }, 422],
+  ['POST', F + '/messages/' + PARTY + '/mark', { read: true }, 422]
+];
+/** the bodies the web sends today, key for key: none of them may meet UNKNOWN_FIELD */
+const WEB_BODIES = [
+  ['POST', F, { name: 'Mayur', scope: 'order' }],
+  ['PATCH', F + '/' + PARTY, { name: 'Mayur' }],
+  ['POST', F + '/move', { chit_id: PARTY, folder_id: PARTY }],
+  ['POST', F + '/' + PARTY + '/rules', { name: 'Invoices', when: { doc: 'invoice' } }],
+  ['PATCH', F + '/rules/' + PARTY, { sort: 2 }],
+  ['PATCH', F + '/rules/' + PARTY, { enabled: false }],
+  ['POST', F + '/rules/preview', { when: { doc: 'invoice' } }],
+  ['POST', F + '/messages/' + PARTY + '/mark', { read: true }],
+  ['POST', F + '/messages/' + PARTY + '/mark', { kept: false }]
+];
+async function checkStrictInput(port) {
+  console.log('\n-- strict input (S33): a key no one reads is refused by name; a key the web sends is not --');
+  for (const [method, url, valid, status] of STRICT_WRITES) {
+    Object.assign(world, FRESH);
+    const answer = await send(port, method, url, Object.assign({}, valid, { zz_unknown_field: 'x' }));
+    const body = answer.json || {};
+    const named = (body.errors || []).some((entry) => entry.field === 'zz_unknown_field' && entry.code === 'UNKNOWN_FIELD');
+    const oldBody = status === 422 || (body.error === 'Validation failed' && sameValue(body.details, [{ field: 'zz_unknown_field', message: 'Invalid value' }]));
+    check(method + ' ' + url + ': zz_unknown_field is refused ' + status + ' by name, in the route\'s own refusal', answer.status === status && named && !!body.type && oldBody, { status: answer.status, body });
+  }
+  for (const [method, url, sent] of WEB_BODIES) {
+    Object.assign(world, FRESH);
+    const answer = await send(port, method, url, sent);
+    const refused = ((answer.json || {}).errors || []).filter((entry) => entry.code === 'UNKNOWN_FIELD');
+    check(method + ' ' + url + ' ' + JSON.stringify(sent) + ': the web\'s keys are let through the schema', refused.length === 0, refused);
+  }
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
@@ -683,6 +735,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const server = app.listen(0);
   const recording = {};
   const tested = await checkRoutes(server.address().port, scenariosOf(routes), recording);
+  if (!flagValue('--capture') && !flagValue('--compare')) await checkStrictInput(server.address().port);
   server.close();
   if (flagValue('--compare')) process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {

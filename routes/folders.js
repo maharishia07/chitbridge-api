@@ -55,18 +55,24 @@ const cost = require('../lib/cost'); // RAIL-146g/146j: is this caller a co-assi
 const costView = require('../lib/cost-view'); // RAIL-146j: what a cost-blind co-assist may read of a folder
 const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
 
+/** S35: no folder of this shop has the id — an unknown id and another shop's id are this one answer, the 404 of notHere() */
+const NOT_HERE = 'not_here';
+const notHere = () => ({ status: 404, ...said('NOT_FOUND', 'Not found') });
 /**
  * viewFolder(entity, id) → the VIEW folder behind an id: a system one (lib/folder-inventory; `false` when the shop switched it
- * off), or a shop's own (folder.kind = 'view', b275) — null for an ordinary filed folder. Every folder route asks this first.
+ * off), or a shop's own (folder.kind = 'view', b275) — null for an ordinary filed folder, NOT_HERE when this shop has no folder
+ * with the id (the same read, no extra trip). A failed read is taken as a filed folder, as before. Every folder route asks this first.
  */
 async function viewFolder(e, id) {
   const sys = await views.systemById(e, id);
   if (sys) return sys.on ? sys : false;
   const r = await withEntity(e, (db) =>
     db.query(`SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])
-  ).catch(log.orElse('folders viewFolder: the read failed — answered with none', { rows: [] }));
+  ).catch(log.orElse('folders viewFolder: the read failed — answered as a filed folder', null));
+  if (!r) return null;
   const f = r.rows[0];
-  return f && f.kind === 'view' ? f : null;
+  if (!f) return NOT_HERE;
+  return f.kind === 'view' ? f : null;
 }
 
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
@@ -340,6 +346,7 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
       const r = await db.query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
       return r.rowCount;
     });
+    if (!deleted) return problem(req, res, notHere()); /* S35: nothing of this shop's was deleted (an unknown id, another shop's): said, not { deleted: 0 } */
     res.json({ deleted });
   } catch (err) {
     problem(req, res, failed(err, req, 'Delete failed'));
@@ -485,6 +492,7 @@ router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) =>
      */
     const vf = await viewFolder(e, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
+    if (vf === NOT_HERE) return problem(req, res, notHere());
     if (vf) {
       /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
          knows (`counts` is one) — anything more would be dropped silently on the way in */
@@ -538,6 +546,7 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
+    if (vf === NOT_HERE) return problem(req, res, notHere());
     const archived = req.query.archived === '1';
     const { head, rows } = vf ? { head: { scope: null, code: vf.code || null }, rows: await views.rowsFor(me, await views.whensOf(me, vf), { archived }) } : await filedSet(me, req.params.id, archived);
     const measured = await costView.measureFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: a blind reader's money stands only over the shop own sales */
@@ -564,7 +573,8 @@ router.get('/:id/rules', auth, ...checked('GET /:id/rules'), async (req, res) =>
         migrated: true,
         system: true
       });
-    const found = await rules.list(ent(req), req.params.id);
+    const found = await rules.list(ent(req), req.params.id, true);
+    if (!found) return problem(req, res, notHere()); /* S35: lib/folder-rules list asks folderOwned first */
     /* S34: a rule is the columns lib/folder-rules list selects, in its order; note only when b132 is not run */
     // prettier-ignore
     res.json({ rules: found.rules.map((x) => ({ rule_id: x.rule_id, folder_id: x.folder_id, name: x.name, when: x.when, enabled: x.enabled, sort: x.sort, stop_processing: x.stop_processing, last_matched_at: x.last_matched_at, match_count: x.match_count, created_at: x.created_at })), migrated: found.migrated, note: found.note });
@@ -598,6 +608,7 @@ router.patch('/rules/:rule_id', auth, ...checked('PATCH /rules/:rule_id'), async
 router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), async (req, res) => {
   try {
     const gone = await rules.remove(ent(req), req.params.rule_id);
+    if (!gone.deleted) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Rule delete failed', 'Rule not found') }); /* S35: the words PATCH /rules/:rule_id answers for a rule this shop does not hold */
     res.json({ deleted: gone.deleted }); /* S34: the count lib/folder-rules remove answers */
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rule delete failed'));
@@ -838,8 +849,8 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
   const read = 'read' in req.body ? !!req.body.read : null;
   const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
-    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
-    const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
+    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS marked_count', [id, read, kept]));
+    const touched = (n.rows[0] && Number(n.rows[0].marked_count)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
        and both deserve to be said rather than reported as a successful no-op. */
     if (!touched) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'No such message in your copies.') });
