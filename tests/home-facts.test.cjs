@@ -384,14 +384,14 @@ const get = (port, p) => new Promise((ok) => {
   r = await g('crm');
   t('crm (W3): customers and suppliers, CRM own count (hidden and merged left out)', [r.json.lines[0].text, r.json.state], ['5 customers · 3 suppliers', 'in_use']);
   r = await g('trend');
-  t('trend (W3): no weeks of sales -> not_started, no figure invented', [r.json.state, r.json.lines.length], ['not_started', 0]);
+  t('trend (W3): no weeks of sales -> not_started, no figure invented, the books words say why (REP-48)', [r.json.state, r.json.lines.length], ['not_started', 1]);
   {
     const R = require(API + '/lib/rollup');
     const wk = (n) => R.weekKey(new Date(Date.now() - n * 7 * DAYS));
     const weekRow = (key) => ({ chit_id: 'w' + key, created_at: new Date(), business_json: { summary: { period: 'week', key, till: { id: 'C1' }, totals: { count: 1, returns: 0, gross: 900, refunds: 0, expenseCount: 0, expenses: 0, total: 900, by: {} } } } });
     F.weeks = [weekRow(wk(1)), weekRow(wk(2))]; F.shopYear = { country: 'IN', currency_code: 'INR', books: null, gov: null };
     r = await g('trend');
-    t('trend (W3): the Till card teaser (the same engine), "Last 8 weeks" when last year is not known', [r.json.state, r.json.lines.map((l) => l.text), r.json.figures.trend.spark.filter((x) => x != null).length], ['in_use', ['Last 8 weeks'], 2]);
+    t('trend (W3): the Till card teaser (the same engine), "Last 8 weeks" when last year is not known', [r.json.state, r.json.lines.map((l) => l.text), r.json.figures.trend.spark.filter((x) => x != null).length], ['in_use', ['Last 8 weeks', "The books are not switched on for this shop, so these sales are the counters' day summaries only."], 2]);
     F.weeks = null; F.shopYear = null;
   }
   r = await g('storefront');

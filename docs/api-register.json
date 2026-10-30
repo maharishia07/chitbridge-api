@@ -24946,7 +24946,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3378,
-   "hash": "66e7008f8895ac0f",
+   "hash": "fe841dc4231d7c51",
    "does": "",
    "errors": {
     "count": 0,
@@ -25006,7 +25006,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "66e7008f8895ac0f"
+    "stale_since": "fe841dc4231d7c51"
    },
    "status": "partial",
    "callers": [
