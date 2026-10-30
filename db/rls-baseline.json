@@ -11,7 +11,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "AI skill prompts per vertical; platform-authored, no entity column"
   },
   "ai_usage": {
    "rls": true,
@@ -23,31 +25,41 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "assistant Q and A text; platform-authored help content"
   },
   "blueprints": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "blueprint catalogue (key, label, pack); platform-minted, same for every shop"
   },
   "boilerplate": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "boilerplate moulds; minted once by the platform, version-frozen"
   },
   "boilerplate_sources": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "which sources a boilerplate version declares; platform-minted"
   },
   "capability": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "capability definitions; platform-minted, version-frozen"
   },
   "capture": {
    "rls": true,
@@ -89,7 +101,9 @@
    "rls": false,
    "forced": false,
    "policies": 1,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "owner writes, subscribers read (read_all policy exists but RLS is off); K-CATALOGUE"
   },
   "cb_attachment": {
    "rls": true,
@@ -101,115 +115,159 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "legacy city/building lookup list"
   },
   "cb_catalogue_category": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "legacy catalogue; entity_id"
   },
   "cb_catalogue_item": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "legacy catalogue; entity_id"
   },
   "cb_chit": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy chit, from_entity and to_entity: either side; K-DISPUTE"
   },
   "cb_chit_item": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy chit line; follows cb_chit; K-DISPUTE"
   },
   "cb_chit_log": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy chit log; follows cb_chit; K-DISPUTE"
   },
   "cb_city": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "city lookup list"
   },
   "cb_consumer_traction": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "business_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_contact": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "owner_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_currency": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "currency lookup list (ISO)"
   },
   "cb_device": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_edge": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "parent_id and child_id: either side; K-DISPUTE / K-CHITWRITE"
   },
   "cb_entity": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy party list read by src/services/network.js across shops; K-DISPUTE / K-CHITWRITE"
   },
   "cb_entity_employee": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "owner_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_entity_supplier": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_external_reference": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; read by no code (b779)",
+   "fix": "b779_rls_dormant_cb_tables.sql"
   },
   "cb_industry": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "industry lookup list"
   },
   "cb_task": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy task, from_entity and to_entity: either side; K-DISPUTE"
   },
   "cb_transaction_history": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "shared",
+   "why": "legacy history, info_entity and to_entity: either side; K-DISPUTE"
   },
   "channel_binding": {
    "rls": true,
@@ -311,13 +369,17 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "from_entity_id and to_entity_id: either side sees the row; K-DISPUTE / K-CHITWRITE"
   },
   "connector_connection": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "entity_id and counterparty_entity_id: either side; K-DISPUTE / K-CHITWRITE"
   },
   "connector_receipt": {
    "rls": true,
@@ -329,13 +391,17 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "constitution packs per vertical; platform-minted, version-frozen"
   },
   "container_region_override": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "child of product_container; K-CATALOGUE"
   },
   "counter_hidden_item": {
    "rls": true,
@@ -377,13 +443,17 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "one row per party of a dispute; every party reads it; K-DISPUTE"
   },
   "entity_actor_settings": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; read in actors, chits, workpattern, workroute (context-free sites to move first)"
   },
   "entity_compliance": {
    "rls": true,
@@ -407,7 +477,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; 18 files read it, some across shops (visibility); needs its own PR"
   },
   "entity_wallet": {
    "rls": true,
@@ -455,7 +527,10 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "entity",
+   "why": "entity_id; one insert, set under the new shop (b778)",
+   "fix": "b778_rls_governance_exceptions.sql"
   },
   "idempotency_key": {
    "rls": true,
@@ -467,7 +542,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "login lookup by e-mail before any shop is bound, and name joins across shops; K-SEC follow-up design"
   },
   "identity_documents": {
    "rls": true,
@@ -479,13 +556,17 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "this installation's own settings row (region, domain, vertical); one platform row, no shop data"
   },
   "jurisdiction": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "trade-lane destinations (dest_key, name); reference list"
   },
   "kyb_field_cache": {
    "rls": true,
@@ -497,7 +578,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "entity_id; served to other shops through public image links; K-SEC follow-up design"
   },
   "network_design": {
    "rls": true,
@@ -527,25 +610,33 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "platform parameters and plan menu; one platform-wide row set"
   },
   "platform_root": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "the single platform root row (singleton)"
   },
   "product_container": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "owner_entity_id writes, subscribers read; K-CATALOGUE"
   },
   "product_version": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "child of product_container; K-CATALOGUE"
   },
   "quick_key_audit": {
    "rls": true,
@@ -575,7 +666,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "region defaults (currency, units, language); reference list"
   },
   "register_acceptance": {
    "rls": true,
@@ -623,7 +716,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "child of product_container; K-CATALOGUE"
   },
   "retention_config": {
    "rls": true,
@@ -641,7 +736,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "entity",
+   "why": "child of entity_schemas (schema_id); goes with entity_schemas"
   },
   "signup_context": {
    "rls": true,
@@ -653,67 +750,89 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (comparison text); public marketing content"
   },
   "sim_feedback": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "platform-private",
+   "why": "prospect feedback from the public simulator; no shop key. Same follow-up as sim_leads"
   },
   "sim_items": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (layer items); public marketing content"
   },
   "sim_layers": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (layers); public marketing content"
   },
   "sim_leads": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "platform-private",
+   "why": "prospect names and e-mails from the public simulator; no shop key, so the shop policy cannot fit. Design: write-only for cb_app (cb-security follow-up)"
   },
   "sim_rules": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (rules); public marketing content"
   },
   "sim_shapes": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (shapes); public marketing content"
   },
   "sim_usps": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "simulator page content (USPs); public marketing content"
   },
   "source_penetration": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "distributor_entity_id rows read by the source owner; K-CATALOGUE"
   },
   "standard_document": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "standard document definitions; platform-authored reference"
   },
   "standard_source": {
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "shared",
+   "why": "owner writes, subscribers read; K-CATALOGUE"
   },
   "state_log": {
    "rls": true,
@@ -734,10 +853,12 @@
    "app_reads": true
   },
   "supplier_list": {
-   "rls": false,
-   "forced": false,
-   "policies": 0,
-   "app_reads": true
+   "rls": true,
+   "forced": true,
+   "policies": 1,
+   "app_reads": true,
+   "class": "entity",
+   "note": "b270 forced it on 29 Sep; the 26 Sep census was stale"
   },
   "supplier_readiness_acceptance": {
    "rls": true,
@@ -767,7 +888,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "which categories a vertical offers; reference list"
   },
   "wholesaler_store": {
    "rls": true,
@@ -779,7 +902,9 @@
    "rls": false,
    "forced": false,
    "policies": 0,
-   "app_reads": true
+   "app_reads": true,
+   "class": "dictionary",
+   "why": "work patterns per vertical; platform-minted, version-frozen"
   }
  }
 }

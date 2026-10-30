@@ -48,4 +48,12 @@ const exposure = require('../lib/exposure');
   assert.strictEqual(it.item_data.cost, undefined);
 })();
 
-console.log('exposure-cost: cost never reaches a customer-facing surface — 4/4 passed');
+/* ── P1 2026-10-29, fail-closed: unit_cost and supplier_note (any depth) are deleted by apply() whatever the switches say ── */
+(function () {
+  const it = { item_data: { name: 'Widget', price: 5, unit_cost: 7777.77, supplier_note: 'x', variants: [{ landed_cost: 1, margin: 2 }] } };
+  exposure.apply(it, exposure.exposureOf({ storefront_exposure: { tax: true, offers: true, stock: true, synonyms: true, hsn: true, description: true, media: true } }, it.item_data));
+  assert.strictEqual(JSON.stringify(it).match(/7777|supplier_note|landed_cost|margin/), null);
+  assert.strictEqual(it.item_data.price, 5);
+})();
+
+console.log('exposure-cost: cost never reaches a customer-facing surface — 5/5 passed');

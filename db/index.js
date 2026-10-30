@@ -162,7 +162,11 @@ const RLS_TENANT_TABLES = ['access_events', 'account_balance', 'ai_usage', 'book
   'quick_key_group_item', 'register_acceptance', 'register_attachable', 'register_entry',
   'register_entry_standard', 'register_subject', 'register_template', 'register_template_standard',
   'retention_config', 'reward_ledger', 'signup_context', 'state_log', 'stock_balance', 'stock_movement',
-  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store'];
+  'supplier_readiness_acceptance', 'supply_item', 'test_result', 'usage_ledger', 'wholesaler_store',
+  /* SEC-75 (b778, b779): written ahead of the migrations (b779 run 29 Oct); no code reads them context-free, so the guard stays quiet until one does */
+  'supplier_list', 'governance_exceptions', 'cb_device', 'cb_external_reference', 'cb_entity_supplier', 'cb_contact', 'cb_entity_employee', 'cb_consumer_traction',
+  /* SEC-75 (b783): seven legacy cb_* tables, run in production 29 Oct; no code reads them */
+  'cb_catalogue_category', 'cb_catalogue_item', 'cb_chit', 'cb_chit_item', 'cb_chit_log', 'cb_task', 'cb_transaction_history'];
 const RLS_TENANT_RE = new RegExp('\\b(' + RLS_TENANT_TABLES.join('|') + ')\\b', 'i');
 
 function rlsGuardMode() {

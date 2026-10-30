@@ -21,6 +21,7 @@ if (!URL) { console.log('  - rls-fresh-db: CB_FRESH_DB_URL not set — skipped (
 const { Pool } = require(path.join(__dirname, '..', 'node_modules', 'pg'));
 /* BCP-MIG (17 Oct): the census is under `.tables` — reading the file's top level compared two keys (`at`, `tables`) and passed vacuously */
 const baseline = require('../db/rls-baseline.json').tables;
+const PROBES = require('./rls-sec75-tables.cjs');   /* SEC-75: how to plant a probe row in each table a SEC-75 migration closed */
 const CORE_FORCED = ['chit_header', 'chit_status', 'chit_detail', 'state_log', 'catalogue_items'];
 /** forced on prod AFTER the baseline census (09-26) was taken: b270 supplier_list, run by the owner 09-29 — the rebuild must force it too */
 const FORCED_SINCE_BASELINE = ['supplier_list'];
@@ -82,12 +83,51 @@ async function checkIsolation(client) {
   } finally { await client.query(`DELETE FROM ${PROBE_TABLE} WHERE doc_type = 'probe' AND entity_id IN ($1,$2)`, [shopA, shopB]); }
 }
 
+/** SEC-75: one planted row per shop in a table a SEC-75 migration closed. The owner plants it (FK checks off for the probe: the legacy cb_* keys point
+ *  at cb_entity), then cb_app reads and writes it back under each shop's binding. */
+async function checkClosedTable(client, table, spec) {
+  const shopA = crypto.randomUUID(), shopB = crypto.randomUUID();
+  const names = [spec.key].concat(Object.keys(spec.cols)).join(', ');
+  const exprs = Object.keys(spec.cols).map((c) => spec.cols[c]);
+  const insertSql = `INSERT INTO ${table} (${names}) VALUES (${['$1'].concat(exprs).join(', ')})`;
+  await client.query('BEGIN');
+  await client.query("SET LOCAL session_replication_role = 'replica'");
+  await client.query(insertSql, [shopA]);
+  await client.query(insertSql, [shopB]);
+  await client.query('COMMIT');
+  const rows = async (entity) => asApp(client, entity, async () =>
+    (await client.query(`SELECT ${spec.key} AS k FROM ${table} WHERE ${spec.key} IN ($1,$2)`, [shopA, shopB])).rows.map((r) => r.k));
+  try {
+    check(table + ': no shop context → zero rows', (await rows(null)).length === 0);
+    const seenByA = await rows(shopA), seenByB = await rows(shopB);
+    check(table + ': shop A sees its own row and never shop B\'s', seenByA.length === 1 && seenByA[0] === shopA);
+    check(table + ': shop B sees its own row and never shop A\'s', seenByB.length === 1 && seenByB[0] === shopB);
+    let refused = false;
+    await asApp(client, shopA, async () => {
+      try { await client.query(insertSql, [shopB]); } catch (e) { refused = /row-level security/i.test(e.message); }
+    });
+    check(table + ': shop A cannot write a row for shop B (WITH CHECK)', refused);
+  } finally { await client.query(`DELETE FROM ${table} WHERE ${spec.key} IN ($1,$2)`, [shopA, shopB]); }
+}
+
+/** every table the baseline marks with a `fix` is forced here, has a policy, and passes the two-shop probe */
+async function checkClosedTables(client, census) {
+  for (const table of Object.keys(baseline).filter((n) => baseline[n].fix)) {
+    const row = census.get(table) || {};
+    check(table + ': FORCE RLS and a policy on a database built from migrations/', !!row.rls && !!row.forced && row.policies > 0);
+    if (PROBES[table]) await checkClosedTable(client, table, PROBES[table]);
+    else check(table + ': has a probe-row recipe in tests/rls-sec75-tables.cjs', false);
+  }
+}
+
 (async () => {
   const pool = new Pool({ connectionString: URL, max: 1 });
   const client = await pool.connect();
   try {
     console.log('\n── RLS on a database built from migrations/ ──');
-    checkCensus(await readCensus(client));
+    const census = await readCensus(client);
+    checkCensus(census);
+    await checkClosedTables(client, census);
     await checkIsolation(client);
   } finally { client.release(); await pool.end(); }
   console.log('\n  ' + checks + ' checks');

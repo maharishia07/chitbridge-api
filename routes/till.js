@@ -1153,7 +1153,8 @@ async function resolveSources(entity_id, adoptedRows) {
   const sources = [];
   adoptedRows.forEach((item, index) => {
     const found = resolved[index];
-    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: found.items || [] });
+    /* CTR-171: a SOURCE shop's cost never travels (DECISIONS) — items go through the ONE strip CAT-241 gave the public catalogue (cost.dropCostKeys on a clone), for every role */
+    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: require('../lib/catalogue-view').publicItemsOf(found.items || []) });
   });
   return sources;
 }
@@ -3369,7 +3370,7 @@ function blueprintCard(blueprints, name) {
 const SUMMARY_BILLS = 60,
   SUMMARY_BILLS_MAX = 400; /* how many bills one period summary rolls up */
 /*
- * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots } —
+ * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots, sales_from, sales_note } —
  * rollup.series (the ONE comparison calculation) over the same summaries, each slot beside the same slot last year. ONE trip (readBatch:
  * the shop's year + the summaries). 422 NO_COUNTRY / NO_MONEY with the one sentence when the shop's country, money or year is unstated.
  * Who may call: the shop's own session or key (auth, own entity, RLS through readBatch). Without compare=1 the answer is unchanged.
@@ -3385,7 +3386,7 @@ router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
       });
       if (trend.status !== 200) return problem(req, res, { status: trend.status, ...relayed(trend.body) }); // the trend's refusals (400 BAD_PERIOD, 422 NO_COUNTRY / NO_MONEY) keep its own codes and words
       /* S34: the trend's answer, every key lib/till-summary trend() returns (JSON leaves an undefined one out) */
-      return res.status(200).json({ period: trend.body.period, n: trend.body.n, currency: trend.body.currency, fy_start_month: trend.body.fy_start_month, slots: trend.body.slots });
+      return res.status(200).json({ period: trend.body.period, n: trend.body.n, currency: trend.body.currency, fy_start_month: trend.body.fy_start_month, slots: trend.body.slots, sales_from: trend.body.sales_from, sales_note: trend.body.sales_note });
     }
     res.json(await periodSummary(entity_id, req.query));
   } catch (e) {

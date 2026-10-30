@@ -150,10 +150,11 @@ const daysFrom = (monday, n) => Array.from({ length: n }, (_, i) => R.dayKey(new
   await pause(1500);
   await kase('RP-08', 'the 12-month trend = the monthly rollups sent: each month is both counters added, and the slots add up to the sum', async () => {
     const t = ok(await j('/api/till/summary?compare=1&period=month&n=12', { token: A.token }), 'trend').b;
-    const have = t.slots.filter((s) => s.gross_minor != null);
+    /* REP-48: the running month is the BOOKS' (the seeded shop has bills in them) - the closed months are the rollups sent */
+    const have = t.slots.filter((s) => s.gross_minor != null && !s.coverage.partial), running = t.slots[t.slots.length - 1];
     const wrong = have.filter((s) => s.gross_minor !== sent[s.key]);
     const total = have.reduce((a, s) => a + s.gross_minor, 0), want = have.reduce((a, s) => a + sent[s.key], 0);
-    expect(t.slots.length === 12 && have.length === 11 && !wrong.length && total === want && total > 0, 'slots ' + t.slots.length + ' · with figures ' + have.length + ' · wrong ' + JSON.stringify(wrong.map((s) => [s.key, s.gross_minor, sent[s.key]])) + ' · total ' + total + ' want ' + want);
+    expect(t.slots.length === 12 && have.length === 11 && !wrong.length && total === want && total > 0 && t.sales_from === 'books' && running.gross_minor > 0, 'slots ' + t.slots.length + ' · with figures ' + have.length + ' · wrong ' + JSON.stringify(wrong.map((s) => [s.key, s.gross_minor, sent[s.key]])) + ' · total ' + total + ' want ' + want);
   });
 
   await kase('RP-08b', 'each closed month beside last year: change % = (this − last year) × 100 ÷ last year from the sums sent; the running month says so and has no change', async () => {
@@ -169,7 +170,8 @@ const daysFrom = (monday, n) => Array.from({ length: n }, (_, i) => R.dayKey(new
   await kase('RP-08c', 'a year folds from its months: the last closed year = the months sent in it; the running year is partial and has no change %', async () => {
     const t = ok(await j('/api/till/summary?compare=1&period=year&n=2', { token: A.token }), 'years').b, fy = t.fy_start_month, sums = {};
     for (let k = 1; k <= 24; k++) { const at = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - k, 15)), yk = R.keyOf('year', at, { fyStart: fy }); sums[yk] = (sums[yk] || 0) + sent[R.monthKey(at)]; }
-    const [prior, running] = t.slots, runWant = sums[running.key] == null ? null : sums[running.key];
+    const [prior, running] = t.slots, runBooks = ok(await j('/api/till/summary?compare=1&period=month&n=1', { token: A.token }), 'month').b.slots[0].gross_minor;
+    const runWant = (sums[running.key] || 0) + runBooks; /* REP-48: the running year = its sent months + the running month as the books hold it */
     expect(t.slots.length === 2 && prior.gross_minor === sums[prior.key] && prior.coverage.partial === false && prior.coverage.short === false && running.coverage.partial === true && running.change_pct === null && running.gross_minor === runWant,
       'fy start ' + fy + ' · slots ' + JSON.stringify(t.slots.map((s) => [s.key, s.gross_minor, s.coverage.partial, s.coverage.short, s.change_pct])) + ' · sums ' + JSON.stringify(sums));
   });

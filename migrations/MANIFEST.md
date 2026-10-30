@@ -46,6 +46,9 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 | 4a | `b773_chit_status_current_status_check.sql` | DB-72: CHECK on `chit_status.current_status` = the rail's 9 statuses (NOT VALID, then VALIDATE); NULL allowed | Athi runs |
 | 4b | `b774_definition_name_unique_folded.sql` | DB-44: UNIQUE (entity_id, kind, lower(btrim(name))) on `definition`; counts first and stops with the number; parent is not a column, see header | Athi runs |
 | 4c | `b775_minted_parties_to_local.sql` | OPS-41: the minted `~` parties move `supplier` to `local` (expected 1); run AFTER b769 | Athi runs |
+| 4d | `b778_rls_governance_exceptions.sql` | SEC-75: RLS ON + FORCE + rls_entity on `governance_exceptions`; run AFTER the api with the new-shop binding (routes/governance.js) is deployed | Athi runs |
+| 4e | `b779_rls_dormant_cb_tables.sql` | SEC-75: RLS ON + FORCE + rls_entity on six legacy cb_* tables no code reads (cb_device, cb_external_reference, cb_entity_supplier, cb_contact, cb_entity_employee, cb_consumer_traction) | Athi ran 2026-10-29 (production, no rows); logged |
+| 4g | `b783_rls_legacy_cb_chit_catalogue.sql` | SEC-75 group A: RLS ON + FORCE + rls_entity on seven legacy cb_* tables no code reads (cb_catalogue_category, cb_catalogue_item, cb_chit, cb_chit_item, cb_chit_log, cb_task, cb_transaction_history); run AFTER b778+b779 (api #338) | Athi ran 2026-10-29 (production, no rows); logged |
 | 5 | `READ-2026-10-21-1-chit-status-values.sql` | DB-72: every current_status value; the CHECK (NOT VALID, then VALIDATE) is written only from this paste | paste back |
 | 6 | `READ-2026-10-21-2-db44-duplicate-names.sql` | DB-44: definitions that would break UNIQUE (entity_id, kind, parent, name); which copy survives | paste back; then cb-catalogue + cb-accounting decide |
 | 7 | `READ-2026-10-21-3-db65-governance-rows.sql` | DB-65: governed identities with no entity_governance row; then the drop of identities.constitution_version / governed_by | paste back; the drop is Athi's yes |
@@ -54,6 +57,7 @@ policies `chit_line_raida_isolation` and `read_all`. 8 functions have older bodi
 | 10 | `docs/27-…/census/2026-10-21-proposals-db5-db6.md` (docs repo) | DB-5 / DB-6: index and tidy proposals, one yes / no per line; nothing removed | Athi answers per line |
 | 11 | `READ-2026-10-24-1-sec100-folder-fk-census.sql` | SEC-100 (api #397): rows pointing at another shop's folder (parents, rules, routing); row 0 is the count | paste back; any cleanup is Athi's yes |
 | 12 | `b781_staff_code_hash.sql` | SEC-106: `identities.otp_code_hash varchar(64)` (a keyed hash of a staff first code, never the code) and `access_events.action` gains `code_issued`; numbers b778-b780 are held by #338 and #348; the code checks the column first and keeps the old way until it runs | Athi runs |
+| 13 | `READ-2026-10-24-2-sec103-assignee-census.sql` | SEC-103 (api stacked on #397): routing rows whose assignee is not an actor of the row's shop (another shop, or nobody); row 0 is the count | paste back; any cleanup is Athi's yes |
 
 **Monthly routine (DB-8, b221 v2):** on the first maintenance night of each month, `RUN-2026-10-21-5-test-result-summarise.sql` then
 `RUN-2026-10-21-6-test-result-purge.sql` then `READ-2026-10-21-5-test-result-check.sql` (paste back). They add 0 rows / delete 0 rows until

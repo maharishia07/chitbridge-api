@@ -3343,7 +3343,9 @@
       },
       "change_pct": 10
      }
-    ]
+    ],
+    "sales_from": "summaries",
+    "sales_note": "The books are not switched on for this shop, so these sales are the counters' day summaries only."
    },
    "optional": []
   },

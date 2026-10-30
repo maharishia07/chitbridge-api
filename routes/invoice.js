@@ -22,6 +22,8 @@ const auth = require('../middleware/auth');
 const S = require('../lib/services');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
 /** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);
@@ -128,7 +130,7 @@ router.get(
       const hdr = await C.copyOf(req.params.chit_id, me);
       if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
       const e = await C.entryFor(hdr, me);
-      res.json({
+      res.json(await costView.invoiceAnswer({ /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view) */
         chit_id: e.chit_id,
         direction: e.direction,
         sells: e.sells,
@@ -141,7 +143,7 @@ router.get(
         buyer: e.buyer,
         invoice: e.invoice,
         heads: T.heads(e.invoice)
-      });
+      }, await cost.isCostBlind(req, me), hdr, me));
     } catch (e) {
       problem(req, res, readFault(e, req));
     }

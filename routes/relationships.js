@@ -606,13 +606,16 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /suppliers/:supplier_entity_id/catalogue'), async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
+    /* SEC-91: a shop reads a supplier's catalogue only from ITS OWN supplier list (or its own); a stranger and an unknown id get the same refusal, so no name or id of anyone else comes back */
+    const linked = String(sid) === String(ctx(req)) || (await withEntity(ctx(req), (db) => db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [ctx(req), sid]))).rows.length > 0;
+    if (!linked) return problem(req, res, { status: 404, ...words.notOnYourList() });
     const sup = await query(
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
        FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`,
       [sid]
     );
     const supplier = sup.rows[0] || null;
-    if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
+    if (!supplier) return problem(req, res, { status: 404, ...words.notOnYourList() });
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
     // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
     // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the

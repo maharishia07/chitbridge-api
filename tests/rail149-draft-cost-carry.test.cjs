@@ -110,6 +110,22 @@ const noMoney = (r) => !/ ?4242|9797|42425|3131/.test(JSON.stringify(r.body));
       }
     });
   }
+  await it('the send ANSWER of a blind resume carries no money: no money key, no total_value, no figure, no rupee sign; cost_hidden:true; the owner answer is not pruned', async () => {
+    for (const flags of [{}, { is_draft: true }]) {
+      const r = await send(BLIND, body([resent({}), resent({ particulars: 'Toor dal 1kg', quantity: 5 })], flags));
+      assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+      const text = JSON.stringify(r.body);
+      assert.ok(!/"(total_value|money|net|total|price|tax|taxable|gross|grand_total|amount)"/.test(text), 'a money key: ' + text);
+      assert.ok(!/₹|4242|42425/.test(text), 'a figure: ' + text);
+      assert.strictEqual(r.body.cost_hidden, true);
+      assert.strictEqual(r.body.chit_id !== undefined && r.body.summary.line_item_count, 2, 'the rest of the answer stays');
+    }
+    const own = await send(OWNER, body([resent({ price: 9 })]));
+    assert.strictEqual(own.body.cost_hidden, undefined);
+    assert.ok('total_value' in own.body.summary, 'the owner still reads the total');
+    const sale = await send(BLIND, body([resent({ price: TRIED })], { recipients: [{ entity_id: CUSTOMER, role: 'to' }] }), { header: headerFor(CUSTOMER) });
+    assert.strictEqual(sale.body.cost_hidden, undefined, 'a sale-side answer is as before');
+  });
   await it('the match is by line_id when the client sends it, in any order; a changed quantity recomputes the total from the STORED price', async () => {
     const r = await send(BLIND, body([resent({ line_id: L2, particulars: 'Toor dal 1kg', quantity: 5 }), resent({ line_id: L1, quantity: 12, total: 0 })]));
     assert.strictEqual(r.status, 200, JSON.stringify(r.body));
