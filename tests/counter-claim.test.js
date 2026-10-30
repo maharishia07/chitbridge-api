@@ -74,7 +74,7 @@ it('and the released key stops working at once', () => {
 
 it('the new key is told which counter it is, and where the run stopped', () => {
   assert.ok(/counter: want/.test(CLAIM), 'the key does not record its counter');
-  assert.ok(/issued: Number\(got\.counter\.next\) > 1/.test(CLAIM),
+  assert.ok(/issued: Number\(claimResult\.counter\.next\) > 1/.test(CLAIM),
     'the key does not carry whether that counter has already issued numbers — the series could restart');
 });
 

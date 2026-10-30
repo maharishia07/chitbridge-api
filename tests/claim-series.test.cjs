@@ -254,7 +254,7 @@ function dupes() {
   t('T9 · /api/chits/send asks tillClaimOf(req.till, …) BEFORE the client_ref dedupe',
     send.indexOf('tillClaimOf(req.till') > 0 && send.indexOf('tillClaimOf(req.till') < send.indexOf('await sameRefLook(sender_id, client_ref)'));
   t('one allocator: claimTill is claimSeries asked as a key; one bookedPrefixes (counters.js reads keys\')',
-    /const claimTill = \(entity_id, jti, ask\) => claimSeries\(entity_id, 'key:' \+ jti, ask\)/.test(KEYS)
+    /const claimTill = \(entity_id, keyId, askedFor\) => claimSeries\(entity_id, 'key:' \+ keyId, askedFor\)/.test(KEYS)
     && (KEYS.match(/FROM chit_header/g) || []).length === 1 && !/FROM chit_header/.test(COUNTERS)
     && /keys\.bookedPrefixes\(db, entity_id\)/.test(COUNTERS));
   t('moved-not-stopped kept (rival, older, moved_from, held_by)', /MOVED, NOT STOPPED/.test(KEYS) && /moved_from: using,\s*held_by: rival\.name/.test(KEYS));

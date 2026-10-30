@@ -68,9 +68,9 @@ it('vendor-till writes versions.json from the engines\' own lines, and the servi
 it('the server keeps them on THAT counter\'s key, shape-checked, in the till record it already writes', () => {
   assert.ok(/engines: req\.query\.eng/.test(TILL), 'the snapshot route does not pass eng= to claimSeries');
   const c = body(KEYS, 'const claimSeries = async');   /* M11: claimTill widened into claimSeries — the key path is its body */
-  assert.ok(/const engines = cleanEngines\(ask && ask\.engines\);/.test(c), 'claimTill does not read the versions');
-  assert.strictEqual((c.match(/if \(engines\) me\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
-  const ce = body(KEYS, 'function cleanEngines(raw)');
+  assert.ok(/const engines = cleanEngines\(askedFor && askedFor\.engines\);/.test(c), 'claimTill does not read the versions');
+  assert.strictEqual((c.match(/if \(engines\) ownRecord\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
+  const ce = body(KEYS, 'function cleanEngines(rawEngines)');
   assert.ok(/slice\(0, 60\)/.test(ce) && /\{1,32\}/.test(ce) && /\{1,20\}/.test(ce), 'the versions are no longer capped and shape-checked');
 });
 
