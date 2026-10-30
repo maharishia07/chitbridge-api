@@ -26,6 +26,12 @@
    "foreign_id_404": true,
    "output_allowlist": true
   },
+  "DELETE /api/folders/:id": {
+   "output_allowlist": true
+  },
+  "DELETE /api/folders/rules/:rule_id": {
+   "output_allowlist": true
+  },
   "DELETE /api/products/:id": {
    "output_allowlist": true
   },
@@ -227,6 +233,42 @@
   "GET /api/entities/usage": {
    "output_allowlist": true
   },
+  "GET /api/folders": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/:id/chits": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/:id/metrics": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/:id/rules": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/groupsum": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/inventory": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/messages": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/mis": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/reconcile": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/rules": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/rules/vocabulary": {
+   "output_allowlist": true
+  },
+  "GET /api/folders/worklist": {
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
    "foreign_id_404": true
   },
@@ -361,6 +403,12 @@
   },
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true
+  },
+  "PATCH /api/folders/:id": {
+   "output_allowlist": true
+  },
+  "PATCH /api/folders/rules/:rule_id": {
+   "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id": {
    "foreign_id_404": true
@@ -497,6 +545,21 @@
   },
   "POST /api/crm/parties/:id/stage": {
    "foreign_id_404": true
+  },
+  "POST /api/folders": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/:id/rules": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/messages/:message_id/mark": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/move": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/rules/preview": {
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/attach": {
    "foreign_id_404": true
@@ -869,6 +932,9 @@
    "output_allowlist": true
   },
   "POST /api/products/status/bulk": {
+   "output_allowlist": true
+  },
+  "PUT /api/folders/inventory/:code": {
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {
