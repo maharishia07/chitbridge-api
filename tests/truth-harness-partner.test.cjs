@@ -2,7 +2,7 @@
 // @type: unit
 /**
  * tests/truth-harness-partner.test.cjs — the harness's partner chits (tests/lib/truth-harness.cjs order() and invoice(), LIFECYCLE-B4 §5.2):
- * a purchase order is an order chit with side 'buy', an invoice carries its engine figures unchanged and names the order it bills against,
+ * a purchase order is an order chit with no side (the direction decides on each copy), its recipient passes the send's recipients rule, an invoice carries its engine figures unchanged and names the order it bills against,
  * every line carries item_data.item_id, and the supplier's rate (not the product's own) is the line price. Offline: no api, no database.
  * CARD 01-rail-core-the-chit/README
  */
@@ -17,12 +17,14 @@ const parotta = { id: 'item-1', name: 'Parotta', unit: 'piece', price: 25 };
 
 console.log('\n══ truth-harness order() and invoice() ══\n');
 
-ok('order: purpose order, side buy, one recipient by bridge id, the supplier rate on the line', () => {
+ok('order: purpose order, no side (the direction decides, as the app sends it), one recipient by bridge id with a name, the supplier rate on the line', () => {
   const o = H.order('B4-P1', [[parotta, 10, 12]], { to: 'bridge-7' });
   assert.strictEqual(o.purpose, 'order');
-  assert.strictEqual(o.business_json.side, 'buy');
+  assert.strictEqual('side' in o.business_json, false);
   assert.strictEqual(o.client_ref, 'B4-P1');
-  assert.deepStrictEqual(o.recipients, [{ bridge_id: 'bridge-7', kind: 'to' }]);
+  assert.deepStrictEqual(o.recipients, [{ bridge_id: 'bridge-7', display_name: 'bridge-7', kind: 'to' }]);
+  assert.strictEqual(H.order('B4-P1', [[parotta, 1]], { to: { bridge: 'bridge-7', name: 'Partner A' } }).recipients[0].display_name, 'Partner A');
+  assert.strictEqual(require('../lib/chits-input').recipientFault({ recipients: o.recipients }), '', 'the send refuses these recipients');
   assert.deepStrictEqual([o.line_items[0].quantity, o.line_items[0].price, o.line_items[0].total], [10, 12, 120]);
   assert.strictEqual(o.line_items[0].item_data.item_id, 'item-1');
 });
