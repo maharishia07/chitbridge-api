@@ -50,7 +50,18 @@ const summaryRow = (key, gross) => ({ business_json: { summary: { period: 'week'
   const t = TS.teaser([S.shop && { country: 'IN', currency_code: 'INR', books: S.shop.books }].map((x) => ({ rows: [x] }))[0], { rows: S.week }, NOW, await TS.booksSold(SHOP, { rows: [S.shop] }));
   ok('the Home teaser is the same week from the same books', !!t && t.spark[7] === 194000, JSON.stringify(t));
 
+  /* REP-54: a fresh shop - no summary at all, one week in the books - still gets its Sold on the Home teaser (lifecycle S9-9b) */
+  S.week = [];
+  const fresh = TS.teaser({ rows: [S.shop] }, { rows: [] }, NOW, await TS.booksSold(SHOP, { rows: [S.shop] }));
+  ok('one week of the books and no summary: the teaser answers, latest week 1940.00, earlier weeks null', !!fresh && fresh.spark[7] === 194000 && fresh.spark[6] === null, JSON.stringify(fresh));
+  const sentence = TS.firstWeekLine(fresh, { rows: [S.shop] });
+  ok('one figure: the server says it, with the money in the shop currency (REP-55)', !!sentence && sentence.text === 'First week: {money} so far' && sentence.money.amount === 1940 && sentence.money.currency === 'INR', JSON.stringify(sentence));
+  ok('several figures (or none): no sentence, the chart speaks', TS.firstWeekLine({ spark: [1, 2] }, { rows: [S.shop] }) === null && TS.firstWeekLine(undefined, { rows: [S.shop] }) === null, '');
+  r = await TS.trend(SHOP, 'actor', { period: 'week', n: 4, now: NOW });
+  ok('the Reports week tab holds the same 1940.00 with no summary', r.body.slots[3].gross_minor === 194000, String(r.body.slots[3].gross_minor));
+
   S.shop = { country: 'IN', currency_code: 'INR', books: { enabled: false, fy_start_month: 4 }, gov: null };
+  S.week = [summaryRow('2026-W38', 540), summaryRow('2026-W37', 100)];
   r = await TS.trend(SHOP, 'actor', { period: 'week', n: 4, now: NOW });
   ok('books off: the counters\' summary (540.00), said in words, from "summaries"', r.body.slots[3].gross_minor === 54000 && r.body.sales_from === 'summaries' && /books are not switched on/.test(r.body.sales_note), JSON.stringify([r.body.slots[3].gross_minor, r.body.sales_from, r.body.sales_note]));
   S.week = [];
