@@ -431,8 +431,8 @@ const SEND_STEPS = [
   sendOffers,
   sendMoney,
   sendIssued,
-  sendBridge,
   sendPaper,
+  sendBridge,
   sendCopyPolicy,
   sendPromote,
   sendParticipants,
@@ -1353,6 +1353,34 @@ async function sendIssued(st, req, res) {
 /** does this invoice carry the engine's total? (the one test before a chit's header is mapped off it) */
 const hasInvoiceTotal = (invoice) => !!invoice && typeof invoice === 'object' && !!invoice.ValDtls && Number.isFinite(Number(invoice.ValDtls.TotInvVal));
 
+/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
+async function checkCounterInvoice(sendState) {
+  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
+  try {
+    const e = await taxCopy.entryFor(
+      {
+        chit_id: null,
+        sender_entity_id: sender_id,
+        purpose,
+        business_json,
+        line_items,
+        currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+        ),
+        sent_at: business_json.billed_at || null
+      },
+      sender_id
+    );
+    if (e && e.tax_check && !e.tax_check.ok) {
+      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
+    }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+  }
+}
+
 /**
  * ⭐⭐⭐ THE MONEY MUST ADD UP, OR THE SALE STOPS (Athi, 2026-10-30: "stop, ask to verify, over rule flag can be set, but it has to be addressed").
  * The ENGINE checked its own bridge (gross → offers → net → taxable → tax → round-off → total, in minor units) before it answered; this step
@@ -1408,34 +1436,6 @@ async function sendPaper(sendState, req, res) {
   if (paper.held) {
     if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
     sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
-  }
-}
-
-/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it */
-async function checkCounterInvoice(sendState) {
-  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
-  try {
-    const e = await taxCopy.entryFor(
-      {
-        chit_id: null,
-        sender_entity_id: sender_id,
-        purpose,
-        business_json,
-        line_items,
-        currency_code,
-        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-        ),
-        sent_at: business_json.billed_at || null
-      },
-      sender_id
-    );
-    if (e && e.tax_check && !e.tax_check.ok) {
-      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-    }
-  } catch (e) {
-    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
   }
 }
 

@@ -1898,6 +1898,14 @@
     422
    ]
   },
+  "POST /api/books/money-check/resolve": {
+   "cases": 7,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/move-in/import": {
    "cases": 2,
    "failed": 0,

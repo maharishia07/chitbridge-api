@@ -49,7 +49,7 @@ const call = (port, method, p, body) => new Promise((done) => {
 /** the routes on a port the OS chose, against a fresh in-memory shop */
 function serve(X) {
   const express = require('express');
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
   const srv = app.listen(0); const port = srv.address().port;
   return { srv, q: (m, p, b) => call(port, m, '/api/books' + p, b) };
 }
@@ -441,19 +441,19 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       ok('To-do money_unbalanced lists the overridden sale with step, amount, who, when and why', td && td.count === 1 && td.items[0].chit_id === BILL('7') && td.items[0].step === 'gross' && td.items[0].unexplained_minor === 5000 && td.items[0].why === 'checked by hand', JSON.stringify(td));
       const before = WHO;
       WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'viewer', display_name: 'Auditor' };
-      const viewer = await q('POST', '/money-check/' + BILL('7') + '/resolve', { how: 'confirmed', note: 'fine' });
+      const viewer = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'fine' });
       WHO = before;
       ok('a VIEWER cannot resolve it (403 in the rail\'s words); the item stays', viewer.status === 403 && (await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced'), JSON.stringify(viewer.body));
       WHO = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
-      const noNote = await q('POST', '/money-check/' + BILL('7') + '/resolve', { how: 'confirmed' });
+      const noNote = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed' });
       ok('"confirmed" with no reason is a 400 (the person says why)', noNote.status === 400, JSON.stringify(noNote.body));
-      const done = await q('POST', '/money-check/' + BILL('7') + '/resolve', { how: 'confirmed', note: 'Customer checked the bill' });
+      const done = await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'Customer checked the bill' });
       WHO = before;
       ok('an EDITOR resolves it: 200, one books_change_log row (money_override · resolved · how · note) naming who; the chit itself is untouched',
         done.status === 200 && done.body.resolved === true && done.body.duplicate === false && X.T.changes.some((c) => c.table_name === 'money_override' && c.field === 'resolved' && c.row_id === BILL('7') && c.old === 'confirmed' && c.new === 'Customer checked the bill' && c.by === '55555555-5555-4555-8555-555555555555')
         && JSON.stringify(X.T.chits.find((c) => c.chit_id === BILL('7')).business_json.money_override) === JSON.stringify(over), JSON.stringify(done.body));
       ok('…the to-do drops it; resolving again is a no-op that says so; an unknown chit is a 404', !(await q('GET', '/todo')).body.some((x) => x.kind === 'money_unbalanced')
-        && (await q('POST', '/money-check/' + BILL('7') + '/resolve', { how: 'confirmed', note: 'again' })).body.duplicate === true && (await q('POST', '/money-check/' + BILL('8') + '/resolve', { how: 'confirmed', note: 'x' })).status === 404);
+        && (await q('POST', '/money-check/resolve', { chit_id: BILL('7'), how: 'confirmed', note: 'again' })).body.duplicate === true && (await q('POST', '/money-check/resolve', { chit_id: BILL('8'), how: 'confirmed', note: 'x' })).status === 404);
     } finally { TCp.entryFor = wasEntryFor; }
   });
 

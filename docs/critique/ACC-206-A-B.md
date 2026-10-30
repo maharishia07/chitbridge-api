@@ -9,7 +9,7 @@ This file is the place the Fable reviewer looks first: every call that was a jud
 - A (api #440 rebased onto main 69e9c5d0): `lib/send-money.js` scopes the engine by purpose, calls it once, reads its bridge as data; `calculateSummary` counts only; `sendMoney` has no
   gross/net/savings/total arithmetic; `total_value` = `money.total`; `summary_json.stamps`; 409 `MONEY_UNBALANCED` + owner `money_override`; 422 / 503 before any write.
 - B: `counter-bill.pickOf` (the one pick) read by books-hooks (Mark-paid quote, the equality check before posting, the override narration); `lib/money-check.js` (compare + raise to our
-  support desk: unique `client_ref`, `/health money_mismatch`, one mail + hourly digest); books to-do `money_unbalanced`; `POST /api/books/money-check/:chit_id/resolve`.
+  support desk: unique `client_ref`, `/health money_mismatch`, one mail + hourly digest); books to-do `money_unbalanced`; `POST /api/books/money-check/resolve`.
 
 ## JUDGMENT CALLS (J) — each one is a place to push back
 - **J1 · offers are NOT handed into the engine yet.** `determine({ offers })` exists (bridge step 2 has its own source), but api `offers-live` returns `applied` with POSITIVE, ABS()'d, prorated amounts, and
@@ -39,7 +39,7 @@ This file is the place the Fable reviewer looks first: every call that was a jud
 - **Amend after send (critic D2 / plan Q10).** Re-running the engine on an amended document and storing its figures on the amendment event needs a place to store them on `chit_line_amendment` (a migration, which the plan says there is none of) and cb-rail's decision on line events. Left; today an amended chit keeps the figures it was sent with (`amend.js` untouched).
 - **Plan B items not built:** books-hooks.js `:212` by_rate total, `:935` round-off absorb, `:975` round_off derivation, and `tax-lines.js:325` still do their own arithmetic over posting rows (the plan hands these to "the engine's data"; that is a rewrite of posting, not a copy). The guard that lists them is step G.
 - **Not in A+B (plan C/D/H/G):** SQL twin and list readers (select.js, rollup, notifications, kyb, forms, cost.js:164), web readers, the till's offline stop + PIN override UI, the arithmetic guard. The till keeps vendoring its own engine copy: cb-counter must `vendor-till` for tax 1.74.0 (the counter will then send an invoice with `_cb.bridge`, and the server stops/override-checks it).
-- **cb-api must re-sign** the touched routes: POST /api/chits/send (new 409 / 422 / 503, new body key `business_json.money_override`), POST /api/books/money-check/:chit_id/resolve (new), GET /health (new key).
+- **cb-api must re-sign** the touched routes: POST /api/chits/send (new 409 / 422 / 503, new body key `business_json.money_override`), POST /api/books/money-check/resolve (new), GET /health (new key).
 
 ## Risks watched
 - A good bill stopped by a bridge identity: the engine's identities are per-line and exact (v1.74.0 tests), proven here over IN / AU / AE, ex-tax and tax-inclusive. The first live sign is a `money.override` log line or a 409 in the send log.

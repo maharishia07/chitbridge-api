@@ -31,7 +31,8 @@ const chits = read('routes/chits.js');
 ok('routes/chits.js no longer defaults a chit\'s currency to INR at the door', !/const currency_code = \(business_json && business_json\.currency\) \|\| 'INR'/.test(chits));
 ok('…the sender\'s row the self-copy read already fetches carries currency_code (one query)', /SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = \$1/.test(chits));
 ok('…and a row without one asks lib/regional.currencyFor (the one resolver), never a literal (N1: none stated → null, not the word NULL)', /const statedMoney = currency_code \|\| \(prefRow\.rows\[0\] && prefRow\.rows\[0\]\.currency_code\) \|\| \(?await require\('\.\.\/lib\/regional'\)\.currencyFor\(sender_id\)\)?;\s*currency_code = statedMoney\s*\?\s*String\(statedMoney\)\.toUpperCase\(\)\s*:\s*null;/.test(chits));
-ok('…decided before the invoice is computed and the money block is written', chits.search(/currency_code = statedMoney\s*\?/) < chits.search(/currency: currency_code,\s*at: invAt/));
+const stepList = chits.slice(chits.indexOf('const SEND_STEPS = ['), chits.indexOf('];', chits.indexOf('const SEND_STEPS = [')));
+ok('…decided (sendBody) before the engine is asked for the invoice (sendMoney; lib/send-money reads the chit currency_code) and the money block is written', chits.search(/currency_code = statedMoney\s*\?/) >= 0 && stepList.indexOf('sendBody,') < stepList.indexOf('sendMoney,') && /currency: currency_code,\s*at,/.test(read('lib/send-money.js')));
 
 const books = read('lib/books.js');
 ok('lib/books.enable() reads the Country setup (lib/country-setup.profile)', /const cs = await CS\.profile\(h, entity, \{ constitution: false \}\)/.test(books) && /const CS = require\('\.\/country-setup'\)/.test(books));

@@ -48,6 +48,7 @@ function rows(s, p) {
   }
   if (/SELECT country, currency_code, timezone FROM identities/.test(s)) return [{ country: 'IN', currency_code: 'INR', timezone: null }];
   if (/SELECT self_copy_pref, currency_code FROM identities/.test(s)) return [{ self_copy_pref: null, currency_code: 'INR' }];
+  if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean); /* ACC-206: the engine reads seller and buyer at send */
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s) && !/status = 'active'/.test(s)) { const r = ROWS[p[0]]; return r ? [r] : []; }
   if (/SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(s)) { const r = ROWS[p[0]]; return r ? [{ bridge_id: r.bridge_id, display_name: r.display_name }] : []; }
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p[0]]; return r ? [r] : []; }
