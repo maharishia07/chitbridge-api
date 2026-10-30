@@ -297,6 +297,15 @@ router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, re
     problem(req, res, refusalOf(err, req));
   }
 });
+/** POST /money-check/:chit_id/resolve { how, note? } — close the to-do item of a sale the owner let through although the money did not add up (ACC-206 B). Owner or editor; viewers are refused. One insert into the books' change log. */
+router.post('/money-check/:chit_id/resolve', auth, noKey, editor, on, ...checked('POST /money-check/:chit_id/resolve'), async (req, res) => {
+  try {
+    if (!UUID.test(String(req.params.chit_id))) throw Object.assign(new Error('Not found'), { code: 'BOOKS_NOT_FOUND' });
+    res.json(await require('../lib/money-check').resolve(ctx(req), String(req.params.chit_id), req.body || {}, byOf(req)));
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), async (req, res) => {
   try {
     const out = await require('../lib/books-hooks').retryOutbox(ctx(req), 100);
