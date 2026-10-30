@@ -243,11 +243,17 @@ const noMoney = (r) => !/ ?4242|9797|42425|3131/.test(JSON.stringify(r.body));
     assert.strictEqual(sentLines(r)[0].price, TRIED);
     assert.strictEqual(reads(r), 0);
   });
-  await it('a blind actor sending a NEW chit (no promote_draft_id): untouched, as RAIL-146 left it', async () => {
-    const r = await send(BLIND, body([resent({ price: TRIED })], { promote_draft_id: undefined }));
+  await it('a blind actor sending a NEW chit to a customer (no promote_draft_id, a SALE): untouched, as RAIL-146 left it', async () => {
+    const r = await send(BLIND, body([resent({ price: TRIED })], { promote_draft_id: undefined, recipients: [{ entity_id: CUSTOMER, role: 'to' }] }));
     assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     assert.strictEqual(sentLines(r)[0].price, TRIED);
     assert.strictEqual(reads(r), 0);
+  });
+  await it('RAIL-156: a blind actor sending a NEW priced chit to a SUPPLIER (no draft) is 403 COST_BLIND, nothing delivered (it was 200 and written)', async () => {
+    const r = await send(BLIND, body([resent({ price: TRIED })], { promote_draft_id: undefined }));
+    assert.strictEqual(r.status, 403, JSON.stringify(r.body));
+    assert.ok(/COST_BLIND/.test(JSON.stringify(r.body)), JSON.stringify(r.body));
+    assert.strictEqual(delivered.length, 0);
   });
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

@@ -445,6 +445,7 @@ const SEND_STEPS = [
   sendTrace,
   sendPrefs,
   sendRecipients,
+  sendOwnSpend,
   sendSuspended,
   sendSeller,
   sendOffers,
@@ -866,8 +867,13 @@ async function sendSourceCarry(state, req, res) {
   const { sender_id, line_items } = state;
   const source = sourceOf(state, req);
   if (!source || !line_items.length || !(await cost.isCostBlind(req, sender_id))) return false;
+  return carryAnswer(state, req, res, source, (db) => costWrite.carryFromSource(db, sender_id, source.id, line_items, req.body.line_items, source.options));
+}
+
+/** runs one carry (`carry(db)` → null or { lines, stamp }) in the sender's scope; a refusal is answered (403 COST_BLIND, 400, 409), a carry replaces the lines and sets the stamp sendWrite re-checks */
+async function carryAnswer(state, req, res, source, carry) {
   try {
-    const carried = await withEntity(sender_id, (db) => costWrite.carryFromSource(db, sender_id, source.id, line_items, req.body.line_items, source.options));
+    const carried = await withEntity(state.sender_id, carry);
     if (carried && !(await definersReady())) throw legacyRefusal();
     if (carried) Object.assign(state, { line_items: carried.lines, sourceCarry: carried.stamp, sourceId: source.id, sourceOptions: source.options });
   } catch (e) {
@@ -875,6 +881,20 @@ async function sendSourceCarry(state, req, res) {
     return problem(req, res, { status: e.status, ...said(e.body, codeOfStatus(e.status)) });
   }
   return false;
+}
+
+/**
+ * RAIL-156 — a cost-blind co-assist sending a chit that is the shop's SPEND with no source (a purchase order, a supplier bill: the receiver is a supplier on the shop's own list, or the
+ * document kind is a buy): any figure he sends is the SAME 403 COST_BLIND a receipt gets (carryFromSource with options.cost and no source id), nothing written. Runs after the receivers
+ * are resolved because the side is judged from them (lib/cost-write sideOfCopy, the reader's own lists). Only a positive buy is judged: a sale, a walk-in, or a party on neither list is as before.
+ */
+async function sendOwnSpend(state, req, res) {
+  const { sender_id, line_items, purpose, business_json, receiverDetails } = state;
+  if (!line_items.length || sourceOf(state, req) || !(await cost.isCostBlind(req, sender_id))) return false;
+  const copy = { purpose, sender_entity_id: sender_id, business_json, all_recipients: receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role })) };
+  const source = { id: null, options: { cost: true, extra: business_json } };
+  return carryAnswer(state, req, res, source, async (db) =>
+    (await costWrite.sideOfCopy(db, sender_id, copy)) === 'buy' ? costWrite.carryFromSource(db, sender_id, null, line_items, req.body.line_items, source.options) : null);
 }
 
 /** the credit limit (F2) and the bill's own facts stamped on the chit */
