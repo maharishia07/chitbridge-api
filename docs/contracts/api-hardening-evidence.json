@@ -1018,7 +1018,11 @@
   "GET /api/crm/followups": {
    "output_allowlist": true
   },
+  "POST /api/crm/followups": {
+   "output_allowlist": true
+  },
   "PATCH /api/crm/followups/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/crm/followups/:id": {
@@ -1028,22 +1032,38 @@
   "GET /api/crm/calls": {
    "output_allowlist": true
   },
+  "POST /api/crm/leads/import": {
+   "output_allowlist": true
+  },
   "GET /api/crm/parties/:id/contact-prefs": {
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/crm/parties/:id/contact-prefs": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/crm/privacy-requests": {
    "output_allowlist": true
   },
+  "POST /api/crm/privacy-requests": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/privacy-requests/:id/answer": {
+   "output_allowlist": true
+  },
   "GET /api/crm/segments": {
+   "output_allowlist": true
+  },
+  "POST /api/crm/groups": {
    "output_allowlist": true
   },
   "DELETE /api/crm/groups/:name": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/crm/segments/:key/send": {
+   "output_allowlist": true
   },
   "GET /api/marketing/came-back": {
    "output_allowlist": true

@@ -469,18 +469,12 @@ router.post('/leads', auth, noKey, ...checked('POST /leads'), async (req, res) =
       const local = a.local,
         party_no = a.party_no;
       const m = await M.add(h, owner, { kind: 'lead_stage', item_id: local.identity_id, group: stage, by: byOf(req) });
-      return {
-        party: {
-          party_id: local.identity_id,
-          display_name: local.display_name,
-          party_no,
-          kind: 'local',
-          on_chitbridge: false,
-          lead: { stage, since: crm.iso(m.at) }
-        }
-      };
+      return { local, party_no, since: crm.iso(m.at) };
     });
-    res.status(201).json(out);
+    /* S34: the new lead's keys named here, in the order they always went */
+    res.status(201).json({
+      party: { party_id: out.local.identity_id, display_name: out.local.display_name, party_no: out.party_no, kind: 'local', on_chitbridge: false, lead: { stage, since: out.since } }
+    });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -506,7 +500,9 @@ router.post('/parties/:id/outcome', auth, noKey, ...checked('POST /parties/:id/o
   try {
     const owner = ctx(req),
       id = idOf(req);
-    res.status(201).json(await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req))));
+    const done = await withEntity(owner, (h) => require('../lib/crm-calls').outcome(h, owner, id, req.body, byOf(req)));
+    /* S34: every key lib/crm-calls outcome answers (the rows under them are the library's, open and listed) */
+    res.status(201).json({ interaction: done.interaction, followup: done.followup, stage: done.stage, suggest: done.suggest });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -525,7 +521,7 @@ router.post('/leads/import', auth, noKey, ...checked('POST /leads/import'), asyn
     const b = req.body || {};
     const out = await require('../lib/crm-leads').importLeads(ctx(req), b.rows, { by: byOf(req), dry: !!b.dry });
     res.status(out.dry ? 200 : 201); /* a preview answers 200, a real import 201 (API-4c (2) asks which the contract should say) */
-    res.json(out);
+    res.json({ dry: out.dry, added: out.added, merged: out.merged, skipped: out.skipped, rows: out.rows }); /* S34: every key lib/crm-leads shape answers */
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -692,7 +688,8 @@ router.post('/groups', auth, noKey, ...checked('POST /groups'), async (req, res)
   try {
     if (!whoIs(req).editor) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
     const owner = ctx(req);
-    res.status(201).json(await withEntity(owner, (h) => CG.setGroup(h, owner, req.body)));
+    const set = await withEntity(owner, (h) => CG.setGroup(h, owner, req.body));
+    res.status(201).json({ name: set.name, added: set.added, removed: set.removed, count: set.count }); /* S34 */
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -712,7 +709,10 @@ router.delete('/groups/:name', auth, noKey, ...checked('DELETE /groups/:name'), 
 router.post('/segments/:key/send', auth, noKey, ...checked('POST /segments/:key/send'), async (req, res) => {
   try {
     if (!whoIs(req).editor) throw bad(VIEW_ONLY_WHY, 403, 'VIEW_ONLY');
-    res.json(await CG.send(ctx(req), req.params.key, req.body));
+    const sent = await CG.send(ctx(req), req.params.key, req.body);
+    /* S34: every key lib/crm-groups send answers (refusals_logged and refusals_unlogged only after a real send: undefined on a preview, so JSON leaves them out) */
+    // prettier-ignore
+    res.json({ key: sent.key, send_ref: sent.send_ref, dry: sent.dry, channel: sent.channel, purpose: sent.purpose, members: sent.members, may: sent.may, refused: sent.refused, refused_by: sent.refused_by, sent: sent.sent, sent_n: sent.sent_n, failed_n: sent.failed_n, refused_n: sent.refused_n, refusals_logged: sent.refusals_logged, refusals_unlogged: sent.refusals_unlogged });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }

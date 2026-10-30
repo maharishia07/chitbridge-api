@@ -40,7 +40,7 @@ of file each thing is; this says what already does the job.
 | 51 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 47 | `again` | `signin-ui.js` |  |
-| 47 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 48 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 44 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 43 | `read` | `cap-print.js` |  |
@@ -66,7 +66,7 @@ of file each thing is; this says what already does the job.
 | 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `facts` | `bill-steps.js` | MY state_log — |
+| 33 | `facts` | `bill-steps.js` | MY state_log — |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
@@ -100,15 +100,15 @@ of file each thing is; this says what already does the job.
 | 24 | `view` | `country-ready.js` |  |
 | 24 | `account` | `home-facts.js` | OMITTED: |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
-| 24 | `hold` | `orders.js` |  |
-| 24 | `owner` | `books.js` |  |
+| 25 | `hold` | `orders.js` |  |
+| 25 | `owner` | `books.js` |  |
 | 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 22 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 23 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 22 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 21 | `chart` | `fx-rates.js` |  |
@@ -161,7 +161,7 @@ of file each thing is; this says what already does the job.
 | 15 | `fmtMoney` | `helpers.js` |  |
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
-| 15 | `label` | `bill-privacy.js` | label(step, mine) — |
+| 16 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
@@ -190,7 +190,7 @@ of file each thing is; this says what already does the job.
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `post` | `books-manual.js` | POST /events — |
-| 12 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
+| 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
