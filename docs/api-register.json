@@ -10,15 +10,15 @@
   "columns": {
    "strict_input": {
     "applies": 346,
-    "failing": 330
+    "failing": 317
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 238
+    "failing": 237
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 102
+    "failing": 100
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -26284,7 +26284,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 408,
-   "hash": "3807752ffc0ea320",
+   "hash": "236c464e6aa84b3e",
    "does": "",
    "errors": {
     "count": 0,
@@ -26316,7 +26316,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -26348,7 +26348,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3807752ffc0ea320"
+    "stale_since": "236c464e6aa84b3e"
    },
    "status": "partial",
    "callers": [
@@ -39413,7 +39413,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 392,
-   "hash": "2735a124451b9667",
+   "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
     "count": 0,
@@ -39447,7 +39447,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39478,7 +39478,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2735a124451b9667"
+    "stale_since": "a8a53cba6b45d665"
    },
    "status": "partial",
    "callers": [
@@ -39511,7 +39511,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 687,
-   "hash": "561e32b62e23278d",
+   "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
     "count": 0,
@@ -39544,7 +39544,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39575,7 +39575,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "561e32b62e23278d"
+    "stale_since": "dc7d46a6e3e12747"
    },
    "status": "partial",
    "callers": [
@@ -39604,7 +39604,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 450,
-   "hash": "8e03f370f91e4af9",
+   "hash": "5de81a35731a3e0b",
    "does": "",
    "errors": {
     "count": 0,
@@ -39639,7 +39639,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39670,7 +39670,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8e03f370f91e4af9"
+    "stale_since": "5de81a35731a3e0b"
    },
    "status": "partial",
    "callers": [
@@ -39699,7 +39699,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 518,
-   "hash": "ef4ac76e1a6196bf",
+   "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
     "count": 0,
@@ -39728,8 +39728,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -39759,7 +39759,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ef4ac76e1a6196bf"
+    "stale_since": "1b98e6ce8b06db3b"
    },
    "status": "partial",
    "callers": [
@@ -39788,7 +39788,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 623,
-   "hash": "3848a257e43bdb19",
+   "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
     "count": 0,
@@ -39820,7 +39820,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39852,7 +39852,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3848a257e43bdb19"
+    "stale_since": "6fbedfc518079d24"
    },
    "status": "partial",
    "callers": [
@@ -39881,7 +39881,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 356,
-   "hash": "e67247d514cbd3b9",
+   "hash": "785eb787c08de857",
    "does": "",
    "errors": {
     "count": 0,
@@ -39916,7 +39916,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39948,7 +39948,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e67247d514cbd3b9"
+    "stale_since": "785eb787c08de857"
    },
    "status": "partial",
    "callers": [
@@ -39979,7 +39979,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 499,
-   "hash": "554d7425788f3463",
+   "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
     "count": 0,
@@ -40009,7 +40009,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -40041,7 +40041,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "554d7425788f3463"
+    "stale_since": "9bd2e77e454eb27a"
    },
    "status": "partial",
    "callers": [
@@ -40070,7 +40070,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 531,
-   "hash": "cb3ac46e6f44931f",
+   "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
     "count": 0,
@@ -40105,7 +40105,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -40137,7 +40137,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cb3ac46e6f44931f"
+    "stale_since": "223d8dd816903a6c"
    },
    "status": "partial",
    "callers": [
@@ -40166,7 +40166,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 646,
-   "hash": "31efec9d4fc2cf15",
+   "hash": "21948004b6ff4f9d",
    "does": "",
    "errors": {
     "count": 0,
@@ -40197,7 +40197,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -40228,7 +40228,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "31efec9d4fc2cf15"
+    "stale_since": "21948004b6ff4f9d"
    },
    "status": "partial",
    "callers": [
@@ -40257,7 +40257,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 660,
-   "hash": "0fab3142f48afd1c",
+   "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
     "count": 0,
@@ -40287,11 +40287,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -40349,7 +40349,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 709,
-   "hash": "7848f5d1450e2f0b",
+   "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
     "count": 0,
@@ -40377,11 +40377,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -40439,7 +40439,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 557,
-   "hash": "d97fec1b8ac442c4",
+   "hash": "bfd12e4bf3f5c6ca",
    "does": "",
    "errors": {
     "count": 0,
@@ -40471,7 +40471,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -40502,7 +40502,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d97fec1b8ac442c4"
+    "stale_since": "bfd12e4bf3f5c6ca"
    },
    "status": "partial",
    "callers": [

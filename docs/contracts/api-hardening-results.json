@@ -5255,8 +5255,7 @@
   },
   "POST /api/crm/parties/:id/interactions": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5273,8 +5272,7 @@
   },
   "POST /api/crm/followups": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5282,8 +5280,7 @@
   },
   "PATCH /api/crm/followups/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5312,8 +5309,7 @@
   },
   "POST /api/crm/leads": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5327,8 +5323,7 @@
   },
   "POST /api/crm/parties/:id/outcome": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5341,8 +5336,7 @@
   },
   "POST /api/crm/leads/import": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5350,8 +5344,7 @@
   },
   "POST /api/crm/parties/:id/stage": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5364,8 +5357,7 @@
   },
   "POST /api/crm/walk-ins/add": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5382,8 +5374,7 @@
   },
   "POST /api/crm/parties/:id/contact-prefs": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5399,8 +5390,7 @@
   },
   "POST /api/crm/privacy-requests": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5408,8 +5398,7 @@
   },
   "POST /api/crm/privacy-requests/:id/answer": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5426,8 +5415,7 @@
   },
   "POST /api/crm/groups": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -5443,8 +5431,7 @@
   },
   "POST /api/crm/segments/:key/send": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
