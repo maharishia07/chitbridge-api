@@ -12,6 +12,7 @@
  * that answers. A rename is the one migration old code cannot limp through — proven the hard way on 2026-08-30,
  * when b185 was applied before this code shipped and every read went to migrated:false.
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
 let ROWS = [], SQL = [], TABLES = new Set(), COLS = new Set();
@@ -205,7 +206,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   /* ⭐⭐ `register` is a perfectly good :chit_id. Declared the other way round, every /register/* call would be
      read as a request for the register OF A CHIT BY THAT NAME and answer EMPTY rather than 404 — a silent wrong
      answer, which is worse than the error. Nothing but this assertion holds the order. */
-  const routes = require('fs').readFileSync(API + '/routes/chits.js', 'utf8');
+  const routes = CF.read(API);
   const firstParam = routes.indexOf("'/:chit_id/raida'");
   const specific = [];
   const re = /router\.(get|post)\('(\/register\/[^']*)'/g;
@@ -261,7 +262,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   console.log('\n-- \u26a0\ufe0f a line card raises a WHOLE entry, not four fields --');
   /* It forwarded kind · body · line_id · visibility and nothing else, so a risk raised from a line arrived with
      every column that makes a register useful left empty. */
-  const rt = require('fs').readFileSync(API + '/routes/chits.js', 'utf8');
+  const rt = CF.read(API);
   const addRoute = rt.slice(rt.indexOf("router.post('/:chit_id/raida'"), rt.indexOf("router.post('/:chit_id/raida/:raida_id/close'"));
   ['likelihood', 'severity', 'treatment', 'verification_method', 'response', 'owner_name', 'due_date']
     .forEach((f) => t('  the line card can send ' + f, new RegExp(f + ': req\.body\.' + f).test(addRoute)));

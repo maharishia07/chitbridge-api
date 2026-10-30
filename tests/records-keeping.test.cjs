@@ -10,6 +10,7 @@
  *       as every registered pack asks; the mint applies it under every copy; the sweep never lists a copy younger than it.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -103,7 +104,7 @@ const packs = reg.list();
 const over = packs.filter((p) => typeof p.retentionYears === 'number' && p.retentionYears > policy.RECORDS_FLOOR_YEARS);
 check('B2 the floor is at least every registered pack\'s retentionYears (' + packs.map((p) => p.id + ':' + (p.retentionYears == null ? '—' : p.retentionYears)).join(' ') + ')', over.length === 0, over.map((p) => p.id).join(' '));
 
-const chits = read('routes/chits.js');
+const chits = CF.read(ROOT);
 check('B3 the mint puts the records floor under every copy (retainDaysFor → retention.copyRetention)', /return copyRetention\(floor, _reqDays, /.test(chits) &&
   /const days = Math\.max\(RECORDS_FLOOR_DAYS, floor, requested \|\| 0\)/.test(read('lib/retention.js')));
 const retainDays = (shopFloor, requested) => Math.max(policy.RECORDS_FLOOR_DAYS, shopFloor, requested || 0);

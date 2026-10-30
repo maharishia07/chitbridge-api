@@ -18,6 +18,7 @@
  * Pure: no DB, no server. Run: node tests/bill-paper.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const path = require('path');
 const fs = require('fs');
 /* books-cashflow (toMinor) reaches the db at load — a stand-in keeps this file pure (the walk-in-buyer.test.cjs pattern) */
@@ -128,7 +129,7 @@ ok('buyerNamed: a name or a tax id names the buyer', BP.buyerNamed({ name: 'Acme
 
 /* ── 6 · the wire in routes/chits.js: its own step after sendIssued, outside the fail-open try; the answer carries it ── */
 {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   const steps = src.slice(src.indexOf('const SEND_STEPS = ['), src.indexOf('];', src.indexOf('const SEND_STEPS = [')));
   ok('SEND_STEPS runs sendPaper right after sendIssued', /sendIssued,\s*sendPaper,/.test(steps));
   const fn = src.slice(src.indexOf('async function sendPaper('), src.indexOf('async function sendCopyPolicy('));

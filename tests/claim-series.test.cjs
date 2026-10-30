@@ -19,6 +19,7 @@
  * Run: node tests/claim-series.test.cjs · no DB, no network.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const fs = require('fs');
 const path = require('path');
@@ -242,7 +243,7 @@ function dupes() {
 
   /* ── the wiring: one code path for both holders ─────────────────────────────────────────────────────────────── */
   const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const CHITS = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const CHITS = CF.read(API);
   const KEYS = fs.readFileSync(path.join(API, 'lib', 'api-keys.js'), 'utf8');
   const COUNTERS = fs.readFileSync(path.join(API, 'routes', 'counters.js'), 'utf8');
   t('T9 · /api/till/snapshot claims through keys.claimSeries(entity, req.till) for a key AND a device',

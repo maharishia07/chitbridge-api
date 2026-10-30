@@ -10,6 +10,7 @@
  *   G8  may/why on trade writes — lib/access.mayWrite / writeGate: a viewer is refused WITH the rail's sentence and a code
  * Run: node tests/trade-srv1.test.cjs · no DB (db/index.js is stubbed), no network.
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -126,7 +127,7 @@ const call = (port, method, p, body) => new Promise((done) => {
     /ch\.summary_json->>'currency_code'/.test(frag) && /ch\.all_recipients/.test(frag) && frag.indexOf(CS.shopCountrySql(7)) > 0 && !/\$[0-689]/.test(frag));
   ok('…a malformed entity_id is never cast (guarded by the uuid pattern); a non-array all_recipients reads as none', /CASE WHEN r->>'entity_id' ~\*/.test(frag) && /jsonb_typeof\(ch\.all_recipients\) = 'array'/.test(frag));
   ok('…the alias is sanitised', CS.abroadSql('ch; drop', 1).indexOf('chdrop.') >= 0);
-  const chits = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const chits = CF.read(API);
   const cf = chits.slice(chits.indexOf('function chitFilters('), chits.indexOf("router.get('/sent'"));
   ok('chitFilters (inbox · sent · folder share it) adds the fragment only for abroad=1|true', /req\.query\.abroad === '1' \|\| req\.query\.abroad === 'true'/.test(cf) && /abroadSql\('ch', params\.length\)/.test(cf));
   ok('…and the three list routes call chitFilters', (chits.match(/= chitFilters\(req, /g) || []).length >= 3);

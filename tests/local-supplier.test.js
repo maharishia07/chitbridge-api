@@ -13,6 +13,7 @@
  * complaint, so all three are asserted here.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), path = require('path'), fs = require('fs');
 const L = require(path.join(__dirname, '..', 'lib', 'local-identity.js'));
 const H = require(path.join(__dirname, '..', 'lib', 'handle.js'));
@@ -231,7 +232,7 @@ it('⭐⭐⭐ the recipient resolver refuses a minted party, on every branch', (
    * ⚠️⚠️ THE DISPLAY-NAME BRANCH IS THE DANGEROUS ONE: minted names are ordinary shop names, so "Corner Hardware"
    * typed by a DIFFERENT business would otherwise resolve to this one's private record.
    */
-  const s = src('routes/chits.js');
+  const s = CF.read(path.join(__dirname, '..'));
   assert.ok(/isMinted\(typedAny\)/.test(s), 'nothing rejects a typed minted handle before the lookups run');
   assert.ok(/cannot receive chits/.test(s), 'the refusal must say why, or it reads as "we lost your supplier"');
   const byName = s.match(/WHERE LOWER\(display_name\) = LOWER\(\$1\)[\s\S]{0,900}?`/);

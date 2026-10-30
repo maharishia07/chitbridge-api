@@ -1,10 +1,15 @@
-/* break each guard of the two-sided counter bill once; every break must turn its test red; every file is restored from a
-   COPY (never git). The counter's own guards (till.html) are broken by chitbridge-web e2e/till-two-sided-breaks.cjs.
-   Run: node scripts/two-sided-breaks.cjs */
+/**
+ * scripts/two-sided-breaks.cjs: break each guard of the two-sided counter bill once; every break must turn its guard test red; every file is restored from a COPY (never git).
+ * OWNS       the list of deliberate breaks of these guards (each names the test it must turn red).
+ * CALLED BY  by hand (node scripts/two-sided-breaks.cjs [repo root]); never by CI. A break aimed at routes/chits.js finds its anchor through tools/chits-files.cjs.
+ * FLOW       for each break: find the file holding the anchor, copy it, apply the break, run the guard test, expect red, restore the copy.
+ * CARD       01-rail-core-the-chit/chit-move
+ */
 const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const R = process.argv[2] || path.join(__dirname, '..');
+const CHITS = require('../tools/chits-files.cjs'); /* the ONE list of chits files: a break finds its anchor wherever the code lives now */
 const BREAKS = [
   /* who sells, on each copy (lib/tax-copy.js) */
   [
@@ -232,7 +237,7 @@ const BREAKS = [
 let caught = 0;
 const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
-  const abs = path.join(R, file),
+  const abs = path.join(R, CHITS.anchorFile(R, file, from)),
     copy = abs + '.breakcopy';
   const orig = fs.readFileSync(abs, 'utf8');
   fs.writeFileSync(copy, orig);

@@ -19,6 +19,7 @@
  * Run: node tests/rail-actions.test.cjs · no DB, no network beyond 127.0.0.1.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -240,7 +241,7 @@ const tally = {};
   }
 
   console.log('\n— C · one vocabulary, one rule —');
-  const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const SRC = CF.read(API);
   const MOVE = fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus lives here now (LEAN-PLAN §8 #3) */
   t('routes/chits.js no longer holds a transition table (validTransitions moved to the engine)', !/validTransitions\s*=/.test(SRC));
   t('routes/chits.js no longer asks access.canMessage — the message route asks the engine', !/access\.canMessage\(/.test(SRC));

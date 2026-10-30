@@ -17,6 +17,7 @@
  * Run: node tests/auth-first.test.cjs · no network beyond 127.0.0.1, no DB.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -54,7 +55,7 @@ let pass = 0, fail = 0;
 const t = (name, ok, extra) => { if (ok) { pass++; console.log('  ok  ' + name); } else { fail++; console.log('  FAIL ' + name + (extra ? '\n       ' + extra : '')); } };
 
 /* ── the BEFORE route: today's file with `auth,` moved back behind the validators (the order main had) ───────── */
-const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+const SRC = CF.read(API);
 const nl = SRC.includes('\r\n') ? '\r\n' : '\n';
 const head = SRC.search(/router\.post\(\s*'\/send',\r?\n/); /* iter1: the formatter moved the path onto its own line */
 const firstAuth = SRC.indexOf(nl + '  auth,' + nl + '  recipientsRule(', head);

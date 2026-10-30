@@ -8,6 +8,7 @@
  * Offline: no DB, no network (fetch is a stub).
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 
@@ -74,7 +75,7 @@ const read = (p) => fs.readFileSync(path.join(API, p), 'utf8');
   const upd = [], del = [];
   files.forEach((f) => { const t = fs.readFileSync(f, 'utf8'); if (/UPDATE\s+state_log\b/i.test(t)) upd.push(path.relative(API, f)); (t.match(/DELETE\s+FROM\s+state_log\b/gi) || []).forEach(() => del.push(path.relative(API, f))); });
   check('no code UPDATEs state_log', upd.length === 0, upd.join(' '));
-  const chits = read('routes/chits.js');
+  const chits = CF.read(API);
   const draftDel = (chits.match(/DELETE FROM state_log[^\n]*/g) || []).length;
   check('the only state_log DELETEs are the two draft paths in routes/chits.js (promote · purge) — a new one is looked at here',
     del.length === 2 && del.every((f) => f === path.join('routes', 'chits.js')) && draftDel === 2 && /role !== 'Draft'/.test(chits) && /promote_draft_id\)\s*\{\s*\/\/ promoting/.test(chits), del.join(' '));
