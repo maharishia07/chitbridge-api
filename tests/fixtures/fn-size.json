@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 226,
+  "long_functions": 224,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -16,10 +16,6 @@
     "lib/amend.js": [
       "(anonymous)",
       "record"
-    ],
-    "lib/api-keys.js": [
-      "(anonymous)",
-      "claimDevice"
     ],
     "lib/assign.js": [
       "byPerson"
