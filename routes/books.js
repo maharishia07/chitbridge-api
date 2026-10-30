@@ -2087,8 +2087,11 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
     if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
-    const message = r.refusals.map((x) => x.why).join(' ');
-    problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy: { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals } });
+    const message = r.refusals.map((x) => x.why).join(' '),
+      legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
+    /* ACC-204: a tax period of the year not closed yet names the answer (the screen opens Tax close on the code); every other refusal stays YEAR_CLOSE_REFUSED */
+    if (r.refusals.some((x) => x.name === 'return_open')) return problem(req, res, { status: 422, code: 'PERIOD_RETURN_OPEN', detail: message, legacy });
+    problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2115,16 +2118,18 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, setting } = await withEntity(e, async (h) => ({
-      rows: await S.periods(h, e, null),
-      figures: await S.periodFigures(h, e, fy),
-      setting: await B.settingOf(h, e)
-    }));
+    const { rows, figures, setting, taxStates } = await withEntity(e, async (h) => {
+      const all = await S.periods(h, e, null),
+        books = await B.settingOf(h, e);
+      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all) };
+    });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
+    /* ACC-204: the tax periods of every year the rows hold, each with its form, so a month's lock advice names the period it ends in */
+    const taxPeriods = [].concat(...Array.from(taxStates.values()).map((state) => state.periods.map((item) => Object.assign({ form: state.form }, item))));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
     res.json({
-      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((item) => !fy || item.fiscal_year === fy)
+      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods).filter((item) => !fy || item.fiscal_year === fy)
     });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

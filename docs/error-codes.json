@@ -3107,6 +3107,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "PERIOD_RETURN_OPEN",
+   "status": "422",
+   "title": "Tax period not closed",
+   "shopkeeper": "A tax period of that year has not been closed yet.",
+   "hint": "Close each period named under Tax close, then close the year.",
+   "owner_area": "books",
+   "since": "2026-10-30"
+  },
+  {
    "code": "PHONE_DELIVERY_NOT_CONFIGURED",
    "status": "varies",
    "title": "Phone delivery not configured",
