@@ -401,7 +401,7 @@ router.get('/download/:id', authIfOffered, schemaValidate(DOWNLOAD_OPERATION), a
          the shop it was downloaded for (found 2026-09-08). */
       const scopes = c.id === 'till' ? ['till'] : ['connector', 'services'];
       try {
-        minted = await require('./keys').mint(auth.entityOf(req), req.identity, {
+        minted = await require('../lib/api-keys').mint(auth.entityOf(req), req.identity, {
           name: 'kit ' + c.id + ' · ' + new Date().toISOString().slice(0, 10),
           scopes: scopes
         });
@@ -470,7 +470,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
          3. both have a GSTIN and they differ → pending, and the reason says so loudly (wrong store, or wrong account);
          4. approved earlier on THIS PC → still approved;  5. approved earlier on ANOTHER PC → pending again ("new PC");
          6. nothing known → pending: Settings › Integrations › Running connectors › Approve this PC (host · Tally company). */
-    const keysMod = require('./keys');
+    const keysMod = require('../lib/api-keys');
     const jti = req.api_key && req.api_key.jti;
     let enrol = null;
     if (jti) {
@@ -650,7 +650,7 @@ router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async
       approved_by: req.identity.identity_id,
       approved_at: new Date().toISOString()
     };
-    const enrol = await require('./keys').setEnrol(entity_id, c.key_jti, patch);
+    const enrol = await require('../lib/api-keys').setEnrol(entity_id, c.key_jti, patch);
     await query(`UPDATE identities SET connector_config = COALESCE(connector_config,'{}'::jsonb) || $2::jsonb WHERE identity_id = $1`, [
       a.identity_id,
       JSON.stringify({ enrol: Object.assign({}, c.enrol || {}, patch) })

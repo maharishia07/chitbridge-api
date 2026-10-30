@@ -121,7 +121,7 @@ it('sign-in by a verified phone and e-mail (identity-auth) still finds the perso
 });
 it('the device-key phone match (keys.js) computes the same PHONE hashes the PUT stored', async () => {
   setKey(KEY_A);
-  const keys = require('../routes/keys');
+  const keys = require('../lib/api-keys');
   assert.ok(keys.assignedHashes(PHONE).includes(rowOf('PHONE').value_hash));
   assert.ok(keys.assignedHashes('+' + PHONE).includes(rowOf('PHONE').value_hash));
 });

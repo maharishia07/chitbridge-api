@@ -39,7 +39,7 @@ const words = require('../lib/orders-contract'); // the contract (each route's o
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction } = require('../db');
-const keys = require('./keys');
+const keys = require('../lib/api-keys');
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return problem(req, res, { status: 403, ...words.sessionOnly() });
@@ -406,7 +406,7 @@ router.noteBill = async (entity_id, series, billedAt, no) => {
  */
 router.claim = async ({ entity_id, identity, id, label, takeover }) => {
   const { withTransaction: nestedWithTransaction } = require('../db');
-  const nestedKeys = require('./keys');
+  const nestedKeys = require('../lib/api-keys');
   const want = String(id || 'C1').toUpperCase();
 
   const got = await nestedWithTransaction(async (db) => {

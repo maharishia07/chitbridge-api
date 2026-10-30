@@ -56,7 +56,7 @@ const schemaPath = require.resolve(path.join(API, 'lib', 'schema'));
 require.cache[schemaPath] = { id: schemaPath, filename: schemaPath, loaded: true,
   exports: { hasColumn: async () => true, has: async () => true, hasTable: async () => true, columns: async () => [], table: async () => ({}) } };
 
-const keys = require(path.join(API, 'routes', 'keys'));
+const keys = require(path.join(API, 'lib', 'api-keys'));
 const counters = require(path.join(API, 'routes', 'counters'));
 const docs = require(path.join(API, 'routes', 'identity-docs'));
 const { holderOf, tillClaimOf } = require(path.join(API, 'lib', 'holder'));
@@ -243,7 +243,7 @@ function dupes() {
   /* ── the wiring: one code path for both holders ─────────────────────────────────────────────────────────────── */
   const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const CHITS = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
-  const KEYS = fs.readFileSync(path.join(API, 'routes', 'keys.js'), 'utf8');
+  const KEYS = fs.readFileSync(path.join(API, 'lib', 'api-keys.js'), 'utf8');
   const COUNTERS = fs.readFileSync(path.join(API, 'routes', 'counters.js'), 'utf8');
   t('T9 · /api/till/snapshot claims through keys.claimSeries(entity, req.till) for a key AND a device',
     /keys\.claimSeries\(entity_id, req\.till,/.test(TILL) && /req\.till\.device_id/.test(TILL) && !/keys\.claimTill\(/.test(TILL));
@@ -254,7 +254,7 @@ function dupes() {
   t('T9 · /api/chits/send asks tillClaimOf(req.till, …) BEFORE the client_ref dedupe',
     send.indexOf('tillClaimOf(req.till') > 0 && send.indexOf('tillClaimOf(req.till') < send.indexOf('await sameRefLook(sender_id, client_ref)'));
   t('one allocator: claimTill is claimSeries asked as a key; one bookedPrefixes (counters.js reads keys\')',
-    /router\.claimTill = \(entity_id, jti, ask\) => router\.claimSeries\(entity_id, 'key:' \+ jti, ask\)/.test(KEYS)
+    /const claimTill = \(entity_id, jti, ask\) => claimSeries\(entity_id, 'key:' \+ jti, ask\)/.test(KEYS)
     && (KEYS.match(/FROM chit_header/g) || []).length === 1 && !/FROM chit_header/.test(COUNTERS)
     && /keys\.bookedPrefixes\(db, entity_id\)/.test(COUNTERS));
   t('moved-not-stopped kept (rival, older, moved_from, held_by)', /MOVED, NOT STOPPED/.test(KEYS) && /moved_from: using,\s*held_by: rival\.name/.test(KEYS));

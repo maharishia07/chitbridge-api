@@ -19,7 +19,7 @@ const API = path.join(__dirname, '..');
 const WEB = path.join(API, '..', 'chitbridge-web', 'public');
 const PROG = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
-const KEYS = fs.readFileSync(path.join(API, 'routes', 'keys.js'), 'utf8').replace(/\r\n/g, '\n');
+const KEYS = fs.readFileSync(path.join(API, 'lib', 'api-keys.js'), 'utf8').replace(/\r\n/g, '\n');
 const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 
 let pass = 0;
@@ -67,7 +67,7 @@ it('vendor-till writes versions.json from the engines\' own lines, and the servi
 
 it('the server keeps them on THAT counter\'s key, shape-checked, in the till record it already writes', () => {
   assert.ok(/engines: req\.query\.eng/.test(TILL), 'the snapshot route does not pass eng= to claimSeries');
-  const c = body(KEYS, 'router.claimSeries = async');   /* M11: claimTill widened into claimSeries — the key path is its body */
+  const c = body(KEYS, 'const claimSeries = async');   /* M11: claimTill widened into claimSeries — the key path is its body */
   assert.ok(/const engines = cleanEngines\(ask && ask\.engines\);/.test(c), 'claimTill does not read the versions');
   assert.strictEqual((c.match(/if \(engines\) me\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
   const ce = body(KEYS, 'function cleanEngines(raw)');

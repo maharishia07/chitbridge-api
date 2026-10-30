@@ -1,7 +1,7 @@
 {
   "limit": 80,
-  "long_functions": 227,
-  "worst_complexity": 183,
+  "long_functions": 226,
+  "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
@@ -16,6 +16,10 @@
     "lib/amend.js": [
       "(anonymous)",
       "record"
+    ],
+    "lib/api-keys.js": [
+      "(anonymous)",
+      "claimDevice"
     ],
     "lib/assign.js": [
       "byPerson"
@@ -423,10 +427,6 @@
     ],
     "routes/invoice.js": [
       "POST /build"
-    ],
-    "routes/keys.js": [
-      "(anonymous)",
-      "claimDevice"
     ],
     "routes/network-design.js": [
       "GET /availability",

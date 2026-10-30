@@ -85,7 +85,7 @@ const lotfields = require('../lib/lotfields');
 const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
-const keys = require('./keys');
+const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
@@ -1552,7 +1552,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /di
     const entity_id = auth.entityOf(req);
     const keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can report itself.');
-    const diag = await require('./keys').setDiag(entity_id, keyId, diagnosticPatch(req));
+    const diag = await require('../lib/api-keys').setDiag(entity_id, keyId, diagnosticPatch(req));
     if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
     res.json({ ok: true, code: diag.code, at: diag.at });
   } catch (e) {
