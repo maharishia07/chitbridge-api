@@ -201,7 +201,7 @@
   "GET /api/till/screens": {"hash":"e3553ae3b95bfdec","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/till/snapshot": {"hash":"c11004366487df50","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/till/stock": {"hash":"3f644a8715faf625","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
-  "GET /api/till/summary": {"hash":"66e7008f8895ac0f","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
+  "GET /api/till/summary": {"hash":"fe841dc4231d7c51","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/till/tasks": {"hash":"6cbf69fcbc8067fc","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/till/verify": {"hash":"46d43e49b67a6e84","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/till/worth-an-offer": {"hash":"eb4695b2dc715bd6","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
