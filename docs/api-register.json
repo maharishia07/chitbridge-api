@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 634,
-    "failing": 263
+    "failing": 250
    },
    "foreign_id_404": {
     "applies": 227,
@@ -1285,8 +1285,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 326,
-   "hash": "b964e5418038a5aa",
+   "line": 334,
+   "hash": "ef0c6f78fb5c9c0d",
    "does": "",
    "errors": {
     "count": 0,
@@ -1320,7 +1320,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -1379,8 +1379,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 562,
-   "hash": "29fd16d8665f60b0",
+   "line": 591,
+   "hash": "d435e755da79001a",
    "does": "",
    "errors": {
     "count": 0,
@@ -1414,7 +1414,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13941,8 +13941,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 436,
-   "hash": "bb204c7a8e782061",
+   "line": 473,
+   "hash": "d9c6a8fbb4735f70",
    "does": "",
    "errors": {
     "count": 0,
@@ -13977,7 +13977,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14005,8 +14005,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d9c6a8fbb4735f70"
    },
    "status": "partial",
    "callers": [
@@ -14036,8 +14037,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 492,
-   "hash": "47486dec2da7fddd",
+   "line": 527,
+   "hash": "9f7f575c37ca7309",
    "does": "",
    "errors": {
     "count": 0,
@@ -14069,7 +14070,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14097,8 +14098,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9f7f575c37ca7309"
    },
    "status": "partial",
    "callers": [
@@ -14126,8 +14128,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 528,
-   "hash": "c699793f92f8b281",
+   "line": 549,
+   "hash": "1b9af23bbbfb67e6",
    "does": "",
    "errors": {
     "count": 0,
@@ -14159,7 +14161,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14216,7 +14218,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 850,
+   "line": 883,
    "hash": "d090f0c5527ea986",
    "does": "",
    "errors": {
@@ -14382,7 +14384,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 657,
+   "line": 690,
    "hash": "60877e20b8df1857",
    "does": "",
    "errors": {
@@ -14476,7 +14478,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1002,
+   "line": 1035,
    "hash": "a7167645145a889c",
    "does": "",
    "errors": {
@@ -14564,7 +14566,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 901,
+   "line": 934,
    "hash": "ab50db137b09ad6d",
    "does": "",
    "errors": {
@@ -14652,7 +14654,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 603,
+   "line": 636,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -14740,7 +14742,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 582,
+   "line": 615,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -14819,7 +14821,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 816,
+   "line": 849,
    "hash": "9cf17566745c9c6b",
    "does": "",
    "errors": {
@@ -26928,8 +26930,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 271,
-   "hash": "268b8e179a372c98",
+   "line": 277,
+   "hash": "b6c1b4c01100ae5c",
    "does": "",
    "errors": {
     "count": 0,
@@ -26963,7 +26965,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26993,7 +26995,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "268b8e179a372c98"
+    "stale_since": "b6c1b4c01100ae5c"
    },
    "status": "partial",
    "callers": [
@@ -27023,8 +27025,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 555,
-   "hash": "b441eb5a465334ce",
+   "line": 581,
+   "hash": "4d1404b7382300a4",
    "does": "",
    "errors": {
     "count": 0,
@@ -27054,7 +27056,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -27082,8 +27084,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4d1404b7382300a4"
    },
    "status": "partial",
    "callers": [
@@ -41324,7 +41327,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
    "line": 188,
-   "hash": "739c296671afce9d",
+   "hash": "46d14826628a8040",
    "does": "",
    "errors": {
     "count": 0,
@@ -41358,7 +41361,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41388,7 +41391,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "739c296671afce9d"
+    "stale_since": "46d14826628a8040"
    },
    "status": "partial",
    "callers": [
@@ -41418,8 +41421,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 544,
-   "hash": "98c0c7c8280fbe49",
+   "line": 568,
+   "hash": "d4cb12d4f7e4a454",
    "does": "",
    "errors": {
     "count": 0,
@@ -41449,7 +41452,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41506,8 +41509,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 795,
-   "hash": "e1e0553c2e47dfe8",
+   "line": 828,
+   "hash": "6475ef0d1713bdc8",
    "does": "",
    "errors": {
     "count": 0,
@@ -41539,7 +41542,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41569,8 +41572,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6475ef0d1713bdc8"
    },
    "status": "partial",
    "callers": [
@@ -41598,8 +41602,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 341,
-   "hash": "36e282e1601d3ecb",
+   "line": 349,
+   "hash": "0961eae0eaa6eac6",
    "does": "",
    "errors": {
     "count": 0,
@@ -41632,7 +41636,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41661,7 +41665,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "36e282e1601d3ecb"
+    "stale_since": "0961eae0eaa6eac6"
    },
    "status": "partial",
    "callers": [
@@ -41691,8 +41695,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 573,
-   "hash": "988b1ca9cc682a67",
+   "line": 603,
+   "hash": "d71abe90d95ce4c1",
    "does": "",
    "errors": {
     "count": 0,
@@ -41721,7 +41725,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41748,8 +41752,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d71abe90d95ce4c1"
    },
    "status": "partial",
    "callers": [
@@ -56047,7 +56052,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
    "line": 151,
-   "hash": "abcd059525ec8d8b",
+   "hash": "b644de49f85a1d71",
    "does": "",
    "errors": {
     "count": 0,
@@ -56082,7 +56087,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -56113,8 +56118,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b644de49f85a1d71"
    },
    "status": "partial",
    "callers": [],

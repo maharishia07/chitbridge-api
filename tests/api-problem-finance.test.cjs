@@ -26,10 +26,28 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock and Math.random are held still, so a difference is the code's and not the run's (a folder's metrics age its chits by the clock) */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+}
 const allowlist = require('../lib/output-allowlist');
 const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4): this file writes the folders routes' output_allowlist rows */
+const FOLDERS_MINE = (route) => route.includes(' /api/folders/') || route.endsWith(' /api/folders');
 const MOUNTS = ['/api/folders', '/api/facts', '/api/pricing'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/folders': 'routes/folders.js', '/api/facts': 'routes/facts.js', '/api/pricing': 'routes/pricing.js' };
@@ -132,6 +150,8 @@ const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND ent
 /** a scenario for an answer the SEC-100 fix ADDS: the code before answered it otherwise (200 or 500), so nothing is frozen for it */
 const N = (id, route, status, extra) => X(id, route, status, Object.assign({ after: true }, extra));
 const BAD_WHEN = { when: { nonsense: 'x' } };
+/** a folder as PATCH /:id reads it back (RETURNING folder_id, parent_id, name): the parent is nullable */
+const FOLDER_BACK = (parent) => ({ folder_id: PARTY, parent_id: parent, name: 'Mayur' });
 const FOLDER_ROW = (extra) => Object.assign({ folder_id: PARTY, name: 'Mayur', scope: 'task', kind: 'filed' }, extra);
 /** a folder row as the folders list selects it (the folder table: migrations/000_baseline_2026-10-21.sql + b133's scope + b275's kind), count as the database answers a COUNT: text */
 const FOLDER_FILED = { folder_id: PARTY, parent_id: null, name: 'Mayur', sort: 1, scope: 'task', kind: 'filed', count: '2' };
@@ -145,6 +165,11 @@ const WHEN_FULL = Object.fromEntries(Object.entries(require(path.join(HERE, 'lib
 const RULE_FULL = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, last_matched_at: AT, match_count: '3', created_at: AT };
 /** a rule may hold any one term of the vocabulary (lib/match validate): this one only a sender, no doc, so no term is read as required */
 const RULE_FROM_ONLY = { rule_id: '88888888-8888-4888-8888-888888888888', folder_id: PARTY, name: 'From Asha', when: { from: 'asha' }, enabled: true, sort: 2, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
+/** a rule as lib/folder-rules create RETURNs it (no last_matched_at), then as update RETURNs it (no created_at); name is nullable, match_count a bigint (text) */
+const RULE_MADE = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, match_count: '0', created_at: AT };
+const RULE_MADE_BARE = Object.assign({}, RULE_MADE, { name: null, when: { from: 'asha' }, enabled: false, sort: 0, stop_processing: false });
+const RULE_SAVED = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: false, sort: 2, stop_processing: true, match_count: '3' };
+const RULE_SAVED_BARE = Object.assign({}, RULE_SAVED, { name: null, when: { doc: 'invoice' } });
 const RULE_BARE = { rule_id: '33333333-3333-4333-8333-333333333333', folder_id: PARTY, name: null, when: { doc: 'invoice' }, enabled: false, sort: 0, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
 /** a message of the inbox as its statement selects it (chit_messages + the chit's header, line and status) */
 const MESSAGE_FULL = { message_id: PARTY, chit_id: PARTY, line_id: PARTY, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Ring me', created_at: AT, msg_type: 'query', read_at: AT, kept: true, manual_subject: 'Rice', auto_subject: 'Order', track: 'order', particulars: 'Ponni 24 kg', chit_status: 'pending' };
@@ -193,6 +218,43 @@ const READY = [
   X('reconcile-two-folder-cycle', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: '33333333-3333-4333-8333-333333333333', name: 'A' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'B' }]) }, patch: withChits(CHITS) }),
   X('reconcile-does-not-add-up', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_ONE }, patch: withChits(CHITS.concat([STRAY])) })
 ];
+/** a filed folder's chit as GET /:id/chits selects it (chit_header + chit_status; the raiser's name a sub-select): the second with every nullable column NULL */
+const FILED_CHIT = { chit_id: PARTY, sender_entity_display_name: 'Asha Traders', auto_subject: 'Order', manual_subject: 'Rice', purpose: 'order', created_at: AT, business_json: { kind: 'device_signal', device_id: 'D1', value: 4, unit: 'C' }, created_by_actor_id: '44444444-4444-4444-8444-444444444444', raiser_name: 'Murugan', direction: 'received', current_status: 'pending', _total: '2' };
+const FILED_CHIT_BARE = { chit_id: '33333333-3333-4333-8333-333333333333', sender_entity_display_name: null, auto_subject: null, manual_subject: null, purpose: 'general', created_at: AT, business_json: null, created_by_actor_id: null, raiser_name: null, direction: 'sent', current_status: null, _total: '2' };
+/** a bill of a view folder as lib/folder-views members answers it: a lib/select row with its lifecycle (lib/bill-steps) */
+const VIEW_BILL = CHIT({ doc_kind: 'bill_received', bill: { step: 'received', code: 'B1', label: 'Received', by: null, at: AT, open: true, history: [] } });
+const MEMBERS = (chits) => ({ views: { members: async () => ({ chits, counts: { open: chits.length, closed: 0, total: chits.length }, state: 'open' }) } });
+const SHOP_VIEW = answering(/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/, [{ folder_id: PARTY, name: 'From Asha', kind: 'view' }]);
+const SUBJECT_CHIT = CHIT({ chit_id: '77777777-7777-4777-8777-777777777777', manual_subject: 'Rice for Diwali', auto_subject: 'Order 7' });
+/** a matched chit with every nullable column of its sample NULL: no counterparty name (lib/select: no recipient name), no status, no created_at */
+const NAMELESS_CHIT = CHIT({ chit_id: '88888888-8888-4888-8888-888888888888', counterparty_name: null, current_status: null, created_at: null });
+/* S34, second pass: the success side of every folders route the first pass left (a write's read-back, a filed and a view folder, nullable columns NULL in one scene and filled in another) */
+const SWEEP_2 = [
+  X('folder-deleted', 'DELETE ' + F + '/:id', 200, { setup: { sqlRows: answering(/DELETE FROM folder WHERE/, [{}]) } }),
+  X('chit-filed', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: 'task' }]), answering(/UPDATE chit_status SET folder_id/, [{}])) } }),
+  X('chit-filed-in-a-folder-without-a-side', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: null }]), answering(/UPDATE chit_status SET folder_id/, [{}, {}])) } }),
+  X('chit-unfiled', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: null } }),
+  X('chits-listed', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: answering(/AS _total/, [FILED_CHIT, FILED_CHIT_BARE]) } }),
+  X('chits-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?limit=9999&archived=1', setup: { sqlRows: answering(/AS _total/, [Object.assign({}, FILED_CHIT, { _total: '900' })]) } }),
+  X('chits-of-a-system-view', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits', patch: MEMBERS([VIEW_BILL]) }),
+  X('chits-of-a-shops-view', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: SHOP_VIEW }, patch: MEMBERS([VIEW_BILL, CHIT({})]) }),
+  X('chits-of-a-view-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits?limit=1', patch: MEMBERS([VIEW_BILL, VIEW_BILL]) }),
+  X('metrics-of-a-task-folder', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: answering(/SELECT scope FROM folder/, [{ scope: 'task' }]) }, patch: withChits(CHITS) }),
+  X('metrics-of-a-system-view', 'GET ' + F + '/:id/metrics', 200, { url: F + '/' + sysId('B-2100') + '/metrics', patch: withChits(CHITS) }),
+  X('metrics-scope-read-fails', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: raising(/SELECT scope FROM folder/, 'XX000') }, patch: withChits(CHITS) }),
+  X('rules-of-a-folder', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY]) } }),
+  X('rules-of-a-folder-not-migrated', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: raising(/FROM folder_rule/, '42P01') } }),
+  X('rule-updated', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { enabled: false, sort: 2 }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED]) } }),
+  X('rule-updated-bare', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { name: '' }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED_BARE]) } }),
+  X('rule-deleted', 'DELETE ' + F + '/rules/:rule_id', 200, { setup: { sqlRows: answering(/DELETE FROM folder_rule/, [{}]) } }),
+  X('preview-matched', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'invoice' } }, patch: withChits(CHITS.concat([SUBJECT_CHIT])) }),
+  X('preview-matched-a-nameless-chit', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'invoice' } }, patch: withChits([NAMELESS_CHIT]) }),
+  X('preview-matched-nothing', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'quote' } }, patch: withChits(CHITS) }),
+  X('level-set', 'PUT ' + F + '/inventory/:code', 200, { url: F + '/inventory/RT-4090', body: { msg: 'none' } }),
+  X('message-kept', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { kept: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ n: '1' }]) } }),
+  /* RAIL-146g: a co-assist without can_see_costs reads the sum of the sales only, with cost_hidden: the closed groupsum shape holds the blind answer too */
+  X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
+];
 const EXTRAS = [
   /* the express-validator chains: a validation refusal keeps its { error, details } body */
   X('name-missing', 'POST ' + F, 400, { body: {} }),
@@ -202,6 +264,10 @@ const EXTRAS = [
   X('parent-not-found', 'POST ' + F, 400, { body: { name: 'Mayur', parent_id: PARTY } }),
   X('view-folder-not-migrated', 'POST ' + F, 503, { body: { name: 'Mayur', kind: 'view' }, setup: { sqlRows: raising(/INSERT INTO folder/, '42703') } }),
   X('view-folder-made', 'POST ' + F, 200, { body: { name: 'Mayur', kind: 'view' }, setup: { sqlRows: answering(/INSERT INTO folder/, [FOLDER_ROW({ kind: 'view' })]) } }),
+  /* S34: the view folder as the INSERT RETURNs it (folder_id, parent_id, name, sort, scope, kind): parent_id is NULL by the statement, sort is nullable */
+  X('view-folder-made-read-back', 'POST ' + F, 200, { body: { name: 'Mayur', kind: 'view', scope: 'order' }, setup: { sqlRows: answering(/INSERT INTO folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur', sort: null, scope: 'order', kind: 'view' }]) } }),
+  X('folder-made-under-a-parent', 'POST ' + F, 200, { body: { name: 'Late', parent_id: PARTY }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, [{ folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late', sort: 0, scope: 'task' }])) } }),
+  X('folder-made-at-the-top', 'POST ' + F, 200, { body: { name: 'Mayur', scope: 'order' }, setup: { sqlRows: answering(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur', sort: null, scope: null }]) } }),
   X('folder-made-before-b133', 'POST ' + F, 200, { body: { name: 'Mayur' }, setup: { sqlRows: raising(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, '42703') } }),
   X('db-fails-with-a-name', 'PATCH ' + F + '/:id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { name: 'Mayur' } }),
@@ -212,8 +278,8 @@ const EXTRAS = [
   X('name-empty', 'PATCH ' + F + '/:id', 400, { body: { name: '' } }),
   N('parent-folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { parent_id: '33333333-3333-4333-8333-333333333333' } }),
   N('parent-not-an-id', 'PATCH ' + F + '/:id', 404, { body: { parent_id: 'nope' } }),
-  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_ROW()])) } }),
-  X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_ROW()]) } }),
+  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_BACK('33333333-3333-4333-8333-333333333333')])) } }),
+  X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_BACK(null)]) } }),
   X('db-fails-with-a-chit', 'POST ' + F + '/move', 500, { body: { chit_id: PARTY }, setup: { db: 'fail' } }),
   X('chit-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: 'nope' } }),
   X('chit-missing', 'POST ' + F + '/move', 400, { body: {} }),
@@ -232,7 +298,8 @@ const EXTRAS = [
   X('condition-unknown', 'POST ' + F + '/:id/rules', 400, { body: BAD_WHEN }),
   X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, raising(/INSERT INTO folder_rule/, '42P01')) } }),
   N('rule-folder-not-found', 'POST ' + F + '/:id/rules', 404, { body: { when: { doc: 'invoice' } } }),
-  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [{ rule_id: PARTY, folder_id: PARTY }])) } }),
+  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { name: 'Invoices', when: WHEN_FULL, sort: 1, stop_processing: true }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [RULE_MADE])) } }),
+  N('rule-made-without-a-name', 'POST ' + F + '/:id/rules', 200, { body: { when: { from: 'asha' }, enabled: false }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [RULE_MADE_BARE])) } }),
   X('rules-not-migrated', 'DELETE ' + F + '/rules/:rule_id', 503, { setup: { sqlRows: raising(/DELETE FROM folder_rule/, '42P01') } }),
   X('db-fails-with-a-change', 'PATCH ' + F + '/rules/:rule_id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('rule-nothing-to-update', 'PATCH ' + F + '/rules/:rule_id', 400, { body: {} }),
@@ -279,6 +346,7 @@ const EXTRAS = [
   X('inventory-read-fails', 'GET ' + F + '/inventory', 500, { patch: { views: { flagsOf: async () => { throw new Error(SECRET_SQL); } } } }),
   /* S34: the READY branch of the folder reads: the database holds rows, so the real handlers and the real libraries (lib/page-limit, lib/folder-rules, lib/assign, lib/measure) run over them */
   ...READY,
+  ...SWEEP_2,
   /* the Home facts */
   X('no-such-card', 'GET /api/facts/:card', 404, { url: '/api/facts/nope' }),
   X('prototype-name-is-no-card', 'GET /api/facts/:card', 404, { url: '/api/facts/constructor' }),
@@ -536,6 +604,45 @@ function checkPricingAllowList(recording) {
   check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
 }
 
+/**
+ * API-8 output allow-list (S34), second pass: every folders route whose success schema is CLOSED (additionalProperties false, derived in docs/contracts/api-output-shapes.json from these
+ * answers and the handler's own keys) has every recorded 200 fit that schema with nothing pruned: a key the schema does not list would be cut, so a drop is an answer that moved.
+ * → { route: { output_allowlist: true } }, written to docs/contracts/api-hardening-evidence-areas.json for the folders routes only (facts and pricing keep the generator's evidence).
+ */
+function checkFoldersAllowList(recording) {
+  console.log('\n-- the closed success shapes of the folders routes hold every recorded 200 --');
+  const proved = {};
+  const operations = require(path.join(HERE, 'lib', 'folders-contract.js')).OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(operations).sort().forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = schema && engine.compile(schema);
+    const held = !!schema && schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its closed schema lists', held, { closed: !!schema && schema.additionalProperties === false, answers: answers.length, errors: fits && fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the folders routes the evidence file says output_allowlist for */
+function foldersEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => FOLDERS_MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write the folders output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeFoldersEvidence(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(FOLDERS_MINE).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 /** lib/contract-kit.js as built for this sweep: a public row, and a schema that refuses with the status a route always used */
 function checkKitWidening() {
   console.log('\n-- lib/contract-kit.js: public rows and the status of the schema refusal --');
@@ -588,6 +695,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkOtherContracts();
   checkKitWidening();
   checkPricingAllowList(recording);
+  const foldersHeld = checkFoldersAllowList(recording);
+  if (argv.includes('--write')) writeFoldersEvidence(foldersHeld);
+  else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the folders routes whose 200 held closed here', sameValue(foldersEvidenceOnDisk(), foldersHeld), { onDisk: Object.keys(foldersEvidenceOnDisk()).length, held: Object.keys(foldersHeld).length });
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
