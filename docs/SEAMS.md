@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 105 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 94 | `words` | `variant.browser.js` |  |
-| 90 | `read` | `books-cashflow.js` | Trips: |
+| 92 | `read` | `books-cashflow.js` | Trips: |
 | 83 | `answer` | `availability.js` | from March; then nearest. |
 | 79 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -23,10 +23,10 @@ of file each thing is; this says what already does the job.
 | 66 | `list` | `cap-settings.js` |  |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 62 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 63 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 61 | `here` | `screen-id.js` |  |
 | 59 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 59 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 58 | `next` | `dayopen.js` | the next thing to do — |
 | 58 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 55 | `items` | `books-store.js` | PERF1: |
@@ -45,9 +45,9 @@ of file each thing is; this says what already does the job.
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
-| 42 | `view` | `books-payables.js` | group: |
+| 43 | `view` | `books-payables.js` | group: |
 | 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 41 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 42 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
@@ -67,7 +67,7 @@ of file each thing is; this says what already does the job.
 | 32 | `shell` | `pick.js` |  |
 | 32 | `facts` | `bill-steps.js` | MY state_log — |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
-| 32 | `live` | `receivables.js` | the allocations that still count: |
+| 33 | `live` | `receivables.js` | the allocations that still count: |
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
@@ -164,7 +164,7 @@ of file each thing is; this says what already does the job.
 | 15 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 15 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
-| 15 | `orders` | `home-facts.js` | the till said 2 — |
+| 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 15 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 15 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `cols` | `cap-catalogue.js` |  |
@@ -183,7 +183,7 @@ of file each thing is; this says what already does the job.
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 13 | `verdict` | `rail-thread.js` |  |
-| 13 | `says` | `adopt.js` |  |
+| 14 | `says` | `adopt.js` |  |
 | 13 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |

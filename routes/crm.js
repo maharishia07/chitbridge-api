@@ -94,6 +94,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
   try {
     const listed = await crm.list(ctx(req), {
       actor: byOf(req),
+      blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
         String(req.query.with || '')
