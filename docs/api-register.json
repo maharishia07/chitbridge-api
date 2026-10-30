@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 35,
-  "partial": 477,
-  "meets": 122,
+  "partial": 475,
+  "meets": 124,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -4934,11 +4934,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72cc6a98fb6b5d8c"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#605 stage2 (re-sign; 13 of 13 read, purchase money null + cost_hidden for a cost-blind actor, owner bytes untouched, finance=1 still OWNER_ONLY)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js",
@@ -11588,11 +11587,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8e2de5a48a92f87e"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#605 stage2 (re-sign; 13 of 13 read, purchase money null + cost_hidden for a cost-blind actor, owner bytes untouched, finance=1 still OWNER_ONLY)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js",
     "cap-crm-record.js"
