@@ -52,6 +52,8 @@ const INV = require('../lib/folder-inventory'); // the folder inventory, numbere
 const { isOwner } = require('../lib/owner');
 const select = require('../lib/select'); // WHICH chits — shared with the scorecard
 const measure = require('../lib/measure'); // ...and how they are counted
+const cost = require('../lib/cost'); // RAIL-146g/146j: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146j: what a cost-blind co-assist may read of a folder
 const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
 
 /**
@@ -436,6 +438,8 @@ router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
 router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) => {
   try {
     const e = ent(req);
+    const blind = await cost.isCostBlind(req, e),
+      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request */
     const arch = req.query.archived === '1' || req.query.archived === 'true';
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     /**
@@ -448,17 +452,18 @@ router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) =>
       const m = await views.members(e, vf, { archived: arch, state: req.query.state });
       /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
          knows (`counts` is one) — anything more would be dropped silently on the way in */
-      return res.json(Object.assign(PL.pageOut('chits', m.chits, pg), { counts: m.counts }));
+      const shown = await withEntity(e, (db) => costView.viewFolderRows(db, e, m.chits, blind)); /* RAIL-146j: a blind reader's cost-side members lose their money */
+      return res.json(Object.assign(PL.pageOut('chits', shown, pg), { counts: m.counts, cost_params_ignored: costView.ignoredField(ignored) }));
     }
     /* ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
        was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
        pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut. */
     const limit = pg.asked ? pg.limit : FOLDER_LIST_MAX,
       offset = pg.asked ? pg.offset : 0;
-    const r = await withEntity(e, (db) =>
-      db.query(
+    const r = await withEntity(e, async (db) => {
+      const found = await db.query(
         `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
-              ch.business_json, ch.created_by_actor_id,
+              ch.business_json, ch.created_by_actor_id${costView.feedColsSql('ch', blind)},
               (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
               cs.direction, cs.current_status, COUNT(*) OVER() AS _total
          FROM chit_status cs
@@ -466,13 +471,14 @@ router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) =>
         WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
         ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`,
         [e, req.params.id, limit, offset]
-      )
-    );
-    const total = r.rows.length ? Number(r.rows[0]._total) || 0 : 0;
-    r.rows.forEach((row) => {
+      );
+      return { found, roles: await costView.rolesFor(db, e, found.rows, blind) };
+    });
+    const total = r.found.rows.length ? Number(r.found.rows[0]._total) || 0 : 0;
+    r.found.rows.forEach((row) => {
       delete row._total;
     });
-    res.json(PL.pageOut('chits', r.rows, pg, total));
+    res.json(Object.assign(PL.pageOut('chits', costView.folderChitRows(r.found.rows, { blind, shopId: e, roles: r.roles }), pg, total), { cost_params_ignored: costView.ignoredField(ignored) }));
   } catch (err) {
     problem(req, res, failed(err, req, 'List failed'));
   }
@@ -493,14 +499,16 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
   try {
     const me = ent(req);
     const flags = await policy.get(me); //  is a POLICY, not a constant hidden inside a report
+    const blind = await cost.isCostBlind(req, me),
+      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request */
+    const shown = (rows, base) => (blind ? withEntity(me, (db) => costView.blindMeasure(db, me, rows, base)) : base); /* a blind reader's money stands only over the shop's own sales */
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
     if (vf) {
       const vrows = await views.rowsFor(me, await views.whensOf(me, vf), { archived: req.query.archived === '1' });
-      return res.json(
-        Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, measure.measure(vrows, { overdue_days: flags.overdue_days }))
-      );
+      const vmeasured = measure.measure(vrows, { overdue_days: flags.overdue_days });
+      return res.json(Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, await shown(vrows, vmeasured), { cost_params_ignored: costView.ignoredField(ignored) }));
     }
     /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
     let fscope = null;
@@ -515,7 +523,8 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
       archived: req.query.archived === '1',
       direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined
     });
-    res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));
+    const measured = measure.measure(rows, { overdue_days: flags.overdue_days });
+    res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, await shown(rows, measured), { cost_params_ignored: costView.ignoredField(ignored) }));
   } catch (err) {
     console.error('folder metrics:', err.message);
     problem(req, res, failed(err, req, 'Metrics failed'));
@@ -846,7 +855,6 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
 });
 
 const groupsum = require('../lib/groupsum');
-const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
   try {
     const me = ent(req);
