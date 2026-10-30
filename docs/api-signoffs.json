@@ -168,6 +168,7 @@
   "GET /api/products/template": {"hash":"4fa0397692601b3c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#358","lifecycle":"stable"},
   "GET /api/products/workbook.xlsx": {"hash":"f926495a5d767afd","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#358","lifecycle":"stable"},
   "GET /api/relationships/scorecard": {"hash":"afebf4d8f77fd1b3","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
+  "GET /api/relationships/scorecard/:entity_id": {"hash":"00f435ab5f1dde1d","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#617 stage2 (re-sign)","lifecycle":"stable"},
   "GET /api/relationships/suppliers/availability": {"hash":"17646a9cbbf08ec2","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/repeat": {"hash":"6157dd476795ba4a","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},
   "GET /api/repeat/:id": {"hash":"f5a594b885e4ce99","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)","lifecycle":"stable"},

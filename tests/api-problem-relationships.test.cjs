@@ -156,10 +156,10 @@ const OWN_ROW_ROUTES = () => [
   { route: 'PATCH ' + MOUNT + '/customers/:id (party)', method: 'PATCH', url: MOUNT + '/customers/' + scenes.LIST_C, body: { legal_name: 'Chola Auto Care Pvt' }, id: scenes.LIST_C, evidence: 'PATCH ' + MOUNT + '/customers/:id' },
   { route: 'POST ' + MOUNT + '/customers/:id/groups', method: 'POST', url: MOUNT + '/customers/' + scenes.LIST_C + '/groups', body: { groups: ['dealers'] }, id: scenes.LIST_C }
 ];
-/** the routes addressed by an id that look it up by what they hold and answer 200 for an unknown one (the register keeps them partial on error_tests): foreign must equal unknown */
+/** the routes addressed by an id that look it up by what they hold: foreign must equal unknown (rewards answers 200 for an unknown one; the scorecard answers the unknown id's 404, S35) */
 const READ_ROUTES = () => [
   { route: 'GET ' + MOUNT + '/customers/:id/rewards', method: 'GET', url: MOUNT + '/customers/' + scenes.CUSTP + '/rewards' },
-  { route: 'GET ' + MOUNT + '/scorecard/:entity_id', method: 'GET', url: MOUNT + '/scorecard/' + scenes.SUPP }
+  { route: 'GET ' + MOUNT + '/scorecard/:entity_id', method: 'GET', url: MOUNT + '/scorecard/' + scenes.SUPP, unknown: 404 }
 ];
 
 /** one play(who, planted) of a foreign-id route: shop A holds the list row (planted) or nobody does (unknown); shop B (the stranger) or shop A (the owner) asks */
@@ -208,7 +208,7 @@ async function checkReadsAreScoped(port) {
       const own = await lab.send(port, item.method, item.url);
       const same = FOREIGN.comparable(foreignAnswer).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID') === FOREIGN.comparable(unknown).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID');
       held.push([item.route, foreignAnswer.status, unknown.status, own.status, same]);
-      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', same && foreignAnswer.status === 200 && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer), [foreignAnswer.status, unknown.status, own.status]);
+      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', same && foreignAnswer.status === (item.unknown || 200) && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer), [foreignAnswer.status, unknown.status, own.status]);
     } finally {
       [sources2.rewardStore.balance, sources2.select.rows, sources2.policy.get] = kept;
     }

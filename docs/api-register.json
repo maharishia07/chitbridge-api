@@ -20974,11 +20974,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api 2026-10-30 PR#617 stage2 (re-sign)",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
