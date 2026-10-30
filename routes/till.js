@@ -3549,6 +3549,8 @@ function billLine(item) {
  * either party, is already reflected here. Nothing about "how much is left" is computed twice.
  * ⚠️ A chit whose lines are all complete is not a task. The screen must never show work that is done.
  */
+const cost = require('../lib/cost'); /* RAIL-146c: can_see_costs, read ONCE per request (isCostBlind) */
+const costView = require('../lib/cost-view'); /* RAIL-146c: what a cost-blind reader may read of the tasks and the match */
 const deliverline = require('../lib/deliverline');
 const select = require('../lib/select'); /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
@@ -3560,8 +3562,9 @@ router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
     const limit = pageLimit.limitOf(req.query.limit, TASKS_PAGE, TASKS_MAX); /* the one clamp */
-    const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
-    res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit });
+    const blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146c: ONE can_see_costs read; a blind reader's tasks lose the purchase money (lib/cost-view) */
+    const out = await require('../lib/open-orders').tasks(entity_id, kind, limit, blind);
+    res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3587,6 +3590,7 @@ router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
 router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
+    const blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146c: ONE can_see_costs read (the landed strip folded in) */
     const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
     const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
@@ -3597,23 +3601,20 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
     if (!heads.length) return res.json({ days, count: 0, orders: [], total: 0, page: 1, limit: 0 });
 
     const { withEntity: nestedWithEntity } = require('../db');
-    const orders = await nestedWithEntity(entity_id, (db) => matchOrders(db, entity_id, heads, days, tolerance));
-    /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
-    if (!(await require('../lib/cost').canReadSafe(req, entity_id))) hideLanded(orders);
+    /* [OFFR-04] landed = goods + freight etc. as the shop paid it, and RAIL-146c every rate and total: cost, so owner / can_see_costs / the paired key only; a blind reader's order goes through lib/cost-view MATCH_KEEP, its side from costSideOf */
+    const orders = await nestedWithEntity(entity_id, async (db) => matchSeen(db, entity_id, heads, blind, await matchOrders(db, entity_id, heads, days, tolerance)));
     const paged = pageLimit.pageOut('orders', orders, pageLimit.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
-    res.json({ days, count: orders.length, orders: paged.orders, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
+    res.json({ days, count: orders.length, orders: paged.orders, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note, cost_params_ignored: costView.ignoredField(ignored) }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
 });
 
-/** the landed cost of each receipt is the shop's buying price: removed from the answer */
-function hideLanded(orders) {
-  orders.forEach((order) =>
-    (order.receipts || []).forEach((entry) => {
-      delete entry.landed;
-    })
-  );
+/** the match orders for their reader: as built for the owner, a cost-allowed actor and the paired key; a cost-blind reader's through lib/cost-view (the old hideLanded folded in), ONE side read for the page */
+async function matchSeen(db, entity_id, heads, blind, orders) {
+  if (!blind || !orders.length) return orders;
+  const shown = new Set(orders.map((order) => String(order.chit_id)));
+  return costView.tillRows(db, entity_id, heads.filter((head) => shown.has(String(head.chit_id))), orders, costView.hideMatchCosts, 'buy'); /* the match is about what we BUY: cost-side whatever the party list says (no side read) */
 }
 
 /** every purchase order beside what was received and what was invoiced, read on one transaction handle */
