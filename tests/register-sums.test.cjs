@@ -9,7 +9,7 @@
  *   B  Σ rows per route file = Σ rows per API group (owner_area) = the total, and a file and a group map one to one
  *   C  every file the register names exists on disk; a file outside routes/ is a NAMED exception (server.js direct routes, src/routes/network.js)
  *   D  every routes/*.js on disk that declares an endpoint is in the register (a new file fails until the register is regenerated)
- *   E  a path outside /api is a NAMED row (server.js /health and OPTIONS *; routes/ctp.js /.well-known/ctp.json, /deliver, /query)
+ *   E  a path outside /api is a NAMED row (server.js /health and OPTIONS *; the ctp double mount is ONE row per handler with aliases, M7)
  * A new endpoint, file or prefix that breaks a sum fails here until `node tools/api-register.cjs` regenerates the register. Nothing is fixed by hand.
  */
 'use strict';
@@ -22,8 +22,9 @@ const rows = reg.routes;
 const FILE_EXCEPTIONS = { 'server.js': 'direct routes in server.js', 'src/routes/network.js': 'the network router lives under src/' };
 const PATH_EXCEPTIONS = {
   'GET /health': 'server.js', 'OPTIONS *': 'server.js',
-  'GET /.well-known/ctp.json': 'routes/ctp.js', 'POST /deliver': 'routes/ctp.js', 'POST /query': 'routes/ctp.js',
 };
+/* M7: routes/ctp.js is mounted at / and at /api/ctp on purpose (server.js); the register holds ONE row per handler, the bare path is its alias */
+const CTP_ALIASES = { 'GET /api/ctp/.well-known/ctp.json': ['/.well-known/ctp.json'], 'POST /api/ctp/deliver': ['/deliver'], 'POST /api/ctp/query': ['/query'] };
 
 let pass = 0, fail = 0;
 const ok = (name, cond, more) => { if (cond) pass++; else { fail++; console.log('  ✗ ' + name + (more ? ' · ' + more : '')); } };
@@ -51,6 +52,8 @@ for (const f of fs.readdirSync(path.join(ROOT, 'routes')).filter((n) => n.endsWi
 for (const r of rows.filter((x) => !x.path.startsWith('/api/'))) {
   ok('E ' + r.key + ' is a named row', PATH_EXCEPTIONS[r.key] === r.file, r.file);
 }
+for (const [k, a] of Object.entries(CTP_ALIASES)) ok('E ' + k + ' carries the bare-path alias ' + a.join(','), rows.some((r) => r.key === k && JSON.stringify(r.aliases) === JSON.stringify(a)));
+ok('E no ctp bare-path row is counted as its own endpoint', !rows.some((r) => r.file === 'routes/ctp.js' && !r.path.startsWith('/api/')));
 for (const [k, f] of Object.entries(PATH_EXCEPTIONS)) ok('E named row ' + k + ' still in the register', rows.some((r) => r.key === k && r.file === f));
 
 console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
