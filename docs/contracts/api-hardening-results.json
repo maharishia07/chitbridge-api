@@ -2556,8 +2556,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/catalogue/network-store/:networkId": {

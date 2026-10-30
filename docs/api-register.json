@@ -18,7 +18,7 @@
    },
    "foreign_id_404": {
     "applies": 227,
-    "failing": 102
+    "failing": 101
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -20920,8 +20920,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 993,
-   "hash": "974b366dc64a6e90",
+   "line": 1004,
+   "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
     "count": 0,
@@ -20948,11 +20948,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true

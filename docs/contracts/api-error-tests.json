@@ -1099,6 +1099,7 @@
  ],
  "GET /api/relationships/scorecard/:entity_id": [
   401,
+  404,
   500
  ],
  "GET /api/relationships/suppliers": [
