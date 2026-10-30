@@ -14535,7 +14535,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+        "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -14625,7 +14625,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+        "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -18242,7 +18242,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+        "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
         "lifecycle": "stable"
       },
       "status": "meets standard",

@@ -101,7 +101,7 @@ of file each thing is; this says what already does the job.
 | 24 | `account` | `home-facts.js` | OMITTED: |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `hold` | `orders.js` |  |
-| 24 | `owner` | `books.js` |  |
+| 25 | `owner` | `books.js` |  |
 | 24 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 23 | `call` | `cap-assist.js` |  |
 | 23 | `profile` | `country-setup.js` | skips the EXISTS read — |

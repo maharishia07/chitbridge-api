@@ -19,6 +19,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { SAID, faultOf, marketingContract: contract } = require('../lib/marketing-contract'); // the contract (the route's operation) and the read's fault
 const results = require('../lib/marketing-results');
+const costView = require('../lib/cost-view'); /* RAIL-146k: the reader sides for who-came-back money */
 
 /** a condition becomes a verdict with a code a screen maps to its own line — the message is never shown as-is (design rule 1) */
 function noKey(req, res, next) {
@@ -34,7 +35,7 @@ function noKey(req, res, next) {
 
 router.get('/came-back', auth, noKey, schemaValidate(contract.operationFor('GET /came-back')), async (req, res) => {
   try {
-    res.json(await results.cameBack(auth.entityOf(req), { query: req.query }));
+    res.json(await results.cameBack(auth.entityOf(req), { query: req.query, sidesOf: (rows) => costView.sidesFor(req, auth.entityOf(req), rows) }));
   } catch (err) {
     problem(req, res, faultOf(err, req)); /* the status the error names (500 when none), the old { error, message } body */
   }

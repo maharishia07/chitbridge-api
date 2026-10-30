@@ -51,7 +51,6 @@ const views = require('../lib/folder-views'); // ⭐ VIEW folders — contents =
 const INV = require('../lib/folder-inventory'); // the folder inventory, numbered with the ledger
 const { isOwner } = require('../lib/owner');
 const select = require('../lib/select'); // WHICH chits — shared with the scorecard
-const measure = require('../lib/measure'); // ...and how they are counted
 const cost = require('../lib/cost'); // RAIL-146g/146j: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146j: what a cost-blind co-assist may read of a folder
 const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
@@ -534,15 +533,14 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
   try {
     const me = ent(req);
     const flags = await policy.get(me); //  is a POLICY, not a constant hidden inside a report
-    const blind = await cost.isCostBlind(req, me),
-      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request */
-    const shown = (rows, base) => (blind ? withEntity(me, (db) => costView.blindMeasure(db, me, rows, base)) : base); /* a blind reader's money stands only over the shop's own sales */
+    const blind = await costView.blindOf(req, me),
+      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request (RAIL-146k: memoised, the measurer below shares it) */
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
     const archived = req.query.archived === '1';
     const { head, rows } = vf ? { head: { scope: null, code: vf.code || null }, rows: await views.rowsFor(me, await views.whensOf(me, vf), { archived }) } : await filedSet(me, req.params.id, archived);
-    const measured = await shown(rows, measure.measure(rows, { overdue_days: flags.overdue_days }));
+    const measured = await costView.measureFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: a blind reader's money stands only over the shop own sales */
     /* S34: the folder (code only for a view folder), then every key lib/measure measure answers, in its order; the nested counts and sums stay the measure own, open; cost_hidden and cost_params_ignored (RAIL-146j) only for a blind reader */
     // prettier-ignore
     res.json({ folder_id: req.params.id, scope: head.scope, code: head.code, count: measured.count, by_status: measured.by_status, by_direction: measured.by_direction, open: measured.open, closed: measured.closed, unread: measured.unread, overdue: measured.overdue, overdue_days: measured.overdue_days, clock: measured.clock, disputes: measured.disputes, money: measured.money, cost_hidden: measured.cost_hidden, cost_params_ignored: costView.ignoredField(ignored) });
@@ -949,6 +947,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
     // ONE read of every copy on this track — filed and unfiled alike. Counting the pieces separately is how two
     // numbers come to disagree; here they are literally partitions of the same array.
     const rows = await select.rows(me, { direction, limit: 5000 });
+    const measureSeg = await costView.measurerFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: ONE side read for overall and every segment */
     const folders = (await withEntity(me, (db) => db.query(`SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me])))
       .rows;
 
@@ -974,7 +973,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
     };
 
     const seg = (list) =>
-      Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
+      Object.assign(measureSeg(list), {
         /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
          assigned — conflating them hides the pile nobody has picked up, which is the one worth seeing. */
         assigned: list.filter((x) => x.assigned_to_actor_id).length,
@@ -1054,11 +1053,12 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */
     const rows = await select.rows(me, { limit: 5000, since });
+    const measured = await costView.measurerFor(req, me, rows, opts); /* RAIL-146k: the reader sides ride in opts.sides */
     const received = rows.filter((item) => item.direction === 'received');
     const sent = rows.filter((item) => item.direction === 'sent');
     /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
        overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
-    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, opts);
+    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, measured.opts);
     res.json({
       overdue_days: flags.overdue_days,
       /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`

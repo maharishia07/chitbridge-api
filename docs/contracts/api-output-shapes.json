@@ -17196,7 +17196,10 @@
             "additionalProperties": false
           },
           "money": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "required": [
               "by_currency",
               "mixed",
@@ -17279,9 +17282,34 @@
               "name": {}
             },
             "additionalProperties": false
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "properties": {
+              "money": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "required": [
+              "cost_hidden"
+            ],
+            "properties": {
+              "money": {
+                "type": "null"
+              },
+              "cost_hidden": {
+                "const": true
+              }
+            }
+          }
+        ]
       },
       "observed": 5,
       "open": [],
@@ -18941,7 +18969,10 @@
             "additionalProperties": false
           },
           "money": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "required": [
               "by_currency",
               "mixed",
@@ -18985,9 +19016,34 @@
           "limit": {
             "type": "number"
           },
-          "query": {}
+          "query": {},
+          "cost_hidden": {
+            "type": "boolean"
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "properties": {
+              "money": {
+                "type": "object"
+              }
+            }
+          },
+          {
+            "required": [
+              "cost_hidden"
+            ],
+            "properties": {
+              "money": {
+                "type": "null"
+              },
+              "cost_hidden": {
+                "const": true
+              }
+            }
+          }
+        ]
       },
       "observed": 3,
       "open": []
