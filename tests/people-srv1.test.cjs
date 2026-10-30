@@ -119,7 +119,7 @@ const keyOf = (jti) => FLAGS.api_keys.find((k) => k.jti === jti);
 (async () => {
   const server = app.listen(0, '127.0.0.1'); await new Promise((r) => server.once('listening', r));
   base = 'http://127.0.0.1:' + server.address().port + '/api';
-  const keys = require(path.join(API, 'routes', 'keys'));
+  const keys = require(path.join(API, 'lib', 'api-keys'));
   const people = require(path.join(API, 'lib', 'people'));
   const PS = require(path.join(API, 'lib', 'person-session'));
   try {

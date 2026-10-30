@@ -486,7 +486,7 @@ function noteSeen(entity_id, jti, req) {
         .trim()
         .slice(0, 45) || null;
     setImmediate(() => {
-      require('../routes/keys')
+      require('../lib/api-keys')
         .setSeen(entity_id, jti, { ip, agent: String(req.headers['user-agent'] || '').slice(0, 160) })
         .catch(() => {});
     });

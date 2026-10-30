@@ -1493,7 +1493,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 730,
+   "line": 166,
    "hash": "037a59863cd4f43e",
    "does": "",
    "errors": {
@@ -11227,7 +11227,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 163,
+   "line": 61,
    "hash": "9641e91dd938d69e",
    "does": "",
    "errors": {
@@ -17142,7 +17142,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 380,
-   "hash": "966e1a6d5ef10766",
+   "hash": "e7f0f4d5bc085ea8",
    "does": "",
    "errors": {
     "count": 1,
@@ -17205,8 +17205,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e7f0f4d5bc085ea8"
    },
    "status": "partial",
    "callers": [
@@ -17923,7 +17924,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 154,
+   "line": 123,
    "hash": "5d347d3eb8faeb49",
    "does": "",
    "errors": {
@@ -26334,7 +26335,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 206,
+   "line": 104,
    "hash": "16b279021b037946",
    "does": "",
    "errors": {
@@ -39349,7 +39350,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 179,
+   "line": 77,
    "hash": "2eccb03ed6d58661",
    "does": "",
    "errors": {
@@ -39442,7 +39443,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 235,
+   "line": 133,
    "hash": "b736fd0b303b6676",
    "does": "",
    "errors": {
@@ -39530,7 +39531,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 263,
+   "line": 161,
    "hash": "2829ee715a1af9ad",
    "does": "",
    "errors": {
@@ -39630,7 +39631,7 @@
    "owner_area": "counters",
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
-   "line": 327,
+   "line": 225,
    "hash": "571eb00e2d0b8ba9",
    "does": "",
    "errors": {
@@ -43508,7 +43509,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 632,
-   "hash": "b0e5048704af15e9",
+   "hash": "0781f6879ca92518",
    "does": "",
    "errors": {
     "count": 3,
@@ -43578,8 +43579,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0781f6879ca92518"
    },
    "status": "partial",
    "callers": [
@@ -43880,7 +43882,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 458,
-   "hash": "077cc43f3cef6bd0",
+   "hash": "e09d5396fcab0124",
    "does": "",
    "errors": {
     "count": 0,
@@ -43942,8 +43944,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e09d5396fcab0124"
    },
    "status": "partial",
    "callers": [],
@@ -44148,7 +44151,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 714,
+   "line": 150,
    "hash": "490457a79b48d9d6",
    "does": "",
    "errors": {
@@ -52119,7 +52122,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 1550,
-   "hash": "45c60afb8f7027fd",
+   "hash": "d1919560973396d0",
    "does": "",
    "errors": {
     "count": 0,
@@ -52181,7 +52184,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "45c60afb8f7027fd"
+    "stale_since": "d1919560973396d0"
    },
    "status": "partial",
    "callers": [
@@ -52208,7 +52211,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2582,
-   "hash": "9635845899566c81",
+   "hash": "e2e1042ea6d178f8",
    "does": "",
    "errors": {
     "count": 0,
@@ -52270,7 +52273,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9635845899566c81"
+    "stale_since": "e2e1042ea6d178f8"
    },
    "status": "partial",
    "callers": [

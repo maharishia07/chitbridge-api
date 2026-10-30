@@ -208,6 +208,9 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
 const INFRA_LIBS = [
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
+  /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
+  'api-keys.js',
+  'counters-store.js',
   /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */
   'contract-kit.js',
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */

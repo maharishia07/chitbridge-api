@@ -64,7 +64,6 @@ const ALLOWED = {
   'folders.js /reconcile': 'one reconciliation summary',
   'folders.js /mis': 'the folders\' MIS summary',
   'integrations.js /reconcile': 'one range\'s books-vs-connector reconciliation summary',
-  'keys.js /': 'the shop\'s API keys — a bounded list inside one row\'s policy_flags',
   'network-design.js /availability': 'one availability question across the network\'s members',
   'products.js /:id/versions': 'one product\'s versions',
   'products.js /lists': 'the Product Lab\'s tick-and-grey: what the shop sells beside the blueprint lists (a vocabulary)',

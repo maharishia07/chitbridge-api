@@ -35,7 +35,8 @@ const ALLOW = {
   'lib/forms.js': [1, 'a form field derived as "today" pre-fills an editable box — the person types over it'],
   'routes/integrations.js': [1, 'an API key\'s NAME carries the day it was minted — a label'],
   'routes/products.js': [2, 'the catalogue export\'s FILE NAME carries the day — a label'],
-  'routes/counters.js': [2, 'a counter key\'s NAME carries the day it was paired — a label'],
+  'routes/counters.js': [1, 'a counter key\'s NAME carries the day it was paired — a label'],
+  'lib/counters-store.js': [1, 'a counter key\'s NAME carries the day it was paired — a label (moved from routes/counters.js, S7)'],
   'routes/till.js': [1, 'a shop-screen key\'s NAME carries the day it was paired — a label'],
 };
 const SLICE = /toISOString\(\)\.slice\(0,\s*10\)/g;

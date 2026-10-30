@@ -27,7 +27,7 @@
 const assert = require('assert'), fs = require('fs'), path = require('path');
 
 const API = path.join(__dirname, '..');
-const COUNTERS = fs.readFileSync(path.join(API, 'routes', 'counters.js'), 'utf8');
+const COUNTERS = fs.readFileSync(path.join(API, 'lib', 'counters-store.js'), 'utf8');
 const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
 const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
 
@@ -36,7 +36,8 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 
 /** the body of the one shared claim */
 const CLAIM = (function () {
-  const at = COUNTERS.indexOf('router.claim = async');
+  /* S7: the refusal and the release are named steps (heldRefusal, releaseHolder) written just above claim — the claim is read from the first of them */
+  const at = COUNTERS.indexOf('function heldRefusal(');
   assert.ok(at > 0, 'counters.claim is gone — this guard is measuring nothing');
   const end = COUNTERS.indexOf('module.exports', at);
   return COUNTERS.slice(at, end > 0 ? end : COUNTERS.length);
@@ -65,6 +66,8 @@ it('a takeover releases the holder BEFORE it claims, in one transaction', () => 
   assert.ok(release > 0, 'a takeover no longer closes the previous key');
   assert.ok(claim > 0, 'the claim no longer records the new holder');
   assert.ok(release < claim, 'the release happens after the claim — two keys would hold one counter');
+  const inClaim = CLAIM.slice(CLAIM.indexOf('const claim = async'));
+  assert.ok(inClaim.indexOf('await releaseHolder(') > 0 && inClaim.indexOf('await releaseHolder(') < inClaim.indexOf('patchCounter(db, entity_id, want'), 'claim no longer calls releaseHolder before it records the new holder');
 });
 
 it('and the released key stops working at once', () => {
@@ -74,7 +77,7 @@ it('and the released key stops working at once', () => {
 
 it('the new key is told which counter it is, and where the run stopped', () => {
   assert.ok(/counter: want/.test(CLAIM), 'the key does not record its counter');
-  assert.ok(/issued: Number\(got\.counter\.next\) > 1/.test(CLAIM),
+  assert.ok(/issued: Number\(claimResult\.counter\.next\) > 1/.test(CLAIM),
     'the key does not carry whether that counter has already issued numbers — the series could restart');
 });
 
@@ -84,7 +87,7 @@ it('enrol claims, and never mints on its own', () => {
   const at = TILL.indexOf("router.post('/enrol'");
   assert.ok(at > 0, 'the enrol route is gone');
   const body = TILL.slice(at, TILL.indexOf('\n});', at));
-  assert.ok(/require\('\.\/counters'\)\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
+  assert.ok(/require\('\.\.\/lib\/counters-store'\)\.claim\(/.test(body), 'enrol mints without claiming — the registry is bypassed again');
   assert.ok(!/keys\.mint\(/.test(body), 'enrol still mints its own key');
   assert.ok(/claimed\.status !== 200/.test(body), 'enrol does not relay the refusal');
 });

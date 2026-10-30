@@ -2624,7 +2624,7 @@ async function sendAnswer(st, req, res) {
    */
   if (!is_draft && client_ref && business_json && business_json.series) {
     setImmediate(() => {
-      require('./counters')
+      require('../lib/counters-store')
         .noteBill(sender_id, business_json.series, business_json.billed_at, client_ref)
         .catch(cbLog.orElse('chits: the helper failed — carried on without it'));
     });

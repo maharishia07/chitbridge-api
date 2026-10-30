@@ -85,7 +85,7 @@ const lotfields = require('../lib/lotfields');
 const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
-const keys = require('./keys');
+const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const rateLimit = require('express-rate-limit');
@@ -1552,7 +1552,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /di
     const entity_id = auth.entityOf(req);
     const keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can report itself.');
-    const diag = await require('./keys').setDiag(entity_id, keyId, diagnosticPatch(req));
+    const diag = await require('../lib/api-keys').setDiag(entity_id, keyId, diagnosticPatch(req));
     if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
     res.json({ ok: true, code: diag.code, at: diag.at });
   } catch (e) {
@@ -1657,7 +1657,7 @@ async function letCounterGo(entity_id, counterId, keyId, till, body) {
   await require('../db').withTransaction(async (db) => {
     const counter = await lockedCounter(db, entity_id, counterId);
     if (!counter) return;
-    await require('./counters').patchCounter(db, entity_id, counterId, counterReleasePatch(counter, keyId, till, body));
+    await require('../lib/counters-store').patchCounter(db, entity_id, counterId, counterReleasePatch(counter, keyId, till, body));
   });
 }
 
@@ -1704,7 +1704,7 @@ async function recordCounterState(entity_id, counterId, keyId, state, body) {
     const counter = await lockedCounter(db, entity_id, counterId);
     /* ⚠️ only the PC that holds the counter may say what it is doing */
     if (!counter || String(counter.held_by || '') !== String(keyId)) return;
-    await require('./counters').patchCounter(db, entity_id, counterId, {
+    await require('../lib/counters-store').patchCounter(db, entity_id, counterId, {
       status: state,
       status_since: state === 'break' ? (body.since ? String(body.since).slice(0, 40) : new Date().toISOString()) : null,
       status_by: state === 'break' ? (body.by ? String(body.by).slice(0, 80) : null) : null
@@ -2586,7 +2586,7 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
     const owner = shop.rows[0] || {};
-    const claimed = await require('./counters').claim(enrolClaim(entity_id, owner, req.body));
+    const claimed = await require('../lib/counters-store').claim(enrolClaim(entity_id, owner, req.body));
     if (claimed.status !== 200) return problem(req, res, { status: claimed.status, ...relayed(claimed.body) });
     res.json({
       key: claimed.key,
