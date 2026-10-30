@@ -54,6 +54,9 @@ const summaryRow = (key, gross) => ({ business_json: { summary: { period: 'week'
   S.week = [];
   const fresh = TS.teaser({ rows: [S.shop] }, { rows: [] }, NOW, await TS.booksSold(SHOP, { rows: [S.shop] }));
   ok('one week of the books and no summary: the teaser answers, latest week 1940.00, earlier weeks null', !!fresh && fresh.spark[7] === 194000 && fresh.spark[6] === null, JSON.stringify(fresh));
+  const sentence = TS.firstWeekLine(fresh, { rows: [S.shop] });
+  ok('one figure: the server says it, with the money in the shop currency (REP-55)', !!sentence && sentence.text === 'First week: {money} so far' && sentence.money.amount === 1940 && sentence.money.currency === 'INR', JSON.stringify(sentence));
+  ok('several figures (or none): no sentence, the chart speaks', TS.firstWeekLine({ spark: [1, 2] }, { rows: [S.shop] }) === null && TS.firstWeekLine(undefined, { rows: [S.shop] }) === null, '');
   r = await TS.trend(SHOP, 'actor', { period: 'week', n: 4, now: NOW });
   ok('the Reports week tab holds the same 1940.00 with no summary', r.body.slots[3].gross_minor === 194000, String(r.body.slots[3].gross_minor));
 
