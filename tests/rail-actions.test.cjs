@@ -241,6 +241,7 @@ const tally = {};
 
   console.log('\n— C · one vocabulary, one rule —');
   const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const MOVE = fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus lives here now (LEAN-PLAN §8 #3) */
   t('routes/chits.js no longer holds a transition table (validTransitions moved to the engine)', !/validTransitions\s*=/.test(SRC));
   t('routes/chits.js no longer asks access.canMessage — the message route asks the engine', !/access\.canMessage\(/.test(SRC));
   /* T1-RAIL: PUT /status asks through lib/rail-status statusGate (the one status write, which asks railActions.move) */
@@ -265,8 +266,8 @@ const tally = {};
     JSON.stringify(RA.forBill('bill_received', gap, railNo).reject) === JSON.stringify({ ok: true, needs: ['reason'] }));
   t('FX-F10W2 · …a viewer is refused Reject by the rail, word for word', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' }, reject: { ok: false, why: 'read_only' } }).reject.why === 'read_only');
   t('FX-F10W2 · PUT /status refuses a bill\'s reject without a reason, in words, with a code (reason_required)',
-    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
-  t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(SRC));
+    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(MOVE) && /code: 'reason_required'/.test(MOVE));
+  t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(MOVE));
   t('…the books wait on something else (a gap) → Accept refused WITH the books\' sentence and its todo',
     JSON.stringify(RA.forBill('bill_received', gap, railNo).accept) === JSON.stringify({ ok: false, why: 'books_waiting', say: gap.why, todo: 'record' }));
   t('…a supplier to add → refused, todo add_supplier', RA.forBill('bill_received', { todo: 'add_supplier', why: 'Who is X?' }, railNo).accept.todo === 'add_supplier');

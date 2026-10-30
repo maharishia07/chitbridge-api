@@ -847,6 +847,9 @@ const ENGINE_OTHER = [
   /* ⭐ T1-RAIL (2026-10-14) — rail-status.js is the ONE status write: read my copy → rail.move → UPDATE, on the caller's transaction.
      moveStatus and every door that moves a status call it; tests/rail-status.test.cjs holds every other SET current_status out. */
   'rail-status.js',
+  /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
+     requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
+  'chit-move.js', 'chit-crossing.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',

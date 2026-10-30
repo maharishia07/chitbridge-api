@@ -11,10 +11,10 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 139 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
-| 105 | `withEntity` | `books-hooks.js` |  |
+| 107 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 94 | `words` | `variant.browser.js` |  |
-| 92 | `read` | `books-cashflow.js` | Trips: |
+| 93 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -38,7 +38,7 @@ of file each thing is; this says what already does the job.
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `pack` | `books-store.js` |  |
-| 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 49 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 48 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 47 | `again` | `signin-ui.js` |  |
 | 45 | `view` | `books-payables.js` | group: |
@@ -47,8 +47,8 @@ of file each thing is; this says what already does the job.
 | 44 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
-| 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 43 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 41 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `rules` | `docnumber.js` | the rule set for a country — |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
@@ -60,11 +60,11 @@ of file each thing is; this says what already does the job.
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `facts` | `bill-steps.js` | MY state_log — |
 | 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 34 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 35 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 33 | `live` | `receivables.js` | the allocations that still count: |
-| 33 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
+| 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
@@ -81,9 +81,9 @@ of file each thing is; this says what already does the job.
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 28 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 29 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 27 | `gate` | `country-setup.js` | gate(h, entity): |
+| 28 | `gate` | `country-setup.js` | gate(h, entity): |
 | 27 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 27 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -109,10 +109,10 @@ of file each thing is; this says what already does the job.
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 22 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
+| 23 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 21 | `chart` | `fx-rates.js` |  |
-| 21 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
+| 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 21 | `group` | `identity.js` | again in a different costume. |
 | 21 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -154,7 +154,7 @@ of file each thing is; this says what already does the job.
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 16 | `connectors` | `home-facts.js` | declare (said in words — |
 | 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
-| 16 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 17 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
 | 15 | `bkDate` | `cap-books.js` |  |
@@ -196,9 +196,10 @@ of file each thing is; this says what already does the job.
 | 12 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
-| 12 | `move` | `rail.js` | Order = the order the server refused in: |
+| 14 | `move` | `rail.js` | Order = the order the server refused in: |
 | 12 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
+| 12 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `when` | `cap-settings.js` |  |
 | 11 | `link` | `chit-sheet.js` |  |

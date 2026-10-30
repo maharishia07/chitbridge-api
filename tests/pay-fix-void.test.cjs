@@ -99,11 +99,12 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const w = await X.dbStub.withEntity(SHOP, (db) => K.chitWithdrawn(db, SHOP, C2, 'changed their mind', SHOP));
   const w2 = await X.dbStub.withEntity(SHOP, (db) => K.chitWithdrawn(db, SHOP, C2, 'changed their mind', SHOP));
   t('chitWithdrawn: the ONE helper both doors call — reverses once; the second call answers duplicate', w.ok === true && w.reverses === posted3.entry_no && w2.duplicate === true && (await openOf(C2)) === 0, JSON.stringify([w, w2]));
-  const moveSrc = srcRoute.slice(srcRoute.indexOf('async function moveStatus('), srcRoute.indexOf("router.put('/:chit_id/void'"));
-  const cancelSrc = srcRoute.slice(srcRoute.indexOf('async function cancelSentCopy('), srcRoute.indexOf('async function moveStatus('));
+  const srcMove = fs.readFileSync(path.join(H.API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus + its cancel leg live in lib/chit-move.js now (LEAN-PLAN §8 #3) */
+  const moveSrc = srcMove.slice(srcMove.indexOf('async function moveStatus('));
+  const cancelSrc = srcMove.slice(srcMove.indexOf('async function cancelSentCopy('), srcMove.indexOf('async function moveStatus('));
   t('moveStatus: the sender-cancel leg (cancelSentCopy) calls chitWithdrawnSaid on the sent copy\'s handle, after g.write(), and carries `books` on the answer (a refusal in words, never swallowed)',
-    /if \(isSender && new_status === 'cancelled'\) booksOnCancel = await cancelSentCopy\(/.test(moveSrc) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
-    && /books: booksOnCancel/.test(moveSrc) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
+    /booksOnCancel = await cancelLegs\(/.test(moveSrc) && /if \(isSender\) return cancelSentCopy\(/.test(srcMove.slice(srcMove.indexOf('async function cancelLegs('))) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
+    && /books: booksOnCancel/.test(srcMove) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
 
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
