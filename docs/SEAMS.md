@@ -9,14 +9,14 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 137 | `list` | `amend.js` |  |
-| 110 | `rows` | `crm.js` | still in them: |
+| 138 | `list` | `amend.js` |  |
+| 111 | `rows` | `crm.js` | still in them: |
 | 105 | `withEntity` | `books-hooks.js` |  |
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 94 | `words` | `variant.browser.js` |  |
 | 92 | `read` | `books-cashflow.js` | Trips: |
-| 83 | `answer` | `availability.js` | from March; then nearest. |
-| 79 | `money` | `bill-privacy.js` |  |
+| 84 | `answer` | `availability.js` | from March; then nearest. |
+| 80 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 71 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -35,18 +35,18 @@ of file each thing is; this says what already does the job.
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
-| 50 | `record` | `access-events.js` |  |
+| 51 | `record` | `access-events.js` |  |
 | 50 | `pack` | `books-store.js` |  |
-| 50 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 51 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 48 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 47 | `again` | `signin-ui.js` |  |
 | 47 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 44 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 44 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 43 | `read` | `cap-print.js` |  |
-| 43 | `view` | `books-payables.js` | group: |
-| 43 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
-| 42 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 44 | `view` | `books-payables.js` | group: |
+| 44 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 42 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 40 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
@@ -185,7 +185,7 @@ of file each thing is; this says what already does the job.
 | 13 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 13 | `verdict` | `rail-thread.js` |  |
 | 13 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
-| 13 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
+| 14 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
