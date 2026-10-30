@@ -82,12 +82,17 @@ function partnerLine(row) {
   const [p, qty, price] = row, rate = price == null ? p.price : price;
   return Object.assign(line(p, qty, p.unit, rate), p.id ? { item_data: { item_id: p.id } } : {});
 }
-const toRecipients = (to) => [{ bridge_id: typeof to === 'object' ? to.bridge : to, kind: 'to' }];
-/** a purchase order chit sent to a partner (P2P step 2: purpose 'order', business_json.side 'buy' is what makes it the buyer's order). opts: to (bridge id) · side (default 'buy') · note */
+/* the send looks up by bridge id first, but its recipients rule (lib/chits-input namesNobody) wants an id or a name beside it: the name rides too */
+const toRecipients = (to) => {
+  const bridge = typeof to === 'object' ? to.bridge : to;
+  return [{ bridge_id: bridge, display_name: (typeof to === 'object' && to.name) || bridge, kind: 'to' }];
+};
+/** a purchase order chit sent to a partner (P2P step 2: purpose 'order'). No side by default, as the app sends it: sideOf reads the direction, so the
+ *  sender's copy is a buy and the partner's received copy a sell (its despatch task). A stated side is read on BOTH copies. opts: to (bridge id, or { bridge, name }) · side · note */
 function order(no, rows, opts) {
   const o = opts || {};
   return { recipients: toRecipients(o.to), purpose: 'order', subject: 'Order ' + no, manual_subject: 'Order ' + no, client_ref: no,
-    business_json: { side: o.side || 'buy', order_no: no, note: o.note || 'lifecycle run' }, line_items: rows.map(partnerLine) };
+    business_json: Object.assign(o.side ? { side: o.side } : {}, { order_no: no, note: o.note || 'lifecycle run' }), line_items: rows.map(partnerLine) };
 }
 /** an invoice chit sent to a partner (seed-local demoSupplierBill's shape). opts: to · invoice (the engine's determine(), carried unchanged) · against (the order chit id) · billedAt */
 function invoice(no, rows, opts) {
