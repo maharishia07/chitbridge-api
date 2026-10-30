@@ -5,8 +5,8 @@
   "routes": 634,
   "no_does": 624,
   "not_started": 35,
-  "partial": 475,
-  "meets": 124,
+  "partial": 462,
+  "meets": 137,
   "columns": {
    "strict_input": {
     "applies": 346,
@@ -26346,11 +26346,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "236c464e6aa84b3e"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm.js"
    ],
@@ -39476,11 +39475,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a8a53cba6b45d665"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js",
@@ -39573,11 +39571,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dc7d46a6e3e12747"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js"
    ],
@@ -39668,11 +39665,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5de81a35731a3e0b"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -39757,11 +39753,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b98e6ce8b06db3b"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -39850,11 +39845,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6fbedfc518079d24"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -39946,11 +39940,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "785eb787c08de857"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js",
     "cap-crm-record.js"
@@ -40039,11 +40032,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9bd2e77e454eb27a"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-calls.js"
    ],
@@ -40135,11 +40127,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "223d8dd816903a6c"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js"
    ],
@@ -40226,11 +40217,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "21948004b6ff4f9d"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -40316,13 +40306,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-privacy.js"
    ],
@@ -40406,13 +40396,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-groups.js"
    ],
@@ -40500,11 +40490,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bfd12e4bf3f5c6ca"
+    "signed_off_by_date": "cb-api 2026-10-30 PR#614 stage2 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js"
    ],
