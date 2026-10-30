@@ -82,11 +82,13 @@
  "DELETE /api/folders/:id": [
   400,
   401,
+  404,
   500
  ],
  "DELETE /api/folders/rules/:rule_id": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -771,6 +773,7 @@
  "GET /api/folders/:id/rules": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/folders/groupsum": [

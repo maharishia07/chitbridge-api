@@ -2265,21 +2265,15 @@
   },
   "PUT /api/folders/inventory/:code": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/folders": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2287,16 +2281,14 @@
   },
   "PATCH /api/folders/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/folders/:id": {
@@ -2304,14 +2296,12 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "POST /api/folders/move": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2323,8 +2313,7 @@
     "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/folders/:id/metrics": {
@@ -2332,8 +2321,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/folders/:id/rules": {
@@ -2341,34 +2329,29 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "POST /api/folders/:id/rules": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "PATCH /api/folders/rules/:rule_id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "DELETE /api/folders/rules/:rule_id": {
@@ -2376,14 +2359,12 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "POST /api/folders/rules/preview": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2406,16 +2387,13 @@
   },
   "POST /api/folders/messages/:message_id/mark": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
+    "pass": true
    }
   },
   "GET /api/folders/worklist": {

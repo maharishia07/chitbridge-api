@@ -2983,6 +2983,14 @@
       "fired": true,
       "status": 400
     },
+    "PUT /api/folders/inventory/:code": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/governance/ai-draft": {
       "file": "governance.js",
       "trips": 0,
