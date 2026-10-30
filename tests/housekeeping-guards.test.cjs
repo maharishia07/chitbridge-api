@@ -213,7 +213,8 @@ const says = (r, why, status) => r.status === status && r.body.why === why && r.
   t('pageOut: a whole list carries no cap keys (the envelope is unchanged for every list that was never cut)', JSON.stringify(Object.keys(PL.pageOut('x', [1, 2], PL.pageArgs({}, 50, 200))).sort()) === JSON.stringify(['limit', 'page', 'total', 'x']));
   t('chits.js: inbox · sent · folder spread PAGE_LIMIT.capOf (three lists, one helper listPage)', (SRC.match(/PAGE_LIMIT\.capOf\(pg, result\.rows\.length, total\)/g) || []).length === 3 && (SRC.match(/= listPage\(req\)/g) || []).length === 3);
   const FSRC = fs.readFileSync(path.join(API, 'routes', 'folders.js'), 'utf8');
-  t('folders.js /:id/chits: the whole count rides in the statement (COUNT(*) OVER()), the ceiling is named, pageOut gets the total', /COUNT\(\*\) OVER\(\) AS _total/.test(FSRC) && /FOLDER_LIST_MAX = 100/.test(FSRC) && /PL\.pageOut\('chits', r\.rows, pg, total\)/.test(FSRC) && !/LIMIT 100/.test(FSRC));
+  /* the rows handed to pageOut may be pruned or renamed first (API-8 sweep, RAIL-146j cost-view): what matters is that pageOut gets the total */
+  t('folders.js /:id/chits: the whole count rides in the statement (COUNT(*) OVER()), the ceiling is named, pageOut gets the total', /COUNT\(\*\) OVER\(\) AS _total/.test(FSRC) && /FOLDER_LIST_MAX = 100/.test(FSRC) && /PL\.pageOut\('chits', [^;]{1,200}?, pg, (?:filed\.)?total\)/.test(FSRC) && !/LIMIT 100/.test(FSRC));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');
