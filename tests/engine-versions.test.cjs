@@ -69,7 +69,7 @@ it('the server keeps them on THAT counter\'s key, shape-checked, in the till rec
   assert.ok(/engines: req\.query\.eng/.test(TILL), 'the snapshot route does not pass eng= to claimSeries');
   /* M11: claimTill widened into claimSeries — the key path is now its named steps (S7): the transaction, the named counter, the free prefix */
   const c = ['async function claimInTransaction(', 'async function claimNamedCounter(', 'async function claimFreePrefix('].map((sig) => body(KEYS, sig)).join('\n');
-  assert.ok(/const engines = cleanEngines\(askedFor && askedFor\.engines\);/.test(c), 'claimTill does not read the versions');
+  assert.ok(/engines: cleanEngines\(askedFor && askedFor\.engines\)/.test(c), 'claimTill does not read the versions');
   assert.strictEqual((c.match(/if \(engines\) ownRecord\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
   const ce = body(KEYS, 'function cleanEngines(rawEngines)');
   assert.ok(/slice\(0, 60\)/.test(ce) && /\{1,32\}/.test(ce) && /\{1,20\}/.test(ce), 'the versions are no longer capped and shape-checked');
