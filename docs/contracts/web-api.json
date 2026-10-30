@@ -1622,7 +1622,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "periods[].return"
+   ],
+   "also_optional": [
+    "periods[].return"
+   ]
   },
   "GET /api/books/pl": {
    "status": 200,
@@ -1936,7 +1941,14 @@
     ],
     "next": "2027-28"
    },
-   "optional": []
+   "optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ],
+   "also_optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ]
   },
   "GET /api/channels/outbound": {
    "status": 200,
@@ -5053,7 +5065,14 @@
     "hint": "Read the reasons shown and fix each one.",
     "request_id": null
    },
-   "optional": []
+   "optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ],
+   "also_optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ]
   },
   "POST /api/books/year/:fy/close #200": {
    "status": 200,

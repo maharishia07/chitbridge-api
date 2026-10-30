@@ -289,6 +289,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PARENT_NOT_FOUND | 404 | Network not found | We could not find that network. | Check its handle and try again. | network | 2026-10-23 |
 | PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Reach figures are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
+| PERIOD_RETURN_OPEN | 422 | Tax period not closed | A tax period of that year has not been closed yet. | Close each period named under Tax close, then close the year. | books | 2026-10-30 |
 | PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | Codes cannot be sent to a mobile number yet, so nothing was changed. | Try again when text messages are set up. | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | PENDING | - | country | 2026-10-22 |
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
