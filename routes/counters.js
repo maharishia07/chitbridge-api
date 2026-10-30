@@ -257,5 +257,7 @@ router.post('/:id/release', auth, sessionOnly, ownerOnly, checked('POST /:id/rel
 
 
 router.openapi = { paths: words.counters.pathsOf(), schemas: {} };
+/* GET /api/till/counters is signed off against its handler text, which calls this export; the sign-off is cb-api's to renew, then till.js can read lib/counters-store directly */
+router.listNarrow = require('../lib/counters-store').listNarrow;
 
 module.exports = router;

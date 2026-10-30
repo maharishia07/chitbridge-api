@@ -1803,7 +1803,7 @@ const quickKeys = require('../lib/quick-keys');
  */
 router.get('/counters', auth, auth.requireScope('till'), ...checked('GET /counters'), async (req, res) => {
   try {
-    const counters = await require('../lib/counters-store').listNarrow(auth.entityOf(req));
+    const counters = await require('./counters').listNarrow(auth.entityOf(req));
     res.json({ counters, me: await counterOfReq(req) });
   } catch (e) {
     problem(req, res, failed(e, req));
