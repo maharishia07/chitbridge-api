@@ -71,9 +71,12 @@ const callsOf = (key) => {
 /* ⚠️ THE MOUNT LINE HAS MORE SHAPES THAN THE OBVIOUS ONE — inline require, or a router VARIABLE (actors, entities, governance…). Both are
    read by tools/server-mounts.cjs (EFF-TRIPS: one helper for this scanner and the round-trip harness; the old regex here knew only the first
    shape and reported its own blindness as "not called by the client" / "no mount in server.js"). */
-let mounts = {};
+let mounts = {},
+  mountsAll = {}; /* every prefix a route file is mounted at (ctp.js: '' and /api/ctp) — the graph reads one route per mount */
 try {
-  mounts = require('./server-mounts.cjs').serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));
+  const serverText = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+  mounts = require('./server-mounts.cjs').serverMounts(serverText);
+  mountsAll = require('./server-mounts.cjs').serverMountsAll(serverText);
 } catch (_) {
   /* no server.js — paths degrade to the route file's own path */
 }
@@ -146,7 +149,7 @@ if (process.argv.indexOf('--buckets') >= 0 || process.argv.indexOf('--md') >= 0)
     JSON.stringify({
       called: called.map((item) => ({ file: item.file, route: item.route, calls: item.calls })),
       mounts,
-      mountsAll: (() => { try { return require('./server-mounts.cjs').serverMountsAll(fs.readFileSync(path.join(API, 'server.js'), 'utf8')); } catch (_) { return {}; } })() /* every prefix a route file is mounted at (ctp.js: '' and /api/ctp) — the graph reads one route per mount */,
+      mountsAll,
       registry: reg,
       routes: rows.map((item) => ({ file: item.file, route: item.route, keys: item.keys, calls: item.calls }))
     }),
