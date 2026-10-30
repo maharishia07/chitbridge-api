@@ -10494,6 +10494,23 @@
     ]
    },
    {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT can_see_costs FROM identities WHERE identity_id = $1",
+    "params": [
+     "ACTOR"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT p.id, EXISTS (SELECT 1 FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = p.id) AS customer, EXISTS (SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = p.id) AS supplier FROM unnest($2::uuid[]) AS p(id)",
+    "params": [
+     "SHOP",
+     [
+      "CUST"
+     ]
+    ]
+   },
+   {
     "via": "query",
     "sql": "WITH s AS (SELECT c.id, c.path FROM identities i JOIN cb_entity c ON c.bridge_id = i.bridge_id WHERE i.identity_id = $1) SELECT bi.identity_id::text AS brand_id, bc.id::text AS brand_node, s.id::text AS store_node, bi.bridge_id AS brand_bridge_id, (SELECT r.bridge_id FROM cb_entity r WHERE r.path = subpath(bc.path, 0, 1) LIMIT 1) AS root_bridge_id, (SELECT g.parent_id::text FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_parent, (s.path <@ bc.path AND s.id <> bc.id) AS built, (SELECT g.state FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_state, (SELECT g.id::text FROM cb_edge g WHERE g.child_id = s.id AND g.type = 'governance' AND g.state IN ('active','suspended') LIMIT 1) AS tree_edge, e.id::text AS edge_id, e.state AS edge_state, CASE WHEN e.requested_by = bc.id THEN 'brand' WHEN e.requested_by = s.id THEN 'store' ELSE NULL END AS asked_by FROM unnest($2::uuid[]) AS want(id) JOIN identities bi ON bi.identity_id = want.id LEFT JOIN cb_entity bc ON bc.bridge_id = bi.bridge_id LEFT JOIN s ON true LEFT JOIN LATERAL (SELECT * FROM cb_edge x WHERE x.parent_id = bc.id AND x.child_id = s.id AND x.type = 'commercial' AND x.state IN ('requested','active','suspended') ORDER BY x.created_at DESC LIMIT 1) e ON true",
     "params": [
