@@ -1285,7 +1285,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 334,
+   "line": 336,
    "hash": "ef0c6f78fb5c9c0d",
    "does": "",
    "errors": {
@@ -1379,7 +1379,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 591,
+   "line": 600,
    "hash": "d435e755da79001a",
    "does": "",
    "errors": {
@@ -13850,7 +13850,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 72,
+   "line": 74,
    "hash": "3aa7dc583807a82a",
    "does": "",
    "errors": {
@@ -13941,8 +13941,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 473,
-   "hash": "d9c6a8fbb4735f70",
+   "line": 476,
+   "hash": "038229b12c4e1107",
    "does": "",
    "errors": {
     "count": 0,
@@ -13961,7 +13961,7 @@
     "identities"
    ],
    "writes": [],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -14007,7 +14007,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d9c6a8fbb4735f70"
+    "stale_since": "038229b12c4e1107"
    },
    "status": "partial",
    "callers": [
@@ -14037,8 +14037,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 527,
-   "hash": "9f7f575c37ca7309",
+   "line": 533,
+   "hash": "eca9d04fc703f169",
    "does": "",
    "errors": {
     "count": 0,
@@ -14100,7 +14100,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9f7f575c37ca7309"
+    "stale_since": "eca9d04fc703f169"
    },
    "status": "partial",
    "callers": [
@@ -14128,7 +14128,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 549,
+   "line": 558,
    "hash": "1b9af23bbbfb67e6",
    "does": "",
    "errors": {
@@ -14218,7 +14218,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 883,
+   "line": 891,
    "hash": "d090f0c5527ea986",
    "does": "",
    "errors": {
@@ -14304,7 +14304,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 134,
+   "line": 136,
    "hash": "b6e727a5f02eaf0b",
    "does": "",
    "errors": {
@@ -14384,7 +14384,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 690,
+   "line": 699,
    "hash": "60877e20b8df1857",
    "does": "",
    "errors": {
@@ -14478,7 +14478,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1035,
+   "line": 1043,
    "hash": "a7167645145a889c",
    "does": "",
    "errors": {
@@ -14566,7 +14566,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 934,
+   "line": 942,
    "hash": "ab50db137b09ad6d",
    "does": "",
    "errors": {
@@ -14654,7 +14654,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 636,
+   "line": 645,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -14742,7 +14742,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 615,
+   "line": 624,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -14821,7 +14821,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 849,
+   "line": 858,
    "hash": "9cf17566745c9c6b",
    "does": "",
    "errors": {
@@ -26930,7 +26930,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 277,
+   "line": 279,
    "hash": "b6c1b4c01100ae5c",
    "does": "",
    "errors": {
@@ -27025,7 +27025,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 581,
+   "line": 590,
    "hash": "4d1404b7382300a4",
    "does": "",
    "errors": {
@@ -41326,7 +41326,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 188,
+   "line": 190,
    "hash": "46d14826628a8040",
    "does": "",
    "errors": {
@@ -41421,7 +41421,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 568,
+   "line": 577,
    "hash": "d4cb12d4f7e4a454",
    "does": "",
    "errors": {
@@ -41509,7 +41509,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 828,
+   "line": 837,
    "hash": "6475ef0d1713bdc8",
    "does": "",
    "errors": {
@@ -41602,7 +41602,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 349,
+   "line": 351,
    "hash": "0961eae0eaa6eac6",
    "does": "",
    "errors": {
@@ -41695,7 +41695,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 603,
+   "line": 612,
    "hash": "d71abe90d95ce4c1",
    "does": "",
    "errors": {
@@ -56051,7 +56051,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 151,
+   "line": 153,
    "hash": "b644de49f85a1d71",
    "does": "",
    "errors": {
@@ -56067,11 +56067,15 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "chit_header",
+    "chit_status",
+    "identities"
+   ],
    "writes": [
     "identities"
    ],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
