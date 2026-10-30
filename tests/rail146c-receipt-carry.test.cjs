@@ -20,6 +20,7 @@ const API = G.API;
 const SHOP = '11111111-1111-4111-8111-111111111111', SUPPLIER = '22222222-2222-4222-8222-222222222222';
 const BLIND_ID = '55555555-5555-4555-8555-555555555555', GRANTED_ID = '66666666-6666-4666-8666-666666666666';
 const ORDER = '77777777-7777-4777-8777-777777777777', L1 = '88888888-8888-4888-8888-888888888881', L2 = '88888888-8888-4888-8888-888888888882';
+const CUSTOMER = '33333333-3333-4333-8333-333333333333', STRANGER = '99999999-9999-4999-8999-999999999999';
 const STORED = 4242.5, LIVE = 4545.5, TRIED = 9797.25;
 const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: name });
 const ROWS = { [SHOP]: row(SHOP, 'Mayur Traders', 'CBSHOP0001'), [SUPPLIER]: row(SUPPLIER, 'Rice Mill', 'CBMILL0001') };
@@ -32,8 +33,13 @@ const PAYLOAD = [
   { line_id: L2, seq: 20, particulars: 'Toor dal 1kg', quantity: 5, unit: 'kg' }
 ];
 let delivered = [];
-const SCENE = { payload: PAYLOAD, live: [], moved: null, locked: 0 };
+/** the order's header as the side read sees it: an order the shop SENT to `other` */
+const headerFor = (other) => ({ purpose: 'order', sender_entity_id: SHOP, all_recipients: [{ entity_id: SHOP, role: 'sender' }, { entity_id: other, role: 'receiver' }], business_json: {} });
+const fresh = () => ({ payload: PAYLOAD, live: [], moved: null, locked: 0, header: headerFor(SUPPLIER), roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' } });
+const SCENE = fresh();
 function rows(s, p) {
+  if (/SELECT ch\.purpose, ch\.sender_entity_id, ch\.all_recipients/.test(s)) return SCENE.header ? [SCENE.header] : [];
+  if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return p[1].map((id) => ({ id, customer: SCENE.roleOf[id] === 'customer', supplier: SCENE.roleOf[id] === 'supplier' }));
   if (/WITH s AS \(SELECT c\.id, c\.path FROM identities/.test(s)) return [{ brand_id: SUPPLIER, built: false, edge_id: null }];
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/can_see_costs FROM identities/.test(s)) return [{ can_see_costs: p[0] === GRANTED_ID }];
@@ -63,7 +69,7 @@ const hiddenLine = (over) => Object.assign({ particulars: 'Basmati rice 1kg', qu
 const receipt = (lines, bj) => ({ purpose: 'receipt', manual_subject: 'Goods received from Rice Mill — R/1', recipients: [{ self: true, name: 'self' }], client_ref: 'R/1',
   business_json: Object.assign({ doc: 'receipt', doc_no: 'R/1', against: { chit_id: ORDER, party: 'Rice Mill' }, goods: 0, extras: 0, landed_total: 0 }, bj || {}), line_items: lines });
 const send = async (who, payload, scene) => {
-  Object.assign(SCENE, { payload: PAYLOAD, live: [], moved: null, locked: 0 }, scene || {});
+  Object.assign(SCENE, fresh(), scene || {});
   delivered = [];
   const r = await h.run(app, { url: '/api/chits/send', body: payload, identity: who, ctx: {} });
   return Object.assign(r, { copies: delivered.length ? JSON.parse(JSON.stringify(delivered[0].copies)) : null, wrote: delivered.length });
@@ -119,6 +125,37 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
     const line = sentLines(r)[0];
     assert.ok(line.price == null && !('unit_cost' in line.item_data), JSON.stringify(line));
     assert.strictEqual(movementOf(line).code, 'no_cost');
+  });
+
+  console.log('\nRAIL-146c · only a BUY order lends a price; the answer is pruned');
+  await it('a receipt against the sender OWN sale order (to a customer-only party) carries nothing: the sell price is not taken as cost, the zeros go, the line is a no_cost skip', async () => {
+    const r = await send(BLIND, receipt([hiddenLine()]), { header: headerFor(CUSTOMER) });
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    const line = sentLines(r)[0];
+    assert.ok(line.price == null && !('unit_cost' in line.item_data), JSON.stringify(line));
+    assert.strictEqual(movementOf(line).code, 'no_cost');
+    const unknown = await send(BLIND, receipt([hiddenLine()]), { header: headerFor(STRANGER), roleOf: {} });
+    assert.ok(sentLines(unknown)[0].price == null, 'an order of unknown side lends nothing');
+  });
+  await it('a figure of his is still a 403 against a sale order', async () => {
+    const r = await send(BLIND, receipt([hiddenLine({ price: TRIED })]), { header: headerFor(CUSTOMER) });
+    assert.strictEqual(r.status, 403, JSON.stringify(r.body));
+  });
+  await it('the SEND ANSWER of a blind receipt: cost_hidden true, no money key, no figure, no rupee sign anywhere in the body, no sender-written rider in the summary', async () => {
+    const r = await send(BLIND, receipt([hiddenLine()], { commercial: { terms: 'net 30 ex works' }, governed: { rule: 'two-sign' } }));
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    const raw = JSON.stringify(r.body);
+    assert.strictEqual(r.body.cost_hidden, true, raw);
+    assert.ok(!/₹|4242|42425|33940|ex works|two-sign/.test(raw), raw); /* no figure, and no sender-written rider */
+    const keys = [];
+    (function walk(v) { if (v && typeof v === 'object') Object.keys(v).forEach((k) => { keys.push(k); walk(v[k]); }); })(r.body);
+    assert.deepStrictEqual(keys.filter((k) => /total|amount|price|money|cost$|commercial|trace|governed|clearances|number_check|offers/.test(k)), [], raw);
+    assert.ok(r.body.chit_id && r.body.summary && r.body.summary.line_item_count === 1, 'the fixed keys stay: ' + raw);
+  });
+  await it('the owner send answer is as it was: no cost_hidden', async () => {
+    const r = await send(OWNER, receipt([hiddenLine({ price: TRIED })], { commercial: { price_basis: 'ex works' } }));
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.ok(!('cost_hidden' in r.body));
   });
 
   console.log('\nRAIL-146c · a blind co-assist cannot write a figure on a receipt');
