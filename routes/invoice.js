@@ -129,21 +129,8 @@ router.get(
       const me = auth.entityOf(req);
       const hdr = await C.copyOf(req.params.chit_id, me);
       if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
-      const e = await C.entryFor(hdr, me);
-      res.json(await costView.invoiceAnswer({ /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view) */
-        chit_id: e.chit_id,
-        direction: e.direction,
-        sells: e.sells,
-        status: e.status,
-        provisional: e.provisional,
-        frozen: e.frozen,
-        rated: e.rated,
-        unrated: e.unrated,
-        seller: e.seller,
-        buyer: e.buyer,
-        invoice: e.invoice,
-        heads: T.heads(e.invoice)
-      }, await cost.isCostBlind(req, me), hdr, me));
+      /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/tax/invoice/:id */
+      res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
     } catch (e) {
       problem(req, res, readFault(e, req));
     }

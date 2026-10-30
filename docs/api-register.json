@@ -2,19 +2,19 @@
  "version": 1,
  "stage": "2",
  "counts": {
-  "routes": 634,
-  "no_does": 624,
+  "routes": 631,
+  "no_does": 621,
   "not_started": 35,
-  "partial": 447,
+  "partial": 444,
   "meets": 152,
   "columns": {
    "strict_input": {
-    "applies": 346,
-    "failing": 309
+    "applies": 344,
+    "failing": 307
    },
    "output_allowlist": {
-    "applies": 634,
-    "failing": 237
+    "applies": 631,
+    "failing": 234
    },
    "foreign_id_404": {
     "applies": 226,
@@ -29,8 +29,8 @@
     "failing": 2
    },
    "trips_budgeted": {
-    "applies": 634,
-    "failing": 159
+    "applies": 631,
+    "failing": 157
    }
   }
  },
@@ -2233,88 +2233,6 @@
     "screens": [
      "cap-catsetup.js 1/12"
     ]
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "GET /.well-known/ctp.json",
-   "method": "GET",
-   "path": "/.well-known/ctp.json",
-   "owner_area": "ctp",
-   "owner_agent": "cb-rail",
-   "file": "routes/ctp.js",
-   "line": 137,
-   "hash": "59e047fa21d05e3f",
-   "does": "",
-   "errors": {
-    "count": 1,
-    "statuses": [
-     500
-    ],
-    "codes": [
-     "CTP_MANIFEST_UNAVAILABLE"
-    ]
-   },
-   "reads": [
-    "installation",
-    "population"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 2,
-    "wire": 2,
-    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -12195,6 +12113,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "aliases": [
+    "/.well-known/ctp.json"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -17914,7 +17835,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 122,
-   "hash": "6f1a9e2fc0be039d",
+   "hash": "94b09992308a0171",
    "does": "",
    "errors": {
     "count": 1,
@@ -17978,7 +17899,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6f1a9e2fc0be039d"
+    "stale_since": "94b09992308a0171"
    },
    "status": "partial",
    "callers": [],
@@ -22247,7 +22168,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 96,
+   "line": 84,
    "hash": "afc22463d8e3418e",
    "does": "",
    "errors": {
@@ -22338,7 +22259,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 35,
-   "hash": "52c89ebde0620b4c",
+   "hash": "fb8b302614887695",
    "does": "",
    "errors": {
     "count": 1,
@@ -22400,7 +22321,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "52c89ebde0620b4c"
+    "stale_since": "fb8b302614887695"
    },
    "status": "partial",
    "callers": [
@@ -22426,7 +22347,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 60,
+   "line": 48,
    "hash": "f20a0b794cbc7c41",
    "does": "",
    "errors": {
@@ -41055,6 +40976,9 @@
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "aliases": [
+    "/deliver"
+   ],
    "human": {
     "names_clear": null,
     "sentence_plain": null,
@@ -41150,6 +41074,9 @@
    ],
    "notes": [
     "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "aliases": [
+    "/query"
    ],
    "human": {
     "names_clear": null,
@@ -50549,7 +50476,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 175,
+   "line": 163,
    "hash": "4e3bb87304124c94",
    "does": "",
    "errors": {
@@ -50642,7 +50569,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 138,
+   "line": 126,
    "hash": "b9bff4e1944f3aa0",
    "does": "",
    "errors": {
@@ -54198,204 +54125,6 @@
    "callers": [
     "till.html"
    ],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": null,
-    "wire": null,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "POST /deliver",
-   "method": "POST",
-   "path": "/deliver",
-   "owner_area": "ctp",
-   "owner_agent": "cb-rail",
-   "file": "routes/ctp.js",
-   "line": 234,
-   "hash": "616220abe11fb194",
-   "does": "",
-   "errors": {
-    "count": 9,
-    "statuses": [
-     400,
-     403,
-     404,
-     409,
-     500,
-     503
-    ],
-    "codes": [
-     "CTP_CROSSING_REFUSED",
-     "CTP_CROSSING_UNCHECKABLE",
-     "CTP_ENVELOPE_REFUSED",
-     "CTP_NO_INSTALLATION",
-     "CTP_NO_RECIPIENT",
-     "CTP_PEER_HOSTED_HERE",
-     "CTP_PEER_REFUSED",
-     "CTP_RECIPIENT_NOT_HERE",
-     "CTP_STORE_FAILED"
-    ]
-   },
-   "reads": [
-    "chit_header",
-    "identities",
-    "installation",
-    "population"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": false
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    403,
-    404,
-    409,
-    500,
-    503
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": null,
-    "wire": null,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "POST /query",
-   "method": "POST",
-   "path": "/query",
-   "owner_area": "ctp",
-   "owner_agent": "cb-rail",
-   "file": "routes/ctp.js",
-   "line": 436,
-   "hash": "1678af41fa18644b",
-   "does": "",
-   "errors": {
-    "count": 7,
-    "statuses": [
-     400,
-     403,
-     409,
-     500
-    ],
-    "codes": [
-     "CTP_NO_INSTALLATION",
-     "CTP_PEER_HOSTED_HERE",
-     "CTP_PEER_KEY_UNREADABLE",
-     "CTP_PEER_REFUSED",
-     "CTP_QUERY_FAILED",
-     "CTP_QUERY_REFUSED",
-     "CTP_UNKNOWN_QUESTION"
-    ]
-   },
-   "reads": [
-    "chit_header",
-    "identities",
-    "installation",
-    "population"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": false
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    403,
-    409,
-    500
-   ],
-   "notes": [
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
-   },
-   "status": "partial",
-   "callers": [],
    "offline": "online-only",
    "round_trips": {
     "trips": null,

@@ -24,7 +24,7 @@ let pass = 0, fail = 0;
 const t = (label, got, want) => {
   const ok = JSON.stringify(got) === JSON.stringify(want);
   ok ? pass++ : fail++;
-  console.log('  ' + (ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(100) + (ok ? '' : JSON.stringify(got).slice(0, 300) + '   want ' + JSON.stringify(want).slice(0, 200)));
+  console.log('  ' + (ok ? 'ok  ' : 'FAIL') + '  ' + label.padEnd(100) + (ok ? '' : String(JSON.stringify(got)).slice(0, 300) + '   want ' + String(JSON.stringify(want)).slice(0, 200)));
 };
 const SUP = '33333333-3333-4333-8333-333333333333', CUS = '55555555-5555-4555-8555-555555555555', STRANGER = '66666666-6666-4666-8666-666666666666';
 const BLIND = { identity_id: 'A7', identity_type: 'actor', entity_id: E1 };
@@ -58,7 +58,7 @@ function feedRowAs(row, text) {
   return asks ? row : plain;
 }
 const TAX = { copy: null, entry: null };
-stubMod('lib/tax-copy.js', Object.assign({}, require('../lib/tax-copy'), { copyOf: async (id, me) => (TAX.copy && TAX.copy.chit_id === id ? TAX.copy : null), entryFor: async () => TAX.entry }));
+stubMod('lib/tax-copy.js', Object.assign({}, require('../lib/tax-copy'), { copyOf: async (id, me) => (TAX.copy && TAX.copy.chit_id === id ? TAX.copy : null), entryFor: async () => TAX.entry, invoiceOf: async () => require('../lib/tax-copy').invoiceFrom(TAX.entry) /* the REAL builder over the planted entry */ }));
 stubMod('lib/amend.js', Object.assign({}, require('../lib/amend'), { listFor: async () => new Map(), liveLines: (lines) => lines }));
 stubMod('lib/policy.js', Object.assign({}, require('../lib/policy'), { get: async () => ({ overdue_days: 3 }) }));
 
@@ -184,16 +184,19 @@ const taxWorld = () => {
     let w = taxWorld(); TAX.copy = w.hdr(U(1), SUP); TAX.entry = w.entry(U(1)); as(OWNER);
     const ownerInv = (await call(base + U(1))).body;
     t(door + ': the owner reads the invoice: ItemList UnitPrice ' + FIG.unit + ' and the heads', [ownerInv.invoice.ItemList[0].UnitPrice, ownerInv.heads.taxable, 'cost_hidden' in ownerInv], [FIG.unit, FIG.bill, false]);
+    t(door + ': the owner reads `sells` (a received bill: false) - M3, both doors answer the same fields', ownerInv.sells, false);
     for (const [who, name] of [[BLIND, 'a cost-blind co-assist'], [VIEWER, 'a VIEWER login without can_see_costs']]) {
       w = taxWorld(); TAX.copy = w.hdr(U(1), SUP); TAX.entry = w.entry(U(1)); as(who); D.canSeeCosts = false;
       const blind = (await call(base + U(1))).body;
       t(door + ' | ' + name + ': a received supplier bill has no invoice block and no heads, cost_hidden:true', ['invoice' in blind, 'heads' in blind, blind.cost_hidden], [false, false, true]);
       t(door + ' | ' + name + ': who, which and the state stay (seller, buyer, status, direction)', [blind.chit_id, blind.status, blind.direction, blind.seller.LglNm, blind.buyer.Gstin], [U(1), 'accepted', 'received', 'Mill', '29ZZZZZ9999Z1Z5']);
+      t(door + ' | ' + name + ': `sells` stays on a received bill (a party fact, no price) - M3', blind.sells, false);
       noLeak(door + ' | ' + name, blind);
       /* his own sale: the counterparty is on his customer list only */
       TAX.copy = w.hdr(U(2), CUS); TAX.copy.purpose = 'order'; TAX.entry = Object.assign(w.entry(U(2)), { direction: 'sent', sells: true });
       const sale = (await call(base + U(2))).body;
       t(door + ' | ' + name + ': his SALE keeps its invoice and heads, unmarked', [sale.invoice.ItemList[0].UnitPrice, sale.heads.taxable, 'cost_hidden' in sale], [FIG.unit, FIG.bill, false]);
+      t(door + ' | ' + name + ': his SALE keeps `sells:true` - M3', sale.sells, true);
       /* a party on no list hides */
       TAX.copy = w.hdr(U(3), STRANGER); TAX.entry = w.entry(U(3));
       const unlisted = (await call(base + U(3))).body;
@@ -201,6 +204,16 @@ const taxWorld = () => {
     }
     w = taxWorld(); TAX.copy = w.hdr(U(1), SUP); TAX.entry = w.entry(U(1)); as(BLIND); D.canSeeCosts = true;
     t(door + ': a cost-allowed actor reads exactly what the owner reads, byte for byte', JSON.stringify((await call(base + U(1))).body), JSON.stringify(ownerInv));
+    t(door + ': a cost-allowed actor reads `sells` as the owner does - M3', (await call(base + U(1))).body.sells, false);
+  }
+
+  /* ── M3 · the TWIN: the same copy answers byte for byte the same on both doors ── */
+  for (const [who, name, allowed] of [[OWNER, 'the owner', true], [BLIND, 'a cost-blind co-assist', false]]) {
+    for (const [id, copyFor, patch] of [[U(1), SUP, {}], [U(2), CUS, { direction: 'sent', sells: true }]]) {
+      const w2 = taxWorld(); TAX.copy = w2.hdr(id, copyFor); if (id === U(2)) TAX.copy.purpose = 'order'; TAX.entry = Object.assign(w2.entry(id), patch); as(who); D.canSeeCosts = allowed;
+      const [a, b] = [JSON.stringify((await call('/api/invoice/' + id)).body), JSON.stringify((await call('/api/tax/invoice/' + id)).body)];
+      t('M3 twin | ' + name + ' | ' + (id === U(1) ? 'a received bill' : 'a sale') + ': /api/invoice/:id and /api/tax/invoice/:id answer byte for byte the same', a === b, true);
+    }
   }
 
   /* ── ONE strip: the doors name their allowlists, the prune and the marker are the chit reads' own ── */

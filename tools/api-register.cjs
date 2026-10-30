@@ -377,6 +377,27 @@ function signoffProblems(signoffs, rows) {
   });
 }
 
+/**
+ * M7: one router mounted at two prefixes (server.js mounts routes/ctp.js at / and at /api/ctp, deliberately) is ONE handler, so ONE row.
+ * Leaves with the same method, the same router and the same handler functions fold into the one with the longest path
+ * (the /api one); the shorter paths are listed on it as `aliases`. Nothing else folds: a different handler is a different endpoint.
+ */
+function foldAliases(all) {
+  const groups = new Map();
+  all.forEach((leaf) => {
+    const same = [...groups.keys()].find((head) => head.method === leaf.method && head.router === leaf.router && head.fns.length === leaf.fns.length && head.fns.every((fn, at) => fn === leaf.fns[at]));
+    groups.set(same || leaf, (groups.get(same || leaf) || []).concat(leaf));
+  });
+  const leaves = [];
+  const aliasesOf = new Map();
+  groups.forEach((members) => {
+    const sorted = members.slice().sort((first, second) => second.path.length - first.path.length);
+    leaves.push(sorted[0]);
+    if (sorted.length > 1) aliasesOf.set(sorted[0], sorted.slice(1).map((leaf) => leaf.path).sort());
+  });
+  return { leaves, aliasesOf };
+}
+
 /** walk the real app and build the whole register: one row per method and path, counts, hashes */
 function buildRegister() {
   const loader = require(path.join(TOOLS_DIR, 'load-app.cjs'));
@@ -387,10 +408,9 @@ function buildRegister() {
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
   const context = { tables: card.knownTables(ROOT), app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: hardeningEvidence(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
-  const rows = loader
-    .leavesOf(app, true)
-    .filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path))
-    .map((leaf) => rowOf(leaf, context))
+  const { leaves, aliasesOf } = foldAliases(loader.leavesOf(app, true).filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path)));
+  const rows = leaves
+    .map((leaf) => Object.assign(rowOf(leaf, context), aliasesOf.has(leaf) ? { aliases: aliasesOf.get(leaf) } : {}))
     .sort((left, right) => (left.key < right.key ? -1 : 1));
   mergeHuman(rows, readSignoffs());
   addEffect(rows, context.budget);
@@ -445,7 +465,7 @@ function renderMarkdown(register) {
   ];
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
-    lines.push('| ' + [row.method, row.path, row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
+    lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
   });
   return lines.concat(card.renderCards(register.routes)).join('\n') + '\n';
 }
