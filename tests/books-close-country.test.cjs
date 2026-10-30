@@ -68,7 +68,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   await buy(AU, 'AUD', '2026-08-06', 300, 30, 'gst', 'P1');
 
   let r = await q('POST', '/gst/close', { fy: '2026-27', period: 2 });
-  ok('a MONTH number is not how a BAS shop closes: 400 asking which BAS period, naming the pack\'s own ids', r.status === 400 && /Which BAS period\? One of .*2026-Q1/.test(r.body.message), JSON.stringify(r.body));
+  ok('a MONTH number is not how a BAS shop closes: 400 asking which BAS period, naming the pack\'s own ids', r.status === 400 && /Which BAS period\? One of .*\(2026-Q1\)/.test(r.body.message), JSON.stringify(r.body));
   r = await q('POST', '/gst/close', { period: '2026-Q2' });
   ok('a period that has not ended (Q2, Oct–Dec) is refused with PERIOD_NOT_ENDED and the day it ends', r.status === 422 && r.body.code === 'PERIOD_NOT_ENDED' && /2026-12-31/.test(r.body.message), JSON.stringify(r.body));
   r = await q('POST', '/gst/close', { period: '2026-Q1', client_ref: 'c1' });
