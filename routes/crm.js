@@ -116,7 +116,8 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
   try {
     const owner = ctx(req),
       id = idOf(req);
-    const found = await crm.one(owner, id, { stages: true, consent: true });
+    const blind = await require('../lib/cost').isCostBlind(req, owner); // RAIL-146i: ONE can_see_costs read; a blind reader sees no supplier-side balance or limit
+    const found = await crm.one(owner, id, { stages: true, consent: true, blind });
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });

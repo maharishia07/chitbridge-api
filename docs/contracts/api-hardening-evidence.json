@@ -458,6 +458,12 @@
   "GET /api/folders/inventory": {
    "output_allowlist": true
   },
+  "PUT /api/folders/inventory/:code": {
+   "output_allowlist": true
+  },
+  "POST /api/folders": {
+   "output_allowlist": true
+  },
   "DELETE /api/folders/:id": {
    "output_allowlist": true
   },
@@ -467,7 +473,19 @@
   "GET /api/folders/:id/metrics": {
    "output_allowlist": true
   },
+  "GET /api/folders/:id/rules": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/:id/rules": {
+   "output_allowlist": true
+  },
+  "PATCH /api/folders/rules/:rule_id": {
+   "output_allowlist": true
+  },
   "DELETE /api/folders/rules/:rule_id": {
+   "output_allowlist": true
+  },
+  "POST /api/folders/rules/preview": {
    "output_allowlist": true
   },
   "GET /api/folders/rules/vocabulary": {

@@ -385,6 +385,7 @@ const INFRA_LIBS = [
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
   'cost-view.js',          // RAIL-146: what a cost-blind co-assist may READ of a chit — an answer-side filter over the shop's own permission, never a rule about what the chit means
+  'dues-view.js',          // RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
   'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
@@ -468,6 +469,10 @@ const INFRA_LIBS = [
      the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
      place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
   'issued-invoice.js',     // the check that only names a difference
+  /* INFRA, THE SAME TEST (CTRY-76, 2026-10-30): `bill-paper.js` reads the SHOP's pack (country.packFor → pack.taxInvoice) over the
+     frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
+     Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
+  'bill-paper.js',         // the buyer line of a counter bill at send — the pack's rule, the one tax-id check
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status

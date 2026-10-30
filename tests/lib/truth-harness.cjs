@@ -77,6 +77,31 @@ function creditNote(no, against, rows, opts) {
       refund: { parts, total } }, o.invoice ? { invoice: o.invoice } : {}),
     line_items: lines };
 }
+/** one partner row: [product, qty, price?] — the price is the SUPPLIER's rate when it differs from the product's own; `item_id` rides on the line (when the product has one) so the match and deliver-lines find it */
+function partnerLine(row) {
+  const [p, qty, price] = row, rate = price == null ? p.price : price;
+  return Object.assign(line(p, qty, p.unit, rate), p.id ? { item_data: { item_id: p.id } } : {});
+}
+/* the send looks up by bridge id first, but its recipients rule (lib/chits-input namesNobody) wants an id or a name beside it: the name rides too */
+const toRecipients = (to) => {
+  const bridge = typeof to === 'object' ? to.bridge : to;
+  return [{ bridge_id: bridge, display_name: (typeof to === 'object' && to.name) || bridge, kind: 'to' }];
+};
+/** a purchase order chit sent to a partner (P2P step 2: purpose 'order'). No side by default, as the app sends it: sideOf reads the direction, so the
+ *  sender's copy is a buy and the partner's received copy a sell (its despatch task). A stated side is read on BOTH copies. opts: to (bridge id, or { bridge, name }) · side · note */
+function order(no, rows, opts) {
+  const o = opts || {};
+  return { recipients: toRecipients(o.to), purpose: 'order', subject: 'Order ' + no, manual_subject: 'Order ' + no, client_ref: no,
+    business_json: Object.assign(o.side ? { side: o.side } : {}, { order_no: no, note: o.note || 'lifecycle run' }), line_items: rows.map(partnerLine) };
+}
+/** an invoice chit sent to a partner (seed-local demoSupplierBill's shape). opts: to · invoice (the engine's determine(), carried unchanged) · against (the order chit id) · billedAt */
+function invoice(no, rows, opts) {
+  const o = opts || {};
+  return { recipients: toRecipients(o.to), purpose: 'invoice', subject: 'Invoice ' + no, manual_subject: 'Invoice ' + no, client_ref: no,
+    business_json: Object.assign({ bill_no: no, billed_at: o.billedAt || new Date().toISOString() },
+      o.invoice ? { invoice: o.invoice } : {}, o.against ? { against: { chit_id: o.against } } : {}),
+    line_items: rows.map(partnerLine) };
+}
 /** a fresh shop made for this run: register → verify with the dev code → country. `tag` keeps User IDs apart (≤ 20 chars).
  *  `opts.tax`: tax registration is NEVER assumed (DECISIONS 2026-10-29) — left out, the shop's tax stays UNKNOWN; a test that means "not registered"
  *  says so: freshShop(tag, label, { tax: { registered: false } }). (Today's route stores an absent tax as registered:false — SET-38, settings area.) */
@@ -105,4 +130,4 @@ function finish(label, jsonFile, extra) {
   process.exitCode = results.some((r) => !r.pass && !r.gap) ? 1 : 0;
 }
 
-module.exports = { API, DB, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, freshShop, finish };
+module.exports = { API, DB, ENTITY_OTP, CUSTOMER_OTP, results, j, ok, pause, kase, skip, expect, near, line, receipt, bill, billLine, creditNote, order, invoice, freshShop, finish };
