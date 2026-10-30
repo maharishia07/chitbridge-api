@@ -905,7 +905,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 416,
+   "line": 417,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -999,7 +999,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 699,
+   "line": 700,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1091,7 +1091,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 432,
+   "line": 433,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -11255,7 +11255,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 488,
+   "line": 489,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -11343,7 +11343,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 376,
+   "line": 377,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -11432,7 +11432,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 93,
-   "hash": "c875fc097db090de",
+   "hash": "19ebdffc65bdaeac",
    "does": "",
    "errors": {
     "count": 0,
@@ -11490,7 +11490,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api 2026-10-30 PR#596 stage2 re-sign (13 of 13, read against contract and cb-security notes)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11523,7 +11523,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 114,
+   "line": 115,
    "hash": "79a5f828e3213138",
    "does": "",
    "errors": {
@@ -11618,7 +11618,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 608,
+   "line": 609,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -11711,7 +11711,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 174,
+   "line": 175,
    "hash": "6cbf9daf9774ff55",
    "does": "",
    "errors": {
@@ -11814,7 +11814,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 638,
+   "line": 639,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -11904,7 +11904,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 679,
+   "line": 680,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -26281,7 +26281,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 406,
+   "line": 407,
    "hash": "e01d0a861a4d98d1",
    "does": "",
    "errors": {
@@ -39407,7 +39407,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 390,
+   "line": 391,
    "hash": "dc7dfb64216aa0f1",
    "does": "",
    "errors": {
@@ -39504,7 +39504,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 689,
+   "line": 690,
    "hash": "7adbe776b050e48e",
    "does": "",
    "errors": {
@@ -39596,7 +39596,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 448,
+   "line": 449,
    "hash": "9141c846d5e2fb1a",
    "does": "",
    "errors": {
@@ -39690,7 +39690,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 520,
+   "line": 521,
    "hash": "c0c22340d0b000d9",
    "does": "",
    "errors": {
@@ -39778,7 +39778,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 625,
+   "line": 626,
    "hash": "ecde3a9059d69190",
    "does": "",
    "errors": {
@@ -39870,7 +39870,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 354,
+   "line": 355,
    "hash": "d4f89601249d1679",
    "does": "",
    "errors": {
@@ -39967,7 +39967,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 503,
+   "line": 504,
    "hash": "68c43ef1411b1293",
    "does": "",
    "errors": {
@@ -40057,7 +40057,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 533,
+   "line": 534,
    "hash": "f65b2d9f487257f3",
    "does": "",
    "errors": {
@@ -40152,7 +40152,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 648,
+   "line": 649,
    "hash": "143f2fc0c8f269c8",
    "does": "",
    "errors": {
@@ -40242,7 +40242,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 662,
+   "line": 663,
    "hash": "573a81c87496219e",
    "does": "",
    "errors": {
@@ -40334,7 +40334,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 710,
+   "line": 711,
    "hash": "e6d8b5df5f81521b",
    "does": "",
    "errors": {
@@ -40424,7 +40424,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 559,
+   "line": 560,
    "hash": "8b85518c2880e72e",
    "does": "",
    "errors": {
