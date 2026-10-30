@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 96 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 94 | `words` | `variant.browser.js` |  |
 | 92 | `read` | `books-cashflow.js` | Trips: |
-| 84 | `answer` | `availability.js` | from March; then nearest. |
+| 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 71 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -120,7 +120,7 @@ of file each thing is; this says what already does the job.
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `note` | `dbwatch.js` |  |
 | 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
-| 20 | `group` | `identity.js` | again in a different costume. |
+| 21 | `group` | `identity.js` | again in a different costume. |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 19 | `note` | `device-id.js` | note(where, problem) — |
