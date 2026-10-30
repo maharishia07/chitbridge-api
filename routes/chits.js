@@ -77,6 +77,7 @@ const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
+const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
@@ -449,6 +450,7 @@ const SEND_STEPS = [
   sendOffers,
   sendMoney,
   sendIssued,
+  sendPaper,
   sendCopyPolicy,
   sendPromote,
   sendParticipants,
@@ -1422,6 +1424,32 @@ async function sendIssued(st, req, res) {
     }
   }
   Object.assign(st, { moneyBlock, issuedTotal });
+}
+
+/**
+ * ⭐ CTRY-76 (Round 1 E2; Athi Q1 30 Oct: HELD, refuse only a bad buyer tax id) — THE PAPER A COUNTER BILL IS, read once at send from the
+ * SHOP's pack (lib/bill-paper: reg-au from A$1,000 the buyer's identity or ABN, GST Act s.29-70(1)(c)(ii)). Its own step, OUTSIDE sendIssued's
+ * fail-open try, because a refusal here must reach the counter. A buyer tax id that fails the pack's one check (profile.taxIdRefusal — the same
+ * call shop setup runs) → 400 BUYER_TAX_ID_BAD. A sale the pack wants the buyer on, with nobody named → the sale stands, recorded under the
+ * counter's own name (business_json.not_invoice 'buyer_identity', the till's M41 slot — a reason the counter already wrote stands) and the
+ * answer says so (not_invoice.code INVOICE_HELD_BUYER + the pack's sentence), so the counter can ask for the buyer before "Tax invoice" is printed.
+ * The frozen invoice and the money are never touched. A draft, a non-counter chit, a shop with no pack rule: nothing.
+ */
+async function sendPaper(sendState, req, res) {
+  const { sender_id, business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !taxCopy.counterIssued(business_json)) return;
+  const paper = billPaper.paperOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code });
+  if (paper.refusal) {
+    res.locals.code = paper.refusal.code;
+    return problem(req, res, {
+      status: 400,
+      ...said({ error: 'Buyer tax number not accepted', code: paper.refusal.code, field: paper.refusal.field, message: paper.refusal.why }, 'CHIT_BAD_REQUEST')
+    });
+  }
+  if (paper.held) {
+    if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
+    sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
+  }
 }
 
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
@@ -2562,7 +2590,9 @@ async function sendAnswer(st, req, res) {
        a claim that the number was checked and approved. */
     number_check: number_check || undefined,
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
-    one_sided: oneSided || undefined
+    one_sided: oneSided || undefined,
+    /* ⭐ CTRY-76: present only when this bill went out as NOT a tax invoice because the buyer is not named (sendPaper) — the counter asks for the buyer */
+    not_invoice: st.paper || undefined
   }));
 
   /**
