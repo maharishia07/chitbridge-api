@@ -38,6 +38,12 @@ try {
   ok('anchorFile: any other file is left alone', CF.anchorFile(tmp, 'lib/mint.js', 'only-in-split') === 'lib/mint.js');
 } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 
+/* the five break scripts find a chits anchor through the list (a break aimed at routes/chits.js follows the code when it moves) */
+['scripts/bills-folder-breaks.cjs', 'scripts/bills-private-breaks.cjs', 'scripts/books-breaks.cjs', 'scripts/tax-truth-breaks.cjs', 'scripts/two-sided-breaks.cjs'].forEach((script) => {
+  const text = fs.readFileSync(path.join(API, script), 'utf8');
+  ok(script + ' resolves its anchor file through tools/chits-files.cjs', /tools\/chits-files\.cjs/.test(text) && /CHITS\.anchorFile\(R, file, from\)/.test(text));
+});
+
 /* 4 - the readers: a literal read of the chits route (readFileSync / read( / src( with routes/chits.js on the line) must go through the list */
 const PINNED = {
   /* none: every by-path reader of the chits code uses the list. A reader that must pin ONE file on purpose is named here WITH its reason. */
