@@ -31632,7 +31632,7 @@
    "method": "POST",
    "path": "/api/books/money-check/resolve",
    "owner_area": "books-money",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-accounting",
    "file": "routes/books-money.js",
    "line": 24,
    "hash": "1ad7908a99d2ccf9",

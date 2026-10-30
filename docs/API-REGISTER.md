@@ -1406,9 +1406,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
-### books-money (unassigned, 0 of 1 with a description)
+### books-money (cb-accounting, 0 of 1 with a description)
 
-**POST /api/books/money-check/resolve** · books-money · unassigned · partial
+**POST /api/books/money-check/resolve** · books-money · cb-accounting · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)

@@ -17,7 +17,7 @@ const logger = require('../lib/logger');
 
 /** route file (the register's owner_area) -> the cb-* agent that answers for it; one small table, the only one (no earlier map existed) */
 const AGENT_OF = {
-  actors: 'cb-people', adopt: 'cb-operations', assist: 'cb-ai', attachments: 'cb-rail', books: 'cb-accounting', capture: 'cb-connect',
+  actors: 'cb-people', adopt: 'cb-operations', assist: 'cb-ai', attachments: 'cb-rail', books: 'cb-accounting', 'books-money': 'cb-accounting', capture: 'cb-connect',
   catalogue: 'cb-catalogue', 'catalogue-face': 'cb-catalogue', channels: 'cb-connect', chits: 'cb-rail', 'combo-templates': 'cb-catalogue',
   connections: 'cb-network', connectors: 'cb-connect', counters: 'cb-counter', 'csp-report': 'cb-security', crm: 'cb-crm', ctp: 'cb-rail',
   definitions: 'cb-catalogue', entities: 'cb-network', events: 'cb-rail', facts: 'cb-reports', folders: 'cb-rail', forms: 'cb-compliance',
