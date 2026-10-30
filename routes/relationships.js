@@ -966,7 +966,7 @@ router.patch(
  * GET /api/relationships/scorecard/:entity_id — one counterparty, in depth
  */
 const select = require('../lib/select');
-const measure = require('../lib/measure');
+const costView = require('../lib/cost-view'); /* RAIL-146k: the ONE way a route measures (a cost-blind reader's money stands only over the shop own sales) */
 const policy = require('../lib/policy');
 
 /** N1: an offer's amount in the SUPPLIER's own money (its stated currency; none stated → the bare amount); only a rupee supplier reads ₹ */
@@ -995,7 +995,7 @@ router.get('/scorecard/:entity_id', auth, ...checked('GET /scorecard/:entity_id'
     const me = auth.entityOf(req);
     const flags = await policy.get(me); // overdue is a POLICY, never a constant baked into a report
     const rows = await select.rows(me, { counterparty_id: req.params.entity_id, since: req.query.since, limit: 5000 });
-    const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
+    const card = await costView.measureFor(req, me, rows, { overdue_days: flags.overdue_days, card: true });
     res.json(Object.assign({ counterparty_id: req.params.entity_id, name: (rows[0] || {}).counterparty_name || null }, card));
   } catch (err) {
     problem(req, res, failed(err, req, 'Scorecard failed'));
