@@ -22166,6 +22166,37 @@ var RCV = null, DSP = null;
  *   vendor_state — theirs against ours is what makes a purchase intra-state or inter-state, and therefore whether
  *     the credit sits under CGST+SGST or under IGST. We often do not know it, and unknown is recorded as unknown.
  */
+/**
+ * ⭐ RAIL-146c — A RECEIPT AGAINST AN ORDER WHOSE MONEY THE SERVER HID: every money field goes as NULL, never 0 (a 0 reads as a stated free cost; a null is what the server fills from the
+ * order's own price — api lib/cost-write carryFromSource). Only what was counted, the lot and the reason travel.
+ */
+function rcvBlindDoc(doc){
+  if (!RCV.hidden) return doc;
+  doc.cost_hidden = true;
+  doc.costs = null; doc.goods = null; doc.extras = null; doc.landed_total = null; doc.input_tax = null;
+  doc.their_bill = { no: (doc.their_bill && doc.their_bill.no) || null, date: (doc.their_bill && doc.their_bill.date) || null, total: null };
+  doc.lines = doc.lines.map(function(line){ return Object.assign({}, line, { rate:null, value:null, cost_share:null, landed:null, unit_cost:null, taxable:null, tax:null }); });
+  return doc;
+}
+/** RAIL-146c: did the server withhold this receive task's money (cost_hidden)? */
+function rcvTaskHidden(task){ return !!task && task.cost_hidden === true; }
+/** a task line's rate for the receive screen: none when hidden or unpriced */
+function rcvTaskRate(line){ return RCV.hidden || line.rate == null ? null : line.rate; }
+/** the balance of a receive line without any cost figure (the money is hidden for this login) */
+function rcvBalHidden(line){
+  var held = line.item_id ? RCV_BAL[String(line.item_id)] : null;
+  return '<span class="u" data-testid="rcv-balance">Have ' + (held ? held.qty : 0) + ' ' + esc(line.unit) + '</span>';
+}
+/** the receive total when the money is hidden: how many lines are counted */
+function rcvHiddenSum(){
+  var counted = RCV.lines.filter(function(line){ return (Number(line.counted) || 0) > 0; }).length;
+  return 'Counted ' + counted + ' of ' + RCV.lines.length + ' lines — the money is hidden for this login.';
+}
+/** the rate cell of a receive line: the input, or the word "hidden" when the server withheld this order's money (RAIL-146c) */
+function rcvRateCell(line, position){
+  if (RCV.hidden) return '<span class="u" data-testid="rcv-rate-veiled-' + position + '">hidden</span>';
+  return '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (line.rate == null ? '' : line.rate) + '" data-testid="rcv-rate-' + position + '" onchange="rcvSet(' + position + ',\'rate\',this.value)">';
+}
 function rcvBlank(){ return { task:null, vendor:'', vendor_party:null, vendor_state:'', bill_no:'', bill_date:'', bill_total:null,
                               tax_inclusive:false, lines:[], costs:{ freight:0, loading:0, duty:0, other:0 } }; }
 function dspBlank(){ return { task:null, ref:'', weight:null, carton:1, lines:[] }; }
@@ -22498,13 +22529,14 @@ function rcvPickTask(id){
   var t = id ? taskById('receive', id) : null;
   RCV = rcvBlank();
   RCV.task = t;
+  RCV.hidden = rcvTaskHidden(t); /* RAIL-146c: the server withheld the order's money from this login: no rate, value or cost is shown or sent */
   if (t){
     RCV.vendor = t.party || '';
     var v = document.getElementById('rcv_vendor'); if (v) v.value = RCV.vendor;
     rcvVendorPick();
     RCV.lines = t.lines.map(function(l){
       return { line_id:l.line_id, item_id:l.item_id, name:l.name, unit:l.unit, ordered:l.remaining, counted:null,
-               rate:l.rate, reason:'', lot:null };   /* ⚠️ lot: the seam the batch layer will fill — see the spec, §0 */
+               rate:rcvTaskRate(l), reason:'', lot:null };   /* ⚠️ lot: the seam the batch layer will fill — see the spec, §0 */
     });
   }
   paintReceive();
@@ -22613,7 +22645,8 @@ function rcvBalEnsure(){
     .catch(function(){ RCV_BAL = {}; });
 }
 function rcvBalLine(l){
-  if (!RCV_BAL) return '';   /* still loading — say nothing rather than a wrong "0 on the shelf" for a moment */
+  if (!RCV_BAL) return '';
+  if (RCV.hidden) return rcvBalHidden(l);   /* RAIL-146c: no cost figure for a login that cannot see costs */
   var b = l.item_id ? RCV_BAL[String(l.item_id)] : null;
   var haveQty = b ? b.qty : 0, haveCost = b ? b.avg_cost : 0;
   var addQty = Number(l.counted) || 0, addCost = Number(l.rate) || 0;
@@ -22645,7 +22678,7 @@ function paintReceive(){
         + (l.item_id ? '<button class="pill" style="margin-top:4px;font-size:.72em;padding:2px 8px" data-testid="rcv-alias-' + n + '" onclick="rememberAlias(' + n + ')">what do they call it?</button>' : '')
         + '</span>'
       + '<input type="number" min="0" step="0.001" inputmode="decimal" placeholder="count" value="' + (l.counted == null ? '' : l.counted) + '" data-testid="rcv-count-' + n + '" onchange="rcvSet(' + n + ',\'counted\',this.value)">'
-      + '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="rate" value="' + (l.rate == null ? '' : l.rate) + '" data-testid="rcv-rate-' + n + '" onchange="rcvSet(' + n + ',\'rate\',this.value)">'
+      + rcvRateCell(l, n)
       /* ⭐ THE TAX ON THIS LINE. Filled from the product's own slab, so the ordinary case needs no typing — and
          editable, because the rate on the supplier's invoice is THEIR statement and it is the paper the credit is
          claimed against. Hidden entirely for a shop that charges no GST: it would have nothing to claim. */
@@ -22794,6 +22827,7 @@ function rcvBillCheck(total, taxable, tax, no){
 }
 function paintRcvSum(){
   var el = document.getElementById('rcv_sum'); if (!el) return;
+  if (RCV.hidden) { el.innerHTML = rcvHiddenSum(); return; }   /* RAIL-146c */
   var goods = rcvGoods(), extra = rcvExtras(), landed = r2(goods + extra);
   /**
    * ⭐⭐ THE TAX PAID IS SHOWN SEPARATELY FROM THE GOODS, always. It is not part of what the stock cost — it is
@@ -22873,7 +22907,7 @@ async function rcvConfirm(){
     }),
   };
   var r = null;
-  try { r = await HOST.doc(doc); } catch (e) { r = { ok:false, error: e && e.message }; }
+  try { r = await HOST.doc(rcvBlindDoc(doc)); } catch (e) { r = { ok:false, error: e && e.message }; }
   if (!r || !r.ok){ say('The receipt could not be saved: ' + ((r && r.error) || 'unknown') + '\n\nNothing was lost — it is all still on the screen.'); return; }
   showDoc('Receipt ' + (r.doc && r.doc.no ? r.doc.no : ''), receiveSlipHTML(r.doc || doc));
   autoPrint(r.doc || doc);
@@ -27809,7 +27843,7 @@ function onlineOrdersPaint(){
  * own order screen, fed by the same /api/till/tasks read), never app.html, never a new tab.
  */
 function onlineOrderMoney(t){
-  return r2((t.lines || []).reduce(function(a, l){ return a + (Number(l.rate) || 0) * (Number(l.ordered) || 0); }, 0));
+  return t.cost_hidden === true ? null : r2((t.lines || []).reduce(function(a, l){ return a + (Number(l.rate) || 0) * (Number(l.ordered) || 0); }, 0));   /* RAIL-146c: null = hidden, never ₹0 */
 }
 function onlineOrderAge(at){
   var m = Math.max(0, Math.round((Date.now() - new Date(at).getTime()) / 60000));
@@ -27829,7 +27863,7 @@ function onlineOrdersOpen(){
         var tot = onlineOrderMoney(t), k = (t.lines || []).length;
         var ago = onlineOrderAge(t.at), items = k === 1 ? '1 item' : k + ' items';
         return '<button type="button" data-testid="till-online-row-' + n + '" data-id="' + esc(t.chit_id) + '" onclick="onlineOrderPick(this.dataset.id)">'
-          + '<b>' + esc(t.party || t.subject || 'Customer') + '</b><b>' + (tot ? money(tot) : '') + '</b>'
+          + '<b>' + esc(t.party || t.subject || 'Customer') + '</b><b>' + (tot === null ? 'hidden' : (tot ? money(tot) : '')) + '</b>'
           + '<i>' + esc(ago) + ' ago · ' + items + '</i>'
           + '<i>' + esc(onlineOrderStatus(t)) + '</i></button>';
       }).join('') + '</div>'
