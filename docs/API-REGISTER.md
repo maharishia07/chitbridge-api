@@ -259,9 +259,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/signin/sessions | signin | routes/signin.js:106 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/simulator/content | simulator | routes/simulator.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/supplies | supplies | routes/supplies.js:34 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/tax/gstr | tax | routes/tax.js:96 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/tax/gstr | tax | routes/tax.js:84 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:35 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/tax/ledger | tax | routes/tax.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/tax/ledger | tax | routes/tax.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/testing/cases | testing | routes/testing.js:405 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/testing/cases/gherkin | testing | routes/testing.js:1649 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/testing/changes | testing | routes/testing.js:3811 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
@@ -569,8 +569,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/supplies | supplies | routes/supplies.js:52 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:115 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:96 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | partial |
-| POST | /api/tax/compute | tax | routes/tax.js:175 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/tax/rate | tax | routes/tax.js:138 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/tax/compute | tax | routes/tax.js:163 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/tax/rate | tax | routes/tax.js:126 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/testing/cases/close | testing | routes/testing.js:258 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/testing/cases/gherkin | testing | routes/testing.js:1706 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/testing/cases/import | testing | routes/testing.js:837 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |

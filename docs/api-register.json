@@ -17914,7 +17914,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 122,
-   "hash": "6f1a9e2fc0be039d",
+   "hash": "94b09992308a0171",
    "does": "",
    "errors": {
     "count": 1,
@@ -17978,7 +17978,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6f1a9e2fc0be039d"
+    "stale_since": "94b09992308a0171"
    },
    "status": "partial",
    "callers": [],
@@ -22247,7 +22247,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 96,
+   "line": 84,
    "hash": "afc22463d8e3418e",
    "does": "",
    "errors": {
@@ -22338,7 +22338,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 35,
-   "hash": "52c89ebde0620b4c",
+   "hash": "fb8b302614887695",
    "does": "",
    "errors": {
     "count": 1,
@@ -22400,7 +22400,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "52c89ebde0620b4c"
+    "stale_since": "fb8b302614887695"
    },
    "status": "partial",
    "callers": [
@@ -22426,7 +22426,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 60,
+   "line": 48,
    "hash": "f20a0b794cbc7c41",
    "does": "",
    "errors": {
@@ -50549,7 +50549,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 175,
+   "line": 163,
    "hash": "4e3bb87304124c94",
    "does": "",
    "errors": {
@@ -50642,7 +50642,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 138,
+   "line": 126,
    "hash": "b9bff4e1944f3aa0",
    "does": "",
    "errors": {
