@@ -50,6 +50,11 @@ ok('invoice: no invoice and no against, no such keys on the chit', () => {
   assert.ok(!('invoice' in b.business_json) && !('against' in b.business_json));
 });
 
+ok('invoice: a partner product with no id (the supplier has no shelf here) sends no item_data', () => {
+  const b = H.invoice('B4-J3', [[{ name: 'Parotta', unit: 'piece', price: 12 }, 3]], { to: 'bridge-9' });
+  assert.ok(!('item_data' in b.line_items[0]));
+});
+
 ok('the older builders are untouched (bill keeps a string third argument as billedAt)', () => {
   const b = H.bill('X1', [[parotta, 1]], '2026-10-30T00:00:00Z');
   assert.strictEqual(b.business_json.billed_at, '2026-10-30T00:00:00Z');

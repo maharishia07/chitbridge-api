@@ -77,10 +77,10 @@ function creditNote(no, against, rows, opts) {
       refund: { parts, total } }, o.invoice ? { invoice: o.invoice } : {}),
     line_items: lines };
 }
-/** one partner row: [product, qty, price?] — the price is the SUPPLIER's rate when it differs from the product's own; `item_id` rides on the line so the match and deliver-lines find it */
+/** one partner row: [product, qty, price?] — the price is the SUPPLIER's rate when it differs from the product's own; `item_id` rides on the line (when the product has one) so the match and deliver-lines find it */
 function partnerLine(row) {
   const [p, qty, price] = row, rate = price == null ? p.price : price;
-  return Object.assign(line(p, qty, p.unit, rate), { item_data: { item_id: p.id } });
+  return Object.assign(line(p, qty, p.unit, rate), p.id ? { item_data: { item_id: p.id } } : {});
 }
 const toRecipients = (to) => [{ bridge_id: typeof to === 'object' ? to.bridge : to, kind: 'to' }];
 /** a purchase order chit sent to a partner (P2P step 2: purpose 'order', business_json.side 'buy' is what makes it the buyer's order). opts: to (bridge id) · side (default 'buy') · note */
