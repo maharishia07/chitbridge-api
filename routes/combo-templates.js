@@ -214,9 +214,13 @@ router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) =>
     /* [OFFR-04] a push writes the product's name, modifiers and price — the same gate as PATCH /products (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['name', 'modifiers', 'price']);
     if (refused) return problem(req, res, { status: 403, code: 'COST_BLIND', detail: refused.message, legacy: refused });
-    const cur = await withEntity(entity_id, (db) =>
-      db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id])
-    );
+    /* SPD-32: the template and the product it is linked to are read in ONE transaction (was two); both reads stay under this shop's RLS scope. */
+    const { cur, linked } = await withEntity(entity_id, async (db) => {
+      const template = await db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id]);
+      const link = template.rows[0] && template.rows[0].product_item_id;
+      const prod = link ? await db.query(`SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true`, [link, entity_id]) : null;
+      return { cur: template, linked: prod };
+    });
     if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const t = cur.rows[0];
     const defErr = badDefinition(t.definition);
@@ -225,13 +229,7 @@ router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) =>
     const wantedFields = { name: t.name, modifiers: t.definition };
     if (t.price != null) wantedFields.price = Number(t.price);
 
-    let existing = null;
-    if (t.product_item_id) {
-      const p = await withEntity(entity_id, (db) =>
-        db.query(`SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true`, [t.product_item_id, entity_id])
-      );
-      existing = p.rows[0] || null; // absent → the link is stale; fall through to create
-    }
+    const existing = (linked && linked.rows[0]) || null; // absent → the link is stale; fall through to create
 
     const outcome = existing ? await updateLinkedProduct(entity_id, existing, wantedFields) : await createPushedProduct(entity_id, t, wantedFields, req.id);
     if (outcome.refusal) {
