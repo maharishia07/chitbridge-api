@@ -7,6 +7,8 @@
 # `installation` row (the country pack) -> the stack -> health of web and api, and the commit each one runs. It seeds NOTHING: a shop
 # is made by registering, as on the live site. It is the existing deploy/compose.yml widened by deploy/sit/docker-compose.yml; nothing is copied.
 # Env you may pass:  GIT_TOKEN (read-only, while the repos are private) · API_REF / WEB_REF (branches, default main) · SIT_ROOT (default: the folder above this repo)
+#   INSTALL_KEY (PLT-64: this installation's key when it is not the kit's own, e.g. sit-ae2 with kit ae; a retired key is never re-used) ·
+#   SIT_COMPOSE_EXTRA (PLT-64: one more compose file, e.g. ~/net/small/compose.small.yml for a 1 GB server). Both are kept in .env, so a re-run keeps them.
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -42,6 +44,8 @@ set_kv() {
   chmod 600 "$ENVF"
 }
 fill_secret() { [ -n "$(get_kv "$1")" ] || set_kv "$1" "$(openssl rand -hex 32)"; }
+# keep_kv NAME: a value passed in the (exported) env wins and is written to .env; else the one already in .env, so a re-run keeps it. Prints it
+keep_kv() { kv_now=$(printenv "$1" || true); if [ -n "$kv_now" ]; then set_kv "$1" "$kv_now"; else kv_now=$(get_kv "$1"); fi; printf '%s' "$kv_now"; }
 
 # ---- 1. Docker ---------------------------------------------------------------------------------------------------------------
 install_docker() {
@@ -74,6 +78,15 @@ if [ ! -f "$ENVF" ]; then
   FIRST=1
 fi
 for name in POSTGRES_PASSWORD CB_APP_PASSWORD JWT_SECRET CB_ADMIN_KEY VAULT_ENC_KEY; do fill_secret "$name"; done
+# PLT-64: the installation key may differ from the kit's (a successor such as sit-ae2 runs the ae pack); lower-case letters, digits and dashes
+INSTALL_KEY=$(keep_kv INSTALL_KEY)
+if [ -n "$INSTALL_KEY" ]; then
+  printf '%s' "$INSTALL_KEY" | grep -Eq '^[a-z][a-z0-9-]{1,39}$' || die "INSTALL_KEY '$INSTALL_KEY': lower-case letters, digits and dashes, 2-40 characters, starting with a letter"
+  KEY=$INSTALL_KEY
+fi
+# PLT-64: one extra compose file on top of the two (absolute, or relative to deploy/sit); it must exist
+SIT_COMPOSE_EXTRA=$(keep_kv SIT_COMPOSE_EXTRA)
+[ -z "$SIT_COMPOSE_EXTRA" ] || [ -f "$SIT_COMPOSE_EXTRA" ] || die "SIT_COMPOSE_EXTRA names $SIT_COMPOSE_EXTRA, which is not a file"
 # this installation's CTP identity: its own Ed25519 key, made once on this VM and never printed (PEM on one line, newlines written as backslash-n: lib/ctpkeys.js reads that form)
 [ -n "$(get_kv CTP_PRIVATE_KEY)" ] || set_kv CTP_PRIVATE_KEY "$(openssl genpkey -algorithm ed25519 | awk 'NR>1{printf "\\n"} {printf "%s", $0}')"
 [ -n "$(get_kv TESTER_CODE)" ] || set_kv TESTER_CODE "$(openssl rand -hex 4){yymmdd}"
@@ -86,7 +99,7 @@ set_kv PUBLIC_API_BASE "https://$SIT_HOST"
 set_kv TESTER_CODE_TZ "${TZNAME:-UTC}"   # the tester code needs a clock; an installation that states no zone uses UTC for it
 # the api's own env file: the same file without what only this script, compose or the database owner needs (the owner's password stays out of the api)
 grep -E '^[A-Z][A-Z0-9_]*=.' "$ENVF" \
-  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS|SIT_PROJECT)=' \
+  | grep -vE '^(POSTGRES_PASSWORD|CB_APP_PASSWORD|GIT_TOKEN|API_REF|WEB_REF|SIT_ROOT|SIT_HOST|SIT_COUNTRY|WEB_ORIGIN|CB_API_BASE|DB_PORT|ASK_CUSTOM_HOSTS|SIT_PEERS|SIT_PROJECT|INSTALL_KEY|SIT_COMPOSE_EXTRA)=' \
   > "$APIENV" || true
 chmod 600 "$APIENV"
 
@@ -127,7 +140,7 @@ export SOURCE_COMMIT CB_WEB_DIR="$WEB_DIR"
 
 # the compose project name: chitbridge, or SIT_PROJECT, so a second stack on the same VM never reuses the first one's volumes (the network spin keeps the old data aside this way)
 PROJECT=${SIT_PROJECT:-$(get_kv SIT_PROJECT)}; PROJECT=${PROJECT:-chitbridge}
-DC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env"
+DC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml${SIT_COMPOSE_EXTRA:+ -f $SIT_COMPOSE_EXTRA} --env-file .env"
 
 # ---- 5. database + migrations (tools/migrate.cjs: empty = baseline + every bNNN; later = only the new files; also sets cb_app's password) ----
 say "database and migrations"

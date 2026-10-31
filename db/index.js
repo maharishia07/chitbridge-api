@@ -1,7 +1,7 @@
 // db/index.js — PostgreSQL connection pool
 const pg = require('pg');
 const { Pool } = pg;
-const { connectPlan } = require('./connect-config');
+const { connectPlan, poolMax } = require('./connect-config');
 
 /**
  * ⭐⭐ M210 · A NAIVE TIMESTAMP IS A UTC WALL CLOCK, WHATEVER CLOCK THE SERVER RUNS ON (known fault "day-close breaks past midnight").
@@ -62,12 +62,13 @@ const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(
  */
 async function createPool() {
   const plan = connectPlan(process.env);
+  const max = poolMax(process.env); /* PLT-64: DB_POOL_MAX, else 10; a bad value stops here, before any connect */
   const why = [];
   for (const a of plan) {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+      return armPool(new Pool({ ...a.config, max, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
