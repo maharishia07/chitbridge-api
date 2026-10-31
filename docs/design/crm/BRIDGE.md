@@ -54,7 +54,7 @@ The party record shows these as what the party **can** do, not as a feature list
 - **By handle** (user_id, bridge_id or email) → existing resolve: suppliers relationships.js:128-131
   (`bridge_id OR lower(user_id) OR lower(email)`), customers :549-577. Search-as-you-type uses
   `GET /api/entities/search?q=` (entities.js:521 — already excludes `~` handles, sealed and internal). Do **not** use
-  `/api/entities/lookup` for this: it does not exclude `~` handles (entities.js:1088-1104).
+  `/api/entities/lookup` for this (route retired 2026-10-31, see RETIRED.md): it did not exclude `~` handles; search does.
 - **By name** → `lib/local-identity.mint(owner, name, { kind })` for **both** roles (DATA.md gap 8). Same find-first rule
   (:86-90): the same name under the same shop returns the same identity, so adding "Ravi Traders" as a customer after
   adding it as a supplier gives **one party, two roles**.

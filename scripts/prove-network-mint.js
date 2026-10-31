@@ -19,6 +19,11 @@
  *
  * Idempotent by design: the operator is a fixed test account and the build is a no-op the second time. To start
  * clean, change SUFFIX.
+ *
+ * OWNS      the manual end-to-end proof of the network Build against a running API (not part of CI).
+ * CALLED BY by hand: DEV_OTP=... node scripts/prove-network-mint.js
+ * FLOW      sign in → dry run (search finds nothing) → build → search finds the store → partner invite → store sign-in → cap → second build is a no-op
+ * CARD      04-network/connections-and-invitations
  */
 'use strict';
 
@@ -129,8 +134,9 @@ const DESIGN = (rootKey) => ({
     '★★ a partner with no handle is NOT created — it is reported',
     !(d.create || []).some((item) => /Ravi/.test(item.name)) && (d.problems || []).some((item) => /Ravi/.test(item.name))
   );
-  const before = await api('/api/entities/lookup?user_id=' + ROOT_HANDLE + '.clothing', { token: op.token });
-  ok('★★ dry run created NOTHING', before.status === 404, 'lookup → ' + before.status);
+  const before = await api('/api/entities/search?q=' + encodeURIComponent(ROOT_HANDLE + '.clothing'), { token: op.token });
+  // search answers 200 {results:[],count:0} for no match (routes/entities.js GET /search); it matches user_id, so a created store would show
+  ok('★★ dry run created NOTHING', before.status === 200 && Array.isArray((before.json || {}).results) && before.json.count === 0, 'search → ' + before.status + ' count ' + ((before.json || {}).count));
 
   // ── 4 · name the partner, then BUILD ─────────────────────────────────────────────────────────────────────
   step(4, 'name the partner and build for real');
@@ -149,6 +155,9 @@ const DESIGN = (rootKey) => ({
   const mens = created.find((item) => item.handle === ROOT_HANDLE + '.mens');
   // The name is flat; the PLACEMENT is not. This is the half that would silently go missing if the flattening had
   // been done by dropping the parent rather than by only dropping it from the name.
+  // positive control: the same search finds the store now, so the empty answer above could not have been a search that finds nothing
+  const found = await api('/api/entities/search?q=' + encodeURIComponent(ROOT_HANDLE + '.clothing'), { token: op.token });
+  ok('★ the same search now finds the built Clothing store', found.status === 200 && ((found.json || {}).results || []).some((item) => item.user_id === ROOT_HANDLE + '.clothing'), 'search → ' + found.status + ' count ' + ((found.json || {}).count));
   ok('★★ Mens is still placed UNDER Clothing on the tree', !!(mens && cloth && mens.path.indexOf(cloth.path + '.') === 0), mens ? mens.path : 'no Mens');
   ok('★ each store was handed a claim code, once', !!(cloth && cloth.claim_code), cloth ? cloth.handle + ' → ' + cloth.claim_code : '');
 

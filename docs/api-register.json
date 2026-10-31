@@ -2,10 +2,10 @@
  "version": 1,
  "stage": "2",
  "counts": {
-  "routes": 631,
-  "no_does": 621,
+  "routes": 630,
+  "no_does": 620,
   "not_started": 35,
-  "partial": 444,
+  "partial": 443,
   "meets": 152,
   "columns": {
    "strict_input": {
@@ -13,8 +13,8 @@
     "failing": 307
    },
    "output_allowlist": {
-    "applies": 631,
-    "failing": 234
+    "applies": 630,
+    "failing": 233
    },
    "foreign_id_404": {
     "applies": 226,
@@ -29,8 +29,8 @@
     "failing": 2
    },
    "trips_budgeted": {
-    "applies": 631,
-    "failing": 157
+    "applies": 630,
+    "failing": 156
    }
   }
  },
@@ -12418,7 +12418,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2432,
+   "line": 2413,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -12573,92 +12573,6 @@
     "screens": [
      "shell.js 3/4"
     ]
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
-   "key": "GET /api/entities/lookup",
-   "method": "GET",
-   "path": "/api/entities/lookup",
-   "owner_area": "entities",
-   "owner_agent": "cb-network",
-   "file": "routes/entities.js",
-   "line": 911,
-   "hash": "4fa9ad17575badb4",
-   "does": "",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     404,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [
-    "identities"
-   ],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": false
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    404,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
-   },
-   "status": "partial",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": null,
-    "wire": null,
-    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -12870,7 +12784,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1747,
+   "line": 1728,
    "hash": "11720064f2b88a42",
    "does": "",
    "errors": {
@@ -13055,7 +12969,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1637,
+   "line": 1618,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -13146,7 +13060,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1501,
+   "line": 1482,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -13235,7 +13149,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1485,
+   "line": 1466,
    "hash": "c0ac046521b15eac",
    "does": "",
    "errors": {
@@ -13494,7 +13408,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1308,
+   "line": 1289,
    "hash": "15ee27fbadd385d3",
    "does": "",
    "errors": {
@@ -26519,7 +26433,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1280,
+   "line": 1261,
    "hash": "e0c040a82e4ebfc4",
    "does": "",
    "errors": {
@@ -26973,7 +26887,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 959,
+   "line": 940,
    "hash": "21b4715aa77e270e",
    "does": "",
    "errors": {
@@ -41299,7 +41213,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1721,
+   "line": 1702,
    "hash": "c303d29a52083779",
    "does": "",
    "errors": {
@@ -56133,7 +56047,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1692,
+   "line": 1673,
    "hash": "bcdf0a12050562df",
    "does": "",
    "errors": {
@@ -56227,7 +56141,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1611,
+   "line": 1592,
    "hash": "c36c30c620c32f6b",
    "does": "",
    "errors": {

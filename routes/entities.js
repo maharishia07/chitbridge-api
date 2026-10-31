@@ -906,25 +906,6 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
    for exactly as long as those caches live. */
 router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
 
-// GET /entities/lookup?user_id=<x> — resolve an entity by its external user_id (ATH-114).
-// The resolution primitive for adding suppliers / connecting by user_id instead of bridge_id.
-router.get('/lookup', auth, async (req, res) => {
-  try {
-    const uid = String(req.query.user_id || '').trim();
-    if (!uid) return problem(req, res, { status: 400, ...contract.words.lookupMissing() });
-    const result = await query(
-      `SELECT identity_id, bridge_id, display_name, user_id
-         FROM identities
-        WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
-      [uid]
-    );
-    if (result.rows.length === 0) return problem(req, res, { status: 404, ...contract.words.lookupNone() });
-    res.json({ entity: result.rows[0] });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Lookup failed'));
-  }
-});
-
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
 
 /**
