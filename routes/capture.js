@@ -15,6 +15,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { faultOf, storesFault, failed, checked } = require('../lib/capture-contract'); // API-4: the contract (each signed-in route's operation) and the words of a refusal
+const { UUID_RE } = require('../lib/trace');
 const { queryDay } = require('../middleware/validate'); // API-17: a ?since= that is not a day answers 400 VALIDATION_FAILED before any read
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
@@ -35,6 +36,17 @@ function hmacOk(rawBuf, secret, header, prefix) {
 }
 
 const entityId = (req) => auth.entityOf(req);
+
+/** the label each /:id route has always answered a missing message under (frozen in docs/contracts/api-legacy.json) */
+const FAILED_LABEL = { structure: 'Structure failed', raise: 'Raise failed', convert: 'Convert failed', dismiss: 'Dismiss failed' };
+/* CON-100 — an id in the address that is not a uuid names no message of this shop: answered 404 before the database puts its own words into a 500. One guard for every /:id route. */
+router.param('id', (req, res, next, id) =>
+  UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'We could not find that message.', legacy: { error: FAILED_LABEL[req.path.split('/')[2]] || 'Not found', message: req.path.endsWith('/raise') || req.path.endsWith('/structure') ? 'Capture not found' : 'Capture not found or already handled' } })
+);
+/** a 400 for one field of the body that is not what the route takes; the database is never asked (CON-100/101) */
+const badField = (req, res, field, detail) => problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail, field, legacy: { error: 'Validation failed', message: detail } });
+/** a field that is given (not absent) and fails the test */
+const given = (value) => value !== undefined && value !== null && value !== '';
 
 // ── authenticated intake (the entity's own inbox) ──────────────────────────────────────────────────────────────
 // POST /simulate — record an inbound message as if it arrived on the web (testable WITHOUT a BSP/inbound-parse).
@@ -92,8 +104,10 @@ router.post('/:id/raise', auth, ...checked('POST /:id/raise'), async (req, res) 
 
 // POST /:id/convert — the human has SENT the chit (via /api/chits/send); record the linkage. { chit_id }
 router.post('/:id/convert', auth, ...checked('POST /:id/convert'), async (req, res) => {
+  const chitId = (req.body || {}).chit_id;
+  if (given(chitId) && !(typeof chitId === 'string' && UUID_RE.test(chitId))) return badField(req, res, 'chit_id', 'The chit that was sent is not a valid id.');
   try {
-    res.json(await capture.markConverted(entityId(req), req.params.id, (req.body || {}).chit_id));
+    res.json(await capture.markConverted(entityId(req), req.params.id, chitId));
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Convert failed', 'any'));
   }
@@ -306,7 +320,11 @@ router.get('/stores', auth, async (req, res) => {
     problem(req, res, faultOf(err, req, 'Stores list failed', 'none'));
   }
 });
+/** a phone is text of 7 to 15 digits (the E.164 ceiling) with only the marks a person types; stores.phoneMatchKey is the one reader of "enough digits" */
+const isPhoneText = (value) => typeof value === 'string' && /^[\d\s()+.-]+$/.test(value) && stores.phoneMatchKey(value) !== '' && value.replace(/\D/g, '').length <= 15;
 router.post('/stores', auth, ...checked('POST /stores'), async (req, res) => {
+  const phone = (req.body || {}).phone;
+  if (given(phone) && !isPhoneText(phone)) return badField(req, res, 'phone', 'Give the phone number as 7 to 15 digits.');
   try {
     res.json(await stores.upsert(entityId(req), req.body || {}));
   } catch (err) {

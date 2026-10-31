@@ -43,6 +43,12 @@ const sanitise = (str) => {
     .substring(0, 1000); // max length
 };
 
+/**
+ * isCalendarDay(value) — true only for a REAL calendar day written YYYY-MM-DD (2026-02-30 and 2026-13-01 are not days). CMP-23: a date column is fed
+ * from a body, and Postgres answers a bad day with its own words (22007, 22008) under a 500; callers refuse it first.
+ */
+const isCalendarDay = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && isDay(value); // date only, through the one day rule (isDay, API-17)
+
 /* one engine for the body (exact types: a number is not a string) and one for the URL (a query value is always text, so "5" may be the integer 5) */
 const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true };
 const bodyEngine = new Ajv2020(AJV_OPTIONS);
@@ -147,4 +153,4 @@ const queryDay = (...names) =>
     return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: failures[0].detail, field: failures[0].field, errors: failures });
   };
 
-module.exports = { queryDay, validate, validateAsProblem, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+module.exports = { queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

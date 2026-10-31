@@ -255,7 +255,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    }
   },
   "GET /api/connections/pending": {
