@@ -196,7 +196,7 @@ async function checkServerHandlers(recording) {
     checkLegacy(id, answer, frozen[id]);
   });
   check('server-error-handler: the answer carries the caller\'s request id', broken.json.request_id === 'req-test', broken.json.request_id);
-  check('server-error-handler: nothing of the parser\'s message leaks', !/Unexpected|JSON|position/.test(broken.text), broken.text);
+  check('server-error-handler: nothing of the parser\'s message leaks', !/Unexpected|position|token/i.test(broken.text), broken.text);
 }
 
 /**

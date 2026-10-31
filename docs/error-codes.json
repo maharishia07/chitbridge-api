@@ -2081,6 +2081,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "INVALID_JSON",
+   "status": "400",
+   "title": "Request not readable",
+   "shopkeeper": "What was sent could not be read. It is cut off or is not a proper set of details.",
+   "hint": "Check it is complete, then send it again.",
+   "owner_area": "server",
+   "since": "2026-10-31"
+  },
+  {
    "code": "INVALID_KEY_REQUEST",
    "status": "400",
    "title": "Key request not valid",
