@@ -28,7 +28,12 @@ const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const supplies = require('../lib/supply-store');
 
+const { UUID_RE } = require('../lib/trace');
+
 const ctx = (req) => auth.entityOf(req);
+
+/** OPS-74: a supply id in the address that is not a uuid names nothing — 404 in the route's own not-found words, before the database sees it */
+router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.notFound() })));
 
 /** the shop's own list of things it uses — never products, never priced */
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
@@ -83,6 +88,18 @@ router.patch('/:id', auth, ...contract.checked('PATCH /:id'), async (req, res) =
   }
 });
 
+/** WX-P2P-04 (2026-10-13): the toast read "1 line(s) recorded · 1 counted · 0 expensed on receipt" — never "(s)", never a zero that is
+   fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words. OPS-72: a line already on the shelf is said, and then "0 counted" is the truth */
+function purchaseSays(out) {
+  const lines = out.recorded.length,
+    parts = [lines + (lines === 1 ? ' line recorded' : ' lines recorded')];
+  if (out.already) parts.push(out.already + ' already recorded');
+  if (out.stocked || out.already) parts.push(out.stocked + ' counted');
+  if (out.expensed) parts.push(out.expensed + ' expensed — not in your books yet');
+  if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
+  return parts.join(' · ');
+}
+
 /**
  * ⭐⭐⭐ RECORD A PURCHASE that never came through a channel.
  *   { ref, from, at, lines: [{ name | supply_item_id, qty, unit, cost, keep_stock }] }
@@ -97,14 +114,8 @@ router.post('/purchase', auth, ...contract.checked('POST /purchase'), async (req
   try {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return problem(req, res, { status: 400, ...words.refused(out.error) });
-    /* WX-P2P-04 (2026-10-13): the toast read "1 line(s) recorded · 1 counted · 0 expensed on receipt" — never "(s)", never a zero that is
-       fine (SYSTEM rule 1: only a failing thing earns words); what happened, in a shopkeeper's words */
-    const n = out.recorded.length,
-      parts = [n + (n === 1 ? ' line recorded' : ' lines recorded')];
-    if (out.stocked) parts.push(out.stocked + ' counted');
-    if (out.expensed) parts.push(out.expensed + ' expensed — not in your books yet');
-    if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
-    res.json(Object.assign({ message: 'Purchase recorded' }, out, { says: parts.join(' · ') }));
+    if (out.conflict) return problem(req, res, { status: 409, ...words.billDiffers(out.ref, out.from) });
+    res.json(Object.assign({ message: out.already && !out.stocked ? 'Purchase already recorded' : 'Purchase recorded' }, out, { says: purchaseSays(out) }));
   } catch (e) {
     if (notMigrated(e)) return problem(req, res, { status: 503, ...words.notReady() });
     problem(req, res, faultOf(e, req, 'Could not record the purchase'));

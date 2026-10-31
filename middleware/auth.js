@@ -7,6 +7,14 @@ const { verifyJwt, rotating } = require('../lib/jwt-verify'); // E10 — JWT_SEC
 const { query } = require('../db');
 const schema = require('../lib/schema'); // b173 — ask the DB what it has before naming a column
 const { holderOf } = require('../lib/holder'); // M04 — req.till, one shape for key / person / actor
+const { problem } = require('../lib/problem'); // API-4b — every refusal below is the one Problem body; the old keys ride on it, frozen
+
+/**
+ * refusedWith(req, res, status, code, legacy) — API-4b. A sign-in 401 or a scope 403 as application/problem+json (API-STANDARD S1) with the
+ * body it always answered kept UNDER it (S2): `error`, `message`, and any `code` / `pending` stay with the same values. Only WHO is refused
+ * is decided by the callers; this changes the shape of the answer, never the status.
+ */
+const refusedWith = (req, res, status, code, legacy) => problem(req, res, { status, code, detail: legacy.message, legacy });
 
 /**
  * ⭐⭐ DECIDED ONCE PER REQUEST (M04, 2026-10-07). A route whose body must not be read before the caller is known
@@ -24,10 +32,7 @@ const auth = async (req, res, next) => {
     /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
     const authHeader = req.headers.authorization || (req.headers['x-api-key'] ? 'Bearer ' + String(req.headers['x-api-key']).trim() : '');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Unauthorised',
-        message: 'No token provided'
-      });
+      return refusedWith(req, res, 401, 'TOKEN_MISSING', { error: 'Unauthorised', message: 'No token provided' });
     }
 
     const token = authHeader.split(' ')[1];
@@ -41,18 +46,18 @@ const auth = async (req, res, next) => {
     // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
     // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
     if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
-      return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+      return refusedWith(req, res, 401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
     }
     /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
        the token's own expiry says. One read per request, cached a minute per jti. */
     let keyRec = null;
     if (decoded.kind === 'api_key') {
       const rec = (keyRec = await keyListed(decoded.identity_id, decoded.jti, req));
-      if (!rec) return res.status(401).json({ error: 'Unauthorised', message: 'API key revoked or unknown' });
+      if (!rec) return refusedWith(req, res, 401, 'KEY_REVOKED', { error: 'Unauthorised', message: 'API key revoked or unknown' });
       /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
          key behind it no longer opens anything */
       if (rec.till && rec.till.closed_at)
-        return res.status(401).json({
+        return refusedWith(req, res, 401, 'COUNTER_CLOSED', {
           error: 'Unauthorised',
           code: 'COUNTER_CLOSED',
           message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.'
@@ -64,7 +69,7 @@ const auth = async (req, res, next) => {
          a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
          approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
       if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
-        return res.status(403).json({
+        return refusedWith(req, res, 403, 'CONNECTOR_NOT_APPROVED', {
           error: 'Forbidden',
           pending: true,
           message:
@@ -74,7 +79,7 @@ const auth = async (req, res, next) => {
         });
       /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
       const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
-      if (!allowed) return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
+      if (!allowed) return refusedWith(req, res, 403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
     }
     /**
      * ⭐⭐ M05 — A PERSON SESSION IS AS ALIVE AS ITS LISTING, AND ONLY ON ITS OWN DEVICE (SPEC-iam-build §4.1, D3).
@@ -89,15 +94,17 @@ const auth = async (req, res, next) => {
      * request log marks it kind:'legacy' so the day nobody holds one is visible. K-SEC PR A: tokenRefusal (below the module).
      */
     const refusal = tokenRefusal(decoded, res);
-    if (refusal) return res.status(401).json(refusal);
+    if (refusal) return refusedWith(req, res, 401, refusal.code, refusal);
     let sessRec = null;
     if (isPersonSession(decoded)) {
       const sent = String(req.headers['x-device-id'] || '').trim();
       if (!decoded.device_id || sent !== String(decoded.device_id)) {
         mark(res, 'code', 'DEVICE_MISMATCH');
-        return res
-          .status(401)
-          .json({ error: 'Unauthorised', code: 'DEVICE_MISMATCH', message: 'This sign-in belongs to another device. Sign in on this one.' });
+        return refusedWith(req, res, 401, 'DEVICE_MISMATCH', {
+          error: 'Unauthorised',
+          code: 'DEVICE_MISMATCH',
+          message: 'This sign-in belongs to another device. Sign in on this one.'
+        });
       }
       const v = (sessRec = await require('../lib/person-session').deviceListed(
         query,
@@ -108,7 +115,7 @@ const auth = async (req, res, next) => {
       const renewing = v.renewed_to && req.method === 'POST' && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
       if (!v.ok && !renewing) {
         mark(res, 'code', v.code);
-        return res.status(401).json({
+        return refusedWith(req, res, 401, v.code, {
           error: 'Unauthorised',
           code: v.code,
           message: v.code === 'DEVICE_REVOKED' ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.'
@@ -164,10 +171,7 @@ const auth = async (req, res, next) => {
       );
       const status = r.rows[0]?.break_status;
       if (!r.rows.length || status === 'removed' || status === 'deactivated') {
-        return res.status(401).json({
-          error: 'Unauthorised',
-          message: 'Your access has been revoked. Contact your admin.'
-        });
+        return refusedWith(req, res, 401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'Your access has been revoked. Contact your admin.' });
       }
       /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
          column existed behaves exactly as it does today rather than being locked out by an absent value. */
@@ -220,10 +224,7 @@ const auth = async (req, res, next) => {
     return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => gate(req, res, next));
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        error: 'Unauthorised',
-        message: 'Token expired — please log in again'
-      });
+      return refusedWith(req, res, 401, 'TOKEN_EXPIRED', { error: 'Unauthorised', message: 'Token expired — please log in again' });
     }
     /**
      * ⚠️⚠️ ONLY A JWT PROBLEM MAY BE REPORTED AS A TOKEN PROBLEM. This catch used to turn EVERY exception into
@@ -237,9 +238,7 @@ const auth = async (req, res, next) => {
      */
     if (err.name === 'JsonWebTokenError' || err.name === 'NotBeforeError') {
       /* E10: the code is added ONLY while a rotation is open — with JWT_SECRET_PREV unset the body is byte-for-byte what it was */
-      return res
-        .status(401)
-        .json(rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
+      return refusedWith(req, res, 401, 'TOKEN_INVALID', rotating() ? { error: 'Unauthorised', code: 'TOKEN_INVALID', message: 'Invalid token' } : { error: 'Unauthorised', message: 'Invalid token' });
     }
     console.error('auth: non-JWT failure —', err.code || '', err.message);
     return res.status(500).json({
@@ -535,7 +534,7 @@ auth.requireScope =
     if (!req.api_key) return next();
     if (scopes.some((item) => req.api_key.scopes.includes(item)) || req.api_key.scopes.includes('services'))
       return next(); /* 'services' = every service; any listed scope will do */
-    return res.status(403).json({ error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
+    return refusedWith(req, res, 403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + scopes.join(' / ') });
   };
 
 /**

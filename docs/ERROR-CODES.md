@@ -10,6 +10,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 <!-- codes:start -->
 | code | status | title | shopkeeper | hint | owner_area | since |
 |---|---|---|---|---|---|---|
+| ACCESS_REVOKED | 401 | Access revoked | Your access has been removed. | Ask your admin to give it back. | auth | 2026-10-31 |
 | ACTOR_KEY_TAKEN | 400/409 | Login key taken | That login key is already taken, even by someone who was removed. | Pick a different key. | actors | 2026-10-23 |
 | ADVICE_EXISTS | 409 | Advice already recorded | An advice is already recorded for this payment. | Open the payment to see it. | books | 2026-10-22 |
 | AI_GATED | 402 | AI not available | AI drafting is not available for your shop right now. | Check your AI allowance in Settings. | governance | 2026-10-23 |
@@ -79,6 +80,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTOR_IN_USE | 409 | Connector in use | This connector has raised records, so it cannot be deleted. | Switch its devices off instead. | connectors | 2026-10-23 |
 | CONNECTOR_KEY_ADMIN_ONLY | 403 | Key reissue not allowed | Only the business admin or a manager can reissue a device key. | Ask the admin or a manager to do it. | connectors | 2026-10-23 |
 | CONNECTOR_NAME_MISMATCH | 400 | Gateway name does not match | The gateway name you typed does not match. | Type the name exactly as it is shown. | connectors | 2026-10-23 |
+| CONNECTOR_NOT_APPROVED | 403 | Connector not approved | This connector is waiting for approval. | Approve this PC in Settings, Integrations, Running connectors. | auth | 2026-10-31 |
 | CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
 | CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | We could not read their consent, so nothing was sent. | Try again in a moment. | whatsapp-out | 2026-10-22 |
@@ -135,6 +137,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | DISPUTE_TARGET_NOT_PARTY | 400 | Not a party to the dispute | That business is not a party to this dispute. | Pick one of the parties listed on the dispute. | chits | 2026-10-23 |
 | DSP | varies | Dsp | Not an error. DSP stands for the Disputes folder. | Nothing to do. | folder-inventory | 2026-10-22 |
 | DUPLICATE_PARTY | 409 | Duplicate party | Another party on your list already has this tax number. | Check the number, or open the party that holds it. | relationships | 2026-10-22 |
+| KEY_NOT_SCOPED | 403 | Key not scoped | This key is not allowed to do that. | Use a key made for this, or sign in as a person. | auth | 2026-10-31 |
+| KEY_REVOKED | 401 | Key revoked | This key was removed or is not known. | Make a new key and use that. | auth | 2026-10-31 |
+| TOKEN_EXPIRED | 401 | Token expired | Your sign-in has run out. | Sign in again. | auth | 2026-10-31 |
+| TOKEN_MISSING | 401 | Token missing | You are not signed in. | Sign in, then try again. | auth | 2026-10-31 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | Leave that detail out and save again. | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
@@ -357,6 +363,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
 | SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies are not switched on yet. | Ask the operator to run the update, then try again. | supplies | 2026-10-24 |
+| SUPPLY_BILL_DIFFERS | 409 | Bill already recorded | This bill number is already recorded for that supplier with different lines. | Record a correction, or use a new bill number. | supplies | 2026-10-31 |
 | SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
 | STORES_NOT_MIGRATED | 503 | Shop list not ready | The shop list is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |

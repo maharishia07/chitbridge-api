@@ -341,7 +341,7 @@
         }
       ],
       "example": {
-        "url": "/api/quick-keys/groups/nope/items/nope",
+        "url": "/api/quick-keys/groups/00000000-0000-4000-8000-0000000000a1/items/00000000-0000-4000-8000-0000000001d1",
         "body": {}
       }
     },
@@ -12107,7 +12107,7 @@
         }
       ],
       "example": {
-        "url": "/api/quick-keys/groups/nope/items",
+        "url": "/api/quick-keys/groups/00000000-0000-4000-8000-0000000000a1/items",
         "body": {}
       }
     },
@@ -16106,6 +16106,7 @@
           "from",
           "recorded",
           "stocked",
+          "already",
           "expensed",
           "books_posted",
           "failed",
@@ -16159,6 +16160,9 @@
             }
           },
           "stocked": {
+            "type": "number"
+          },
+          "already": {
             "type": "number"
           },
           "expensed": {

@@ -35,6 +35,7 @@ const money = require('../lib/money'); // adoption commercials are the SECOND pr
 // The honest, no-oversell guardrail lives in lib/ai.js as the `assist-ask` skill (T1-AI) — server-side, never shipped to
 // the client — so it runs through the one model caller with the wallet, the platform daily cap and the usage ledger.
 const ai = require('../lib/ai');
+const access = require('../lib/access'); // b173 viewer / commenter / editor: the one test of what a login may do
 /* ⚠️ ASSIST_LLM_PROVIDER stays the ON-switch for CB Assist (dormant by default); the key and the model are the one
    caller's (ANTHROPIC_API_KEY · ai_skill.model / AI_MODEL). The entity is who pays: no signed-in entity → no model
    call, because a call that cannot be metered must not spend (lib/ai.js S1) — the caller's floor answers instead. */
@@ -67,7 +68,7 @@ function softIdentity(req) {
     // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
     // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
     if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
-    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null };
+    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null, identity_type: d.identity_type, access_level: d.access_level }; // the level rides the token (identity-auth FX-L2C), so a draft that costs money can ask lib/access
   } catch (e) {
     log.fellBack('assist softIdentity: the helper failed — answered with nothing', e);
     return null;
@@ -216,7 +217,8 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
     // Designer intro — model-drafted RUNG-summarise layer, best-effort. It describes the ALREADY-structured
     // collection; it never invents items. Absent a key, the structure still stands (intro: null).
     let intro = null;
-    if (assistOn() && identity) {
+    /* PPL-27 (Q42): a View-only or Comment-only login keeps the free draft but never spends the shop's AI money: it gets the anonymous answer. lib/access is the ONE level test. */
+    if (assistOn() && identity && access.canEdit(identity)) {
       try {
         const out = await ai.invokeSkill(
           payerOf(identity),
