@@ -1206,7 +1206,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 468,
+   "line": 476,
    "hash": "2f1f2eb1c5052ee7",
    "does": "",
    "errors": {
@@ -41072,8 +41072,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 289,
-   "hash": "888cb025c8866a76",
+   "line": 297,
+   "hash": "ae048163ad86eb46",
    "does": "",
    "errors": {
     "count": 0,
@@ -41082,6 +41082,7 @@
      401,
      409,
      422,
+     428,
      500
     ],
     "codes": []
@@ -41130,6 +41131,7 @@
     401,
     409,
     422,
+    428,
     500
    ],
    "notes": [
@@ -41175,7 +41177,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 529,
+   "line": 537,
    "hash": "839f910941610693",
    "does": "",
    "errors": {
@@ -56001,8 +56003,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 357,
-   "hash": "f9fe1e2a35b40d05",
+   "line": 365,
+   "hash": "47c980784df872d2",
    "does": "",
    "errors": {
     "count": 0,
@@ -56013,6 +56015,7 @@
      404,
      409,
      422,
+     428,
      500
     ],
     "codes": []
@@ -56041,7 +56044,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -56064,6 +56067,7 @@
     404,
     409,
     422,
+    428,
     500
    ],
    "notes": [

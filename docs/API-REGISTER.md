@@ -24,7 +24,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:418 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:698 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/parties/:id | crm | routes/crm.js:434 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/definitions/:id | definitions | routes/definitions.js:468 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/definitions/:id | definitions | routes/definitions.js:476 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/folders/:id | folders | routes/folders.js:341 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:608 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/keys/:jti | keys | routes/keys.js:166 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
@@ -462,8 +462,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/csp-report | csp-report | routes/csp-report.js:80 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/ctp/deliver (also /deliver) | ctp | routes/ctp.js:234 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/ctp/query (also /query) | ctp | routes/ctp.js:436 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/definitions | definitions | routes/definitions.js:289 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/definitions/freeze | definitions | routes/definitions.js:529 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/definitions | definitions | routes/definitions.js:297 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/definitions/freeze | definitions | routes/definitions.js:537 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/entities/populations | entities | routes/entities.js:1702 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/register | entities | routes/entities.js:331 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/verify | entities | routes/entities.js:332 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -626,7 +626,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4124 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6064 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:119 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PUT | /api/definitions/:id | definitions | routes/definitions.js:357 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/definitions/:id | definitions | routes/definitions.js:365 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1673 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/entities/routing | entities | routes/entities.js:1592 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:158 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -2401,7 +2401,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/definitions** · definitions · cb-catalogue · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 428, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-categories.js 0/6, cap-catsetup.js 0/12, cap-definitions.js 0/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_version · callers: cap-categories.js, cap-catsetup.js, cap-definitions.js, core.js · actions: -
 
@@ -2413,7 +2413,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **PUT /api/definitions/:id** · definitions · cb-catalogue · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 422, 428, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share app.html 1/140, cap-categories.js 1/6, cap-definitions.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_status_log, definition_version · callers: app.html, cap-categories.js, cap-definitions.js, core.js · actions: -
 
