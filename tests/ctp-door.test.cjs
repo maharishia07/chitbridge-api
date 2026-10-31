@@ -19,6 +19,10 @@ const SENDER = '22222222-2222-4222-8222-222222222222';
 function rows(s, p, ctx) {
   if (/SELECT identity_id FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.labelHere ? [{ identity_id: 'LOCAL-SHOP' }] : [];
   if (/FROM installation WHERE installation_key = \$1/.test(s)) { if (ctx.peerThrows) throw new Error('no table'); return ctx.peer ? [ctx.peer] : []; }
+  /* RAIL-107: the sender is looked up by bridge id (stubFor); a window-shopping sender has no row here yet and one is made */
+  if (/f_installation_of/.test(s) && /FROM identities WHERE bridge_id/.test(s)) return ctx.sender ? [ctx.sender] : [];
+  if (/^INSERT INTO identities/.test(s)) return [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX Pumps' }];
+  if (/f_place_entity/.test(s)) return [];
   if (/FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.to ? [ctx.to] : [];
   /* RAIL-138 (b): is the sender a business with a row here, and which installation is it stamped to? */
   if (/FROM identities WHERE identity_id = \$1/.test(s)) { if (ctx.homeThrows) throw new Error('rls'); return ctx.senderHere ? [{ identity_id: p[0] }] : []; }

@@ -42,6 +42,9 @@ const keys = require('../lib/ctpkeys');
 const directory = require('../lib/ctpdirectory');
 const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do we deal with this installation?" */
 const mint = require('../lib/mint');
+const remoteParty = require('../lib/remote-party'); /* RAIL-107: a party named on an arriving chit is found or made by bridge id, never stored by a foreign uuid */
+const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
+const net = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
 const { problem } = require('../lib/problem');
 const { safeErr } = require('../lib/respond');
 const { schemaValidate } = require('../middleware/validate'); // S9: the body is checked against the door's own schema
@@ -120,6 +123,8 @@ async function manifestRead() {
     installation_key: me ? me.installation_key : process.env.INSTALLATION_KEY || 'platform-0',
     label: me ? me.label : null,
     region: me ? me.region : null,
+    /* RAIL-100: the installation's own domain, so an answer can be written bridge_id@domain (lib/ctpaddress.format) */
+    domain: me ? me.domain : null,
     endpoint: (me && me.ctp_endpoint) || null,
     accepts_populations: pops,
     public_key: k.public_key,
@@ -128,11 +133,79 @@ async function manifestRead() {
     can_sign: k.can_sign,
     /* RAIL-140 (b): a fixed sentence. k.why names the variable and carries the crypto library's error text — for our own log
        and health check, not for every stranger who reads the manifest. */
-    note: k.can_sign ? undefined : CANNOT_SIGN
+    note: k.can_sign ? undefined : CANNOT_SIGN,
+    /* RAIL-97: the pass the network master signed for this installation, published so a receiver needs no call to the master; and (on a master) the fingerprint of the
+       network key, which a joining installation compares with what it was told. Both are absent on a standalone installation. */
+    membership: await netMembership(),
+    network_fingerprint: net.networkFingerprint() || undefined
   };
   return { body, whole };
 }
 const CANNOT_SIGN = 'this installation cannot sign envelopes — do not accept any that claim to come from it';
+
+/** this installation's own membership certificate for the manifest; a failed read is logged and the manifest goes out without it (the door then says why) */
+async function netMembership() {
+  try {
+    return (await net.ownMembership()) || undefined;
+  } catch (e) {
+    log.fellBack('ctp manifest: the membership read failed — published without it', e);
+    return undefined;
+  }
+}
+
+/**
+ * RAIL-104: open the envelope with the key the sender's domain published. If it does not verify, the sender may have rotated its key while we hold the old
+ * one: read its manifest once more (ctpdirectory throttles that) and try the key it publishes NOW. A forger fails again.
+ * @param ctxParts { population, pairedWith } — the recipient's world and the pairing answer the caller already got from the database
+ */
+async function openEnvelope(env, peer, installationKey, publicKey, ctxParts) {
+  const openWith = (key) => envelope.open(env, Object.assign({ verify: (hash, sig) => keys.verifyWith(key, hash, sig) }, ctxParts));
+  const opened = openWith(publicKey);
+  if (opened.ok || !/signature did not verify/.test(opened.why)) return opened;
+  const again = await directory.publicKeyFor(peer.domain, installationKey, { fresh: true });
+  return again.ok && again.public_key !== publicKey ? openWith(again.public_key) : opened;
+}
+
+/** NET-39: the `search` question — the SAME function the local search runs (lib/business-search): listed shops only, public fields only, limit clamped here again */
+async function answerSearch(question, refuse, res) {
+  /* another installation is asking: only shops that opted in to sell outside are answered (Athi, 2026-10-25) */
+  const found = await require('../lib/business-search').find({ q: question.q, kind: question.kind, limit: question.limit }, { abroad: true });
+  if (!found.ok) return refuse({ status: 400, code: 'CTP_SEARCH_TOO_SHORT', why: found.why });
+  return res.json({ ok: true, found: found.results.length > 0, results: found.results, searched: found.searched });
+}
+
+/**
+ * ── RAIL-106 · THE RETURN PATH: an EVENT is not a copy ───────────────────────────────────────────────────
+ * Same door, same checks as a delivery (peer, key, crossing, seal, pass — all done by the caller). It carries one change a party on ANOTHER installation made to a chit both of you already hold,
+ * and it is applied to OUR rows only (lib/ctpreturn apply: a shadow of that party's status row, our copy of its message), never forwarded. An older or repeated event is acknowledged and
+ * ignored, so the sender's queue can stop resending it. `accepted: true` means the sender may stop; `applied` says whether this call changed anything.
+ * @param ctx { opened, from, to, toBridge } the opened envelope, its signed `from`, the recipient row WE resolved (never the envelope's id), and its bridge id
+ */
+async function answerEvent(res, refuse, ctx) {
+  const done = await returnPath.apply({ chit_id: ctx.opened.chit_id, event: ctx.opened.event, from: ctx.from, to: { identity_id: ctx.to.identity_id } });
+  if (!done.ok) return refuse({ status: done.status, code: done.code, why: done.why });
+  return res.json({ accepted: true, applied: done.applied, why: done.why, chit_id: ctx.opened.chit_id, to: ctx.toBridge });
+}
+
+/**
+ * RAIL-107 · the parties of an arriving copy, as OUR rows. The sender is found by its bridge id from the signed envelope; this installation holds no row for it when the buyer added the seller
+ * and the seller never added the buyer ("window-shopping"), so one is made (lib/remote-party stubFor: placed on the sending installation, in the recipient's world, no relationship). A different
+ * local business holding that bridge id is refused in words (CTP_ADDRESS_CLASH, RAIL-102), nothing written.
+ * @returns {Promise<{refusal}|{header}>}
+ */
+async function localParties(ctx) {
+  const { env, opened, peer, ik, to } = ctx;
+  const sender = String((env.from || {}).bridge_id || '');
+  if (!sender) return { refusal: { status: 400, code: 'CTP_NO_SENDER', why: 'the envelope does not name the sending business' } };
+  const copy = opened.copy || {};
+  const stub = await remoteParty.stubFor({ bridge_id: sender, display_name: (env.from || {}).display_name || copy.sender_entity_display_name, installation_key: ik, domain: peer.domain, owner: to.identity_id });
+  if (!stub.ok) return { refusal: { status: stub.status, code: stub.code, why: stub.why } };
+  const recipients = Array.isArray(copy.all_recipients) ? copy.all_recipients : [];
+  const toRow = await query('SELECT bridge_id FROM identities WHERE identity_id = $1', [to.identity_id]);
+  const toBridge = toRow.rows[0] && toRow.rows[0].bridge_id;
+  const others = await remoteParty.holdersOf(recipients.map((entry) => entry && entry.bridge_id));
+  return { header: remoteParty.localizeParties({ all_recipients: recipients }, { senderId: stub.identity_id, senderBridge: sender, toId: to.identity_id, toBridge, others }) };
+}
 
 router.get('/.well-known/ctp.json', async (req, res) => {
   try {
@@ -194,7 +267,7 @@ async function sealedBy(peer, installationKey, env) {
   const pk = await directory.publicKeyFor(peer.domain, installationKey);
   if (!pk.ok) return { refusal: { status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the sender’s manifest: ' + pk.why } };
   const seal = sealHolds(env, pk.public_key);
-  return seal.ok ? { publicKey: pk.public_key } : { refusal: { status: 409, code: 'CTP_ENVELOPE_REFUSED', why: seal.why } };
+  return seal.ok ? { publicKey: pk.public_key, manifest: pk.manifest } : { refusal: { status: 409, code: 'CTP_ENVELOPE_REFUSED', why: seal.why } }; /* the manifest carries the membership pass (RAIL-97) */
 }
 /** the hash of the canonical contents, then the signature over it: envelope.open's two checks and words. Unhashable is unsealed. */
 function sealHolds(env, publicKey) {
@@ -318,14 +391,17 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       return refuse({ status: 409, code: 'CTP_CROSSING_REFUSED', why: contract.crossingRefused(to.population, ik) });
     }
 
-    const opened = envelope.open(env, {
-      /* ⭐ the RECIPIENT's world is the subject, and the pairing question has already been answered above by
-         the database, so `pairedWith` simply reports it rather than deciding it a second time. */
-      population: to.population,
-      pairedWith: () => mayCross,
-      verify: (hash, sig) => keys.verifyWith(sealed.publicKey, hash, sig)
-    });
+    /* ⭐ the RECIPIENT's world is the subject, and the pairing question has already been answered above by the database, so `pairedWith`
+       simply reports it rather than deciding it a second time. RAIL-104: a rotated key is re-read once (openEnvelope). */
+    const opened = await openEnvelope(env, peer, ik, sealed.publicKey, { population: to.population, pairedWith: () => mayCross });
     if (!opened.ok) return refuse({ status: 409, code: 'CTP_ENVELOPE_REFUSED', why: opened.why });
+
+    /* ── RAIL-97: after the signature, the PASS. A member or master accepts a chit only from a peer whose manifest carries a membership certificate signed by the key
+       it pinned (the pinned master itself is trusted by that key). A standalone installation skips this and behaves exactly as before. */
+    const pass = await net.doorVerdict(ik, peer, sealed.manifest);
+    if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
+
+    if (opened.kind === 'event') return await answerEvent(res, refuse, { opened, from: env.from, to, toBridge }); /* RAIL-106: an event is not a copy */
 
     /**
      * ── ⚠️ THE COPY IS WRITTEN AS THE RECIPIENT'S, WITH THE ENTITY WE RESOLVED — never the entity_id the
@@ -355,7 +431,11 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
       sender_bridge_id: (env.from && env.from.bridge_id) || null,
       at: new Date().toISOString()
     };
-    const copy = Object.assign({}, opened.copy, {
+    /* ⭐ RAIL-107: the sender (and every party the copy names) is a row of OUR database, found or made by bridge id — the copy's entity ids are the sender's own and mean nothing here */
+    if (!(opened.copy.sender_entity_id || (opened.header && opened.header.sender_entity_id))) return refuse({ status: 400, code: 'CTP_NO_SENDER', why: 'the copy does not say who sent it' });
+    const parties = await localParties({ env, opened, peer, ik, to });
+    if (parties.refusal) return refuse(parties.refusal);
+    const copy = Object.assign({}, opened.copy, parties.header, {
       entity_id: to.identity_id,
       business_json: Object.assign({}, opened.copy.business_json || {}, { ctp_arrival: arrivalStamp })
     });
@@ -388,12 +468,16 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
      * is never theirs to choose. `chit_header.sender_entity_id` has no foreign key precisely so that a
      * counterparty on another machine can be named without existing here.
      */
-    const once = await deliverOnce(opened, copy, ik, to.identity_id); /* RAIL-138 (b) the sender is theirs · (c) a repeat writes nothing */
+    /* the write context is the LOCAL stub of the sender (localParties above, RAIL-107), never the sender's own uuid; deliverOnce checks that stub is
+       stamped to the signing installation (RAIL-138 b) and that a retried envelope writes nothing (RAIL-138 c, RAIL-105: `repeat`) */
+    const once = await deliverOnce(opened, copy, ik, to.identity_id);
     if (once.refusal) return refuse(once.refusal);
+    if (!once.repeat) returnPath.onChitArrived(to.identity_id, opened.chit_id, opened.header); /* RAIL-106: the bell the local send rings for each recipient */
 
     res.json({
       accepted: true,
       repeat: once.repeat || undefined,
+      duplicate: once.repeat || undefined, /* the word the SIT drivers read (run 2, E5); `repeat` is the contract's */
       chit_id: opened.chit_id,
       to: toBridge,
       /* ⭐ the sender's governance as WE resolved it from their installation — visible, and never the reason a
@@ -447,14 +531,26 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     if (!member.peer) return refuse({ status: 403, code: 'CTP_PEER_REFUSED', why: member.why });
     const peer = member.peer;
 
-    const pk = await directory.publicKeyFor(peer.domain, ik);
+    /* RAIL-96/97: a question only the pinned master may ask is verified with the PINNED key; one only a master answers is refused anywhere else, in words */
+    const gate = await net.queryGate(q.ask && q.ask.want, ik);
+    if (gate.refuse) return refuse({ status: gate.refuse.status, code: gate.refuse.code, why: gate.refuse.why });
+    const pk = gate.pinnedKey ? { ok: true, public_key: gate.pinnedKey } : await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + pk.why });
     const opened = ctpquery.open(q, {
       verify: (hash, sig, who) => who === ik && keys.verifyWith(pk.public_key, hash, sig)
     });
     if (!opened.ok) return refuse({ status: 403, code: 'CTP_QUERY_REFUSED', why: opened.why });
-
     const ask = opened.ask;
+    /* a network question names the installation it is for (signed, and the master assigned the key); a domain can change hands (a VM re-used), so a
+       question for another installation is not ours to answer (SIT run 4: the master's pull for a retired member was answered by its successor).
+       Only the network asks: an older hand-made peer row may name us differently, and resolve/catalogue keep working for it. */
+    const toKey = String((q.to || {}).installation_key || '');
+    if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== net.ownKey())
+      return refuse({ status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + net.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' });
+    /* after the signature, the PASS (as in deliver): resolve, catalogue, search and locate need a valid certificate; renewing one and reading the directory do not */
+    const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
+    if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
+    if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await net.answer(ask, ik));
     const cat = require('./catalogue');
 
     if (ask.want === 'resolve') {
@@ -474,19 +570,26 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
         display_name: ent.display_name,
         user_id: ent.user_id,
         address: require('../lib/ctpaddress').format(ent.bridge_id, me.domain),
-        installation_key: me.installation_key
+        installation_key: me.installation_key,
+        /* NET-39 (DECISIONS 14:50): whether this shop sells OUTSIDE its own installation, by the one rule (lib/profile isExporter, the same one search and catalogue answer by). An installation that adds this shop as a supplier asks nothing more. */
+        sells_outside: await require('../lib/profile').isExporter(ent.identity_id)
       });
     }
 
+    /* RAIL-106: a file on a chit, to a party of that chit only (lib/ctpreturn attachmentFor decides who is a party) */
+    if (ask.want === 'attachment') return res.json(await returnPath.attachmentFor(ik, ask));
+
     if (ask.want === 'catalogue') {
       const ent = await cat.resolveEntity(ask.bridge_id);
-      if (!ent) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
+      /* a shop that did not opt in to sell outside is "not found", the same words as an unknown id: its existence is not revealed (Athi, 2026-10-25) */
+      if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return res.json({ ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id });
       /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
          The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
       const view = await cat.publicViewFor(ent, {});
       if (!view || !view.available) return res.json({ ok: true, found: false, why: ent.display_name + ' has no public catalogue' });
       return res.json(Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false)));
     }
+    if (ask.want === 'search') return await answerSearch(ask, refuse, res);
     return refuse({ status: 400, code: 'CTP_UNKNOWN_QUESTION', why: 'not a question this installation answers' });
   } catch (e) {
     safeErr(e, { id: req.id, path: req.path }); /* fail closed: which side failed, never why (QUERY_FAILED) */

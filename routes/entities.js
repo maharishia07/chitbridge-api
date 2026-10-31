@@ -358,98 +358,37 @@ router.get('/constitutions', async (req, res) => {
   }
 });
 
-/* S34: a row of GET /search is the five columns its statement selects (identities), each named */
-const searchRowOf = (x) => ({ identity_id: x.identity_id, bridge_id: x.bridge_id, display_name: x.display_name, user_id: x.user_id, created_at: x.created_at });
-// GET /entities/search
+/**
+ * GET /entities/search?q=&kind=business|product&limit=&where=here|<installation_key>|all   (NET-39)
+ * ONE search, Here and There (lib/network-search → lib/business-search.find): a NAME finds LISTED shops only (public storefront + the operator's cap + not closed);
+ * an exact handle or bridge id still resolves (finding is not reaching: "private" shops stay reachable by a person who knows the whole handle), and a minted
+ * "~" party or an internal entity (Athi, 2026-09-14: "you should not search and find cbincroot") is never shown. where=<key>|all asks the other installations
+ * we deal with, one after another, 5 s each; a silent one is said in words in answers[] and the rest still answer.
+ * Reply { results:[{bridge_id, display_name, user_id, kind, hits, address, installation_key, domain, where}], count, answers:[{installation_key, ok, why}] }.
+ * Who may call: any signed-in business. Round trips: Here 2 (+ up to 26 for kind=product); each installation asked is one signed call.
+ */
 router.get('/search', auth, async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
-    if (q.length < 2) {
-      return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
-    }
-    const result = await query(
-      /**
-       * ⚠️⚠️ THE SEARCH DID NOT MATCH user_id — the one thing it should have matched first.
-       *
-       * Athi, 2026-08-19: *"a supplier can add this entity by alpha-timers only, not with Alpha timers."* He is
-       * right about the principle, and the code was worse than he thought: typing `alpha-timers` found NOTHING.
-       * It matched display_name and bridge_id only, so the ONLY ways to find a business were its NAME — which
-       * may repeat — or a ten-character generated code nobody remembers.
-       *
-       * ⭐ user_id is now matched too, and ORDERED FIRST, so an exact handle wins over a fuzzy name match. The
-       * name stays searchable because finding is not the same act as identifying: you may look someone up by
-       * name, but what gets stored is always their bridge_id.
-       */
-      `SELECT identity_id, bridge_id, display_name, user_id, created_at
-       FROM identities
-       WHERE (LOWER(user_id) LIKE LOWER($1) OR LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
-       AND identity_type = 'entity' AND status = 'active'
-       AND COALESCE(sealed, false) = false
-       /**
-        * ⚠️⚠️ AND NEVER A MINTED PARTY — a supplier or customer some business created by hand, whose handle starts
-        * with a tilde (lib/handle.js). They are ordinary active entities by design, so nothing else here excludes
-        * them, and two different things would go wrong at once: they cannot be traded with (nobody can sign in to
-        * receive), and WHO SUPPLIES YOU is one of the few genuinely competitive facts a small business holds.
-        * Without this line every local supplier a shop wrote down would be discoverable — and addable — by every
-        * competitor on the platform, with nothing on any screen to suggest it.
-        */
-       AND COALESCE(user_id, '') NOT LIKE '~%'
-       AND identity_id != $2
-       /*
-        * -- AND NOT AN INTERNAL ENTITY. Athi, 2026-09-14: "you should not search and find cbincroot."
-        *
-        * This is the FIRST thing anywhere to read entity_visibility (b234). Until now the column described a
-        * policy nothing applied: cbincroot and the seven ISO/ICC standards were findable by anyone who typed
-        * their name, and addable as a supplier straight from the result.
-        *
-        * internal ONLY -- not private, not network. Those two have ZERO members and their rules are not agreed;
-        * filtering on them here would hide nothing today and enforce an unaudited decision tomorrow.
-        * lib/visibility-cap.js records what that costs: "a value nobody has audited becomes policy the instant
-        * something starts reading it."
-        *
-        * SAFE BECAUSE IT WAS AUDITED FIRST. The Platform screen shows entity_visibility per row, and the count
-        * was checked before this line was written: exactly 9 rows are internal and every one is ours --
-        * cbincroot, the standards, GOV-01-Help. Nothing a customer could reach disappears.
-        *
-        * COALESCE, because a row minted before b234 ran would hold NULL and must stay findable. Absent is not
-        * the same as hidden.
-        *
-        * NOTE: plain SQL comment markers and NO BACKTICKS -- this block lives inside a JS template literal, and
-        * a backtick here terminates the query string. It did, once.
-        */
-       AND (
-         COALESCE(entity_visibility, 'public') NOT IN ('internal', 'private')
-         /*
-          * -- PRIVATE IS NOT FINDABLE, BUT IT IS REACHABLE. Athi, 2026-09-14, on the rule for 'private':
-          * "reachable only by someone who already holds the handle."
-          *
-          * So an EXACT handle still resolves; a partial or fuzzy match never does. Type "chola" and a private
-          * shop stays hidden; type its whole user_id and you get it, because you already knew it.
-          *
-          * That distinction is the same one rows 3 and 4 of the matrix turn on: FINDABLE and REACHABLE are
-          * different questions. Collapsing them would mean a private shop could never be sent a chit by anyone
-          * who did not already trade with it -- which is most of why a shop would choose private in the first
-          * place: quiet, not cut off.
-          *
-          * $3 is the raw query, already bound for the ORDER BY below.
-          *
-          * NOTE: zero rows are entity_visibility='private' today, so this changes nothing now. That is exactly
-          * why it is safe to write now -- the rule exists before anyone can be surprised by it.
-          */
-         OR (COALESCE(entity_visibility, 'public') = 'private' AND LOWER(user_id) = LOWER($3))
-       )
-       /**
-        * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.
-        * ⚠️ $3, NOT $2. $2 is the CALLER'S identity_id (the "not me" filter); comparing a user_id against it
-        * would never match, and the ordering would be silently inert — a ranking that looks implemented and
-        * ranks nothing. Caught by reading the parameter list rather than the query.
-        */
-       ORDER BY (LOWER(user_id) = LOWER($3)) DESC, display_name LIMIT 10`,
-      [`%${q}%`, req.identity.identity_id, q]
-    );
-    res.json({ results: result.rows.map(searchRowOf), count: result.rows.length });
+    if (q.length < 2) return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
+    const kind = req.query.kind === 'product' ? 'product' : 'business';
+    const found = await require('../lib/network-search').search({ q, kind, limit: req.query.limit }, req.identity, req.query.where);
+    /* both statuses written in full: a place we do not deal with is a 404, a question too short is the 400 (tools/api-register.cjs reads the literals) */
+    if (!found.ok && found.code === 'SEARCH_PLACE_UNKNOWN') return problem(req, res, { status: 404, code: found.code, detail: found.why });
+    if (!found.ok) return problem(req, res, { status: 400, code: found.code, detail: found.why });
+    res.json({ results: found.results, count: found.count, answers: found.answers });
   } catch (err) {
     console.error('Search error:', err.message);
+    problem(req, res, failed(err, req, 'Search failed'));
+  }
+});
+
+// GET /entities/search/places — the installations the Where picker offers: remote and ACTIVE only (a suspended one drops out), each by name and domain
+router.get('/search/places', auth, async (req, res) => {
+  try {
+    res.json({ places: await require('../lib/network-search').places() });
+  } catch (err) {
+    console.error('Search places error:', err.message);
     problem(req, res, failed(err, req, 'Search failed'));
   }
 });

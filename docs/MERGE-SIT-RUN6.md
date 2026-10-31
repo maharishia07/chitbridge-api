@@ -1,0 +1,44 @@
+# sit/run6 — joining origin/sit/grundfos (1a68240b, 67 commits) with origin/main (2df6760b) · 2026-10-31
+
+Merge, not rebase (the 67 SIT commits stay traceable). Merge-base 907d1f58; main had moved 791 commits. 41 conflicts: 19 code, 22 tests and generated registers.
+Rule applied to every file: keep BOTH behaviours; a money/tax/mint conflict is composed, never picked blind. Where a test pinned one side's spelling it was re-aimed at the rule, never deleted.
+
+## The structural fact that decided most of routes/chits.js
+Main lifted `moveStatus` (the ONE status writer) into `lib/chit-move.js` and `postMessageCopies` into `lib/chit-crossing.js`; the branch's RAIL-106 emits rode inside those functions in routes/chits.js. The emits were re-applied INSIDE the libs, so the one writer stays one: `ctpReturn.onStatusMoved` after the timeline write in `chit-move.moveStatus` (never for a bill step), in `cancelSentCopy`, `onCancelConfirmed` in `confirmCancelToSender`, `ringStatus` + the two cancel stamps moved to chit-move (exported; routes/chits.js and lib/ctpreturn.js call them there); `message_id` reuse + `lib/message-limit` + `onMessagePosted` in `chit-crossing.postMessageCopies`. The branch's duplicate moveStatus block in routes/chits.js was removed (323 lines).
+
+## Code conflicts (19)
+| File | main changed | branch changed | joined as | proves main | proves branch |
+|---|---|---|---|---|---|
+| lib/ctpkeys.js | `_reset` clears `warnedPeers` | `held` map per env name | both cleared | ctp-conformance 21/21 | network-door 34 |
+| lib/rail-status.js | header: moveStatus lives in lib/chit-move | header: ctpreturn mirror calls it | one header line naming both | rail-status 27/27 | ctp-return-path (mirror) |
+| lib/ctpquery.js | RAIL-140 farRefusal/unreachable | exports NETWORK_WANTS | both | ctp-query 16/16 | network-door |
+| lib/ctpaddress.js | RAIL-142: every row, `known` set, placeStamp | domain+label in the map; inactive = remote, refused in words | main's structure; the map carries domain/label; an inactive stamp is `local:false, inactive:true` (mint refuses CTP_PEER_INACTIVE, playbook C5) not `resolved:false`; domain lookup LIMIT 2 so the two-active refusal still works | ctp-address 22/24 (2 open, below) | SIT run 4 E-table |
+| lib/ctpenvelope.js | RAIL-141: `no()` objects, hashOrNull, no verifier = refusal | `kind:'event'` envelopes | main's structure + the event kind; branch's duplicate boundary/seal helpers dropped | ctp-conformance | ctp-return-door 10/10 |
+| lib/mint.js | RAIL-142 awayCopies/refuseUnresolved, refusal(), refusedCrossing log | sendAway (inactive refusal, RAIL-98 recipient bridge id, RAIL-99 farEndFailure 409/502) | both: deliver → awayCopies → sendAway; farEndFailure + refusedCrossing log (detail merged) | crm-traded 5 | send-seller-currency 7/7, money-origin 4/4 |
+| lib/amend.js | RAIL-147 `inside` step; RAIL-133 no value echoed | prepare()/guard() extracted for proposals | branch's split + main's `inside` runs before guard; main's error shape (frozen legacy has no code) | rail147-amend-cost-gate 62/62 | chit-proposals (2 open, below) |
+| lib/tax.js, lib/tax-engine.browser.js | ACC-191 adopted from engines v1.72.2 (holdsTax) | SIT-only shim, same formula | main (identical arithmetic: `priceIncludesTax && levied`) | money-origin | — (shim retired) |
+| lib/entities-contract.js | 22 of 24 (lookup retired, api#638) | 24 of 26 (search, lookup) | 23 of 25 (search declared, lookup gone) | api-problem-entities (2 open, below) | net-39-search |
+| lib/relationships-contract.js (add/add) | API-4 contract, 14 operations | 6 supplier doors + remote words | main's, plus `remoteRefused` + `ADDRESS_GATE_STATUSES` | api-problem-relationships 1252/1252 | net-39-search (1 open, below) |
+| routes/ctp.js | RAIL-138/139/140: sealedBy first, senderOf, deliverOnce (repeat 200), fixed manifest note | RAIL-97 membership in manifest, RAIL-104 openEnvelope re-read, RAIL-107 localParties stub, event door, bell | main's door order; manifest adds membership + network_fingerprint; openEnvelope over sealed.publicKey; deliverOnce on the LOCALISED copy; `repeat` and `duplicate` both said; onChitArrived bell | api-problem-ctp (all), ctp-door (3 open) | ctp-return-door 10/10, network-door 34 |
+| routes/chits.js (15 hunks) | chit-move/chit-crossing lift, RAIL-146 cost strip, RAIL-147 cost door, RAIL-133 words, S34 shapes, CTRY-76 sendPaper, logMessageSent in tx | RAIL-106 emits, proposals on amend, REP-50 per-currency rollup, ctp marks on reads, API-6 words, checkCounterInvoice | see above; rollup = (key, currency) rows → cost-view strip per row → fold by key (by_currency + cost_hidden); amend = proposeAmendment first, then costWrite.recordAmend; GET /:chit_id and /messages carry ctp_unconfirmed inside the S34 shapes (ANSWER_KEEP gains the key); reprice/costs say the library's words; checkCounterInvoice restored (main's inline check was auto-dropped by the branch's extraction) | api-problem-chits 3602/3604 (2 open), rail146 (2 open), rail147 | rollup-currency 4/4, chit-proposals (2 open), ctp-return-gaps 29/30 |
+| routes/entities.js | S34 searchRowOf over the old LIKE | NET-39 one search Here and There | branch (decided 25 Oct, proven G4) | api-problem-entities (2 open) | net-39-search 30/31 |
+| routes/relationships.js (24 hunks) | API-4 words/partyRefusal/removeFault, SEC-91 | checkedSupplier, remoteAddress gate, remote-catalogue | main everywhere + `remoteAddress` on POST /suppliers + remote-catalogue after SEC-91; main's express-validator chains restored (the branch had deleted them) | api-problem-relationships | net-39-search (1 open) |
+| routes/attachments.js | API-4 contract/problem | RAIL-106 attachment by reference | both | api-problem-attachments | ctp-return-gaps G3 |
+
+## Tests and generated files (22)
+tests/*: main's version, then the branch's additions (api-problem-ctp stubs both; api-problem-entities both requires; problem-world `genericOk` + `added`; rail-actions main's RAIL-133 tolerance; api-problem-chits main's scenes — the branch's four amend scenes NOT added, they need frozen legacy rows). scripts/guards.cjs lists the branch's eight offline tests. Generated JSON: main's file, then the branch's key-level deltas against the base (`merge3.cjs`: api-legacy +5 routes +1 changed, hardening-evidence +2, evidence-areas +5; the rest unchanged), serialised at each file's own indent. docs/API-REGISTER.md, api-register.json, SEAMS.md, ERROR-CODES/error-codes.json, readability.ratchet.json, round-trips.budget.json, fn-size.json: MAIN's — NOT regenerated yet (step 5 open). MANIFEST.md: both rows (b790 renumbered to row 14).
+
+## Migrations (none renumbered, none run)
+b790_network_member, b791_ctp_return_path, b792_ctp_event_kinds_disputes, b793_ctp_event_kinds_gaps, b796_chit_proposal. Main stops at b783; b784–b789 and b794–b795 are gaps, no clash. ⚠️ b790 already RAN in production on 25 Oct (db ledger: five tables lacked RLS, DB-85 proposed b797 in plain text) — Athi decides the remaining four; the fresh-db apply on cb-local-pg was NOT run in this pass (RAM, time).
+
+## Open after this pass (each with its cause)
+1. ctp-door 3: main's door tests stub `identities` for senderOf; with RAIL-107 the sender is first localised (remote-party.stubFor) and the stubs answer no row → re-aim the stubs (RAIL-107 + RAIL-138 b together).
+2. ctp-internal-wire 3: pins `alreadyHeld` (RAIL-105 helper, replaced by deliverOnce's pre-read) and RAIL-104 directory throttling → re-aim at deliverOnce / check lib/ctpdirectory kept the branch's retry.
+3. ctp-address 2: source-pinned tests read deliver()'s body for `await sendAway(` and the CTP_UNRESOLVABLE order → re-aim the slice (the call is there; the body cut moved).
+4. chit-proposals 2 + ctp-window-shopping 1: the amend door on main reads the copy (RAIL-128 404 before the rail verdict) with SQL the branch's stand-in does not answer → add the stub answer.
+5. api-problem-chits 2: reprice/costs now say the library's words (API-6, the branch's scenes) and main's frozen legacy for those two has the generic sentence → freeze the new sentence by hand (indent 1) or drop words:true (then the branch's scenes fail). Decision for the coordinator: which legacy is the frozen one.
+6. api-problem-entities 2: GET /search's recorded 200 holds keys outside the op's `out` list and evidence-areas' output_allowlist row → regenerate contract tests/evidence for the NET-39 shape.
+7. rail146 2: deepStrictEqual key order vs the composed group (by_currency added in the expectation; still red — compare by value).
+8. net-39-search 1: pins the POST /suppliers chain text (remoteAddress position) → re-aim.
+9. ctp-return-gaps 1 (413 counts 0 vs 1) and ctp-return-path 1 (opens an event with `verify: undefined`: RAIL-141 a refuses that now — the test must pass a verifier).
+10. Not done: register/ratchet/SEAMS regeneration, fresh-db apply, full guards.cjs, readability ratchet, PR §6 numbers by hand.

@@ -32,11 +32,14 @@ const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-eviden
 const MOUNT = '/api/chits';
 /** the route file this mount serves (named in full so the graph links this test to it) */
 const ROUTE_FILE = 'routes/chits.js';
-const MINE = (route) => route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT);
+/** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
+const PROPOSAL_DOOR = new RegExp('/proposals(/|$)');
+const MINE = (route) => (route.includes(' ' + MOUNT + '/') || route.endsWith(' ' + MOUNT)) && !PROPOSAL_DOOR.test(route);
 const argv = process.argv.slice(2);
 const flagValue = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const PROBLEM_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id', 'field', 'params', 'errors'];
 const REQUIRED_FIELDS = ['type', 'title', 'status', 'code', 'detail', 'hint', 'request_id'];
+const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
 
 let passed = 0;
 let failed = 0;
@@ -641,6 +644,8 @@ function checkProblemBody(label, answer) {
   check(label + ': content-type is application/problem+json', /application\/problem\+json/.test(answer.type), answer.type);
   check(label + ': has every Problem field', answer.json && REQUIRED_FIELDS.every((name) => answer.json[name] !== undefined), answer.json);
   check(label + ': status in the body equals the HTTP status', answer.json && answer.json.status === answer.status);
+  /* API-6 (25 Oct): a 4xx is a refusal the caller can act on, so its detail and message are the thrower's own sentence, never the generic words of a fault (amend hid lib/amend's sentence this way) */
+  if (answer.status < 500 && answer.json) check(label + ': a 4xx says its own sentence, never the generic fault words', !GENERIC_SENTENCE.test(String(answer.json.detail)) && !GENERIC_SENTENCE.test(String(answer.json.message)), [answer.json.detail, answer.json.message]);
 }
 
 function checkLegacy(label, answer, frozen) {

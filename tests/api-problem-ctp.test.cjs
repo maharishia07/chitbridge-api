@@ -60,12 +60,17 @@ function rowsFor(sql) {
   }
   /* RAIL-138 (b): the sender's id and bridge id are looked up here too; this world's sender is a party of the peer with no row here */
   if (/SELECT identity_id FROM identities WHERE (identity_id|bridge_id) = \$1$/.test(sql)) return { rows: [] };
+  if (/f_installation_of/.test(sql) && /FROM identities/.test(sql)) return { rows: [] }; /* RAIL-107: the sender has no row here yet: a stub is made */
+  if (/^INSERT INTO identities/.test(sql)) return { rows: [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX' }] };
+  if (/f_place_entity/.test(sql)) return { rows: [] };
+  if (/FROM identities WHERE bridge_id = ANY/.test(sql)) return { rows: [] };
   if (/FROM identities/.test(sql)) return { rows: world.to ? [world.to] : [] };
   if (/f_ctp_may_deliver/.test(sql)) {
     if (world.crossThrows) throw new Error(SECRET_SQL);
     return { rows: [{ ok: !!world.mayCross }] };
   }
   if (/ops\.population/.test(sql)) return { rows: [{ code: 'live' }] };
+  if (/SELECT trade_mode FROM entity_profile/.test(sql)) return { rows: [{ trade_mode: 'export' }] }; /* NET-39: the shop asked about sells outside, so its catalogue is answered */
   return { rows: [] };
 }
 
@@ -89,7 +94,9 @@ function installStubs() {
         ? { ok: false, why: world.openWhy }
         : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: '22222222-2222-4222-8222-222222222222', sender_entity_bridge_id: 'CBSEND0001' }), header: {} }
   });
-  mock('lib/ctpquery', { open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
+  /* RAIL-96/97: the route reads which questions are the network's (NETWORK_WANTS) from the real module; the stand-in keeps those lists and replaces only the opener */
+  const realQuery = require(path.join(API, 'lib', 'ctpquery'));
+  mock('lib/ctpquery', { WANTS: realQuery.WANTS, NETWORK_WANTS: realQuery.NETWORK_WANTS, open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
   mock('lib/mint', {
     deliver: async () => {
       if (world.storeFails) throw Object.assign(new Error(SECRET_SQL), { code: '53100' });

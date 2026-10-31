@@ -31,6 +31,7 @@ const auth = require('../middleware/auth');
 const storage = require('../lib/storage');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract'); // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
+const ctpReturn = require('../lib/ctpreturn'); // RAIL-106: a file on a chit is told to the parties on other installations, who pull it
 
 // POST /api/attachments — { chit_id, message_id?, line_index?, name, mime, data_base64 }
 // PER-ENTITY copies (b66): replicate one row per participant so each owns its own. Audience = all chit participants
@@ -46,6 +47,7 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
       db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id])
     );
     if (!rosterRow.rows.length) return problem(req, res, { status: 403, ...words.notParticipant() });
+    let internalNote = false;
     let participants = [...new Set((rosterRow.rows[0].all_recipients || []).map((item) => item.entity_id).filter(Boolean))];
     if (!participants.includes(entity_id)) participants.push(entity_id);
     if (message_id) {
@@ -54,7 +56,10 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
         db.query(`SELECT visibility_entity_id FROM chit_messages WHERE message_id = $1 AND chit_id = $2 LIMIT 1`, [message_id, chit_id])
       );
       const vis = mv.rows[0] && mv.rows[0].visibility_entity_id;
-      if (vis) participants = [vis];
+      if (vis) {
+        participants = [vis];
+        internalNote = true;
+      }
     }
 
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
@@ -73,7 +78,11 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
       participants,
       forEntity: entity_id
     });
-    res.json({ id, name, mime: mime || 'application/octet-stream', size: buffer.length });
+    /* ⭐ RAIL-106: by REFERENCE (id, name, type, size, sha-256), never the bytes: the party elsewhere pulls them over the CTP door, from the copy this entity holds. An internal note's file stays here. */
+    const crossed = internalNote
+      ? { queued: 0 }
+      : await ctpReturn.onAttachment(entity_id, { chit_id, message_id: message_id || null, line_index: line_index == null ? null : parseInt(line_index), attachment_id: id, name: String(name).slice(0, 200), mime: String(mime || 'application/octet-stream').slice(0, 120), size: buffer.length, sha256: require('crypto').createHash('sha256').update(buffer).digest('hex') });
+    res.json({ id, name, mime: mime || 'application/octet-stream', size: buffer.length, ...ctpReturn.answerOf(crossed) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Upload failed')); /* the cause is logged with the request id; the caller gets the one generic sentence */
   }

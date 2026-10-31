@@ -155,6 +155,42 @@
    "since": "2026-10-22"
   },
   {
+   "code": "AMEND_LINE_INDEX",
+   "status": "400",
+   "title": "Bad line number",
+   "shopkeeper": "The correction does not say which line it corrects.",
+   "hint": "Send the line number (line_index) or the line id.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_LINE_NEEDS_ITEM",
+   "status": "400",
+   "title": "Replacement line has no item",
+   "shopkeeper": "A replacement line needs an item. To remove the line, send line: null.",
+   "hint": "Name the item on the line, or remove the line.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_NOTHING",
+   "status": "400",
+   "title": "Nothing to amend",
+   "shopkeeper": "The correction names no line.",
+   "hint": "Send at least one line to correct.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "AMEND_NOT_A_NUMBER",
+   "status": "400",
+   "title": "Quantity or price not a number",
+   "shopkeeper": "A quantity or a price on the correction is not a number.",
+   "hint": "Type a plain number and try again.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
    "code": "ANSWERED",
    "status": "409",
    "title": "Already answered",
@@ -1199,6 +1235,87 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CTP_EVENT_ATTACHMENT_UNREADABLE",
+   "status": "502",
+   "title": "File not taken",
+   "shopkeeper": "The file announced for this chit could not be fetched or did not arrive as announced, so it was not stored.",
+   "hint": "The sending installation tries again; check it is reachable.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_BAD",
+   "status": "400",
+   "title": "Change not readable",
+   "shopkeeper": "The change sent for this chit could not be read.",
+   "hint": "The sending installation must send a status or a message with its sequence.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_CHANGE_NOT_APPLIED",
+   "status": "409",
+   "title": "Change not applied here",
+   "shopkeeper": "This installation could not apply the agreed version to its own copy.",
+   "hint": "Check the lines on this side; the sender can propose again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NOT_YET",
+   "status": "404",
+   "title": "Not here yet",
+   "shopkeeper": "What this change refers to has not arrived on this installation yet, so it was not applied.",
+   "hint": "The sender tries again in order.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NO_CHIT",
+   "status": "404",
+   "title": "Chit not held here",
+   "shopkeeper": "This business holds no copy of that chit, so the change was not applied.",
+   "hint": "Check the chit was delivered here first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_NO_DISPUTE",
+   "status": "404",
+   "title": "Dispute not held here",
+   "shopkeeper": "This installation holds no such dispute for that business, so the change was not applied.",
+   "hint": "The dispute must reach this side first; the sender tries again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_PARTY_MISMATCH",
+   "status": "409",
+   "title": "Not a party to this chit",
+   "shopkeeper": "The sender is not one of the businesses on this chit, or not one of its installation's, so its change was refused.",
+   "hint": "Check the business is added with the right address.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_PARTY_UNKNOWN",
+   "status": "404",
+   "title": "Business not known here",
+   "shopkeeper": "No business here stands for the sender, so its change could not be applied.",
+   "hint": "Add the business by its address first.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "CTP_EVENT_TOO_LARGE",
+   "status": "413",
+   "title": "File too large",
+   "shopkeeper": "The file is larger than the limit, so it was not taken.",
+   "hint": "Send a smaller file (the limit is 6 MB).",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CTP_MANIFEST_UNAVAILABLE",
    "status": "500",
    "title": "Manifest unavailable",
@@ -1224,6 +1341,15 @@
    "hint": "Send a CTP/1 query.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_NOT_THIS_INSTALLATION",
+   "status": "409",
+   "title": "Asked the wrong installation",
+   "shopkeeper": "This installation is not the one the question was for; the address held for it is out of date.",
+   "hint": "Refresh the network directory and ask again.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CTP_NO_INSTALLATION",
@@ -1260,6 +1386,15 @@
    "hint": "Deliver it locally.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_PEER_INACTIVE",
+   "status": "409",
+   "title": "Not sent",
+   "shopkeeper": "That business is on an installation we do not deal with now (suspended or retired), so nothing was sent or saved.",
+   "hint": "Ask the operator whether that installation is coming back.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CTP_PEER_KEY_UNREADABLE",
@@ -1359,6 +1494,15 @@
    "hint": "Ask to resolve a business or for its catalogue.",
    "owner_area": "ctp",
    "since": "2026-10-23"
+  },
+  {
+   "code": "CTP_UNREACHABLE",
+   "status": "502",
+   "title": "The other installation did not answer",
+   "shopkeeper": "We could not reach the other installation, so nothing was sent or saved.",
+   "hint": "Send it again when they are back.",
+   "owner_area": "ctp",
+   "since": "2026-10-25"
   },
   {
    "code": "CURRENCY_ENTITY_ONLY",
@@ -2306,6 +2450,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "MESSAGE_TOO_LONG",
+   "status": "413",
+   "title": "Message too long",
+   "shopkeeper": "That message is longer than one message can hold, so nothing was sent.",
+   "hint": "Shorten it, or attach it as a file.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
    "code": "MIGRATION",
    "status": "409",
    "title": "Not switched on yet",
@@ -2774,6 +2927,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "NO_NETWORK_KEY",
+   "status": "500",
+   "title": "No network key here",
+   "shopkeeper": "This installation holds no network root key, so it cannot sign for the network.",
+   "hint": "Set CB_NETWORK_ROOT_KEY on the master installation.",
+   "owner_area": "platform",
+   "since": "2026-10-25"
+  },
+  {
    "code": "NO_OPERATOR",
    "status": "409",
    "title": "Network has no operator",
@@ -3089,6 +3251,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PARTY_CONTACT_NOT_YOURS",
+   "status": "403",
+   "title": "Their contact, not yours",
+   "shopkeeper": "That is their own ChitBridge business, so their phone and e-mail are theirs to change.",
+   "hint": "Ask them to change it on their side.",
+   "owner_area": "relationships",
+   "since": "2026-10-25"
+  },
+  {
    "code": "PAYMENT_ABOVE_QUOTE",
    "status": "422",
    "title": "DEPRECATED 2026-10-29 (FIN-53): Above the quoted amount",
@@ -3285,6 +3456,78 @@
    "hint": "Send less at a time: split the file, or use a smaller picture.",
    "owner_area": "products",
    "since": "2026-10-23"
+  },
+  {
+   "code": "PROPOSAL_BAD",
+   "status": "400",
+   "title": "Proposal not usable",
+   "shopkeeper": "That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take.",
+   "hint": "Read the sentence shown, fix it and try again.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_CLOSED",
+   "status": "409",
+   "title": "Proposal already decided",
+   "shopkeeper": "That proposal is already decided, so it cannot be decided again.",
+   "hint": "Look at the newest round.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_DOMESTIC",
+   "status": "409",
+   "title": "Not an RFQ",
+   "shopkeeper": "Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote.",
+   "hint": "Change this chit directly, or ask for a quote when you compose it.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_FOUND",
+   "status": "404",
+   "title": "No such proposal",
+   "shopkeeper": "There is no such proposal on this chit.",
+   "hint": "Open the chit again and pick one of its rounds.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_SETUP",
+   "status": "503",
+   "title": "Proposals not set up",
+   "shopkeeper": "Proposals are not set up on this installation yet.",
+   "hint": "Ask the operator to apply the update.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NOT_YOURS",
+   "status": "403",
+   "title": "Your own proposal",
+   "shopkeeper": "You made this proposal, so the other side decides it.",
+   "hint": "Wait for the other side.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_NO_COUNTERPARTY",
+   "status": "409",
+   "title": "Nobody to propose to",
+   "shopkeeper": "This chit has no other party, so there is nothing to propose.",
+   "hint": "Change it directly.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
+  },
+  {
+   "code": "PROPOSAL_STALE",
+   "status": "409",
+   "title": "Proposal out of date",
+   "shopkeeper": "A newer round has replaced this one, or the lines or the invoice changed since it was proposed, so it cannot be accepted as it stands.",
+   "hint": "Look at the newest round, or ask for a new one.",
+   "owner_area": "rail",
+   "since": "2026-10-25"
   },
   {
    "code": "PURPOSE_FIXED",

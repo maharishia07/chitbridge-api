@@ -65,11 +65,11 @@ function loadAddress(dbStub) {
       query: async (sql, args) => {
         calls.push(sql);
         if (/FROM installation/i.test(sql)) {
-          return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE' }] };
+          return { rows: [{ installation_key: 'platform-ae', ctp_endpoint: 'https://ae.example/ctp', region: 'AE', active: true }, { installation_key: 'platform-gone', ctp_endpoint: 'https://gone.example/ctp', region: null, active: false }] };
         }
         /* ⚠️ through the SECURITY DEFINER function — a plain entity_governance read would answer nothing */
         if (/ops\.f_installation_of/.test(sql)) {
-          return { rows: [{ installation_key: args[0] === 'far' ? 'platform-ae' : 'platform-0' }] };
+          return { rows: [{ installation_key: args[0] === 'far' ? 'platform-ae' : args[0] === 'gone' ? 'platform-gone' : 'platform-0' }] };
         }
         return { rows: [] };
       },
@@ -80,6 +80,14 @@ function loadAddress(dbStub) {
       const a = await A.resolve('far');
       assert.strictEqual(a.local, false, 'expected remote');
       assert.strictEqual(a.endpoint, 'https://ae.example/ctp');
+    });
+
+    /* SIT run 4 (RAIL-112): a suspended or retired installation dropped out of the map, so its businesses looked LOCAL and their chits never left */
+    await okAsync('an entity on an INACTIVE remote installation stays REMOTE and is marked inactive, never local', async () => {
+      const a = await A.resolve('gone');
+      assert.strictEqual(a.local, false, 'a business on a retired installation is still somebody else');
+      assert.strictEqual(a.inactive, true);
+      assert.strictEqual(a.endpoint, null, 'nothing is sent to it');
     });
 
     await okAsync('an entity on a local installation still resolves LOCAL', async () => {
@@ -129,10 +137,12 @@ function loadAddress(dbStub) {
        [[feedback-improvise-update-cases]] */
     ok('…and settles every remote copy BEFORE any local write, or throws', () => {
       const guard = body.slice(0, body.indexOf("'SELECT chit_deliver"));
-      assert.ok(/transport\.send/.test(guard), 'remote copies must be sent before the local write');
-      assert.ok(/CTP_REFUSED/.test(guard), 'a refusal must carry a named code');
-      assert.ok(/throw e;/.test(guard), 'it must throw, not warn — half a chit is worse than none');
-      assert.ok(/Nothing was written/.test(guard), 'and the message must say the local side was not written');
+      assert.ok(/await sendAway\(/.test(guard) && /transport\.send/.test(src), 'remote copies must be sent before the local write');
+      /* RAIL-99: the refusal is built by farEndFailure (named codes CTP_REFUSED / CTP_UNREACHABLE, in words that say nothing was saved) */
+      const whole = src;
+      assert.ok(/throw farEndFailure\(/.test(src), 'it must throw, not warn — half a chit is worse than none');
+      assert.ok(/CTP_REFUSED/.test(whole) && /CTP_UNREACHABLE/.test(whole), 'a refusal must carry a named code');
+      assert.ok(/nothing was saved here/.test(whole), 'and the message must say the local side was not written');
     });
 
     ok('a DRAFT never crosses an installation boundary', () => {
@@ -206,9 +216,12 @@ function loadAddress(dbStub) {
     };
     const A = loadAddress(stub);
     await okAsync('a party on a switched-off remote installation is unresolved, not "hosted here" (RAIL-142 b)', async () => {
+      /* sit/run6 merge: the rule is unchanged (never "hosted here", nothing written); the SHAPE is SIT run 4's — the party stays REMOTE
+         (local:false) and inactive:true, so lib/mint sendAway refuses it in words (CTP_PEER_INACTIVE, playbook C5) before any write. */
       const a = await A.resolve('off');
-      assert.strictEqual(a.resolved, false, JSON.stringify(a));
-      assert.ok(/switched off/.test(a.why), a.why);
+      assert.strictEqual(a.local, false, JSON.stringify(a));
+      assert.strictEqual(a.inactive, true, JSON.stringify(a));
+      assert.ok(/not active/.test(a.why), a.why);
     });
     await okAsync('a stamp naming no installation is unresolved, not "hosted here" (RAIL-142 b)', async () => {
       const a = await A.resolve('typo');

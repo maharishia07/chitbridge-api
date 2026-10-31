@@ -206,6 +206,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
   /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
@@ -225,6 +227,10 @@ const INFRA_LIBS = [
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
   'till-contract.js',
+  /* API-4 sweep, the proposal doors: their OpenAPI operations (closed bodies and answers) and the library refusals they publish — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'chit-proposals-contract.js',
+  /* API-4 sweep, the supplier doors: their OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'relationships-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',

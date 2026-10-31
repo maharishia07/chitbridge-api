@@ -522,6 +522,14 @@
     422
    ]
   },
+  "GET /api/chits/:chit_id/proposals": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/chits/:chit_id/raida": {
    "cases": 3,
    "failed": 0,
@@ -2304,6 +2312,38 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/chits/:chit_id/raida": {
