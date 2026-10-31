@@ -54320,6 +54320,30 @@
      }
     },
     {
+     "scenario": "create-live-offer-unconfirmed",
+     "status": 428,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
+     }
+    },
+    {
+     "scenario": "create-live-offer-confirmed-not-true",
+     "status": 428,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
+     }
+    },
+    {
      "scenario": "create-name-taken",
      "status": 409,
      "body_keys": {
@@ -54661,6 +54685,18 @@
         "items": []
        }
       ]
+     }
+    },
+    {
+     "scenario": "save-offer-made-live-unconfirmed",
+     "status": 428,
+     "body_keys": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
+     },
+     "fixture": {
+      "error": "Not confirmed",
+      "message": "An offer goes live only after you confirm it. Nothing was changed."
      }
     },
     {

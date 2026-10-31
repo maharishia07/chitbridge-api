@@ -273,6 +273,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_TEMPLATE | varies | No template | Offers after 24 hours need an approved WhatsApp message. | Set one up in Channels. | marketing-results | 2026-10-22 |
 | NO_TOKEN | varies | No token | WhatsApp is not connected, so nothing went out. | Ask the owner to connect WhatsApp in Channels. | marketing-results | 2026-10-22 |
 | OFFER_CLASH | 409 | Offer clash | Another live offer already covers some of the same items. | Pause the other offer, or take those items out of this one. | offer-clash | 2026-10-22 |
+| OFFER_LIVE_UNCONFIRMED | 428 | Not confirmed | This offer is not live yet because you have not confirmed it. | Check what it does and who it is for, then confirm to make it live. | definitions | 2026-10-31 |
 | OFFER_ENDS_BEFORE_START | 400 | Offer ends before it starts | The offer would end before it starts. | Pick an end after the start. | network-offers | 2026-10-23 |
 | OFFER_NOT_LIVE | 409 | Offer not live | Make the offer live before releasing it to your stores. | Make it live, then release. | network-offers | 2026-10-23 |
 | OFFER_NOT_RELEASED | 409 | Offer never released | That offer was never released to your stores. | Release it first. | network-offers | 2026-10-23 |

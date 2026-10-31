@@ -4,8 +4,8 @@
  "counts": {
   "routes": 630,
   "no_does": 620,
-  "not_started": 28,
-  "partial": 450,
+  "not_started": 25,
+  "partial": 453,
   "meets": 152,
   "columns": {
    "strict_input": {
@@ -1206,7 +1206,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 468,
+   "line": 476,
    "hash": "2f1f2eb1c5052ee7",
    "does": "",
    "errors": {
@@ -21672,7 +21672,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 49,
+   "line": 62,
    "hash": "9d37f883df1e3ac1",
    "does": "",
    "errors": {
@@ -41072,8 +41072,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 289,
-   "hash": "888cb025c8866a76",
+   "line": 297,
+   "hash": "ae048163ad86eb46",
    "does": "",
    "errors": {
     "count": 0,
@@ -41082,6 +41082,7 @@
      401,
      409,
      422,
+     428,
      500
     ],
     "codes": []
@@ -41130,6 +41131,7 @@
     401,
     409,
     422,
+    428,
     500
    ],
    "notes": [
@@ -41175,7 +41177,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 529,
+   "line": 537,
    "hash": "839f910941610693",
    "does": "",
    "errors": {
@@ -49138,7 +49140,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 245,
+   "line": 257,
    "hash": "522139faaa0ab757",
    "does": "",
    "errors": {
@@ -49218,7 +49220,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 327,
+   "line": 342,
    "hash": "3c27d75cf0b80028",
    "does": "",
    "errors": {
@@ -49297,13 +49299,15 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 305,
-   "hash": "fe3c0e13b88bfd3f",
+   "line": 317,
+   "hash": "417065f1d66e833e",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -49321,7 +49325,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49350,7 +49354,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-service.js"
    ],
@@ -49376,7 +49380,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 215,
+   "line": 227,
    "hash": "4b363cb3e9243049",
    "does": "",
    "errors": {
@@ -49457,8 +49461,8 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 193,
-   "hash": "cf63bbe4e1b64f1a",
+   "line": 205,
+   "hash": "e1f249fa4fc4cb6f",
    "does": "",
    "errors": {
     "count": 0,
@@ -49483,7 +49487,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49512,7 +49516,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-service.js"
    ],
@@ -56001,8 +56005,8 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 357,
-   "hash": "f9fe1e2a35b40d05",
+   "line": 365,
+   "hash": "47c980784df872d2",
    "does": "",
    "errors": {
     "count": 0,
@@ -56013,6 +56017,7 @@
      404,
      409,
      422,
+     428,
      500
     ],
     "codes": []
@@ -56041,7 +56046,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -56064,6 +56069,7 @@
     404,
     409,
     422,
+    428,
     500
    ],
    "notes": [
@@ -57322,8 +57328,8 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 146,
-   "hash": "208ec110ba400137",
+   "line": 159,
+   "hash": "14fcb960e1b5cc72",
    "does": "",
    "errors": {
     "count": 0,
@@ -57348,7 +57354,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -57377,7 +57383,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-service.js"
    ],

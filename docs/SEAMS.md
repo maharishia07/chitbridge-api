@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 140 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
-| 97 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 94 | `words` | `variant.browser.js` |  |
+| 98 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 95 | `words` | `variant.browser.js` |  |
 | 93 | `read` | `books-cashflow.js` | Trips: |
 | 86 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -26,9 +26,9 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 61 | `here` | `screen-id.js` |  |
 | 60 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 60 | `next` | `dayopen.js` | the next thing to do — |
 | 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 59 | `next` | `dayopen.js` | the next thing to do — |
 | 57 | `items` | `books-store.js` | PERF1: |
 | 56 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 54 | `entry` | `books-store.js` |  |
@@ -71,12 +71,12 @@ of file each thing is; this says what already does the job.
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
+| 30 | `sentence` | `one-person.js` |  |
 | 30 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 30 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 30 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 30 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 29 | `lines` | `cart.js` |  |
-| 29 | `sentence` | `one-person.js` |  |
 | 29 | `changes` | `books-store.js` |  |
 | 29 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
@@ -191,6 +191,7 @@ of file each thing is; this says what already does the job.
 | 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
 | 12 | `units` | `cart.js` |  |
+| 12 | `link` | `chit-sheet.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 12 | `post` | `books-manual.js` | POST /events — |
@@ -202,7 +203,6 @@ of file each thing is; this says what already does the job.
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `when` | `cap-settings.js` |  |
-| 11 | `link` | `chit-sheet.js` |  |
 | 11 | `safe` | `country-profiles.js` | text made safe for HTML — |
 | 11 | `confirm` | `lab-kit.js` | opts: |
 | 11 | `stored` | `one-person.js` |  |
