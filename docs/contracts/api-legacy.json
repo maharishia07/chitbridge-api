@@ -20374,11 +20374,11 @@
      "status": 403,
      "body_keys": {
       "error": "Failed to read the register",
-      "message": "Something went wrong — please try again."
+      "message": "Nope."
      },
      "fixture": {
       "error": "Failed to read the register",
-      "message": "Something went wrong — please try again."
+      "message": "Nope."
      }
     }
    ]
@@ -21448,11 +21448,11 @@
      "status": 400,
      "body_keys": {
       "error": "Failed to record cost",
-      "message": "Something went wrong — please try again."
+      "message": "No rows."
      },
      "fixture": {
       "error": "Failed to record cost",
-      "message": "Something went wrong — please try again."
+      "message": "No rows."
      }
     },
     {
@@ -22868,11 +22868,11 @@
      "status": 409,
      "body_keys": {
       "error": "Reprice failed",
-      "message": "Something went wrong — please try again."
+      "message": "No."
      },
      "fixture": {
       "error": "Reprice failed",
-      "message": "Something went wrong — please try again."
+      "message": "No."
      }
     },
     {
@@ -55391,6 +55391,1674 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "list-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Proposals could not be read",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Proposals could not be read",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "list-viewer-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\".",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "propose-not-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-domestic-chit",
+     "status": 409,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are for deals with a business on another installation, or a chit made as an RFQ (ask for a quote). On this chit, change it directly.",
+      "code": "PROPOSAL_DOMESTIC",
+      "type": "https://chitbridge.com/problems/proposal_domestic",
+      "title": "Not an RFQ",
+      "status": 409,
+      "detail": "Proposals are for deals with a business on another installation, or a chit made as an RFQ (ask for a quote). On this chit, change it directly.",
+      "hint": "Change this chit directly, or ask for a quote when you compose it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are for deals with a business on another installation, or a chit made as an RFQ (ask for a quote). On this chit, change it directly.",
+      "code": "PROPOSAL_DOMESTIC",
+      "type": "https://chitbridge.com/problems/proposal_domestic",
+      "title": "Not an RFQ",
+      "status": 409,
+      "detail": "Proposals are for deals with a business on another installation, or a chit made as an RFQ (ask for a quote). On this chit, change it directly.",
+      "hint": "Change this chit directly, or ask for a quote when you compose it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-says-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Say what you are asking for: the lines and quantities, or a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are asking for: the lines and quantities, or a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Say what you are asking for: the lines and quantities, or a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are asking for: the lines and quantities, or a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-quantity-not-a-number",
+     "status": 400,
+     "body_keys": {
+      "error": "Not done",
+      "message": "A quantity must be a number.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "A quantity must be a number.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "A quantity must be a number.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "A quantity must be a number.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-terms-say-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Say what you are proposing: a date, a scope, a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are proposing: a date, a scope, a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Say what you are proposing: a date, a scope, a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are proposing: a date, a scope, a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price_total is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price_total",
+      "errors": [
+       {
+        "field": "price_total",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price_total is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price_total is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price_total",
+      "errors": [
+       {
+        "field": "price_total",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price_total is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "propose-lines-not-a-list",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "lines must be a array.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "lines",
+      "errors": [
+       {
+        "field": "lines",
+        "code": "WRONG_VALUE",
+        "detail": "lines must be a array."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "lines must be a array.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "lines",
+      "errors": [
+       {
+        "field": "lines",
+        "code": "WRONG_VALUE",
+        "detail": "lines must be a array."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "propose-nobody-else-on-the-chit",
+     "status": 409,
+     "body_keys": {
+      "error": "Nobody to propose to",
+      "message": "This chit has no other party, so there is nothing to propose: change it directly.",
+      "code": "PROPOSAL_NO_COUNTERPARTY",
+      "type": "https://chitbridge.com/problems/proposal_no_counterparty",
+      "title": "Nobody to propose to",
+      "status": 409,
+      "detail": "This chit has no other party, so there is nothing to propose: change it directly.",
+      "hint": "Change it directly.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Nobody to propose to",
+      "message": "This chit has no other party, so there is nothing to propose: change it directly.",
+      "code": "PROPOSAL_NO_COUNTERPARTY",
+      "type": "https://chitbridge.com/problems/proposal_no_counterparty",
+      "title": "Nobody to propose to",
+      "status": 409,
+      "detail": "This chit has no other party, so there is nothing to propose: change it directly.",
+      "hint": "Change it directly.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Proposal failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Proposal failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-viewer-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "propose-line-without-item",
+     "status": 400,
+     "body_keys": {
+      "error": "Not done",
+      "message": "A replacement line needs an item. To remove the line, send line: null.",
+      "code": "AMEND_LINE_NEEDS_ITEM",
+      "type": "https://chitbridge.com/problems/amend_line_needs_item",
+      "title": "Replacement line has no item",
+      "status": 400,
+      "detail": "A replacement line needs an item. To remove the line, send line: null.",
+      "hint": "Name the item on the line, or remove the line.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "A replacement line needs an item. To remove the line, send line: null.",
+      "code": "AMEND_LINE_NEEDS_ITEM",
+      "type": "https://chitbridge.com/problems/amend_line_needs_item",
+      "title": "Replacement line has no item",
+      "status": 400,
+      "detail": "A replacement line needs an item. To remove the line, send line: null.",
+      "hint": "Name the item on the line, or remove the line.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "accept-not-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-no-such-round",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such proposal on this chit.",
+      "code": "PROPOSAL_NOT_FOUND",
+      "type": "https://chitbridge.com/problems/proposal_not_found",
+      "title": "No such proposal",
+      "status": 404,
+      "detail": "No such proposal on this chit.",
+      "hint": "Open the chit again and pick one of its rounds.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such proposal on this chit.",
+      "code": "PROPOSAL_NOT_FOUND",
+      "type": "https://chitbridge.com/problems/proposal_not_found",
+      "title": "No such proposal",
+      "status": 404,
+      "detail": "No such proposal on this chit.",
+      "hint": "Open the chit again and pick one of its rounds.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-my-own-round",
+     "status": 403,
+     "body_keys": {
+      "error": "Not done",
+      "message": "You made this proposal; the other side decides it.",
+      "code": "PROPOSAL_NOT_YOURS",
+      "type": "https://chitbridge.com/problems/proposal_not_yours",
+      "title": "Your own proposal",
+      "status": 403,
+      "detail": "You made this proposal; the other side decides it.",
+      "hint": "Wait for the other side.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "You made this proposal; the other side decides it.",
+      "code": "PROPOSAL_NOT_YOURS",
+      "type": "https://chitbridge.com/problems/proposal_not_yours",
+      "title": "Your own proposal",
+      "status": 403,
+      "detail": "You made this proposal; the other side decides it.",
+      "hint": "Wait for the other side.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-round-already-decided",
+     "status": 409,
+     "body_keys": {
+      "error": "Not done",
+      "message": "This proposal is already rejected.",
+      "code": "PROPOSAL_CLOSED",
+      "type": "https://chitbridge.com/problems/proposal_closed",
+      "title": "Proposal already decided",
+      "status": 409,
+      "detail": "This proposal is already rejected.",
+      "hint": "Look at the newest round.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "This proposal is already rejected.",
+      "code": "PROPOSAL_CLOSED",
+      "type": "https://chitbridge.com/problems/proposal_closed",
+      "title": "Proposal already decided",
+      "status": 409,
+      "detail": "This proposal is already rejected.",
+      "hint": "Look at the newest round.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-older-round",
+     "status": 409,
+     "body_keys": {
+      "error": "Not done",
+      "message": "A newer round has replaced this one, so it cannot be accepted. Look at the newest.",
+      "code": "PROPOSAL_STALE",
+      "type": "https://chitbridge.com/problems/proposal_stale",
+      "title": "Proposal out of date",
+      "status": 409,
+      "detail": "A newer round has replaced this one, so it cannot be accepted. Look at the newest.",
+      "hint": "Look at the newest round, or ask for a new one.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "A newer round has replaced this one, so it cannot be accepted. Look at the newest.",
+      "code": "PROPOSAL_STALE",
+      "type": "https://chitbridge.com/problems/proposal_stale",
+      "title": "Proposal out of date",
+      "status": 409,
+      "detail": "A newer round has replaced this one, so it cannot be accepted. Look at the newest.",
+      "hint": "Look at the newest round, or ask for a new one.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-a-request",
+     "status": 409,
+     "body_keys": {
+      "error": "Not done",
+      "message": "This is a request. Answer it with a priced proposal.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 409,
+      "detail": "This is a request. Answer it with a priced proposal.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "This is a request. Answer it with a priced proposal.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 409,
+      "detail": "This is a request. Answer it with a priced proposal.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-stale-round",
+     "status": 409,
+     "body_keys": {
+      "error": "Not done",
+      "message": "The lines or the invoice have changed since this was proposed, so it cannot be accepted as it stands. Ask for a new round.",
+      "code": "PROPOSAL_STALE",
+      "type": "https://chitbridge.com/problems/proposal_stale",
+      "title": "Proposal out of date",
+      "status": 409,
+      "detail": "The lines or the invoice have changed since this was proposed, so it cannot be accepted as it stands. Ask for a new round.",
+      "hint": "Look at the newest round, or ask for a new one.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "The lines or the invoice have changed since this was proposed, so it cannot be accepted as it stands. Ask for a new round.",
+      "code": "PROPOSAL_STALE",
+      "type": "https://chitbridge.com/problems/proposal_stale",
+      "title": "Proposal out of date",
+      "status": 409,
+      "detail": "The lines or the invoice have changed since this was proposed, so it cannot be accepted as it stands. Ask for a new round.",
+      "hint": "Look at the newest round, or ask for a new one.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "accept-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "signed is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "signed",
+      "errors": [
+       {
+        "field": "signed",
+        "code": "UNKNOWN_FIELD",
+        "detail": "signed is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "signed is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "signed",
+      "errors": [
+       {
+        "field": "signed",
+        "code": "UNKNOWN_FIELD",
+        "detail": "signed is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "accept-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Decision failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Decision failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "counter-not-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-chit-not-held",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Chit not found",
+      "code": "NOT_FOUND",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "detail": "Chit not found",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-says-nothing",
+     "status": 400,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Say what you are asking for: the lines and quantities, or a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are asking for: the lines and quantities, or a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Say what you are asking for: the lines and quantities, or a note.",
+      "code": "PROPOSAL_BAD",
+      "type": "https://chitbridge.com/problems/proposal_bad",
+      "title": "Proposal not usable",
+      "status": 400,
+      "detail": "Say what you are asking for: the lines and quantities, or a note.",
+      "hint": "Read the sentence shown, fix it and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "currency_code is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "currency_code",
+      "errors": [
+       {
+        "field": "currency_code",
+        "code": "UNKNOWN_FIELD",
+        "detail": "currency_code is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "currency_code is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "currency_code",
+      "errors": [
+       {
+        "field": "currency_code",
+        "code": "UNKNOWN_FIELD",
+        "detail": "currency_code is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "counter-nobody-else-on-the-chit",
+     "status": 409,
+     "body_keys": {
+      "error": "Nobody to ask",
+      "message": "This chit has no other party.",
+      "code": "PROPOSAL_NO_COUNTERPARTY",
+      "type": "https://chitbridge.com/problems/proposal_no_counterparty",
+      "title": "Nobody to propose to",
+      "status": 409,
+      "detail": "This chit has no other party.",
+      "hint": "Change it directly.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Nobody to ask",
+      "message": "This chit has no other party.",
+      "code": "PROPOSAL_NO_COUNTERPARTY",
+      "type": "https://chitbridge.com/problems/proposal_no_counterparty",
+      "title": "Nobody to propose to",
+      "status": 409,
+      "detail": "This chit has no other party.",
+      "hint": "Change it directly.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "counter-write-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Counter-proposal failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Counter-proposal failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "answers": [
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-set-up",
+     "status": 503,
+     "body_keys": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not done",
+      "message": "Proposals are not set up on this installation yet.",
+      "code": "PROPOSAL_NOT_SETUP",
+      "type": "https://chitbridge.com/problems/proposal_not_setup",
+      "title": "Proposals not set up",
+      "status": 503,
+      "detail": "Proposals are not set up on this installation yet.",
+      "hint": "Ask the operator to apply the update.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "chit_id",
+      "errors": [
+       {
+        "field": "chit_id",
+        "code": "WRONG_VALUE",
+        "detail": "chit_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       },
+       {
+        "field": "proposal_id",
+        "code": "WRONG_VALUE",
+        "detail": "proposal_id must match pattern \"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12})$\"."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "reject-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "reason is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "reason",
+      "errors": [
+       {
+        "field": "reason",
+        "code": "UNKNOWN_FIELD",
+        "detail": "reason is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "reason is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "reason",
+      "errors": [
+       {
+        "field": "reason",
+        "code": "UNKNOWN_FIELD",
+        "detail": "reason is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "reject-read-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Decision failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Decision failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reject-no-such-round",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such proposal on this chit.",
+      "code": "PROPOSAL_NOT_FOUND",
+      "type": "https://chitbridge.com/problems/proposal_not_found",
+      "title": "No such proposal",
+      "status": 404,
+      "detail": "No such proposal on this chit.",
+      "hint": "Open the chit again and pick one of its rounds.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such proposal on this chit.",
+      "code": "PROPOSAL_NOT_FOUND",
+      "type": "https://chitbridge.com/problems/proposal_not_found",
+      "title": "No such proposal",
+      "status": 404,
+      "detail": "No such proposal on this chit.",
+      "hint": "Open the chit again and pick one of its rounds.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "reject-viewer-refused",
+     "status": 403,
+     "body_keys": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not permitted",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/chit_not_permitted",
+      "title": "Not allowed on this chit",
+      "status": 403,
+      "code": "CHIT_NOT_PERMITTED",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
      }
     }
    ]

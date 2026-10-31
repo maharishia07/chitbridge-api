@@ -2956,7 +2956,10 @@
           "delivery_summary": {
             "type": "object"
           },
-          "bill_private": {}
+          "bill_private": {},
+          "ctp_unconfirmed": {
+            "type": "object"
+          }
         },
         "additionalProperties": false
       },
@@ -2993,6 +2996,10 @@
         {
           "path": "delivery_summary",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "ctp_unconfirmed",
+          "reason": "RAIL-106: present only when a change of mine is not yet confirmed by the party on another installation (lib/ctpreturn markOf: count, since, failed, why, words)"
         }
       ],
       "example": {
@@ -4072,7 +4079,8 @@
               "required": [
                 "key",
                 "chits",
-                "total_value"
+                "total_value",
+                "by_currency"
               ],
               "properties": {
                 "key": {
@@ -4092,6 +4100,35 @@
                 },
                 "cost_hidden": {
                   "type": "boolean"
+                },
+                "by_currency": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "currency_code",
+                      "chits",
+                      "total_value"
+                    ],
+                    "properties": {
+                      "currency_code": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "chits": {
+                        "type": "number"
+                      },
+                      "total_value": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  }
                 }
               },
               "additionalProperties": false
@@ -6419,6 +6456,12 @@
           },
           "count": {
             "type": "number"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           }
         },
         "additionalProperties": false
@@ -6428,6 +6471,10 @@
         {
           "path": "results[]",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "answers[]",
+          "reason": "NET-39 (sit/run6): who answered the search Here and There and who did not, in words (lib/network-search), passed through"
         }
       ],
       "example": {
@@ -12879,12 +12926,20 @@
           },
           "message": {
             "type": "string"
+          },
+          "ctp": {
+            "type": "object"
           }
         },
         "additionalProperties": false
       },
       "observed": 2,
-      "open": [],
+      "open": [
+        {
+          "path": "ctp",
+          "reason": "RAIL-106: present only when a party on another installation was told ({ queued, seq } or { queued: 0, why }); spread from lib/ctpreturn answerOf, so no recorded answer shows it"
+        }
+      ],
       "example": {
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/disputes",
         "body": {
@@ -12919,12 +12974,20 @@
           },
           "created_at": {
             "type": "string"
+          },
+          "ctp": {
+            "type": "object"
           }
         },
         "additionalProperties": false
       },
       "observed": 1,
-      "open": [],
+      "open": [
+        {
+          "path": "ctp",
+          "reason": "RAIL-106: present only when a party on another installation was told ({ queued, seq } or { queued: 0, why }); spread from lib/ctpreturn answerOf, so no recorded answer shows it"
+        }
+      ],
       "example": {
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/messages",
         "body": {
@@ -15431,12 +15494,20 @@
           },
           "message": {
             "type": "string"
+          },
+          "ctp": {
+            "type": "object"
           }
         },
         "additionalProperties": false
       },
       "observed": 2,
-      "open": [],
+      "open": [
+        {
+          "path": "ctp",
+          "reason": "RAIL-106: present only when a party on another installation was told ({ queued, seq } or { queued: 0, why }); spread from lib/ctpreturn answerOf, so no recorded answer shows it"
+        }
+      ],
       "example": {
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/disputes/22222222-2222-4222-8222-222222222222/resolve",
         "body": {
@@ -15604,6 +15675,9 @@
           },
           "books": {
             "type": "object"
+          },
+          "ctp": {
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -15613,6 +15687,10 @@
         {
           "path": "books",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "ctp",
+          "reason": "RAIL-106: present only when a party on another installation was told ({ queued, seq } or { queued: 0, why }); spread from lib/ctpreturn answerOf, so no recorded answer shows it"
         }
       ],
       "example": {
@@ -15808,6 +15886,9 @@
           "mime": {},
           "size": {
             "type": "number"
+          },
+          "ctp": {
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -15817,6 +15898,10 @@
         {
           "path": "name",
           "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "ctp",
+          "reason": "RAIL-106: present only when a party on another installation was told ({ queued, seq } or { queued: 0, why }); spread from lib/ctpreturn answerOf, so no recorded answer shows it"
         }
       ],
       "example": {

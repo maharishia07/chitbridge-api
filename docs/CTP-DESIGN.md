@@ -317,6 +317,21 @@ catalogue — the same data already on your public storefront, and never the own
 
 ## 6.5 ⚠️⚠️ THE RETURN PATH — the unbuilt half, and the authority that shapes it (2026-09-16)
 
+> **DECIDED AND BUILT 2026-10-25 (RAIL-106, takes in RAIL-114; Athi: "either one installation or multiple installations, it has to behave the same way", DECISIONS.md 2026-10-25 09:10).**
+> The four questions below are answered; the text under them is kept as the history of the question.
+> 1. **What crosses: a shadow copy.** A change travels as a signed EVENT envelope (`kind: 'event'`, an `event` where a delivery has a `copy`; lib/ctpenvelope.js `buildEvent`) through the same door as a delivery
+>    (POST /api/ctp/deliver: peer, key, crossing rule, seal, membership pass). The receiver applies it to ITS OWN rows (lib/ctpreturn.js `apply`): a shadow of the other party's `chit_status` row
+>    (written by lib/rail-status.js `mirror`, the one file that sets a status) and its own copy of an external message (`postMessageCopies`, with the id it was sent with). Nobody writes into another database;
+>    nothing owned crosses (an internal note, a workflow stage, a membership never do).
+> 2. **Queue and say so.** Saved locally first, then queued (`ctp_event_out`, migration b791) and resent by tools/ctp-return.cjs until the far side accepts (30 s doubling to 15 min; about ten hours, then `failed` and the row says why).
+>    The sequence runs per (chit, sending party); the oldest event of a stream goes first. An older or repeated STATUS event is acknowledged and ignored (`ctp_event_in`, last-writer-wins by seq); a MESSAGE is idempotent on its message id,
+>    so a late earlier message is still kept. Until accepted the sender's own copy carries `ctp_unconfirmed` (GET /chits/:id; `ctp_unconfirmed` on each message of GET /chits/:id/messages): "Not yet confirmed to the other side".
+> 3. **Disputes cross too (2026-10-25, same day).** Athi: "the computation happens in only one place where it originates, rest of the places it just displays it as a record". A raise, a dispute reply and a resolve are decided ONLY where the person acts (the dispute routes, `lib/dispute-may`, the rail engine) and then travel as events (`dispute_raise`, `dispute_message`, `dispute_resolve`; queue kind widened by migration b792). The receiver RECORDS them through the same writers the routes use (`recordRaise`, `recordResolve`, `postMessageCopies`) as the remote party's stub, keyed by dispute id and bridge ids; it never re-decides. One envelope per installation (dispute-wide): to the roster's installations when targeted, to every party elsewhere when chit-wide. `CTP_CROSS_DISPUTE` is retired.
+> 4. **Where it leaves from.** Inside `moveStatus` (the one status writer) after the local write, once for every party on another installation; inside `postMessageCopies` for an external, non-dispute message. A bill step (the holder's own) never crosses.
+>    A party is "on another installation" by bridge id (lib/ctpreturn.js `remoteParties` over ctpaddress.resolve); with nothing hosted elsewhere it costs one memoised lookup and no query.
+> **Part 3 (2026-10-25, same day):** the cancel flags (`cancel_request`, `cancel_confirm`), the sent-copy cancel, assigning back to pending, attachments (by reference, pulled with the question `attachment`, 6 MB), the receiver's bell (`lib/events.emit`), every local party's timeline row and a 10,000-character message limit now cross or hold the same way. An amendment is private to the amending copy and crosses nowhere. Migration b793 widens the queue's kind check.
+> Still not: a crash between the local save and the queue write (one statement wide), the bell for a status move or a dispute raise (none locally either), archive/delete parity.
+
 Athi: *"catalogue reading never should be the problem. reaching a chit back to the domain and the status update
 across another domain will be the problem — because you are accessing another domain, you do not have
 authority."*
@@ -514,3 +529,5 @@ step 3**, which costs a day, not a deployment.
   `project-chitbridge-canon-hardening` · `reference-rail-metaphor` · `project-jurisdiction-pivot`
 - **Blocked on:** the nine decisions in §9. Four of them (2, 4, 5, 7) change the shape of the envelope or the
   trust model, so they are not implementation details to be discovered later.
+
+> **Part 4 (2026-10-25):** one proposal mechanism on one chit (lib/chit-proposal.js, b796): the seller's installation prices the buyer's request as round 2; the buyer accepts, counters or rejects; acceptance makes the round the agreed record on both copies, byte for byte; an amendment after agreement and a money-free agreement are the same flow; accepted/rejected/cancelled statuses and disputes ring the other party here and on arrival. See docs/FIELDS.md "chit_proposal".

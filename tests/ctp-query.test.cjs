@@ -205,8 +205,9 @@ const TO = { installation_key: 'platform-0', domain: 'in.example' };
 
   ok('⚠️ resolve answers only for a BUSINESS — the grammar decides before the database is asked', () => {
     const src = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-    assert.ok(/resolveuserid'\)\.classify\(ask\.handle\)/.test(src), 'classify first');
-    assert.ok(/c\.kind !== 'entity' && c\.kind !== 'network_node' && c\.kind !== 'bridge_id'/.test(src),
+    assert.ok(/resolveuserid'\)\.classify\(\w+\.handle\)/.test(src), 'classify first');
+    /* the rule, whatever the classification is called (sit/run6 F5 named it handleKind): only these three kinds may be resolved */
+    assert.ok(/(\w+)\.kind !== 'entity' && \1\.kind !== 'network_node' && \1\.kind !== 'bridge_id'/.test(src),
       'an employee, a customer or a minted party is never resolvable by another installation');
   });
 

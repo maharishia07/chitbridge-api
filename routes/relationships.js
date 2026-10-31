@@ -73,6 +73,28 @@ function checked(route) {
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
 
 /**
+ * RAIL-101 (NS-3), a step BEFORE the add: the address a person typed, pasted or scanned, when it names a business on ANOTHER installation.
+ * lib/remote-party asks that installation (ctpaddress + ctpquery, the existing seams) and makes the local party row linked to it, then the ordinary add
+ * carries on with that row's bridge id (req.body.supplier_bridge_id is rewritten to it; req.remoteShown adds the address to the answer).
+ * A bare id or an e-mail passes through untouched; nothing is written unless the far end confirmed the business.
+ */
+async function remoteAddress(req, res, next) {
+  const typed = String((req.body && req.body.supplier_bridge_id) || '').trim();
+  if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
+  try {
+    const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
+    if (adopted.error) return problem(req, res, words.remoteRefused(adopted.error));
+    req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
+    if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
+    return next();
+  } catch (failure) {
+    console.error('Add supplier by address error:', failure.message);
+    return problem(req, res, failed(failure, req, 'Add supplier failed'));
+  }
+}
+remoteAddress.addsStatuses = words.ADDRESS_GATE_STATUSES; /* tools/api-register.cjs reads the statuses a gate answers from here */
+
+/**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
  * Athi, 2026-09-10: *"still a non-CB person can be a supplier, we can set the flag again — he is not part of CB?"*
@@ -118,6 +140,7 @@ router.post(
   auth,
   validateAsProblem,
   ...checked('POST /suppliers'),
+  remoteAddress, /* RAIL-101 / NET-39: `bridge_id@domain` or a URL names a business on another installation — adopted as a stub here, then added like any other */
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -212,7 +235,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
-          bridge_id: bridge,
+          supplier_entity_id: sup.rows[0].identity_id, bridge_id: bridge, ...req.remoteShown, /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add · RAIL-101: the address, when the supplier was adopted from one */
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
           party_no: supNo,
@@ -230,12 +253,9 @@ router.post(
   }
 );
 
-// List my suppliers — has_catalogue reflects an active default schema only
-router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
-  try {
-    const owner = ctx(req);
-    const r = await withEntity(owner, (db) =>
-      db.query(
+/** GET /suppliers: my supplier list with the facts the screen reads, on the connection withEntity hands out (RLS). One statement; the notes say why each column is there. */
+function listSuppliers(db, owner) {
+  return db.query(
         /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
@@ -245,16 +265,32 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
-              EXISTS (SELECT 1 FROM entity_schemas es
+              /* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema
+                 row exists; it counts as "has a catalogue — ask them", and GET /suppliers/:id/catalogue asks the far side
+                 (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). */
+              (EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true) AS has_catalogue
+                        AND es.status = 'active' AND es.is_default = true)
+               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue,
+              /* API-6 (network owner, 25 Oct): WHERE the supplier lives, named only when it is another installation (null here), with that installation's label.
+                 The web's money-promise confirm before a cross-installation send (supCrossParty → CBQuotes.askCross) decides "far" from it: a stub made from an
+                 address carries no country or currency, so without this the confirm never fired (browser R16 on SIT). */
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1) THEN ops.f_installation_of(i.identity_id) END AS installation_key,
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)
+                   THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
-        [owner]
-      )
-    );
+    [owner]
+  );
+}
+
+// List my suppliers — has_catalogue reflects an active default schema only
+router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const r = await withEntity(owner, (db) => listSuppliers(db, owner));
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
     const rows = r.rows.map((x) => {
@@ -516,10 +552,8 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
       viewer
     };
 
-    const matches = (p) => {
-      const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
-    };
+    /* NET-39: ONE product matcher, shared with the cross-installation search (lib/business-search) */
+    const matches = (p) => require('../lib/business-search').productMatches(p, text);
 
     const one = async (s) => {
       const base = {
@@ -616,6 +650,9 @@ router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /su
     );
     const supplier = sup.rows[0] || null;
     if (!supplier) return problem(req, res, { status: 404, ...words.notOnYourList() });
+    /* NET-39: a supplier on ANOTHER installation is a stub row here; its catalogue is the seller's own public view, asked for over the signed door */
+    const remote = await require('../lib/remote-catalogue').forSupplier(supplier);
+    if (remote) return res.json(remote);
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
     // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
     // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the

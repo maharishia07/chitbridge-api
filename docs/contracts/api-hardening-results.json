@@ -88,6 +88,11 @@
     "pass": true
    }
   },
+  "GET /api/entities/search/places": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "GET /api/entities/policy": {
    "output_allowlist": {
     "pass": true
@@ -289,7 +294,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 409"
    }
   },
   "GET /api/chits/sent": {
@@ -580,8 +585,7 @@
   },
   "POST /api/chits/:chit_id/amend": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -884,6 +888,64 @@
   },
   "GET /api/chits/trace/networks": {
    "output_allowlist": {
+    "pass": true
+   }
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "output_allowlist": {
+    "pass": true
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 409"
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   },
+   "foreign_id_404": {
+    "pass": false,
+    "why": "not reached: the caller's own id answered 404 too"
+   }
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 409"
+   },
+   "foreign_id_404": {
     "pass": true
    }
   },
@@ -2456,7 +2518,7 @@
   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": true

@@ -489,6 +489,13 @@
   403,
   500
  ],
+ "GET /api/chits/:chit_id/proposals": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
  "GET /api/chits/:chit_id/raida": [
   401,
   403,
@@ -726,6 +733,11 @@
  ],
  "GET /api/entities/search": [
   400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/search/places": [
   401,
   500
  ],
@@ -2117,6 +2129,43 @@
   409,
   422,
   500
+ ],
+ "POST /api/chits/:chit_id/proposals": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/counter": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/reject": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
  ],
  "POST /api/chits/:chit_id/raida": [
   400,

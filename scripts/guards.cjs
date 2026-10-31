@@ -89,6 +89,11 @@ const GUARDS = [
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
+  'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
+  'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
+  'network-sync.test.cjs', // PLT-45/RAIL-96: the pulls — certificate and directory only if signed by the pinned key; registry by sequence, ids only, resync on a gap; locate verified at the far domain
+  'network-tools.test.cjs', // PLT-45: the operator's three tools (network-cert · network-seed-root · network-sync) refuse in words, with their exit codes, before any write
+  'installer-token.test.cjs', // PLT-45: the installer's one-time token through the one verify: its handle only, before any registered business is active, fail-closed
   'ctp-ssrf-guard.test.cjs', // SEC-80: CTP outbound fetches refuse non-https and any private, loopback, link-local or CGNAT address (DNS stubbed)
   'mint-ctp-refusal.test.cjs', // RAIL-129: a refused crossing or a crossing draft is a 409 in words (lib/knownerr), the far end's why never in the sentence, nothing local written
   'products-safe-errors.test.cjs', // SEC-83: products.js sends no raw error text; a 5xx 'Bad status' gets the safeErr line
@@ -224,11 +229,17 @@ const GUARDS = [
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
+  'money-origin.test.cjs', // ACC-192
+  'rollup-currency.test.cjs', // REP-50
+  'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
+  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a
      PROTOCOL rule because b247 cannot see the far entity. */
   'ctp-conformance.test.cjs',
+  'remote-catalogue.test.cjs', // NET-39: a supplier on another installation shows its catalogue (signed ask, local shape, words when silent)
+  'net-39-search.test.cjs', // NET-39: find a business/product on another installation - ONE search Here and There, listed shops and public fields only
   /* ⭐ Athi’s test: two shops with the SAME user id, display name AND bridge id, in two countries. The
      collision is expected — bridge ids are minted per installation — and the address carries the namespace,
      so CBAAAAAAAA@in.example is not CBAAAAAAAA@ae.example. The dangerous case it holds: a QUALIFIED address
@@ -364,6 +375,14 @@ const GUARDS = [
   'api-problem-entities.test.cjs', // API-4 sweep, the entities: every refusal of the 25 routes of routes/entities.js (sign-in apart, which is recorded byte for byte, never judged) is a Problem with its old keys frozen; no success answer moved; no 5xx says its cause; the platform doors answer in the Problem body; another shop's id is asked as an unknown one (S35, findings printed, evidence pinned)
   'api-problem-assist.test.cjs', // API-4 sweep, the assistant: every refusal of the 22 routes of routes/assist.js is a Problem with its old keys frozen; the assistant's 503 and 502 (the answers the web client falls through on) are replayed word for word; no success answer moved; no answer of any status says a failure's cause; the two public reference reads are listed as findings by the foreign-id world
   'api-problem-catalogue.test.cjs', // API-4 sweep, the rest of the catalogue: the shopper's orders and documents, the product enquiries, the photo read and the catalogue face — every refusal a Problem with its old keys frozen, no success answer moved
+  'api-problem-chit-proposals.test.cjs', // API-4 sweep, the proposal doors (RAIL-106): every refusal of the 5 routes of routes/chit-proposals.js is a Problem with its keys frozen at the first contract; every body closed (S33); no answer says a failure's cause; another shop's chit id answers as an unknown one (S35)
+  'ctp-return-path.test.cjs', // RAIL-106: the return path — a status another installation decided is mirrored on the shadow row through the one status write; sequence, repeat, late message (db and transport stubbed)
+  'ctp-return-disputes.test.cjs', // RAIL-106 part 2: a dispute raised or resolved elsewhere is recorded here through recordRaise / recordResolve; confidential scoping kept
+  'ctp-return-gaps.test.cjs', // RAIL-106 part 3: void, cancel flags, attachments by reference, the bell, every local party's timeline row, the message limit
+  'ctp-return-door.test.cjs', // RAIL-106: the event kind at the one door (routes/ctp.js): same checks as a copy, applied to our rows only
+  'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
+  'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte)
+  'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-bell.test.cjs', // API-4 sweep, the bell: every refusal of routes/events.js and routes/notifications.js (6 routes) is a Problem with its old keys frozen; the stream opens with a ticket in ?t= and ?ticket=, its frames and heartbeat unchanged; no answer says its cause; notif_dismissed has no foreign key, so a foreign log_id is no oracle
