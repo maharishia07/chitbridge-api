@@ -60,6 +60,8 @@ function call(port, method, p, headers, body) {
     r = await call(port, 'POST', '/api/crm/parties', { 'X-Request-Id': 'too-big-1' }, JSON.stringify({ pad: 'x'.repeat(300 * 1024) }));
     ok(r.status === 413 && r.body && r.body.code === 'BODY_TOO_LARGE' && r.headers['x-request-id'] === 'too-big-1', 'through the real server: 300 KB on a CRM route → 413 BODY_TOO_LARGE, id echoed (E01)');
 
+    await call(port, 'GET', '/api/crm/parties?q=x', { 'X-Request-Id': 'mounted-1' }); /* refused by the router's own auth */
+
     await sleep(300);
     const lines = out.split(/\r?\n/).filter((l) => l.trim().charAt(0) === '{');
     const parsed = lines.map((l) => { try { return JSON.parse(l); } catch (_) { return null; } });
@@ -71,6 +73,8 @@ function call(port, method, p, headers, body) {
     ok(reqLines.length > 0 && reqLines.every((x) => 'entity' in x && 'person' in x && 'bytes' in x && 'code' in x), 'every request line names entity, person, bytes and code');
     const big = reqLines.find((x) => x.id === 'too-big-1');
     ok(!!big && big.status === 413 && big.code === 'BODY_TOO_LARGE' && big.bytes > 300 * 1024, 'the 413 has its own log line with the code and the size');
+    const inside = reqLines.find((x) => x.id === 'mounted-1');
+    ok(!!inside && inside.path === '/api/crm/parties', 'a request answered INSIDE a mounted router logs the FULL path, no query string (Servers heat map): ' + (inside && inside.path));
   } finally {
     child.kill();
   }
