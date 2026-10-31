@@ -206,6 +206,20 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
+     the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
+     No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
+  'netcert.js',
+  'netmember.js',
+  'netsync.js',
+  'installer-token.js',
+  'network-search.js',
+  'business-search.js',
+  'remote-catalogue.js',
+  'message-limit.js',
+  'ctp-repair.js',
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
   /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
@@ -225,6 +239,8 @@ const INFRA_LIBS = [
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
   'till-contract.js',
+  /* API-4 sweep, the proposal doors: their OpenAPI operations (closed bodies and answers) and the library refusals they publish — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'chit-proposals-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',
@@ -723,6 +739,10 @@ const ENGINE_OTHER = [
   /* CTP’s READ verb (2026-09-16): a signed question to a peer — resolve a handle, pull a public catalogue. Like
      the other ctp* files it leaves as a SPECIFICATION, not a library (docs/SOFTWARE-ASSETS.md). */
   'ctpquery.js',
+  /* sit/run6 (RAIL-106, 2026-10-25): the rail's own decisions across installations: the return path (a status, message, dispute or proposal told to the far side and
+     applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
+  'ctpreturn.js',
+  'chit-proposal.js',
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;

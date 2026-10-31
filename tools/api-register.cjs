@@ -102,7 +102,9 @@ function routerFilesOf() {
 }
 
 /** the owner area of a route file: its name, except that routes/chits-<part>.js (LEAN-PLAN §8: routes/chits.js split by owner area) is still the chits area, so a move-only split changes a row's file and line and nothing else */
-const areaOfFile = (file) => path.basename(file, '.js').replace(/^chits-.+$/, 'chits');
+/* a part of a split router answers in its parent's group (routes/chits-trace.js, and routes/chit-proposals.js which routes/chits.js uses: tools/server-mounts.cjs partParents) */
+const PARTS = require('./server-mounts.cjs').partParents(path.join(ROOT, 'routes'));
+const areaOfFile = (file) => path.basename(PARTS[path.basename(file)] || file, '.js').replace(/^chits-.+$/, 'chits');
 
 /** the functions every route shares (middleware/*.js exports): not "own" code of a route, never hashed with it */
 function sharedFunctions() {

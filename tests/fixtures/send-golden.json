@@ -74,6 +74,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -100,6 +107,11 @@
      "CUST",
      "SHOP"
     ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active, hosted_locally, domain, label FROM installation",
+    "params": null
    },
    {
     "via": "query",
@@ -563,6 +575,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -1599,6 +1618,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -7881,10 +7907,13 @@
      "gross": 618,
      "savings": 50,
      "net": 568,
+     "taxable": 568,
      "tax": 0,
      "total": 568,
+     "round_off": 0,
      "currency_code": "INR",
-     "provisional": true
+     "provisional": false,
+     "issued": true
     }
    }
   },
@@ -7939,6 +7968,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -8115,10 +8151,13 @@
          "gross": 618,
          "savings": 50,
          "net": 568,
+         "taxable": 568,
          "tax": 0,
          "total": 568,
+         "round_off": 0,
          "currency_code": "INR",
-         "provisional": true
+         "provisional": false,
+         "issued": true
         }
        },
        "schema_version": 3,
@@ -8141,6 +8180,110 @@
         },
         "credit_override": {
          "by": "owner"
+        },
+        "invoice": {
+         "DocDtls": {
+          "Typ": "INV",
+          "No": null,
+          "Dt": "TS"
+         },
+         "currency": "INR",
+         "TranDtls": {
+          "TaxSch": "GST",
+          "SupTyp": "B2B",
+          "RegRev": "N",
+          "IgstOnIntra": "N"
+         },
+         "SellerDtls": {
+          "Gstin": "29BBBBB0000B1Z5",
+          "LglNm": "Chola Auto Care",
+          "State": "29"
+         },
+         "BuyerDtls": {
+          "Gstin": "33AAAAA0000A1Z5",
+          "LglNm": "Mayur Traders",
+          "State": "33",
+          "Pos": "33"
+         },
+         "ItemList": [
+          {
+           "SlNo": "1",
+           "PrdDesc": "Brake pad",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 2,
+           "Unit": "piece",
+           "UnitPrice": 59,
+           "TotAmt": 118,
+           "Discount": 0,
+           "AssAmt": 118,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 118,
+           "_line_id": "UUID#2"
+          },
+          {
+           "SlNo": "2",
+           "PrdDesc": "Oil",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 1,
+           "Unit": "",
+           "UnitPrice": 450,
+           "TotAmt": 450,
+           "Discount": 0,
+           "AssAmt": 450,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 450,
+           "_line_id": "UUID#3"
+          }
+         ],
+         "ValDtls": {
+          "AssVal": 568,
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "StCesVal": 0,
+          "Discount": 0,
+          "RndOffAmt": 0,
+          "TotInvVal": 568,
+          "TaxVal": 0
+         },
+         "_cb": {
+          "scheme": "GST",
+          "supply": "inter",
+          "place_of_supply": "33",
+          "seller_state": "29",
+          "slabs": [
+           {
+            "GstRt": 0,
+            "AssVal": 568,
+            "CgstVal": 0,
+            "SgstVal": 0,
+            "IgstVal": 0,
+            "CesVal": 0
+           }
+          ],
+          "amount_payable": 568,
+          "reverse_charge": false,
+          "price_includes_tax": true,
+          "notes": [
+           "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+           "Your prices include tax, so the taxable value was worked back out of each price."
+          ]
+         }
         },
         "page": "chit.base.detail@1.0"
        },
@@ -8216,10 +8359,13 @@
          "gross": 618,
          "savings": 50,
          "net": 568,
+         "taxable": 568,
          "tax": 0,
          "total": 568,
+         "round_off": 0,
          "currency_code": "INR",
-         "provisional": true
+         "provisional": false,
+         "issued": true
         }
        },
        "schema_version": 3,
@@ -8242,6 +8388,110 @@
         },
         "credit_override": {
          "by": "owner"
+        },
+        "invoice": {
+         "DocDtls": {
+          "Typ": "INV",
+          "No": null,
+          "Dt": "TS"
+         },
+         "currency": "INR",
+         "TranDtls": {
+          "TaxSch": "GST",
+          "SupTyp": "B2B",
+          "RegRev": "N",
+          "IgstOnIntra": "N"
+         },
+         "SellerDtls": {
+          "Gstin": "29BBBBB0000B1Z5",
+          "LglNm": "Chola Auto Care",
+          "State": "29"
+         },
+         "BuyerDtls": {
+          "Gstin": "33AAAAA0000A1Z5",
+          "LglNm": "Mayur Traders",
+          "State": "33",
+          "Pos": "33"
+         },
+         "ItemList": [
+          {
+           "SlNo": "1",
+           "PrdDesc": "Brake pad",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 2,
+           "Unit": "piece",
+           "UnitPrice": 59,
+           "TotAmt": 118,
+           "Discount": 0,
+           "AssAmt": 118,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 118,
+           "_line_id": "UUID#2"
+          },
+          {
+           "SlNo": "2",
+           "PrdDesc": "Oil",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 1,
+           "Unit": "",
+           "UnitPrice": 450,
+           "TotAmt": 450,
+           "Discount": 0,
+           "AssAmt": 450,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 450,
+           "_line_id": "UUID#3"
+          }
+         ],
+         "ValDtls": {
+          "AssVal": 568,
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "StCesVal": 0,
+          "Discount": 0,
+          "RndOffAmt": 0,
+          "TotInvVal": 568,
+          "TaxVal": 0
+         },
+         "_cb": {
+          "scheme": "GST",
+          "supply": "inter",
+          "place_of_supply": "33",
+          "seller_state": "29",
+          "slabs": [
+           {
+            "GstRt": 0,
+            "AssVal": 568,
+            "CgstVal": 0,
+            "SgstVal": 0,
+            "IgstVal": 0,
+            "CesVal": 0
+           }
+          ],
+          "amount_payable": 568,
+          "reverse_charge": false,
+          "price_includes_tax": true,
+          "notes": [
+           "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+           "Your prices include tax, so the taxable value was worked back out of each price."
+          ]
+         }
         },
         "page": "chit.base.detail@1.0"
        },
@@ -8340,6 +8590,110 @@
        },
        "credit_override": {
         "by": "owner"
+       },
+       "invoice": {
+        "DocDtls": {
+         "Typ": "INV",
+         "No": null,
+         "Dt": "TS"
+        },
+        "currency": "INR",
+        "TranDtls": {
+         "TaxSch": "GST",
+         "SupTyp": "B2B",
+         "RegRev": "N",
+         "IgstOnIntra": "N"
+        },
+        "SellerDtls": {
+         "Gstin": "29BBBBB0000B1Z5",
+         "LglNm": "Chola Auto Care",
+         "State": "29"
+        },
+        "BuyerDtls": {
+         "Gstin": "33AAAAA0000A1Z5",
+         "LglNm": "Mayur Traders",
+         "State": "33",
+         "Pos": "33"
+        },
+        "ItemList": [
+         {
+          "SlNo": "1",
+          "PrdDesc": "Brake pad",
+          "IsServc": "N",
+          "HsnCd": "",
+          "Qty": 2,
+          "Unit": "piece",
+          "UnitPrice": 59,
+          "TotAmt": 118,
+          "Discount": 0,
+          "AssAmt": 118,
+          "GstRt": 0,
+          "IgstAmt": 0,
+          "CgstAmt": 0,
+          "SgstAmt": 0,
+          "TaxAmt": 0,
+          "CesRt": 0,
+          "CesAmt": 0,
+          "TotItemVal": 118,
+          "_line_id": "UUID#2"
+         },
+         {
+          "SlNo": "2",
+          "PrdDesc": "Oil",
+          "IsServc": "N",
+          "HsnCd": "",
+          "Qty": 1,
+          "Unit": "",
+          "UnitPrice": 450,
+          "TotAmt": 450,
+          "Discount": 0,
+          "AssAmt": 450,
+          "GstRt": 0,
+          "IgstAmt": 0,
+          "CgstAmt": 0,
+          "SgstAmt": 0,
+          "TaxAmt": 0,
+          "CesRt": 0,
+          "CesAmt": 0,
+          "TotItemVal": 450,
+          "_line_id": "UUID#3"
+         }
+        ],
+        "ValDtls": {
+         "AssVal": 568,
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "StCesVal": 0,
+         "Discount": 0,
+         "RndOffAmt": 0,
+         "TotInvVal": 568,
+         "TaxVal": 0
+        },
+        "_cb": {
+         "scheme": "GST",
+         "supply": "inter",
+         "place_of_supply": "33",
+         "seller_state": "29",
+         "slabs": [
+          {
+           "GstRt": 0,
+           "AssVal": 568,
+           "CgstVal": 0,
+           "SgstVal": 0,
+           "IgstVal": 0,
+           "CesVal": 0
+          }
+         ],
+         "amount_payable": 568,
+         "reverse_charge": false,
+         "price_includes_tax": true,
+         "notes": [
+          "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+          "Your prices include tax, so the taxable value was worked back out of each price."
+         ]
+        }
        },
        "page": "chit.base.detail@1.0"
       },
@@ -9156,6 +9510,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -9751,6 +10112,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -9841,6 +10209,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -9963,6 +10338,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -10518,6 +10900,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -11334,6 +11723,13 @@
     ]
    },
    {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
+    ]
+   },
+   {
     "via": "readShelf",
     "payload": {
      "sellerId": "CUST"
@@ -11738,6 +12134,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {
@@ -12241,10 +12644,13 @@
      "gross": 618,
      "savings": 50,
      "net": 568,
+     "taxable": 568,
      "tax": 0,
      "total": 568,
+     "round_off": 0,
      "currency_code": "INR",
-     "provisional": true
+     "provisional": false,
+     "issued": true
     }
    }
   },
@@ -12476,10 +12882,13 @@
          "gross": 618,
          "savings": 50,
          "net": 568,
+         "taxable": 568,
          "tax": 0,
          "total": 568,
+         "round_off": 0,
          "currency_code": "INR",
-         "provisional": true
+         "provisional": false,
+         "issued": true
         }
        },
        "schema_version": 3,
@@ -12508,6 +12917,110 @@
             "name": "x",
             "matches": 2
            }
+          ]
+         }
+        },
+        "invoice": {
+         "DocDtls": {
+          "Typ": "INV",
+          "No": null,
+          "Dt": "TS"
+         },
+         "currency": "INR",
+         "TranDtls": {
+          "TaxSch": "GST",
+          "SupTyp": "B2B",
+          "RegRev": "N",
+          "IgstOnIntra": "N"
+         },
+         "SellerDtls": {
+          "Gstin": "33AAAAA0000A1Z5",
+          "LglNm": "Mayur Traders",
+          "State": "33"
+         },
+         "BuyerDtls": {
+          "Gstin": "29BBBBB0000B1Z5",
+          "LglNm": "Chola Auto Care",
+          "State": "29",
+          "Pos": "29"
+         },
+         "ItemList": [
+          {
+           "SlNo": "1",
+           "PrdDesc": "Brake pad",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 2,
+           "Unit": "piece",
+           "UnitPrice": 59,
+           "TotAmt": 118,
+           "Discount": 0,
+           "AssAmt": 118,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 118,
+           "_line_id": "UUID#2"
+          },
+          {
+           "SlNo": "2",
+           "PrdDesc": "Oil",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 1,
+           "Unit": "",
+           "UnitPrice": 450,
+           "TotAmt": 450,
+           "Discount": 0,
+           "AssAmt": 450,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 450,
+           "_line_id": "UUID#3"
+          }
+         ],
+         "ValDtls": {
+          "AssVal": 568,
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "StCesVal": 0,
+          "Discount": 0,
+          "RndOffAmt": 0,
+          "TotInvVal": 568,
+          "TaxVal": 0
+         },
+         "_cb": {
+          "scheme": "GST",
+          "supply": "inter",
+          "place_of_supply": "29",
+          "seller_state": "33",
+          "slabs": [
+           {
+            "GstRt": 0,
+            "AssVal": 568,
+            "CgstVal": 0,
+            "SgstVal": 0,
+            "IgstVal": 0,
+            "CesVal": 0
+           }
+          ],
+          "amount_payable": 568,
+          "reverse_charge": false,
+          "price_includes_tax": true,
+          "notes": [
+           "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+           "Your prices include tax, so the taxable value was worked back out of each price."
           ]
          }
         },
@@ -12615,10 +13128,13 @@
          "gross": 618,
          "savings": 50,
          "net": 568,
+         "taxable": 568,
          "tax": 0,
          "total": 568,
+         "round_off": 0,
          "currency_code": "INR",
-         "provisional": true
+         "provisional": false,
+         "issued": true
         }
        },
        "schema_version": 3,
@@ -12647,6 +13163,110 @@
             "name": "x",
             "matches": 2
            }
+          ]
+         }
+        },
+        "invoice": {
+         "DocDtls": {
+          "Typ": "INV",
+          "No": null,
+          "Dt": "TS"
+         },
+         "currency": "INR",
+         "TranDtls": {
+          "TaxSch": "GST",
+          "SupTyp": "B2B",
+          "RegRev": "N",
+          "IgstOnIntra": "N"
+         },
+         "SellerDtls": {
+          "Gstin": "33AAAAA0000A1Z5",
+          "LglNm": "Mayur Traders",
+          "State": "33"
+         },
+         "BuyerDtls": {
+          "Gstin": "29BBBBB0000B1Z5",
+          "LglNm": "Chola Auto Care",
+          "State": "29",
+          "Pos": "29"
+         },
+         "ItemList": [
+          {
+           "SlNo": "1",
+           "PrdDesc": "Brake pad",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 2,
+           "Unit": "piece",
+           "UnitPrice": 59,
+           "TotAmt": 118,
+           "Discount": 0,
+           "AssAmt": 118,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 118,
+           "_line_id": "UUID#2"
+          },
+          {
+           "SlNo": "2",
+           "PrdDesc": "Oil",
+           "IsServc": "N",
+           "HsnCd": "",
+           "Qty": 1,
+           "Unit": "",
+           "UnitPrice": 450,
+           "TotAmt": 450,
+           "Discount": 0,
+           "AssAmt": 450,
+           "GstRt": 0,
+           "IgstAmt": 0,
+           "CgstAmt": 0,
+           "SgstAmt": 0,
+           "TaxAmt": 0,
+           "CesRt": 0,
+           "CesAmt": 0,
+           "TotItemVal": 450,
+           "_line_id": "UUID#3"
+          }
+         ],
+         "ValDtls": {
+          "AssVal": 568,
+          "CgstVal": 0,
+          "SgstVal": 0,
+          "IgstVal": 0,
+          "CesVal": 0,
+          "StCesVal": 0,
+          "Discount": 0,
+          "RndOffAmt": 0,
+          "TotInvVal": 568,
+          "TaxVal": 0
+         },
+         "_cb": {
+          "scheme": "GST",
+          "supply": "inter",
+          "place_of_supply": "29",
+          "seller_state": "33",
+          "slabs": [
+           {
+            "GstRt": 0,
+            "AssVal": 568,
+            "CgstVal": 0,
+            "SgstVal": 0,
+            "IgstVal": 0,
+            "CesVal": 0
+           }
+          ],
+          "amount_payable": 568,
+          "reverse_charge": false,
+          "price_includes_tax": true,
+          "notes": [
+           "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+           "Your prices include tax, so the taxable value was worked back out of each price."
           ]
          }
         },
@@ -12745,6 +13365,110 @@
            "name": "x",
            "matches": 2
           }
+         ]
+        }
+       },
+       "invoice": {
+        "DocDtls": {
+         "Typ": "INV",
+         "No": null,
+         "Dt": "TS"
+        },
+        "currency": "INR",
+        "TranDtls": {
+         "TaxSch": "GST",
+         "SupTyp": "B2B",
+         "RegRev": "N",
+         "IgstOnIntra": "N"
+        },
+        "SellerDtls": {
+         "Gstin": "33AAAAA0000A1Z5",
+         "LglNm": "Mayur Traders",
+         "State": "33"
+        },
+        "BuyerDtls": {
+         "Gstin": "29BBBBB0000B1Z5",
+         "LglNm": "Chola Auto Care",
+         "State": "29",
+         "Pos": "29"
+        },
+        "ItemList": [
+         {
+          "SlNo": "1",
+          "PrdDesc": "Brake pad",
+          "IsServc": "N",
+          "HsnCd": "",
+          "Qty": 2,
+          "Unit": "piece",
+          "UnitPrice": 59,
+          "TotAmt": 118,
+          "Discount": 0,
+          "AssAmt": 118,
+          "GstRt": 0,
+          "IgstAmt": 0,
+          "CgstAmt": 0,
+          "SgstAmt": 0,
+          "TaxAmt": 0,
+          "CesRt": 0,
+          "CesAmt": 0,
+          "TotItemVal": 118,
+          "_line_id": "UUID#2"
+         },
+         {
+          "SlNo": "2",
+          "PrdDesc": "Oil",
+          "IsServc": "N",
+          "HsnCd": "",
+          "Qty": 1,
+          "Unit": "",
+          "UnitPrice": 450,
+          "TotAmt": 450,
+          "Discount": 0,
+          "AssAmt": 450,
+          "GstRt": 0,
+          "IgstAmt": 0,
+          "CgstAmt": 0,
+          "SgstAmt": 0,
+          "TaxAmt": 0,
+          "CesRt": 0,
+          "CesAmt": 0,
+          "TotItemVal": 450,
+          "_line_id": "UUID#3"
+         }
+        ],
+        "ValDtls": {
+         "AssVal": 568,
+         "CgstVal": 0,
+         "SgstVal": 0,
+         "IgstVal": 0,
+         "CesVal": 0,
+         "StCesVal": 0,
+         "Discount": 0,
+         "RndOffAmt": 0,
+         "TotInvVal": 568,
+         "TaxVal": 0
+        },
+        "_cb": {
+         "scheme": "GST",
+         "supply": "inter",
+         "place_of_supply": "29",
+         "seller_state": "33",
+         "slabs": [
+          {
+           "GstRt": 0,
+           "AssVal": 568,
+           "CgstVal": 0,
+           "SgstVal": 0,
+           "IgstVal": 0,
+           "CesVal": 0
+          }
+         ],
+         "amount_payable": 568,
+         "reverse_charge": false,
+         "price_includes_tax": true,
+         "notes": [
+          "Place of supply was not given, so the buyer's state was used. For a delivery elsewhere, or for a service, state the place of supply — it, not the address, decides the tax.",
+          "Your prices include tax, so the taxable value was worked back out of each price."
          ]
         }
        },
@@ -12871,6 +13595,13 @@
      [
       "CUST"
      ]
+    ]
+   },
+   {
+    "via": "query",
+    "sql": "SELECT currency_code FROM identities WHERE identity_id = $1",
+    "params": [
+     "CUST"
     ]
    },
    {

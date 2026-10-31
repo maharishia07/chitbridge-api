@@ -149,8 +149,8 @@
     },
     "GET /.well-known/ctp.json": {
       "file": "ctp.js",
-      "trips": 2,
-      "wire": 2,
+      "trips": 4,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -532,6 +532,17 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/channels/outbound": {
+      "file": "channels.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
+    },
     "GET /api/chits/:chit_id": {
       "file": "chits.js",
       "trips": 1,
@@ -568,6 +579,14 @@
       "wire": 4,
       "fired": true,
       "status": 403
+    },
+    "GET /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/chits/:chit_id/raida": {
       "file": "chits.js",
@@ -774,7 +793,7 @@
     },
     "GET /api/crm/parties": {
       "file": "crm.js",
-      "trips": 3,
+      "trips": 1,
       "wire": 14,
       "fired": true,
       "status": 200
@@ -815,164 +834,6 @@
         "since": "2026-10-13"
       }
     },
-    "GET /api/entities/entitlements": {
-      "file": "entities.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/folders/inventory": {
-      "file": "folders.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/folders/rules/vocabulary": {
-      "file": "folders.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/forms": {
-      "file": "forms.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/ai-skills": {
-      "file": "governance.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/ai-usage": {
-      "file": "governance.js",
-      "trips": 3,
-      "wire": 12,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/commerce-standards": {
-      "file": "governance.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/journey": {
-      "file": "governance.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/profile/path": {
-      "file": "governance.js",
-      "trips": 8,
-      "wire": 16,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/profile/readiness": {
-      "file": "governance.js",
-      "trips": 7,
-      "wire": 15,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/track-record": {
-      "file": "governance.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/governance/vault-schema": {
-      "file": "governance.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/identity/documents": {
-      "file": "identity-docs.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/integrations/kit": {
-      "file": "integrations.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/kyb/position": {
-      "file": "kyb.js",
-      "trips": 2,
-      "wire": 4,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/kyb/risk": {
-      "file": "kyb.js",
-      "trips": 9,
-      "wire": 24,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/kyb/yourself": {
-      "file": "kyb.js",
-      "trips": 14,
-      "wire": 34,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/marketing/came-back": {
-      "file": "marketing.js",
-      "trips": 3,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
-        "since": "2026-10-22"
-      }
-    },
-    "GET /api/channels/outbound": {
-      "file": "channels.js",
-      "trips": 2,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
-        "since": "2026-10-22"
-      }
-    },
     "GET /api/crm/segments": {
       "file": "crm.js",
       "trips": 3,
@@ -983,6 +844,14 @@
         "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
         "since": "2026-10-14"
       }
+    },
+    "GET /api/ctp/.well-known/ctp.json": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
     },
     "GET /api/definitions": {
       "file": "definitions.js",
@@ -1002,6 +871,14 @@
       "file": "entities.js",
       "trips": 3,
       "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/entitlements": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1071,6 +948,14 @@
       "fired": true,
       "status": 400
     },
+    "GET /api/entities/search/places": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/entities/sides": {
       "file": "entities.js",
       "trips": 15,
@@ -1098,9 +983,9 @@
       "file": "events.js",
       "trips": 0,
       "wire": 0,
-      "fired": false,
-      "extra": true,
-      "why": "event stream held open: the ticket is checked in memory, no database read"
+      "fired": true,
+      "status": 401,
+      "extra": true
     },
     "GET /api/facts/rail/chits": {
       "file": "facts.js",
@@ -1145,6 +1030,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/folders/inventory": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/folders/messages": {
       "file": "folders.js",
       "trips": 1,
@@ -1174,6 +1067,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/folders/rules/vocabulary": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/folders/worklist": {
       "file": "folders.js",
       "trips": 1,
@@ -1181,10 +1082,42 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/forms": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/forms/instances/all": {
       "file": "forms.js",
       "trips": 1,
       "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-skills": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-usage": {
+      "file": "governance.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/commerce-standards": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1204,10 +1137,18 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/governance/journey": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/governance/lanes": {
       "file": "governance.js",
-      "trips": 5,
-      "wire": 13,
+      "trips": 2,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1218,6 +1159,22 @@
       "wire": 10,
       "fired": true,
       "status": 200
+    },
+    "GET /api/governance/profile/path": {
+      "file": "governance.js",
+      "trips": 8,
+      "wire": 16,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/profile/readiness": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": 15,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/governance/readiness": {
       "file": "governance.js",
@@ -1241,12 +1198,44 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/governance/track-record": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/vault-schema": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/identity/documents": {
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 200
+    },
+    "GET /api/integrations/kit": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/integrations/profile-map": {
       "file": "integrations.js",
@@ -1290,6 +1279,41 @@
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/kyb/position": {
+      "file": "kyb.js",
+      "trips": 2,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/risk": {
+      "file": "kyb.js",
+      "trips": 9,
+      "wire": 24,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/yourself": {
+      "file": "kyb.js",
+      "trips": 14,
+      "wire": 34,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/marketing/came-back": {
+      "file": "marketing.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
     },
     "GET /api/network-design": {
       "file": "network-design.js",
@@ -1628,8 +1652,7 @@
       "wire": 4,
       "fired": true,
       "status": 200,
-      "extra": true,
-      "why": "W1-SET: paged through readPage (one statement carries the page and its count); called by public/cmdb/record.html outside the registry"
+      "extra": true
     },
     "GET /api/testing/coverage": {
       "file": "testing.js",
@@ -2371,8 +2394,7 @@
       "trips": 1,
       "wire": 7,
       "fired": true,
-      "status": 404,
-      "why": "W2-RAIL R2: the open-dispute count and the UPDATE in ONE withEntity (was two); the count is savepointed (SAVEPOINT · COUNT · RELEASE) so an unreadable dispute table refuses 503, never archives"
+      "status": 404
     },
     "POST /api/chits/:chit_id/assign-lines": {
       "file": "chits.js",
@@ -2416,6 +2438,38 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/chits/:chit_id/raida": {
       "file": "chits.js",
@@ -2708,6 +2762,22 @@
       "status": 204,
       "extra": true
     },
+    "POST /api/ctp/deliver": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
+    },
+    "POST /api/ctp/query": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
+    },
     "POST /api/definitions": {
       "file": "definitions.js",
       "trips": 0,
@@ -2824,8 +2894,7 @@
       "wire": 0,
       "fired": true,
       "status": 403,
-      "extra": true,
-      "why": "W1-SET: the platform door (lib/platformroot.refuseUnlessPlatform) answers before any read; no web screen calls it (the runbook does)"
+      "extra": true
     },
     "POST /api/governance/supplier-acceptance": {
       "file": "governance.js",
@@ -3333,8 +3402,7 @@
       "wire": 0,
       "fired": true,
       "status": 400,
-      "extra": true,
-      "why": "W2-REW by hand: the empty stub answers 400 (ref required) before any trip. Live, with a programme: + lock + the SERVER'S bill (lib/counter-bill byRef) + balance + writes in one TX; an on_items category rule adds the category master + the catalogue (2)."
+      "extra": true
     },
     "POST /api/till/shop": {
       "file": "till.js",
@@ -3362,10 +3430,10 @@
     },
     "PUT /api/actors/:id/status": {
       "file": "actors.js",
-      "trips": 5,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3). PEOPLE-SRV1 (2026-10-14), counted by hand: the sign-out (person-session closeBy + keys endKeysBy: two FOR UPDATE reads of the shop row + at most two policy_flags writes) runs INSIDE the one withEntity transaction — 0 extra trips, up to 4 more statements on the wire. PEOPLE-SRV1 second dispatch (compliance), by hand: + ONE withEntity for the access_events break_changed row (recordBreak), after the act's COMMIT as the PATCH's audit is — 5 on every path (reactivate 4+1, deactivate/remove 4+1).",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     },
     "PUT /api/actors/:id/tasks/route": {
@@ -3386,10 +3454,10 @@
     },
     "PUT /api/actors/break": {
       "file": "actors.js",
-      "trips": 8,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). PEOPLE-SRV1 (2026-10-14), counted by hand: the owner gate is 0 trips; the subject read (the named person for the owner, G6 — and since the second dispatch the person's OWN row too, so the audit row carries the real before-state) + who they cover + their own cover (+ that cover's state, only when one is set) + ONE UPDATE for a short break or back; leave: + the open-jobs count (withEntity) + the stand-in read (only when routed to a person) + ONE withEntity transaction; + ONE withEntity for the access_events break_changed row (recordBreak) after the COMMIT. Worst path 8.",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     },
     "PUT /api/actors/change-pin": {
@@ -3595,6 +3663,13 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "POST /api/books/parties/:id/dispute": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
     }
   }
 }

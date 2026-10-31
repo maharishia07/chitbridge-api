@@ -32,6 +32,10 @@ function partParents(routesDir) {
     for (const found of text.matchAll(/require\('\.\/([A-Za-z0-9_-]+)'\)/g)) {
       if (found[1].startsWith(stem + '-') && files.includes(found[1] + '.js')) parents[found[1] + '.js'] = parent;
     }
+    /* sit/run6 (RAIL-106): a router another router USES is a part of it whatever its name (routes/chit-proposals.js inside routes/chits.js, at /:chit_id/proposals) */
+    for (const found of text.matchAll(/router\.use\(\s*require\('\.\/([A-Za-z0-9_-]+)'\)\s*\)/g)) {
+      if (files.includes(found[1] + '.js') && !parents[found[1] + '.js']) parents[found[1] + '.js'] = parent;
+    }
   }
   return parents;
 }

@@ -220,7 +220,9 @@ app.use((req, res, next) => {
     log.info('request', {
       id: req.id,
       method: req.method,
-      path: req.path,
+      /* the FULL path, not the part a mounted router leaves, and no query string (the Servers heat map
+         counts by path: PM/SERVERS-STATUS.md, Athi 31 Oct) */
+      path: (req.originalUrl || req.url).split('?')[0],
       status: res.statusCode,
       ms: Date.now() - t0,
       code: (res.locals && res.locals.code) || null,

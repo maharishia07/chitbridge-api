@@ -18,8 +18,9 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
-const { moveStatus } = require('../lib/chit-move'); // the ONE status writer (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
+const { moveStatus, stampCancelRequested, stampCancelConfirmed, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
 const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
+const ctpReturn = require('../lib/ctpreturn'); // ⭐ RAIL-106 — the return path: a status or an external message reaches a party on another installation (queued, resent), a dispute across installations is refused in words
 const railStatus = require('../lib/rail-status'); // ⭐ T1-RAIL — the ONE status write (read → rail.move → UPDATE); no other SET current_status
 const { assignChit, taskCount } = require('../lib/assign-chit'); // ⭐ W1-RAIL · TA1 — the ONE writer of who holds a chit and of a person's task count
 const ownBill = require('../lib/counter-bill'); // ⭐ W2-REW — the shop's bill by its number: the duplicate check here, the points in reward-store
@@ -1196,6 +1197,25 @@ async function sendLookupRecipient(r) {
 }
 
 /** who sells (an order: the recipient; anything else: the sender) and the rate on every line the shelf can answer */
+/**
+ * ⭐ THE SELLER'S CURRENCY (Athi, 25 Oct, DECISIONS 14:50, walk W24: "always use the seller currency"). An order is priced in the money of the business that SELLS it: Sydney (AUD) ordering ₹650 goods
+ * from Chennai (INR) was stored as 13000.00 AUD on both copies because the chit took the SENDER's money. For an order-like send (seller ≠ sender) the seller's own money is, in order:
+ *   1. the seller's identities.currency_code, when this installation holds it;
+ *   2. lib/regional.currencyFor(seller) — the one resolver — when the seller lives on THIS installation;
+ *   3. nothing: a seller on another installation is a stub with NULL money on purpose (the business is elsewhere; regional would invent this installation's default). The caller then keeps what the
+ *      buyer's screen stated (business_json.currency, the seller's price list as it showed it). With none stated sendMoney REFUSES the send (400 CURRENCY_REQUIRED, F7, 25 Oct): it never files the sender's money.
+ * A self-chit, a counter bill, and anything that is not an order never come here (sendSeller decides who sells).
+ * @returns {Promise<string|null>} an upper-case code, or null when this installation does not know the seller's money
+ */
+async function sellerMoney(sellerId) {
+  const row = await query('SELECT currency_code FROM identities WHERE identity_id = $1', [sellerId]);
+  const stated = row.rows[0] && row.rows[0].currency_code;
+  if (stated) return String(stated).toUpperCase();
+  if ((await require('../lib/ctpaddress').resolve(sellerId)).local === false) return null;
+  const known = await require('../lib/regional').currencyFor(sellerId);
+  return known ? String(known).toUpperCase() : null;
+}
+
 async function sendSeller(st, req, res) {
   const { sender_id, purpose, business_json, receiverDetails } = st;
   let { line_items } = st;
@@ -1218,6 +1238,7 @@ async function sendSeller(st, req, res) {
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
+  if (sellerId !== sender_id) st.currency_code = (await sellerMoney(sellerId)) || st.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
   /**
    * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
    * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
@@ -1294,65 +1315,50 @@ async function sendOffers(st, req, res) {
   Object.assign(st, { line_items, offersApplied });
 }
 
-/** the header's money — gross · savings · net · tax · total, provisional */
-async function sendMoney(st, req, res) {
-  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
-  /**
-   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
-   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
-   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total.
-   *   · gross and savings are free — the offers engine has just run and the line keeps its listed price beside its total.
-   *   · tax is `taxLines.invoiceFor`, a PURE function over the lines that `decorate` has already rated, plus one row per party.
-   *     ONE query for both identities (his "why do you need another query?"), never one per line.
-   * ⚠️ PROVISIONAL, AND IT SAYS SO. The invoice freezes at completed (G3); this is a display summary carrying the same
-   * caveat as the invoice tab, not a second source of truth. A tax we cannot compute is `null`, never 0 — a column showing
-   * "—" is honest, a column showing zero tax is a lie.
-   */
-  let moneyBlock = null;
-  try {
-    const r2m = (n) => roundMoney(Number(n) || 0);
-    const li = Array.isArray(line_items) ? line_items : [];
-    const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
-    const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
-    const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
-    const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
-    const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
-    let tax = null,
-      total = null;
-    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
-    const buyerId = counterBill ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
-    if (li.length && buyerId && String(sellerId) !== String(buyerId)) {
-      const ids = [String(sellerId), String(buyerId)];
-      const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [ids]);
-      const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
-      const sRow = rowOf(sellerId),
-        bRow = rowOf(buyerId);
-      if (sRow && bRow) {
-        /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent,
-           so priceIncludesTax arrived as undefined and !!undefined taxed a GST-inclusive shelf price as
-           if it were ex-tax. sRow already carries policy_flags from the query two lines up; flagOf() reads
-           the SELLER's own setting from it, no second query. */
-        const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
-        /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever
-           reaches DocDtls.Dt (metadata, no rate lookup keys on it), but a bill queued offline and sent days
-           later must say when it was actually billed, same reasoning as the offers guard just above. */
-        const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
-        const inv = taxLines.invoiceFor({
-          lines: li,
-          seller: taxLines.partyOf(sRow),
-          buyer: taxLines.partyOf(bRow),
-          currency: currency_code,
-          at: invAt,
-          priceIncludesTax
-        });
-        const h = taxLines.heads(inv.invoice);
-        if (h && Number.isFinite(h.tax)) {
-          tax = r2m(h.tax);
-          total = r2m(h.total || net + tax);
-        }
-      }
-    }
-    moneyBlock = {
+/** the invoice for a chit between two parties, computed ONCE at send (the origin) from the seller's own flags; null when a party is not on record */
+async function invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) {
+  const pr = await query('SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY($1::uuid[])', [[String(sellerId), String(buyerId)]]);
+  const rowOf = (id) => pr.rows.filter((x) => String(x.identity_id) === String(id))[0] || null;
+  const sRow = rowOf(sellerId),
+    bRow = rowOf(buyerId);
+  if (!sRow || !bRow) return null;
+  /* ⭐⭐⭐ [REV-01] the fix for "every server invoice is 18% too high" — this line was simply absent, so priceIncludesTax arrived as undefined
+     and !!undefined taxed a GST-inclusive shelf price as if it were ex-tax. flagOf() reads the SELLER's own setting, no second query. */
+  const priceIncludesTax = policy.flagOf(sRow.policy_flags, 'price_includes_tax', sRow.country) === 'yes';
+  /* ⚠️ [REV-02] the invoice's own document date, not the moment sync happened to run — `at` only ever reaches DocDtls.Dt (metadata, no rate
+     lookup keys on it), but a bill queued offline and sent days later must say when it was actually billed. */
+  const invAt = (business_json && business_json.billed_at) || new Date().toISOString();
+  return taxLines.invoiceFor({ lines: li, seller: taxLines.partyOf(sRow), buyer: taxLines.partyOf(bRow), currency: currency_code, at: invAt, priceIncludesTax }).invoice;
+}
+
+/**
+ * The header's money and the invoice behind it, for ONE set of lines — gross · savings · net · tax · total, provisional, and the INV-01 invoice when the tax can be decided. The ONE
+ * calculation: a send uses it (sendMoney), and so does a CHANGE ORDER (lib/change-order.js, RAIL-106) when the amending side re-issues the invoice for the proposed lines. Computed here, at the
+ * origin; every other copy reads what this returned.
+ * @param parties { sellerId, buyerId|null }   buyerId null (a counter bill, several recipients) = no server-side tax
+ * @returns {Promise<{moneyBlock, invoice}>}   invoice is null when the tax could not be decided (tax then null, never 0)
+ */
+async function moneyOfLines(li, parties, business_json, currency_code) {
+  const r2m = (n) => roundMoney(Number(n) || 0);
+  const qtyOf = (l) => Number(l.quantity != null ? l.quantity : l.qty) || 0;
+  const netOf = (l) => Number(l.total != null ? l.total : (Number(l.price) || 0) * qtyOf(l)) || 0;
+  const listOf = (l) => Number(l.list_price != null ? l.list_price : l.price) || 0;
+  const gross = r2m(li.reduce((sum, item) => sum + listOf(item) * qtyOf(item), 0));
+  const net = r2m(li.reduce((sum, item) => sum + netOf(item), 0));
+  let tax = null,
+    total = null,
+    originInvoice = null;
+  const { sellerId, buyerId } = parties;
+  const invoice = li.length && buyerId && String(sellerId) !== String(buyerId) ? await invoiceAtSend(li, sellerId, buyerId, business_json, currency_code) : null;
+  const h = invoice && taxLines.heads(invoice);
+  if (h && Number.isFinite(h.tax)) {
+    tax = r2m(h.tax);
+    total = r2m(h.total || net + tax);
+    originInvoice = invoice; /* ACC-192: computed here, the origin; sendIssued carries it with the chit */
+  }
+  return {
+    invoice: originInvoice,
+    moneyBlock: {
       gross,
       savings: r2m(gross - net),
       net,
@@ -1360,11 +1366,77 @@ async function sendMoney(st, req, res) {
       total: total != null ? total : tax != null ? r2m(net + tax) : null,
       currency_code,
       provisional: true
-    };
+    }
+  };
+}
+
+/**
+ * ⭐ F7 (critic 25 Oct, Athi: "if the stuff is not there, we should not fall back, rather reject"): an order to a seller on ANOTHER installation, with no money stated by the sender's screen
+ * (business_json.currency), is refused in words. This installation holds a stub with NULL money for that seller on purpose, so it cannot know the money of their price list and must not
+ * file the order in the sender's money. A draft is the author's own copy and is let through.
+ */
+function refuseCurrencyRequired(req, res) {
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Currency required', code: 'CURRENCY_REQUIRED', message: 'Say which money their price list is in, then send again.' }, codeOfStatus(400))
+  });
+}
+
+/** RAIL-106: where the seller of this send lives (lib/ctpaddress resolve) — null for a counter bill or when I am the seller myself */
+async function sellerPlaceOf(sendState) {
+  if (sendState.counterBill || String(sendState.sellerId) === String(sendState.sender_id)) return null;
+  return require('../lib/ctpaddress').resolve(sendState.sellerId);
+}
+
+/** whose tax view prices the lines: me on an order I place, the one recipient of anything else, or nobody (several recipients) */
+const buyerOfSend = (orderLike, sender_id, toIds) => (orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null);
+
+/** the currency the sender stated on the chit (business_json.currency), or '' */
+const statedCurrencyOf = (business_json) => (business_json && typeof business_json === 'object' ? String(business_json.currency || '').trim() : '');
+
+/**
+ * ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION.
+ * The chit says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's.
+ */
+async function stampQuotation(business_json, sender_id, sellerPlace) {
+  if (!business_json || typeof business_json !== 'object' || business_json.jurisdiction) return;
+  business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
+}
+
+/** the header's money — gross · savings · net · tax · total, provisional */
+async function sendMoney(st, req, res) {
+  const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
+  /**
+   * ⭐⭐ THE MONEY THE HEADER CARRIES (Athi, 2026-09-07). `total_value` is the net after offers and BEFORE tax — right, but alone
+   * on a list column called Amount it reads as the whole bill, and his Order list said ₹488.25 where Zoho's invoice said ₹531.
+   * So the header now carries the five figures a person actually compares: gross · savings · net · tax · total (moneyOfLines above).
+   * ⚠️ PROVISIONAL, AND IT SAYS SO. A tax we cannot compute is `null`, never 0 — a column showing "—" is honest, a column showing zero tax is a lie.
+   */
+  let moneyBlock = null;
+  let originInvoice = null;
+  let sellerElsewhere = false;
+  try {
+    /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
+    /* ⭐ RAIL-106 (Athi, 25 Oct 12:05): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side (lib/chit-proposal). The buyer's installation sends what and how many and runs no tax of its own on someone else's goods. */
+    const sellerPlace = await sellerPlaceOf(st);
+    sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
+    const buyerId = counterBill || sellerElsewhere ? null : buyerOfSend(orderLike, sender_id, toIds);
+    ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
+    if (sellerElsewhere) await stampQuotation(business_json, sender_id, sellerPlace);
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
-  Object.assign(st, { moneyBlock });
+  if (sellerElsewhere && !statedCurrencyOf(business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
+  Object.assign(st, { moneyBlock, originInvoice });
+}
+
+/**
+ * sit/run6 (ACC-192 x the header of 2026-09-07): an invoice computed HERE at send is priced at the sold price, so it knows no offer; the offer the lines carried
+ * (the listed price beside the sold one) stays on the header: savings from the lines, gross = the invoice net + those savings, every other figure the invoice's. A counter's invoice is read as it came.
+ */
+function keepOffer(fromInvoice, fromLines) {
+  if (!fromLines || !(Number(fromLines.savings) > Number(fromInvoice.savings || 0))) return fromInvoice;
+  return Object.assign(fromInvoice, { gross: roundMoney(Number(fromInvoice.net) + Number(fromLines.savings)), savings: fromLines.savings });
 }
 
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
@@ -1381,35 +1453,48 @@ async function sendIssued(st, req, res) {
    * the log (tax.check-differs, for the health view); the stored invoice is never replaced. Fails open, like the block above.
    */
   let issuedTotal = null;
+  /* ⭐⭐⭐ ACC-192 (Athi 2026-10-25): "the computation happens in only one place where it originates, rest of the places it just displays it as
+     a record". The invoice sendMoney computed at send travels with the chit exactly as a counter bill's does — business_json.invoice, read by
+     tax-copy and carried over CTP — so no copy computes it again. Never over an invoice already carried, never on a draft. */
+  if (business_json && !business_json.invoice && st.originInvoice && !is_draft) business_json.invoice = st.originInvoice;
   const carried = business_json && business_json.invoice;
-  if (counterBill && !is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
-    moneyBlock = moneyOfInvoice(carried, currency_code);
+  /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
+     counter's is checked, because only the counter computed it somewhere other than here */
+  if (!is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
+    moneyBlock = keepOffer(moneyOfInvoice(carried, currency_code), carried === st.originInvoice ? moneyBlock : null);
     issuedTotal = moneyBlock.total;
-    try {
-      const e = await taxCopy.entryFor(
-        {
-          chit_id: null,
-          sender_entity_id: sender_id,
-          purpose,
-          business_json,
-          line_items,
-          currency_code,
-          all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
-            receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
-          ),
-          sent_at: business_json.billed_at || null
-        },
-        sender_id
-      );
-      if (e && e.tax_check && !e.tax_check.ok) {
-        business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
-        require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
-      }
-    } catch (e) {
-      cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
-    }
   }
+  if (counterBill && issuedTotal != null) await checkCounterInvoice(st);
   Object.assign(st, { moneyBlock, issuedTotal });
+}
+
+/** a counter bill's invoice was computed at the counter: the server checks it and names a difference on the chit, never replacing it (ACC-192: only the
+ *  counter's invoice is checked, because only the counter computed it somewhere other than here; the roster is the sender plus every receiver) */
+async function checkCounterInvoice(sendState) {
+  const { sender_id, purpose, line_items, business_json, currency_code, receiverDetails } = sendState;
+  try {
+    const e = await taxCopy.entryFor(
+      {
+        chit_id: null,
+        sender_entity_id: sender_id,
+        purpose,
+        business_json,
+        line_items,
+        currency_code,
+        all_recipients: [{ entity_id: sender_id, role: 'sender' }].concat(
+          receiverDetails.filter((item) => item.entity_id).map((item) => ({ entity_id: item.entity_id, role: item.all_role || 'receiver' }))
+        ),
+        sent_at: business_json.billed_at || null
+      },
+      sender_id
+    );
+    if (e && e.tax_check && !e.tax_check.ok) {
+      business_json.tax_check = { at: new Date().toISOString(), differences: e.tax_check.differences, kept: 'issued' };
+      require('../lib/logger').warn('tax.check-differs', { entity_id: sender_id, bill_no: business_json.bill_no, says: e.tax_check.says });
+    }
+  } catch (e) {
+    cbLog.fellBack('chits: the helper failed — carried on without it', e); /* the check never stops a bill — the stored invoice stands either way */
+  }
 }
 
 /**
@@ -2886,6 +2971,21 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
   }
 });
 
+/** REP-50: (key, currency) rows → one group per key, busiest first: { key, chits, total_value (null when it mixes currencies), by_currency[] } */
+function rollupGroups(rows) {
+  const byKey = new Map();
+  for (const row of rows) {
+    const group = byKey.get(row.key) || { key: row.key, chits: 0, by_currency: [] };
+    group.chits += row.chits;
+    group.by_currency.push({ currency_code: row.currency_code || null, chits: row.chits, total_value: row.total_value });
+    if (row.cost_hidden) group.cost_hidden = true; /* RAIL-146: a blind actor's stripped row marks the whole group */
+    byKey.set(row.key, group);
+  }
+  return [...byKey.values()]
+    .map((group) => Object.assign(group, { total_value: group.by_currency.length === 1 ? group.by_currency[0].total_value : null }))
+    .sort((first, second) => second.chits - first.chits);
+}
+
 // GET /chits/rollup?group_by=counterparty|state — read-only grouped summary over MY chits.
 // No merge, no new chit, the seal is untouched. Mounted BEFORE /:chit_id.
 router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
@@ -2913,16 +3013,20 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
     }
     // B1 RLS: caller reads only its own entity_id rows -> run inside withEntity(me).
     const { result, disp, roles } = await withEntity(entity_id, async (db) => {
-      const outcome = await db.query(
-        `SELECT ${keyExpr} AS key, COUNT(*)::int AS chits,
+      /* REP-50 (SIT 2026-10-25): summed PER CURRENCY, never across. One SUM over every chit added an IN chit's rupees to an AU shop's
+         dollars at face value. Each group carries by_currency [{ currency_code, chits, total_value }]; total_value stays for the old
+         readers but only where the group holds one currency, and is null where it mixes (a sum across currencies is no number).
+         RAIL-146 rides on the same rows: a blind actor's (key, currency) row is stripped by lib/cost-view first, then folded by key. */
+      const perCur = await db.query(
+        `SELECT ${keyExpr} AS key, NULLIF(ch.summary_json->>'currency_code', '') AS currency_code, COUNT(*)::int AS chits,
               COALESCE(SUM((ch.summary_json->>'total_value')::numeric), 0) AS total_value${costView.rollupMembersSql('ch', blind)}
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-        GROUP BY ${keyExpr}
-        ORDER BY chits DESC`,
+        GROUP BY 1, 2`,
         params
       );
+      const outcome = perCur;
       // D4: open-dispute count for the same scope — powers the "Disputes (n)" filter in the task menu.
       // Guarded so a pre-migration DB (no dispute tables) simply reports 0 rather than failing the rollup.
       const nestedDisp = await db
@@ -2938,7 +3042,9 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
       return { result: outcome, disp: nestedDisp, roles: await costView.rollupRoles(db, entity_id, outcome.rows, blind) };
     });
     /* S34: a group is the three columns its statement selects; a blind actor's is lib/cost-view rollupGroup (the same three, cost_hidden when the sum left some out) */
-    res.json({ group_by: groupBy, direction: dir, groups: costView.rollupGroups(result.rows, blind, entity_id, roles), dispute_open: disp.rows[0].n });
+    /* each (key, currency) row for its reader (lib/cost-view rollupGroups: the statement's columns, or a blind actor's stripped sum), then one group per key (REP-50 rollupGroups) */
+    const perReader = costView.rollupGroups(result.rows, blind, entity_id, roles).map((row, index) => Object.assign({ currency_code: result.rows[index].currency_code }, row));
+    res.json({ group_by: groupBy, direction: dir, groups: rollupGroups(perReader), dispute_open: disp.rows[0].n });
   } catch (err) {
     console.error('Rollup error:', err.message);
     problem(req, res, failed(err, req, 'Rollup failed'));
@@ -3226,6 +3332,9 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
+/** RAIL-106: the changes of mine on this chit the party on another installation has not confirmed yet (lib/ctpreturn unconfirmed) — null, and no query, when nothing is hosted elsewhere; null when the read fails (logged) */
+const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null));
+
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
@@ -3657,11 +3766,11 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     } catch (e) {
       cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
     }
-
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
+      ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants: _red.participants,
@@ -3748,7 +3857,7 @@ router.post('/:chit_id/reprice', auth, ...checked('POST /:chit_id/reprice'), asy
     res.json({ has_catalogue: priced.has_catalogue, will_price: priced.will_price, needs_price: priced.needs_price, unchanged: priced.unchanged, totals: priced.totals, applied: priced.applied });
   } catch (err) {
     cbLog.error('chits/reprice failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
-    problem(req, res, faultOf(err, req, 'Reprice failed'));
+    problem(req, res, faultOf(err, req, 'Reprice failed', { words: true })); /* API-6 (SIT 25 Oct): the library's own 400 reaches the person */
   }
 });
 
@@ -3775,7 +3884,7 @@ router.post('/:chit_id/costs', auth, ...checked('POST /:chit_id/costs'), async (
     res.json({ costs: recorded.costs });
   } catch (err) {
     cbLog.error('chits/costs record failed', { id: req.id, chit_id: req.params.chit_id, err: err.message });
-    problem(req, res, faultOf(err, req, 'Failed to record cost'));
+    problem(req, res, faultOf(err, req, 'Failed to record cost', { words: true })); /* API-6 (SIT 25 Oct): the library's own 400 reaches the person */
   }
 });
 
@@ -3983,7 +4092,7 @@ router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, r
     res.json({ entries: report.entries, by_kind: report.by_kind, by_disposition: report.by_disposition, migrated: report.migrated, full: report.full, resp: report.resp, open: report.open, closed: report.closed, closed_by_order: report.closed_by_order });
   } catch (err) {
     console.error('Raida report error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
@@ -3997,7 +4106,7 @@ router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (re
     res.json({ entries: listed.entries, open: listed.open, closed: listed.closed, migrated: listed.migrated, full: listed.full });
   } catch (err) {
     console.error('Raida read error:', err.message);
-    problem(req, res, faultOf(err, req, 'Failed to read the register'));
+    problem(req, res, faultOf(err, req, 'Failed to read the register', { words: true }));
   }
 });
 
@@ -4378,6 +4487,51 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
 //                        reason_code, reason }] }
 // ⚠️ `line: null` REMOVES the line — Athi: "old line deleted and new line is nothing". It stays visible on the
 //    chit and counts in nothing. That is NOT quantity:0, which is a real zero and would leak into totals.
+/** the amend route's edits as a proposal (lib/chit-proposal propose); null when the chit has nobody else on it */
+async function proposeAmendment(entity_id, chit_id, edits, req) {
+  if (!(await schema.hasTable('chit_proposal'))) return null; /* b796 not run: an amendment is direct, as it always was */
+  if (!(await require('../lib/chit-proposal').usesRfq(entity_id, chit_id))) return null; /* a domestic chit that was not made a proposal deal is amended directly, exactly as before 25 Oct (DECISIONS 14:10) */
+  const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
+  return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
+}
+/**
+ * ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
+ * stands until it is accepted — lib/chit-proposal. Answered here (the proposal, or the library's refusal in its words and code) → true; false: a chit with nobody else on it is amended directly, as it always was.
+ */
+async function answeredAsProposal(req, res, { entity_id, chit_id, edits }) {
+  let proposed;
+  try {
+    proposed = await proposeAmendment(entity_id, chit_id, edits, req);
+  } catch (err) {
+    if (!(err && err.refused)) throw err;
+    problem(req, res, { status: err.status, ...said({ error: 'Not done', message: err.message, code: err.code }, err.code) });
+    return true;
+  }
+  if (!proposed) return false;
+  res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+  return true;
+}
+
+/** the edits an amend body carries: { edits: [...] }, or the array (or one edit) as the body itself */
+const editsOf = (body) => [].concat(body.edits || body).filter(Boolean);
+
+/**
+ * the amend refusals the library means → the Problem spec, or null (anything else goes on to the catch below):
+ *  · a settled line is a deliberate refusal, not a failure — say which line and what to do instead. b152: three narrower refusals replaced the old blanket
+ *    "any delivery locks the line". Each keeps its own code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery,
+ *    while a unit change wants the line left alone. One code for all three would send people to the wrong remedy.
+ *  · an input the caller can fix (lib/amend AMEND_*: a line with no item, a quantity that is not a number, nothing to amend, a bad line number): the sentence
+ *    reaches the screen under its own code (API-6 finding, 25 Oct)
+ */
+function knownAmendSpec(err) {
+  if (!err) return null;
+  if (['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
+    return { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
+  }
+  if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) };
+  return null;
+}
+
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4391,7 +4545,9 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
-    const out = await costWrite.recordAmend(req, entity_id, chit_id, req.body.edits || req.body, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
+    const edits = editsOf(req.body);
+    if (await answeredAsProposal(req, res, { entity_id, chit_id, edits })) return;
+    const out = await costWrite.recordAmend(req, entity_id, chit_id, edits, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
@@ -4453,15 +4609,8 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    /**
-     * A settled line is a deliberate refusal, not a failure — say which line and what to do instead.
-     * b152: three narrower refusals replaced the old blanket "any delivery locks the line". Each keeps its own
-     * code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery, while a
-     * unit change wants the line left alone. One code for all three would send people to the wrong remedy.
-     */
-    if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
-      return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
-    }
+    const known = knownAmendSpec(err);
+    if (known) return problem(req, res, known);
     if (err && err.code === '23514') {
       cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({
@@ -4756,7 +4905,6 @@ function withdrawFailure(req, res, err) {
     message: 'The books hold this chit and could not reverse it: ' + err.message + ' Open the month, or reverse the entry there, then withdraw again.'
   }, 'CHIT_CANNOT_WITHDRAW') });
 }
-
 /** the answer of PUT /status: a refusal of the rail as a Problem (its old body kept), else the 200 of a move or of the no-op of a status already held; true when the status really moved */
 function answerMoved(req, res, moved) {
   if (moved.code >= 400) problem(req, res, { status: moved.code, ...said(moved.body, codeOfStatus(moved.code)) });
@@ -4908,6 +5056,18 @@ async function logMessageSent(db, { chit_id, entity_id, display_name, message_te
   }
 }
 
+/**
+ * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
+ * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
+ * the copies are written inside the transaction, so the crossing is queued once it has committed.
+ */
+function tellMessageElsewhere(entity_id, chit_id, result, posted) {
+  const { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type } = posted;
+  const line_id = posted.line_id || null;
+  if (isDispute) return ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type, sender_display_name: senderName, line_id, to_ids: disputeRoster });
+  return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
+}
+
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5022,7 +5182,7 @@ router.post(
         if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
         return posted;
       });
-
+      result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -5047,11 +5207,11 @@ router.post(
         thread_type,
         message_text,
         sender_display_name: display_name,
-        created_at: result.created_at
+        created_at: result.created_at,
+        ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
-      console.error('Send message error:', err.message);
-      problem(req, res, failed(err, req, 'Send message failed'));
+      answerSendFailure(req, res, err);
     }
   }
 );
@@ -5099,6 +5259,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
     for (const m of result.rows) {
       m.attachments = byMsg[m.message_id] || [];
     }
+    ctpReturn.markMessages(result.rows, await ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id/messages: the read failed — answered with none', null))); // RAIL-106: a message of mine the other installation has not confirmed carries ctp_unconfirmed (the sentence to show)
     const thread = PAGE_LIMIT.pageOut('messages', result.rows, PAGE_LIMIT.pageArgs(req.query, LIST_PAGE, LIST_MAX));
     /* S34: count, then the page envelope (lib/page-limit pageOut); capped and cap_note only when the pager cut the thread */
     res.json({ count: result.rows.length, messages: thread.messages, total: thread.total, page: thread.page, limit: thread.limit, capped: thread.capped, cap_note: thread.cap_note });
@@ -5151,6 +5312,140 @@ async function holdersAmong(callerEntity, chit_id, ids) {
   return ids.filter((id) => holding.has(String(id)));
 }
 
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RAISED DISPUTE: the per-party copies (chit_dispute_deliver), the raiser's timeline row, the parties' notices and the reason as a roster-scoped message.
+ * POST /:chit_id/disputes runs it for the person who raised it; lib/ctpreturn runs the SAME function on the installation that is told of it (as the remote raiser's stub, with the ids mapped
+ * to its own rows). The permission and scope decisions are made once, by the route, where the dispute originates — this only records.
+ * client = a transaction under withEntity(raiser). → { reason_message_id }
+ */
+async function recordRaise(client, args) {
+  await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
+    args.dispute_id, args.chit_id, args.raiser_id, args.raiser_name, args.target_id, args.target_name, args.scope, args.parity.mode, args.parity.answerable, args.parity.parity_state, args.via, args.category, args.reason,
+    JSON.stringify(args.evidence), JSON.stringify(args.roster), args.audience
+  ]);
+  // raiser's own timeline
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+    [args.chit_id, args.raiser_id, args.raiser_id, args.actor_name, `Dispute raised — ${args.category} (${args.parity.mode === 'one_sided' ? 'record-only' : args.scope}): ${args.reason.slice(0, 80)}`]
+  );
+  // per-party timeline notices — CROSS write into each party's own state_log copy
+  if (args.partyIds.length) {
+    const notice = `Dispute raised against you — ${args.category}: ${args.reason.slice(0, 80)}`;
+    if (args.ready !== undefined ? args.ready : await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, args.partyIds, 'dispute_raised', args.raiser_id, args.actor_name, notice]);
+    } else {
+      for (const pid of args.partyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
+          [args.chit_id, pid, args.raiser_id, args.actor_name, notice]
+        );
+      }
+    }
+  }
+  // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
+  const reason_message_id = args.reason_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: reason_message_id, chit_id: args.chit_id, sender_entity_id: args.raiser_id, sender_display_name: args.raiser_name, thread_type: 'external', message_text: `[${args.category}] ${args.reason}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  return { reason_message_id };
+}
+
+/**
+ * ⭐ RAIL-106 — THE ONE WRITER OF A RESOLUTION: the definer that clears the party copy(ies) (and the raiser's when none is left open), the resolver's timeline row, the note as a roster-scoped
+ * message and the parties' notices. PUT …/resolve runs it after its own permission check; lib/ctpreturn runs the same function where the resolution is told of. client = a transaction under withEntity(resolver).
+ * → { allResolved, resolvedPartyIds, resolve_message_id }
+ */
+async function recordResolve(client, args) {
+  let resolvedPartyIds;
+  if (args.targetParty) resolvedPartyIds = [args.targetParty];
+  else {
+    const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [args.dispute_id]);
+    resolvedPartyIds = openR.rows.map((item) => item.entity_id);
+  }
+  // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
+  const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [args.dispute_id, args.resolver_id, args.targetParty || null, args.resolution_note]);
+  const allResolved = rr.rows[0].all_resolved;
+  await client.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+    [args.chit_id, args.resolver_id, args.resolver_id, args.actor_name, `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`]
+  );
+  const resolve_message_id = args.resolve_message_id || uuidv4();
+  await postMessageCopies(
+    { message_id: resolve_message_id, chit_id: args.chit_id, sender_entity_id: args.resolver_id, sender_display_name: args.resolver_name, thread_type: 'external', message_text: `[resolved] ${args.resolution_note}`, is_dispute: true, dispute_id: args.dispute_id },
+    client
+  );
+  if (resolvedPartyIds.length) {
+    const notice = `Dispute resolved — ${args.category}: ${args.resolution_note.slice(0, 100)}`;
+    if (await definersReady()) {
+      await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [args.chit_id, resolvedPartyIds, 'dispute_resolved', args.resolver_id, args.actor_name, notice]);
+    } else {
+      for (const pid of resolvedPartyIds) {
+        await client.query(
+          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
+          [args.chit_id, pid, args.resolver_id, args.actor_name, notice]
+        );
+      }
+    }
+  }
+  return { allResolved, resolvedPartyIds, resolve_message_id };
+}
+
+/** ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits). The dispute carries no "in whose favour"; the buyer's own status says it. */
+function releaseAfterResolve(out, chit_id, extraIds) {
+  if (!out.allResolved) return;
+  try {
+    const hooks = require('../lib/books-hooks');
+    setImmediate(() => {
+      for (const party of (extraIds || []).concat(out.resolvedPartyIds || [])) hooks.afterChit(party, chit_id, null);
+    });
+  } catch (e) {
+    cbLog.fellBack('chits dispute resolve: the helper failed — carried on without it', e);
+  }
+}
+
+/** RAIL-106: a message longer than lib/message-limit allows is refused 413 in words (the writer threw it); true when it answered */
+/** POST /messages could not send: a message over the one limit is 413 MESSAGE_TOO_LONG in its words; anything else is the fault answer (logged with the request id) */
+function answerSendFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Send message error:', err.message);
+  problem(req, res, failed(err, req, 'Send message failed'));
+}
+
+/** a targeted dispute names its target (id and the name parity read); a chit-wide one names nobody */
+const targetOf = (scope, target_entity_id, parity) => (scope === 'targeted' ? { id: target_entity_id, name: parity.target_display_name } : { id: null, name: null });
+
+/** RAIL-106: on an international or proposal deal only, the parties named on it are rung here; those elsewhere when it arrives */
+async function ringDisputeRaised(entity_id, chit_id, partyIds, byName) {
+  if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: byName });
+}
+
+/** POST /disputes could not raise: too long (413, its words), the disputes tables missing (500 DISPUTES_TABLE_MISSING, says which migrations), else the fault answer */
+function answerRaiseFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Raise dispute error:', err.message);
+  if (err.message.includes('chit_disputes'))
+    return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
+  problem(req, res, failed(err, req, 'Raise dispute failed'));
+}
+
+/** PUT /disputes/:id/resolve could not resolve: too long (413, its words), else the fault answer */
+function answerResolveFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Resolve dispute error:', err.message);
+  problem(req, res, failed(err, req, 'Resolve failed'));
+}
+
+function answeredTooLong(req, res, err) {
+  if (!err || err.code !== 'MESSAGE_TOO_LONG') return false;
+  problem(req, res, { status: 413, ...said({ error: 'Message too long', message: err.message, code: 'MESSAGE_TOO_LONG', limit: err.limit }, 'MESSAGE_TOO_LONG') });
+  return true;
+}
+
 // ─── POST /chits/:chit_id/disputes ───────────────────────────
 router.post(
   '/:chit_id/disputes',
@@ -5168,6 +5463,7 @@ router.post(
         db.query(`SELECT current_status FROM chit_status WHERE chit_id=$1 AND entity_id=$2`, [chit_id, entity_id])
       );
       if (access.rows.length === 0) return problem(req, res, { status: 403, ...said({ error: 'Not a participant' }, 'CHIT_NOT_PERMITTED') });
+      await ctpReturn.ensureShadows(entity_id, chit_id); // RAIL-106: a party on another installation is a participant here (its shadow row), so the roster below can hold it
 
       // C2 (Athi): raising on an already-CLOSED chit is allowed but flagged with a warning (bring back to Act if needed).
       const _cs = access.rows[0].current_status;
@@ -5246,66 +5542,13 @@ router.post(
         partyIds.map((pid) => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' }))
       );
       const audience = [...new Set([entity_id, ...partyIds])];
-      await withEntity(entity_id, async (client) => {
-        await client.query(`SELECT chit_dispute_deliver($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14::jsonb,$15::jsonb,$16::uuid[])`, [
-          dispute_id,
-          chit_id,
-          entity_id,
-          entityName,
-          scope === 'targeted' ? target_entity_id : null,
-          scope === 'targeted' ? parity.target_display_name : null,
-          scope,
-          parity.mode,
-          parity.answerable,
-          parity.parity_state,
-          via,
-          category,
-          reason,
-          JSON.stringify(evidence),
-          JSON.stringify(roster),
-          audience
-        ]);
-        // raiser's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-          [
-            chit_id,
-            entity_id,
-            entity_id,
-            display_name,
-            `Dispute raised — ${category} (${parity.mode === 'one_sided' ? 'record-only' : scope}): ${reason.slice(0, 80)}`
-          ]
-        );
-        // per-party timeline notices — CROSS write into each party's own state_log copy
-        if (partyIds.length) {
-          const notice = `Dispute raised against you — ${category}: ${reason.slice(0, 80)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, partyIds, 'dispute_raised', entity_id, display_name, notice]);
-          } else {
-            for (const pid of partyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_raised',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        // the dispute REASON as a per-copy dispute message (roster-scoped via chit_message_deliver)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[${category}] ${reason}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-      });
+      const target = targetOf(scope, target_entity_id, parity);
+      const raised = await withEntity(entity_id, (client) =>
+        recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: target.id, target_name: target.name, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
+      );
+      await ringDisputeRaised(entity_id, chit_id, partyIds, display_name);
+      /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
+      const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: target.id, target_name: target.name, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
         dispute_id,
         mode: parity.mode,
@@ -5331,13 +5574,11 @@ router.post(
             : widened
               ? 'This category notifies all parties — raised chit-wide.'
               : 'Dispute raised with the selected party.',
-        message: 'Dispute raised'
+        message: 'Dispute raised',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      console.error('Raise dispute error:', err.message);
-      if (err.message.includes('chit_disputes'))
-        return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
-      problem(req, res, failed(err, req, 'Raise dispute failed'));
+      answerRaiseFailure(req, res, err);
     }
   }
 );
@@ -5563,71 +5804,12 @@ router.put(
         }
       }
 
-      const ready = await definersReady();
-      const out = await withEntity(entity_id, async (client) => {
-        // who is being cleared (for their timeline notice): the target party, or every still-open party.
-        let resolvedPartyIds;
-        if (targetParty) resolvedPartyIds = [targetParty];
-        else {
-          const openR = await client.query(`SELECT entity_id FROM chit_dispute_roster($1) WHERE role='party' AND status='open'`, [dispute_id]);
-          resolvedPartyIds = openR.rows.map((item) => item.entity_id);
-        }
-        // definer clears the party copy(ies), and the raiser's copy when no party remains open. Returns allResolved.
-        const rr = await client.query(`SELECT chit_dispute_resolve($1,$2,$3,$4) AS all_resolved`, [
-          dispute_id,
-          entity_id,
-          targetParty || null,
-          resolution_note
-        ]);
-        const allResolved = rr.rows[0].all_resolved;
-        // resolver's own timeline
-        await client.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-           VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-          [chit_id, entity_id, entity_id, display_name, `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`]
-        );
-        // resolution note as a per-copy dispute message (roster-scoped)
-        await postMessageCopies(
-          {
-            chit_id,
-            sender_entity_id: entity_id,
-            sender_display_name: entityName,
-            thread_type: 'external',
-            message_text: `[resolved] ${resolution_note}`,
-            is_dispute: true,
-            dispute_id
-          },
-          client
-        );
-        // notify the cleared parties on their own timeline
-        if (resolvedPartyIds.length) {
-          const notice = `Dispute resolved — ${d.category}: ${resolution_note.slice(0, 100)}`;
-          if (ready) {
-            await client.query(`SELECT chit_log_targets($1,$2,$3,$4,$5,$6)`, [chit_id, resolvedPartyIds, 'dispute_resolved', entity_id, display_name, notice]);
-          } else {
-            for (const pid of resolvedPartyIds) {
-              await client.query(
-                `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-                 VALUES ($1,$2,'dispute_resolved',$3,$4,$5)`,
-                [chit_id, pid, entity_id, display_name, notice]
-              );
-            }
-          }
-        }
-        return { allResolved, resolvedPartyIds };
-      });
-      /* ⭐ a settled dispute may release a bill a party already ACCEPTED (lib/books-hooks buyerGate: open dispute → waits).
-         The dispute carries no "in whose favour"; the buyer's own status says it — accepted posts, rejected never does. */
-      if (out.allResolved) {
-        try {
-          const hooks = require('../lib/books-hooks');
-          setImmediate(() => {
-            for (const p of [entity_id].concat(out.resolvedPartyIds || [])) hooks.afterChit(p, chit_id, null);
-          });
-        } catch (e) {
-          cbLog.fellBack('chits PUT /:chit_id/disputes/:dispute_id/resolve: the helper failed — carried on without it', e);
-        }
-      }
+      const out = await withEntity(entity_id, (client) =>
+        recordResolve(client, { dispute_id, chit_id, resolver_id: entity_id, resolver_name: entityName, actor_name: display_name, targetParty, resolution_note, category: d.category })
+      );
+      releaseAfterResolve(out, chit_id, [entity_id]);
+      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(out.resolvedPartyIds || [], { kind: 'dispute', id: chit_id, what: 'resolved', who: display_name }); /* RAIL-106: an international or proposal deal only: the cleared parties are rung */
+      const crossed = await ctpReturn.onDisputeResolved(entity_id, chit_id, { dispute_id, scope: d.scope, target_id: targetParty, resolution_note, category: d.category, actor_name: display_name, resolver_name: entityName, resolve_message_id: out.resolve_message_id });
 
       res.json({
         dispute_id,
@@ -5636,11 +5818,11 @@ router.put(
         fully_resolved: out.allResolved,
         resolution_note,
         resolved_by: display_name,
-        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others'
+        message: out.allResolved ? 'Dispute fully resolved' : 'Party resolved — still open for the others',
+        ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      console.error('Resolve dispute error:', err.message);
-      problem(req, res, failed(err, req, 'Resolve failed'));
+      answerResolveFailure(req, res, err);
     }
   }
 );
@@ -6047,6 +6229,19 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
   }
 });
 
+/**
+ * ⭐ RAIL-106: each copy of mine the withdrawal moved is told to the parties on other installations, by the same event a status move sends (the rail decided it in the route);
+ * a withdrawal rings the recipients, as a cancelled status does. → what each was queued as (the route answers the first that says something)
+ */
+async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
+  if (!moved || !moved.length) return [];
+  const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
+  await ringStatus(entity_id, chit_id, 'cancelled', header, byName);
+  const told = [];
+  for (const copy of moved) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: byName, note: reason }));
+  return told;
+}
+
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
 // ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
@@ -6109,13 +6304,14 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       }
       const refusedBy = gates.find((item) => !item.ok);
       if (refusedBy) return { refused: refusedBy };
-      for (const g of gates) await g.write();
+      const moved = [];
+      for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
       await db.query(
         `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
            VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
         [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
       ); // own timeline only
-      return { refused: null, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+      return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
     });
     if (gate.refused) {
       const g = gate.refused;
@@ -6130,6 +6326,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         allowed_transitions: g.allowed
       })));
     }
+    const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
       chit_id,
@@ -6195,15 +6392,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
              timestamp for no reason. */
         for (const rid of [...new Set(parties)]) {
-          await withEntity(rid, (db) =>
-            db.query(
-              `UPDATE chit_status
-                  SET cancel_requested_at = NOW(), cancel_requested_by = $2, cancel_reason = $3
-                WHERE chit_id = $1 AND entity_id = $4`,
-              [chit_id, req.identity.display_name, reason, rid]
-            )
-          );
+          await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
         }
+        told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
       }
     } catch (e) {
       console.error('cancel flag:', e.message);
@@ -6211,7 +6402,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books });
+    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books, ...ctpReturn.answerOf(ctpReturn.firstOf(told)) });
   } catch (err) {
     withdrawFailure(req, res, err);
   }
@@ -6313,6 +6504,15 @@ router.post(
 router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
 router.openapi = { paths: pathsOf(), schemas: {} };
+router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
+router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
+router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
+router.moneyOfLines = moneyOfLines; /* lib/change-order re-issues the invoice for proposed lines by the very same calculation */
+router.moneyOfInvoice = moneyOfInvoice;
+router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
+router.recordResolve = recordResolve;
+router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
+module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

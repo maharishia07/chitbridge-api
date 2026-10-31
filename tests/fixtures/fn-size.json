@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 222,
+  "long_functions": 216,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -12,10 +12,6 @@
     ],
     "lib/ai.js": [
       "invokeSkill"
-    ],
-    "lib/amend.js": [
-      "(anonymous)",
-      "record"
     ],
     "lib/assign.js": [
       "byPerson"
@@ -154,9 +150,6 @@
     ],
     "lib/lotfields.js": [
       "(anonymous)"
-    ],
-    "lib/mint.js": [
-      "deliver"
     ],
     "lib/money.js": [
       "(anonymous)"
@@ -377,7 +370,6 @@
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
       "POST /assign-bulk",
-      "PUT /:chit_id/disputes/:dispute_id/resolve",
       "PUT /:chit_id/status",
       "PUT /:chit_id/void",
       "chitFilters",
@@ -403,7 +395,6 @@
     "routes/entities.js": [
       "GET /me",
       "GET /mis",
-      "GET /search",
       "PATCH /profile"
     ],
     "routes/folders.js": [
@@ -438,7 +429,6 @@
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers",
       "GET /suppliers/availability",
       "PATCH /suppliers/:id",
       "POST /customers",

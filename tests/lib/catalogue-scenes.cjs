@@ -57,7 +57,7 @@ function extras(tools) {
     X('photo-empty-list', 'POST ' + C + '/photo-extract', 400, { body: { images: [] } }),
     X('photo-read', 'POST ' + C + '/photo-extract', 200, { body: { images: [{ mime: 'image/png', b64: 'AA==' }] }, patch: photo(async () => ({ proposed: [], note: 'ok' })) }),
     X('photo-wallet-empty', 'POST ' + C + '/photo-extract', 402, { body: { images: [{}] }, patch: photo(refusal(402, 'Top up the wallet.')) }),
-    X('photo-refusal-without-words', 'POST ' + C + '/photo-extract', 429, { body: { images: [{}] }, patch: photo(async () => { throw Object.assign(new Error(''), { status: 429 }); }) }),
+    X('photo-refusal-without-words', 'POST ' + C + '/photo-extract', 429, { genericOk: true /* the thrower set no sentence: the generic one is all there is */, body: { images: [{}] }, patch: photo(async () => { throw Object.assign(new Error(''), { status: 429 }); }) }),
     X('photo-not-connected', 'POST ' + C + '/photo-extract', 503, { body: { images: [{}] }, patch: photo(refusal(503, 'secret provider text')) }),
     X('photo-fails', 'POST ' + C + '/photo-extract', 500, { body: { images: [{}] }, patch: photo(boom) }),
     /* the shopper's orders and documents */

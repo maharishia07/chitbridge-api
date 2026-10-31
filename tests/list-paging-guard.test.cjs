@@ -57,7 +57,6 @@ const ALLOWED = {
   'chits-trace.js /:id/trace': 'one chit\'s trace graph',
   'chits-trace.js /trace/by-batch': 'one batch\'s reconstructed graph',
   'chits-trace.js /trace/networks': 'the networks I trace in — a small vocabulary',
-  'entities.js /search': 'a typeahead — the ten best matches by design (LIMIT 10)',
   'entities.js /routing': 'one entity\'s routing summary',
   'entities.js /populations': 'the fixed population vocabulary',
   'entities.js /mis': 'one entity\'s MIS summary',
