@@ -3935,6 +3935,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "SUPPLY_BILL_DIFFERS",
+   "status": "409",
+   "title": "Bill already recorded",
+   "shopkeeper": "This bill number is already recorded for that supplier with different lines.",
+   "hint": "Record a correction, or use a new bill number.",
+   "owner_area": "supplies",
+   "since": "2026-10-31"
+  },
+  {
    "code": "SUPPLY_INVALID",
    "status": "400",
    "title": "Supply not accepted",
