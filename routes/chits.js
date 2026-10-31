@@ -5304,11 +5304,26 @@ function askedPartyIds(checklist, targetId) {
   return checklist.length ? [...new Set(checklist)] : targetId ? [targetId] : [];
 }
 
+/** every entity that holds a copy of the chit (chit_participants, callable by a holder only) */
+async function holdersOf(callerEntity, chit_id) {
+  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
+  return participants.rows.map((row) => row.entity_id);
+}
+
+/**
+ * ⭐ RAIL-162 — the parties of a dispute. A TARGETED one names them (the checklist or the target); a CHIT-WIDE one is the whole chit, so every OTHER holder is a party.
+ * Since b68 each party reads only its own chit_disputes copy, so a chit-wide raise that named nobody wrote the raiser's copy alone: the other side saw an empty list, was refused its
+ * reply (403 "Not a party") and never saw the resolve. The roster this feeds also tells the other installations (lib/ctpreturn builds the remote copies from it).
+ */
+async function disputeParties(callerEntity, chit_id, scope, named) {
+  if (scope !== 'chit_wide') return holdersAmong(callerEntity, chit_id, named);
+  return (await holdersOf(callerEntity, chit_id)).filter((id) => String(id) !== String(callerEntity));
+}
+
 /** SEC-FIX3 S4 — which of these entity ids HOLD a copy of the chit (chit_participants, callable by a holder only); a stranger gets no copy, no reason text */
 async function holdersAmong(callerEntity, chit_id, ids) {
   if (!ids.length) return [];
-  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
-  const holding = new Set(participants.rows.map((row) => String(row.entity_id)));
+  const holding = new Set((await holdersOf(callerEntity, chit_id)).map(String));
   return ids.filter((id) => holding.has(String(id)));
 }
 
@@ -5511,7 +5526,7 @@ router.post(
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
-      const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
+      const partyIds = await disputeParties(entity_id, chit_id, scope, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
       const partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);
