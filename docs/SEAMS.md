@@ -71,12 +71,12 @@ of file each thing is; this says what already does the job.
 | 30 | `ensureCap` | `app.html` |  |
 | 30 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
+| 30 | `sentence` | `one-person.js` |  |
 | 30 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 30 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 30 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 30 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 29 | `lines` | `cart.js` |  |
-| 29 | `sentence` | `one-person.js` |  |
 | 29 | `changes` | `books-store.js` |  |
 | 29 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
@@ -191,6 +191,7 @@ of file each thing is; this says what already does the job.
 | 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
 | 12 | `units` | `cart.js` |  |
+| 12 | `link` | `chit-sheet.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 12 | `post` | `books-manual.js` | POST /events — |
@@ -202,7 +203,6 @@ of file each thing is; this says what already does the job.
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `when` | `cap-settings.js` |  |
-| 11 | `link` | `chit-sheet.js` |  |
 | 11 | `safe` | `country-profiles.js` | text made safe for HTML — |
 | 11 | `confirm` | `lab-kit.js` | opts: |
 | 11 | `stored` | `one-person.js` |  |
