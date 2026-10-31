@@ -1382,6 +1382,27 @@ function refuseCurrencyRequired(req, res) {
   });
 }
 
+/** RAIL-106: where the seller of this send lives (lib/ctpaddress resolve) — null for a counter bill or when I am the seller myself */
+async function sellerPlaceOf(st) {
+  if (st.counterBill || String(st.sellerId) === String(st.sender_id)) return null;
+  return require('../lib/ctpaddress').resolve(st.sellerId);
+}
+
+/** whose tax view prices the lines: me on an order I place, the one recipient of anything else, or nobody (several recipients) */
+const buyerOfSend = (orderLike, sender_id, toIds) => (orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null);
+
+/** the currency the sender stated on the chit (business_json.currency), or '' */
+const statedCurrencyOf = (business_json) => (business_json && typeof business_json === 'object' ? String(business_json.currency || '').trim() : '');
+
+/**
+ * ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION.
+ * The chit says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's.
+ */
+async function stampQuotation(business_json, sender_id, sellerPlace) {
+  if (!business_json || typeof business_json !== 'object' || business_json.jurisdiction) return;
+  business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
+}
+
 /** the header's money — gross · savings · net · tax · total, provisional */
 async function sendMoney(st, req, res) {
   const { sender_id, line_items, business_json, currency_code, orderLike, toIds, counterBill, sellerId } = st;
@@ -1397,20 +1418,15 @@ async function sendMoney(st, req, res) {
   try {
     /* a counter bill: no server-side tax here, exactly as for every counter bill today (the slip's own tax stands; REV-02) */
     /* ⭐ RAIL-106 (Athi, 25 Oct 12:05): a seller on ANOTHER installation prices its own goods — price, currency and tax by its own pack, at its side (lib/chit-proposal). The buyer's installation sends what and how many and runs no tax of its own on someone else's goods. */
-    const sellerPlace = !counterBill && String(sellerId) !== String(sender_id) ? await require('../lib/ctpaddress').resolve(sellerId) : null;
+    const sellerPlace = await sellerPlaceOf(st);
     sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
-    const buyerId = counterBill || sellerElsewhere ? null : orderLike ? String(sender_id) : toIds.length === 1 ? toIds[0] : null;
+    const buyerId = counterBill || sellerElsewhere ? null : buyerOfSend(orderLike, sender_id, toIds);
     ({ moneyBlock, invoice: originInvoice } = await moneyOfLines(Array.isArray(line_items) ? line_items : [], { sellerId, buyerId }, business_json, currency_code));
-    /* ⭐ RAIL-106 (DECISIONS 13:10): a seller on another installation prices it (moneyOfLines asked nobody's tax engine here); the request and every priced round before acceptance are a QUOTATION. The chit
-       says whose country it was asked from; the seller's half is added by its priced rounds. The buyer's duty and taxes are never computed (buyer_duty_and_taxes: not_included). The words on the screen are the web's. */
-    if (sellerElsewhere && business_json && typeof business_json === 'object' && !business_json.jurisdiction) {
-      business_json.jurisdiction = { document: 'quotation', buyer_country: await countryOfEntity(sender_id), buyer_installation: process.env.INSTALLATION_KEY || null, seller_installation: sellerPlace.installation_key || null, buyer_duty_and_taxes: 'not_included' };
-    }
+    if (sellerElsewhere) await stampQuotation(business_json, sender_id, sellerPlace);
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* a chit never fails to send because its money summary could not be built */
   }
-  const statedCurrency = business_json && typeof business_json === 'object' && String(business_json.currency || '').trim();
-  if (sellerElsewhere && !statedCurrency && !req.body.is_draft) return refuseCurrencyRequired(req, res);
+  if (sellerElsewhere && !statedCurrencyOf(business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
   Object.assign(st, { moneyBlock, originInvoice });
 }
 
@@ -3316,6 +3332,9 @@ router.get('/unread', auth, async (req, res) => {
 function orderBilledSql(header) {
   return header && header.purpose === 'order' ? require('../lib/open-orders').billedOfChitSql('$1', '$2') : 'NULL::boolean';
 }
+/** RAIL-106: the changes of mine on this chit the party on another installation has not confirmed yet (lib/ctpreturn unconfirmed) — null, and no query, when nothing is hosted elsewhere; null when the read fails (logged) */
+const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null));
+
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 
@@ -3747,13 +3766,11 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     } catch (e) {
       cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
     }
-
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
-    const _ctpMark = await ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null)); // RAIL-106: null, and no query, when nothing is hosted elsewhere
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
-      ...ctpReturn.markOf(_ctpMark), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
+      ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: data.header.rows[0],
       detail: data.detail.rows[0] || null,
       participants: _red.participants,
@@ -4477,6 +4494,44 @@ async function proposeAmendment(entity_id, chit_id, edits, req) {
   const lines = edits.map((item) => ({ line_index: item.line_index, line_id: item.line_id, line: item.line === undefined ? undefined : item.line, price: item.line && item.line.price, quantity: item.line && item.line.quantity, requested_price: item.line && item.line.price, remove: item.line === null, note: item.reason || null }));
   return require('../lib/chit-proposal').propose(entity_id, chit_id, { lines, note: null }, { id: req.identity.identity_id, name: req.identity.display_name });
 }
+/**
+ * ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
+ * stands until it is accepted — lib/chit-proposal. Answered here (the proposal, or the library's refusal in its words and code) → true; false: a chit with nobody else on it is amended directly, as it always was.
+ */
+async function answeredAsProposal(req, res, { entity_id, chit_id, edits }) {
+  let proposed;
+  try {
+    proposed = await proposeAmendment(entity_id, chit_id, edits, req);
+  } catch (err) {
+    if (!(err && err.refused)) throw err;
+    problem(req, res, { status: err.status, ...said({ error: 'Not done', message: err.message, code: err.code }, err.code) });
+    return true;
+  }
+  if (!proposed) return false;
+  res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+  return true;
+}
+
+/** the edits an amend body carries: { edits: [...] }, or the array (or one edit) as the body itself */
+const editsOf = (body) => [].concat(body.edits || body).filter(Boolean);
+
+/**
+ * the amend refusals the library means → the Problem spec, or null (anything else goes on to the catch below):
+ *  · a settled line is a deliberate refusal, not a failure — say which line and what to do instead. b152: three narrower refusals replaced the old blanket
+ *    "any delivery locks the line". Each keeps its own code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery,
+ *    while a unit change wants the line left alone. One code for all three would send people to the wrong remedy.
+ *  · an input the caller can fix (lib/amend AMEND_*: a line with no item, a quantity that is not a number, nothing to amend, a bad line number): the sentence
+ *    reaches the screen under its own code (API-6 finding, 25 Oct)
+ */
+function knownAmendSpec(err) {
+  if (!err) return null;
+  if (['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
+    return { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
+  }
+  if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) };
+  return null;
+}
+
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4490,15 +4545,8 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
     const verdict = railActions.can({ held }, railActions.meOf(req), 'amend');
     if (!verdict.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(verdict)));
 
-    /* ⭐ RAIL-106 (Athi, 25 Oct 11:15): an amendment is a change order. With another party on the chit it is PROPOSED (the seller prices it at the seller's installation; anyone else asks) and the agreed record
-       stands until it is accepted — lib/chit-proposal. A chit with nobody else on it is amended directly, as it always was. */
-    const edits = [].concat(req.body.edits || req.body).filter(Boolean);
-    const proposed = await proposeAmendment(entity_id, chit_id, edits, req).catch((err) => {
-      if (err && err.refused) return { refusal: err };
-      throw err;
-    });
-    if (proposed && proposed.refusal) return problem(req, res, { status: proposed.refusal.status, ...said({ error: 'Not done', message: proposed.refusal.message, code: proposed.refusal.code }, proposed.refusal.code) });
-    if (proposed) return res.json({ proposed: true, proposal: proposed, amendments: [], message: proposed.kind === 'request' ? 'Counter-proposal asked' : 'Change proposed' });
+    const edits = editsOf(req.body);
+    if (await answeredAsProposal(req, res, { entity_id, chit_id, edits })) return;
     const out = await costWrite.recordAmend(req, entity_id, chit_id, edits, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
@@ -4561,19 +4609,8 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    /**
-     * A settled line is a deliberate refusal, not a failure — say which line and what to do instead.
-     * b152: three narrower refusals replaced the old blanket "any delivery locks the line". Each keeps its own
-     * code, because the screen's next action differs: a removal or a reduction wants a NEGATIVE delivery, while a
-     * unit change wants the line left alone. One code for all three would send people to the wrong remedy.
-     */
-    if (err && ['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
-      return problem(req, res, { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') });
-    }
-    /* an input the caller can fix (lib/amend AMEND_*: a line with no item, a quantity that is not a number, nothing to amend, a bad line number): the sentence reaches the screen under its own code (API-6 finding, 25 Oct) */
-    if (err && err.status === 400 && /^AMEND_/.test(String(err.code))) {
-      return problem(req, res, { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) });
-    }
+    const known = knownAmendSpec(err);
+    if (known) return problem(req, res, known);
     if (err && err.code === '23514') {
       cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({
@@ -5019,6 +5056,18 @@ async function logMessageSent(db, { chit_id, entity_id, display_name, message_te
   }
 }
 
+/**
+ * RAIL-106: a message just posted, told to the parties on another installation → what was queued (ctpReturn.answerOf says it on the answer).
+ * A dispute message goes to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide); any other message by RAIL-106 x RAIL-136 (sit/run6):
+ * the copies are written inside the transaction, so the crossing is queued once it has committed.
+ */
+function tellMessageElsewhere(entity_id, chit_id, result, posted) {
+  const { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type } = posted;
+  const line_id = posted.line_id || null;
+  if (isDispute) return ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type, sender_display_name: senderName, line_id, to_ids: disputeRoster });
+  return ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type, sender_display_name: senderName, line_id }, result);
+}
+
 router.post(
   '/:chit_id/messages',
   auth,
@@ -5133,7 +5182,7 @@ router.post(
         if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
         return posted;
       });
-      if (isDispute) result.ctp = await ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null, to_ids: disputeRoster }); /* RAIL-106: to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide) */ else result.ctp = await ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null }, result); /* RAIL-106 x RAIL-136 (sit/run6): the copies are written inside the transaction, so the crossing is queued once it has committed */
+      result.ctp = await tellMessageElsewhere(entity_id, chit_id, result, { isDispute, disputeId, disputeRoster, thread_type, message_text, senderName, msg_type: req.body.msg_type, line_id: req.body.line_id });
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -5162,9 +5211,7 @@ router.post(
         ...ctpReturn.answerOf(result.ctp) // RAIL-106: queued for the party on another installation (resent until it accepts), or the words saying it could not be
       });
     } catch (err) {
-      if (answeredTooLong(req, res, err)) return;
-      console.error('Send message error:', err.message);
-      problem(req, res, failed(err, req, 'Send message failed'));
+      answerSendFailure(req, res, err);
     }
   }
 );
@@ -5362,6 +5409,37 @@ function releaseAfterResolve(out, chit_id, extraIds) {
 }
 
 /** RAIL-106: a message longer than lib/message-limit allows is refused 413 in words (the writer threw it); true when it answered */
+/** POST /messages could not send: a message over the one limit is 413 MESSAGE_TOO_LONG in its words; anything else is the fault answer (logged with the request id) */
+function answerSendFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Send message error:', err.message);
+  problem(req, res, failed(err, req, 'Send message failed'));
+}
+
+/** a targeted dispute names its target (id and the name parity read); a chit-wide one names nobody */
+const targetOf = (scope, target_entity_id, parity) => (scope === 'targeted' ? { id: target_entity_id, name: parity.target_display_name } : { id: null, name: null });
+
+/** RAIL-106: on an international or proposal deal only, the parties named on it are rung here; those elsewhere when it arrives */
+async function ringDisputeRaised(entity_id, chit_id, partyIds, byName) {
+  if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: byName });
+}
+
+/** POST /disputes could not raise: too long (413, its words), the disputes tables missing (500 DISPUTES_TABLE_MISSING, says which migrations), else the fault answer */
+function answerRaiseFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Raise dispute error:', err.message);
+  if (err.message.includes('chit_disputes'))
+    return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
+  problem(req, res, failed(err, req, 'Raise dispute failed'));
+}
+
+/** PUT /disputes/:id/resolve could not resolve: too long (413, its words), else the fault answer */
+function answerResolveFailure(req, res, err) {
+  if (answeredTooLong(req, res, err)) return;
+  console.error('Resolve dispute error:', err.message);
+  problem(req, res, failed(err, req, 'Resolve failed'));
+}
+
 function answeredTooLong(req, res, err) {
   if (!err || err.code !== 'MESSAGE_TOO_LONG') return false;
   problem(req, res, { status: 413, ...said({ error: 'Message too long', message: err.message, code: 'MESSAGE_TOO_LONG', limit: err.limit }, 'MESSAGE_TOO_LONG') });
@@ -5464,12 +5542,13 @@ router.post(
         partyIds.map((pid) => ({ entity_id: pid, display_name: partyNames[pid] || null, role: 'party' }))
       );
       const audience = [...new Set([entity_id, ...partyIds])];
+      const target = targetOf(scope, target_entity_id, parity);
       const raised = await withEntity(entity_id, (client) =>
-        recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
+        recordRaise(client, { dispute_id, chit_id, raiser_id: entity_id, raiser_name: entityName, actor_name: display_name, target_id: target.id, target_name: target.name, scope, parity, via, category, reason, evidence, roster, audience, partyIds, ready })
       );
-      if (await require('../lib/chit-proposal').usesRfq(entity_id, chit_id)) require('../lib/events').emit(partyIds, { kind: 'dispute', id: chit_id, what: 'raised', who: display_name }); /* RAIL-106: an international or proposal deal only: the parties named on it are rung here; those elsewhere when it arrives */
+      await ringDisputeRaised(entity_id, chit_id, partyIds, display_name);
       /* RAIL-106: told to the roster's parties on other installations, who record it on their own copy (the decision above is not re-run there) */
-      const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: scope === 'targeted' ? target_entity_id : null, target_name: scope === 'targeted' ? parity.target_display_name : null, roster, partyIds, reason_message_id: raised.reason_message_id });
+      const crossed = await ctpReturn.onDisputeRaised(entity_id, chit_id, { dispute_id, category, reason, scope, mode: parity.mode, answerable: parity.answerable, parity_state: parity.parity_state, via, evidence, actor_name: display_name, raiser_id: entity_id, target_id: target.id, target_name: target.name, roster, partyIds, reason_message_id: raised.reason_message_id });
       const d = {
         dispute_id,
         mode: parity.mode,
@@ -5499,11 +5578,7 @@ router.post(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      if (answeredTooLong(req, res, err)) return;
-      console.error('Raise dispute error:', err.message);
-      if (err.message.includes('chit_disputes'))
-        return problem(req, res, { status: 500, ...said({ error: 'Table not found', message: 'Run B3.5 + B3.10 migrations', sql_needed: true }, 'DISPUTES_TABLE_MISSING') });
-      problem(req, res, failed(err, req, 'Raise dispute failed'));
+      answerRaiseFailure(req, res, err);
     }
   }
 );
@@ -5747,9 +5822,7 @@ router.put(
         ...ctpReturn.answerOf(crossed)
       });
     } catch (err) {
-      if (answeredTooLong(req, res, err)) return;
-      console.error('Resolve dispute error:', err.message);
-      problem(req, res, failed(err, req, 'Resolve failed'));
+      answerResolveFailure(req, res, err);
     }
   }
 );
@@ -6156,6 +6229,19 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
   }
 });
 
+/**
+ * ⭐ RAIL-106: each copy of mine the withdrawal moved is told to the parties on other installations, by the same event a status move sends (the rail decided it in the route);
+ * a withdrawal rings the recipients, as a cancelled status does. → what each was queued as (the route answers the first that says something)
+ */
+async function tellWithdrawal(entity_id, chit_id, moved, byName, reason) {
+  if (!moved || !moved.length) return [];
+  const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
+  await ringStatus(entity_id, chit_id, 'cancelled', header, byName);
+  const told = [];
+  for (const copy of moved) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: byName, note: reason }));
+  return told;
+}
+
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
 // ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
@@ -6240,13 +6326,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
         allowed_transitions: g.allowed
       })));
     }
-    /* ⭐ RAIL-106: each copy of mine that moved is told to the parties on other installations, by the same event a status move sends (the rail decided it above) */
-    const told = [];
-    if ((gate.moved || []).length) {
-      const header = await withEntity(entity_id, (db) => db.query('SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [chit_id, entity_id]));
-      await ringStatus(entity_id, chit_id, 'cancelled', header, req.identity.display_name); /* RAIL-106: a withdrawal rings the recipients, as a cancelled status does */
-    }
-    for (const copy of gate.moved || []) told.push(await ctpReturn.onStatusMoved(entity_id, chit_id, { status: 'cancelled', previous_status: copy.from, copy: copy.copy, by_name: req.identity.display_name, note: reason }));
+    const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
       chit_id,

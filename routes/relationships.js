@@ -235,8 +235,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
-          supplier_entity_id: sup.rows[0].identity_id /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add */,
-          bridge_id: bridge, ...req.remoteShown,
+          supplier_entity_id: sup.rows[0].identity_id, bridge_id: bridge, ...req.remoteShown, /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add · RAIL-101: the address, when the supplier was adopted from one */
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
           party_no: supNo,
@@ -254,12 +253,9 @@ router.post(
   }
 );
 
-// List my suppliers — has_catalogue reflects an active default schema only
-router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
-  try {
-    const owner = ctx(req);
-    const r = await withEntity(owner, (db) =>
-      db.query(
+/** GET /suppliers: my supplier list with the facts the screen reads ($1 = me). One statement; the notes say why each column is there. */
+function supplierListSql() {
+  return (
         /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
@@ -285,7 +281,17 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
-       ORDER BY sl.preferred DESC, sl.created_at DESC`,
+       ORDER BY sl.preferred DESC, sl.created_at DESC`
+  );
+}
+
+// List my suppliers — has_catalogue reflects an active default schema only
+router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const r = await withEntity(owner, (db) =>
+      db.query(
+        supplierListSql(),
         [owner]
       )
     );
