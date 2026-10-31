@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 218,
+  "long_functions": 217,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -432,7 +432,6 @@
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers",
       "GET /suppliers/availability",
       "PATCH /suppliers/:id",
       "POST /customers",
