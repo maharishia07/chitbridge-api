@@ -1,4 +1,9 @@
 'use strict';
+// owns: the service clock routes of a chit (start, respond, resolve, pause, end, answer) and their plain answers when an id or a time is not valid.
+// called by: server.js (mounted at /api/service) · the web service panel.
+// FLOW  auth → router.param uuid guard → mine(entity, chit) → withEntity → chit_sla / pause functions → res | problem
+// INIT  express → middleware/auth · lib/sla · lib/problem · db
+// CARD 03-disputes-service-and-register/service-request-sla-pause
 /**
  * routes/service.js — a chit AS A SERVICE REQUEST. The clock, and the pause that gets argued about.
  *
@@ -19,11 +24,19 @@ const auth = require('../middleware/auth');
 const { validate } = require('../middleware/validate'); // ⚠️ a NAMED export — the default is the module object
 const { withEntity, onEntity } = require('../db');
 const sla = require('../lib/sla');
+const { problem, fromError } = require('../lib/problem');
+const { UUID_RE } = require('../lib/trace');
 const safeErr = (e) => (e && e.message) || 'Something went wrong';
 
 const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.code === '42883');
 const gone = (res) => res.status(503).json({ error: 'Not migrated', message: 'The service clock needs b147 on this environment.' });
 const ctx = (req) => auth.entityOf(req);
+
+/* RAIL-158 — an id in the address that is not a uuid names nothing this shop holds: answered 404 here, before the database
+   puts its own words ("invalid input syntax for type uuid") into the 500. One guard for every route of this file. */
+const noSuch = (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'We could not find that request.', legacy: { error: 'Not found' } }));
+router.param('chit_id', noSuch);
+router.param('pause_id', noSuch);
 
 /** A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority. */
 /**
@@ -183,8 +196,7 @@ router.put(
       res.json({ message: 'Service clock updated', record: r.rows[0] });
     } catch (e) {
       if (notMigrated(e)) return gone(res);
-      console.error('service put:', e.message);
-      res.status(500).json({ error: 'Failed', message: safeErr(e) });
+      fromError(req, res, e, { error: 'Failed' });
     }
   }
 );
@@ -207,7 +219,7 @@ router.post('/:chit_id/respond', auth, async (req, res) => {
     res.json({ message: 'Response recorded', responded_at: r.rows[0].responded_at });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
@@ -306,8 +318,11 @@ router.post('/:chit_id/pause/:pause_id/end', auth, async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
+    const to = req.body.to || null;
+    if (to !== null && (typeof to !== 'string' || Number.isNaN(Date.parse(to))))
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Bad time' } });
     const n = await withEntity(entity_id, (db) =>
-      db.query(`SELECT chit_sla_pause_end($1,$2,$3) AS copies`, [req.params.chit_id, req.params.pause_id, req.body.to || null])
+      db.query(`SELECT chit_sla_pause_end($1,$2,$3) AS copies`, [req.params.chit_id, req.params.pause_id, to])
     );
     /* ⚠️ ZERO COPIES MEANS THE PAUSE WAS ALREADY CLOSED — said plainly rather than reported as success. Re-ending
        silently would let someone believe they had corrected an end time that never moved. */
@@ -315,7 +330,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, async (req, res) => {
     res.json({ message: 'Clock restarted', copies: n.rows[0].copies });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
