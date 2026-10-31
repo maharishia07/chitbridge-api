@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 219,
+  "long_functions": 218,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -12,9 +12,6 @@
     ],
     "lib/ai.js": [
       "invokeSkill"
-    ],
-    "lib/amend.js": [
-      "guard"
     ],
     "lib/assign.js": [
       "byPerson"
