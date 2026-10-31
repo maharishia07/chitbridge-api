@@ -15,52 +15,54 @@
  *
  * ⚠️ Prints no secret: the private network key never leaves the environment; a fingerprint and a public key are public by design.
  * OWNS: nothing (a thin caller of lib/netmember.js and lib/netcert.js). CALLED BY: the operator; deploy/sit/spin.sh.
+ * FLOW: argv verb → VERBS[verb] (lib/netmember: roleOf · nextRootHandle · registerMember · issueTo · setStanding; lib/netcert.fingerprint) → one JSON answer on stdout, exit 0;
+ *       an unknown verb → the usage line, exit 2; a refused or failed verb → its words on stderr, exit 1. Tested by tests/network-tools.test.cjs.
  * CARD 28-platform-and-operations/network-control-panel
  */
 'use strict';
 const path = require('path');
 const API = path.join(__dirname, '..');
-const net = require(path.join(API, 'lib', 'netmember'));
+const netmember = require(path.join(API, 'lib', 'netmember'));
 const netcert = require(path.join(API, 'lib', 'netcert'));
 const keys = require(path.join(API, 'lib', 'ctpkeys'));
 const { query } = require(path.join(API, 'db'));
 
 const flag = (args, name) => {
-  const i = args.indexOf('--' + name);
-  return i >= 0 ? args[i + 1] : undefined;
+  const at = args.indexOf('--' + name);
+  return at >= 0 ? args[at + 1] : undefined;
 };
-const need = (v, what) => {
-  if (!v) throw new Error('missing ' + what);
-  return v;
+const need = (value, what) => {
+  if (!value) throw new Error('missing ' + what);
+  return value;
 };
 
 async function listMembers() {
-  const r = await query(
+  const members = await query(
     `SELECT i.installation_key, i.domain, i.country, i.network_role, i.root_handle, i.active,
             (SELECT count(*)::int FROM registry_entry e WHERE e.installation_key = i.installation_key) AS entities,
             (SELECT c.status || ' to ' || c.not_after::text FROM membership_certificate c WHERE c.installation_key = i.installation_key ORDER BY c.issued_at DESC LIMIT 1) AS certificate,
             (SELECT k.last_seq FROM registry_cursor k WHERE k.installation_key = i.installation_key) AS pulled_to
        FROM installation i WHERE NOT i.hosted_locally ORDER BY i.installation_key`
   );
-  return r.rows;
+  return members.rows;
 }
 
 const VERBS = {
   async show() {
-    const role = await net.roleOf();
-    const k = keys.status('network');
-    return { installation_key: net.ownKey(), role: role.role, row_says: role.row, holds_network_key: k.can_sign, network_fingerprint: net.networkFingerprint(), why: k.why };
+    const role = await netmember.roleOf();
+    const networkKey = keys.status('network');
+    return { installation_key: netmember.ownKey(), role: role.role, row_says: role.row, holds_network_key: networkKey.can_sign, network_fingerprint: netmember.networkFingerprint(), why: networkKey.why };
   },
   async fingerprint() {
-    const k = keys.status('network');
-    if (!k.can_sign) throw new Error('this installation holds no network root key: ' + k.why);
-    return { public_key: k.public_key, fingerprint: netcert.fingerprint(k.public_key) };
+    const networkKey = keys.status('network');
+    if (!networkKey.can_sign) throw new Error('this installation holds no network root key: ' + networkKey.why);
+    return { public_key: networkKey.public_key, fingerprint: netcert.fingerprint(networkKey.public_key) };
   },
   async 'next-handle'(args) {
-    return { handle: await net.nextRootHandle(need(args[0], 'a scope')) };
+    return { handle: await netmember.nextRootHandle(need(args[0], 'a scope')) };
   },
   async register(args) {
-    return net.registerMember({
+    return netmember.registerMember({
       installation_key: need(args[0], 'the installation key'),
       domain: need(args[1], 'the domain'),
       country: flag(args, 'country'),
@@ -71,17 +73,17 @@ const VERBS = {
   },
   async issue(args) {
     const minutes = Number(flag(args, 'minutes'));
-    const cert = await net.issueTo(need(args[0], 'the installation key'), { life_ms: minutes > 0 ? minutes * 60 * 1000 : undefined });
+    const cert = await netmember.issueTo(need(args[0], 'the installation key'), { life_ms: minutes > 0 ? minutes * 60 * 1000 : undefined });
     return { serial: cert.serial, installation_key: cert.installation_key, not_before: cert.not_before, not_after: cert.not_after };
   },
   async suspend(args) {
-    return net.setStanding(need(args[0], 'the installation key'), 'suspended', flag(args, 'reason') || 'suspended by the master');
+    return netmember.setStanding(need(args[0], 'the installation key'), 'suspended', flag(args, 'reason') || 'suspended by the master');
   },
   async reinstate(args) {
-    return net.setStanding(need(args[0], 'the installation key'), 'active', null);
+    return netmember.setStanding(need(args[0], 'the installation key'), 'active', null);
   },
   async revoke(args) {
-    return net.setStanding(need(args[0], 'the installation key'), 'revoked', flag(args, 'reason') || 'revoked by the master');
+    return netmember.setStanding(need(args[0], 'the installation key'), 'revoked', flag(args, 'reason') || 'revoked by the master');
   },
   async list() {
     return listMembers();

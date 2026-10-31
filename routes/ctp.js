@@ -44,7 +44,7 @@ const addressBook = require('../lib/ctpaddress'); /* peerByKey — the ONE "do w
 const mint = require('../lib/mint');
 const remoteParty = require('../lib/remote-party'); /* RAIL-107: a party named on an arriving chit is found or made by bridge id, never stored by a foreign uuid */
 const returnPath = require('../lib/ctpreturn'); /* RAIL-106: a change to a chit that already crossed (a status, an external message) is applied to OUR rows */
-const net = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
+const netmember = require('../lib/netmember'); /* RAIL-96/97: the network role, the membership verdict, the master's answers */
 const { problem } = require('../lib/problem');
 const { safeErr } = require('../lib/respond');
 const { schemaValidate } = require('../middleware/validate'); // S9: the body is checked against the door's own schema
@@ -137,7 +137,7 @@ async function manifestRead() {
     /* RAIL-97: the pass the network master signed for this installation, published so a receiver needs no call to the master; and (on a master) the fingerprint of the
        network key, which a joining installation compares with what it was told. Both are absent on a standalone installation. */
     membership: await netMembership(),
-    network_fingerprint: net.networkFingerprint() || undefined
+    network_fingerprint: netmember.networkFingerprint() || undefined
   };
   return { body, whole };
 }
@@ -146,7 +146,7 @@ const CANNOT_SIGN = 'this installation cannot sign envelopes — do not accept a
 /** this installation's own membership certificate for the manifest; a failed read is logged and the manifest goes out without it (the door then says why) */
 async function netMembership() {
   try {
-    return (await net.ownMembership()) || undefined;
+    return (await netmember.ownMembership()) || undefined;
   } catch (e) {
     log.fellBack('ctp manifest: the membership read failed — published without it', e);
     return undefined;
@@ -194,11 +194,11 @@ async function answerEvent(res, refuse, ctx) {
  * @returns {Promise<{refusal}|{header}>}
  */
 async function localParties(ctx) {
-  const { env, opened, peer, ik, to } = ctx;
+  const { env, opened, peer, ik: senderKey, to } = ctx;
   const sender = String((env.from || {}).bridge_id || '');
   if (!sender) return { refusal: { status: 400, code: 'CTP_NO_SENDER', why: 'the envelope does not name the sending business' } };
   const copy = opened.copy || {};
-  const stub = await remoteParty.stubFor({ bridge_id: sender, display_name: (env.from || {}).display_name || copy.sender_entity_display_name, installation_key: ik, domain: peer.domain, owner: to.identity_id });
+  const stub = await remoteParty.stubFor({ bridge_id: sender, display_name: (env.from || {}).display_name || copy.sender_entity_display_name, installation_key: senderKey, domain: peer.domain, owner: to.identity_id });
   if (!stub.ok) return { refusal: { status: stub.status, code: stub.code, why: stub.why } };
   const recipients = Array.isArray(copy.all_recipients) ? copy.all_recipients : [];
   const toRow = await query('SELECT bridge_id FROM identities WHERE identity_id = $1', [to.identity_id]);
@@ -398,7 +398,7 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
 
     /* ── RAIL-97: after the signature, the PASS. A member or master accepts a chit only from a peer whose manifest carries a membership certificate signed by the key
        it pinned (the pinned master itself is trusted by that key). A standalone installation skips this and behaves exactly as before. */
-    const pass = await net.doorVerdict(ik, peer, sealed.manifest);
+    const pass = await netmember.doorVerdict(ik, peer, sealed.manifest);
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
 
     if (opened.kind === 'event') return await answerEvent(res, refuse, { opened, from: env.from, to, toBridge }); /* RAIL-106: an event is not a copy */
@@ -532,7 +532,7 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
     const peer = member.peer;
 
     /* RAIL-96/97: a question only the pinned master may ask is verified with the PINNED key; one only a master answers is refused anywhere else, in words */
-    const gate = await net.queryGate(q.ask && q.ask.want, ik);
+    const gate = await netmember.queryGate(q.ask && q.ask.want, ik);
     if (gate.refuse) return refuse({ status: gate.refuse.status, code: gate.refuse.code, why: gate.refuse.why });
     const pk = gate.pinnedKey ? { ok: true, public_key: gate.pinnedKey } : await directory.publicKeyFor(peer.domain, ik);
     if (!pk.ok) return refuse({ status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + pk.why });
@@ -545,12 +545,12 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
        question for another installation is not ours to answer (SIT run 4: the master's pull for a retired member was answered by its successor).
        Only the network asks: an older hand-made peer row may name us differently, and resolve/catalogue keep working for it. */
     const toKey = String((q.to || {}).installation_key || '');
-    if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== net.ownKey())
-      return refuse({ status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + net.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' });
+    if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== netmember.ownKey())
+      return refuse({ status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + netmember.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' });
     /* after the signature, the PASS (as in deliver): resolve, catalogue, search and locate need a valid certificate; renewing one and reading the directory do not */
-    const pass = net.needsMembership(ask.want) ? await net.doorVerdict(ik, peer, pk.manifest) : { ok: true };
+    const pass = netmember.needsMembership(ask.want) ? await netmember.doorVerdict(ik, peer, pk.manifest) : { ok: true };
     if (!pass.ok) return refuse({ status: pass.status, code: pass.code, why: pass.why });
-    if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await net.answer(ask, ik));
+    if (ctpquery.NETWORK_WANTS.includes(ask.want)) return res.json(await netmember.answer(ask, ik));
     const cat = require('./catalogue');
 
     if (ask.want === 'resolve') {

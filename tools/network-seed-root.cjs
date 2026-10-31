@@ -7,6 +7,8 @@
  * registered business is active here (lib/installer-token.js, called by lib/otp.verifyOtp). So the governance stamp keeps its existing writers; nothing is inserted behind the door.
  * Prints one JSON line { handle, identity_id, bridge_id, made } and no secret. Safe to run again: a root that exists is reported, not remade.
  * OWNS: nothing. CALLED BY: deploy/network/install.sh. CARD 18-identity-sign-in-and-access/platform-root
+ * FLOW: env (handle, token) → existing(handle)? report it : POST /api/entities/register → POST /api/entities/verify (the installer token) → one JSON line, exit 0;
+ *       no handle, no token, or a door that refused → its words on stderr, exit 1. Tested by tests/network-tools.test.cjs.
  */
 'use strict';
 const path = require('path');
@@ -15,12 +17,17 @@ const { query } = require(path.join(__dirname, '..', 'db'));
 
 const post = async (url, body) => {
   const res = await fetch(base + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  return { status: res.status, body: await res.json().catch(() => ({})) };
+  /* a door that answers with no JSON body is still told by its status; the words below say which door and what status */
+  const answer = await res.json().catch((e) => {
+    console.error('network-seed-root: ' + url + ' answered ' + res.status + ' with no JSON body (' + e.message + ')');
+    return {};
+  });
+  return { status: res.status, body: answer };
 };
 
 async function existing(handle) {
-  const r = await query(`SELECT identity_id, bridge_id, status FROM identities WHERE lower(user_id) = lower($1) AND identity_type = 'entity'`, [handle]);
-  return r.rows[0] || null;
+  const found = await query(`SELECT identity_id, bridge_id, status FROM identities WHERE lower(user_id) = lower($1) AND identity_type = 'entity'`, [handle]);
+  return found.rows[0] || null;
 }
 
 (async () => {
@@ -35,10 +42,10 @@ async function existing(handle) {
   if (!token) throw new Error('CB_INSTALLER_TOKEN is not set and the root does not exist yet');
   const email = process.env.CB_ROOT_EMAIL || handle + '@example.org';
   const name = process.env.CB_ROOT_NAME || handle;
-  const reg = await post('/api/entities/register', { email, display_name: name, user_id: handle });
-  if (reg.status >= 400 && !have) throw new Error('register answered ' + reg.status + ': ' + JSON.stringify(reg.body).slice(0, 300));
-  const ver = await post('/api/entities/verify', { email, otp: token });
-  if (ver.status >= 400 || !ver.body.entity) throw new Error('verify answered ' + ver.status + ': ' + JSON.stringify(ver.body).slice(0, 300));
+  const registered = await post('/api/entities/register', { email, display_name: name, user_id: handle });
+  if (registered.status >= 400 && !have) throw new Error('register answered ' + registered.status + ': ' + JSON.stringify(registered.body).slice(0, 300));
+  const verified = await post('/api/entities/verify', { email, otp: token });
+  if (verified.status >= 400 || !verified.body.entity) throw new Error('verify answered ' + verified.status + ': ' + JSON.stringify(verified.body).slice(0, 300));
   const made = await existing(handle);
   console.log(JSON.stringify({ handle, identity_id: made.identity_id, bridge_id: made.bridge_id, made: true }));
 })()
