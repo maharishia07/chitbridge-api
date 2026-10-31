@@ -188,7 +188,7 @@ const productId = async (shop, item_data) => ok(await j('/api/products', { metho
     const shelf = 'tiffin-' + RUN, first = 'Tiffin 10% ' + RUN, scope = { scope: 'line', applies_to: { category: shelf } };
     await definition(A, { kind: 'offer', sub_kind: 'percent_off', name: first, status: 'live', confirmed: true, rules: Object.assign({ percent: 10 }, scope) });
     const second = { kind: 'offer', sub_kind: 'amount_off', name: 'Tiffin 5 off ' + RUN, rules: Object.assign({ amount: 5 }, scope) };
-    const r = await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'live' }, second) });
+    const r = await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'live', confirmed: true }, second) });
     expect(r.status === 409 && r.b.code === 'OFFER_CLASH', 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     expect(r.b.message.includes('overlaps "' + first + '"') && /one discount at a time/.test(r.b.message), 'sentence: ' + r.b.message);
     ok(await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'draft' }, second) }), 'the refused name is free: nothing was stored');
