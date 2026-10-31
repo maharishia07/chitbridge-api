@@ -2989,6 +2989,7 @@
  "POST /api/supplies/:id/issue": [
   400,
   401,
+  404,
   500
  ],
  "POST /api/supplies/purchase": [
