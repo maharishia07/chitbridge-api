@@ -12,10 +12,10 @@ of file each thing is; this says what already does the job.
 | 140 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
-| 97 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 94 | `words` | `variant.browser.js` |  |
+| 98 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 95 | `words` | `variant.browser.js` |  |
 | 93 | `read` | `books-cashflow.js` | Trips: |
-| 86 | `answer` | `availability.js` | from March; then nearest. |
+| 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
 | 76 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 71 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -166,7 +166,7 @@ of file each thing is; this says what already does the job.
 | 15 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 15 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 15 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
-| 15 | `report` | `raida.js` | register at the one moment it must not. |
+| 16 | `report` | `raida.js` | register at the one moment it must not. |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 14 | `offers` | `network-app.js` |  |
