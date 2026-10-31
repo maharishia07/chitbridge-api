@@ -31,14 +31,24 @@ tests/*: main's version, then the branch's additions (api-problem-ctp stubs both
 ## Migrations (none renumbered, none run)
 b790_network_member, b791_ctp_return_path, b792_ctp_event_kinds_disputes, b793_ctp_event_kinds_gaps, b796_chit_proposal. Main stops at b783; b784–b789 and b794–b795 are gaps, no clash. ⚠️ b790 already RAN in production on 25 Oct (db ledger: five tables lacked RLS, DB-85 proposed b797 in plain text) — Athi decides the remaining four; the fresh-db apply on cb-local-pg was NOT run in this pass (RAM, time).
 
-## Open after this pass (each with its cause)
-1. ctp-door 3: main's door tests stub `identities` for senderOf; with RAIL-107 the sender is first localised (remote-party.stubFor) and the stubs answer no row → re-aim the stubs (RAIL-107 + RAIL-138 b together).
-2. ctp-internal-wire 3: pins `alreadyHeld` (RAIL-105 helper, replaced by deliverOnce's pre-read) and RAIL-104 directory throttling → re-aim at deliverOnce / check lib/ctpdirectory kept the branch's retry.
-3. ctp-address 2: source-pinned tests read deliver()'s body for `await sendAway(` and the CTP_UNRESOLVABLE order → re-aim the slice (the call is there; the body cut moved).
-4. chit-proposals 2 + ctp-window-shopping 1: the amend door on main reads the copy (RAIL-128 404 before the rail verdict) with SQL the branch's stand-in does not answer → add the stub answer.
-5. api-problem-chits 2: reprice/costs now say the library's words (API-6, the branch's scenes) and main's frozen legacy for those two has the generic sentence → freeze the new sentence by hand (indent 1) or drop words:true (then the branch's scenes fail). Decision for the coordinator: which legacy is the frozen one.
-6. api-problem-entities 2: GET /search's recorded 200 holds keys outside the op's `out` list and evidence-areas' output_allowlist row → regenerate contract tests/evidence for the NET-39 shape.
-7. rail146 2: deepStrictEqual key order vs the composed group (by_currency added in the expectation; still red — compare by value).
-8. net-39-search 1: pins the POST /suppliers chain text (remoteAddress position) → re-aim.
-9. ctp-return-gaps 1 (413 counts 0 vs 1) and ctp-return-path 1 (opens an event with `verify: undefined`: RAIL-141 a refuses that now — the test must pass a verifier).
-10. Not done: register/ratchet/SEAMS regeneration, fresh-db apply, full guards.cjs, readability ratchet, PR §6 numbers by hand.
+## Pass 2 (31 Oct): what was open, and what it became
+Every check was re-aimed at its RULE; none deleted. One line each:
+1. ctp-door: stubs answer RAIL-107's localisation (stubFor) and the sender's bridge id; an unknown sender is written under the local row.
+2. ctp-internal-wire: RAIL-105 re-aimed at `deliverOnce` (a repeat is true, CTP_CHIT_ID_TAKEN 409, written once); RAIL-104's fetch stub serves `body.getReader` (RAIL-140 c reads the manifest as a capped stream); RAIL-99 refused re-aimed: names the business, `refused: true`, the far end's words NOT said (Q19 beats RAIL-99's "give their words": flagged for cb-security).
+3. ctp-address: slices re-aimed at `sendAway` (`farEndFailure(` then `throw failure;`; the refusal before `sendAway(`).
+4. chit-proposals + ctp-window-shopping: stubs answer RAIL-128's holdsCopy probe and RAIL-142's topology read.
+5. api-problem-chits (API-6): words:true kept; the new sentences ("No.", "No rows.") frozen BY HAND in docs/contracts/api-legacy.json, in its format. Needs cb-api sign-off.
+6. api-problem-entities: GET /api/entities/search's shape gains `answers` (open); contract tests regenerated.
+7. rail146: expectations in the wire's key order. 8. net-39-search: chain regex re-aimed. 9. ctp-return-gaps/path: real ed25519 signer + verifier; no verifier = refused (RAIL-141 a).
+10. Money (ACC-192 x the offer): `keepOffer` composes the carried origin invoice with the offer's savings (gross = net + savings), so send-golden keeps 618/50. Flag for cb-accounting.
+11. RAIL-106 answers: `ctp` (attachments, messages, disputes, resolve, void) and `ctp_unconfirmed` (GET /:chit_id) declared in api-output-shapes.json as open objects; guards run OUTPUT_ALLOWLIST=enforce and had pruned them.
+12. DB-85: b797 carried from api #443 (RLS on + forced on b790's five tables; #443 is superseded). Fresh db `fresh_run6` on cb-local-pg: 22 files applied, 0 failed; b790-b797 in the ledger; 8 tables RLS on + forced, 2 policies each; dropped after.
+13. Servers heat-map fix (Athi 31 Oct, PM/SERVERS-STATUS.md): the access log writes `(req.originalUrl || req.url).split('?')[0]`, not `req.path`, so a route inside a mounted router logs its full path. Only that line; the origin-refused log and middleware/idempotency.js unchanged. Nothing routes or meters on the field; tests/request-log pins it (red before, green after). Own commit.
+14. Generated: fn-size (223 -> 219), API-REGISTER, api-register.json, error codes (duplicate CTP_REFUSED joined into the rail row), SEAMS, hardening evidence. POST /api/relationships/suppliers loses strict_input against the branch (main never had it).
+
+## Still open (each with its owner)
+- api-ratchet vs origin/main: 5 routes lost "meets" only because their cb-api sign-offs are stale (GET /api/chits/:chit_id, /raida/report, /rollup, /entities/search, /relationships/suppliers/availability) -> cb-api re-signs, then `api-ratchet --write`.
+- migration-lint vocabulary (runs only where PM/NAMING-AND-MEANING.md sits beside the repo, so not in CI): chit_proposal.currency_code, chit_proposal.note, membership_certificate.note. These columns already exist on the SIT servers; renaming them is cb-db's call (D8 says columns keep currency_code).
+- tax-vendor: red on pristine main too (api 2df6760b vs web d8acc41f pin different reg-* releases for IN slip/taxInvoice/tax) -> cb-accounting / release; not this merge.
+- raida-close-route: 10/10 pass; a libuv assertion on exit on Windows, the same on main.
+- Readability: CI lists 1 item (installer-token minimums, now tested directly). The SIT branch's F5 readability commits live on #443's branch (origin/db/db-85-b790-rls), never merged into sit/grundfos; bringing them is the coordinator's call.
