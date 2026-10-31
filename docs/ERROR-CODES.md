@@ -193,6 +193,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVALID_ASSIGNEE | 400 | Default person not allowed | The default person must be able to take tasks. | Pick a person with Act or Manager access. | actors | 2026-10-23 |
 | INVALID_DELEGATE | 400 | Cover not allowed | That person cannot cover. | Pick someone else who can take tasks. | actors | 2026-10-23 |
 | INVALID_INPUT | 422 | Input not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send it again. | validate | 2026-10-22 |
+| INVALID_JSON | 400 | Request not readable | What was sent could not be read. It is cut off or is not a proper set of details. | Check it is complete, then send it again. | server | 2026-10-31 |
 | INVALID_KEY_REQUEST | 400 | Key request not valid | That key cannot be made as asked. | Pick a listed kind, and revoke a key if you have twenty. | keys | 2026-10-22 |
 | INVOICE_BAD_REQUEST | 400 | Invoice needs lines | The invoice needs at least one line. | Send the lines to invoice. | invoice | 2026-10-23 |
 | IN_FLIGHT | 409 | Open chit on the connection | A chit is still open on this connection. | Settle it first, or disconnect and settle together. | network | 2026-10-23 |
