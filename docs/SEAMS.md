@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
 | 100 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 98 | `words` | `variant.browser.js` |  |
+| 100 | `words` | `variant.browser.js` |  |
 | 94 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -179,7 +179,7 @@ of file each thing is; this says what already does the job.
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
-| 14 | `move` | `rail.js` | Order = the order the server refused in: |
+| 15 | `move` | `rail.js` | Order = the order the server refused in: |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
@@ -194,7 +194,7 @@ of file each thing is; this says what already does the job.
 | 12 | `link` | `chit-sheet.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
-| 12 | `post` | `books-manual.js` | POST /events — |
+| 13 | `post` | `books-manual.js` | POST /events — |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |

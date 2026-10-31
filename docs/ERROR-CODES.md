@@ -357,6 +357,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
 | SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies are not switched on yet. | Ask the operator to run the update, then try again. | supplies | 2026-10-24 |
+| SUPPLY_BILL_DIFFERS | 409 | Bill already recorded | This bill number is already recorded for that supplier with different lines. | Record a correction, or use a new bill number. | supplies | 2026-10-31 |
 | SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
 | STORES_NOT_MIGRATED | 503 | Shop list not ready | The shop list is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
