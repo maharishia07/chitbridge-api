@@ -44606,6 +44606,16 @@
      }
     },
     {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
      "scenario": "key-remove-fails",
      "status": 500,
      "body_keys": {
@@ -44846,6 +44856,26 @@
      }
     },
     {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
      "scenario": "keys-reorder-fails",
      "status": 500,
      "body_keys": {
@@ -44975,14 +45005,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "product_id required"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "product_id required"
+      "error": "Not found"
      }
     },
     {
