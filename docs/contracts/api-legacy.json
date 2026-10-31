@@ -46395,14 +46395,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "validation",
-      "message": "no such supply"
+      "error": "Not found"
      }
     },
     {
