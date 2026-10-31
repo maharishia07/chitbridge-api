@@ -493,8 +493,8 @@ router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_R
  * ── RAIL-97: after the signature, the PASS → a refusal, or null. A member or master accepts a chit only from a peer whose manifest carries a membership certificate signed by
  * the key it pinned (the pinned master itself is trusted by that key). A standalone installation skips this and behaves exactly as before.
  */
-async function passRefusal(ik, peer, manifest) {
-  const pass = await netmember.doorVerdict(ik, peer, manifest);
+async function passRefusal(senderKey, peer, manifest) {
+  const pass = await netmember.doorVerdict(senderKey, peer, manifest);
   return pass.ok ? null : { status: pass.status, code: pass.code, why: pass.why };
 }
 
@@ -583,12 +583,12 @@ router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL)
 });
 
 /** RAIL-96/97: the key a question is verified with → { pk } | { refusal }. A question only the pinned master may ask is verified with the PINNED key; one only a master answers is refused anywhere else, in words */
-async function askerKeyFor(q, ik, peer) {
-  const gate = await netmember.queryGate(q.ask && q.ask.want, ik);
+async function askerKeyFor(question, askerKey, peer) {
+  const gate = await netmember.queryGate(question.ask && question.ask.want, askerKey);
   if (gate.refuse) return { refusal: { status: gate.refuse.status, code: gate.refuse.code, why: gate.refuse.why } };
-  const pk = gate.pinnedKey ? { ok: true, public_key: gate.pinnedKey } : await directory.publicKeyFor(peer.domain, ik);
-  if (!pk.ok) return { refusal: { status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + pk.why } };
-  return { pk };
+  const peerKey = gate.pinnedKey ? { ok: true, public_key: gate.pinnedKey } : await directory.publicKeyFor(peer.domain, askerKey);
+  if (!peerKey.ok) return { refusal: { status: 403, code: 'CTP_PEER_KEY_UNREADABLE', why: 'could not read the asker’s manifest: ' + peerKey.why } };
+  return { pk: peerKey };
 }
 
 /**
@@ -598,25 +598,25 @@ async function askerKeyFor(q, ik, peer) {
  *    differently, and resolve/catalogue keep working for it.
  *  · the PASS (as in deliver): resolve, catalogue, search and locate need a valid certificate; renewing one and reading the directory do not
  */
-async function networkRefusal(q, ask, ik, peer, pk) {
+async function networkRefusal(question, asked, askerKey, peer, peerKey) {
   const ctpquery = require('../lib/ctpquery');
-  const toKey = String((q.to || {}).installation_key || '');
-  if (ctpquery.NETWORK_WANTS.includes(ask.want) && toKey && toKey !== netmember.ownKey()) {
+  const toKey = String((question.to || {}).installation_key || '');
+  if (ctpquery.NETWORK_WANTS.includes(asked.want) && toKey && toKey !== netmember.ownKey()) {
     return { status: 409, code: 'CTP_NOT_THIS_INSTALLATION', why: 'this is ' + netmember.ownKey() + ', not ' + toKey + '; the address you hold for ' + toKey + ' is out of date' };
   }
-  const pass = netmember.needsMembership(ask.want) ? await netmember.doorVerdict(ik, peer, pk.manifest) : { ok: true };
+  const pass = netmember.needsMembership(asked.want) ? await netmember.doorVerdict(askerKey, peer, peerKey.manifest) : { ok: true };
   return pass.ok ? null : { status: pass.status, code: pass.code, why: pass.why };
 }
 
 /** resolve: a BUSINESS by handle or bridge id → the answer. ⭐ the grammar decides what MAY be resolved before the database is asked anything */
-async function answerResolve(ask) {
-  const cat = require('./catalogue');
-  const handleKind = require('../lib/resolveuserid').classify(ask.handle);
+async function answerResolve(asked) {
+  const catalogue = require('./catalogue');
+  const handleKind = require('../lib/resolveuserid').classify(asked.handle);
   if (handleKind.kind !== 'entity' && handleKind.kind !== 'network_node' && handleKind.kind !== 'bridge_id') {
-    return { ok: true, found: false, why: '"' + ask.handle + '" is not a business — only a business can be addressed across installations' };
+    return { ok: true, found: false, why: '"' + asked.handle + '" is not a business — only a business can be addressed across installations' };
   }
-  const ent = await cat.resolveEntity(handleKind.kind === 'bridge_id' ? handleKind.bridge_id : handleKind.handle);
-  if (!ent) return { ok: true, found: false, why: 'no business here called ' + ask.handle };
+  const ent = await catalogue.resolveEntity(handleKind.kind === 'bridge_id' ? handleKind.bridge_id : handleKind.handle);
+  if (!ent) return { ok: true, found: false, why: 'no business here called ' + asked.handle };
   const me = await manifest();
   /* ⚠️ the address is BUILT by lib/ctpaddress, never spelled here — tests/namespace fails any second "@" join */
   return {
@@ -633,16 +633,16 @@ async function answerResolve(ask) {
 }
 
 /** catalogue: a shop's public catalogue → the answer */
-async function answerCatalogue(ask) {
-  const cat = require('./catalogue');
-  const ent = await cat.resolveEntity(ask.bridge_id);
+async function answerCatalogue(asked) {
+  const catalogue = require('./catalogue');
+  const ent = await catalogue.resolveEntity(asked.bridge_id);
   /* a shop that did not opt in to sell outside is "not found", the same words as an unknown id: its existence is not revealed (Athi, 2026-10-25) */
-  if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return { ok: true, found: false, why: 'no business here with bridge id ' + ask.bridge_id };
+  if (!ent || !(await require('../lib/profile').isExporter(ent.identity_id))) return { ok: true, found: false, why: 'no business here with bridge id ' + asked.bridge_id };
   /* ⚠️ neither asOwner nor viewer — a peer installation is never the owner and is not a signed-in customer.
      The RAW view, then the SAME trim a storefront visitor gets: one view, one response, two doors. */
-  const view = await cat.publicViewFor(ent, {});
+  const view = await catalogue.publicViewFor(ent, {});
   if (!view || !view.available) return { ok: true, found: false, why: ent.display_name + ' has no public catalogue' };
-  return Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, cat.publicResponseFor(view, false));
+  return Object.assign({ ok: true, found: true, bridge_id: ent.bridge_id }, catalogue.publicResponseFor(view, false));
 }
 
 /* the contract, one operation per door on each of its two mounts (server.js: '/' for the manifest, '/api/ctp' for the doors) */

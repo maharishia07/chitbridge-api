@@ -1383,9 +1383,9 @@ function refuseCurrencyRequired(req, res) {
 }
 
 /** RAIL-106: where the seller of this send lives (lib/ctpaddress resolve) — null for a counter bill or when I am the seller myself */
-async function sellerPlaceOf(st) {
-  if (st.counterBill || String(st.sellerId) === String(st.sender_id)) return null;
-  return require('../lib/ctpaddress').resolve(st.sellerId);
+async function sellerPlaceOf(sendState) {
+  if (sendState.counterBill || String(sendState.sellerId) === String(sendState.sender_id)) return null;
+  return require('../lib/ctpaddress').resolve(sendState.sellerId);
 }
 
 /** whose tax view prices the lines: me on an order I place, the one recipient of anything else, or nobody (several recipients) */
