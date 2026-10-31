@@ -88,6 +88,7 @@ const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
+const { UUID_RE } = require('../lib/trace');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
@@ -95,6 +96,13 @@ const auth = require('../middleware/auth');
 const signin = require('./signin');
 
 /** the schema check of one route, to spread after its chain (lib/actors-contract.js): a body that is not an object, or a page asked twice, is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
+/* PPL-26 (BH-12, the api #649 pattern): a person id in the address that is not a uuid names nobody in this shop. Answered 404 in words here, before the database puts its own words into a 500 */
+router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.coAssistGone() })));
+
+/* PPL-26: a chain's trim() turns a list or an object into the text "[object Object]" BEFORE the schema looks, so a field that is trimmed is checked for being one plain value first (the message is the chain's way, the body its old "Validation failed") */
+const plainValue = (value) => value === null || typeof value !== 'object';
+const PLAIN = 'Send one value, not a list or an object';
+
 const checked = (route) => {
   const operation = contract.actors.operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
@@ -118,7 +126,7 @@ async function entityTaskCap(entity_id) {
 async function taskCapGuard(req, res, next) {
   try {
     const sent = req.body && req.body.max_tasks;
-    if (sent === undefined || sent === null || sent === '') return next();
+    if (sent === undefined || sent === null || sent === '' || typeof sent === 'object') return next(); /* PPL-26: a list or an object is the validators' to refuse, before any read */
     const ceiling = await entityTaskCap(auth.entityOf(req));
     if (ceiling && parseInt(sent, 10) > ceiling) return problem(req, res, { status: 400, ...words.overTaskCap(ceiling) });
     next();
@@ -181,7 +189,7 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
-router.post('/suggest-key', auth, [body('display_name').trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
+router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withMessage(PLAIN).trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
     const name = req.body.display_name;
@@ -509,9 +517,9 @@ router.patch(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
-    body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
-    body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
+    body('display_name').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }),
+    body('actor_role').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
@@ -519,7 +527,7 @@ router.patch(
     body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
     body('whole_entity').optional().isBoolean(),
     body('can_see_costs').optional().isBoolean(),
-    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
+    body('email').optional({ nullable: true, checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
   ],
   validateAsProblem,
   ...checked('PATCH /:id'),
