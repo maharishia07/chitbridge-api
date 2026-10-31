@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 144 | `list` | `amend.js` |  |
-| 117 | `rows` | `crm.js` | still in them: |
+| 118 | `rows` | `crm.js` | still in them: |
 | 110 | `withEntity` | `books-hooks.js` |  |
 | 102 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 108 | `words` | `variant.browser.js` |  |
@@ -27,7 +27,7 @@ of file each thing is; this says what already does the job.
 | 61 | `here` | `screen-id.js` |  |
 | 63 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 67 | `next` | `dayopen.js` | the next thing to do — |
-| 61 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 62 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 58 | `items` | `books-store.js` | PERF1: |
 | 56 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
