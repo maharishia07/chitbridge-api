@@ -26,7 +26,6 @@ const { withEntity, onEntity } = require('../db');
 const sla = require('../lib/sla');
 const { problem, fromError } = require('../lib/problem');
 const { UUID_RE } = require('../lib/trace');
-const safeErr = (e) => (e && e.message) || 'Something went wrong';
 
 const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.code === '42883');
 const gone = (res) => res.status(503).json({ error: 'Not migrated', message: 'The service clock needs b147 on this environment.' });
@@ -144,8 +143,7 @@ router.get('/:chit_id', auth, async (req, res) => {
     });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    console.error('service get:', e.message);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
@@ -243,7 +241,7 @@ router.post('/:chit_id/resolve', auth, [body('resolution_code').isString()], val
     res.json({ message: 'Resolution recorded', ...r.rows[0] });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
@@ -308,8 +306,7 @@ router.post('/:chit_id/pause', auth, [body('reason').isString()], validate, asyn
     res.json({ message: 'Clock paused', pause_id, copies: out.copies });
   } catch (e) {
     if (notMigrated(e)) return gone(res);
-    console.error('service pause:', e.message);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
@@ -359,8 +356,7 @@ router.post('/:chit_id/pause/:pause_id/answer', auth, [body('accepted').isBoolea
       return res.status(409).json({ error: 'Your own claim', message: 'You raised this pause — the other party is the one who accepts or rejects it.' });
     }
     if (notMigrated(e)) return gone(res);
-    console.error('service answer:', e.message);
-    res.status(500).json({ error: 'Failed', message: safeErr(e) });
+    fromError(req, res, e, { error: 'Failed' });
   }
 });
 
