@@ -238,6 +238,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NOTIF_NOTHING_TO_CLEAR | 400 | Nothing to clear | There is nothing chosen to clear. | Pick an item to clear, or choose clear all. | notifications | 2026-10-23 |
 | NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The unread count cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-23 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
+| NOT_BOARD_READER | 403 | Not board reader | The test board is for builders. | Use your own incidents and requirements, or ask a builder. | testing | 2026-10-31 |
 | NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |
 | NOT_FOR_COUNTRY | varies | Not for your country | This is not offered for a shop in your country. | The message names what to use instead. | integrations | 2026-10-22 |
 | NOT_FOUND | 404 | Not found | We could not find that. | Check the address or the name and try again. | api | 2026-10-22 |
