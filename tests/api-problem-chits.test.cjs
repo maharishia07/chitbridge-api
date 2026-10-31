@@ -130,14 +130,15 @@ const BODY_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 /** { 'METHOD /full/path': template } for every route the router holds, read from the router itself */
 function routesOf(router, mount) {
   const found = {};
-  router.stack
-    .filter((layer) => layer.route)
-    .forEach((layer) =>
-      Object.keys(layer.route.methods).forEach((method) => {
-        const full = layer.route.path === '/' ? mount : mount + layer.route.path;
-        found[method.toUpperCase() + ' ' + full] = full;
-      })
-    );
+  router.stack.forEach((layer) => {
+    /* a router mounted inside this one (routes/chits-trace.js) answers on the same prefix: walk it too */
+    if (!layer.route && layer.name === 'router' && layer.handle.stack) return Object.assign(found, routesOf(layer.handle, mount));
+    if (!layer.route) return;
+    Object.keys(layer.route.methods).forEach((method) => {
+      const full = layer.route.path === '/' ? mount : mount + layer.route.path;
+      found[method.toUpperCase() + ' ' + full] = full;
+    });
+  });
   return found;
 }
 const urlOf = (template, bad) => template.replace(/:(\w+)/g, (all, name) => (bad ? 'nope' : PARAM_VALUES[name] || PARTY));

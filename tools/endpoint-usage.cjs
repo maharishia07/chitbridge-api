@@ -75,8 +75,8 @@ let mounts = {},
   mountsAll = {}; /* every prefix a route file is mounted at (ctp.js: '' and /api/ctp) — the graph reads one route per mount */
 try {
   const serverText = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
-  mounts = require('./server-mounts.cjs').serverMounts(serverText);
-  mountsAll = require('./server-mounts.cjs').serverMountsAll(serverText);
+  mounts = require('./server-mounts.cjs').serverMounts(serverText, path.join(API, 'routes'));
+  mountsAll = require('./server-mounts.cjs').serverMountsAll(serverText, path.join(API, 'routes'));
 } catch (_) {
   /* no server.js — paths degrade to the route file's own path */
 }

@@ -31,7 +31,10 @@ const ok = (name, cond, more) => { if (cond) pass++; else { fail++; console.log(
 const tally = (key) => rows.reduce((m, r) => ((m[key(r)] = (m[key(r)] || 0) + 1), m), {});
 const sum = (m) => Object.values(m).reduce((a, b) => a + b, 0);
 
-const byFile = tally((r) => r.file), byGroup = tally((r) => r.owner_area);
+/* a part of a split router (routes/chits-trace.js of routes/chits.js) shares its parent's group: count the parent file */
+const parentOf = require(path.join(ROOT, 'tools', 'server-mounts.cjs')).partParents(path.join(ROOT, 'routes'));
+const unitOf = (file) => (file.startsWith('routes/') && parentOf[file.slice(7)] ? 'routes/' + parentOf[file.slice(7)] : file);
+const byFile = tally((r) => unitOf(r.file)), byGroup = tally((r) => r.owner_area);
 ok('A register header count = rows', reg.counts.routes === rows.length, reg.counts.routes + ' vs ' + rows.length);
 ok('B Σ route files = total', sum(byFile) === rows.length, sum(byFile) + ' vs ' + rows.length);
 ok('B Σ API groups = total', sum(byGroup) === rows.length, sum(byGroup) + ' vs ' + rows.length);
@@ -47,7 +50,7 @@ for (const f of Object.keys(byFile)) {
 }
 const declares = (f) => /\b(?:router|app)\.(?:get|post|put|patch|delete|all)\(/.test(fs.readFileSync(path.join(ROOT, 'routes', f), 'utf8'));
 for (const f of fs.readdirSync(path.join(ROOT, 'routes')).filter((n) => n.endsWith('.js') && declares(n))) {
-  ok('D routes/' + f + ' declares endpoints and is in the register', !!byFile['routes/' + f]);
+  ok('D routes/' + f + ' declares endpoints and is in the register', rows.some((row) => row.file === 'routes/' + f));
 }
 for (const r of rows.filter((x) => !x.path.startsWith('/api/'))) {
   ok('E ' + r.key + ' is a named row', PATH_EXCEPTIONS[r.key] === r.file, r.file);

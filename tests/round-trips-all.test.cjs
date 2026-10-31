@@ -110,7 +110,7 @@ if (webHere) {
 }
 if (!called) {
   /* the web client is not beside us: fire the budget's own list, with the mounts server.js declares */
-  const found = require(path.join(API, 'tools', 'server-mounts.cjs')).serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));   /* one helper with the scanner — inline AND variable mounts */
+  const found = require(path.join(API, 'tools', 'server-mounts.cjs')).serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'), path.join(API, 'routes'));   /* one helper with the scanner — inline AND variable mounts */
   for (const f of Object.keys(found)) if (!mounts[f]) mounts[f] = found[f];
   called = Object.keys(budget.routes).map((k) => ({ route: k, file: budget.routes[k].file }));
 }
