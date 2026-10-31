@@ -6,7 +6,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('./lib/rate-limit');
 const log = require('./lib/logger');
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
