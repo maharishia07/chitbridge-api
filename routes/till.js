@@ -88,7 +88,7 @@ const variantEngine = require('../lib/variant.browser.js'); /* the same shape-gu
 const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
 /**
  * ⚠️⚠️ STARTING A SHOP IS A ONCE-PER-SHOP ACT ([TILL-112]). The route already refuses a shop that has
  * products, so the honest limit is low: a handful of attempts covers choosing the wrong trade and saying so.

@@ -3350,6 +3350,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "RATE_LIMITED",
+   "status": "429",
+   "title": "Slow down",
+   "shopkeeper": "Too many requests came in a short time.",
+   "hint": "Wait the seconds shown, then try again.",
+   "owner_area": "server",
+   "since": "2026-10-31"
+  },
+  {
    "code": "READ_ONLY",
    "status": "403",
    "title": "View only",
