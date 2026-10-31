@@ -54,6 +54,7 @@ const {
   notStored,
   notSignedIn,
   notBoardWriter,
+  notBoardReader,
   faultOf,
   bareFaultOf,
   schemaOptions,
@@ -402,7 +403,7 @@ function testerOf(req) {
  * ⚠️ ONE QUERY, not one per case: the version join is done in SQL. A board that opens 110 cases would otherwise
  * make 110 round trips, and at 1.4–2.4 s per Railway↔Supabase call that is not a screen, it is an afternoon.
  */
-router.get('/cases', auth, ...checked('GET /cases'), async (req, res) => {
+router.get('/cases', auth, boardReadGate, ...checked('GET /cases'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -895,7 +896,7 @@ router.post('/cases/import', auth, ...checked('POST /cases/import'), async (req,
  * ⚠️ These are NOT cases and must never be loaded as definitions: they are what the tests are about, and
  * putting them in the case table would make them countable as coverage.
  */
-router.get('/engine', auth, ...checked('GET /engine'), (req, res) => {
+router.get('/engine', auth, boardReadGate, ...checked('GET /engine'), (req, res) => {
   try {
     const f = require('path').join(__dirname, '..', 'data', 'test-cases.json');
     if (!require('fs').existsSync(f)) return res.json({ engine: null });
@@ -1033,6 +1034,17 @@ function boardRefused(req, res) {
   return true;
 }
 
+/**
+ * ⭐ SEC-122 (Athi 2026-10-31): READING the shared board asks the SAME door as writing it (testboard.canWrite: the board's own
+ * entity · TEST_BOARD_WRITERS · the platform root), so nothing posted to the board reaches an ordinary shop. The own-shop reads
+ * (incidents · requirements · changes · releases · evidence · trace) never come here: they are the Test lab. Per-tenant board
+ * (no TEST_BOARD_ENTITY): canWrite is true for a shop on its OWN board, so it still reads its own — nothing is shared there.
+ */
+function boardReadGate(req, res, next) {
+  if (testboard.canWrite(auth.entityOf(req))) return next();
+  problem(req, res, { status: 403, ...notBoardReader() });
+}
+
 /** one CMDB list row from its definition row: the id, title, version, and the flags the record raises about itself */
 function cmdbListRow(row) {
   const record = row.rules || {};
@@ -1046,7 +1058,7 @@ function cmdbListRow(row) {
   };
 }
 /** GET /api/testing/cmdb — every record, PAGED (W1-SET: readPage → top-level total · page · limit, ?page= ?limit=; `records` stays) */
-router.get('/cmdb', auth, ...checked('GET /cmdb'), async (req, res) => {
+router.get('/cmdb', auth, boardReadGate, ...checked('GET /cmdb'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const page = await withEntity(entity_id, (db) =>
@@ -1070,7 +1082,7 @@ router.get('/cmdb', auth, ...checked('GET /cmdb'), async (req, res) => {
 });
 
 /** GET /api/testing/cmdb/:ci — one record, as stored (?version=N for an earlier one) */
-router.get('/cmdb/:ci', auth, ...checked('GET /cmdb/:ci'), async (req, res) => {
+router.get('/cmdb/:ci', auth, boardReadGate, ...checked('GET /cmdb/:ci'), async (req, res) => {
   try {
     const ci = String(req.params.ci || '');
     if (!cmdb.CI_RE.test(ci)) return problem(req, res, { status: 400, ...badRequest('Not a CI id', 'A CI id looks like CAP-SIGNIN.') });
@@ -1416,7 +1428,7 @@ router.post('/results', auth, ...checked('POST /results'), async (req, res) => {
  * we?" The history is there on request (?case_key= or ?run_id=), and a case's history is the interesting half
  * when something is flaky.
  */
-router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
+router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};
@@ -1468,7 +1480,7 @@ router.get('/results', auth, ...checked('GET /results'), async (req, res) => {
 });
 
 /** GET /api/testing/runs — the sittings, newest first, each with its totals. */
-router.get('/runs', auth, ...checked('GET /runs'), async (req, res) => {
+router.get('/runs', auth, boardReadGate, ...checked('GET /runs'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const pj = projectOf((req.query || {}).project);
@@ -1646,7 +1658,7 @@ router.post('/results/junit', auth, ...checked('POST /results/junit'), async (re
  */
 
 /** GET /api/testing/cases/gherkin[?module=CTR] — download the board as .feature text. */
-router.get('/cases/gherkin', auth, ...checked('GET /cases/gherkin'), async (req, res) => {
+router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const gherkin = require('../lib/gherkin');
@@ -2660,7 +2672,7 @@ router.post('/evidence', auth, ...checked('POST /evidence'), async (req, res) =>
   }
 });
 
-router.get('/stale', auth, ...checked('GET /stale'), async (req, res) => {
+router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const r = await withEntity(entity_id, (db) =>
@@ -2721,7 +2733,7 @@ router.get('/stale', auth, ...checked('GET /stale'), async (req, res) => {
  * ⚠️ ONE QUERY. A per-module loop here would be sixteen Pacific crossings to answer a question the panel asks on
  * every open. [[project-roundtrip-cost]]
  */
-router.get('/coverage', auth, ...checked('GET /coverage'), async (req, res) => {
+router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
@@ -2905,7 +2917,7 @@ router.get('/coverage', auth, ...checked('GET /coverage'), async (req, res) => {
  * ⭐ So every section is marked `source: 'measured'` or `source: 'needs a person'`, and the ones that need a
  * person carry the QUESTION rather than an answer. The screen renders that difference plainly.
  */
-router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
+router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
@@ -3540,7 +3552,7 @@ router.get('/report', auth, ...checked('GET /report'), async (req, res) => {
  * ⚠ It reads RESULTS, not cases — so a guard file that has never been written up as a case still gets its
  * history. The board answers "what should be tested"; this answers "what can be believed".
  */
-router.get('/reliability', auth, ...checked('GET /reliability'), async (req, res) => {
+router.get('/reliability', auth, boardReadGate, ...checked('GET /reliability'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
     const q = req.query || {};

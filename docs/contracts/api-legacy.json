@@ -55343,14 +55343,14 @@
   },
   "server-error-handler": {
    "handler": "ANY (error handler)",
-   "status": 500,
+   "status": 400,
    "body_keys": {
-    "error": "Server error",
-    "message": "Something went wrong"
+    "error": "Invalid JSON",
+    "message": "What was sent could not be read. It is cut off or is not a proper set of details."
    },
    "fixture": {
-    "error": "Server error",
-    "message": "Something went wrong"
+    "error": "Invalid JSON",
+    "message": "What was sent could not be read. It is cut off or is not a proper set of details."
    }
   }
  }

@@ -4,8 +4,8 @@
  "counts": {
   "routes": 630,
   "no_does": 620,
-  "not_started": 35,
-  "partial": 443,
+  "not_started": 28,
+  "partial": 450,
   "meets": 152,
   "columns": {
    "strict_input": {
@@ -21757,9 +21757,11 @@
    "hash": "44b050cddc91b9e8",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "KEY_CANNOT_SIGN_IN"
+    ]
    },
    "reads": [
     "identities"
@@ -21777,7 +21779,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": true,
@@ -21806,7 +21808,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-settings.js"
    ],
@@ -21836,9 +21838,11 @@
    "hash": "3d96a78c38ea06b5",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "KEY_CANNOT_SIGN_IN"
+    ]
    },
    "reads": [
     "identities"
@@ -21856,7 +21860,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": true,
@@ -21885,7 +21889,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-settings.js"
    ],
@@ -22350,14 +22354,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 405,
-   "hash": "b1e69d0f109c9b3c",
+   "line": 406,
+   "hash": "c7796f384914558e",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -22367,6 +22372,8 @@
     "definition_version"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -22402,6 +22409,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -22414,7 +22422,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b1e69d0f109c9b3c"
+    "stale_since": "c7796f384914558e"
    },
    "status": "partial",
    "callers": [],
@@ -22438,14 +22446,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1649,
-   "hash": "0908d66a7eb18f0d",
+   "line": 1661,
+   "hash": "225562369df44c8d",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -22455,6 +22464,8 @@
     "definition_version"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -22490,6 +22501,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -22500,8 +22512,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "225562369df44c8d"
    },
    "status": "partial",
    "callers": [],
@@ -22525,7 +22538,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3811,
+   "line": 3823,
    "hash": "8cf4e576115ef2fb",
    "does": "",
    "errors": {
@@ -22615,14 +22628,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1049,
-   "hash": "a02a979153be7498",
+   "line": 1061,
+   "hash": "b4d8b2a2ed26256c",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -22631,6 +22645,8 @@
     "definition"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -22666,6 +22682,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -22678,7 +22695,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a02a979153be7498"
+    "stale_since": "b4d8b2a2ed26256c"
    },
    "status": "partial",
    "callers": [
@@ -22706,14 +22723,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1073,
-   "hash": "96bdb5ceee195ce5",
+   "line": 1085,
+   "hash": "cb27ce34e66cddf0",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      404,
      500
     ],
@@ -22724,6 +22742,8 @@
     "definition_version"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -22759,6 +22779,7 @@
    "declared": [
     400,
     401,
+    403,
     404,
     500
    ],
@@ -22772,7 +22793,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "96bdb5ceee195ce5"
+    "stale_since": "cb27ce34e66cddf0"
    },
    "status": "partial",
    "callers": [
@@ -22798,14 +22819,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2724,
-   "hash": "230e964186f28e92",
+   "line": 2736,
+   "hash": "26fa1d41d4daf04f",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -22815,7 +22837,10 @@
     "definition_version",
     "test_result"
    ],
-   "writes": [],
+   "writes": [
+    "definition",
+    "definition_version"
+   ],
    "money": true,
    "actions": [],
    "derived": [
@@ -22849,6 +22874,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -22861,7 +22887,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "230e964186f28e92"
+    "stale_since": "26fa1d41d4daf04f"
    },
    "status": "partial",
    "callers": [],
@@ -22885,13 +22911,14 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 898,
-   "hash": "ff6c09906ff23d81",
+   "line": 899,
+   "hash": "ef445392025c7505",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
+     403,
      500
     ],
     "codes": []
@@ -22900,6 +22927,8 @@
     "definition"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -22934,6 +22963,7 @@
    },
    "declared": [
     401,
+    403,
     500
    ],
    "notes": [
@@ -22946,7 +22976,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ff6c09906ff23d81"
+    "stale_since": "ef445392025c7505"
    },
    "status": "partial",
    "callers": [],
@@ -22970,7 +23000,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2361,
+   "line": 2373,
    "hash": "648b3631d4dd9f78",
    "does": "",
    "errors": {
@@ -23057,7 +23087,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 4058,
+   "line": 4070,
    "hash": "52497bb11fd4f7f5",
    "does": "",
    "errors": {
@@ -23147,14 +23177,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3543,
-   "hash": "4765a5e2b46043d7",
+   "line": 3555,
+   "hash": "cde1efb7ead1d3ed",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -23164,6 +23195,8 @@
     "test_result"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -23199,6 +23232,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -23211,7 +23245,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4765a5e2b46043d7"
+    "stale_since": "cde1efb7ead1d3ed"
    },
    "status": "partial",
    "callers": [],
@@ -23235,14 +23269,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2908,
-   "hash": "01e844b4a974f6fb",
+   "line": 2920,
+   "hash": "7b2f3e0bdc3f002d",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -23252,7 +23287,10 @@
     "definition_version",
     "test_result"
    ],
-   "writes": [],
+   "writes": [
+    "definition",
+    "definition_version"
+   ],
    "money": true,
    "actions": [],
    "derived": [
@@ -23286,6 +23324,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -23298,7 +23337,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "01e844b4a974f6fb"
+    "stale_since": "7b2f3e0bdc3f002d"
    },
    "status": "partial",
    "callers": [],
@@ -23322,7 +23361,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2012,
+   "line": 2024,
    "hash": "e85095280e6bcaf9",
    "does": "",
    "errors": {
@@ -23409,14 +23448,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1419,
-   "hash": "7d1d8b9790744061",
+   "line": 1431,
+   "hash": "c333284f75c58fd6",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -23426,6 +23466,8 @@
     "test_result"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -23461,6 +23503,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -23473,7 +23516,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7d1d8b9790744061"
+    "stale_since": "c333284f75c58fd6"
    },
    "status": "partial",
    "callers": [],
@@ -23497,14 +23540,15 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1471,
-   "hash": "63236bc69e2bac66",
+   "line": 1483,
+   "hash": "c2147cbd5b085bbb",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -23514,6 +23558,8 @@
     "test_result"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -23549,6 +23595,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -23561,7 +23608,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "63236bc69e2bac66"
+    "stale_since": "c2147cbd5b085bbb"
    },
    "status": "partial",
    "callers": [],
@@ -23585,13 +23632,14 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2663,
-   "hash": "f0002c0f1c3087f3",
+   "line": 2675,
+   "hash": "99f94adaaabe158a",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
+     403,
      500
     ],
     "codes": []
@@ -23601,6 +23649,8 @@
     "definition_version"
    ],
    "writes": [
+    "definition",
+    "definition_version",
     "test_result"
    ],
    "money": false,
@@ -23635,6 +23685,7 @@
    },
    "declared": [
     401,
+    403,
     500
    ],
    "notes": [
@@ -23647,7 +23698,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f0002c0f1c3087f3"
+    "stale_since": "99f94adaaabe158a"
    },
    "status": "partial",
    "callers": [],
@@ -23671,7 +23722,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 328,
+   "line": 329,
    "hash": "4f251bf1eda67e5c",
    "does": "",
    "errors": {
@@ -23756,7 +23807,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 340,
+   "line": 341,
    "hash": "0b7aa4bfcc5d0706",
    "does": "",
    "errors": {
@@ -28026,7 +28077,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2472,
+   "line": 2484,
    "hash": "f63b0129e7b79af2",
    "does": "",
    "errors": {
@@ -28118,7 +28169,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2091,
+   "line": 2103,
    "hash": "61eb8f3ac5e44b4c",
    "does": "",
    "errors": {
@@ -49491,9 +49542,11 @@
    "hash": "e872fc56e1fade59",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "AMBIGUOUS_NAME"
+    ]
    },
    "reads": [
     "identities"
@@ -49513,7 +49566,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49540,7 +49593,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "signin-ui.js"
    ],
@@ -49568,9 +49621,11 @@
    "hash": "84b6041b552384e3",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "KEY_CANNOT_SIGN_IN"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -49586,7 +49641,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49615,7 +49670,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49718,9 +49773,12 @@
    "hash": "7448baae28dc0c9a",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "KEY_CANNOT_SIGN_IN",
+     "NO_DEVICE"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -49736,7 +49794,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49765,7 +49823,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "till.html"
    ],
@@ -49793,9 +49851,11 @@
    "hash": "cd1b084e1c218968",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "KEY_CANNOT_SIGN_IN"
+    ]
    },
    "reads": [
     "identities"
@@ -49813,7 +49873,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49842,7 +49902,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-settings.js"
    ],
@@ -49872,9 +49932,11 @@
    "hash": "d392c9d09d159c7f",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [],
-    "codes": []
+    "codes": [
+     "AMBIGUOUS_NAME"
+    ]
    },
    "reads": [
     "constitution",
@@ -49899,7 +49961,7 @@
     "schema_out": false,
     "missing_input_answer": false,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49926,7 +49988,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "signin-ui.js"
    ],
@@ -50575,7 +50637,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 258,
+   "line": 259,
    "hash": "f13bb8d07407445b",
    "does": "",
    "errors": {
@@ -50668,7 +50730,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1706,
+   "line": 1718,
    "hash": "d2d2a16fb181822e",
    "does": "",
    "errors": {
@@ -50762,7 +50824,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 837,
+   "line": 838,
    "hash": "5bcf76fe43050cb3",
    "does": "",
    "errors": {
@@ -50854,7 +50916,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 910,
+   "line": 911,
    "hash": "ac4bce59d38715a0",
    "does": "",
    "errors": {
@@ -50946,7 +51008,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3737,
+   "line": 3749,
    "hash": "280da187b85f6274",
    "does": "",
    "errors": {
@@ -51035,7 +51097,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1113,
+   "line": 1125,
    "hash": "8ee0bc5c9fef1604",
    "does": "",
    "errors": {
@@ -51127,7 +51189,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2626,
+   "line": 2638,
    "hash": "c100f3afb42bf30b",
    "does": "",
    "errors": {
@@ -51216,7 +51278,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2227,
+   "line": 2239,
    "hash": "07f3c222969ac836",
    "does": "",
    "errors": {
@@ -51308,7 +51370,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3876,
+   "line": 3888,
    "hash": "4b5b7b925c19b8c9",
    "does": "",
    "errors": {
@@ -51398,7 +51460,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1817,
+   "line": 1829,
    "hash": "cc9a293306f1b39d",
    "does": "",
    "errors": {
@@ -51491,7 +51553,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1390,
+   "line": 1402,
    "hash": "3fa30109f7c3575d",
    "does": "",
    "errors": {
@@ -51580,7 +51642,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1568,
+   "line": 1580,
    "hash": "f3c36632f8490c7d",
    "does": "",
    "errors": {
@@ -51669,7 +51731,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 315,
+   "line": 316,
    "hash": "c4c0e50bdd1347d3",
    "does": "",
    "errors": {
@@ -57341,7 +57403,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1097,
+   "line": 1109,
    "hash": "3f9fb8b5cb7e82ea",
    "does": "",
    "errors": {
