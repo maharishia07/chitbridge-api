@@ -30,6 +30,16 @@ async function existing(handle) {
   return found.rows[0] || null;
 }
 
+/** the root through the ONE register door, then the verify that takes the installer token; a root half-made earlier (registered, not verified) is verified, not registered again → throws the door's words */
+async function registerAndVerify(handle, token, halfMade) {
+  const email = process.env.CB_ROOT_EMAIL || handle + '@example.org';
+  const name = process.env.CB_ROOT_NAME || handle;
+  const registered = await post('/api/entities/register', { email, display_name: name, user_id: handle });
+  if (registered.status >= 400 && !halfMade) throw new Error('register answered ' + registered.status + ': ' + JSON.stringify(registered.body).slice(0, 300));
+  const verified = await post('/api/entities/verify', { email, otp: token });
+  if (verified.status >= 400 || !verified.body.entity) throw new Error('verify answered ' + verified.status + ': ' + JSON.stringify(verified.body).slice(0, 300));
+}
+
 (async () => {
   const handle = String(process.env.CB_INSTALLER_HANDLE || '').trim();
   const token = String(process.env.CB_INSTALLER_TOKEN || '');
@@ -40,12 +50,7 @@ async function existing(handle) {
     return;
   }
   if (!token) throw new Error('CB_INSTALLER_TOKEN is not set and the root does not exist yet');
-  const email = process.env.CB_ROOT_EMAIL || handle + '@example.org';
-  const name = process.env.CB_ROOT_NAME || handle;
-  const registered = await post('/api/entities/register', { email, display_name: name, user_id: handle });
-  if (registered.status >= 400 && !have) throw new Error('register answered ' + registered.status + ': ' + JSON.stringify(registered.body).slice(0, 300));
-  const verified = await post('/api/entities/verify', { email, otp: token });
-  if (verified.status >= 400 || !verified.body.entity) throw new Error('verify answered ' + verified.status + ': ' + JSON.stringify(verified.body).slice(0, 300));
+  await registerAndVerify(handle, token, !!have);
   const made = await existing(handle);
   console.log(JSON.stringify({ handle, identity_id: made.identity_id, bridge_id: made.bridge_id, made: true }));
 })()

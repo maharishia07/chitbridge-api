@@ -26,17 +26,19 @@ const whoOf = (req) => ({ id: req.identity.identity_id, name: req.identity.displ
 const NOBODY_TO_PROPOSE_TO = { error: 'Nobody to propose to', message: 'This chit has no other party, so there is nothing to propose: change it directly.', code: 'PROPOSAL_NO_COUNTERPARTY' };
 const NOBODY_TO_ASK = { error: 'Nobody to ask', message: 'This chit has no other party.', code: 'PROPOSAL_NO_COUNTERPARTY' };
 
+/** a refusal a library meant, as { error, register code }: its own (chit-proposal), a line that was already delivered (lib/amend LINE_*), or lib/amend's input refusals (AMEND_*); null for anything else */
+function meantRefusal(err) {
+  if (!err) return null;
+  if (err.refused) return { error: err.status === 404 ? 'Not found' : 'Not done', registered: err.code };
+  if (err.status && err.status < 500 && err.code && /^LINE_/.test(err.code)) return { error: 'Already delivered', registered: 'CHIT_CONFLICT' };
+  if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { error: 'Not done', registered: err.code };
+  return null;
+}
+
 /** the Problem spec of whatever a door caught: a refusal the library meant, in its words and its registered code; anything else is a fault (logged with the request id, said safely) */
 function specOf(req, err, label) {
-  if (err && err.refused) {
-    return { status: err.status, ...said({ error: err.status === 404 ? 'Not found' : 'Not done', message: err.message, code: err.code }, err.code) };
-  }
-  if (err && err.status && err.status < 500 && err.code && /^LINE_/.test(err.code)) {
-    return { status: err.status, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
-  }
-  if (err && err.status === 400 && /^AMEND_/.test(String(err.code))) {
-    return { status: 400, ...said({ error: 'Not done', message: err.message, code: err.code }, err.code) }; /* lib/amend's input refusals: the sentence, under its own code */
-  }
+  const meant = meantRefusal(err);
+  if (meant) return { status: err.status, ...said({ error: meant.error, message: err.message, code: err.code }, meant.registered) };
   console.error(label + ':', err && err.message);
   return failed(err, req, label);
 }
