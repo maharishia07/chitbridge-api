@@ -439,6 +439,8 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
+    /* CTR-157: an offer made live, paused or changed is what every open counter prices with, so they hear it now, as for a create or a retire */
+    shopChanged(entity_id, 'definition saved');
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
     problem(req, res, definitionFault(e, req, { nameTaken: true }));

@@ -3240,6 +3240,8 @@
       <button class="pill" id="lockbtn" data-testid="till-lock" onclick="lockNow()" title="Lock this counter — the bill stays; sign in to carry on">🔒</button>
       <!-- ⭐ M74: online orders waiting — shown only when there is one (onlineOrdersPaint) -->
       <button class="pill off" id="orderpill" data-testid="till-online-orders" hidden onclick="onlineOrdersOpen()"></button>
+      <!-- ⭐ CTR-157: the shop changed its offers under an open bill — shown only then (offersHeldPaint) -->
+      <button class="pill off" id="offerpill" data-testid="till-offers-new" hidden onclick="offersReread()"></button>
       <!--
         ⭐⭐ THE LINE PILL IS THE WAY IN TO "WHY IS A BILL STUCK?". Athi, 2026-09-17: *"do you have a chip called why is a bill
         stuck? I couldn't see that."* It lived only inside ☰, and this pill — the first place anyone looks when bills are not
@@ -7010,6 +7012,7 @@ async function refresh(){
     if (r && r.ok === false) return refreshFailed(Number(r.status) || 0, r.code || null);
     busyAt(1, 1, 'Sorting it out…');
     await load();
+    SHOP_HELD = false; OFFERS_NEW = { n: 0, changed: false }; offersHeldPaint();   /* CTR-157: a read, by anyone, answers the held one */
     var n = ((S && S.items) || []).length;
     toastLine(n ? (fmtCount(n) + ' products, up to date.') : 'Read the shop.');
     dayReread(false).catch(function(e){ cbQuiet('refresh:6', e); });   /* FX-CT1: and this counter's day, so a wiped browser gets its bills back */
@@ -17204,6 +17207,7 @@ function clearBill(){
   KOT_N = 0;   /* a new customer is a new set of tickets — see sendKOT */ ageClear(); CART = []; CARTSEL = -1; PARTS = []; PAY_ASKED = false; paintParts(); document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value=''; price(); stepGo('pick'); focusSearch();
   /* ⭐ a screen style that was held back because a bill was in hand lands HERE ([TILL-84]) */
   try { stylePendFlush(); } catch (e) { cbQuiet('clearBill:1', e); }
+  try { shopHeldFlush(); } catch (e) { cbQuiet('clearBill:3', e); }   /* CTR-157: offers that changed under that bill land now */
   /* ⭐ a network simulation held back for the same reason (§4.5, Phase 3.4) lands HERE too */
   try { netPendFlush(); } catch (e) { cbQuiet('clearBill:2', e); }
 }
@@ -27978,6 +27982,66 @@ async function orderBilledDone(bo, bill){
   try { r = (HOST && HOST.orderBilled) ? await HOST.orderBilled(bo, bill) : null; } catch (_) { r = null; }
   if (!r || !r.ok) toastLine('Billed ' + bill.no + '. The order is not marked done yet - open it in ChitBridge.');
 }
+/**
+ * ── ⭐⭐ CTR-157 (R45, walk 2026-10-24) — A LIVE OFFER REACHES THE NEXT BILL, NEVER THE OPEN ONE ─────────────────────────────────
+ * "Make live: on the very next bill" was not true: the counter kept the offers it read at 08:12 until F4. The shop now rings the bell when a
+ * definition is saved (routes/definitions.js PUT), and the bell asks for a re-read. ⚠️ NEVER UNDER AN OPEN BILL: a "Reading your shop…"
+ * overlay and prices that move under a customer who was already quoted are worse than a late offer. So with a bill in hand the re-read is HELD:
+ * offersPeek() looks at the offers only (a small delta read, stored nowhere), the bar says "1 new offer, re-read", and the real read lands the
+ * moment the bill is cleared (clearBill) or the 30 s tick finds the counter idle — the same funnel stylePendFlush() uses.
+ * ⚠️ OFFLINE: nothing is asked and nothing is said; the last list stays and a bill still prices with it. The bell cannot arrive offline anyway.
+ * ⚠️ THE EVENT CARRIES NO DATA (see THE BELL): the count comes from reading, never from the event.
+ */
+var SHOP_HELD = false, OFFERS_NEW = { n: 0, changed: false };
+/** is a bill in hand — lines on it. Receive, orders and the rest hold no CART, so they refresh as they always did. */
+function billInHand(){ return typeof CART !== 'undefined' && CART.length > 0; }
+/** offers the shop now runs against the ones this bill started with: how many are new, and whether anything differs (by id, then by content) */
+function offersDiff(have, got){
+  if (!Array.isArray(got)) return { n: 0, changed: false };
+  var was = {}, n = 0, changed = got.length !== have.length;
+  have.forEach(function(o){ was[String(o.id)] = JSON.stringify(o); });
+  got.forEach(function(o){
+    var before = was[String(o.id)];
+    if (before === undefined) { n++; changed = true; } else if (before !== JSON.stringify(o)) changed = true;
+  });
+  return { n: n, changed: changed };
+}
+/** the shop's offers, read without touching the stored copy or S — a delta from this copy's own cursor, so it is small */
+async function offersPeek(){
+  OFFERS_NEW = { n: 0, changed: false };
+  if (!(S && S.at) || !lineUp() || !(HOST && HOST.mode === 'cloud' && CloudHost.cred())) return;
+  try {
+    var r = await fetchBy(CloudHost.api + '/api/till/snapshot?since=' + encodeURIComponent(S.at), { headers: CloudHost.auth() }, SLOW);
+    if (!r.ok) return;
+    var j = await r.json();
+    OFFERS_NEW = offersDiff(S.offers || [], j && j.offers);
+  } catch (e) { cbQuiet('offersPeek:1', e); }   /* the line failed mid-look: the bar says nothing new and the last list stays */
+}
+/** the bar pill: "1 new offer, re-read" — only while a held read has something to say */
+function offersHeldPaint(){
+  var p = document.getElementById('offerpill'); if (!p) return;
+  p.hidden = !(SHOP_HELD && OFFERS_NEW.changed);
+  if (p.hidden) return;
+  p.textContent = '🏷 ' + (OFFERS_NEW.n ? OFFERS_NEW.n + (OFFERS_NEW.n === 1 ? ' new offer' : ' new offers') + ', re-read' : 'Offers changed, re-read');
+  p.title = 'This bill keeps the offers it started with. Press to read them now, or they apply from the next bill.';
+}
+/** the bell said the shop moved: read now between bills, hold it while a bill is in hand */
+function shopHeard(){
+  if (!billInHand()) return refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); });
+  SHOP_HELD = true;
+  return offersPeek().then(offersHeldPaint);
+}
+/** a held read lands once the bill is gone and the line is up; the pill goes with the read (refresh clears it) */
+function shopHeldFlush(){
+  if (!SHOP_HELD || billInHand() || !lineUp()) return;
+  SHOP_HELD = false;   /* one try: a read that fails says so on the bar, it is not retried every tick */
+  refresh().catch(function(e){ cbQuiet('shopHeldFlush:1', e); });
+}
+/** the cashier pressed the pill: read now, and price the open bill again with what came in */
+async function offersReread(){
+  await refresh();
+  try { price(); } catch (e) { cbQuiet('offersReread:1', e); }
+}
 async function bellUp(){
   try {
     if (BELL || !lineUp()) return;
@@ -28001,7 +28065,7 @@ async function bellUp(){
       /* ⭐ heard, whatever it said — delivery is the fact being measured, not relevance ([TILL-167]) */
       bellHeard();
       var d = {}; try { d = JSON.parse(ev.data || '{}'); } catch (e) { cbQuiet('bellUp:1', e); }
-      if (d.kind === 'shop') { refresh().then(function(){ toastLine('The shop changed — this counter is up to date.'); }); }
+      if (d.kind === 'shop') { shopHeard(); }
       /**
        * ⭐ Athi: "counter application do not have notifications, do we need to bring notification for the
        * till/counter application" — until now, deliberately not: "a chit arriving is the mailbox's business,
@@ -28025,7 +28089,7 @@ async function bellUp(){
 /* ⭐ one tick: build it if it is gone, and replace it if it has stopped delivering ([TILL-167]) */
 /* ⭐ the ribbon, restored on load — a size left on Phone must still be Phone after a reload ([TILL-177]) */
 try { devApplySize(); devPaint(); } catch (e) { cbQuiet('top:4', e); }
-setInterval(function(){ bellWatch(); bellUp(); }, 30000);
+setInterval(function(){ bellWatch(); bellUp(); shopHeldFlush(); }, 30000);
 /* ⭐ are the bills that say "sent" really in the books? — decoupled from drain so the two can never re-enter each other */
 if (typeof setTimeout === 'function') setTimeout(function(){ checkAbsorbed(false); }, 45000);
 setInterval(function(){ checkAbsorbed(false); }, 600000);
