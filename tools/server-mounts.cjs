@@ -15,7 +15,38 @@
  *   const { serverMounts } = require('../tools/server-mounts.cjs');
  *   serverMounts(fs.readFileSync('server.js', 'utf8'))   → { file: basePath }   (first mount of a file wins)
  */
-function serverMounts(src) {
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * partParents(routesDir) → { 'chits-trace.js': 'chits.js' } — a split route file routes/<name>-<part>.js that routes/<name>.js requires is a PART of it:
+ * the parent mounts it (router.use), so server.js never names it. No folder (or none given) means no parts.
+ */
+function partParents(routesDir) {
+  const parents = {};
+  if (!routesDir || !fs.existsSync(routesDir)) return parents;
+  const files = fs.readdirSync(routesDir).filter((name) => name.endsWith('.js'));
+  for (const parent of files) {
+    const stem = parent.slice(0, -3);
+    const text = fs.readFileSync(path.join(routesDir, parent), 'utf8');
+    for (const found of text.matchAll(/require\('\.\/([A-Za-z0-9_-]+)'\)/g)) {
+      if (found[1].startsWith(stem + '-') && files.includes(found[1] + '.js')) parents[found[1] + '.js'] = parent;
+    }
+  }
+  return parents;
+}
+
+/** a part with no mount of its own answers at its parent's (copied by `copyOf`); the map comes back */
+function inheritMounts(mounts, routesDir, copyOf) {
+  const parents = partParents(routesDir);
+  for (const part of Object.keys(parents)) {
+    if (mounts[part] === undefined && mounts[parents[part]] !== undefined) mounts[part] = copyOf(mounts[parents[part]]);
+  }
+  return mounts;
+}
+
+/** the text of server.js (and the routes folder, for the parts) → { 'actors.js': '/api/actors', … }, the first mount of each route file */
+function serverMounts(src, routesDir) {
   const mounts = {};
   /* a commented-out mount is not a mount (server.js:438 keeps one for src/routes/catalogue under /api/network; reading it as live put 18 catalogue routes at the wrong path in the trace) */
   const s = String(src || '').replace(/^\s*\/\/.*$/gm, '');
@@ -35,15 +66,15 @@ function serverMounts(src) {
     const last = args[args.length - 1];
     if (last && vars[last] && !mounts[vars[last]]) mounts[vars[last]] = m[1];
   }
-  return mounts;
+  return inheritMounts(mounts, routesDir, (parentMount) => parentMount);
 }
-module.exports = { serverMounts };
+module.exports = { serverMounts, partParents };
 
 /**
  * serverMountsAll(serverSource) → { 'ctp.js': ['/api/ctp', ''], … } — EVERY prefix a route file is mounted at (API-1: the register lists a route once per mount; a router mounted
  * twice, or at '/', is two sets of endpoints). serverMounts above keeps only the first, which is all its two callers need.
  */
-function serverMountsAll(serverSource) {
+function serverMountsAll(serverSource, routesDir) {
   const text = String(serverSource || '').replace(/^\s*\/\/.*$/gm, '');
   const vars = {};
   for (const m of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
@@ -56,6 +87,6 @@ function serverMountsAll(serverSource) {
     const prefix = m[1] === undefined || m[1] === '/' ? '' : m[1];
     (all[file] = all[file] || []).includes(prefix) || all[file].push(prefix);
   }
-  return all;
+  return inheritMounts(all, routesDir, (parentMounts) => parentMounts.slice());
 }
 module.exports.serverMountsAll = serverMountsAll;

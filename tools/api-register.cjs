@@ -101,6 +101,9 @@ function routerFilesOf() {
   return found;
 }
 
+/** the owner area of a route file: its name, except that routes/chits-<part>.js (LEAN-PLAN §8: routes/chits.js split by owner area) is still the chits area, so a move-only split changes a row's file and line and nothing else */
+const areaOfFile = (file) => path.basename(file, '.js').replace(/^chits-.+$/, 'chits');
+
 /** the functions every route shares (middleware/*.js exports): not "own" code of a route, never hashed with it */
 function sharedFunctions() {
   const shared = new Set();
@@ -310,7 +313,7 @@ function rowOf(leaf, context) {
   const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
   const line = lineOf(fileText, leaf);
-  const area = path.basename(info.file, '.js');
+  const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
   return { key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) };
 }
