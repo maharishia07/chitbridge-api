@@ -33,7 +33,7 @@
 
 const express = require('express');
 const log = require('../lib/logger');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
 const router = express.Router();
 
 const { query, withEntity } = require('../db');

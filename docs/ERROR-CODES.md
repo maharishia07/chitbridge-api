@@ -191,6 +191,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INTERNAL | 500 | Something went wrong | Something went wrong on our side. Try again in a moment. | If it keeps happening, tell us the request id. | api | 2026-10-22 |
 | INVALID_ACTION | 400 | Action not understood | That is not something this can do. | Send pool, or push with a colleague. | actors | 2026-10-23 |
 | INVALID_ASSIGNEE | 400 | Default person not allowed | The default person must be able to take tasks. | Pick a person with Act or Manager access. | actors | 2026-10-23 |
+| INVALID_CHARACTER | 400 | Odd character | What was sent holds a character that cannot be saved. It often comes from pasting out of a PDF or from a scanner. | Remove the odd character, or type that part again. | server | 2026-10-31 |
 | INVALID_DELEGATE | 400 | Cover not allowed | That person cannot cover. | Pick someone else who can take tasks. | actors | 2026-10-23 |
 | INVALID_INPUT | 422 | Input not valid | Some of what was sent is missing or not valid. | Fix the fields listed and send it again. | validate | 2026-10-22 |
 | INVALID_JSON | 400 | Request not readable | What was sent could not be read. It is cut off or is not a proper set of details. | Check it is complete, then send it again. | server | 2026-10-31 |
@@ -313,6 +314,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_CHANGED | 409 | Group changed | Someone changed this group since you opened it. | Open the group again and make your change again. | quick-keys | 2026-10-23 |
 | QUICK_KEY_INVALID | 400 | Quick key not valid | A group needs a name, and a key needs a product. | Fill in what is missing and try again. | quick-keys | 2026-10-23 |
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
+| RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
 | REGION_STORE_MISSING | 503 | Regions not ready | Regional overrides are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |

@@ -317,6 +317,7 @@ const INFRA_LIBS = [
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
   'knownerr.js',
+  'input-hygiene.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',
@@ -491,6 +492,7 @@ const INFRA_LIBS = [
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
+  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders

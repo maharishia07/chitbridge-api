@@ -297,7 +297,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/work/:chit_id | work | routes/work.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/work/facts | work | routes/work.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/work/list | work | routes/work.js:43 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /health | server | server.js:486 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
+| GET | /health | server | server.js:488 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | OPTIONS | * | server | server.js:163 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | PATCH | /api/actors/:id | actors | routes/actors.js:506 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1340 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | no | yes | yes | partial |
