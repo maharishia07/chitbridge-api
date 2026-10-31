@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 141 | `list` | `amend.js` |  |
-| 111 | `rows` | `crm.js` | still in them: |
+| 112 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
 | 100 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 98 | `words` | `variant.browser.js` |  |
@@ -34,7 +34,7 @@ of file each thing is; this says what already does the job.
 | 54 | `entry` | `books-store.js` |  |
 | 52 | `register` | `regulation.js` | register(pack) → the pack — |
 | 51 | `record` | `access-events.js` |  |
-| 51 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 52 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `pack` | `books-store.js` |  |
