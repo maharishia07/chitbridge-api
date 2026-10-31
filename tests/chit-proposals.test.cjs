@@ -81,7 +81,7 @@ function rowsFor(sql, p) {
     w.props.filter((r) => r.entity_id === p[0] && r.chit_id === p[1] && r.proposal_id !== p[2] && r.status === 'proposed').forEach((r) => (r.status = 'superseded'));
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = CASE/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) - 'invoice'/.test(s)) {
     const h = w.header[p[1]];
     const bj = Object.assign({}, h.business_json);
     if (p[2] == null) delete bj.invoice;
@@ -90,12 +90,12 @@ function rowsFor(sql, p) {
     h.summary_json = Object.assign({}, h.summary_json, p[3] ? JSON.parse(p[3]) : {});
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = jsonb_set\(coalesce\(business_json, '\{\}'::jsonb\), '\{jurisdiction\}'/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('jurisdiction'/.test(s)) {
     const h = w.header[p[1]];
     h.business_json = Object.assign({}, h.business_json, { jurisdiction: Object.assign({}, (h.business_json || {}).jurisdiction, JSON.parse(p[2])) });
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = jsonb_set\(coalesce\(business_json, '\{\}'::jsonb\), '\{agreed\}'/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('agreed'/.test(s)) {
     const h = w.header[p[1]];
     h.business_json = Object.assign({}, h.business_json, { agreed: JSON.parse(p[2]) });
     return [];
@@ -516,9 +516,10 @@ const call = (method, url, id, body) =>
   });
   await t('at send, a seller on another installation is not priced by the buyer’s installation: no tax rule runs, and the request is stamped a quotation with the buyer’s country', async () => {
     const { A } = twoInstallations();
-    const st = { sender_id: BUY, line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
+    /* F7: a seller elsewhere needs the money stated by the buyer's screen (else 400 CURRENCY_REQUIRED) */
+    const st = { sender_id: BUY, line_items: clone(ITEMS), business_json: { currency: 'INR' }, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
     CUR = A;
-    await chits.sendMoney(st, {}, {});
+    await chits.sendMoney(st, { body: {} }, {});
     assert.strictEqual(A.taxCalls.length, 0, 'the buyer’s installation ran no tax of its own on someone else’s goods');
     assert.strictEqual(st.originInvoice, null);
     assert.strictEqual(st.moneyBlock.tax, null);
@@ -526,7 +527,7 @@ const call = (method, url, id, body) =>
     const local = oneInstallation();
     const st2 = { sender_id: BUY, line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL], counterBill: false, sellerId: SELL };
     CUR = local;
-    await chits.sendMoney(st2, {}, {});
+    await chits.sendMoney(st2, { body: {} }, {});
     assert.strictEqual(local.taxCalls.length, 1, 'a seller on the same installation is priced at send as before');
     assert.strictEqual(st2.business_json.jurisdiction, undefined);
   });

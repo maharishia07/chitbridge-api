@@ -3663,6 +3663,13 @@
       "fired": true,
       "status": 200,
       "extra": true
+    },
+    "POST /api/books/parties/:id/dispute": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
     }
   }
 }

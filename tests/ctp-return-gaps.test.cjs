@@ -597,7 +597,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
 
   console.log('\n== 7 · the bell for accepted, rejected, cancelled and for a dispute raised or resolved ==\n');
   const rungKinds = () => RUNG.map((x) => [x.ids.slice().sort(), x.evt.kind, x.evt.status || x.evt.what]);
-  await t('a status move to accepted, rejected or cancelled rings the OTHER parties once (here); any other move rings nothing', async () => {
+  await t('a status move to accepted, rejected or cancelled rings the OTHER parties once (here); any other move pushes QUIETLY (F15: it repaints an open chit, rings no bell)', async () => {
     for (const status of ['accepted', 'rejected', 'cancelled']) {
       resetWorld();
       RUNG.length = 0;
@@ -614,8 +614,14 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     resetWorld();
     RUNG.length = 0;
     W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'accepted' }];
+    W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, entity_id: STUB, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'cc' }] };
+    W.senderId = STUB;
     await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'in_progress', { id: ME, name: 'Asha' }, '', EDITOR);
-    assert.strictEqual(RUNG.filter((x) => x.evt.kind === 'status').length, 0, 'in progress rings nobody');
+    const quiet = RUNG.filter((x) => x.evt.kind === 'status');
+    assert.strictEqual(quiet.length, 1, 'in progress pushes once, to the same roster');
+    assert.deepStrictEqual(quiet[0].ids.slice().sort(), [STUB, LOCAL2].sort());
+    assert.strictEqual(quiet[0].evt.quiet, true, 'and quietly: no bell row, no toast');
+    assert.strictEqual(quiet[0].evt.status, 'in_progress');
   });
   await t('a status that arrives from another installation rings the local people on the chit once; a repeat rings nothing', async () => {
     resetWorld();
@@ -630,7 +636,9 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     await apply(ev);
     assert.strictEqual(RUNG.length, 0);
     await apply(Object.assign({}, ev, { seq: 5, status: 'in_progress' }));
-    assert.strictEqual(RUNG.length, 0, 'a status that rings nothing locally rings nothing here');
+    assert.deepStrictEqual(rungKinds(), [[[ME, LOCAL2].sort(), 'status', 'in_progress']], 'F15: a status that does not ring still pushes, to the same roster');
+    assert.strictEqual(RUNG[0].evt.quiet, true, 'quietly');
+    assert.ok(!RUNG.some((x) => x.evt.status === 'accepted' && x.evt.quiet), 'a bell status is never quiet');
   });
   await t('a dispute raised (the real route) rings the parties named on it — on an international deal only; a domestic chit rings nothing, exactly as before 25 Oct', async () => {
     for (const international of [false, true]) {

@@ -151,6 +151,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_SEARCH_TOO_SHORT | 400 | Search too short | Enter at least 2 characters to search. | Type a little more of the name. | ctp | 2026-10-25 |
 | CTP_STORE_FAILED | 500 | Could not store the chit | This installation could not store the chit just now. | Try again later; it was not written. | ctp | 2026-10-23 |
 | CTP_UNKNOWN_QUESTION | 400 | Unknown question | This installation does not answer that question. | Ask to resolve a business or for its catalogue. | ctp | 2026-10-23 |
+| CURRENCY_REQUIRED | 400 | Currency required | Say which money their price list is in, then send again. | Choose their money on the order, then send it again. | chits | 2026-10-25 |
 | CURRENCY_ENTITY_ONLY | 403 | Currency is the business’s | The currency your prices are written in belongs to the business. | Ask whoever runs the account to change it in Settings. | entities | 2026-10-22 |
 | CURRENCY_MALFORMED | varies | Not a currency code | That is not a currency code. | Use the three-letter code, like SGD. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |

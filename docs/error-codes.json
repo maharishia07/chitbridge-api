@@ -1586,6 +1586,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CURRENCY_REQUIRED",
+   "status": "400",
+   "title": "Currency required",
+   "shopkeeper": "Say which money their price list is in, then send again.",
+   "hint": "Choose their money on the order, then send it again.",
+   "owner_area": "chits",
+   "since": "2026-10-25"
+  },
+  {
    "code": "CYCLE",
    "status": "409",
    "title": "Would loop",
