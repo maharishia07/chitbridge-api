@@ -1176,10 +1176,12 @@
  "GET /api/testing/cases": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/cases/gherkin": [
   401,
+  403,
   500
  ],
  "GET /api/testing/changes": [
@@ -1189,21 +1191,25 @@
  ],
  "GET /api/testing/cmdb": [
   401,
+  403,
   500
  ],
  "GET /api/testing/cmdb/:ci": [
   400,
   401,
+  403,
   404,
   500
  ],
  "GET /api/testing/coverage": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/engine": [
   401,
+  403,
   500
  ],
  "GET /api/testing/incidents": [
@@ -1218,11 +1224,13 @@
  "GET /api/testing/reliability": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/report": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/requirements": [
@@ -1233,15 +1241,18 @@
  "GET /api/testing/results": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/runs": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/stale": [
   401,
+  403,
   500
  ],
  "GET /api/testing/trace": [
