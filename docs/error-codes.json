@@ -2063,6 +2063,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "INVALID_CHARACTER",
+   "status": "400",
+   "title": "Odd character",
+   "shopkeeper": "What was sent holds a character that cannot be saved. It often comes from pasting out of a PDF or from a scanner.",
+   "hint": "Remove the odd character, or type that part again.",
+   "owner_area": "server",
+   "since": "2026-10-31"
+  },
+  {
    "code": "INVALID_DELEGATE",
    "status": "400",
    "title": "Cover not allowed",

@@ -317,6 +317,7 @@ const INFRA_LIBS = [
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
   'knownerr.js',
+  'input-hygiene.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',
