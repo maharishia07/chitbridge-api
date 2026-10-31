@@ -73,7 +73,7 @@ const writes = () => SQL.filter((s) => /^\s*(INSERT|UPDATE)/.test(s)).length;
   console.log('\n══ AN OFFER SAVE REFUSES A CLASH, IN WORDS ══\n');
 
   reset();
-  let r = await call(port, 'POST', '/api/definitions', { kind: 'offer', sub_kind: 'amount_off', name: 'Tiffin ₹5', status: 'live', rules: { amount: 5, scope: 'line', applies_to: { category: 'tiffin' } } });
+  let r = await call(port, 'POST', '/api/definitions', { kind: 'offer', sub_kind: 'amount_off', name: 'Tiffin ₹5', status: 'live', confirmed: true, rules: { amount: 5, scope: 'line', applies_to: { category: 'tiffin' } } });
   t('POST live on the same category as a live 10% → 409 OFFER_CLASH, nothing written', r.status === 409 && r.body.code === 'OFFER_CLASH' && writes() === 0, JSON.stringify(r));
   t('…the sentence names the other offer and what to do (what happened · what it means · what to do)',
     /overlaps "Tiffin 10%"/.test(r.body.message) && /one discount at a time/.test(r.body.message) && /pause "Tiffin 10%"/.test(r.body.message), r.body.message);
@@ -85,14 +85,14 @@ const writes = () => SQL.filter((s) => /^\s*(INSERT|UPDATE)/.test(s)).length;
   t('the same offer saved as a DRAFT → 201, not asked (the lab warns while drafting)', r.status === 201 && !SQL.some((s) => /d\.status = 'live'/.test(s)), JSON.stringify(r));
 
   reset();
-  r = await call(port, 'PUT', '/api/definitions/' + DRAFT, { status: 'live' });
+  r = await call(port, 'PUT', '/api/definitions/' + DRAFT, { status: 'live', confirmed: true });
   t('PUT { status: live } with no rules: the stored rules are read; an item in the live category → 409, naming the item',
     r.status === 409 && r.body.code === 'OFFER_CLASH' && /Masala Dosa/.test(r.body.message) && writes() === 0, JSON.stringify(r));
   t('…the item list is placed in its category by ONE catalogue read of the named ids', SQL.filter((s) => /catalogue_items/.test(s)).length === 1);
 
   reset();
   DEFS[DRAFT].rules = { amount: 5, scope: 'line', applies_to: { item_ids: [TEA] } };
-  r = await call(port, 'PUT', '/api/definitions/' + DRAFT, { status: 'live' });
+  r = await call(port, 'PUT', '/api/definitions/' + DRAFT, { status: 'live', confirmed: true });
   t('an item in ANOTHER category goes live → 200 (different shelves never clash)', r.status === 200, JSON.stringify(r));
 
   reset();
@@ -104,7 +104,7 @@ const writes = () => SQL.filter((s) => /^\s*(INSERT|UPDATE)/.test(s)).length;
   t('pausing it is never refused', r.status === 200, JSON.stringify(r));
 
   reset();
-  r = await call(port, 'POST', '/api/definitions', { kind: 'offer', sub_kind: 'threshold', name: 'Spend 500', status: 'live', rules: { min_amount: 500, amount: 50, scope: 'cart' } });
+  r = await call(port, 'POST', '/api/definitions', { kind: 'offer', sub_kind: 'threshold', name: 'Spend 500', status: 'live', confirmed: true, rules: { min_amount: 500, amount: 50, scope: 'cart' } });
   t('a basket-level offer live beside it → 201 (bill-level offers stack; asked of the engine, not a list here)', r.status === 201 && !SQL.some((s) => /d\.status = 'live'/.test(s)), JSON.stringify(r));
   r = await call(port, 'POST', '/api/definitions', { kind: 'category', name: 'Tiffin' });
   t('anything that is not an offer is untouched', r.status === 201, JSON.stringify(r));

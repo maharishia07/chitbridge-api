@@ -2918,6 +2918,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "OFFER_LIVE_UNCONFIRMED",
+   "status": "428",
+   "title": "Not confirmed",
+   "shopkeeper": "This offer is not live yet because you have not confirmed it.",
+   "hint": "Check what it does and who it is for, then confirm to make it live.",
+   "owner_area": "definitions",
+   "since": "2026-10-31"
+  },
+  {
    "code": "OFFER_NOT_LIVE",
    "status": "409",
    "title": "Offer not live",

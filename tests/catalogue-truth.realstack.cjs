@@ -186,7 +186,7 @@ const productId = async (shop, item_data) => ok(await j('/api/products', { metho
   });
   await kase('CA-11', 'a live offer that clashes with another live offer is refused in words, and nothing is written', async () => {
     const shelf = 'tiffin-' + RUN, first = 'Tiffin 10% ' + RUN, scope = { scope: 'line', applies_to: { category: shelf } };
-    await definition(A, { kind: 'offer', sub_kind: 'percent_off', name: first, status: 'live', rules: Object.assign({ percent: 10 }, scope) });
+    await definition(A, { kind: 'offer', sub_kind: 'percent_off', name: first, status: 'live', confirmed: true, rules: Object.assign({ percent: 10 }, scope) });
     const second = { kind: 'offer', sub_kind: 'amount_off', name: 'Tiffin 5 off ' + RUN, rules: Object.assign({ amount: 5 }, scope) };
     const r = await j('/api/definitions', { method: 'POST', token: A.token, body: Object.assign({ status: 'live' }, second) });
     expect(r.status === 409 && r.b.code === 'OFFER_CLASH', 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
