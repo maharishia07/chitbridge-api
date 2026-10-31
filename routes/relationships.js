@@ -22,7 +22,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
-const { validateAsProblem, sanitise, schemaValidate } = require('../middleware/validate');
+const { validateAsProblem, sanitise, schemaValidate, queryDay } = require('../middleware/validate');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { words, partyRefusal, mintRefusal, removeFault, failed, contract, schemaOptions, PARTY_KEYS } = require('../lib/relationships-contract'); // the contract (each route's operation), the words of a refusal and the party fields a PATCH may carry
 const auth = require('../middleware/auth');
@@ -990,7 +990,7 @@ async function tradedWith(shop, counterparty_id, since, windowRows) {
   return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
 }
 
-router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) => {
+router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     // Derived from the CHITS, not from a saved supplier list: a supplier you have never traded with has nothing
@@ -1002,7 +1002,7 @@ router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) =>
   }
 });
 
-router.get('/scorecard/:entity_id', auth, ...checked('GET /scorecard/:entity_id'), async (req, res) => {
+router.get('/scorecard/:entity_id', auth, queryDay('since'), ...checked('GET /scorecard/:entity_id'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const flags = await policy.get(me); // overdue is a POLICY, never a constant baked into a report
