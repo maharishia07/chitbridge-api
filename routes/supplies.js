@@ -28,7 +28,12 @@ const auth = require('../middleware/auth');
 const { withEntity } = require('../db');
 const supplies = require('../lib/supply-store');
 
+const { UUID_RE } = require('../lib/trace');
+
 const ctx = (req) => auth.entityOf(req);
+
+/** OPS-74: a supply id in the address that is not a uuid names nothing — 404 in the route's own not-found words, before the database sees it */
+router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.notFound() })));
 
 /** the shop's own list of things it uses — never products, never priced */
 router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {

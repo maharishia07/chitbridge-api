@@ -77,7 +77,7 @@ const MINT_OPERATION = {
     content: json({
       type: 'object',
       description: 'scopes are some of: ' + [].concat(SCOPES || []).join(', ') + ' (a kind the shop may not make is refused with 403)',
-      properties: { name: { type: 'string' }, scopes: { type: 'array', items: { type: 'string' } }, days: { type: 'integer' } }
+      properties: { name: { type: 'string', maxLength: 200 }, scopes: { type: 'array', items: { type: 'string' } }, days: { type: 'integer' } }
     })
   },
   responses: {
