@@ -48882,6 +48882,18 @@
      }
     },
     {
+     "scenario": "credential-title-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "Add credential failed",
+      "message": "title must be text."
+     },
+     "fixture": {
+      "error": "Add credential failed",
+      "message": "title must be text."
+     }
+    },
+    {
      "scenario": "credential-body-a-list",
      "status": 400,
      "body_keys": {
@@ -48919,14 +48931,14 @@
     },
     {
      "scenario": "credential-bad-date",
-     "status": 500,
+     "status": 400,
      "body_keys": {
       "error": "Add credential failed",
-      "message": "Something went wrong — please try again."
+      "message": "valid_until must be a real day written YYYY-MM-DD."
      },
      "fixture": {
       "error": "Add credential failed",
-      "message": "Something went wrong — please try again."
+      "message": "valid_until must be a real day written YYYY-MM-DD."
      }
     },
     {
