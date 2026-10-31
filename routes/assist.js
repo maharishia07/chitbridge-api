@@ -579,7 +579,8 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
     const owner = auth.entityOf(req);
     let rows = [];
     try {
-      const r = await query(
+      /* SEC-75c: source_penetration is RLS-closed (b831) — the brand sees rows of sources it owns, so bind it */
+      const r = await withEntity(owner, (db) => db.query(
         `SELECT sp.source_key, sp.locality,
                 count(*)::int AS orders,
                 count(DISTINCT sp.distributor_entity_id)::int AS distributors
@@ -589,7 +590,7 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
           GROUP BY sp.source_key, sp.locality
           ORDER BY orders DESC, sp.locality ASC`,
         [owner]
-      );
+      ));
       rows = r.rows;
     } catch (dbErr) {
       return problem(req, res, { status: 503, ...words.penetrationStoreMissing() });
