@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 223,
+  "long_functions": 222,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -285,9 +285,6 @@
     "lib/stock-store.js": [
       "(anonymous)",
       "post"
-    ],
-    "lib/supply-store.js": [
-      "purchase"
     ],
     "lib/tax-copy.js": [
       "partiesFor"
