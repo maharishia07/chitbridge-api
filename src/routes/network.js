@@ -26,6 +26,11 @@ const actorOf = (req) => net.nodeOf(auth_.entityOf(req), { ensure: true });
 const gateWrite = (req, res, next) => (WRITES_ENABLED ? next() : problem(req, res, { status: 503, ...contract.words.writesOff() }));
 /** the schema check of one route (its own operation in lib/network-contract.js) */
 const checked = (route) => schemaValidate(contract.network.operationFor(route), contract.schemaOptions.network);
+/** NET-48: a connection that names someone who cannot exist is answered "not found" before the database is asked */
+const namesOne = (req, res, next) => {
+  const refusal = contract.unknownSide(req.body || {});
+  return refusal ? problem(req, res, refusal) : next();
+};
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
@@ -137,6 +142,7 @@ router.post(
   auth,
   gateWrite,
   checked('POST /connections'),
+  namesOne,
   h(async (req) => {
     const b = req.body || {};
     const out = await net.requestConnect(
