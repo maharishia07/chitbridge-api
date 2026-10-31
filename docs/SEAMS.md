@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
 | 100 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 98 | `words` | `variant.browser.js` |  |
+| 100 | `words` | `variant.browser.js` |  |
 | 94 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -26,7 +26,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 61 | `here` | `screen-id.js` |  |
 | 60 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 62 | `next` | `dayopen.js` | the next thing to do — |
+| 63 | `next` | `dayopen.js` | the next thing to do — |
 | 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `items` | `books-store.js` | PERF1: |
@@ -113,7 +113,7 @@ of file each thing is; this says what already does the job.
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
 | 21 | `chart` | `fx-rates.js` |  |
-| 21 | `group` | `identity.js` | again in a different costume. |
+| 22 | `group` | `identity.js` | again in a different costume. |
 | 21 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 21 | `keep` | `signin.js` | see. |

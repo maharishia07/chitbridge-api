@@ -1411,7 +1411,7 @@
    ]
   },
   "PATCH /api/actors/:id": {
-   "cases": 4,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1547,7 +1547,7 @@
    ]
   },
   "PATCH /api/quick-keys/groups/:id/items": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1635,7 +1635,7 @@
    ]
   },
   "POST /api/actors/check-key": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1643,7 +1643,7 @@
    ]
   },
   "POST /api/actors/suggest-key": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3691,7 +3691,7 @@
    ]
   },
   "PUT /api/actors/:id/delegate": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3739,7 +3739,7 @@
    ]
   },
   "PUT /api/actors/settings": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

@@ -486,6 +486,9 @@
   "PATCH /api/quick-keys/groups/:id": {
    "foreign_id_404": true
   },
+  "PATCH /api/quick-keys/groups/:id/items": {
+   "foreign_id_404": true
+  },
   "PATCH /api/relationships/customers/:id": {
    "foreign_id_404": true
   },
