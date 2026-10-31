@@ -20,11 +20,13 @@ const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  '
 let storeRows = {};            /* (entity\nkey) → the idempotency_key row the "database" holds */
 let storeError = null;         /* set → every store call rejects with it (the store is OFF) */
 let stmts = [];
+let finalizeLagMs = 0;        /* PLT-66: the store takes this long to record an answer (a real database round trip) */
 const dbStub = {
   withEntity: async (entity, fn) => {
     if (storeError) throw storeError;
     return fn({ query: async (sql, params) => {
       stmts.push(sql);
+      if (finalizeLagMs && /^s*(UPDATE|DELETE)/.test(sql)) await new Promise((r) => setTimeout(r, finalizeLagMs));
       const slot = entity + '\n' + params[/INSERT/.test(sql) ? 1 : (/\$3\)/.test(sql) && /FROM idempotency_key WHERE entity_id = \$1 AND idem_key = \$3/.test(sql) ? 2 : 1)];
       if (/^\s*SELECT/.test(sql)) return { rows: storeRows[slot] ? [Object.assign({ expired: false }, storeRows[slot])] : [] };
       if (/INSERT/.test(sql)) { if (storeRows[slot]) return { rows: [] }; storeRows[slot] = { idem_key: params[1], req_hash: params[4], state: 'in_progress', status: null, response: null }; return { rows: [{ idem_key: params[1] }] }; }
@@ -51,7 +53,7 @@ function send(o) {
   const req = { id: 'req-' + Math.random().toString(36).slice(2, 7), method: x.method || 'POST', path: x.path || '/api/chits', body: x.body || { a: 1 },
     headers: Object.assign({ authorization: 'Bearer t' }, x.key ? { 'idempotency-key': x.key } : {}, x.headers || {}) };
   const res = { statusCode: 200, headers: {}, body: undefined,
-    status(s) { this.statusCode = s; return this; }, setHeader(k, v) { this.headers[k] = v; }, json(b) { this.body = b; return this; } };
+    status(s) { this.statusCode = s; return this; }, setHeader(k, v) { this.headers[k] = v; }, json(b) { this.body = b; if (x.onFlush) x.onFlush(); return this; } };
   let ran = false;
   return new Promise((resolve) => {
     const finish = () => setTimeout(() => resolve({ ran, status: res.statusCode, body: res.body, headers: res.headers }), 5);
@@ -59,7 +61,7 @@ function send(o) {
     setTimeout(finish, 20);   /* a refusal never calls next */
   });
 }
-const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.length = 0; tokenThrows = null; tokenClaims = { identity_id: 'shop-1' }; idempotency._memory.clear(); };
+const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.length = 0; finalizeLagMs = 0; tokenThrows = null; tokenClaims = { identity_id: 'shop-1' }; idempotency._memory.clear(); };
 
 (async () => {
   console.log('\nIDEMPOTENCY — off is never silent, a retry never runs twice in this process\n');
@@ -76,6 +78,21 @@ const reset = () => { storeRows = {}; storeError = null; stmts = []; warns.lengt
     assert.strictEqual(retry.ran, false); assert.strictEqual(retry.status, 201); assert.deepStrictEqual(retry.body, { chit_id: 'c1' }); assert.strictEqual(retry.headers['X-Idempotent-Replay'], 'true');
     assert.strictEqual(warns.length, 0, 'nothing to warn about');
   });
+  /* ⭐ PLT-66 (BH-2): the retry sent the instant the first answer is flushed. Before, the answer left BEFORE the store recorded it, so the retry saw the claim
+     still 'in_progress' and got 409 (8 of 10 pairs after a 4xx, 2 of 10 after a 2xx). The answer now leaves only after the key is settled. */
+  for (const [label, answer] of [['4xx', { status: 422, body: { code: 'INVALID_INPUT' } }], ['2xx', { status: 201, body: { lead_id: 'l1' } }]]) {
+    await ita('PLT-66 · a retry sent the instant the first ' + label + ' answer is flushed replays it (X-Idempotent-Replay), never 409', async () => {
+      reset(); finalizeLagMs = 15; let retryP = null;
+      const first = await send({ key: 'race-' + label, answer, onFlush: () => { retryP = send({ key: 'race-' + label }); } });
+      assert.ok(first.ran);
+      await new Promise((r) => setTimeout(r, 60));   /* the flush follows the store's lag */
+      assert.ok(retryP, 'the first answer was never flushed');
+      const retry = await retryP;
+      assert.notStrictEqual(retry.status, 409, 'IDEMPOTENCY_IN_PROGRESS on a retry of a finished request');
+      assert.strictEqual(retry.ran, false, 'the route ran a second time'); assert.strictEqual(retry.status, answer.status); assert.deepStrictEqual(retry.body, answer.body);
+      assert.strictEqual(retry.headers['X-Idempotent-Replay'], 'true');
+    });
+  }
   await ita('the store works: the same key with a different body → 422 IDEMPOTENCY_CONFLICT (a code the client branches on)', async () => {
     reset(); await send({ key: 'k2', answer: { body: { ok: true } } });
     const other = await send({ key: 'k2', body: { a: 2 } });
