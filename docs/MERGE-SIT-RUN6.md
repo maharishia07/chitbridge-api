@@ -46,9 +46,22 @@ Every check was re-aimed at its RULE; none deleted. One line each:
 13. Servers heat-map fix (Athi 31 Oct, PM/SERVERS-STATUS.md): the access log writes `(req.originalUrl || req.url).split('?')[0]`, not `req.path`, so a route inside a mounted router logs its full path. Only that line; the origin-refused log and middleware/idempotency.js unchanged. Nothing routes or meters on the field; tests/request-log pins it (red before, green after). Own commit.
 14. Generated: fn-size (223 -> 219), API-REGISTER, api-register.json, error codes (duplicate CTP_REFUSED joined into the rail row), SEAMS, hardening evidence. POST /api/relationships/suppliers loses strict_input against the branch (main never had it).
 
+## Pass 3 (31 Oct): #443 merged, readability to 0 failures
+Coordinator: take the fixes, do not accept the debt. origin/db/db-85-b790-rls (#443, 20 commits) MERGED (not cherry-picked) as 3cce9b72; #443 is superseded and closes once this lands.
+1. lib/chit-proposal.js: #443 whole (pass 2 had only duplicated its money.round + requestLinesOf fixes).
+2. lib/ctpaddress.js: #443's split (notResolved, resolveOwnNamespace, installationForDomain) carrying ours: RAIL-140(e) Q19 fixed sentences, RAIL-140(g) LIMIT 2, RAIL-142(e) ownDomainAnswer; peerOfDomain gone.
+3. lib/ctpquery.js: #443's ASK_NEEDS + askProblem with NET-39's MIN_SEARCH_TEXT and search need.
+4. routes/attachments.js: #443's audienceFor with main's header and the ONE problem shape.
+5. routes/chits.js: ours (moveStatus lives in lib/chit-move, the ONE status writer); #443's F15 carried into chit-move ringStatus (the status event rings with the new status, no early return); ctp-return-gaps' F15 check aimed at lib/chit-move.
+6. Tests: ours for api-problem-ctp, bills-private, engine-manifest, write-route-gate (orphan subMountsOf removed); generated files rebuilt by their own tools.
+7. F5 style, behaviour unchanged: cryptic names spelled out (netmember, netsync, netcert, installer-token, ctpaddress, storage, routes/ctp, the network tools); network-seed-root's empty catch now logs; new tests/network-tools.test.cjs (9 checks, enrolled in guards).
+8. Long steps split into named steps (chit-move, chit-crossing, ctpenvelope, ctptransport, netsync, remote-catalogue, otp, chit-proposals, network-seed-root); legacy handlers back within main's sizes (routes/chits.js send/amend/message/dispute/withdraw; routes/ctp.js deliver 184L c26, query 36L c16; routes/relationships.js GET /suppliers via supplierListSql, SQL byte for byte).
+9. tests/ctp-query re-aimed at the rule (the classify call, the three-kind gate), not the old variable names.
+10. Readability guard: 0 failures, 12 warnings. fn-size 219 -> 217. Contract tests 1543/0.
+
 ## Still open (each with its owner)
 - api-ratchet vs origin/main: 5 routes lost "meets" only because their cb-api sign-offs are stale (GET /api/chits/:chit_id, /raida/report, /rollup, /entities/search, /relationships/suppliers/availability) -> cb-api re-signs, then `api-ratchet --write`.
 - migration-lint vocabulary (runs only where PM/NAMING-AND-MEANING.md sits beside the repo, so not in CI): chit_proposal.currency_code, chit_proposal.note, membership_certificate.note. These columns already exist on the SIT servers; renaming them is cb-db's call (D8 says columns keep currency_code).
 - tax-vendor: red on pristine main too (api 2df6760b vs web d8acc41f pin different reg-* releases for IN slip/taxInvoice/tax) -> cb-accounting / release; not this merge.
 - raida-close-route: 10/10 pass; a libuv assertion on exit on Windows, the same on main.
-- Readability: CI lists 1 item (installer-token minimums, now tested directly). The SIT branch's F5 readability commits live on #443's branch (origin/db/db-85-b790-rls), never merged into sit/grundfos; bringing them is the coordinator's call.
+- migration-lint: green in pass 3 (#443's F4 allowance came with the merge).

@@ -253,9 +253,9 @@ router.post(
   }
 );
 
-/** GET /suppliers: my supplier list with the facts the screen reads ($1 = me). One statement; the notes say why each column is there. */
-function supplierListSql() {
-  return (
+/** GET /suppliers: my supplier list with the facts the screen reads, on the connection withEntity hands out (RLS). One statement; the notes say why each column is there. */
+function listSuppliers(db, owner) {
+  return db.query(
         /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
@@ -281,7 +281,8 @@ function supplierListSql() {
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
-       ORDER BY sl.preferred DESC, sl.created_at DESC`
+       ORDER BY sl.preferred DESC, sl.created_at DESC`,
+    [owner]
   );
 }
 
@@ -289,12 +290,7 @@ function supplierListSql() {
 router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
   try {
     const owner = ctx(req);
-    const r = await withEntity(owner, (db) =>
-      db.query(
-        supplierListSql(),
-        [owner]
-      )
-    );
+    const r = await withEntity(owner, (db) => listSuppliers(db, owner));
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
     const rows = r.rows.map((x) => {
