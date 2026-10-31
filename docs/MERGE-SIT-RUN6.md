@@ -65,3 +65,5 @@ Coordinator: take the fixes, do not accept the debt. origin/db/db-85-b790-rls (#
 - tax-vendor: red on pristine main too (api 2df6760b vs web d8acc41f pin different reg-* releases for IN slip/taxInvoice/tax) -> cb-accounting / release; not this merge.
 - raida-close-route: 10/10 pass; a libuv assertion on exit on Windows, the same on main.
 - migration-lint: green in pass 3 (#443's F4 allowance came with the merge).
+
+- B1 NET-47 fixed: Here finds every known shop by name (main LIKE, same exclusions), There keeps public + exporter; lib/business-search.js, tests/net-39-search.test.cjs.
