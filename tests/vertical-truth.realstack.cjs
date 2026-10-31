@@ -21,6 +21,8 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
+/* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
+const NOT_REGISTERED = { tax: { registered: false } };
 const { DB, ENTITY_OTP, j, ok, pause, kase, expect, near, bill, receipt, freshShop, finish } = H;
 const RUN = 'vertx' + (Date.now() % 1e8).toString(36);
 const API_DIR = path.join(__dirname, '..');
@@ -103,7 +105,7 @@ const TESTS_THE_TRADE = /\b(vertical|sector|verticalKey)[A-Za-z_]*\)?\s*[!=]==?\
     }, 'VB3: no `consumes` primitive on any constitution and a BOM sale moves only the item itself (BACKLOG:2636); the same fact as NW-07');
 
     await kase('VB-06', 'the shop keeps only kg and piece: its own choice is read back, and the starter lists offer it only those units', async () => {
-      const O = await freshShop(RUN + 'u', 'Units');
+      const O = await freshShop(RUN + 'u', 'Units', NOT_REGISTERED);
       ok(await j('/api/entities/policy', { method: 'PATCH', token: O.token, body: { units: ['kg', 'piece'] } }), 'set units');
       const kept = ok(await j('/api/entities/policy', { token: O.token }), 'policy').b.flags.units;
       expect(JSON.stringify(kept) === '["kg","piece"]', 'the shop\'s own set reads back as ' + JSON.stringify(kept));
@@ -113,7 +115,7 @@ const TESTS_THE_TRADE = /\b(vertical|sector|verticalKey)[A-Za-z_]*\)?\s*[!=]==?\
     }, 'the starter lists (lib/catalogue-blueprint.js units) ignore policy_flags.units; only the product form honours it — decide with cb-catalogue whether lists must narrow to the shop');
 
     await kase('VB-07', 'the same data under the base constitution and under a trade constitution gives the same stock, the same books and the same CRM numbers', async () => {
-      const base = await freshShop(RUN + 'e', 'Same data'), trade = await tradeShop(RUN + 'f');
+      const base = await freshShop(RUN + 'e', 'Same data', NOT_REGISTERED), trade = await tradeShop(RUN + 'f');
       const out = [];
       for (const S of [base, trade]) {
         ok(await j('/api/books/enable', { method: 'POST', token: S.token }), 'books on');
@@ -133,7 +135,7 @@ const TESTS_THE_TRADE = /\b(vertical|sector|verticalKey)[A-Za-z_]*\)?\s*[!=]==?\
     });
 
     await kase('VB-08a', 'applying a starter list adds its items (the API half of "meat / veg blueprint: apply → its starter set")', async () => {
-      const S = await freshShop(RUN + 'g', 'Apply');
+      const S = await freshShop(RUN + 'g', 'Apply', NOT_REGISTERED);
       const r = await j('/api/products/lists/adopt', { method: 'POST', token: S.token, body: { list: 'veg' } });
       const n = (ok(await j('/api/products', { token: S.token }), 'products').b.items || []).length;
       expect(r.status < 300 && n > 0, 'adopt veg answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200) + ' · products after: ' + n);

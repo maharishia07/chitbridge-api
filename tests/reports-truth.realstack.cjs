@@ -19,6 +19,8 @@
  * CARD 26-reporting-mis-and-bi/README
  */
 const H = require('./lib/truth-harness.cjs');
+/* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
+const NOT_REGISTERED = { tax: { registered: false } };
 const R = require('../lib/rollup');
 const { CUSTOMER_OTP, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
 const RUN = 'rp' + (Date.now() % 1e10).toString(36);
@@ -39,7 +41,7 @@ const daysFrom = (monday, n) => Array.from({ length: n }, (_, i) => R.dayKey(new
 (async () => {
   console.log('\n── reports truth on ' + H.API + ' · run ' + RUN + ' ──');
   ok(await j('/health'), 'health');
-  const A = await freshShop(RUN + 'a', 'Reports truth');
+  const A = await freshShop(RUN + 'a', 'Reports truth', NOT_REGISTERED);
   ok(await j('/api/books/enable', { method: 'POST', token: A.token }), 'books on');
 
   const first = {};
@@ -203,7 +205,7 @@ const daysFrom = (monday, n) => Array.from({ length: n }, (_, i) => R.dayKey(new
   });
 
   /* ── RP-10: the pulse watermark (GET /api/chits/pulse) moves when a list row would change, and only for this shop ── */
-  const B = await freshShop(RUN + 'b', 'Reports truth other');
+  const B = await freshShop(RUN + 'b', 'Reports truth other', NOT_REGISTERED);
   const pulse = async (shop) => ok(await j('/api/chits/pulse', { token: shop.token }), 'pulse').b.w;
   const w0 = await pulse(A), w0again = await pulse(A), b0 = await pulse(B);
   ok(await j('/api/chits/send', { method: 'POST', token: A.token, body: bill(RUN + '-p1', [[P, 1]]) }), 'bill for the pulse');
