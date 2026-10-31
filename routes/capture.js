@@ -15,6 +15,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { faultOf, storesFault, failed, checked } = require('../lib/capture-contract'); // API-4: the contract (each signed-in route's operation) and the words of a refusal
+const { queryDay } = require('../middleware/validate'); // API-17: a ?since= that is not a day answers 400 VALIDATION_FAILED before any read
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
 const optout = require('../lib/optout'); // CON-2 — a STOP reply withdraws marketing consent (new messages only, before auto-raise)
@@ -274,7 +275,7 @@ const consolidate = require('../lib/consolidate');
 const stores = require('../lib/stores');
 
 // GET /api/capture/consolidate?date=YYYY-MM-DD — the requirement + the attribution, per fulfilment date.
-router.get('/consolidate', auth, ...checked('GET /consolidate'), async (req, res) => {
+router.get('/consolidate', auth, queryDay('since'), ...checked('GET /consolidate'), async (req, res) => {
   try {
     const me = entityId(req);
     const cat = await consolidate.loadCatalogue(me);

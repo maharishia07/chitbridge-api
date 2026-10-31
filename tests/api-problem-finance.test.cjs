@@ -344,7 +344,7 @@ const EXTRAS = [
   X('actor-worklist', 'GET ' + F + '/worklist', 200, { setup: { who: STAFF } }),
   X('groupsum-order', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=order&folder_id=' + PARTY + '&chit_ids=' + PARTY }),
   X('mis-since', 'GET ' + F + '/mis', 200, { url: F + '/mis?since=2026-01-01' }),
-  X('mis-since-junk', 'GET ' + F + '/mis', 200, { url: F + '/mis?since=junk' }),
+  N('mis-since-junk', 'GET ' + F + '/mis', 400, { url: F + '/mis?since=junk' }),
   X('reconcile-order', 'GET ' + F + '/reconcile', 200, { url: F + '/reconcile?scope=order' }),
   X('folders-before-b133', 'GET ' + F, 200, { setup: { sqlRows: raising(/f\.scope,/, '42703') } }),
   X('system-folders-fail', 'GET ' + F, 200, { patch: { views: { systemFolders: async () => { throw new Error(SECRET_SQL); } } } }),
