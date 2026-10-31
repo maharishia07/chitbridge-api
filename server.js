@@ -348,6 +348,8 @@ app.use('/api/assist', assistLimiter);
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
+/* API-15 (BH-3): a NUL byte in the path, query or body is refused 400 here, once — Postgres cannot store it (22021) and each route would answer 500 */
+app.use(require('./lib/input-hygiene').refuseNul);
 
 // ── Idempotency (offline outbox, Phase 2) ─────────────────────
 // Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a
