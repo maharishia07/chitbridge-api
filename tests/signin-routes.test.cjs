@@ -270,7 +270,18 @@ async function run(sc, door) {
   if (!GOLDEN && typeof signin.events === 'object' && signin.events.flush) await signin.events.flush();
   return { responses, rows: snapshot(), inserts: INSERTS.length, events: EVENTS.slice() };
 }
-const strip = (x) => ({ responses: x.responses, rows: x.rows, inserts: x.inserts });
+/* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
+   is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
+const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id'];
+const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED'];
+const frozenBody = (b) => {
+  if (!b || typeof b.type !== 'string' || b.type.indexOf('https://chitbridge.com/problems/') !== 0) return b;
+  const o = Object.assign({}, b);
+  PROBLEM_KEYS.forEach((k) => delete o[k]);
+  if (API_4B_CODES.indexOf(o.code) >= 0) delete o.code;
+  return o;
+};
+const strip = (x) => ({ responses: x.responses.map((r) => ({ status: r.status, body: frozenBody(r.body) })), rows: x.rows, inserts: x.inserts });
 /* the ONLY keys the new door may add to an old answer (routes/signin.js header): ask's kind + need, NO_ACCOUNT's code.
    Removed from the new door's answer only where the old answer lacks them — every other key and value must match. */
 const ADDED = ['kind', 'need', 'code', 'id'];   /* id: M14 — the stored id a mobile or e-mail resolved to */
@@ -308,7 +319,7 @@ const firstDiff = (a, b) => {
     for (const sc of S) {
       OLD[sc.id] = await run(sc, 'old');
       const g = golden[sc.id];
-      t(sc.id.padEnd(28) + ' ' + sc.old.join(' ').slice(0, 44), !!g && same(strip(OLD[sc.id]), g), g ? firstDiff(strip(OLD[sc.id]), g) : 'no golden');
+      t(sc.id.padEnd(28) + ' ' + sc.old.join(' ').slice(0, 44), !!g && same(strip(OLD[sc.id]), strip(g)), g ? firstDiff(strip(OLD[sc.id]), strip(g)) : 'no golden');
     }
 
     say('\n-- 1b - SEC-81: an unknown account, a wrong secret and a locked account get ONE answer (same status, same body, no count, no "locked") --');

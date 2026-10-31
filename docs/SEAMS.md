@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 141 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
-| 100 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 101 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 98 | `words` | `variant.browser.js` |  |
 | 94 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 35 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `facts` | `bill-steps.js` | MY state_log — |
-| 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 35 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
