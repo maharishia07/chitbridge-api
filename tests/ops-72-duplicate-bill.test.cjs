@@ -95,6 +95,16 @@ function standIn() {
   const noSupplierAgain = await buy('N1', null, 2, 'Rope');
   check('no supplier named: the bill still counts once', noSupplier.status === 200 && /1 counted/.test(say(noSupplier)) && /already recorded/.test(say(noSupplierAgain)) && db.onHand('Rope') === 2);
 
+  /* a bill recorded before the supplier was part of the ref sits under the bare number: seeded by a purchase that names no supplier */
+  await buy('L1', null, 4, 'Nails');
+  const legacySame = await buy('L1', 'Acme', 4, 'Nails');
+  check('legacy bill, same lines, sent with a supplier: already recorded, 0 counted', legacySame.status === 200 && /already recorded/.test(say(legacySame)) && /0 counted/.test(say(legacySame)) && legacySame.json.stocked === 0, legacySame.json);
+  check('legacy bill sent again does not double the count', db.onHand('Nails') === 4);
+  const legacyDiffers = await buy('L1', 'Acme', 9, 'Nails');
+  check('legacy bill, other lines, sent with a supplier: 409 SUPPLY_BILL_DIFFERS', legacyDiffers.status === 409 && legacyDiffers.json.code === 'SUPPLY_BILL_DIFFERS' && db.onHand('Nails') === 4, legacyDiffers.json);
+  const noLegacy = await buy('L2', 'Acme', 6, 'Nails');
+  check('no legacy bill under that number: counts', noLegacy.status === 200 && /1 counted/.test(say(noLegacy)) && db.onHand('Nails') === 10, noLegacy.json);
+
   server.close();
   const total = lab.count.passed + lab.count.failed;
   console.log(total + ' checks' + (lab.count.failed ? ' · ' + lab.count.failed + ' FAILED' : ''));

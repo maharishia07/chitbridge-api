@@ -13,7 +13,7 @@ of file each thing is; this says what already does the job.
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
 | 100 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 100 | `words` | `variant.browser.js` |  |
+| 99 | `words` | `variant.browser.js` |  |
 | 94 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -95,7 +95,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `money` | `cart.js` |  |
-| 25 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 25 | `hold` | `orders.js` |  |
 | 25 | `owner` | `books.js` |  |
 | 24 | `load` | `cap-assist.js` |  |
