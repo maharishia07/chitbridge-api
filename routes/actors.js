@@ -259,19 +259,21 @@ router.post(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
-    body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
+    body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
        at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
        an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
     body('actor_key')
+      .custom(plainValue)
+      .withMessage(PLAIN)
       .trim()
       .isLength({ min: 4, max: 12 })
       .matches(/^[a-z0-9]+$/)
       .withMessage('Lowercase and numbers only — 4 to 12 characters'),
-    body('actor_role').optional().trim().isLength({ max: 100 }),
-    body('phone').optional().trim().isLength({ max: 20 }),
+    body('actor_role').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
