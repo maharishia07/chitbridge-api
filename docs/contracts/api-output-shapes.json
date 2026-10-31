@@ -16106,6 +16106,7 @@
           "from",
           "recorded",
           "stocked",
+          "already",
           "expensed",
           "books_posted",
           "failed",
@@ -16159,6 +16160,9 @@
             }
           },
           "stocked": {
+            "type": "number"
+          },
+          "already": {
             "type": "number"
           },
           "expensed": {

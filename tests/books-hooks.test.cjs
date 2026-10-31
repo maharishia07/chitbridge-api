@@ -45,7 +45,8 @@ const S = { enabled: true, walkin_grain: 'day', country: 'IN', functional_curren
     const gs = K.classify(bill({ customer: { name: 'Acme', gstin: '33ABCDE1234F1Z5' }, payment: { parts: [{ how: 'UPI', amount: 118 }] } }));
     eq('a buyer with a GSTIN is per bill even when paid', [gs.kind, gs.event.type, gs.event.paid], ['post', 'sale_bill', { upi: 118 }]);
     const ro = K.classify(bill({ payment: { parts: [{ how: 'Cash', amount: 118.5 }] } }));
-    eq('a rounded bill carries its round-off (+0.50)', ro.bill.round_off, 0.5);
+    /* ACC-200: reg-in has no cashRounding (a rounded figure is never posted) — 50p over waits, named; AU's 5c step: tests/acc-200-cash-rounding */
+    eq('an Indian bill paid 50p over its invoice WAITS with the gap named, never a silent round-off', [ro.kind, ro.gap_minor, /over by ₹0\.50/.test(ro.why || '')], ['queue', 50, true]);
     const far = K.classify(bill({ payment: { parts: [{ how: 'Cash', amount: 150 }] } }));
     eq('payments that differ from the invoice by more than a rupee are queued, not forced', far.kind, 'queue');
     const pts = K.classify(bill({ payment: { parts: [{ how: 'Points', amount: 118 }] } }));

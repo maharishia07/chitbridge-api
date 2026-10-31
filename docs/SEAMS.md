@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 141 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
-| 100 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 100 | `words` | `variant.browser.js` |  |
+| 101 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 101 | `words` | `variant.browser.js` |  |
 | 94 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 51 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
-| 50 | `pack` | `books-store.js` |  |
+| 51 | `pack` | `books-store.js` |  |
 | 49 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 48 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 47 | `again` | `signin-ui.js` |  |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 35 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 35 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 34 | `facts` | `bill-steps.js` | MY state_log — |
-| 34 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 35 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
@@ -95,7 +95,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `money` | `cart.js` |  |
-| 25 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 26 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 25 | `hold` | `orders.js` |  |
 | 25 | `owner` | `books.js` |  |
 | 24 | `load` | `cap-assist.js` |  |
@@ -179,7 +179,7 @@ of file each thing is; this says what already does the job.
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
-| 14 | `move` | `rail.js` | Order = the order the server refused in: |
+| 15 | `move` | `rail.js` | Order = the order the server refused in: |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
@@ -194,7 +194,7 @@ of file each thing is; this says what already does the job.
 | 12 | `link` | `chit-sheet.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
-| 12 | `post` | `books-manual.js` | POST /events — |
+| 13 | `post` | `books-manual.js` | POST /events — |
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |

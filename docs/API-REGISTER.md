@@ -19,7 +19,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5758 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4670 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6019 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:257 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:255 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1002 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:418 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:698 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -564,9 +564,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/signin/verify | signin | routes/signin.js:965 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/simulator/feedback | simulator | routes/simulator.js:94 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/simulator/lead | simulator | routes/simulator.js:69 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/supplies | supplies | routes/supplies.js:57 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/supplies/:id/issue | supplies | routes/supplies.js:120 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
-| POST | /api/supplies/purchase | supplies | routes/supplies.js:101 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | partial |
+| POST | /api/supplies | supplies | routes/supplies.js:57 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/supplies/:id/issue | supplies | routes/supplies.js:126 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
+| POST | /api/supplies/purchase | supplies | routes/supplies.js:113 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | yes | yes | partial |
 | POST | /api/tax/compute | tax | routes/tax.js:163 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/tax/rate | tax | routes/tax.js:126 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/testing/cases/close | testing | routes/testing.js:259 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
@@ -4011,7 +4011,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/supplies** · supplies · cb-operations · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 422, 500, 503 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-supplies.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): supply_item · writes (derived): supply_item · callers: cap-supplies.js · actions: -
 
@@ -4023,9 +4023,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/supplies/purchase** · supplies · cb-operations · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 422, 500, 503 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 500, 503 · money y (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-supplies.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): supply_item · callers: cap-supplies.js · actions: -
+- reads (derived): - · writes (derived): - · callers: cap-supplies.js · actions: -
 
 ### tax (cb-accounting, 0 of 5 with a description)
 
