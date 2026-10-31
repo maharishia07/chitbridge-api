@@ -2576,6 +2576,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NOT_BOARD_READER",
+   "status": "403",
+   "title": "Not board reader",
+   "shopkeeper": "The test board is for builders.",
+   "hint": "Use your own incidents and requirements, or ask a builder.",
+   "owner_area": "testing",
+   "since": "2026-10-31"
+  },
+  {
    "code": "NOT_BOARD_WRITER",
    "status": "403",
    "title": "Not board writer",

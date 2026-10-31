@@ -178,6 +178,7 @@ const GUARDS = [
   'board-kinds.test.cjs', // the shared board carries CASES and CMDB records, nothing else — findings stay with the raiser
   'cmdb.test.cjs', // ⭐⭐ the CMDB: every shipped record fits, a way in + out + tests, only a board writer writes
   'testing-board-writes.test.cjs', // ⭐⭐ SEC-SMALL: the six shared-board writes ask the gate first; results/incidents/evidence stay open; the platform root writes
+  'testing-board-reads.test.cjs', // ⭐ SEC-122: a shop is refused the shared board's reads (403 NOT_BOARD_READER); the board account reads; the Test lab stays open
   'platform-door.test.cjs', // ⭐⭐ W1-SET GOV2: the platform role is ONE door (platformroot.refuseUnlessPlatform) — register a source · governed create · re-attest · erase ask it before any read
   'notif-feed-dryrun.test.cjs', // ⭐ SEC-SMALL: b619 is the live notifications feed verbatim; b620 CONCURRENTLY + IF NOT EXISTS, no transaction block
   'field-ledger.test.cjs', // ⭐⭐ NO FIELD LEFT UNTURNED: a new product column / form input has a ledger row; a "not used" field gains no reader (2026-10-09)
