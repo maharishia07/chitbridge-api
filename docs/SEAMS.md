@@ -12,8 +12,8 @@ of file each thing is; this says what already does the job.
 | 140 | `list` | `amend.js` |  |
 | 111 | `rows` | `crm.js` | still in them: |
 | 108 | `withEntity` | `books-hooks.js` |  |
-| 98 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 95 | `words` | `variant.browser.js` |  |
+| 100 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 96 | `words` | `variant.browser.js` |  |
 | 93 | `read` | `books-cashflow.js` | Trips: |
 | 85 | `answer` | `availability.js` | from March; then nearest. |
 | 80 | `money` | `bill-privacy.js` |  |
@@ -26,7 +26,7 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 61 | `here` | `screen-id.js` |  |
 | 60 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 60 | `next` | `dayopen.js` | the next thing to do — |
+| 61 | `next` | `dayopen.js` | the next thing to do — |
 | 60 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `items` | `books-store.js` | PERF1: |
