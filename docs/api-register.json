@@ -6889,7 +6889,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 277,
+   "line": 278,
    "hash": "2c754880414516a4",
    "does": "",
    "errors": {
@@ -6971,7 +6971,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 59,
+   "line": 60,
    "hash": "aa63a36c8fb35bd0",
    "does": "",
    "errors": {
@@ -7059,7 +7059,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 301,
+   "line": 302,
    "hash": "96f6dbc935fffa9d",
    "does": "",
    "errors": {
@@ -7141,7 +7141,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 124,
+   "line": 125,
    "hash": "78663c728812c446",
    "does": "",
    "errors": {
@@ -14482,11 +14482,12 @@
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
    "line": 1053,
-   "hash": "b8e56b8a1d3641a8",
+   "hash": "cf257228ec420cb3",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      422,
      500
@@ -14526,6 +14527,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     422,
     500
@@ -14538,7 +14540,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#606 stage2 (RAIL-146k re-sign)",
+    "signed_off_by_date": "cb-api 2026-10-31 PR#652 stage2 (API-17, 13 of 13 read; reviewed by cb-api, builder's re-sign replaced)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -21326,7 +21328,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 59,
+   "line": 68,
    "hash": "6157dd476795ba4a",
    "does": "",
    "errors": {
@@ -21410,7 +21412,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 86,
+   "line": 95,
    "hash": "f5a594b885e4ce99",
    "does": "",
    "errors": {
@@ -33883,7 +33885,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 93,
+   "line": 94,
    "hash": "af4a403f154c6a3d",
    "does": "",
    "errors": {
@@ -33975,7 +33977,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 101,
+   "line": 102,
    "hash": "a42a7a067092a26b",
    "does": "",
    "errors": {
@@ -34067,7 +34069,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 83,
+   "line": 84,
    "hash": "a6cd77f3fba06fd4",
    "does": "",
    "errors": {
@@ -34155,7 +34157,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 68,
+   "line": 69,
    "hash": "3f2d19294eed1651",
    "does": "",
    "errors": {
@@ -34247,7 +34249,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 41,
+   "line": 42,
    "hash": "37fd221879f08cb3",
    "does": "",
    "errors": {
@@ -34335,7 +34337,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 308,
+   "line": 309,
    "hash": "255328331f6e7b90",
    "does": "",
    "errors": {
@@ -34417,7 +34419,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 223,
+   "line": 224,
    "hash": "970b221adf248a12",
    "does": "",
    "errors": {
@@ -34488,7 +34490,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 193,
+   "line": 194,
    "hash": "560f4ec338a1edeb",
    "does": "",
    "errors": {
@@ -48003,7 +48005,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 69,
+   "line": 78,
    "hash": "749a332e4dcb969a",
    "does": "",
    "errors": {
@@ -48092,8 +48094,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 96,
-   "hash": "ebcf0ce375ffdda4",
+   "line": 105,
+   "hash": "288b9b78d73539b8",
    "does": "",
    "errors": {
     "count": 0,
@@ -48155,7 +48157,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ebcf0ce375ffdda4"
+    "stale_since": "288b9b78d73539b8"
    },
    "status": "partial",
    "callers": [],
@@ -48179,7 +48181,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 141,
+   "line": 150,
    "hash": "2bf04f617222643a",
    "does": "",
    "errors": {
@@ -48266,8 +48268,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 104,
-   "hash": "2083129cd8a249db",
+   "line": 113,
+   "hash": "1d439b0051d2b7aa",
    "does": "",
    "errors": {
     "count": 0,
@@ -48329,7 +48331,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2083129cd8a249db"
+    "stale_since": "1d439b0051d2b7aa"
    },
    "status": "partial",
    "callers": [
@@ -48357,8 +48359,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 111,
-   "hash": "9542e67203654f2a",
+   "line": 120,
+   "hash": "f61b0021c29f2dc4",
    "does": "",
    "errors": {
     "count": 0,
@@ -48420,7 +48422,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9542e67203654f2a"
+    "stale_since": "f61b0021c29f2dc4"
    },
    "status": "partial",
    "callers": [],
@@ -48444,7 +48446,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 161,
+   "line": 170,
    "hash": "b71357b2a0c51a91",
    "does": "",
    "errors": {
@@ -48531,7 +48533,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 151,
+   "line": 160,
    "hash": "c6fa367702a740ec",
    "does": "",
    "errors": {
@@ -48618,7 +48620,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 146,
+   "line": 155,
    "hash": "65a9fb3371b4e726",
    "does": "",
    "errors": {
@@ -48705,7 +48707,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 156,
+   "line": 165,
    "hash": "eb9c528a25400285",
    "does": "",
    "errors": {
@@ -48792,7 +48794,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 166,
+   "line": 175,
    "hash": "13a18f7561d9ce56",
    "does": "",
    "errors": {
@@ -48879,8 +48881,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 120,
-   "hash": "1c3cdfac3cd0025b",
+   "line": 129,
+   "hash": "368d922455578327",
    "does": "",
    "errors": {
     "count": 0,
@@ -48942,7 +48944,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1c3cdfac3cd0025b"
+    "stale_since": "368d922455578327"
    },
    "status": "partial",
    "callers": [],
@@ -48966,7 +48968,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 77,
+   "line": 86,
    "hash": "ad094b37ef7961c4",
    "does": "",
    "errors": {
