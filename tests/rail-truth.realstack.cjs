@@ -257,6 +257,23 @@ async function disputeCases(A, B, C, D) {
     const asB = ok(await j('/api/chits/' + id + '/disputes', { token: B.token }), 'B disputes').b;
     expect((asB.disputes || []).some((x) => x.dispute_id === dispute), 'B (on the roster) does not see its own dispute');
   }, 'RAIL-80/88: these three reads rely on RLS alone (no entity_id predicate of their own) and the local api connects as postgres, which bypasses it');
+  await kase('RL-04c', 'RAIL-162: a CHIT-WIDE dispute that names nobody is held by every holder of the chit: the sender sees it, answers inside it, and sees it resolved', async () => {
+    const wid = await sendLines(A, [B], RUN + '-dw'), wmark = 'RLWIDE' + RUN;
+    const wr = await j('/api/chits/' + wid + '/disputes', { method: 'POST', token: B.token, body: { category: 'payment', reason: wmark + ' ' + DISPUTE_REASON, chit_wide: true } });
+    const wd = wr.b.dispute_id;
+    expect(wr.status < 300 && wd, 'recipient raise HTTP ' + wr.status + ' ' + JSON.stringify(wr.b).slice(0, 160));
+    const held = JSON.stringify((await pg.query('SELECT entity_id FROM chit_disputes WHERE chit_id = $1 AND dispute_id = $2', [wid, wd])).rows.map((r) => r.entity_id).sort());
+    expect(held === JSON.stringify([A.entity, B.entity].sort()), 'copies held by ' + held);
+    const aList = ok(await j('/api/chits/' + wid + '/disputes', { token: A.token }), 'sender list').b;
+    expect((aList.disputes || []).some((x) => x.dispute_id === wd), 'the sender does not see the dispute');
+    const aSay = await j('/api/chits/' + wid + '/messages', { method: 'POST', token: A.token, body: { message_text: wmark + ' answer', thread_type: 'external', is_dispute: true, dispute_id: wd } });
+    expect(aSay.status < 300, 'the sender answered HTTP ' + aSay.status + ' ' + JSON.stringify(aSay.b).slice(0, 120));
+    const res = await j('/api/chits/' + wid + '/disputes/' + wd + '/resolve', { method: 'PUT', token: B.token, body: { resolution_note: 'rail truth: settled' } });
+    expect(res.status < 300, 'the raiser resolve HTTP ' + res.status);
+    const aAfter = ok(await j('/api/chits/' + wid + '/disputes', { token: A.token }), 'sender list after').b;
+    const seen = (aAfter.disputes || []).find((x) => x.dispute_id === wd);
+    expect(seen && seen.status === 'resolved', 'the sender reads the dispute as ' + (seen && seen.status));
+  });
 }
 
 /** RL-12 a bill's steps stay with the shop that took them */
