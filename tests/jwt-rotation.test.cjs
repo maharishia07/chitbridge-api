@@ -49,16 +49,16 @@ const sign = (secret) => jwt.sign(claims, secret, { algorithm: 'HS256', expiresI
     const r = await call(sign(NEW));
     assert.strictEqual(r.out.nexted, true); assert.strictEqual(r.kind, 'legacy');
   });
-  await ita('a token signed with the OLD secret is refused, and the 401 body is byte-for-byte today (no code)', async () => {
+  await ita('a token signed with the OLD secret is refused, and the 401 keeps its old keys (API-4b: it is a Problem now, so it also carries code TOKEN_INVALID)', async () => {
     const r = await call(sign(OLD));
     assert.strictEqual(r.out.status, 401); assert.strictEqual(r.out.nexted, false);
-    assert.strictEqual(JSON.stringify(r.out.body), JSON.stringify({ error: 'Unauthorised', message: 'Invalid token' }));
+    assert.strictEqual(r.out.body.error, 'Unauthorised'); assert.strictEqual(r.out.body.message, 'Invalid token'); assert.strictEqual(r.out.body.code, 'TOKEN_INVALID');
   });
   await ita('PREV set to an empty string is the same as unset', async () => {
     process.env.JWT_SECRET_PREV = '';
     const r = await call(sign(OLD));
     delete process.env.JWT_SECRET_PREV;
-    assert.strictEqual(r.out.status, 401); assert.strictEqual(r.out.body.code, undefined);
+    assert.strictEqual(r.out.status, 401); assert.strictEqual(r.out.body.message, 'Invalid token');
   });
   await ita('the verifier throws what jwt.verify throws (same name and message)', async () => {
     const { verifyJwt } = require('../lib/jwt-verify');

@@ -86,6 +86,7 @@ const revokeSession = (who) => { devices = {}; sessions.forget(who.jti); };
     assert.strictEqual(again.headers['X-Idempotent-Replay'], 'true');
   });
 
+  const noId = (b) => Object.assign({}, b, { request_id: undefined }); /* API-4b: a Problem body carries its own request's id */
   await ita('a REVOKED session replaying a stored key gets the fresh-request refusal (401 SESSION_EXPIRED), not the stored answer', async () => {
     reset(); const me = person('owner');
     await send(me, { key: 'k2' });
@@ -93,7 +94,7 @@ const revokeSession = (who) => { devices = {}; sessions.forget(who.jti); };
     const replay = await send(me, { key: 'k2' });
     const fresh = await send(me, { key: 'k2-other' });
     assert.strictEqual(replay.status, 401); assert.strictEqual(replay.body.code, 'SESSION_EXPIRED');
-    assert.deepStrictEqual(replay.body, fresh.body, 'the replay refusal differs from the fresh refusal');
+    assert.deepStrictEqual(noId(replay.body), noId(fresh.body), 'the replay refusal differs from the fresh refusal');
     assert.strictEqual(replay.headers['X-Idempotent-Replay'], undefined);
   });
 
@@ -104,7 +105,7 @@ const revokeSession = (who) => { devices = {}; sessions.forget(who.jti); };
     const replay = await send(me, { key: 'k3' });
     const fresh = await send(me, { key: 'k3-other' });
     assert.strictEqual(replay.status, 401); assert.strictEqual(replay.body.code, 'DEVICE_REVOKED');
-    assert.deepStrictEqual(replay.body, fresh.body);
+    assert.deepStrictEqual(noId(replay.body), noId(fresh.body));
   });
 
   await ita('a DEACTIVATED actor replaying a stored key gets 401 "access has been revoked", same as a fresh request', async () => {
@@ -115,7 +116,7 @@ const revokeSession = (who) => { devices = {}; sessions.forget(who.jti); };
     const replay = await send(me, { key: 'k4' });
     const fresh = await send(me, { key: 'k4-other' });
     assert.strictEqual(replay.status, 401); assert.ok(/revoked/.test(replay.body.message));
-    assert.deepStrictEqual(replay.body, fresh.body);
+    assert.deepStrictEqual(noId(replay.body), noId(fresh.body));
   });
 
   await ita('a removed actor (no row) is refused on replay too', async () => {

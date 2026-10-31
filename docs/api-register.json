@@ -736,7 +736,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 257,
+   "line": 255,
    "hash": "e72ad7c32f415e59",
    "does": "",
    "errors": {
@@ -38377,7 +38377,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 211,
-   "hash": "4356718794e04f32",
+   "hash": "a9d0257c4e37305f",
    "does": "",
    "errors": {
     "count": 3,
@@ -50184,13 +50184,14 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 57,
-   "hash": "4bc2bbc1f21a36b9",
+   "hash": "95ae36003ee854d5",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     409,
      422,
      500,
      503
@@ -50216,7 +50217,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": true,
+    "error_tests": false,
     "status_codes": true,
     "strict_input": false,
     "output_allowlist": true,
@@ -50236,6 +50237,7 @@
    "declared": [
     400,
     401,
+    409,
     422,
     500,
     503
@@ -50277,7 +50279,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 120,
+   "line": 126,
    "hash": "eacf63dcd79a6a2e",
    "does": "",
    "errors": {
@@ -50369,14 +50371,15 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 101,
-   "hash": "157ae23f58e75039",
+   "line": 113,
+   "hash": "b991feea66601cf9",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     409,
      422,
      500,
      503
@@ -50384,9 +50387,7 @@
     "codes": []
    },
    "reads": [],
-   "writes": [
-    "supply_item"
-   ],
+   "writes": [],
    "money": true,
    "actions": [],
    "derived": [
@@ -50400,7 +50401,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": true,
+    "error_tests": false,
     "status_codes": true,
     "strict_input": false,
     "output_allowlist": true,
@@ -50420,6 +50421,7 @@
    "declared": [
     400,
     401,
+    409,
     422,
     500,
     503
