@@ -304,6 +304,14 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   await raida.revise('e1', 'r1', { response: 'transfer' });
   t('a valid response revision lands', /response/.test(SQL.map((q) => q.text).join(' ')));
 
+  console.log('\n-- RAIL-160: the report filters bind their parameters --');
+  FULL(); COLS = new Set(['response']); ROWS = []; SQL = [];
+  await raida.report('e1', { subject_id: 'subj-9', standard_key: 'iso9001' });
+  const rq = SQL.filter((q) => /FROM register_entry/.test(q.text) && Array.isArray(q.args) && q.args[0] === 'e1').pop();
+  t('report: the subject filter is the placeholder $2, not a bare number', !!rq && /a\.subject_id = \$2(?!\d)/.test(rq.text), rq && String(rq.text.match(/subject_id = \S+/)));
+  t('report: the standard filter is the placeholder $3, not a bare number', !!rq && /es\.standard_key = \$3(?!\d)/.test(rq.text), rq && String(rq.text.match(/standard_key = \S+/)));
+  t('report: the args line up with the placeholders', !!rq && rq.args[1] === 'subj-9' && rq.args[2] === 'iso9001');
+
   console.log('\n  == ' + pass + ' passed - ' + fail + ' failed ==\n');
   process.exitCode = fail ? 1 : 0;
 })();
