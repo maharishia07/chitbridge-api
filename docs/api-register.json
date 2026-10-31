@@ -21328,7 +21328,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 59,
+   "line": 68,
    "hash": "6157dd476795ba4a",
    "does": "",
    "errors": {
@@ -21412,7 +21412,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 86,
+   "line": 95,
    "hash": "f5a594b885e4ce99",
    "does": "",
    "errors": {
@@ -48005,7 +48005,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 69,
+   "line": 78,
    "hash": "749a332e4dcb969a",
    "does": "",
    "errors": {
@@ -48094,8 +48094,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 96,
-   "hash": "ebcf0ce375ffdda4",
+   "line": 105,
+   "hash": "288b9b78d73539b8",
    "does": "",
    "errors": {
     "count": 0,
@@ -48157,7 +48157,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ebcf0ce375ffdda4"
+    "stale_since": "288b9b78d73539b8"
    },
    "status": "partial",
    "callers": [],
@@ -48181,7 +48181,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 141,
+   "line": 150,
    "hash": "2bf04f617222643a",
    "does": "",
    "errors": {
@@ -48268,8 +48268,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 104,
-   "hash": "2083129cd8a249db",
+   "line": 113,
+   "hash": "1d439b0051d2b7aa",
    "does": "",
    "errors": {
     "count": 0,
@@ -48331,7 +48331,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2083129cd8a249db"
+    "stale_since": "1d439b0051d2b7aa"
    },
    "status": "partial",
    "callers": [
@@ -48359,8 +48359,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 111,
-   "hash": "9542e67203654f2a",
+   "line": 120,
+   "hash": "f61b0021c29f2dc4",
    "does": "",
    "errors": {
     "count": 0,
@@ -48422,7 +48422,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9542e67203654f2a"
+    "stale_since": "f61b0021c29f2dc4"
    },
    "status": "partial",
    "callers": [],
@@ -48446,7 +48446,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 161,
+   "line": 170,
    "hash": "b71357b2a0c51a91",
    "does": "",
    "errors": {
@@ -48533,7 +48533,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 151,
+   "line": 160,
    "hash": "c6fa367702a740ec",
    "does": "",
    "errors": {
@@ -48620,7 +48620,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 146,
+   "line": 155,
    "hash": "65a9fb3371b4e726",
    "does": "",
    "errors": {
@@ -48707,7 +48707,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 156,
+   "line": 165,
    "hash": "eb9c528a25400285",
    "does": "",
    "errors": {
@@ -48794,7 +48794,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 166,
+   "line": 175,
    "hash": "13a18f7561d9ce56",
    "does": "",
    "errors": {
@@ -48881,8 +48881,8 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 120,
-   "hash": "1c3cdfac3cd0025b",
+   "line": 129,
+   "hash": "368d922455578327",
    "does": "",
    "errors": {
     "count": 0,
@@ -48944,7 +48944,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1c3cdfac3cd0025b"
+    "stale_since": "368d922455578327"
    },
    "status": "partial",
    "callers": [],
@@ -48968,7 +48968,7 @@
    "owner_area": "repeat-supply",
    "owner_agent": "cb-orders",
    "file": "routes/repeat-supply.js",
-   "line": 77,
+   "line": 86,
    "hash": "ad094b37ef7961c4",
    "does": "",
    "errors": {
