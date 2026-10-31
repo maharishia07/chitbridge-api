@@ -109,7 +109,7 @@ async function caseCollisionNamed() {
 /** CT-17 (R58 walk 24 Oct): a shop's SALES offer never touches a goods receipt: the line total equals qty x cost. The offer is proved live first, on a captured sale. */
 async function caseNoOfferOnReceipt() {
   const S = await freshShop(RUN + 'f', 'Offer'), p = await product(S, 'Dal', 100);
-  ok(await j('/api/definitions', { method: 'POST', token: S.token, body: { kind: 'offer', sub_kind: 'amount_off', name: 'Dal 5 off ' + RUN, status: 'live', rules: { amount: 5, scope: 'line', applies_to: { item_ids: [p.id] } } } }), 'offer');
+  ok(await j('/api/definitions', { method: 'POST', token: S.token, body: { kind: 'offer', sub_kind: 'amount_off', name: 'Dal 5 off ' + RUN, status: 'live', confirmed: true, rules: { amount: 5, scope: 'line', applies_to: { item_ids: [p.id] } } } }), 'offer');
   const sale = bill(RUN + '-F1', [[p, 1]]); delete sale.business_json.billed_at;   /* a captured sale carries no billed_at: the live offers apply to it */
   const sid = (await sendAs(S, sale, 'captured sale')).chit_id;
   const sold = (await pg.query('SELECT line_items FROM chit_detail WHERE chit_id = $1', [sid])).rows[0].line_items[0];
