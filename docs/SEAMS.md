@@ -108,7 +108,6 @@ of file each thing is; this says what already does the job.
 | 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 23 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 22 | `form` | `accounts-shell.js` |  |
-| 22 | `guard` | `books-assets.js` | run a store call; a missing table is the one refusal |
 | 22 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 21 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -188,7 +187,6 @@ of file each thing is; this says what already does the job.
 | 13 | `verdict` | `rail-thread.js` |  |
 | 15 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
-| 13 | `apply` | `exposure.js` | strip the PUBLIC copy of an item (the view's output object) of what is not exposed; returns the switches appli |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
 | 12 | `units` | `cart.js` |  |
 | 12 | `link` | `chit-sheet.js` |  |
@@ -209,3 +207,7 @@ of file each thing is; this says what already does the job.
 | 11 | `session` | `page-frame.js` | FLOW  mount → session() → skeleton()? → CBShell.mount(host, { host:{app·bar}, person, signin, avatar, title, h |
 | 11 | `pick` | `showcase-templates.js` | the template a shop uses: |
 | 11 | `evidence` | `test-menu-tree.js` | something; nobody has yet written what it should do. |
+| 22 | `guard` | `amend.js` | would disturb what has gone out. |
+| 12 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
+| 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
+| 62 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
