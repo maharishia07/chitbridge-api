@@ -1627,7 +1627,7 @@
    ]
   },
   "POST /api/actors": {
-   "cases": 4,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
