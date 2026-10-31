@@ -1586,8 +1586,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/quick-keys/screen-config/default": {

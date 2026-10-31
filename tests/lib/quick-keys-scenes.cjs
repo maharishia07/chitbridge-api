@@ -123,7 +123,7 @@ function extras() {
     X('key-remove-fails', R('DELETE', '/groups/:id/items/:productId'), 500, failing),
     X('keys-reorder', R('PATCH', items), 200, Object.assign({ body: { items: [{ product_id: BUN, position: 1 }, { product_id: TEA, position: 2 }] } }, at('/groups/' + GROUP + '/items'), planted())),
     X('keys-reorder-no-list', R('PATCH', items), 200, Object.assign({ body: {} }, at('/groups/' + GROUP + '/items'), planted())),
-    X('keys-reorder-unknown-group', R('PATCH', items), 200, Object.assign({ body: { items: [{ product_id: TEA, position: 1 }] } }, at('/groups/' + GROUP + '/items'))),
+    N('keys-reorder-unknown-group', R('PATCH', items), 404, Object.assign({ body: { items: [{ product_id: TEA, position: 1 }] } }, at('/groups/' + GROUP + '/items'))),
     X('keys-reorder-fails', R('PATCH', items), 500, Object.assign({ body: { items: [{ product_id: TEA, position: 1 }] } }, failing)),
     N('keys-reorder-body-a-list', R('PATCH', items), 400, Object.assign({ body: [] }, at('/groups/' + GROUP + '/items'), planted())),
     X('screen-read-empty', R('GET', '/screen-config/default'), 200, {}),

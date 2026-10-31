@@ -104,7 +104,7 @@ function checkContractShape(routes) {
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every route that takes a body declares an object, requiring nothing (the handlers answer a missing field in their own words)', bodies.length === 6 && bodies.every((key) => { const schema = contract.OPERATIONS[key].requestBody.content['application/json'].schema; return schema.type === 'object' && !(schema.required || []).length; }), bodies);
   check('the two stale-version routes list the 409 and carry the version in their body', ['PATCH', 'DELETE'].every((method) => { const one = contract.OPERATIONS[method + ' ' + MOUNT + '/groups/:id']; return (one['x-quick-keys-refusals'] || []).some((item) => item.status === 409 && item.code === 'QUICK_KEY_CHANGED') && 'version' in one.requestBody.content['application/json'].schema.properties; }));
-  check('a group id in the path is plain text: a malformed one stays the database\'s own answer, as before', operations.filter((key) => key.includes(':')).every((key) => contract.OPERATIONS[key].parameters.every((one) => one.schema.type === 'string' && !one.schema.pattern)));
+  check('a group or product id in the path is a uuid in the contract; a malformed one is answered 404 by router.param before the schema (CTR-172)', operations.filter((key) => key.includes(':')).every((key) => contract.OPERATIONS[key].parameters.every((one) => one.schema.type === 'string' && !!one.schema.pattern)));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
   check('the created answers are 201 (a group, a key) and the rest 200, as the handlers send them', ['POST ' + MOUNT + '/groups', 'POST ' + MOUNT + '/groups/:id/items'].every((key) => '201' in contract.OPERATIONS[key].responses && !('200' in contract.OPERATIONS[key].responses)));
 }
@@ -132,15 +132,15 @@ const ASKS = () => {
   return [
     ['PATCH ' + MOUNT + '/groups/:id', 'PATCH', group, { name: 'Evening' }],
     ['DELETE ' + MOUNT + '/groups/:id', 'DELETE', group, { version: 1 }],
-    ['POST ' + MOUNT + '/groups/:id/items', 'POST', group + '/items', { product_id: S.BUN }]
+    ['POST ' + MOUNT + '/groups/:id/items', 'POST', group + '/items', { product_id: S.BUN }],
+    ['PATCH ' + MOUNT + '/groups/:id/items', 'PATCH', group + '/items', { items: [{ product_id: S.TEA, position: 9 }] }]
   ];
 };
 /** the routes that answer 200 for a group that is not there: asked as another shop they must answer exactly as for an unknown id, and change nothing of the other shop's */
 const SILENT = () => {
   const group = MOUNT + '/groups/' + S.GROUP;
   return [
-    ['DELETE ' + MOUNT + '/groups/:id/items/:productId', 'DELETE', group + '/items/' + S.TEA],
-    ['PATCH ' + MOUNT + '/groups/:id/items', 'PATCH', group + '/items', { items: [{ product_id: S.TEA, position: 9 }] }]
+    ['DELETE ' + MOUNT + '/groups/:id/items/:productId', 'DELETE', group + '/items/' + S.TEA]
   ];
 };
 

@@ -353,7 +353,8 @@
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network-offers/:id/release": {
    "foreign_id_404": true
