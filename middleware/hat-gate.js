@@ -1,5 +1,10 @@
 /**
  * hat-gate.js — make the co-assist HAT actually govern writes, by default, everywhere.
+ * OWNS      the list of writes a View-only or Comment-only login keeps (SELF_SCOPED, SELF_SCOPED_EXACT) and why each is open
+ * CALLED BY middleware/auth.js (runs it inside every signed-in route) · tests/write-route-gate.test.cjs
+ * FLOW      request → auth → hat-gate → access.canEdit → next, or the self-scoped list, or 403
+ * CARD      17-people-employees-hr-and-payroll/people-list-with-may-why
+ *
  *
  * ⚠️⚠️ THE DEFECT: A FALSE ASSURANCE, WHICH IS WORSE THAN A GAP. The hat
  * (`view_only · act · audit · mis · manager`) has been stored, editable, and shown to owners as a choice since
@@ -44,7 +49,7 @@ const access = require('../lib/access'); // b173 — viewer / commenter / editor
  */
 const SELF_SCOPED = [
   ['/entities/me/prefs', 'their own locale and appearance — a display choice, not a record'],
-  ['/entities/me/locale', 'the same, under its pre-b166 name'],
+  ['/entities/me/locale', 'the same, under its pre-b166 name (PPL-27: a viewer keeps this)'],
   ['/actors/me', 'their own profile row'],
   /**
    * ⭐ A PERSON'S OWN IDENTITY DOCUMENTS ARE THEIRS, NOT THE BUSINESS'S. b174. Athi: *"which HE can submit here
@@ -56,12 +61,12 @@ const SELF_SCOPED = [
    * there is no shape of this request that files a document against somebody else.
    */
   ['/identity', 'their own identity documents — the subject is always the caller (b174)'],
-  ['/actors/break', 'their own break status — a person may say they are on a break'],
+  ['/actors/break', 'their own break status — a person may say they are on a break (PPL-27: a viewer keeps this)'],
   ['/auth', 'signing in cannot require permission to sign in'],
   /* M05: renew, sign out, list and end ONE'S OWN sessions. Ending someone else's session or removing a device is
      owner-only, and routes/signin.js refuses it itself — an actor is never the owner. */
   ['/signin', 'a person’s own sessions — signing out cannot require permission to sign out'],
-  ['/notifications', "clearing one's own notifications changes no record — b164 writes only a dismissal"],
+  ['/notifications', "clearing one's own notifications changes no record — b164 writes only a dismissal (PPL-27: a viewer keeps POST /notifications/seen)"],
   /* ⚠️⚠️ '/assist' WAS HERE, BY PREFIX — and five routes under it WRITE business records (external review
      2026-09-25, fixed 2026-09-28): catalogue-adopt, catalogue-source (PUT with an empty list wipes a brand's
      shared source that every member store adopts), container, region-override, publish. A View-only co-assist
@@ -100,7 +105,7 @@ const SELF_SCOPED_EXACT = [
      checked 2026-09-28). A new /assist route is gated until somebody adds it here on purpose. */
   [/^\/assist(\/ask)?\/?$/, 'asking the assistant a question (POST /api/assist) — it creates nothing on the rail'],
   [/^\/assist\/conform$/, 'checking a product against a standard — a read'],
-  [/^\/assist\/catalogue-structure$/, 'a proposed catalogue structure, returned, not saved'],
+  [/^\/assist\/catalogue-structure$/, 'a proposed catalogue structure, returned, not saved (PPL-27: a viewer keeps the free draft; the paid intro is for editors only, routes/assist.js)'],
   [/^\/assist\/gap$/, 'deprecated: logs a line and writes nothing (capture is the chit flow)'],
   [/^\/assist\/resolve$/, 'resolving a governed view — a read']
 ];
