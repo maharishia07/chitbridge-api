@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 51 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
-| 50 | `pack` | `books-store.js` |  |
+| 51 | `pack` | `books-store.js` |  |
 | 49 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 48 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 47 | `again` | `signin-ui.js` |  |
