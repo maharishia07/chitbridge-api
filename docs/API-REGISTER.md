@@ -85,10 +85,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/books/todo | books | routes/books.js:2333 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/books/trial-balance | books | routes/books.js:958 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/books/year/:fy/status | books | routes/books.js:2103 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/capture/consolidate | capture | routes/capture.js:277 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/capture/pending | capture | routes/capture.js:59 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/capture/stores | capture | routes/capture.js:301 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:124 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
+| GET | /api/capture/consolidate | capture | routes/capture.js:278 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/capture/pending | capture | routes/capture.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/capture/stores | capture | routes/capture.js:302 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:125 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1098 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1116 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
@@ -248,8 +248,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/relationships/suppliers | relationships | routes/relationships.js:234 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/relationships/suppliers/:supplier_entity_id/catalogue | relationships | routes/relationships.js:606 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/relationships/suppliers/availability | relationships | routes/relationships.js:474 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/repeat | repeat-supply | routes/repeat-supply.js:59 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/repeat/:id | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/repeat | repeat-supply | routes/repeat-supply.js:68 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/repeat/:id | repeat-supply | routes/repeat-supply.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/schemas/fields | schemas | routes/schemas.js:90 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/schemas/my | schemas | routes/schemas.js:29 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/service/:chit_id | service | routes/service.js:62 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -384,14 +384,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/terms | books | routes/books.js:241 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/write-off | books | routes/books.js:1698 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/books/year/:fy/close | books | routes/books.js:2088 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
-| POST | /api/capture/:id/convert | capture | routes/capture.js:93 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/capture/:id/dismiss | capture | routes/capture.js:101 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/capture/:id/raise | capture | routes/capture.js:83 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/capture/:id/structure | capture | routes/capture.js:68 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/capture/simulate | capture | routes/capture.js:41 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/capture/stores | capture | routes/capture.js:308 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/capture/webhook/email | capture | routes/capture.js:223 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
-| POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:193 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
+| POST | /api/capture/:id/convert | capture | routes/capture.js:94 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/capture/:id/dismiss | capture | routes/capture.js:102 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/capture/:id/raise | capture | routes/capture.js:84 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/capture/:id/structure | capture | routes/capture.js:69 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/capture/simulate | capture | routes/capture.js:42 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/capture/stores | capture | routes/capture.js:309 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/capture/webhook/email | capture | routes/capture.js:224 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
+| POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:194 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
 | POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1830 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1128 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
@@ -538,18 +538,18 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/relationships/customers | relationships | routes/relationships.js:783 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/relationships/customers/:id/groups | relationships | routes/relationships.js:892 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/relationships/suppliers | relationships | routes/relationships.js:107 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/repeat | repeat-supply | routes/repeat-supply.js:69 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/accept | repeat-supply | routes/repeat-supply.js:96 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/agree | repeat-supply | routes/repeat-supply.js:141 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/counter | repeat-supply | routes/repeat-supply.js:104 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/decline | repeat-supply | routes/repeat-supply.js:111 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/end | repeat-supply | routes/repeat-supply.js:161 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/pause | repeat-supply | routes/repeat-supply.js:151 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/refuse | repeat-supply | routes/repeat-supply.js:146 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/resume | repeat-supply | routes/repeat-supply.js:156 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/run | repeat-supply | routes/repeat-supply.js:166 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:120 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:77 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat | repeat-supply | routes/repeat-supply.js:78 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/accept | repeat-supply | routes/repeat-supply.js:105 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/agree | repeat-supply | routes/repeat-supply.js:150 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/counter | repeat-supply | routes/repeat-supply.js:113 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/decline | repeat-supply | routes/repeat-supply.js:120 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/end | repeat-supply | routes/repeat-supply.js:170 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/pause | repeat-supply | routes/repeat-supply.js:160 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/refuse | repeat-supply | routes/repeat-supply.js:155 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/resume | repeat-supply | routes/repeat-supply.js:165 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/run | repeat-supply | routes/repeat-supply.js:175 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | POST | /api/service/:chit_id/pause | service | routes/service.js:257 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:342 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
@@ -2655,7 +2655,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/folders/mis** · folders · cb-rail · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/118, cap-mis.js 2/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, cap-mis.js · actions: -
 

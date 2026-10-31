@@ -15,7 +15,7 @@ const router = express.Router();
 const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { schemaValidate, sanitise, queryDay } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { said, failed, faultOf, schemaOptionsFor, operationFor, pathsOf } = require('../lib/folders-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 
@@ -1050,7 +1050,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
  * it is measure() over the whole array, so medians and rates are computed across the real population rather
  * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
  */
-router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
+router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, res) => {
   try {
     const me = ent(req);
     const flags = await policy.get(me);
