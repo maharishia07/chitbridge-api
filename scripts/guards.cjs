@@ -572,7 +572,8 @@ const report = [];
 
 let total = 0,
   failed = [],
-  started = Date.now();
+  started = Date.now(),
+  slowest = []; /* [QA-82] per-file seconds, so the CI log carries the numbers the JUnit already holds */
 console.log(all ? '— every test file (some need a server) —' : '— the guards —');
 
 for (const text of files) {
@@ -591,7 +592,7 @@ for (const text of files) {
   const bad = r.status !== 0 || /\bFAIL\b/.test(out) || n === 0;
   total += n;
   if (bad) failed.push(text);
-  console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks');
+  console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks  ' + ((Date.now() - t0) / 1000).toFixed(1) + 's');
   const list = bad
     ? out
         .split('\n')
@@ -600,6 +601,7 @@ for (const text of files) {
         .map((item) => item.trim())
     : [];
   if (bad) console.log(list.map((item) => '          ' + item).join('\n'));
+  slowest.push({ text, n, secs: (Date.now() - t0) / 1000 });
   report.push({
     name: KEY(text),
     status: bad ? 'fail' : 'pass',
@@ -616,6 +618,9 @@ if (JUNIT) {
   console.log('  JUnit → ' + path.relative(process.cwd(), JUNIT) + ' (' + report.length + ' files)');
 }
 
+/* [QA-82] the 10 slowest files: the run time is the cost, the check count is not */
+slowest.sort((x, y) => y.secs - x.secs);
+console.log('  slowest: ' + slowest.slice(0, 10).map((x) => x.text.replace(/\.test\.(js|cjs)$/, '') + ' ' + x.secs.toFixed(1) + 's').join(' · '));
 console.log('  ' + '─'.repeat(40));
 console.log(
   '  ' +
