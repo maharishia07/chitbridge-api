@@ -682,12 +682,6 @@
   401,
   500
  ],
- "GET /api/entities/lookup": [
-  400,
-  401,
-  404,
-  500
- ],
  "GET /api/entities/me": [
   401,
   404,

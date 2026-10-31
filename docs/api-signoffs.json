@@ -94,7 +94,6 @@
   "GET /api/crm/segments": {"hash":"1f991ac5f33714b8","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
   "GET /api/entities/entitlements": {"hash":"30f43a715550a15a","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
   "GET /api/entities/header": {"hash":"1ecf5a03e800a3af","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)","lifecycle":"stable"},
-  "GET /api/entities/lookup": {"hash":"4fa9ad17575badb4","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#372","lifecycle":"stable"},
   "GET /api/entities/me": {"hash":"923ae667956b75ae","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)","lifecycle":"stable"},
   "GET /api/entities/me/can-see-costs": {"hash":"b43d5b8b4da152b9","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)","lifecycle":"stable"},
   "GET /api/entities/mis": {"hash":"11720064f2b88a42","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)","lifecycle":"stable"},

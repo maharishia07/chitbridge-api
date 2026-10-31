@@ -157,12 +157,6 @@
     "pass": true
    }
   },
-  "GET /api/entities/lookup": {
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
-   }
-  },
   "PATCH /api/entities/profile": {
    "strict_input": {
     "pass": false,
