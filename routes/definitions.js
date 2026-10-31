@@ -355,6 +355,16 @@ router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes
   }
 });
 
+/** one definition_status_log row per REAL transition (see the b268 note in PUT /:id): a no-op re-send of the same status writes nothing */
+async function logStatusChange(db, req, entity_id, wasStatus, status) {
+  if (!status || status === wasStatus) return;
+  await db.query(
+    `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
+     VALUES ($1,$2,$3,$4)`,
+    [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
+  );
+}
+
 /**
  * ⭐⭐ PUT /:id — an edit is a NEW VERSION, never an overwrite.
  *
@@ -426,19 +436,15 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
        * question it exists for and never one nobody asked ("approved" appearing twice because a screen
        * re-sent the same status is noise, not history).
        */
-      if (status && status !== d.status) {
-        await db.query(
-          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
-           VALUES ($1,$2,$3,$4)`,
-          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
-        );
-      }
+      await logStatusChange(db, req, entity_id, d.status, status);
       return { row: upd.rows[0], version, versioned: !!rules };
     });
 
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
+    /* CTR-157: an offer made live, paused or changed is what every open counter prices with, so they hear it now, as for a create or a retire */
+    shopChanged(entity_id, 'definition saved');
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
     problem(req, res, definitionFault(e, req, { nameTaken: true }));
