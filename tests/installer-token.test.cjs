@@ -50,6 +50,19 @@ const reset = (env) => { for (const k of ['CB_INSTALLER_TOKEN', 'CB_INSTALLER_HA
   reset({ CB_INSTALLER_TOKEN: TOKEN, CB_INSTALLER_HANDLE: 'cbau01-root' });
   t('the stored code still works with the token configured', (await otp.verifyOtp(run, row(), '123456')).ok === true);
 
+  /* the module itself, one check per rule (DISCIPLINES §7: unit-per-rule · refusal-path · fail-closed), not only through the verify door */
+  const installer = require(path.join(API, 'lib', 'installer-token'));
+  reset({ CB_INSTALLER_TOKEN: TOKEN, CB_INSTALLER_HANDLE: 'CBAU01-root' });
+  t('installerOk: the token for the handle (case-folded) before any business is active → yes', (await installer.installerOk(' ' + TOKEN + ' ', ['cbau01-root'])) === true);
+  t('installerOk: refused for another handle', (await installer.installerOk(TOKEN, ['someone-else'])) === false);
+  t('installerOk: refused for a wrong token', (await installer.installerOk(TOKEN + 'x', ['cbau01-root'])) === false);
+  activeRegistered = true;
+  t('installerOk: refused once a registered business is active', (await installer.installerOk(TOKEN, ['cbau01-root'])) === false);
+  activeRegistered = false; readThrows = true;
+  t('installerOk: a database that is down answers no (fail-closed)', (await installer.installerOk(TOKEN, ['cbau01-root'])) === false);
+  reset({ CB_INSTALLER_TOKEN: 'x'.repeat(installer.MIN_LENGTH - 1), CB_INSTALLER_HANDLE: 'cbau01-root' });
+  t('installerOk: refused for a token shorter than MIN_LENGTH', (await installer.installerOk('x'.repeat(installer.MIN_LENGTH - 1), ['cbau01-root'])) === false);
+
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
   console.log('  ' + pass + ' checks');
   process.exit(fail ? 1 : 0);
