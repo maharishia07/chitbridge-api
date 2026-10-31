@@ -34,6 +34,13 @@ ok('a chit with no currency is counted and says so (null), never given the shop\
 ok('busiest group first, as before', () => {
   assert.deepStrictEqual(g.map((x) => x.key), ['accepted', 'delivered', 'draft']);
 });
+/* S34 (cb-api, 31 Oct): the route's closed output shape once pruned by_currency under OUTPUT_ALLOWLIST=enforce, so the fix above never reached a reader */
+ok('the output allow-list keeps by_currency (nothing of a group is dropped)', () => {
+  const allowlist = require('../lib/output-allowlist');
+  const shape = allowlist.shapeOf('GET /api/chits/rollup');
+  const answer = { group_by: 'state', direction: null, groups: g.concat([Object.assign({}, g[0], { cost_hidden: true })]), dispute_open: 0 };
+  assert.deepStrictEqual(allowlist.prune(shape.schema || shape, answer).dropped, []);
+});
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks\n');
 process.exit(fail ? 1 : 0);

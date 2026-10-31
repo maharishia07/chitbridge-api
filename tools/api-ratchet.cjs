@@ -303,8 +303,10 @@ function refuseRises(previous, now) {
   if (previous.raw_error_writes !== undefined && now.rawNow > previous.raw_error_writes) throw new Error('refusing to raise the raw error text count (' + now.rawNow + ' against ' + previous.raw_error_writes + ')');
   if (flag('--rebaseline')) return;
   const before = previous.columns_failing || {};
-  Object.keys(now.columnsFailing).filter((name) => before[name] !== undefined && now.columnsFailing[name] > before[name]).forEach((name) => { throw new Error('refusing to raise the routes failing ' + name); });
-  if (!flag('--seed') && now.notMeeting > previous.not_meeting + Math.max(0, now.routes - previous.total)) throw new Error('refusing to raise the count of routes not meeting the standard');
+  /* a new route may add its own, as checkColumns allows in CI (one rule on both sides; before 31 Oct --write refused what CI accepted) */
+  const added = Math.max(0, now.routes - previous.total);
+  Object.keys(now.columnsFailing).filter((name) => before[name] !== undefined && now.columnsFailing[name] > before[name] + added).forEach((name) => { throw new Error('refusing to raise the routes failing ' + name); });
+  if (!flag('--seed') && now.notMeeting > previous.not_meeting + added) throw new Error('refusing to raise the count of routes not meeting the standard');
 }
 
 /** --write: rewrite docs/api-ratchet.json from the head register (never raises the count) */

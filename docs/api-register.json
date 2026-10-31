@@ -5,8 +5,8 @@
   "routes": 636,
   "no_does": 626,
   "not_started": 35,
-  "partial": 454,
-  "meets": 147,
+  "partial": 449,
+  "meets": 152,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -2054,7 +2054,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 468,
+   "line": 464,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -8319,11 +8319,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6cba303a3817793d"
+    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -9749,11 +9748,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "da017925ba4b62d2"
+    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-register.js"
    ],
@@ -10129,7 +10127,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 2991,
-   "hash": "bbc26aca0dcca968",
+   "hash": "ad6796f3a4111cb6",
    "does": "",
    "errors": {
     "count": 0,
@@ -10189,11 +10187,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bbc26aca0dcca968"
+    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -13383,11 +13380,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72535ba03adc05e5"
+    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm.js"
@@ -20785,7 +20781,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 711,
+   "line": 707,
    "hash": "dd816c613da54877",
    "does": "",
    "errors": {
@@ -20876,7 +20872,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 772,
+   "line": 768,
    "hash": "283ad24d6c24e087",
    "does": "",
    "errors": {
@@ -20964,7 +20960,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 704,
+   "line": 700,
    "hash": "d18c205627345524",
    "does": "",
    "errors": {
@@ -21050,7 +21046,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1034,
+   "line": 1030,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -21132,7 +21128,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1046,
+   "line": 1042,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -21216,8 +21212,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 289,
-   "hash": "e37bebff6f5d50ca",
+   "line": 290,
+   "hash": "cb3dde74a6d48c45",
    "does": "",
    "errors": {
     "count": 0,
@@ -21314,7 +21310,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 644,
+   "line": 640,
    "hash": "dd765b9a6933027e",
    "does": "",
    "errors": {
@@ -21407,7 +21403,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 514,
+   "line": 510,
    "hash": "87639ef2aa0887f7",
    "does": "",
    "errors": {
@@ -21468,11 +21464,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "87639ef2aa0887f7"
+    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -27632,7 +27627,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 955,
+   "line": 951,
    "hash": "05dd04b81445505f",
    "does": "",
    "errors": {
@@ -27728,7 +27723,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 361,
+   "line": 357,
    "hash": "991e34211939bebf",
    "does": "",
    "errors": {
@@ -48175,7 +48170,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 824,
+   "line": 820,
    "hash": "c6699df6864b635a",
    "does": "",
    "errors": {
@@ -48274,7 +48269,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 933,
+   "line": 929,
    "hash": "e982cebe9da706c1",
    "does": "",
    "errors": {

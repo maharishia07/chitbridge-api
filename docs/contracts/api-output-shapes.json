@@ -4079,7 +4079,8 @@
               "required": [
                 "key",
                 "chits",
-                "total_value"
+                "total_value",
+                "by_currency"
               ],
               "properties": {
                 "key": {
@@ -4099,6 +4100,35 @@
                 },
                 "cost_hidden": {
                   "type": "boolean"
+                },
+                "by_currency": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "currency_code",
+                      "chits",
+                      "total_value"
+                    ],
+                    "properties": {
+                      "currency_code": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "chits": {
+                        "type": "number"
+                      },
+                      "total_value": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  }
                 }
               },
               "additionalProperties": false

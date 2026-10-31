@@ -60,7 +60,7 @@ Coordinator: take the fixes, do not accept the debt. origin/db/db-85-b790-rls (#
 10. Readability guard: 0 failures, 12 warnings. fn-size 219 -> 217. Contract tests 1543/0.
 
 ## Still open (each with its owner)
-- api-ratchet vs origin/main: 5 routes lost "meets" only because their cb-api sign-offs are stale (GET /api/chits/:chit_id, /raida/report, /rollup, /entities/search, /relationships/suppliers/availability) -> cb-api re-signs, then `api-ratchet --write`.
+- DONE 31 Oct (cb-api): the 5 re-signed after review; rollup gained by_currency in its output shape (enforce had pruned it), entities/search says the register's sentence instead of echoing `where`; ratchet 484 of 636 (allowed 484), the 5 added output_allowlist failures are new SIT routes (proposals x4, search/places).
 - migration-lint vocabulary (runs only where PM/NAMING-AND-MEANING.md sits beside the repo, so not in CI): chit_proposal.currency_code, chit_proposal.note, membership_certificate.note. These columns already exist on the SIT servers; renaming them is cb-db's call (D8 says columns keep currency_code).
 - tax-vendor: red on pristine main too (api 2df6760b vs web d8acc41f pin different reg-* releases for IN slip/taxInvoice/tax) -> cb-accounting / release; not this merge.
 - raida-close-route: 10/10 pass; a libuv assertion on exit on Windows, the same on main.
