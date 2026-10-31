@@ -202,7 +202,12 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
     const env = envelope.buildEvent(FROM, { bridge_id: B_ME }, { chit_id: CHIT, event: statusEv(1, 'accepted') });
     assert.strictEqual(env.kind, 'event');
     assert.strictEqual(env.copy, undefined);
-    const out = envelope.open(wire(envelope.sign(env, null)), { population: 'live', verify: undefined });
+    /* RAIL-141 a (main): an envelope with no way to check its seal is refused, so the event is sealed with a real key and opened with its verifier */
+    const kp = crypto.generateKeyPairSync('ed25519');
+    const signer = { alg: 'ed25519', sign: (h) => crypto.sign(null, Buffer.from(h, 'utf8'), kp.privateKey).toString('base64') };
+    const verify = (hash, sig) => crypto.verify(null, Buffer.from(hash, 'utf8'), kp.publicKey, Buffer.from(sig, 'base64'));
+    const out = envelope.open(wire(envelope.sign(env, signer)), { population: 'live', verify });
+    assert.strictEqual(envelope.open(wire(envelope.sign(env, null)), { population: 'live', verify: undefined }).ok, false, 'no verifier = refused (RAIL-141 a)');
     assert.ok(out.ok, out.why);
     assert.strictEqual(out.kind, 'event');
     assert.strictEqual(out.event.status, 'accepted');
@@ -264,7 +269,8 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
   });
   await t('a message is kept once: our own copy through postMessageCopies with the id it was sent with; the same id again is ignored', async () => {
     const posted = [];
-    const chitsPath = require.resolve(root('routes/chits.js'));
+    /* sit/run6: lib/ctpreturn posts an arrived message through lib/chit-crossing postMessageCopies (the function the routes use; routes/chits no longer re-exports it) */
+    const chitsPath = require.resolve(root('lib/chit-crossing.js'));
     const hadChits = require.cache[chitsPath];
     require.cache[chitsPath] = {
       id: chitsPath,
@@ -458,7 +464,7 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
   await t('moveStatus on a chit with a party on another installation queues the move once, and says so in its answer', async () => {
     resetWorld();
     seed();
-    const mv = await chits.moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
+    const mv = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.strictEqual(mv.code, 200, JSON.stringify(mv.body));
     assert.strictEqual(W.out.length, 1);
     assert.strictEqual(W.out[0].event.status, 'accepted');
@@ -470,7 +476,7 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
     resetWorld();
     seed();
     W.headers[ME].all_recipients = [{ bridge_id: B_ME }, { bridge_id: B_LOCAL2 }];
-    const mv = await chits.moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
+    const mv = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.strictEqual(mv.code, 200);
     assert.strictEqual(W.out.length, 0);
     assert.strictEqual(mv.body.ctp, undefined);
@@ -478,10 +484,10 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
   await t('…a refused step, and a move to the status it already holds, queue nothing', async () => {
     resetWorld();
     seed();
-    const same = await chits.moveStatus(ME, CHIT, 'pending', { id: ME, name: 'Asha' }, '', EDITOR);
+    const same = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'pending', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.ok(same.noop);
     W.status[0].current_status = 'completed';
-    const refused = await chits.moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
+    const refused = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.ok(refused.code >= 400 && !refused.moved, JSON.stringify(refused));
     assert.strictEqual(W.out.length, 0);
   });
@@ -491,7 +497,7 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
   await t('CTP_CROSS_DISPUTE is retired in the register, not raised by any code', async () => {
     const row = require(root('docs/error-codes.json')).codes.find((c) => c.code === 'CTP_CROSS_DISPUTE');
     assert.ok(row && /RETIRED/.test(row.shopkeeper), 'kept in the register, marked retired');
-    assert.ok(!/CTP_CROSS_DISPUTE/.test(require('fs').readFileSync(root('routes/chits.js'), 'utf8') + require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8')));
+    assert.ok(!/CTP_CROSS_DISPUTE/.test(require(root('tools/chits-files.cjs')).read(root('.')) + require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8')));
   });
 
   console.log('\n== F · the registered words ==\n');

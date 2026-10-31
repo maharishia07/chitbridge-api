@@ -2,22 +2,22 @@
  "version": 1,
  "stage": "2",
  "counts": {
-  "routes": 630,
-  "no_does": 620,
+  "routes": 636,
+  "no_does": 626,
   "not_started": 35,
-  "partial": 443,
-  "meets": 152,
+  "partial": 454,
+  "meets": 147,
   "columns": {
    "strict_input": {
-    "applies": 344,
-    "failing": 307
+    "applies": 348,
+    "failing": 306
    },
    "output_allowlist": {
-    "applies": 630,
-    "failing": 233
+    "applies": 636,
+    "failing": 238
    },
    "foreign_id_404": {
-    "applies": 226,
+    "applies": 231,
     "failing": 89
    },
    "idempotent_money_write": {
@@ -29,8 +29,8 @@
     "failing": 2
    },
    "trips_budgeted": {
-    "applies": 630,
-    "failing": 156
+    "applies": 636,
+    "failing": 153
    }
   }
  },
@@ -143,9 +143,9 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-employees.js 1/10",
-     "cap-workforce.js 1/16",
-     "core.js 1/50"
+     "cap-employees.js 1/5",
+     "cap-workforce.js 1/11",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -438,7 +438,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5758,
+   "line": 5852,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -517,8 +517,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50",
+     "app.html 1/132",
+     "core.js 1/37",
      "till.html 1/48"
     ]
    },
@@ -536,7 +536,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4670,
+   "line": 4767,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -613,7 +613,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -630,7 +630,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6019,
+   "line": 6113,
    "hash": "fc31a63bfe103fc8",
    "does": "",
    "errors": {
@@ -718,8 +718,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50"
+     "app.html 1/132",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -910,7 +910,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -1004,7 +1004,7 @@
     "trips": 1,
     "wire": 5,
     "screens": [
-     "cap-crm.js 1/8"
+     "cap-crm.js 1/6"
     ]
    },
    "measured": {
@@ -1384,7 +1384,7 @@
     "wire": 5,
     "screens": [
      "cap-folders.js 1/22",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -1669,10 +1669,10 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "catalogue-lines.js 1/20",
      "combo-mode.js 1/5",
-     "core.js 1/50",
+     "core.js 1/37",
      "till.html 1/48"
     ]
    },
@@ -1856,7 +1856,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "catalogue-lines.js 2/20"
     ]
    },
@@ -2054,7 +2054,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 428,
+   "line": 462,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -2131,9 +2131,9 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-suppliers.js 1/3",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -2322,12 +2322,12 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "cap-admin.js 2/118",
      "cap-chit2.js 2/13",
-     "cap-workforce.js 2/16",
+     "cap-workforce.js 2/11",
      "cap-worklist.js 2/9",
-     "core.js 2/50"
+     "core.js 2/37"
     ]
    },
    "measured": {
@@ -2574,7 +2574,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -2835,7 +2835,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -3417,7 +3417,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-admin.js 1/118",
      "cap-assist.js 1/2"
     ]
@@ -3663,7 +3663,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -3749,7 +3749,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-assist.js 1/2"
     ]
    },
@@ -3767,7 +3767,7 @@
    "owner_area": "attachments",
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
-   "line": 83,
+   "line": 92,
    "hash": "25c3bb3907eaa752",
    "does": "",
    "errors": {
@@ -5326,7 +5326,7 @@
     "wire": 3,
     "screens": [
      "accounts.html 1/7",
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-books.js 1/26",
      "cap-move-in.js 1/4",
      "crm.html 1/1",
@@ -6588,7 +6588,7 @@
     "wire": 3,
     "screens": [
      "cap-crm-record.js 1/7",
-     "cap-finance-terms.js 1/5"
+     "cap-finance-terms.js 1/3"
     ]
    },
    "measured": {
@@ -7283,7 +7283,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-catalogue.js 1/10",
      "cap-catsetup.js 1/12"
     ]
@@ -7623,7 +7623,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -7881,7 +7881,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -8229,7 +8229,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-marketing.js 2/6"
+     "cap-marketing.js 2/5"
     ]
    },
    "measured": {
@@ -8246,8 +8246,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3232,
-   "hash": "0a6f999b3e6b83d1",
+   "line": 3307,
+   "hash": "04b28fff80621002",
    "does": "",
    "errors": {
     "count": 0,
@@ -8319,10 +8319,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "04b28fff80621002"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -8349,20 +8350,20 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "authority-forms.html 1/4",
      "cap-admin.js 1/118",
      "cap-books.js 1/26",
      "cap-chit2.js 1/13",
      "cap-crm-chits.js 1/3",
      "cap-crm-record.js 1/7",
-     "cap-crm.js 1/8",
+     "cap-crm.js 1/6",
      "cap-dispute.js 1/5",
      "cap-messages.js 1/4",
      "cap-register.js 1/9",
      "cap-worklist.js 1/9",
      "chit-sheet.js 1/2",
-     "core.js 1/50",
+     "core.js 1/37",
      "intake.html 1/5",
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
@@ -8384,7 +8385,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4496,
+   "line": 4593,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -8458,7 +8459,7 @@
     "trips": 2,
     "wire": 8,
     "screens": [
-     "app.html 2/140"
+     "app.html 2/132"
     ]
    },
    "measured": {
@@ -8475,7 +8476,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3783,
+   "line": 3860,
    "hash": "4a7a64bbf05a9fdb",
    "does": "",
    "errors": {
@@ -8565,7 +8566,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5439,
+   "line": 5590,
    "hash": "d314b7303243841c",
    "does": "",
    "errors": {
@@ -8656,7 +8657,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5393,
+   "line": 5544,
    "hash": "3d7ed7659b7e4ede",
    "does": "",
    "errors": {
@@ -8737,7 +8738,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-dispute.js 1/5",
      "screen-id.js 1/5",
      "screens.js 1/6",
@@ -8758,8 +8759,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5063,
-   "hash": "ffa44464ffc2fb1f",
+   "line": 5161,
+   "hash": "92b767d1356f7beb",
    "does": "",
    "errors": {
     "count": 0,
@@ -8775,7 +8776,8 @@
    "reads": [
     "chit_header",
     "chit_messages",
-    "chit_status"
+    "chit_status",
+    "ctp_event_out"
    ],
    "writes": [
     "state_log"
@@ -8844,12 +8846,12 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-chit2.js 1/13",
      "cap-crm-record.js 1/7",
      "cap-dispute.js 1/5",
      "cap-intake.js 1/6",
-     "core.js 1/50",
+     "core.js 1/37",
      "rail-thread.js 1/2",
      "screens.js 1/6"
     ]
@@ -8865,10 +8867,32 @@
    "key": "GET /api/chits/:chit_id/proposals",
    "method": "GET",
    "path": "/api/chits/:chit_id/proposals",
-   "owner_area": "chit-proposals",
+   "owner_area": "chits",
+   "owner_agent": "cb-rail",
    "file": "routes/chit-proposals.js",
    "line": 55,
    "hash": "bcb64b42baacd216",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -8910,7 +8934,20 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 2,
+    "wire": 5,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
   },
   {
    "key": "GET /api/chits/:chit_id/raida",
@@ -8919,8 +8956,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3990,
-   "hash": "5314575a13d964fd",
+   "line": 4067,
+   "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
     "count": 0,
@@ -9009,7 +9046,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4101,
+   "line": 4178,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -9278,7 +9315,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5659,
+   "line": 5753,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -9376,7 +9413,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2811,
+   "line": 2865,
    "hash": "55d4d0593ffb2a8c",
    "does": "",
    "errors": {
@@ -9451,7 +9488,7 @@
     "trips": 3,
     "wire": 7,
     "screens": [
-     "app.html 3/140",
+     "app.html 3/132",
      "cap-admin.js 3/118"
     ]
    },
@@ -9469,7 +9506,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2986,
+   "line": 3061,
    "hash": "043cd9e70f06789d",
    "does": "",
    "errors": {
@@ -9547,7 +9584,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "authority-forms.html 2/4",
      "cap-admin.js 2/118"
     ]
@@ -9566,7 +9603,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3173,
+   "line": 3248,
    "hash": "54cb3e4dc8ed64b1",
    "does": "",
    "errors": {
@@ -9636,7 +9673,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -9653,8 +9690,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3972,
-   "hash": "aa60ca38a2849a85",
+   "line": 4049,
+   "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
     "count": 0,
@@ -9712,10 +9749,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "da017925ba4b62d2"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -9741,7 +9779,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3812,
+   "line": 3889,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -9827,7 +9865,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3822,
+   "line": 3899,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -9915,7 +9953,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3864,
+   "line": 3941,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -10000,7 +10038,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3929,
+   "line": 4006,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -10090,8 +10128,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2891,
-   "hash": "bf8ab9c162ab85dc",
+   "line": 2960,
+   "hash": "bbc26aca0dcca968",
    "does": "",
    "errors": {
     "count": 0,
@@ -10151,10 +10189,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bbc26aca0dcca968"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "till.html"
@@ -10164,7 +10203,7 @@
     "trips": 1,
     "wire": 5,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "till.html 1/48"
     ]
    },
@@ -10182,7 +10221,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2744,
+   "line": 2798,
    "hash": "81a3de9166377e50",
    "does": "",
    "errors": {
@@ -10273,13 +10312,13 @@
     "trips": 1,
     "wire": 5,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "authority-forms.html 1/4",
      "cap-admin.js 1/118",
      "cap-bank.js 1/4",
      "cap-connector.js 1/11",
      "cap-crm-groups.js 1/10",
-     "cap-marketing.js 1/6",
+     "cap-marketing.js 1/5",
      "cap-mis.js 1/3",
      "cap-repeat.js 1/7",
      "rail-advice.js 1/3",
@@ -10562,7 +10601,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3200,
+   "line": 3275,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -10635,7 +10674,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-folders.js 0/22",
      "cap-mis.js 0/3"
     ]
@@ -10982,7 +11021,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-workforce.js 1/16"
+     "cap-workforce.js 1/11"
     ]
    },
    "measured": {
@@ -11353,7 +11392,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-admin.js 1/118",
      "cap-settings.js 1/65",
      "screen-id.js 1/5",
@@ -11533,7 +11572,7 @@
     "trips": 1,
     "wire": 8,
     "screens": [
-     "cap-crm.js 1/8"
+     "cap-crm.js 1/6"
     ]
    },
    "measured": {
@@ -11620,12 +11659,12 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 3,
+    "trips": 1,
     "wire": 14,
     "screens": [
-     "cap-crm-leads.js 3/3",
-     "cap-crm.js 3/8",
-     "cap-finance-terms.js 3/5"
+     "cap-crm-leads.js 1/1",
+     "cap-crm.js 1/6",
+     "cap-finance-terms.js 1/3"
     ]
    },
    "measured": {
@@ -11916,7 +11955,7 @@
     "wire": 11,
     "screens": [
      "cap-crm-record.js 1/7",
-     "cap-crm.js 1/8"
+     "cap-crm.js 1/6"
     ]
    },
    "measured": {
@@ -12111,7 +12150,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 137,
+   "line": 210,
    "hash": "59e047fa21d05e3f",
    "does": "",
    "errors": {
@@ -12178,7 +12217,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 50,
     "wire": null,
     "screens": []
    },
@@ -12273,10 +12312,10 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-categories.js 1/6",
      "cap-catsetup.js 1/12",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -12370,7 +12409,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-categories.js 1/6"
     ]
    },
@@ -12469,7 +12508,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2413,
+   "line": 2352,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -12555,7 +12594,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 510,
+   "line": 449,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -12639,7 +12678,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 537,
+   "line": 476,
    "hash": "923ae667956b75ae",
    "does": "",
    "errors": {
@@ -12721,14 +12760,14 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "avatar.js 2/2",
      "cap-admin.js 2/118",
      "cap-country.js 2/8",
      "cap-finance-returns.js 2/2",
      "cap-print.js 2/13",
      "cap-shop.js 2/14",
-     "cap-workforce.js 2/16",
+     "cap-workforce.js 2/11",
      "catalogue.html 2/2",
      "till.html 2/48"
     ]
@@ -12747,7 +12786,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 894,
+   "line": 833,
    "hash": "b43d5b8b4da152b9",
    "does": "",
    "errors": {
@@ -12835,7 +12874,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1728,
+   "line": 1667,
    "hash": "11720064f2b88a42",
    "does": "",
    "errors": {
@@ -12911,7 +12950,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -12928,7 +12967,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 481,
+   "line": 420,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -13020,7 +13059,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1618,
+   "line": 1557,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -13094,7 +13133,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -13111,7 +13150,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1482,
+   "line": 1421,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -13200,7 +13239,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1466,
+   "line": 1405,
    "hash": "c0ac046521b15eac",
    "does": "",
    "errors": {
@@ -13268,7 +13307,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -13285,23 +13324,22 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 364,
-   "hash": "5ad0154eda5f0382",
+   "line": 370,
+   "hash": "72535ba03adc05e5",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     404,
      500
     ],
     "codes": []
    },
-   "reads": [
-    "identities"
-   ],
+   "reads": [],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -13345,10 +13383,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "72535ba03adc05e5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-crm.js"
@@ -13358,9 +13397,88 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "cap-crm.js 0/8"
+     "app.html 0/132",
+     "cap-crm.js 0/6"
     ]
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "GET /api/entities/search/places",
+   "method": "GET",
+   "path": "/api/entities/search/places",
+   "owner_area": "entities",
+   "owner_agent": "cb-network",
+   "file": "routes/entities.js",
+   "line": 387,
+   "hash": "01d70f4bd8eeb16d",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": false,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body"
+   ],
+   "human": {
+    "names_clear": null,
+    "sentence_plain": null,
+    "backward_compatible": null,
+    "signed_off_by_date": null,
+    "lifecycle": null
+   },
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 1,
+    "screens": []
    },
    "measured": {
     "server_ms_p50": null,
@@ -13376,7 +13494,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 526,
+   "line": 465,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -13460,7 +13578,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1289,
+   "line": 1228,
    "hash": "15ee27fbadd385d3",
    "does": "",
    "errors": {
@@ -13622,7 +13740,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/50",
+     "core.js 0/37",
      "promo.html 0/15",
      "rail-bell.js 0/4",
      "till.html 0/48"
@@ -13713,7 +13831,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/50",
+     "core.js 0/37",
      "promo.html 0/15",
      "rail-bell.js 0/4",
      "till.html 0/48"
@@ -14950,7 +15068,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-messages.js 1/4",
      "cap-worklist.js 1/9",
      "screens.js 1/6"
@@ -15883,7 +16001,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-readiness.js 0/22"
+     "cap-readiness.js 0/19"
     ]
    },
    "measured": {
@@ -16048,10 +16166,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 5,
-    "wire": 13,
+    "trips": 2,
+    "wire": 4,
     "screens": [
-     "cap-readiness.js 5/22"
+     "cap-readiness.js 2/19"
     ]
    },
    "measured": {
@@ -16138,9 +16256,9 @@
     "trips": 4,
     "wire": 10,
     "screens": [
-     "app.html 4/140",
+     "app.html 4/132",
      "cap-print.js 4/13",
-     "cap-readiness.js 4/22",
+     "cap-readiness.js 4/19",
      "cap-shop.js 4/14"
     ]
    },
@@ -16393,7 +16511,7 @@
     "screens": [
      "cap-admin.js 8/118",
      "cap-definitions.js 8/15",
-     "cap-readiness.js 8/22"
+     "cap-readiness.js 8/19"
     ]
    },
    "measured": {
@@ -16485,7 +16603,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -16663,7 +16781,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "app.html 2/140"
+     "app.html 2/132"
     ]
    },
    "measured": {
@@ -18311,10 +18429,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 3,
+    "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-marketing.js 3/6"
+     "cap-marketing.js 2/5"
     ]
    },
    "measured": {
@@ -19105,7 +19223,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "app.html 3/140",
+     "app.html 3/132",
      "rail-bell.js 3/4"
     ]
    },
@@ -19413,9 +19531,9 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-books.js 1/26",
-     "cap-employees.js 1/10",
+     "cap-employees.js 1/5",
      "cap-tasks.js 1/7",
      "employees.html 1/1",
      "screen-id.js 1/5",
@@ -19753,7 +19871,7 @@
     "trips": 2,
     "wire": 9,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "cap-catalogue.js 2/10",
      "cap-categories.js 2/6",
      "cap-catsetup.js 2/12",
@@ -19942,7 +20060,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "catalogue-lines.js 1/20"
     ]
    },
@@ -20032,7 +20150,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "app.html 3/140",
+     "app.html 3/132",
      "catalogue-lines.js 3/20"
     ]
    },
@@ -20297,7 +20415,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catsetup.js 0/12",
      "catalogue-lines.js 0/20"
     ]
@@ -20667,7 +20785,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 670,
+   "line": 705,
    "hash": "dd816c613da54877",
    "does": "",
    "errors": {
@@ -20740,7 +20858,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "cap-definitions.js 2/15"
     ]
    },
@@ -20758,7 +20876,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 731,
+   "line": 766,
    "hash": "283ad24d6c24e087",
    "does": "",
    "errors": {
@@ -20846,7 +20964,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 663,
+   "line": 698,
    "hash": "d18c205627345524",
    "does": "",
    "errors": {
@@ -20914,7 +21032,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-definitions.js 1/15"
     ]
    },
@@ -20932,7 +21050,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 993,
+   "line": 1028,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -21014,7 +21132,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1005,
+   "line": 1040,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -21098,8 +21216,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 234,
-   "hash": "89e50658703656e5",
+   "line": 258,
+   "hash": "c9ca7ff127c5c7e7",
    "does": "",
    "errors": {
     "count": 0,
@@ -21113,6 +21231,7 @@
    "reads": [
     "entity_schemas",
     "identities",
+    "installation",
     "party_tax_id",
     "supplier_list"
    ],
@@ -21175,7 +21294,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "app.html 2/140",
+     "app.html 2/132",
      "cap-admin.js 2/118",
      "cap-chit2.js 2/13",
      "cap-suppliers.js 2/3"
@@ -21195,8 +21314,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 606,
-   "hash": "07e52039f4b1be88",
+   "line": 638,
+   "hash": "dd765b9a6933027e",
    "does": "",
    "errors": {
     "count": 0,
@@ -21270,7 +21389,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-chit2.js 1/13"
     ]
    },
@@ -21288,8 +21407,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 474,
-   "hash": "17646a9cbbf08ec2",
+   "line": 508,
+   "hash": "87639ef2aa0887f7",
    "does": "",
    "errors": {
     "count": 0,
@@ -21349,10 +21468,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "87639ef2aa0887f7"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -21361,7 +21481,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -21622,7 +21742,7 @@
     "trips": 3,
     "wire": 6,
     "screens": [
-     "app.html 3/140",
+     "app.html 3/132",
      "cap-catalogue.js 3/10",
      "cap-catsetup.js 3/12"
     ]
@@ -25883,9 +26003,9 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "cap-employees.js 2/10",
-     "cap-workforce.js 2/16",
-     "core.js 2/50"
+     "cap-employees.js 2/5",
+     "cap-workforce.js 2/11",
+     "core.js 2/37"
     ]
    },
    "measured": {
@@ -26284,7 +26404,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -26468,7 +26588,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-crm.js 1/8"
+     "cap-crm.js 1/6"
     ]
    },
    "measured": {
@@ -26485,7 +26605,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1261,
+   "line": 1200,
    "hash": "e0c040a82e4ebfc4",
    "does": "",
    "errors": {
@@ -26575,7 +26695,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 867,
+   "line": 806,
    "hash": "7d19b7065fef8cc8",
    "does": "",
    "errors": {
@@ -26665,7 +26785,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 907,
+   "line": 846,
    "hash": "e55ea05cc2141a4a",
    "does": "",
    "errors": {
@@ -26749,7 +26869,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 861,
+   "line": 800,
    "hash": "3a7c9f99a608bfbf",
    "does": "",
    "errors": {
@@ -26824,7 +26944,7 @@
     "wire": 0,
     "screens": [
      "avatar.js 0/2",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -26841,7 +26961,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 492,
+   "line": 431,
    "hash": "e190a37baf2cd8ee",
    "does": "",
    "errors": {
@@ -26939,7 +27059,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 940,
+   "line": 879,
    "hash": "21b4715aa77e270e",
    "does": "",
    "errors": {
@@ -27022,12 +27142,12 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-admin.js 1/118",
      "cap-country.js 1/8",
      "cap-network.js 1/3",
      "cap-shop.js 1/14",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -27121,7 +27241,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -27311,12 +27431,12 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catalogue.js 0/10",
      "cap-categories.js 0/6",
      "catalogue-lines.js 0/20",
      "combo-mode.js 0/5",
-     "core.js 0/50",
+     "core.js 0/37",
      "till.html 0/48"
     ]
    },
@@ -27512,7 +27632,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 914,
+   "line": 949,
    "hash": "05dd04b81445505f",
    "does": "",
    "errors": {
@@ -27589,7 +27709,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-books.js 0/26",
      "cap-crm-record.js 0/7"
     ]
@@ -27608,7 +27728,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 321,
+   "line": 355,
    "hash": "991e34211939bebf",
    "does": "",
    "errors": {
@@ -27693,11 +27813,11 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-books.js 0/26",
      "cap-crm-record.js 0/7",
      "cap-suppliers.js 0/3",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -28343,9 +28463,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "cap-employees.js 0/10",
-     "cap-workforce.js 0/16"
+     "app.html 0/132",
+     "cap-employees.js 0/5",
+     "cap-workforce.js 0/11"
     ]
    },
    "measured": {
@@ -28440,7 +28560,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-workforce.js 1/16"
+     "cap-workforce.js 1/11"
     ]
    },
    "measured": {
@@ -28600,7 +28720,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -28677,7 +28797,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -28940,7 +29060,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-assist.js 0/2",
      "screen-id.js 0/5",
      "tasks.html 0/2"
@@ -29039,7 +29159,7 @@
     "trips": 6,
     "wire": 12,
     "screens": [
-     "app.html 6/140"
+     "app.html 6/132"
     ]
    },
    "measured": {
@@ -29127,7 +29247,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -29213,7 +29333,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -29389,10 +29509,10 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-admin.js 0/118",
      "cap-assist.js 0/2",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -29495,8 +29615,8 @@
    "owner_area": "attachments",
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
-   "line": 38,
-   "hash": "f0ae6bbcf8009b62",
+   "line": 39,
+   "hash": "354b8240e6586f25",
    "does": "",
    "errors": {
     "count": 0,
@@ -29572,7 +29692,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "attach-ui.js 0/0"
     ]
    },
@@ -33669,7 +33789,7 @@
     "wire": 3,
     "screens": [
      "cap-finance-cheques.js 1/1",
-     "cap-finance-terms.js 1/5"
+     "cap-finance-terms.js 1/3"
     ]
    },
    "measured": {
@@ -33958,7 +34078,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "intake.html 1/5"
     ]
    },
@@ -34638,7 +34758,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -35124,7 +35244,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -35938,12 +36058,13 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4381,
-   "hash": "af07e17fde45da9c",
+   "line": 4465,
+   "hash": "cb982f9593677caf",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      404,
      409,
@@ -35974,7 +36095,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36007,7 +36128,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "af07e17fde45da9c"
+    "stale_since": "cb982f9593677caf"
    },
    "status": "partial",
    "callers": [
@@ -36019,7 +36140,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "workflow.js 1/1"
     ]
    },
@@ -36037,7 +36158,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5911,
+   "line": 6005,
    "hash": "cb34c7ed90a137a9",
    "does": "",
    "errors": {
@@ -36116,9 +36237,9 @@
     "trips": 1,
     "wire": 7,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-chit2.js 1/13",
-     "core.js 1/50",
+     "core.js 1/37",
      "screens.js 1/6"
     ]
    },
@@ -36136,7 +36257,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4327,
+   "line": 4404,
    "hash": "4063fb6f59ac6ff8",
    "does": "",
    "errors": {
@@ -36233,7 +36354,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4721,
+   "line": 4818,
    "hash": "ee3617b9ff3ada02",
    "does": "",
    "errors": {
@@ -36312,7 +36433,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-admin.js 1/118"
     ]
    },
@@ -36330,8 +36451,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3765,
-   "hash": "fce2b3aa9996ee1a",
+   "line": 3842,
+   "hash": "f9d325bb11b7f5e6",
    "does": "",
    "errors": {
     "count": 0,
@@ -36393,7 +36514,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fce2b3aa9996ee1a"
+    "stale_since": "f9d325bb11b7f5e6"
    },
    "status": "partial",
    "callers": [],
@@ -36417,7 +36538,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4135,
+   "line": 4212,
    "hash": "e275be90e73d1615",
    "does": "",
    "errors": {
@@ -36520,8 +36641,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5155,
-   "hash": "a58a2860682470dd",
+   "line": 5357,
+   "hash": "113fe61adca266eb",
    "does": "",
    "errors": {
     "count": 0,
@@ -36608,7 +36729,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-crm-record.js 0/7",
      "cap-dispute.js 0/5",
      "cap-legend.js 0/0",
@@ -36632,8 +36753,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4911,
-   "hash": "d5e42d1087e1fec2",
+   "line": 5007,
+   "hash": "8bfb5fe0058d1343",
    "does": "",
    "errors": {
     "count": 0,
@@ -36729,7 +36850,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4633,
+   "line": 4730,
    "hash": "e497f7a73e38b01a",
    "does": "",
    "errors": {
@@ -36806,7 +36927,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -36820,10 +36941,33 @@
    "key": "POST /api/chits/:chit_id/proposals",
    "method": "POST",
    "path": "/api/chits/:chit_id/proposals",
-   "owner_area": "chit-proposals",
+   "owner_area": "chits",
+   "owner_agent": "cb-rail",
    "file": "routes/chit-proposals.js",
    "line": 65,
    "hash": "bc5361b2419ec40c",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -36866,16 +37010,51 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 4,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
   },
   {
    "key": "POST /api/chits/:chit_id/proposals/:proposal_id/accept",
    "method": "POST",
    "path": "/api/chits/:chit_id/proposals/:proposal_id/accept",
-   "owner_area": "chit-proposals",
+   "owner_area": "chits",
+   "owner_agent": "cb-rail",
    "file": "routes/chit-proposals.js",
    "line": 85,
    "hash": "7ac3c62df99d299d",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -36917,16 +37096,52 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 4,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
   },
   {
    "key": "POST /api/chits/:chit_id/proposals/:proposal_id/counter",
    "method": "POST",
    "path": "/api/chits/:chit_id/proposals/:proposal_id/counter",
-   "owner_area": "chit-proposals",
+   "owner_area": "chits",
+   "owner_agent": "cb-rail",
    "file": "routes/chit-proposals.js",
    "line": 88,
    "hash": "0143a811429ac986",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -36969,16 +37184,51 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 4,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
   },
   {
    "key": "POST /api/chits/:chit_id/proposals/:proposal_id/reject",
    "method": "POST",
    "path": "/api/chits/:chit_id/proposals/:proposal_id/reject",
-   "owner_area": "chit-proposals",
+   "owner_area": "chits",
+   "owner_agent": "cb-rail",
    "file": "routes/chit-proposals.js",
    "line": 86,
    "hash": "6b32d0890d28f119",
+   "does": "",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
    "columns": {
     "schema_in": true,
     "schema_out": true,
@@ -37020,7 +37270,20 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "partial"
+   "status": "partial",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 4,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
   },
   {
    "key": "POST /api/chits/:chit_id/raida",
@@ -37029,7 +37292,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4004,
+   "line": 4081,
    "hash": "479526d135d780a1",
    "does": "",
    "errors": {
@@ -37120,7 +37383,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4060,
+   "line": 4137,
    "hash": "a2a7aa5d1d83d8de",
    "does": "",
    "errors": {
@@ -37210,7 +37473,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4080,
+   "line": 4157,
    "hash": "a6b86a1d6d491d8f",
    "does": "",
    "errors": {
@@ -37296,8 +37559,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3726,
-   "hash": "be798ba1eee325c9",
+   "line": 3803,
+   "hash": "2a3bed85e5eb4b08",
    "does": "",
    "errors": {
     "count": 0,
@@ -37359,7 +37622,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "be798ba1eee325c9"
+    "stale_since": "2a3bed85e5eb4b08"
    },
    "status": "partial",
    "callers": [
@@ -37387,7 +37650,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5990,
+   "line": 6084,
    "hash": "de599def3fd8151d",
    "does": "",
    "errors": {
@@ -37465,8 +37728,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50"
+     "app.html 1/132",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -37483,7 +37746,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5969,
+   "line": 6063,
    "hash": "a4bc9af3df307f6e",
    "does": "",
    "errors": {
@@ -37560,8 +37823,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50"
+     "app.html 1/132",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -37578,7 +37841,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5951,
+   "line": 6045,
    "hash": "4b88a41af9602e17",
    "does": "",
    "errors": {
@@ -37655,8 +37918,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50"
+     "app.html 1/132",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -37673,7 +37936,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6221,
+   "line": 6317,
    "hash": "75e5de25ab8a058b",
    "does": "",
    "errors": {
@@ -37752,8 +38015,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "core.js 0/50"
+     "app.html 0/132",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -37770,7 +38033,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3950,
+   "line": 4027,
    "hash": "40945af1720316ac",
    "does": "",
    "errors": {
@@ -37856,7 +38119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3919,
+   "line": 3996,
    "hash": "4da9aa2267f6a5f5",
    "does": "",
    "errors": {
@@ -37946,7 +38209,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3940,
+   "line": 4017,
    "hash": "f562f4561052b995",
    "does": "",
    "errors": {
@@ -38036,7 +38299,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3836,
+   "line": 3913,
    "hash": "dc988275757c672d",
    "does": "",
    "errors": {
@@ -38128,7 +38391,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3854,
+   "line": 3931,
    "hash": "7631077758f063ea",
    "does": "",
    "errors": {
@@ -38218,7 +38481,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3896,
+   "line": 3973,
    "hash": "b7c1d5b5f6e060a8",
    "does": "",
    "errors": {
@@ -38308,7 +38571,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3875,
+   "line": 3952,
    "hash": "c3904d51d26c89aa",
    "does": "",
    "errors": {
@@ -38393,7 +38656,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 321,
+   "line": 322,
    "hash": "3c76bd61695c1790",
    "does": "",
    "errors": {
@@ -38474,8 +38737,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "cap-readiness.js 0/22",
+     "app.html 0/132",
+     "cap-readiness.js 0/19",
      "cap-tasks.js 0/7",
      "intake.html 0/5",
      "rail-advice.js 0/3",
@@ -38847,7 +39110,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-workforce.js 1/16"
+     "cap-workforce.js 1/11"
     ]
    },
    "measured": {
@@ -39976,7 +40239,7 @@
     "wire": 0,
     "screens": [
      "cap-crm-record.js 0/7",
-     "cap-crm.js 0/8",
+     "cap-crm.js 0/6",
      "cap-finance-cheques.js 0/1"
     ]
    },
@@ -40163,7 +40426,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-crm-leads.js 0/3"
+     "cap-crm-leads.js 0/1"
     ]
    },
    "measured": {
@@ -40251,7 +40514,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-crm-leads.js 0/3"
+     "cap-crm-leads.js 0/1"
     ]
    },
    "measured": {
@@ -40625,7 +40888,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-crm-leads.js 0/3"
+     "cap-crm-leads.js 0/1"
     ]
    },
    "measured": {
@@ -41076,11 +41339,11 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 234,
-   "hash": "616220abe11fb194",
+   "line": 307,
+   "hash": "91c80b5e339c1077",
    "does": "",
    "errors": {
-    "count": 9,
+    "count": 10,
     "statuses": [
      400,
      403,
@@ -41095,6 +41358,7 @@
      "CTP_ENVELOPE_REFUSED",
      "CTP_NO_INSTALLATION",
      "CTP_NO_RECIPIENT",
+     "CTP_NO_SENDER",
      "CTP_PEER_HOSTED_HERE",
      "CTP_PEER_REFUSED",
      "CTP_RECIPIENT_NOT_HERE",
@@ -41163,7 +41427,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 50,
     "wire": null,
     "screens": []
    },
@@ -41181,11 +41445,11 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 436,
-   "hash": "1678af41fa18644b",
+   "line": 520,
+   "hash": "8f5ca5da5f5416c7",
    "does": "",
    "errors": {
-    "count": 7,
+    "count": 8,
     "statuses": [
      400,
      403,
@@ -41193,6 +41457,7 @@
      500
     ],
     "codes": [
+     "CTP_NOT_THIS_INSTALLATION",
      "CTP_NO_INSTALLATION",
      "CTP_PEER_HOSTED_HERE",
      "CTP_PEER_KEY_UNREADABLE",
@@ -41204,8 +41469,10 @@
    },
    "reads": [
     "chit_header",
+    "chit_messages",
     "identities",
     "installation",
+    "membership_certificate",
     "population"
    ],
    "writes": [],
@@ -41262,7 +41529,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": null,
+    "trips": 50,
     "wire": null,
     "screens": []
    },
@@ -41366,7 +41633,7 @@
      "cap-categories.js 0/6",
      "cap-catsetup.js 0/12",
      "cap-definitions.js 0/15",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -41455,7 +41722,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -41472,7 +41739,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1702,
+   "line": 1641,
    "hash": "c303d29a52083779",
    "does": "",
    "errors": {
@@ -41549,7 +41816,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -41634,7 +41901,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-register.js 0/9",
      "cap-worklist.js 0/9",
      "intake.html 0/5",
@@ -41716,7 +41983,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "intake.html 0/5",
      "register-form.js 0/3"
     ]
@@ -41807,7 +42074,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/50",
+     "core.js 0/37",
      "promo.html 0/15",
      "rail-bell.js 0/4",
      "till.html 0/48"
@@ -41903,7 +42170,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-folders.js 0/22"
     ]
    },
@@ -42176,7 +42443,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -42708,10 +42975,10 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-assist.js 0/2",
      "cap-dispute.js 0/5",
-     "cap-readiness.js 0/22"
+     "cap-readiness.js 0/19"
     ]
    },
    "measured": {
@@ -42892,8 +43159,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-readiness.js 0/22",
-     "core.js 0/50"
+     "cap-readiness.js 0/19",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -43366,7 +43633,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -43458,8 +43725,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-readiness.js 0/22",
-     "core.js 0/50"
+     "cap-readiness.js 0/19",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -44404,7 +44671,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "app.html 50/140",
+     "app.html 50/132",
      "cap-admin.js 50/118",
      "cap-settings.js 50/65"
     ]
@@ -46135,7 +46402,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "rail-bell.js 0/4"
     ]
    },
@@ -46225,7 +46492,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "rail-bell.js 1/4"
     ]
    },
@@ -46773,7 +47040,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catalogue.js 0/10",
      "combo-mode.js 0/5"
     ]
@@ -46970,7 +47237,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "catalogue-lines.js 0/20"
     ]
    },
@@ -47244,7 +47511,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "catalogue-lines.js 0/20"
     ]
    },
@@ -47627,7 +47894,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catsetup.js 0/12",
      "catalogue-lines.js 0/20"
     ]
@@ -47719,7 +47986,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "catalogue-lines.js 0/20"
     ]
    },
@@ -47913,7 +48180,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 783,
+   "line": 818,
    "hash": "c6699df6864b635a",
    "does": "",
    "errors": {
@@ -47993,9 +48260,9 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-crm-record.js 0/7",
-     "cap-crm.js 0/8"
+     "cap-crm.js 0/6"
     ]
    },
    "measured": {
@@ -48012,7 +48279,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 892,
+   "line": 927,
    "hash": "e982cebe9da706c1",
    "does": "",
    "errors": {
@@ -48089,7 +48356,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140"
+     "app.html 1/132"
     ]
    },
    "measured": {
@@ -48106,8 +48373,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 107,
-   "hash": "2389702af63c287c",
+   "line": 129,
+   "hash": "b625a915557f7e09",
    "does": "",
    "errors": {
     "count": 0,
@@ -48188,10 +48455,10 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-books.js 0/26",
      "cap-crm-record.js 0/7",
-     "cap-crm.js 0/8",
+     "cap-crm.js 0/6",
      "cap-suppliers.js 0/3"
     ]
    },
@@ -51550,7 +51817,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -51733,7 +52000,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -52824,7 +53091,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "till.html 1/48"
     ]
    },
@@ -54400,9 +54667,9 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-employees.js 1/10",
-     "cap-workforce.js 1/16",
-     "core.js 1/50"
+     "cap-employees.js 1/5",
+     "cap-workforce.js 1/11",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -54499,12 +54766,12 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 5,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": [
-     "cap-employees.js 5/10",
-     "cap-workforce.js 5/16",
-     "core.js 5/50"
+     "cap-employees.js 0/5",
+     "cap-workforce.js 0/11",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -54692,10 +54959,10 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-admin.js 0/118",
      "cap-tasks.js 0/7",
-     "core.js 0/50",
+     "core.js 0/37",
      "workflow.js 0/1"
     ]
    },
@@ -54789,11 +55056,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 8,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": [
-     "app.html 8/140",
-     "core.js 8/50"
+     "app.html 0/132",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -54983,7 +55250,7 @@
     "wire": 2,
     "screens": [
      "cap-admin.js 2/118",
-     "core.js 2/50"
+     "core.js 2/37"
     ]
    },
    "measured": {
@@ -55353,7 +55620,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catsetup.js 0/12"
     ]
    },
@@ -55371,8 +55638,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5518,
-   "hash": "c51f1ee9a3f9e58d",
+   "line": 5669,
+   "hash": "acbd70ead8f48de2",
    "does": "",
    "errors": {
     "count": 1,
@@ -55393,8 +55660,7 @@
     "identities"
    ],
    "writes": [
-    "chit_header",
-    "state_log"
+    "chit_header"
    ],
    "money": false,
    "actions": [],
@@ -55443,7 +55709,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c51f1ee9a3f9e58d"
+    "stale_since": "acbd70ead8f48de2"
    },
    "status": "partial",
    "callers": [
@@ -55457,7 +55723,7 @@
     "wire": 0,
     "screens": [
      "cap-dispute.js 0/5",
-     "core.js 0/50",
+     "core.js 0/37",
      "screens.js 0/6"
     ]
    },
@@ -55475,7 +55741,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5803,
+   "line": 5897,
    "hash": "7c91c6607d810af7",
    "does": "",
    "errors": {
@@ -55553,8 +55819,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "core.js 0/50"
+     "app.html 0/132",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -55571,7 +55837,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5859,
+   "line": 5953,
    "hash": "ac2768c0c89bd282",
    "does": "",
    "errors": {
@@ -55651,8 +55917,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "core.js 0/50"
+     "app.html 0/132",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -55669,7 +55935,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5934,
+   "line": 6028,
    "hash": "9641c194ec49396a",
    "does": "",
    "errors": {
@@ -55747,8 +56013,8 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
-     "core.js 1/50"
+     "app.html 1/132",
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -55765,7 +56031,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4766,
+   "line": 4862,
    "hash": "bdc0ab6cc433cce6",
    "does": "",
    "errors": {
@@ -55867,7 +56133,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-assist.js 0/2",
      "cap-bank.js 0/4",
      "cap-books.js 0/26",
@@ -55876,15 +56142,15 @@
      "cap-country.js 0/8",
      "cap-crm-calls.js 0/3",
      "cap-crm-groups.js 0/10",
-     "cap-crm-leads.js 0/3",
+     "cap-crm-leads.js 0/1",
      "cap-crm-privacy.js 0/5",
      "cap-crm-record.js 0/7",
-     "cap-crm.js 0/8",
+     "cap-crm.js 0/6",
      "cap-dispute.js 0/5",
-     "cap-employees.js 0/10",
+     "cap-employees.js 0/5",
      "cap-finance-cheques.js 0/1",
      "cap-finance-returns.js 0/2",
-     "cap-marketing.js 0/6",
+     "cap-marketing.js 0/5",
      "cap-period.js 0/12",
      "cap-register.js 0/9",
      "cap-settings.js 0/65",
@@ -55892,7 +56158,7 @@
      "cap-suppliers.js 0/3",
      "cap-tasks.js 0/7",
      "chit-sheet.js 0/2",
-     "core.js 0/50",
+     "core.js 0/37",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
      "till.html 0/48"
@@ -55912,7 +56178,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4124,
+   "line": 4201,
    "hash": "bf8d67dc430c628c",
    "does": "",
    "errors": {
@@ -55988,7 +56254,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-books.js 1/26",
      "chit-sheet.js 1/2"
     ]
@@ -56007,8 +56273,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6064,
-   "hash": "1e84c1a78e82bbcf",
+   "line": 6158,
+   "hash": "0bb04dfd47616501",
    "does": "",
    "errors": {
     "count": 0,
@@ -56076,7 +56342,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "1e84c1a78e82bbcf"
+    "stale_since": "0bb04dfd47616501"
    },
    "status": "partial",
    "callers": [
@@ -56088,8 +56354,8 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
-     "core.js 0/50"
+     "app.html 0/132",
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -56286,10 +56552,10 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "app.html 1/140",
+     "app.html 1/132",
      "cap-categories.js 1/6",
      "cap-definitions.js 1/15",
-     "core.js 1/50"
+     "core.js 1/37"
     ]
    },
    "measured": {
@@ -56306,7 +56572,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1673,
+   "line": 1612,
    "hash": "bcdf0a12050562df",
    "does": "",
    "errors": {
@@ -56383,7 +56649,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140"
+     "app.html 0/132"
     ]
    },
    "measured": {
@@ -56400,7 +56666,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1592,
+   "line": 1531,
    "hash": "c36c30c620c32f6b",
    "does": "",
    "errors": {
@@ -56759,8 +57025,8 @@
     "trips": 5,
     "wire": 14,
     "screens": [
-     "cap-readiness.js 5/22",
-     "core.js 5/50"
+     "cap-readiness.js 5/19",
+     "core.js 5/37"
     ]
    },
    "measured": {
@@ -56857,7 +57123,7 @@
     "screens": [
      "cap-print.js 7/13",
      "cap-shop.js 7/14",
-     "core.js 7/50"
+     "core.js 7/37"
     ]
    },
    "measured": {
@@ -57151,7 +57417,7 @@
     "wire": 0,
     "screens": [
      "cap-network.js 0/3",
-     "core.js 0/50"
+     "core.js 0/37"
     ]
    },
    "measured": {
@@ -57320,7 +57586,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "catalogue-lines.js 0/20"
     ]
    },
@@ -57414,7 +57680,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "app.html 0/140",
+     "app.html 0/132",
      "cap-catalogue.js 0/10",
      "catalogue-lines.js 0/20"
     ]

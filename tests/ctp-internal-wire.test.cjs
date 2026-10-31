@@ -95,9 +95,10 @@ function mintWith(transport, place) {
     assert.ok(known, 'the refusal is not recognised, so the route would say Send failed (500)');
     assert.strictEqual(known.status, 409);
     assert.strictEqual(known.body.code, 'CTP_REFUSED');
-    assert.ok(/sit-au/.test(known.body.message) && /QA Rish Pty/.test(known.body.message), 'must name who: ' + known.body.message);
-    assert.ok(/no active business here called CBGHOST001/.test(known.body.message), "must give the far end's words");
-    assert.ok(/Nothing was sent/.test(known.body.message));
+    /* sit/run6 (RAIL-99 x RAIL-129 + Q19): the refusal names WHO from our own row; the far end's own words go to the log, never into the sentence (a value from outside is never echoed) */
+    assert.ok(/QA Rish Pty/.test(known.body.message), 'must name who: ' + known.body.message);
+    assert.ok(!/CBGHOST001/.test(known.body.message), "the far end's words are logged, not said: " + known.body.message);
+    assert.ok(/Nothing was written/.test(known.body.message) && err.refused === true);
   });
 
   await t('RAIL-99: nobody answers (timeout / unreachable) -> 502 CTP_UNREACHABLE, not 500', async () => {
@@ -282,7 +283,10 @@ function mintWith(transport, place) {
     global.fetch = async () => {
       const next = served.shift();
       if (next === 'down') throw Object.assign(new Error('refused'), { name: 'TypeError' });
-      return { ok: true, status: 200, text: async () => JSON.stringify({ ctp: '1', installation_key: 'sit-au', public_key: next }) };
+      /* RAIL-140 c (main): the manifest body is read through its stream, capped in bytes, so the stand-in serves a body reader */
+      const bytes = Buffer.from(JSON.stringify({ ctp: '1', installation_key: 'sit-au', public_key: next }));
+      let given = false;
+      return { ok: true, status: 200, body: { getReader: () => ({ read: async () => (given ? { done: true } : ((given = true), { done: false, value: bytes })), cancel: async () => {} }) } };
     };
     return dir;
   };
@@ -326,12 +330,19 @@ function mintWith(transport, place) {
     assert.ok(/signature did not verify[\s\S]{0,400}fresh: true/.test(src));
   });
 
+  /* sit/run6: RAIL-105's alreadyHeld (a unique-key fault read after the write) is replaced on main by RAIL-138 c deliverOnce (our copy read BEFORE the write); the behaviour it protected is pinned on deliverOnce */
   await t('RAIL-105: the same chit sent twice is accepted as a repeat (nothing written), a chit id held by another sender is not', async () => {
-    const dup = Object.assign(new Error('duplicate key'), { code: '23505' });
-    const held = (rows) => ({ query: async () => ({ rows: [] }), withEntity: async (id, fn) => fn({ query: async () => ({ rows }) }) });
-    assert.strictEqual(await load('routes/ctp.js', { '../db': held([{}]) }).alreadyHeld(dup, 'r1', 'c1', 's1'), true);
-    assert.strictEqual(await load('routes/ctp.js', { '../db': held([]) }).alreadyHeld(dup, 'r1', 'c1', 's1'), false, 'no copy of ours from that sender: a real fault');
-    assert.strictEqual(await load('routes/ctp.js', { '../db': held([{}]) }).alreadyHeld(new Error('disk'), 'r1', 'c1', 's1'), false, 'only a unique-key refusal can be a repeat');
+    const S1 = 'a1000000-0000-4000-8000-000000000001', S2 = 'a2000000-0000-4000-8000-000000000002';
+    let written = 0;
+    const held = (rows) => ({ '../db': { query: async () => ({ rows: [] }), withEntity: async (id, fn) => fn({ query: async () => ({ rows }) }) }, '../lib/mint': { deliver: async () => { written++; } } });
+    const opened = { chit_id: 'c1', header: { sender_entity_id: S1 } };
+    const copyOf = { sender_entity_id: S1 };
+    assert.deepStrictEqual(await load('routes/ctp.js', held([{ sender_entity_id: S1 }])).deliverOnce(opened, copyOf, 'sit-au', 'r1'), { repeat: true });
+    assert.strictEqual(written, 0, 'a repeat writes nothing');
+    const other = await load('routes/ctp.js', held([{ sender_entity_id: S2 }])).deliverOnce(opened, copyOf, 'sit-au', 'r1');
+    assert.ok(other.refusal && other.refusal.code === 'CTP_CHIT_ID_TAKEN' && other.refusal.status === 409, JSON.stringify(other));
+    assert.deepStrictEqual(await load('routes/ctp.js', held([])).deliverOnce(opened, copyOf, 'sit-au', 'r1'), { repeat: false });
+    assert.strictEqual(written + 0, 1, 'a chit not held yet is written once');
   });
 
   await t('RAIL-101: the add-supplier route calls the existing seam (no parallel route)', async () => {

@@ -281,7 +281,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
     W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, role: 'sender' }, { bridge_id: B_ME, role: 'to' }] };
     W.asked = true;
-    const mv = await chits.moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
+    const mv = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.strictEqual(mv.code, 200, JSON.stringify(mv.body));
     assert.deepStrictEqual(kinds().sort(), ['cancel_confirm', 'message', 'status:received:cancelled'].sort());
     assert.strictEqual(W.out.find((x) => x.kind === 'cancel_confirm').to_bridge_id, B_STUB);
@@ -291,7 +291,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
     W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB }, { bridge_id: B_ME }] };
     W.asked = false;
-    await chits.moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
+    await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'cancelled', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.ok(!kinds().includes('cancel_confirm'), kinds().join());
   });
   await t('assigning a chit back to pending is a status move and is told like one', async () => {
@@ -448,12 +448,12 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
   };
   const stubMessages = () => {
     const chitsPath = require.resolve(root('routes/chits.js'));
-    const real = chits.postMessageCopies;
-    chits.postMessageCopies = async (m) => {
+    const real = require(root('lib/chit-crossing')).postMessageCopies;
+    require(root('lib/chit-crossing')).postMessageCopies = async (m) => {
       W.msgs.push({ message_id: m.message_id, entity_id: ME }, { message_id: m.message_id, entity_id: LOCAL2 }); /* the fan-out writes a copy for every party here */
       return { message_id: m.message_id };
     };
-    return () => (chits.postMessageCopies = real);
+    return () => (require(root('lib/chit-crossing')).postMessageCopies = real);
   };
   await t('an arrived external message rings the people on the chit who are not the sender, once, with the local message bell (kind message, chit id, who)', async () => {
     resetWorld();
@@ -562,7 +562,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     resetWorld();
     let thrown = null;
     try {
-      await chits.postMessageCopies({ chit_id: CHIT, sender_entity_id: ME, sender_display_name: 'IN Plant', thread_type: 'external', message_text: 'y'.repeat(100000) });
+      await require(root('lib/chit-crossing')).postMessageCopies({ chit_id: CHIT, sender_entity_id: ME, sender_display_name: 'IN Plant', thread_type: 'external', message_text: 'y'.repeat(100000) });
     } catch (e) {
       thrown = e;
     }
@@ -604,7 +604,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
       W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'pending' }];
       W.header = { sender_entity_bridge_id: B_STUB, all_recipients: [{ bridge_id: B_STUB, entity_id: STUB, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }, { bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'cc' }] };
       W.senderId = STUB;
-      const mv = await chits.moveStatus(ME, CHIT, status, { id: ME, name: 'Asha' }, status === 'rejected' ? 'wrong item' : '', EDITOR);
+      const mv = await require(root('lib/chit-move')).moveStatus(ME, CHIT, status, { id: ME, name: 'Asha' }, status === 'rejected' ? 'wrong item' : '', EDITOR);
       assert.strictEqual(mv.code, 200, status + ' ' + JSON.stringify(mv.body));
       const bells = RUNG.filter((x) => x.evt.kind === 'status');
       assert.strictEqual(bells.length, 1, status);
@@ -614,7 +614,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
     resetWorld();
     RUNG.length = 0;
     W.status = [{ chit_id: CHIT, entity_id: ME, direction: 'received', current_status: 'accepted' }];
-    await chits.moveStatus(ME, CHIT, 'in_progress', { id: ME, name: 'Asha' }, '', EDITOR);
+    await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'in_progress', { id: ME, name: 'Asha' }, '', EDITOR);
     assert.strictEqual(RUNG.filter((x) => x.evt.kind === 'status').length, 0, 'in progress rings nobody');
   });
   await t('a status that arrives from another installation rings the local people on the chit once; a repeat rings nothing', async () => {
@@ -659,7 +659,7 @@ const kinds = () => W.out.map((r) => r.kind + (r.kind === 'status' ? ':' + r.eve
       W.header = { sender_entity_bridge_id: B_LOCAL2, all_recipients: [{ bridge_id: B_LOCAL2, entity_id: LOCAL2, role: 'sender' }, { bridge_id: B_ME, entity_id: ME, role: 'receiver' }] };
       W.senderId = LOCAL2;
       W.businessJson = dealType ? { deal_type: dealType } : {};
-      const mv = await chits.moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
+      const mv = await require(root('lib/chit-move')).moveStatus(ME, CHIT, 'accepted', { id: ME, name: 'Asha' }, '', EDITOR);
       assert.strictEqual(mv.code, 200, JSON.stringify(mv.body));
       assert.strictEqual(RUNG.filter((x) => x.evt.kind === 'status').length, dealType ? 1 : 0, String(dealType));
     }

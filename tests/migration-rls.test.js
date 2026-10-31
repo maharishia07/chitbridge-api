@@ -63,6 +63,15 @@ const ALLOWED = {
    * live state is checked by scripts/rls-census.cjs, which is the authority.
    */
   signup_context: 'closed by b265_signup_context_rls.sql — append-only, INSERT policy only',
+  /**
+   * ⚠️ b790's five network tables (DB-85) — b790 ran in production on 25 Oct and closes them in a DO-loop with format(), which this file-reading scanner cannot see;
+   * a ran migration is never edited, so b797_network_member_rls.sql restates ENABLE + FORCE + policies in plain text. Listed BY NAME, with the file that closes them.
+   */
+  membership_certificate: 'closed by b797_network_member_rls.sql (b790 closes it in a format() loop the scanner cannot read)',
+  network_revoked: 'closed by b797_network_member_rls.sql (as above)',
+  registry_change: 'closed by b797_network_member_rls.sql (as above); cb_app SELECT only',
+  registry_entry: 'closed by b797_network_member_rls.sql (as above)',
+  registry_cursor: 'closed by b797_network_member_rls.sql (as above)',
 };
 
 const files = [...WRITTEN.keys()].filter((f) => f.endsWith('.sql')).sort();
@@ -213,6 +222,16 @@ it('⭐ a table with RLS has at least one policy', () => {
     });
   });
   assert.strictEqual(mute.length, 0, 'RLS on with no policy at all: ' + mute.join(', '));
+});
+
+/** DB-85: the five tables the scanner cannot read in b790 are restated, ENABLE + FORCE + a policy each, in b797 — so the allow-list entries above are true */
+it('b797 closes the five network tables of b790 in plain text (ENABLE, FORCE, policy)', () => {
+  const sql = stripComments(fs.readFileSync(at('b797_network_member_rls.sql'), 'utf8'));
+  ['membership_certificate', 'network_revoked', 'registry_change', 'registry_entry', 'registry_cursor'].forEach((t) => {
+    assert.ok(new RegExp('ALTER\\s+TABLE\\s+' + t + '\\s+ENABLE\\s+ROW', 'i').test(sql), t + ' not enabled in b797');
+    assert.ok(new RegExp('ALTER\\s+TABLE\\s+' + t + '\\s+FORCE\\s+ROW', 'i').test(sql), t + ' not forced in b797');
+    assert.ok(new RegExp('CREATE\\s+POLICY\\s+\\w+\\s+ON\\s+' + t + '\\s', 'i').test(sql), t + ' has no policy in b797');
+  });
 });
 
 /**

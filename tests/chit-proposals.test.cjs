@@ -119,6 +119,8 @@ function rowsFor(sql, p) {
   if (/chit_line_delivered_qty/.test(s)) return [];
   if (/^SELECT business_json FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s)) return w.header[p[1]] ? [{ business_json: clone(w.header[p[1]].business_json) }] : [];
   if (/^SELECT role FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ role: 'sender' }];
+  /* sit/run6 (RAIL-128, main): the amend door first asks whether I hold a copy (holdsCopy), before the rail's verdict */
+  if (/^SELECT 1 FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return w.header[p[1]] ? [{ held: 1 }] : [];
   if (/^SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [w.ident[p[0]]] : [];
   if (/^SELECT country, gstn FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [{ country: w.ident[p[0]].country || null, gstn: null }] : [];
   if (/^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s)) return p[0][0] ? p[0].map((id) => w.ident[id]).filter(Boolean) : [];

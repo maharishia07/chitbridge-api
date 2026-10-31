@@ -48,7 +48,14 @@ require.cache[require.resolve(path.join(API, 'db'))] = { exports: {
   const src = fs.readFileSync(path.join(API, 'lib', 'books-hooks.js'), 'utf8');
   const n = (src.match(/closeDone\(entity/g) || []).length;
   ok('every end is wired: day post, day already posted, covered, late, bill-grain, day summary chit, week/month summary (>= 7 call sites)', n >= 7, 'sites ' + n);
-  ok('it goes through lib/chit-move moveStatus (no second status writer, no route reached from lib)', /require\('\.\/chit-move'\)\.moveStatus/.test(src) && !/require\('\.\.\/routes\/chits'\)/.test(src) && /^module\.exports = \{ moveStatus \}/m.test(fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8')) && !/router\.moveStatus/.test(CF.read(API)));
+  /* sit/run6 (RAIL-106): chit-move also exports the two cancel stamps and the bell; the rule is that none of them writes a status, only moveStatus does */
+  const chitMove = fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8');
+  const noSecondWriter = ['stampCancelRequested', 'stampCancelConfirmed', 'ringStatus'].every((name) => {
+    const at = chitMove.indexOf('function ' + name + '(');
+    const body = at < 0 ? '' : chitMove.slice(at, chitMove.indexOf('\n}\n', at));
+    return at >= 0 && !/SET\s+status\s*=|,\s*status\s*=/.test(body);
+  });
+  ok('it goes through lib/chit-move moveStatus (no second status writer, no route reached from lib)', /require\('\.\/chit-move'\)\.moveStatus/.test(src) && !/require\('\.\.\/routes\/chits'\)/.test(src) && /^module\.exports = \{ moveStatus\b/m.test(chitMove) && noSecondWriter && !/router\.moveStatus/.test(CF.read(API)));
 
   console.log('\n  ' + (pass + fail) + ' checks · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

@@ -611,3 +611,4 @@ router.openapi = {
 
 module.exports = router;
 module.exports.manifest = manifest;
+module.exports.deliverOnce = deliverOnce; /* tests/ctp-internal-wire: a repeat writes nothing, a chit id held by another sender is refused (RAIL-105 / RAIL-138 c) */

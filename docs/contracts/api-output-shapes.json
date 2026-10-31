@@ -6419,6 +6419,12 @@
           },
           "count": {
             "type": "number"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           }
         },
         "additionalProperties": false
@@ -6428,6 +6434,10 @@
         {
           "path": "results[]",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "answers[]",
+          "reason": "NET-39 (sit/run6): who answered the search Here and There and who did not, in words (lib/network-search), passed through"
         }
       ],
       "example": {

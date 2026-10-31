@@ -51,7 +51,7 @@ function rowsFor(sql, p) {
   if (/FROM chit_header h/.test(s) && /WHERE h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return COPY ? [Object.assign({ current_status: CUR }, COPY)] : [];
   /* moveStatus */
   if (/SELECT current_status/.test(s) && /FROM chit_status/.test(s) && /direction = 'received'/.test(s)) return [{ current_status: CUR }];
-  if (/SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return HDR ? [HDR] : [];
+  if (/SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) /* sit/run6: the move header also reads all_recipients (RAIL-106 bell), same row */ return HDR ? [HDR] : [];
   /* the chit read */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return HDR ? [HDR] : [];
   if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return [{ detail_type: 'invoice', line_items: [{ line_id: 'l1', particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }] }];

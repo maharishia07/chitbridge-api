@@ -21448,11 +21448,11 @@
      "status": 400,
      "body_keys": {
       "error": "Failed to record cost",
-      "message": "Something went wrong — please try again."
+      "message": "No rows."
      },
      "fixture": {
       "error": "Failed to record cost",
-      "message": "Something went wrong — please try again."
+      "message": "No rows."
      }
     },
     {
@@ -22868,11 +22868,11 @@
      "status": 409,
      "body_keys": {
       "error": "Reprice failed",
-      "message": "Something went wrong — please try again."
+      "message": "No."
      },
      "fixture": {
       "error": "Reprice failed",
-      "message": "Something went wrong — please try again."
+      "message": "No."
      }
     },
     {

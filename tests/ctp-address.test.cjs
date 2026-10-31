@@ -140,7 +140,9 @@ function loadAddress(dbStub) {
       assert.ok(/await sendAway\(/.test(guard) && /transport\.send/.test(src), 'remote copies must be sent before the local write');
       /* RAIL-99: the refusal is built by farEndFailure (named codes CTP_REFUSED / CTP_UNREACHABLE, in words that say nothing was saved) */
       const whole = src;
-      assert.ok(/throw farEndFailure\(/.test(src), 'it must throw, not warn — half a chit is worse than none');
+      /* sit/run6: the crossing moved into sendAway (RAIL-98/99), which builds the failure, logs it (refusedCrossing) and throws it */
+      const away = src.slice(src.indexOf('async function sendAway('));
+      assert.ok(/const failure = farEndFailure\(/.test(away) && /throw failure;/.test(away.slice(0, away.indexOf('\n}\n'))), 'it must throw, not warn — half a chit is worse than none');
       assert.ok(/CTP_REFUSED/.test(whole) && /CTP_UNREACHABLE/.test(whole), 'a refusal must carry a named code');
       assert.ok(/nothing was saved here/.test(whole), 'and the message must say the local side was not written');
     });
@@ -296,7 +298,8 @@ function loadAddress(dbStub) {
     ok('deliver() refuses an unresolved copy before the remote branch and before chit_deliver', () => {
       const refuseAt = body.indexOf('awayCopies(copies, addressed)');
       assert.ok(refuseAt > 0, 'deliver() does not check for unresolved copies');
-      assert.ok(refuseAt < body.indexOf('transport.send') && refuseAt < body.indexOf("'SELECT chit_deliver"), 'the refusal must come before any send or write');
+      /* sit/run6: the send is sendAway's (RAIL-98/99), called from deliver() */
+      assert.ok(body.indexOf('sendAway(') > 0 && refuseAt < body.indexOf('sendAway(') && refuseAt < body.indexOf("'SELECT chit_deliver"), 'the refusal must come before any send or write');
     });
     const fn = src.slice(src.indexOf('function refuseUnresolved('));
     const helper = fn.slice(0, fn.indexOf('\n}\n') + 1);

@@ -9,7 +9,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const read = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').replace(/\r\n/g, '\n');
-const chits = read('routes/chits.js');
+const chits = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')); /* the ONE list of chits files */
 const copy = read('lib/tax-copy.js');
 const fnBody = (src, sig) => { const d = src.slice(src.indexOf(sig)); return d.slice(0, d.indexOf('\n}\n') + 1); };
 

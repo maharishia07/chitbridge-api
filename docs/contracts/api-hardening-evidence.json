@@ -13,6 +13,9 @@
   "GET /api/entities/search": {
    "output_allowlist": true
   },
+  "GET /api/entities/search/places": {
+   "output_allowlist": true
+  },
   "GET /api/entities/policy": {
    "output_allowlist": true
   },
@@ -1196,12 +1199,6 @@
   },
   "GET /health": {
    "output_allowlist": true
-  },
-  "GET /api/entities/search/places": {
-   "output_allowlist": true
-  },
-  "POST /api/relationships/suppliers": {
-   "strict_input": true
   }
  }
 }

@@ -58,6 +58,8 @@ function rows(s, p, ctx) {
   /* B: the reply */
   if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s)) return ctx.header ? [ctx.header] : [];
   if (/FROM installation\s+WHERE hosted_locally = false/.test(s) || /FROM installation WHERE hosted_locally = false/.test(s)) return [{ installation_key: 'mx-1', ctp_endpoint: 'https://mx.example/api/ctp/deliver', region: null, active: true }];
+  /* sit/run6 (RAIL-142, main): the topology reads EVERY installation row (hosted_locally, domain, label too) and keeps the remote ones */
+  if (/^SELECT installation_key, ctp_endpoint, region, active, hosted_locally, domain, label FROM installation$/.test(s.trim())) return [{ installation_key: 'mx-1', ctp_endpoint: 'https://mx.example/api/ctp/deliver', region: null, active: true, hosted_locally: false, domain: 'mx.example.com', label: null }];
   if (/ops\.f_installation_of/.test(s)) return [{ installation_key: 'mx-1' }];
   if (/coalesce\(max\(seq\), 0\) \+ 1/.test(s)) return [{ seq: 1 }];
   return [];

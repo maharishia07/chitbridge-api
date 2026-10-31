@@ -156,7 +156,10 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     console.log('\n── never changed after send ──');
     const W = laterWrites();
     ok('there are later business_json writes to check (' + W.length + ' found)', W.length >= 5, JSON.stringify(W));
-    const bad = W.filter((w) => w.assign || /'page'|\{page\}/.test(w.rhs) || !/^(\(\s*)?COALESCE\(\s*business_json/i.test(w.rhs.trim()));
+    /* sit/run6 (RAIL-106 lib/chit-proposal): jsonb_set(COALESCE(business_json…), '{its key}', …) is a merge-patch of its own key too, and so is a CASE whose every arm patches COALESCE(business_json…) */
+    const patchOf = (rhs) => /^(\(\s*)?COALESCE\(\s*business_json/i.test(rhs) || /^jsonb_set\(\s*COALESCE\(\s*business_json\s*,\s*'\{\}'::jsonb\s*\)\s*,\s*'\{\w+\}'/i.test(rhs)
+      || (/^CASE WHEN /i.test(rhs) && rhs.split(/\b(?:THEN|ELSE)\b/i).slice(1).every((arm) => patchOf(arm.replace(/\bEND\b[\s\S]*$/i, '').trim())));
+    const bad = W.filter((w) => w.assign || /'page'|\{page\}/.test(w.rhs) || !patchOf(w.rhs.trim()));
     ok('…every one is a merge-patch of its own key onto COALESCE(business_json…) — none names page, none replaces it whole', bad.length === 0, JSON.stringify(bad));
     const route = CF.read(API);
     ok('no route offers a PATCH on a chit (the header is written once, at send)', !/router\.patch\(/.test(route));

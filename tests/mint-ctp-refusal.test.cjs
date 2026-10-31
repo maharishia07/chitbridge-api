@@ -24,6 +24,8 @@ stub('ctpenvelope', { build: () => ({ sealed: true }) });
 stub('ctptransport', { send: async () => ({ accepted: false, status: 403, why: HOSTILE_WHY }) });
 const db = require('../db');
 db.withEntity = async () => { delivered++; return { rows: [] }; }; /* any local write would land here */
+/* sit/run6 (RAIL-98): the recipient's bridge id and name are read from its identities row before the envelope is built (a read, never a write) */
+db.query = async (sql) => (/FROM identities WHERE identity_id = $1/.test(String(sql)) ? { rows: [{ bridge_id: 'B-FAR', display_name: 'Far Traders' }] } : { rows: [] });
 const mint = require('../lib/mint');
 const { known } = require('../lib/knownerr');
 

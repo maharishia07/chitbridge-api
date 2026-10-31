@@ -125,7 +125,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_ADDRESS_CLASH | 409 | Id already used here | A different business here already uses that id, so the one you typed cannot be added under it. | Ask them to share their link, and tell us. | ctp | 2026-10-25 |
 | CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
-| CTP_REFUSED | 409 | The other business refused it | The other installation answered no, and the chit was not sent or saved. | Read the reason, fix the chit or the address, send again. | ctp | 2026-10-25 |
 | SUPPLIER_SELLS_ONLY_HERE | 409 | Sells only on their own ChitBridge | That business sells only on its own ChitBridge, so it cannot be your supplier from here. | Ask them to sell outside, or find another supplier. | ctp | 2026-10-25 |
 | SUPPLIER_INVALID | 400 | Supplier details not valid | Something about the supplier you typed is missing or not valid. | Read the line shown, change it and try again. | relationships | 2026-10-25 |
 | AMEND_LINE_NEEDS_ITEM | 400 | Replacement line has no item | A replacement line needs an item. To remove the line, send line: null. | Name the item on the line, or remove the line. | chits | 2026-10-25 |
@@ -144,7 +143,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_QUERY_FAILED | 500 | Question failed | This installation could not answer just now. | Try again later. | ctp | 2026-10-23 |
 | CTP_QUERY_REFUSED | 403 | Question refused | The question was not signed by the installation that sent it. | Check the asking installation signs with the key it publishes. | ctp | 2026-10-23 |
 | CTP_RECIPIENT_NOT_HERE | 404 | Recipient not here | There is no active business here with that bridge id. | Check the address of the business. | ctp | 2026-10-23 |
-| CTP_REFUSED | 409 | Not delivered | Another installation did not take its copy of this chit. Nothing was written. | Try again later. If it keeps happening, check the two installations name each other as peers. | rail | 2026-10-28 |
+| CTP_REFUSED | 409 | Not delivered | Another installation did not take its copy of this chit (for the business named). Nothing was written. | Check the business and its address, then send again. If it keeps happening, check the two installations name each other as peers. | rail | 2026-10-28 |
 | CTP_SENDER_NOT_AN_ID | 400 | Sender not named by an id | The chit names the business that sent it by something that is not an id. | The sending installation must name its sender by id. | ctp | 2026-10-28 |
 | CTP_SENDER_NOT_THEIRS | 403 | Sender not theirs to name | The chit names a sender that does not belong to the installation that signed it. | The sending installation may only send for its own businesses. | ctp | 2026-10-28 |
 | CTP_CHIT_ID_TAKEN | 409 | Chit id already here | A chit with this id is already here, from a different sender. | Chit ids are minted once; the sender should mint a new id, not reuse one. | ctp | 2026-10-28 |

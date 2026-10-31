@@ -1399,6 +1399,15 @@ async function sendMoney(st, req, res) {
   Object.assign(st, { moneyBlock, originInvoice });
 }
 
+/**
+ * sit/run6 (ACC-192 x the header of 2026-09-07): an invoice computed HERE at send is priced at the sold price, so it knows no offer; the offer the lines carried
+ * (the listed price beside the sold one) stays on the header: savings from the lines, gross = the invoice net + those savings, every other figure the invoice's. A counter's invoice is read as it came.
+ */
+function keepOffer(fromInvoice, fromLines) {
+  if (!fromLines || !(Number(fromLines.savings) > Number(fromInvoice.savings || 0))) return fromInvoice;
+  return Object.assign(fromInvoice, { gross: roundMoney(Number(fromInvoice.net) + Number(fromLines.savings)), savings: fromLines.savings });
+}
+
 /** a counter bill carries its invoice — the header maps it, the server only checks it */
 async function sendIssued(st, req, res) {
   const { sender_id, purpose, line_items, business_json, currency_code, is_draft, receiverDetails, counterBill } = st;
@@ -1421,7 +1430,7 @@ async function sendIssued(st, req, res) {
   /* ACC-192: every chit that carries its invoice (the counter's, or the one sendMoney computed at send) is mapped the same way; only the
      counter's is checked, because only the counter computed it somewhere other than here */
   if (!is_draft && carried && typeof carried === 'object' && carried.ValDtls && Number.isFinite(Number(carried.ValDtls.TotInvVal))) {
-    moneyBlock = moneyOfInvoice(carried, currency_code);
+    moneyBlock = keepOffer(moneyOfInvoice(carried, currency_code), carried === st.originInvoice ? moneyBlock : null);
     issuedTotal = moneyBlock.total;
   }
   if (counterBill && issuedTotal != null) await checkCounterInvoice(st);
@@ -5109,7 +5118,7 @@ router.post(
         if (thread_type === 'external') await logMessageSent(db, { chit_id, entity_id, display_name, message_text, roster: disputeRoster });
         return posted;
       });
-      if (isDispute) result.ctp = await ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null, to_ids: disputeRoster }); // RAIL-106: to the roster's parties elsewhere (targeted), or every party elsewhere (chit-wide)
+      if (isDispute) result.ctp = await ctpReturn.onDisputeMessage(entity_id, chit_id, { dispute_id: disputeId, message_id: result.message_id, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null, to_ids: disputeRoster }); /* RAIL-106: to the roster parties elsewhere (targeted), or every party elsewhere (chit-wide) */ else result.ctp = await ctpReturn.onMessagePosted(entity_id, { chit_id, thread_type, message_text, msg_type: req.body.msg_type, sender_display_name: senderName, line_id: req.body.line_id || null }, result); /* RAIL-106 x RAIL-136 (sit/run6): the copies are written inside the transaction, so the crossing is queued once it has committed */
 
       /* ⭐ THE BELL, for the people on the other side of an EXTERNAL message (CB CRM — a reply lands on the party's timeline and the
          Next block, so their open tab refreshes it). Internal notes are the author's own and ring nobody. Best effort, after the
@@ -6400,8 +6409,6 @@ router.post(
 router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes, mounted where they sat so no path changes its order */
 
 router.openapi = { paths: pathsOf(), schemas: {} };
-router.stampCancelRequested = stampCancelRequested; /* lib/ctpreturn sets the same flags on a copy a request or a confirmation was sent to */
-router.stampCancelConfirmed = stampCancelConfirmed;
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
@@ -6410,8 +6417,6 @@ router.moneyOfInvoice = moneyOfInvoice;
 router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
 router.recordResolve = recordResolve;
 router.releaseAfterResolve = releaseAfterResolve;
-router.postMessageCopies = postMessageCopies; /* lib/ctpreturn applies a message that arrived from another installation through the same function */
-router.moveStatus = moveStatus; /* the ONE status writer — lib/books-hooks closes a posted counter sale through it */
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */

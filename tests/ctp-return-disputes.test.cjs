@@ -403,7 +403,7 @@ const apply = (event, over) => ret.apply(Object.assign({ chit_id: CHIT, event, f
     }
   });
   await t('the retired refusal is gone from both dispute doors', async () => {
-    const src = require('fs').readFileSync(root('routes/chits.js'), 'utf8');
+    const src = require(root('tools/chits-files.cjs')).read(root('.')); /* the ONE list of chits files: the code may live in a lifted lib */
     assert.ok(!/answeredCrossDispute|crossDisputeRefusal/.test(src + require('fs').readFileSync(root('lib/ctpreturn.js'), 'utf8')));
   });
 

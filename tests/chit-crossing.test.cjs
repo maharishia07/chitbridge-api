@@ -39,12 +39,15 @@ require.cache[require.resolve(path.join(API, 'db'))] = { exports: {
   ok('crossing: before the migration the legacy fallback runs, the definer is not asked', legacy === 1 && !asked.some((a) => /chit_log_all/.test(a.sql)));
 
   const first = await X.postMessageCopies(msg);
-  ok('postMessageCopies: a message goes through the 10-arg deliver with the sender as the entity context', /chit_message_deliver\(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\)/.test(asked[asked.length - 1].sql) && asked[asked.length - 1].entity === 'e1' && !!first.message_id && first.created_at === '2026-10-31T00:00:00.000Z');
+  /* RAIL-106 (sit/run6): after the deliver, onMessagePosted reads the parties to queue the return-path event, so the deliver is found by its SQL, not as the last query */
+  const delivers = () => asked.filter((q) => /chit_message_deliver/.test(q.sql));
+  const lastDeliver = () => delivers()[delivers().length - 1];
+  ok('postMessageCopies: a message goes through the 10-arg deliver with the sender as the entity context', /chit_message_deliver\(\$1,\$2,\$3,\$4,\$5,\$6,\$7,\$8,\$9,\$10\)/.test(lastDeliver().sql) && lastDeliver().entity === 'e1' && !!first.message_id && first.created_at === '2026-10-31T00:00:00.000Z');
 
   deliverFails = Object.assign(new Error('no function'), { code: '42883' });
   asked.length = 0;
   await X.postMessageCopies(msg);
-  ok('postMessageCopies: a chit-level message retries the 9-arg form when the 10-arg function is not there yet', asked.length === 2 && !/\$10/.test(asked[1].sql));
+  ok('postMessageCopies: a chit-level message retries the 9-arg form when the 10-arg function is not there yet', delivers().length === 2 && !/\$10/.test(delivers()[1].sql));
 
   asked.length = 0;
   let refused = null;

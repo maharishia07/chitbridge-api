@@ -357,7 +357,8 @@ const askStub = async (target, want, deps) => {
     const src = require('fs').readFileSync(path.join(API, 'routes', 'relationships.js'), 'utf8');
     ok(/require\('\.\.\/lib\/remote-party'\)\.adopt\(ctx\(req\), typed\)/.test(src));
     /* API-4 (25 Oct): the express-validator array became the door's schema check; the address gate still stands right after it */
-    ok(/'\/suppliers',\s*auth,[\s\S]{0,400}?\.\.\.checkedSupplier\('POST \/suppliers'\),\s*remoteAddress,/.test(src));
+    /* sit/run6: main's chain is the express-validator array, auth, validateAsProblem, then the door's schema check (checked); the address gate still stands right after it */
+    ok(/'\/suppliers',[\s\S]{0,900}?\.\.\.checked\('POST \/suppliers'\),\s*remoteAddress,/.test(src));
   });
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
