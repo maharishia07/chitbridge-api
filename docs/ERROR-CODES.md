@@ -180,7 +180,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | Leave that detail out and save again. | relationships | 2026-10-24 |
 | PARTY_CONTACT_NOT_YOURS | 403 | Their contact, not yours | That is their own ChitBridge business, so their phone and e-mail are theirs to change. | Ask them to change it on their side. | relationships | 2026-10-25 |
 | SUPPLIER_NOT_YOURS | 403 | Their name, not yours | That is their own business name, so it cannot be changed from here. | Use "your name for them" (nickname) instead. | relationships | 2026-10-25 |
-| UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | - | relationships | 2026-10-24 |
 | EDGE_NOT_FOUND | 404 | Connection not found | We could not find that connection. | Refresh the list; it may have been removed. | network | 2026-10-23 |
 | EMAIL_DELIVERY_NOT_CONFIGURED | 503 | Email delivery not configured | This shop cannot e-mail a first code yet, so nothing was changed. | Set up e-mail sending first. | employee-code | 2026-10-22 |
 | EMAIL_TAKEN | 409 | Email taken | That e-mail already signs in to another account. | Use the person's own e-mail, or leave it empty. | actors | 2026-10-22 |
