@@ -27992,38 +27992,45 @@ async function orderBilledDone(bo, bill){
  * ⚠️ OFFLINE: nothing is asked and nothing is said; the last list stays and a bill still prices with it. The bell cannot arrive offline anyway.
  * ⚠️ THE EVENT CARRIES NO DATA (see THE BELL): the count comes from reading, never from the event.
  */
-var SHOP_HELD = false, OFFERS_NEW = { n: 0, changed: false };
+var SHOP_HELD = false, OFFERS_NEW = { count: 0, changed: false };
 /** is a bill in hand — lines on it. Receive, orders and the rest hold no CART, so they refresh as they always did. */
 function billInHand(){ return typeof CART !== 'undefined' && CART.length > 0; }
 /** offers the shop now runs against the ones this bill started with: how many are new, and whether anything differs (by id, then by content) */
-function offersDiff(have, got){
-  if (!Array.isArray(got)) return { n: 0, changed: false };
-  var was = {}, n = 0, changed = got.length !== have.length;
-  have.forEach(function(o){ was[String(o.id)] = JSON.stringify(o); });
-  got.forEach(function(o){
-    var before = was[String(o.id)];
-    if (before === undefined) { n++; changed = true; } else if (before !== JSON.stringify(o)) changed = true;
+function offersDiff(haveOffers, nowOffers){
+  if (!Array.isArray(nowOffers)) return { count: 0, changed: false };
+  var knownJson = {}, count = 0, changed = nowOffers.length !== haveOffers.length;
+  haveOffers.forEach(function(offer){ knownJson[String(offer.id)] = JSON.stringify(offer); });
+  nowOffers.forEach(function(offer){
+    var before = knownJson[String(offer.id)];
+    if (before === undefined) count++;
+    if (before !== JSON.stringify(offer)) changed = true;
   });
-  return { n: n, changed: changed };
+  return { count: count, changed: changed };
+}
+/** can the counter look at the shop right now: a copy to compare with, the line up, and a signed-in cloud counter */
+function canPeekOffers(){
+  if (!(S && S.at) || !lineUp()) return false;
+  return !!(HOST && HOST.mode === 'cloud' && CloudHost.cred());
 }
 /** the shop's offers, read without touching the stored copy or S — a delta from this copy's own cursor, so it is small */
 async function offersPeek(){
-  OFFERS_NEW = { n: 0, changed: false };
-  if (!(S && S.at) || !lineUp() || !(HOST && HOST.mode === 'cloud' && CloudHost.cred())) return;
+  OFFERS_NEW = { count: 0, changed: false };
+  if (!canPeekOffers()) return;
   try {
-    var r = await fetchBy(CloudHost.api + '/api/till/snapshot?since=' + encodeURIComponent(S.at), { headers: CloudHost.auth() }, SLOW);
-    if (!r.ok) return;
-    var j = await r.json();
-    OFFERS_NEW = offersDiff(S.offers || [], j && j.offers);
+    var answer = await fetchBy(CloudHost.api + '/api/till/snapshot?since=' + encodeURIComponent(S.at), { headers: CloudHost.auth() }, SLOW);
+    if (!answer.ok) return;
+    var shop = await answer.json();
+    OFFERS_NEW = offersDiff(S.offers || [], shop && shop.offers);
   } catch (e) { cbQuiet('offersPeek:1', e); }   /* the line failed mid-look: the bar says nothing new and the last list stays */
 }
 /** the bar pill: "1 new offer, re-read" — only while a held read has something to say */
 function offersHeldPaint(){
-  var p = document.getElementById('offerpill'); if (!p) return;
-  p.hidden = !(SHOP_HELD && OFFERS_NEW.changed);
-  if (p.hidden) return;
-  p.textContent = '🏷 ' + (OFFERS_NEW.n ? OFFERS_NEW.n + (OFFERS_NEW.n === 1 ? ' new offer' : ' new offers') + ', re-read' : 'Offers changed, re-read');
-  p.title = 'This bill keeps the offers it started with. Press to read them now, or they apply from the next bill.';
+  var pill = document.getElementById('offerpill'); if (!pill) return;
+  pill.hidden = !(SHOP_HELD && OFFERS_NEW.changed);
+  if (pill.hidden) return;
+  var count = OFFERS_NEW.count;
+  pill.textContent = '🏷 ' + (count ? count + (count === 1 ? ' new offer' : ' new offers') + ', re-read' : 'Offers changed, re-read');
+  pill.title = 'This bill keeps the offers it started with. Press to read them now, or they apply from the next bill.';
 }
 /** the bell said the shop moved: read now between bills, hold it while a bill is in hand */
 function shopHeard(){

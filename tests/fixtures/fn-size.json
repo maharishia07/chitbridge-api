@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 216,
+  "long_functions": 215,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -389,8 +389,7 @@
       "POST /deliver"
     ],
     "routes/definitions.js": [
-      "GET /",
-      "PUT /:id"
+      "GET /"
     ],
     "routes/entities.js": [
       "GET /me",

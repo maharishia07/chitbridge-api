@@ -355,6 +355,16 @@ router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes
   }
 });
 
+/** one definition_status_log row per REAL transition (see the b268 note in PUT /:id): a no-op re-send of the same status writes nothing */
+async function logStatusChange(db, req, entity_id, wasStatus, status) {
+  if (!status || status === wasStatus) return;
+  await db.query(
+    `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
+     VALUES ($1,$2,$3,$4)`,
+    [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
+  );
+}
+
 /**
  * ⭐⭐ PUT /:id — an edit is a NEW VERSION, never an overwrite.
  *
@@ -426,13 +436,7 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
        * question it exists for and never one nobody asked ("approved" appearing twice because a screen
        * re-sent the same status is noise, not history).
        */
-      if (status && status !== d.status) {
-        await db.query(
-          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
-           VALUES ($1,$2,$3,$4)`,
-          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
-        );
-      }
+      await logStatusChange(db, req, entity_id, d.status, status);
       return { row: upd.rows[0], version, versioned: !!rules };
     });
 
