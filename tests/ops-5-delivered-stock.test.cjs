@@ -47,6 +47,10 @@ function fakeDb() {
         world.deliveries.push({ delivery_id: 'D' + ++world.seq, line_id: p[12], quantity: p[5], unit: p[6], kind: p[9], client_ref: ref, delivered_at: '2026-10-31' });
         return { rowCount: 1, rows: [] };
       }
+      if (/FROM chit_line_delivery d JOIN stock_movement/.test(t)) {
+        const counted = [...ledger.entries()].filter(([k]) => k.includes('|GI:')).reduce((a, [, q]) => a + q, 0);
+        return { rows: counted ? [{ item_id: ITEM, qty: counted }] : [] };
+      }
       if (/chit_line_event/.test(t)) return { rows: [{ copies: 2 }] };
       if (/FROM chit_line_delivery/.test(t)) return { rows: world.deliveries.filter((d) => d.kind === 'deliver') };
       if (/FROM chit_header WHERE entity_id/.test(t)) return { rows: world.receipts };
@@ -148,6 +152,28 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
     rows: [{ delivery_id: 'T1', line_id: L1, quantity: -3, unit: 'kg' }, { delivery_id: 'T2', line_id: L1, quantity: 3, unit: 'kg' }]
   });
   eq([rules[0].code, rules[1].reason, rules[1].ref], ['take_back_not_posted', 'purchase', 'GI:T2'], 'a take-back is refused; a delivery is a purchase with its own ref');
+
+  /* a receipt raised AFTER the bill was counted in: the shared link is against.chit_id = the bill */
+  const receipt = (qty) => ({ chit_id: 'R1', purpose: 'receipt', business_json: { client_ref: 'GRN1', against: { chit_id: CHIT } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] });
+  const receive = (qty) => stockFromChit.postDelivered && require(path.join(API, 'lib/stock-from-chit')).postFor(SHOP, receipt(qty), dbStub.withEntity, {});
+  reset();
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'x1' }]);
+  const same = await receive(50);
+  eq([onHand(), same.skipped.map((s) => s.code)], [50, ['already_counted_in']], 'bill counted in 50, then a receipt of 50: stock stays 50, said so');
+  reset();
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'x2' }]);
+  const more = await receive(80);
+  eq([onHand(), more.moved], [80, 1], 'bill 50, then a receipt of 80: only the remainder 30 is posted, stock 80');
+  eq((await receive(80)).moved, 0, 'the receipt sent again posts nothing twice');
+  reset();
+  await receive(50);
+  reset({ receipts: [{ x: 1 }] });
+  eq(ledger.size, 0, 'scene: receipt first');
+  reset();
+  await receive(50);
+  world.receipts = [{ x: 1 }];
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'x3' }]);
+  eq(onHand(), 50, 'receipt before the bill: the bill is not counted a second time (already_received)');
 
   console.log(checks + ' checks');
 })().catch((e) => {
