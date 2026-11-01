@@ -566,19 +566,30 @@ async function shopDatePhrase(identityId) {
   const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
   return countrySetup.datePhrase(new Date(), countrySetup.clockOf(row));
 }
+/* ONE shop row and ONE "is it a live shop" test, shared by the handle read and the by-id read (SEC-126).
+   population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
+   claims to have come from the live world. */
+const SHOP_COLS = 'identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population';
+const SHOP_LIVE = "identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false";
 async function resolveEntity(handle) {
   const r = await query(
-    /* population: the storefront support path stamps it on the ticket (b249) - without it every buyer ticket
-       claims to have come from the live world. */
-    `SELECT identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population
+    `SELECT ${SHOP_COLS}
      FROM identities
       WHERE (bridge_id = $1 OR LOWER(user_id) = LOWER($1))
-        AND identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false
+        AND ${SHOP_LIVE}
       ORDER BY (bridge_id = $1) DESC
       LIMIT 1`,
     [handle]
   );
   return r.rows[0] || null;
+}
+/** liveShopsOf(ids) → the live shop rows of these identity ids, ONE read, in the order the ids came (a closed account, a
+ *  sealed one or an unknown id is simply absent) */
+async function liveShopsOf(ids) {
+  if (!ids.length) return [];
+  const rows = (await query(`SELECT ${SHOP_COLS} FROM identities WHERE identity_id = ANY($1::uuid[]) AND ${SHOP_LIVE}`, [ids])).rows;
+  const byId = new Map(rows.map((row) => [String(row.identity_id), row]));
+  return ids.map((id) => byId.get(String(id))).filter(Boolean);
 }
 /** the shop a request is on, read once: the key gate and the handler share the one read */
 const shopFor = (req) => (req.storefrontShop = req.storefrontShop || resolveEntity(req.params.bridge_id));
@@ -608,15 +619,48 @@ async function networkStoreOf(handle) {
   const members = await membership.members(brand.identity_id);
   return { brand, members: [String(brand.identity_id)].concat(members.map(String)) };
 }
-/** the public item rows of these members — one statement; a sign-in-first shop's items never reach the anonymous lens (SEC4) */
-const networkItems = (members) =>
-  withEntity(null, (db) =>
-    db.query(
-      `SELECT ci.item_id, ci.entity_id, ci.item_data FROM catalogue_items ci WHERE ci.entity_id = ANY($1::uuid[]) AND ci.is_active = true
-      AND NOT EXISTS (SELECT 1 FROM identities i WHERE i.identity_id = ci.entity_id AND to_jsonb(i)->>'storefront_access' = 'login')`,
-      [members]
+/**
+ * ⭐⭐ SEC-126 · THE LENS SHOWS WHAT EACH SHOP'S OWN STOREFRONT SHOWS, AND NOTHING MORE. This read used to be its own SQL over
+ * catalogue_items, filtered only by sign-in-first — so a member whose catalogue was private, closed, over its plan's visibility cap
+ * or network-only still had every item and price listed to anyone holding the brand's handle. Now each shop goes through the ONE
+ * public view (publicViewFor → lib/catalogue-view buildPublicView), the same one GET /network/:bridge_id and every storefront use:
+ * closed · private · cap · network-only · sign-in-first · unavailable / qty-zero · cost and exposure — decided in one place.
+ * What the view leaves out, the lens leaves out: a shop with no public catalogue (no public schema, nothing adopted) is absent, and
+ * adopted reference catalogues (view.finishes) stay out as before — only the shop's own items are listed.
+ * ⚠️ COST: one view per shop, as on /network/:bridge_id, capped at MAX_DEPARTMENTS and the cut REPORTED (`truncated`).
+ */
+/** visibleShopsOf(network) → { shops: [live shop rows, the brand first], truncated: { shown, total } | null } */
+async function visibleShopsOf(network) {
+  const readable = network.members.slice(0, MAX_DEPARTMENTS);
+  const shops = [network.brand].concat(await liveShopsOf(readable.slice(1)));
+  return { shops, truncated: network.members.length > readable.length ? { shown: readable.length, total: network.members.length } : null };
+}
+/** publicItemsOfShops(shops) → [{ item_id, entity_id, item_data }] — each shop's items exactly as its anonymous storefront shows them */
+async function publicItemsOfShops(shops) {
+  const rows = [];
+  for (const shop of shops) {
+    const view = await publicViewFor(shop, {});
+    if (!view || !view.available || view.sign_in) continue;
+    for (const item of view.items || []) rows.push({ item_id: item.item_id, entity_id: shop.identity_id, item_data: item.item_data });
+  }
+  return rows;
+}
+/** orderableOf(ids, network) → the cart's stored rows (active, of a shop the GET reads: the same capped slice, visibleShopsOf) that their store's anonymous storefront shows (the GET's own view) — a customer of one
+ *  member never orders a private, closed or capped sibling's item by its id. The price stays the stored row's. */
+async function orderableOf(ids, network) {
+  const { shops } = await visibleShopsOf(network);
+  const found = (
+    await withEntity(null, (db) =>
+      db.query(
+        `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
+        [ids, shops.map((shop) => String(shop.identity_id))]
+      )
     )
-  );
+  ).rows;
+  const stores = new Set(found.map((item) => String(item.entity_id)));
+  const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
+  return found.filter((item) => shown.has(String(item.item_id)));
+}
 router.get('/network-store/:networkId', async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
@@ -625,7 +669,8 @@ router.get('/network-store/:networkId', async (req, res) => {
       .trim()
       .toLowerCase();
     const text = String(req.query.category || '').trim();
-    const rows = (await networkItems(network.members)).rows;
+    const lens = await visibleShopsOf(network);
+    const rows = await publicItemsOfShops(lens.shops);
     let products = rows.map((item) => {
       const d = item.item_data || {};
       return {
@@ -644,6 +689,7 @@ router.get('/network-store/:networkId', async (req, res) => {
     res.json(
       Object.assign(
         { network_id: network.brand.bridge_id, categories, count: products.length },
+        lens.truncated ? { truncated: lens.truncated } : {},
         PL.pageOut('products', products, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))
       )
     ); // NO node/entity attribution — the internal structure stays hidden
@@ -764,14 +810,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       return refuseAs(req, res, { status: 403, code: 'NOT_THIS_NETWORK', legacy: storefront.NOT_THIS_NETWORK });
     const nid = network.brand.bridge_id;
     const ids = cart.map((item) => item.product_id).filter(Boolean);
-    const rows = (
-      await withEntity(null, (db) =>
-        db.query(
-          `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
-          [ids, network.members]
-        )
-      )
-    ).rows;
+    const rows = await orderableOf(ids, network); /* SEC-126: only what the store's own storefront shows */
     if (!rows.length)
       return refuseAs(req, res, { status: 404, code: 'NO_MATCHING_PRODUCTS', legacy: oldBody('Not found', 'No matching products in this network') });
     const operatorId = String(network.brand.identity_id);
