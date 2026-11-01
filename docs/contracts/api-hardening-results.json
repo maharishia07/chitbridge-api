@@ -2759,10 +2759,6 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "another shop's id answered 201, not the unknown id's 404"
    }
   },
   "POST /api/products": {

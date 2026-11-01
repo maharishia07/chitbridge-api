@@ -14,7 +14,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:764 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2304 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
-| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1927 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1966 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | DELETE | /api/channels/:id | channels | routes/channels.js:136 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5940 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4819 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
@@ -90,15 +90,15 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/capture/stores | capture | routes/capture.js:316 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:139 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | no | not started |
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1098 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1116 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1906 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1880 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/catalogue/:bridge_id/support/preview | catalogue | routes/catalogue.js:1191 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/catalogue/enquiry | catalogue | routes/catalogue.js:1053 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2016 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
-| GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:620 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:892 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1137 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1155 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1945 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1919 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/catalogue/:bridge_id/support/preview | catalogue | routes/catalogue.js:1230 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/catalogue/enquiry | catalogue | routes/catalogue.js:1092 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2055 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
+| GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:664 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:931 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | GET | /api/channels | channels | routes/channels.js:24 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/channels/outbound | channels | routes/channels.js:34 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id | chits | routes/chits.js:3341 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -394,14 +394,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/capture/stores | capture | routes/capture.js:325 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/capture/webhook/email | capture | routes/capture.js:238 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
 | POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:208 | no | no | no | no | no | no | no | no | no | yes | yes | no | yes | not started |
-| POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1830 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1128 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/catalogue/:bridge_id/support | catalogue | routes/catalogue.js:1268 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1229 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2039 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:754 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1948 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1869 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1366 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1167 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/:bridge_id/support | catalogue | routes/catalogue.js:1307 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/:bridge_id/support/start | catalogue | routes/catalogue.js:1268 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2078 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:800 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1987 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/channels | channels | routes/channels.js:80 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/channels/:id/approve | channels | routes/channels.js:109 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/channels/:id/auto-raise | channels | routes/channels.js:60 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -1535,7 +1535,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [NETWORK_READ_FAILED, NO_SUCH_NETWORK] · statuses 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/catalogue/network/:bridge_id** · catalogue · cb-catalogue · partial
 - does: _not yet written_
