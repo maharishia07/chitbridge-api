@@ -13,6 +13,9 @@
  *   node tools/api-allowlist.cjs --capture F --file routes/assist.js --web                         also list keys the web callers read near each call that the shape lacks (a review list)
  *   node tools/api-allowlist.cjs --check F ...                                                     every recorded success answer in F passes through its route's shape unchanged (exit 1 if not)
  *
+ * CLOSED FROM RECORDINGS (S34: "recorded answers plus the keys the handler names"): a route whose answer comes from a shared wrapper (routes/books.js route(...)) has no literal in its own text, so its keys are the recorded
+ * ones only. Such a node is marked `x-closed-by: recordings` (and its shape `closed_by: 'recordings'`); the filter reports a key outside it and KEEPS it, until every branch is recorded or the handler names its keys.
+ *
  * The rule that keeps it honest: a key is in the schema if it was SEEN in an answer or NAMED in the handler's literal. A node is closed (additionalProperties: false) only when its keys come from
  * a literal or from a recorded object; an identifier handed to res.json (rows, a row, a spread) is open and listed with its path. The runtime filter logs and counts every key it ever drops.
  */
@@ -25,6 +28,7 @@ const SHAPES_FILE = path.join(ROOT, 'docs', 'contracts', 'api-output-shapes.json
 const REGISTER_FILE = path.join(ROOT, 'docs', 'api-register.json');
 const DYNAMIC_KEYS = 40; /* an object with more keys than this, or keys that look like ids or dates, is a map keyed by data, not a record */
 const KEY_LOOKS_LIKE_DATA = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-|\d{4}-\d\d-\d\d|\d+$)/i;
+const CLOSED_BY = 'x-closed-by'; /* the schema keyword lib/output-allowlist.js reads: a node closed from recorded answers alone is reported when a key falls outside it, never dropped */
 const ROUTE_START = /^\s*(?:router|app)\.(?:get|post|put|patch|delete|all|use)\s*\(/;
 
 /* ── what the answers show ─────────────────────────────────────────────────────────────────────── */
@@ -217,9 +221,13 @@ function leafSchema(stats) {
 /** is an object's key set a map keyed by data (ids, dates, very many keys), not a record of named fields */
 const keyedByData = (names) => names.length > DYNAMIC_KEYS || (names.length > 2 && names.filter((name) => KEY_LOOKS_LIKE_DATA.test(name)).length > names.length / 2);
 
+/** a node of a route answered by a shared wrapper (no literal to read): the recorded keys are all there is, and the node is marked x-closed-by recordings */
+const recordedOnly = (stats, source, open) => !source && !!open.recordings && !!stats && stats.objects > 0;
+
 /** the keys a node may hold: seen in the answers, named in the literal; null when they cannot be known (the node stays open, with the reason) */
 function keysOf(stats, source, where, open) {
   const seen = stats ? [...stats.keys.keys()] : [];
+  if (recordedOnly(stats, source, open)) return seen;
   if (source && source.kind === 'object') {
     if (source.spread || source.computed) return open(where, source.spread ? 'a spread (...x) adds keys the text does not name' : 'a computed key'), null;
     return [...new Set(seen.concat([...source.keys.keys()]))];
@@ -282,13 +290,15 @@ function closeObject(stats, source, where, open) {
   if (keyedByData(names)) return open(where || '(answer)', 'a map keyed by data (' + names.length + ' keys)'), { type: 'object' };
   const properties = propertiesOf(names, { stats, source, where, open });
   const required = requiredOf(stats, names, source);
-  return Object.assign({ type: 'object' }, required.length ? { required } : {}, { properties, additionalProperties: false });
+  const byRecordings = recordedOnly(stats, source, open) ? { [CLOSED_BY]: 'recordings' } : {};
+  return Object.assign({ type: 'object' }, required.length ? { required } : {}, { properties, additionalProperties: false }, byRecordings);
 }
 
-/** deriveShape({ samples: [body...], source: node|null }) → { schema, open: [{ path, reason }] } */
-function deriveShape({ samples, source }) {
+/** deriveShape({ samples: [body...], source: node|null, recordings?: true }) → { schema, open: [{ path, reason }] }; `recordings` (a route whose answer comes from a shared wrapper, no literal in its own text) closes a node from the recorded keys alone and marks it x-closed-by: recordings */
+function deriveShape({ samples, source, recordings }) {
   const openPaths = [];
   const open = (where, reason) => openPaths.push({ path: where, reason });
+  open.recordings = !!recordings;
   const schema = closeNode(foldValues(samples), source, '', open);
   return { schema, open: openPaths };
 }
@@ -334,15 +344,25 @@ function deriveFile(file, captures) {
   const result = { shapes: {}, listed: {} };
   routesOfFile(file).forEach((route) => {
     const byStatus = samplesOf(captures, route.key);
-    const statuses = Object.keys(byStatus);
-    if (!statuses.length) return void (result.listed[route.key] = 'not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial');
-    const answers = handlerAnswers(handlerText(lines, route.line));
-    const status = statuses.includes('200') ? '200' : statuses[0] || '200';
-    const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node });
-    result.shapes[route.key] = Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, exampleOf(captures, route.key, status));
-    if (derived.open.length) result.listed[route.key] = 'open at ' + derived.open.map((item) => (item.path || '(answer)') + ' — ' + item.reason).join('; ');
+    if (!Object.keys(byStatus).length) return void (result.listed[route.key] = 'not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial');
+    const entry = shapeEntry(route, { byStatus, lines, captures });
+    result.shapes[route.key] = entry;
+    if (entry.open.length) result.listed[route.key] = 'open at ' + entry.open.map((item) => (item.path || '(answer)') + ' — ' + item.reason).join('; ');
   });
   return result;
+}
+
+/** answered by the shared route() wrapper: the route's own text holds no res.json at all and its registration line starts with route( */
+const answeredByWrapper = (answers, lines, route) => !answers.node && answers.calls === 0 && /^\s*route\(/.test(lines[route.line - 1] || '');
+
+/** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text */
+function shapeEntry(route, { byStatus, lines, captures }) {
+  const statuses = Object.keys(byStatus);
+  const answers = handlerAnswers(handlerText(lines, route.line));
+  const status = statuses.includes('200') ? '200' : statuses[0] || '200';
+  const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: answeredByWrapper(answers, lines, route) });
+  const byRecordings = JSON.stringify(derived.schema).includes('"' + CLOSED_BY + '"') ? { closed_by: 'recordings' } : {};
+  return Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, byRecordings, exampleOf(captures, route.key, status));
 }
 
 /** the keys the web callers read near each call of a route that the shape does not list (a review list, never written into a shape) */
@@ -424,6 +444,8 @@ function report(merged, files, withWeb) {
   const shaped = Object.keys(merged.shapes);
   const closed = shaped.filter((key) => !merged.shapes[key].open.length);
   const unshaped = Object.keys(merged.listed).filter((key) => !merged.shapes[key]);
+  const fromRecordings = shaped.filter((key) => merged.shapes[key].closed_by === 'recordings');
+  if (fromRecordings.length) console.log('  CLOSED FROM RECORDINGS (enforcement reports a key outside them, never drops it) ' + fromRecordings.length + ': ' + fromRecordings.join(', '));
   console.log('routes ' + (shaped.length + unshaped.length) + ' · shaped ' + shaped.length + ' · fully closed ' + closed.length + ' · open somewhere ' + (shaped.length - closed.length));
   Object.keys(merged.listed).forEach((key) => console.log('  LISTED ' + key + ': ' + merged.listed[key]));
   if (!withWeb) return;
@@ -433,7 +455,7 @@ function report(merged, files, withWeb) {
 
 /** the command line: --check F | --capture F [--capture G] --file routes/x.js [--write] [--web]; the exit code */
 function main(argv) {
-  const captures = flagValues(argv, '--capture').concat(flagValues(argv, '--check')).map((file) => readJson(file, null)).filter(Boolean);
+  const captures = flagValues(argv, '--capture').concat(flagValues(argv, '--check')).map((file) => readJson(file, null)).filter(Boolean).map((capture) => (capture.answers && typeof capture.about === 'string' ? capture.answers : capture)); /* a fixture { about, answers } (docs/contracts/books-answers.json) is its answers */
   if (argv.includes('--check')) {
     const lost = checkCaptures(captures);
     console.log(lost.length ? lost.join(String.fromCharCode(10)) : 'every recorded success answer passes the output allow-list unchanged');

@@ -97,5 +97,19 @@ const whoami = contract.operationFor('GET /whoami');
 t('kit: a route with a derived shape answers under that closed schema, and its checked() chain holds the filter', whoami.responses[200].content['application/json'].schema.additionalProperties === false && contract.checked('GET /whoami').some((fn) => fn && fn.outputAllowlist));
 t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', contract.operationFor('POST /conform').responses[200].content['application/json'].schema.additionalProperties === undefined && !contract.checked('POST /conform').some((fn) => fn && fn.outputAllowlist));
 
+/* ── closed from recordings only (a route answered by a shared wrapper): reported, never enforced ── */
+const wrapped = tool.deriveShape({ samples: [{ ok: true, entry_id: 'e1', lines: [{ code: '1', dr: 1 }] }, { ok: true, duplicate: true, entry_id: 'e1' }], source: null, recordings: true });
+t('recordings: with no handler literal and recorded objects, the node closes over the recorded keys and says so', wrapped.schema.additionalProperties === false && wrapped.schema['x-closed-by'] === 'recordings' && same(Object.keys(wrapped.schema.properties), ['ok', 'entry_id', 'lines', 'duplicate']) && !wrapped.open.length);
+t('recordings: the nested list items are closed from recordings too', wrapped.schema.properties.lines.items['x-closed-by'] === 'recordings');
+t('recordings: the same samples without the flag stay OPEN and are listed (the literal rule is unchanged)', (() => { const out = tool.deriveShape({ samples: [{ ok: true }], source: null }); return out.schema.additionalProperties === undefined && out.open.length === 1; })());
+t('recordings: a handler literal closes by the handler, never marked', (() => { const out = tool.deriveShape({ samples: [{ ok: true }], source: literal('{ ok: true }'), recordings: true }); return out.schema.additionalProperties === false && out.schema['x-closed-by'] === undefined; })());
+const unproven = allow.prune(wrapped.schema, { ok: true, entry_id: 'e1', brand_new_key: 1, lines: [{ code: '1', dr: 1, other: 2 }] });
+t('prune: a key outside a recordings-closed node is listed as dropped AND kept in the value (never enforced)', same(unproven.dropped.slice().sort(), ['brand_new_key', 'lines.[].other']) && same(unproven.kept.slice().sort(), ['brand_new_key', 'lines.[].other']) && unproven.value.brand_new_key === 1 && unproven.value.lines[0].other === 2);
+t('prune: a key outside a node closed by the handler is still dropped and not in kept', (() => { const out = allow.prune(schema, body); return out.kept.length === 0 && out.value.canary === undefined; })());
+allow.forgetDropped();
+t('filter (enforce): a recordings-closed answer keeps its new key, and the drop is still counted and named', (() => { const out = run(200, { ok: true, brand_new_key: 1 }, { status: 200, observed: 2, schema: wrapped.schema }); return out.brand_new_key === 1 && allow.droppedCount() === 1 && allow.droppedKeys()[0].path === 'brand_new_key'; })());
+allow.forgetDropped();
+t('register: a passing output_allowlist whose evidence says basis recordings is marked on its row; nothing else is', (() => { const reg = require(path.join(API, 'tools', 'api-register.cjs')); return same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true, output_allowlist_basis: 'recordings' }), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true }), {}) && same(reg.basisOf({ output_allowlist: false }, { output_allowlist_basis: 'recordings' }), {}); })());
+
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
