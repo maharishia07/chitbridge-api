@@ -5,8 +5,8 @@
   "routes": 636,
   "no_does": 626,
   "not_started": 21,
-  "partial": 463,
-  "meets": 152,
+  "partial": 447,
+  "meets": 168,
   "columns": {
    "strict_input": {
     "applies": 348,
@@ -29830,11 +29830,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "09ce0dbdbd76db8c"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -30601,11 +30600,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cf88afddb1ead2a6"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -30705,11 +30703,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c5d5fa6c2a416807"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -30992,11 +30989,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0184f8490b3c9ecc"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts-shell.js"
    ],
@@ -31091,11 +31087,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9de7666626d30c72"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -31387,11 +31382,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e3bbffd0a43845a4"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -31485,11 +31479,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c185bb01296cb2ce"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -31585,11 +31578,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8a8fe2f889e3128e"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -32165,11 +32157,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5a3126bb70d7d509"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-move-in.js"
    ],
@@ -32371,11 +32362,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "325faf2a4d813cf7"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -32468,11 +32458,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c5cd3d070b6a04fc"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -32565,11 +32554,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "61e8d612485ebf8d"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -33162,11 +33150,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4dc3b9538d3c0038"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js"
@@ -33455,11 +33442,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "678cbb0c1ba116dc"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -33745,11 +33731,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "375eed95657abf0f"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts-shell.js"
    ],
@@ -33848,11 +33833,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "09fc6cf934662aac"
+    "signed_off_by_date": "cb-api 2026-11-01 PR#687 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-finance-cheques.js",
     "cap-finance-terms.js"
