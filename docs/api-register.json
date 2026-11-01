@@ -30149,7 +30149,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "c8e4cf964341bbc0",
+   "hash": "dd20f8b7ff039130",
    "does": "",
    "errors": {
     "count": 2,
@@ -30218,7 +30218,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c8e4cf964341bbc0"
+    "stale_since": "dd20f8b7ff039130"
    },
    "status": "partial",
    "callers": [
@@ -31320,7 +31320,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2445,
-   "hash": "93ef3f8ef43a10fb",
+   "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
     "count": 3,
@@ -31389,7 +31389,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "93ef3f8ef43a10fb"
+    "stale_since": "e3bbffd0a43845a4"
    },
    "status": "partial",
    "callers": [
@@ -31902,7 +31902,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "3c8d23fd5fee32d2",
+   "hash": "0f3772ca67a39e28",
    "does": "",
    "errors": {
     "count": 2,
@@ -31971,7 +31971,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3c8d23fd5fee32d2"
+    "stale_since": "0f3772ca67a39e28"
    },
    "status": "partial",
    "callers": [],
@@ -31996,7 +31996,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1833,
-   "hash": "617cc398527c3ddb",
+   "hash": "9b2e840b9557f355",
    "does": "",
    "errors": {
     "count": 2,
@@ -32070,7 +32070,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "617cc398527c3ddb"
+    "stale_since": "9b2e840b9557f355"
    },
    "status": "partial",
    "callers": [
@@ -32099,7 +32099,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1780,
-   "hash": "94732aac150f11b8",
+   "hash": "5a3126bb70d7d509",
    "does": "",
    "errors": {
     "count": 2,
@@ -32167,7 +32167,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "94732aac150f11b8"
+    "stale_since": "5a3126bb70d7d509"
    },
    "status": "partial",
    "callers": [
@@ -32196,7 +32196,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1823,
-   "hash": "13fa274a4353fdfd",
+   "hash": "33e170893cfe51d1",
    "does": "",
    "errors": {
     "count": 2,
@@ -32268,7 +32268,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "13fa274a4353fdfd"
+    "stale_since": "33e170893cfe51d1"
    },
    "status": "partial",
    "callers": [
@@ -33389,7 +33389,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2284,
-   "hash": "9609fb9db17de980",
+   "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
     "count": 2,
@@ -33457,7 +33457,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9609fb9db17de980"
+    "stale_since": "678cbb0c1ba116dc"
    },
    "status": "partial",
    "callers": [
