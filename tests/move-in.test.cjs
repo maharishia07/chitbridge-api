@@ -163,7 +163,7 @@ t('⭐ Xero trial balance: "Sales (200)" finds the ledger by THEIR code; amounts
   const unk = byLine(pl, 12); assert.strictEqual(unk.action, 'skip'); assert.ok(/No ledger named "Unknown Ledger" \(Xero code 777\)/.test(unk.why), unk.why);
   assert.strictEqual(byLine(pl, 13).action, 'skip'); assert.ok(/total row/i.test(byLine(pl, 13).why));
   assert.deepStrictEqual(pl.totals, { dr_minor: 4063050, cr_minor: 4063050 }); assert.deepStrictEqual(pl.control, { debtors_minor: 440000, creditors_minor: -220000 });
-  assert.ok(/Suspense will hold A\$6,600\.00 until the open invoices and bills are moved in/.test(pl.notes[0]), pl.notes[0]);
+  assert.ok(/Suspense will hold A\$2,200\.00 until the open invoices and bills are moved in/.test(pl.notes[0]), pl.notes[0]);
 });
 t('⭐ an UNBALANCED trial balance is refused with the sentence (and the rows still say what they would have done)', () => {
   const pl = planAU('trial_balance', { source: 'xero', currency: 'AUD', rows: rowsOf('trial_balance', 'xero-tb-unbalanced.csv'), world: MOVED() });
@@ -185,7 +185,7 @@ t('⭐ open invoices (Xero aged receivables): one bill-wise row per open documen
   const a = byLine(pl, 2); assert.strictEqual(a.action, 'add'); assert.deepStrictEqual([a.data.code, a.data.party_id, a.data.bill_ref, a.data.due_date, a.data.dr_minor, a.data.cr_minor], ['1300', 'p-bondi', 'INV-0041', '2026-07-15', 330000, 0]);
   const cn = byLine(pl, 4); assert.deepStrictEqual([cn.data.dr_minor, cn.data.cr_minor], [0, 22000]); assert.ok(/A credit of A\$220\.00/.test(cn.why), cn.why);
   const nob = byLine(pl, 5); assert.strictEqual(nob.action, 'skip'); assert.ok(/No customer named "Nobody Known" — move the contacts in first/.test(nob.why));
-  const dup = byLine(pl, 6); assert.strictEqual(dup.action, 'skip'); assert.ok(/already on line 2/.test(dup.why));
+  const dup = byLine(pl, 6); assert.strictEqual(dup.action, 'skip'); assert.ok(/Line 6 is another line of INV-0041, counted once/.test(dup.why), dup.why);
   const paid = byLine(pl, 7); assert.strictEqual(paid.action, 'skip'); assert.ok(/Nothing owed/.test(paid.why));
   assert.deepStrictEqual(pl.counts, { add: 3, merge: 0, skip: 3, hold: 0 });
 });
@@ -194,6 +194,48 @@ t('open bills (QBO aged payables): the supplier by name, "$1,650.00" and "12/07/
   const pl = planAU('open_bills', { source: 'qbo', side: 'payable', currency: 'AUD', rows: rowsOf('open_bills', 'qbo-aged.csv'), world: w });
   assert.deepStrictEqual(pl.rows.map((r) => [r.action, r.data.code, r.data.party_id, r.data.bill_ref, r.data.due_date, r.data.cr_minor]), [['add', '2100', 'p-kumar', 'B-1007', '2026-07-12', 165000], ['add', '2100', 'p-kumar', 'B-1012', '2026-07-25', 55000]]);
   assert.strictEqual(MI.skippedCsv([{ line: 4, what: 'Nobody, Inc', why: 'No "customer"' }]), 'line,what,why\n"4","Nobody, Inc","No ""customer"""\n');
+});
+/* ═══ G1a (2026-11-01) — the move-in WORDS: ACC-242 · ACC-246 · ACC-247 · UX-134. No posting changes. ═══ */
+t('⭐ ACC-242 the Suspense note carries the SIGNED net of the control rows — it equals the suspense the entry posts (customers 4,400 Dr less suppliers 2,200 Cr = 2,200, not 6,600)', () => {
+  const rows = rowsOf('trial_balance', 'xero-tb.csv').filter((r) => r.line !== 12);   /* the unknown ledger out ... */
+  rows.find((r) => /Retained/.test(r.account)).credit = '22,200.00';                        /* ... and its 3,500 out of the credits so the file balances */
+  const pl = planAU('trial_balance', { source: 'xero', currency: 'AUD', as_at: '2026-07-01', rows, world: MOVED() });
+  assert.strictEqual(pl.refusal, null, pl.refusal);
+  const adds = pl.rows.filter((r) => r.action === 'add');
+  const posted = adds.reduce((n, r) => n + r.data.cr_minor - r.data.dr_minor, 0);        /* what the entry's Suspense line takes: the credit side's excess */
+  const said = /Suspense will hold A\$([\d,]+\.\d\d)/.exec(pl.notes[0]);
+  assert.ok(said, pl.notes[0]);
+  assert.strictEqual(Math.round(Number(said[1].replace(/,/g, '')) * 100), Math.abs(posted), pl.notes[0] + ' vs posted ' + posted);
+});
+const SHOP_AU = () => ({ enabled_at: '2026-07-05', country: 'AU' });   /* the ledger began on the financial year's first day, 2026-07-01 */
+t('⭐ ACC-246 a trial balance (and open bills) dated BEFORE the ledger began is refused in the preview by the import\'s own rule, in words; the day itself and later pass', () => {
+  const w = MOVED(); w.setting = SHOP_AU();
+  const tb = (as_at) => planAU('trial_balance', { source: 'xero', currency: 'AUD', as_at, rows: rowsOf('trial_balance', 'xero-tb.csv'), world: w });
+  const early = tb('2026-06-30');
+  assert.ok(/2026-06-30 is before this ledger began \(2026-07-01\)/.test(early.refusal || ''), String(early.refusal));
+  assert.ok(/Set the move date to 2026-07-01 or later/.test(early.refusal), early.refusal);
+  assert.strictEqual(tb('2026-07-01').refusal, null);
+  const wb = Object.assign(PARTIES(), { chart: MOVED().chart, setting: SHOP_AU() });
+  const bills = planAU('open_bills', { source: 'xero', side: 'receivable', currency: 'AUD', as_at: '2026-06-30', rows: rowsOf('open_bills', 'xero-aged.csv'), world: wb });
+  assert.ok(/before this ledger began/.test(bills.refusal || ''), String(bills.refusal));
+});
+t('⭐ ACC-247 Total − Paid − Credited ≠ Due on an open item: the row says so in one sentence and still posts the amount due; equal arithmetic adds no sentence', () => {
+  const w = Object.assign(PARTIES(), { chart: MOVED().chart }); w.parties.push({ party_id: 'p-bondi', party_no: 'P-00004', name: 'Bondi Pet Supplies', customer: true, supplier: false });
+  const row = (line, total, paid, credited, due) => ({ line, contact: 'Bondi Pet Supplies', invoice_no: 'INV-' + line, total, paid, credited, amount_due: due });
+  const pl = planAU('open_bills', { source: 'xero', side: 'receivable', currency: 'AUD', rows: [row(2, '550.00', '100.00', '', '300.00'), row(3, '550.00', '100.00', '', '450.00'), row(4, '550.00', '', '', '550.00')], world: w });
+  const odd = byLine(pl, 2);
+  assert.strictEqual(odd.action, 'add'); assert.strictEqual(odd.data.dr_minor, 30000);   /* posting unchanged: the amount due */
+  assert.ok(/total A\$550\.00, paid A\$100\.00, credited A\$0\.00 — that leaves A\$450\.00, not the A\$300\.00 still owed/.test(odd.why), odd.why);
+  assert.ok(!/leaves/.test(byLine(pl, 3).why) && !/leaves/.test(byLine(pl, 4).why));
+  const g = MI.guess('open_bills', ['ContactName', 'InvoiceNumber', 'Total', 'InvoiceAmountPaid', 'InvoiceAmountCredited', 'InvoiceAmountDue']);
+  const f = Object.fromEntries(g.guess.map((x) => [x.incoming, x.field]));
+  assert.deepStrictEqual([f.InvoiceAmountPaid, f.InvoiceAmountCredited, f.InvoiceAmountDue], ['paid', 'credited', 'amount_due']);
+});
+t('⭐ UX-134 a multi-line invoice\'s next line reads "Line 3 is another line of INV-0301, counted once", not "already on line 2 of this file"', () => {
+  const w = Object.assign(PARTIES(), { chart: MOVED().chart }); w.parties.push({ party_id: 'p-bondi', party_no: 'P-00004', name: 'Bondi Pet Supplies', customer: true, supplier: false });
+  const row = (line) => ({ line, contact: 'Bondi Pet Supplies', invoice_no: 'INV-0301', amount_due: '100.00' });
+  const pl = planAU('open_bills', { source: 'xero', side: 'receivable', currency: 'AUD', rows: [row(2), row(3)], world: w });
+  assert.strictEqual(byLine(pl, 3).action, 'skip'); assert.strictEqual(byLine(pl, 3).why, 'Line 3 is another line of INV-0301, counted once.');
 });
 t('dates and money: the readers refuse rather than guess', () => {
   assert.strictEqual(MI.isoDate('31/02/2026'), null); assert.strictEqual(MI.isoDate('2026-07-01T00:00:00Z'), '2026-07-01'); assert.strictEqual(MI.isoDate('July 1, 2026'), '2026-07-01'); assert.strictEqual(MI.isoDate('20260701'), null);
