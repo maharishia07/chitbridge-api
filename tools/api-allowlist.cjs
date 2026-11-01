@@ -352,15 +352,23 @@ function deriveFile(file, captures) {
   return result;
 }
 
-/** answered by the shared route() wrapper: the route's own text holds no res.json at all and its registration line starts with route( */
-const answeredByWrapper = (answers, lines, route) => !answers.node && answers.calls === 0 && /^\s*route\(/.test(lines[route.line - 1] || '');
+/** the line (1-based) of a route registered through the shared route(method, path, fn) wrapper, which the register gives no line (0 when the route is not one): the route( line whose method matches and whose path the key ends with */
+function wrapperLineOf(lines, route) {
+  const [method, full] = route.key.split(' ');
+  const at = lines.findIndex((text) => {
+    const registered = /^\s*route\(\s*'(\w+)',\s*'([^']+)'/.exec(text);
+    return !!registered && registered[1].toUpperCase() === method && full.endsWith(registered[2]);
+  });
+  return at + 1;
+}
 
-/** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text */
+/** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text; a route( wrapper route (its own text holds no res.json) closes from recordings */
 function shapeEntry(route, { byStatus, lines, captures }) {
   const statuses = Object.keys(byStatus);
-  const answers = handlerAnswers(handlerText(lines, route.line));
+  const wrapperLine = route.line ? 0 : wrapperLineOf(lines, route);
+  const answers = handlerAnswers(handlerText(lines, route.line || wrapperLine));
   const status = statuses.includes('200') ? '200' : statuses[0] || '200';
-  const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: answeredByWrapper(answers, lines, route) });
+  const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: wrapperLine > 0 && !answers.node && answers.calls === 0 });
   const byRecordings = JSON.stringify(derived.schema).includes('"' + CLOSED_BY + '"') ? { closed_by: 'recordings' } : {};
   return Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, byRecordings, exampleOf(captures, route.key, status));
 }
@@ -470,4 +478,4 @@ function main(argv) {
 }
 
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
-module.exports = { foldValues, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, tokensOf, deriveShape, deriveFile, samplesOf, checkCaptures, writeShapes, mergeShapeFile, flatListed, mergeNodes, SHAPES_FILE };
+module.exports = { wrapperLineOf, shapeEntry, foldValues, nodeOf, handlerAnswers, handlerText, closingOf, splitTop, tokensOf, deriveShape, deriveFile, samplesOf, checkCaptures, writeShapes, mergeShapeFile, flatListed, mergeNodes, SHAPES_FILE };

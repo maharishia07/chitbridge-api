@@ -109,6 +109,14 @@ t('prune: a key outside a node closed by the handler is still dropped and not in
 allow.forgetDropped();
 t('filter (enforce): a recordings-closed answer keeps its new key, and the drop is still counted and named', (() => { const out = run(200, { ok: true, brand_new_key: 1 }, { status: 200, observed: 2, schema: wrapped.schema }); return out.brand_new_key === 1 && allow.droppedCount() === 1 && allow.droppedKeys()[0].path === 'brand_new_key'; })());
 allow.forgetDropped();
+const wrapperText = ["router.get('/assets', auth, async (req, res) => { res.json({ a: 1 }); });", "route('post', '/assets', (req, e) => P().addAsset(e));", "route('post', '/assets/:id/dispose', (req, e) => P().disposeAsset(e));"];
+t('wrapperLineOf: a route( registration is found by method and by the path the key ends with, exactly', tool.wrapperLineOf(wrapperText, { key: 'POST /api/books/assets' }) === 2 && tool.wrapperLineOf(wrapperText, { key: 'POST /api/books/assets/:id/dispose' }) === 3 && tool.wrapperLineOf(wrapperText, { key: 'GET /api/books/assets' }) === 0);
+t('shapeEntry: a route( wrapper route closes from its recordings and says closed_by recordings; a router.get route with a literal does not', (() => {
+  const samples = { 200: [{ ok: true, entry_id: 'e1' }] };
+  const wrapped = tool.shapeEntry({ key: 'POST /api/books/assets', line: 0 }, { byStatus: samples, lines: wrapperText, captures: [] });
+  const literal = tool.shapeEntry({ key: 'GET /api/books/assets', line: 1 }, { byStatus: samples, lines: wrapperText, captures: [] });
+  return wrapped.closed_by === 'recordings' && wrapped.schema.additionalProperties === false && !wrapped.open.length && literal.closed_by === undefined;
+})());
 t('register: a passing output_allowlist whose evidence says basis recordings is marked on its row; nothing else is', (() => { const reg = require(path.join(API, 'tools', 'api-register.cjs')); return same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true, output_allowlist_basis: 'recordings' }), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true }), {}) && same(reg.basisOf({ output_allowlist: false }, { output_allowlist_basis: 'recordings' }), {}); })());
 
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
