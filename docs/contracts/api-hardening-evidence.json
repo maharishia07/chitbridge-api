@@ -1050,6 +1050,138 @@
   "GET /api/books/status": {
    "output_allowlist": true
   },
+  "POST /api/books/enable": {
+   "strict_input": true
+  },
+  "POST /api/books/setting": {
+   "strict_input": true
+  },
+  "POST /api/books/terms": {
+   "strict_input": true
+  },
+  "POST /api/books/check": {
+   "strict_input": true
+  },
+  "POST /api/books/outbox/retry": {
+   "strict_input": true
+  },
+  "POST /api/books/accounts": {
+   "strict_input": true
+  },
+  "POST /api/books/payments/preview": {
+   "strict_input": true
+  },
+  "POST /api/books/payments": {
+   "strict_input": true
+  },
+  "PATCH /api/books/payments/:id": {
+   "strict_input": true
+  },
+  "POST /api/books/payments/:id/propose": {
+   "strict_input": true
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "strict_input": true
+  },
+  "POST /api/books/cheques/:id/status": {
+   "strict_input": true
+  },
+  "POST /api/books/parties/:id/dispute": {
+   "strict_input": true
+  },
+  "POST /api/books/entries": {
+   "strict_input": true
+  },
+  "POST /api/books/entries/:id/reverse": {
+   "strict_input": true
+  },
+  "POST /api/books/write-off": {
+   "strict_input": true
+  },
+  "POST /api/books/opening": {
+   "strict_input": true
+  },
+  "POST /api/books/move-in/preflight": {
+   "strict_input": true
+  },
+  "POST /api/books/move-in/preview": {
+   "strict_input": true
+  },
+  "POST /api/books/move-in/import": {
+   "strict_input": true
+  },
+  "POST /api/books/compare/preflight": {
+   "strict_input": true
+  },
+  "POST /api/books/compare/snapshots": {
+   "strict_input": true
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "strict_input": true
+  },
+  "POST /api/books/year/:fy/close": {
+   "strict_input": true
+  },
+  "POST /api/books/packs": {
+   "strict_input": true
+  },
+  "POST /api/books/packs/:id/ack": {
+   "strict_input": true
+  },
+  "POST /api/books/recurring": {
+   "strict_input": true
+  },
+  "PATCH /api/books/recurring/:id": {
+   "strict_input": true
+  },
+  "POST /api/books/recurring/:id/post": {
+   "strict_input": true
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "strict_input": true
+  },
+  "POST /api/books/assets": {
+   "strict_input": true
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "strict_input": true
+  },
+  "POST /api/books/depreciation/run": {
+   "strict_input": true
+  },
+  "POST /api/books/closing-stock": {
+   "strict_input": true
+  },
+  "POST /api/books/gst/close": {
+   "strict_input": true
+  },
+  "POST /api/books/gst/pay": {
+   "strict_input": true
+  },
+  "POST /api/books/loans": {
+   "strict_input": true
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "strict_input": true
+  },
+  "POST /api/books/accruals": {
+   "strict_input": true
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "strict_input": true
+  },
+  "POST /api/books/contra": {
+   "strict_input": true
+  },
+  "POST /api/books/fx-rates": {
+   "strict_input": true
+  },
+  "POST /api/books/fx-rates/import": {
+   "strict_input": true
+  },
+  "POST /api/books/fx-revalue": {
+   "strict_input": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },
