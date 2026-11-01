@@ -4461,8 +4461,7 @@
   },
   "POST /api/books/enable": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4471,8 +4470,7 @@
   },
   "POST /api/books/setting": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4487,8 +4485,7 @@
   },
   "POST /api/books/terms": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4503,8 +4500,7 @@
   },
   "POST /api/books/check": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4513,8 +4509,7 @@
   },
   "POST /api/books/outbox/retry": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4529,8 +4524,7 @@
   },
   "POST /api/books/accounts": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4595,8 +4589,7 @@
   },
   "POST /api/books/payments/preview": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4605,8 +4598,7 @@
   },
   "POST /api/books/payments": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4635,8 +4627,7 @@
   },
   "PATCH /api/books/payments/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4653,8 +4644,7 @@
   },
   "POST /api/books/payments/:id/propose": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4671,8 +4661,7 @@
   },
   "POST /api/books/payments/:id/confirm": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4695,8 +4684,7 @@
   },
   "POST /api/books/cheques/:id/status": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4709,8 +4697,7 @@
   },
   "POST /api/books/parties/:id/dispute": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4749,8 +4736,7 @@
   },
   "POST /api/books/entries": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4759,8 +4745,7 @@
   },
   "POST /api/books/entries/:id/reverse": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4773,8 +4758,7 @@
   },
   "POST /api/books/write-off": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4783,8 +4767,7 @@
   },
   "POST /api/books/opening": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4793,8 +4776,7 @@
   },
   "POST /api/books/move-in/preflight": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4803,8 +4785,7 @@
   },
   "POST /api/books/move-in/preview": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4813,8 +4794,7 @@
   },
   "POST /api/books/move-in/import": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4835,8 +4815,7 @@
   },
   "POST /api/books/compare/preflight": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4845,8 +4824,7 @@
   },
   "POST /api/books/compare/snapshots": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4875,8 +4853,7 @@
   },
   "POST /api/books/periods/:fy/:p/:act": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4889,8 +4866,7 @@
   },
   "POST /api/books/year/:fy/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4925,8 +4901,7 @@
   },
   "POST /api/books/packs": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4955,8 +4930,7 @@
   },
   "POST /api/books/packs/:id/ack": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4975,8 +4949,7 @@
   },
   "POST /api/books/recurring": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4985,8 +4958,7 @@
   },
   "PATCH /api/books/recurring/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5009,8 +4981,7 @@
   },
   "POST /api/books/recurring/:id/post": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5023,8 +4994,7 @@
   },
   "POST /api/books/recurring/:id/skip": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5049,8 +5019,7 @@
   },
   "POST /api/books/assets": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5059,8 +5028,7 @@
   },
   "POST /api/books/assets/:id/dispose": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5073,8 +5041,7 @@
   },
   "POST /api/books/depreciation/run": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5083,8 +5050,7 @@
   },
   "POST /api/books/closing-stock": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5093,8 +5059,7 @@
   },
   "POST /api/books/gst/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5103,8 +5068,7 @@
   },
   "POST /api/books/gst/pay": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5123,8 +5087,7 @@
   },
   "POST /api/books/loans": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5133,8 +5096,7 @@
   },
   "POST /api/books/loans/:ref/emi": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5147,8 +5109,7 @@
   },
   "POST /api/books/accruals": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5157,8 +5118,7 @@
   },
   "POST /api/books/accruals/:ref/reverse": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5171,8 +5131,7 @@
   },
   "POST /api/books/contra": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5187,8 +5146,7 @@
   },
   "POST /api/books/fx-rates": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5197,8 +5155,7 @@
   },
   "POST /api/books/fx-rates/import": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5213,8 +5170,7 @@
   },
   "POST /api/books/fx-revalue": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,

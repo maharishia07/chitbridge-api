@@ -10,11 +10,11 @@
   "columns": {
    "strict_input": {
     "applies": 348,
-    "failing": 306
+    "failing": 262
    },
    "output_allowlist": {
     "applies": 636,
-    "failing": 238
+    "failing": 227
    },
    "foreign_id_404": {
     "applies": 230,
@@ -32,7 +32,8 @@
     "applies": 636,
     "failing": 153
    }
-  }
+  },
+  "output_allowlist_from_recordings": 11
  },
  "machine_columns": [
   "schema_in",
@@ -26071,7 +26072,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1340,
-   "hash": "ab89410882268f23",
+   "hash": "448a4e239db6e38d",
    "does": "",
    "errors": {
     "count": 4,
@@ -26121,7 +26122,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -26156,7 +26157,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ab89410882268f23"
+    "stale_since": "448a4e239db6e38d"
    },
    "status": "partial",
    "callers": [
@@ -26185,7 +26186,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2294,
-   "hash": "bee50220a319737d",
+   "hash": "da15e2c5df750548",
    "does": "",
    "errors": {
     "count": 2,
@@ -26221,7 +26222,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -26253,7 +26254,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bee50220a319737d"
+    "stale_since": "da15e2c5df750548"
    },
    "status": "partial",
    "callers": [
@@ -29759,7 +29760,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 340,
-   "hash": "3811b544012d8b31",
+   "hash": "09ce0dbdbd76db8c",
    "does": "",
    "errors": {
     "count": 2,
@@ -29799,7 +29800,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29831,7 +29832,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3811b544012d8b31"
+    "stale_since": "09ce0dbdbd76db8c"
    },
    "status": "partial",
    "callers": [
@@ -29860,7 +29861,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "e11dc56f2f6c00ee",
+   "hash": "8946badbc2fbfb0d",
    "does": "",
    "errors": {
     "count": 2,
@@ -29896,8 +29897,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29922,12 +29923,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8946badbc2fbfb0d"
    },
    "status": "partial",
    "callers": [
@@ -29954,7 +29957,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "d60f521d80212da1",
+   "hash": "c5804bdfe29a5772",
    "does": "",
    "errors": {
     "count": 2,
@@ -29990,8 +29993,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30016,12 +30019,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "c5804bdfe29a5772"
    },
    "status": "partial",
    "callers": [
@@ -30048,7 +30053,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "fa69bd94b52e0c7d",
+   "hash": "85ee4d9880bd3f5d",
    "does": "",
    "errors": {
     "count": 2,
@@ -30084,8 +30089,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30110,12 +30115,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "85ee4d9880bd3f5d"
    },
    "status": "partial",
    "callers": [
@@ -30142,7 +30149,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "07f4da6c18005556",
+   "hash": "dd20f8b7ff039130",
    "does": "",
    "errors": {
     "count": 2,
@@ -30178,8 +30185,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30204,12 +30211,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "dd20f8b7ff039130"
    },
    "status": "partial",
    "callers": [
@@ -30236,7 +30245,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 293,
-   "hash": "b732844b32a0b4c8",
+   "hash": "867e5ec2ee699edf",
    "does": "",
    "errors": {
     "count": 2,
@@ -30272,7 +30281,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30302,8 +30311,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "867e5ec2ee699edf"
    },
    "status": "partial",
    "callers": [],
@@ -30328,7 +30338,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1576,
-   "hash": "791e87ab60c0c426",
+   "hash": "6167ef775abb8f3b",
    "does": "",
    "errors": {
     "count": 1,
@@ -30365,7 +30375,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -30398,7 +30408,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "791e87ab60c0c426"
+    "stale_since": "6167ef775abb8f3b"
    },
    "status": "partial",
    "callers": [
@@ -30427,7 +30437,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "81c7a68b6596fef6",
+   "hash": "f7e474aa3f126a6f",
    "does": "",
    "errors": {
     "count": 2,
@@ -30463,8 +30473,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30489,12 +30499,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f7e474aa3f126a6f"
    },
    "status": "partial",
    "callers": [
@@ -30521,7 +30533,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1907,
-   "hash": "48cce5437b2b13cf",
+   "hash": "cf88afddb1ead2a6",
    "does": "",
    "errors": {
     "count": 4,
@@ -30559,7 +30571,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30591,7 +30603,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "48cce5437b2b13cf"
+    "stale_since": "cf88afddb1ead2a6"
    },
    "status": "partial",
    "callers": [
@@ -30620,7 +30632,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1924,
-   "hash": "c3cc2dfa26bfac95",
+   "hash": "c5d5fa6c2a416807",
    "does": "",
    "errors": {
     "count": 4,
@@ -30662,7 +30674,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30695,7 +30707,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c3cc2dfa26bfac95"
+    "stale_since": "c5d5fa6c2a416807"
    },
    "status": "partial",
    "callers": [
@@ -30724,7 +30736,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "b7de4792f46dba1f",
+   "hash": "4791a685ccbf85d4",
    "does": "",
    "errors": {
     "count": 2,
@@ -30760,8 +30772,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30786,12 +30798,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4791a685ccbf85d4"
    },
    "status": "partial",
    "callers": [],
@@ -30816,7 +30830,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "e6107dd2f522b2cd",
+   "hash": "7f566abeda51311f",
    "does": "",
    "errors": {
     "count": 2,
@@ -30852,8 +30866,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30878,12 +30892,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7f566abeda51311f"
    },
    "status": "partial",
    "callers": [
@@ -30910,7 +30926,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 161,
-   "hash": "372b3fdf696a4ef2",
+   "hash": "0184f8490b3c9ecc",
    "does": "",
    "errors": {
     "count": 1,
@@ -30947,7 +30963,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30978,7 +30994,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "372b3fdf696a4ef2"
+    "stale_since": "0184f8490b3c9ecc"
    },
    "status": "partial",
    "callers": [
@@ -31007,7 +31023,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1658,
-   "hash": "9d86e99f0c2669d0",
+   "hash": "9de7666626d30c72",
    "does": "",
    "errors": {
     "count": 2,
@@ -31045,7 +31061,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -31077,7 +31093,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9d86e99f0c2669d0"
+    "stale_since": "9de7666626d30c72"
    },
    "status": "partial",
    "callers": [
@@ -31106,7 +31122,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1685,
-   "hash": "7dfd81b7e02fd8b0",
+   "hash": "da97f92d366b4bc1",
    "does": "",
    "errors": {
     "count": 3,
@@ -31144,7 +31160,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -31177,7 +31193,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7dfd81b7e02fd8b0"
+    "stale_since": "da97f92d366b4bc1"
    },
    "status": "partial",
    "callers": [
@@ -31304,7 +31320,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2445,
-   "hash": "3a843cdad18dbabe",
+   "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
     "count": 3,
@@ -31341,7 +31357,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -31373,7 +31389,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3a843cdad18dbabe"
+    "stale_since": "e3bbffd0a43845a4"
    },
    "status": "partial",
    "callers": [
@@ -31402,7 +31418,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2454,
-   "hash": "86e46574f45dbc24",
+   "hash": "c185bb01296cb2ce",
    "does": "",
    "errors": {
     "count": 3,
@@ -31439,7 +31455,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -31471,7 +31487,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "86e46574f45dbc24"
+    "stale_since": "c185bb01296cb2ce"
    },
    "status": "partial",
    "callers": [
@@ -31500,7 +31516,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2499,
-   "hash": "d93409160a155d12",
+   "hash": "8a8fe2f889e3128e",
    "does": "",
    "errors": {
     "count": 3,
@@ -31538,7 +31554,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -31571,7 +31587,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d93409160a155d12"
+    "stale_since": "8a8fe2f889e3128e"
    },
    "status": "partial",
    "callers": [
@@ -31600,7 +31616,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "3c7634f00c4bd826",
+   "hash": "e0e55c0fbac21845",
    "does": "",
    "errors": {
     "count": 2,
@@ -31636,8 +31652,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -31662,12 +31678,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e0e55c0fbac21845"
    },
    "status": "partial",
    "callers": [
@@ -31694,7 +31712,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "22f60cd274a23d49",
+   "hash": "48e7fbc7c749a012",
    "does": "",
    "errors": {
     "count": 2,
@@ -31730,8 +31748,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": true,
@@ -31756,12 +31774,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "48e7fbc7c749a012"
    },
    "status": "partial",
    "callers": [
@@ -31788,7 +31808,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "b4badb092ebd3991",
+   "hash": "1c90f5d4dea66b3f",
    "does": "",
    "errors": {
     "count": 2,
@@ -31824,8 +31844,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -31850,12 +31870,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1c90f5d4dea66b3f"
    },
    "status": "partial",
    "callers": [],
@@ -31880,7 +31902,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 0,
-   "hash": "10480c2322762cd4",
+   "hash": "0f3772ca67a39e28",
    "does": "",
    "errors": {
     "count": 2,
@@ -31916,8 +31938,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -31942,12 +31964,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0f3772ca67a39e28"
    },
    "status": "partial",
    "callers": [],
@@ -31972,7 +31996,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1833,
-   "hash": "56d6afde4e313771",
+   "hash": "9b2e840b9557f355",
    "does": "",
    "errors": {
     "count": 2,
@@ -32013,7 +32037,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32044,8 +32068,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9b2e840b9557f355"
    },
    "status": "partial",
    "callers": [
@@ -32074,7 +32099,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1780,
-   "hash": "7f4fa469761dfc9c",
+   "hash": "5a3126bb70d7d509",
    "does": "",
    "errors": {
     "count": 2,
@@ -32110,7 +32135,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32142,7 +32167,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7f4fa469761dfc9c"
+    "stale_since": "5a3126bb70d7d509"
    },
    "status": "partial",
    "callers": [
@@ -32171,7 +32196,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1823,
-   "hash": "5512554f5ed56bc5",
+   "hash": "33e170893cfe51d1",
    "does": "",
    "errors": {
     "count": 2,
@@ -32211,7 +32236,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32241,8 +32266,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "33e170893cfe51d1"
    },
    "status": "partial",
    "callers": [
@@ -32271,7 +32297,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1730,
-   "hash": "3d54b6ed4161ec8d",
+   "hash": "325faf2a4d813cf7",
    "does": "",
    "errors": {
     "count": 2,
@@ -32314,7 +32340,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32347,7 +32373,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "3d54b6ed4161ec8d"
+    "stale_since": "325faf2a4d813cf7"
    },
    "status": "partial",
    "callers": [
@@ -32376,7 +32402,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 300,
-   "hash": "260b6a41dc0cca58",
+   "hash": "c5cd3d070b6a04fc",
    "does": "",
    "errors": {
     "count": 2,
@@ -32412,7 +32438,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32444,7 +32470,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "260b6a41dc0cca58"
+    "stale_since": "c5cd3d070b6a04fc"
    },
    "status": "partial",
    "callers": [
@@ -32473,7 +32499,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2178,
-   "hash": "a44350d195f73a23",
+   "hash": "61e8d612485ebf8d",
    "does": "",
    "errors": {
     "count": 2,
@@ -32509,7 +32535,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -32541,7 +32567,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a44350d195f73a23"
+    "stale_since": "61e8d612485ebf8d"
    },
    "status": "partial",
    "callers": [
@@ -32570,7 +32596,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2253,
-   "hash": "a3229969705c2956",
+   "hash": "f295ae85c796a7e7",
    "does": "",
    "errors": {
     "count": 3,
@@ -32612,7 +32638,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -32645,7 +32671,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a3229969705c2956"
+    "stale_since": "f295ae85c796a7e7"
    },
    "status": "partial",
    "callers": [
@@ -32674,7 +32700,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1599,
-   "hash": "c90a2015dd9a256b",
+   "hash": "260df860493ec496",
    "does": "",
    "errors": {
     "count": 1,
@@ -32711,7 +32737,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -32744,7 +32770,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c90a2015dd9a256b"
+    "stale_since": "260df860493ec496"
    },
    "status": "partial",
    "callers": [
@@ -32773,7 +32799,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1165,
-   "hash": "641586702d47a9e4",
+   "hash": "8f54bd325d140576",
    "does": "",
    "errors": {
     "count": 2,
@@ -32816,7 +32842,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
@@ -32848,7 +32874,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "641586702d47a9e4"
+    "stale_since": "8f54bd325d140576"
    },
    "status": "partial",
    "callers": [
@@ -32877,7 +32903,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1427,
-   "hash": "132619f7428c9ad4",
+   "hash": "d52c6fc8c68a9760",
    "does": "",
    "errors": {
     "count": 2,
@@ -32915,7 +32941,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -32947,7 +32973,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "132619f7428c9ad4"
+    "stale_since": "d52c6fc8c68a9760"
    },
    "status": "partial",
    "callers": [],
@@ -32972,7 +32998,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1396,
-   "hash": "fbc036805e8eab17",
+   "hash": "7a320711f3c0301c",
    "does": "",
    "errors": {
     "count": 2,
@@ -33010,7 +33036,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": false,
@@ -33042,7 +33068,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fbc036805e8eab17"
+    "stale_since": "7a320711f3c0301c"
    },
    "status": "partial",
    "callers": [],
@@ -33067,7 +33093,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1115,
-   "hash": "d16a29fcb8fdd28d",
+   "hash": "4dc3b9538d3c0038",
    "does": "",
    "errors": {
     "count": 2,
@@ -33106,7 +33132,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -33138,7 +33164,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d16a29fcb8fdd28d"
+    "stale_since": "4dc3b9538d3c0038"
    },
    "status": "partial",
    "callers": [
@@ -33169,7 +33195,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2075,
-   "hash": "d48ae90b495afbd5",
+   "hash": "92a8304b6bb46be8",
    "does": "",
    "errors": {
     "count": 2,
@@ -33209,7 +33235,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -33241,7 +33267,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d48ae90b495afbd5"
+    "stale_since": "92a8304b6bb46be8"
    },
    "status": "partial",
    "callers": [],
@@ -33363,7 +33389,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2284,
-   "hash": "aae1bf74cbe9be2b",
+   "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
     "count": 2,
@@ -33399,7 +33425,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -33431,7 +33457,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "aae1bf74cbe9be2b"
+    "stale_since": "678cbb0c1ba116dc"
    },
    "status": "partial",
    "callers": [
@@ -33460,7 +33486,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2314,
-   "hash": "f4ec04dc1173d3c9",
+   "hash": "a9a8fedb79f55b44",
    "does": "",
    "errors": {
     "count": 2,
@@ -33496,7 +33522,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -33528,7 +33554,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f4ec04dc1173d3c9"
+    "stale_since": "a9a8fedb79f55b44"
    },
    "status": "partial",
    "callers": [
@@ -33555,7 +33581,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2323,
-   "hash": "bcb5b014687e1415",
+   "hash": "c51214ebf2d96a82",
    "does": "",
    "errors": {
     "count": 2,
@@ -33591,7 +33617,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -33623,7 +33649,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bcb5b014687e1415"
+    "stale_since": "c51214ebf2d96a82"
    },
    "status": "partial",
    "callers": [
@@ -33650,7 +33676,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 174,
-   "hash": "bf708a1ab388b0c8",
+   "hash": "375eed95657abf0f",
    "does": "",
    "errors": {
     "count": 2,
@@ -33689,7 +33715,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -33721,7 +33747,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bf708a1ab388b0c8"
+    "stale_since": "375eed95657abf0f"
    },
    "status": "partial",
    "callers": [
@@ -33750,7 +33776,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 241,
-   "hash": "31ee0f31eed27f93",
+   "hash": "09fc6cf934662aac",
    "does": "",
    "errors": {
     "count": 3,
@@ -33791,7 +33817,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -33824,7 +33850,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "31ee0f31eed27f93"
+    "stale_since": "09fc6cf934662aac"
    },
    "status": "partial",
    "callers": [
@@ -33855,7 +33881,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1698,
-   "hash": "77c0239acdda6c1c",
+   "hash": "ff316dffbfab4af3",
    "does": "",
    "errors": {
     "count": 2,
@@ -33893,7 +33919,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -33926,7 +33952,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "77c0239acdda6c1c"
+    "stale_since": "ff316dffbfab4af3"
    },
    "status": "partial",
    "callers": [],
@@ -33951,7 +33977,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2088,
-   "hash": "16b6b5684ed096ac",
+   "hash": "ecce20760c8f63c3",
    "does": "",
    "errors": {
     "count": 4,
@@ -33992,7 +34018,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -34024,7 +34050,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "16b6b5684ed096ac"
+    "stale_since": "ecce20760c8f63c3"
    },
    "status": "partial",
    "callers": [
