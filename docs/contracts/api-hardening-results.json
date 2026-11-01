@@ -121,7 +121,7 @@
   "GET /api/entities/me": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "PATCH /api/entities/me/prefs/:kind": {
@@ -674,7 +674,7 @@
   "GET /api/chits/:chit_id/messages": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
@@ -1990,7 +1990,7 @@
   "GET /api/actors": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "POST /api/actors/:id/otp": {
@@ -2532,7 +2532,7 @@
   "GET /api/relationships/customers": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/relationships/customers/:id/rewards": {
@@ -2628,7 +2628,7 @@
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
@@ -2761,7 +2761,8 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": true
+    "pass": false,
+    "why": "another shop's id answered 201, not the unknown id's 404"
    }
   },
   "POST /api/products": {

@@ -616,8 +616,7 @@
    "strict_input": true
   },
   "POST /api/catalogue/enquiry/:item_id": {
-   "output_allowlist": true,
-   "foreign_id_404": true
+   "output_allowlist": true
   },
   "POST /api/products/status/bulk": {
    "output_allowlist": true
