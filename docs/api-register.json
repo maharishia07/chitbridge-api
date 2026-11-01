@@ -17,7 +17,7 @@
     "failing": 238
    },
    "foreign_id_404": {
-    "applies": 231,
+    "applies": 230,
     "failing": 88
    },
    "idempotent_money_write": {
@@ -259,7 +259,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1927,
+   "line": 1966,
    "hash": "cb4788656770100d",
    "does": "",
    "errors": {
@@ -7302,7 +7302,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1098,
+   "line": 1137,
    "hash": "baa5a1ee9cdc5a82",
    "does": "",
    "errors": {
@@ -7385,7 +7385,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1116,
+   "line": 1155,
    "hash": "d607d6f62eb7d0de",
    "does": "",
    "errors": {
@@ -7468,7 +7468,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1906,
+   "line": 1945,
    "hash": "f8822ac8bc7414af",
    "does": "",
    "errors": {
@@ -7553,7 +7553,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1880,
+   "line": 1919,
    "hash": "32bc5eb8888ad730",
    "does": "",
    "errors": {
@@ -7640,7 +7640,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1191,
+   "line": 1230,
    "hash": "e92723610f98cd45",
    "does": "",
    "errors": {
@@ -7723,7 +7723,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1053,
+   "line": 1092,
    "hash": "b199ff993db515f6",
    "does": "",
    "errors": {
@@ -7808,7 +7808,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2016,
+   "line": 2055,
    "hash": "94028d2eee2e5db1",
    "does": "",
    "errors": {
@@ -7898,8 +7898,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 620,
-   "hash": "985e2513117c90be",
+   "line": 664,
+   "hash": "7da497c2aa168f2a",
    "does": "",
    "errors": {
     "count": 2,
@@ -7914,7 +7914,6 @@
     ]
    },
    "reads": [
-    "catalogue_items",
     "identities"
    ],
    "writes": [],
@@ -7960,8 +7959,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7da497c2aa168f2a"
    },
    "status": "partial",
    "callers": [],
@@ -7985,7 +7985,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 892,
+   "line": 931,
    "hash": "7e516fd50beb91fc",
    "does": "",
    "errors": {
@@ -34728,7 +34728,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1830,
+   "line": 1869,
    "hash": "9d34219e5166cb7b",
    "does": "",
    "errors": {
@@ -34823,7 +34823,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1327,
+   "line": 1366,
    "hash": "060fac9633f19490",
    "does": "",
    "errors": {
@@ -34937,7 +34937,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1128,
+   "line": 1167,
    "hash": "622c83d3ce290ba1",
    "does": "",
    "errors": {
@@ -35032,7 +35032,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1268,
+   "line": 1307,
    "hash": "81696fd76afddafd",
    "does": "",
    "errors": {
@@ -35126,7 +35126,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1229,
+   "line": 1268,
    "hash": "7d9d4681880be122",
    "does": "",
    "errors": {
@@ -35216,7 +35216,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2039,
+   "line": 2078,
    "hash": "8c67d9df0fb2f2fd",
    "does": "",
    "errors": {
@@ -35260,7 +35260,7 @@
    "applies": {
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
@@ -35309,8 +35309,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 754,
-   "hash": "dec4bb854d252554",
+   "line": 800,
+   "hash": "1f2b998c43f174b9",
    "does": "",
    "errors": {
     "count": 7,
@@ -35382,8 +35382,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1f2b998c43f174b9"
    },
    "status": "partial",
    "callers": [],
@@ -35407,7 +35408,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1948,
+   "line": 1987,
    "hash": "c64265079935b335",
    "does": "",
    "errors": {
