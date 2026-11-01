@@ -645,19 +645,20 @@ async function publicItemsOfShops(shops) {
   }
   return rows;
 }
-/** orderableOf(ids, members) → the cart's stored rows (active, of a member) that their store's anonymous storefront shows (the GET's own view) — a customer of one
+/** orderableOf(ids, network) → the cart's stored rows (active, of a shop the GET reads: the same capped slice, visibleShopsOf) that their store's anonymous storefront shows (the GET's own view) — a customer of one
  *  member never orders a private, closed or capped sibling's item by its id. The price stays the stored row's. */
-async function orderableOf(ids, members) {
+async function orderableOf(ids, network) {
+  const { shops } = await visibleShopsOf(network);
   const found = (
     await withEntity(null, (db) =>
       db.query(
         `SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY($1::uuid[]) AND entity_id = ANY($2::uuid[]) AND is_active = true`,
-        [ids, members]
+        [ids, shops.map((shop) => String(shop.identity_id))]
       )
     )
   ).rows;
-  const stores = [...new Set(found.map((item) => String(item.entity_id)))];
-  const shown = new Set((await publicItemsOfShops(await liveShopsOf(stores))).map((item) => String(item.item_id)));
+  const stores = new Set(found.map((item) => String(item.entity_id)));
+  const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
   return found.filter((item) => shown.has(String(item.item_id)));
 }
 router.get('/network-store/:networkId', async (req, res) => {
@@ -809,7 +810,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
       return refuseAs(req, res, { status: 403, code: 'NOT_THIS_NETWORK', legacy: storefront.NOT_THIS_NETWORK });
     const nid = network.brand.bridge_id;
     const ids = cart.map((item) => item.product_id).filter(Boolean);
-    const rows = await orderableOf(ids, network.members); /* SEC-126: only what the store's own storefront shows */
+    const rows = await orderableOf(ids, network); /* SEC-126: only what the store's own storefront shows */
     if (!rows.length)
       return refuseAs(req, res, { status: 404, code: 'NO_MATCHING_PRODUCTS', legacy: oldBody('Not found', 'No matching products in this network') });
     const operatorId = String(network.brand.identity_id);

@@ -249,6 +249,16 @@ const ids = (r) => (r.body.products || []).map((x) => x.product_id);
       show(r)
     );
   }
+  /* the door takes the GET's own capped slice: a public item of a shop past the first 40 is not orderable here (security review, api #680) */
+  MEMBERS = Array.from({ length: 45 }, (_, n) => id('b' + String(n).padStart(2, '0'))).concat([P]);
+  DELIVERED.length = 0;
+  r = await call('POST', ORDER, customer(P), { items: [{ product_id: item(2), qty: 1 }] });
+  t(
+    'a public item of a shop past the first 40 → 404, the door is no wider than the GET',
+    r.status === 404 && r.body.code === 'NO_MATCHING_PRODUCTS' && DELIVERED.length === 0,
+    show(r)
+  );
+  MEMBERS = [P, V, C, K, N, Z, U, L];
   DELIVERED.length = 0;
   r = await call('POST', ORDER, customer(P), {
     items: [
