@@ -30,6 +30,7 @@ process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-li
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
+const ANSWERS_FILE = path.join(HERE, 'docs', 'contracts', 'books-answers.json'); /* the period-end routes' 2xx answers, produced by tests/support/books-capture.cjs --build */
 const MOUNT = '/api/books';
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
@@ -484,6 +485,8 @@ function checkRefusals() {
  */
 function checkAllowList(recording) {
   const proved = {};
+  const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
+  const recorded = Object.assign({}, Object.fromEntries(Object.entries(fixture).filter(([, one]) => closedByRecordings(one.route))), recording); /* only for the routes whose shape is closed from them */
   const words = require(path.join(HERE, 'lib', 'books-contract.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
@@ -491,20 +494,22 @@ function checkAllowList(recording) {
     const status = Number(Object.keys(words.OPERATIONS[route].responses).find((code) => /^2\d\d$/.test(code)) || 200);
     const schema = (((words.OPERATIONS[route].responses[status] || {}).content || {})['application/json'] || {}).schema;
     if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === status && one.body);
+    const answers = Object.values(recorded).filter((one) => one.route === route && one.status === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
     check(route + ': every recorded ' + status + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
-    if (held) proved[route] = { output_allowlist: true };
+    if (held) proved[route] = Object.assign({ output_allowlist: true }, closedByRecordings(route) ? { output_allowlist_basis: 'recordings' } : {});
   });
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
   return proved;
 }
+/** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
+const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
