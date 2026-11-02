@@ -34,9 +34,9 @@ of file each thing is; this says what already does the job.
 | 58 | `items` | `books-store.js` | PERF1: |
 | 57 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 57 | `register` | `regulation.js` | register(pack) → the pack — |
+| 54 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 53 | `record` | `access-events.js` |  |
 | 53 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 52 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 51 | `pack` | `books-store.js` |  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -66,6 +66,7 @@ of file each thing is; this says what already does the job.
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
+| 33 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 33 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 33 | `live` | `receivables.js` | the allocations that still count: |
 | 33 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
@@ -75,7 +76,6 @@ of file each thing is; this says what already does the job.
 | 32 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 32 | `gate` | `country-setup.js` | gate(h, entity): |
-| 32 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 32 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 31 | `changes` | `books-store.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
