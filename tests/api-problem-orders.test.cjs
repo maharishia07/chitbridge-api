@@ -435,7 +435,7 @@ function applyPatch(setup) {
     undo.push([owner, name, owner[name]]);
     owner[name] = given;
   };
-  const keys = require(path.join(HERE, 'routes', 'keys'));
+  const keys = require(path.join(HERE, 'lib', 'api-keys'));
   if (setup.patchKeys || setup.mintFails) {
     swap(keys, 'mint', async () => {
       if (setup.mintFails) throw setup.mintFails;

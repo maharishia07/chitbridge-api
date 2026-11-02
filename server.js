@@ -6,7 +6,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('./lib/rate-limit');
 const log = require('./lib/logger');
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
@@ -220,7 +220,9 @@ app.use((req, res, next) => {
     log.info('request', {
       id: req.id,
       method: req.method,
-      path: req.path,
+      /* the FULL path, not the part a mounted router leaves, and no query string (the Servers heat map
+         counts by path: PM/SERVERS-STATUS.md, Athi 31 Oct) */
+      path: (req.originalUrl || req.url).split('?')[0],
       status: res.statusCode,
       ms: Date.now() - t0,
       code: (res.locals && res.locals.code) || null,
@@ -348,6 +350,8 @@ app.use('/api/assist', assistLimiter);
 /* ⭐ M04 (IAM §35) — WHO before WHAT: POST /api/chits/send is authenticated here, after the rate limiters and before its body
    is parsed; an unidentified caller is refused without the server reading what it sent. middleware/auth-first.js */
 app.use(authFirst.authThenParse);
+/* API-15 (BH-3): a NUL byte in the path, query or body is refused 400 here, once — Postgres cannot store it (22021) and each route would answer 500 */
+app.use(require('./lib/input-hygiene').refuseNul);
 
 // ── Idempotency (offline outbox, Phase 2) ─────────────────────
 // Opt-in per request (Idempotency-Key header) + self-healing (no-op until b109 is run). Placed before the routers so a

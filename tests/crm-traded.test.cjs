@@ -5,6 +5,7 @@
  * Run: node tests/crm-traded.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
@@ -27,7 +28,7 @@ it('the shop itself, or a name that is not an id → no statement at all (a shop
   const h = handle([]); assert.strictEqual(await crm.traded(h, OWNER, OWNER, null), null); assert.strictEqual(await crm.traded(h, OWNER, 'Ravi Stores', null), null); assert.strictEqual(h.sql.length, 0);
 });
 it('routes/chits.js: the bump runs INSIDE the delivery\'s withEntity, on deliver\'s own client, in a savepoint, skipping a recipient', () => {
-  const s = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const s = CF.read(API);
   /* T2-SPLIT (2026-10-14): the write is the sendWrite step now — the same two lines, so matched whatever their indent; RAIL-149 may put ONE verifySourceCarry line (same client c, same transaction) before deliver */
   const m = /await withEntity\(sender_id, async \(c\) => \{\r?\n(?:\s*if \(st\.sourceCarry\) await costWrite\.verifySourceCarry\(c, [^\n]*\r?\n)?\s*await mint\.deliver\(sender_id, chit_id, copies, \{ is_draft: !!promote_draft_id, client: c \}\);/.exec(s);
   const i = m ? m.index : -1;

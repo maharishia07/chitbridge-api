@@ -17,6 +17,7 @@
  * Run: node tests/chit-currency-default.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -27,7 +28,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 
 console.log('\n══ a chit is in the sender\'s money · the ledger opens on the Country setup ══\n');
 
-const chits = read('routes/chits.js');
+const chits = CF.read(ROOT);
 ok('routes/chits.js no longer defaults a chit\'s currency to INR at the door', !/const currency_code = \(business_json && business_json\.currency\) \|\| 'INR'/.test(chits));
 ok('…the sender\'s row the self-copy read already fetches carries currency_code (one query)', /SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = \$1/.test(chits));
 ok('…and a row without one asks lib/regional.currencyFor (the one resolver), never a literal (N1: none stated → null, not the word NULL)', /const statedMoney = currency_code \|\| \(prefRow\.rows\[0\] && prefRow\.rows\[0\]\.currency_code\) \|\| \(?await require\('\.\.\/lib\/regional'\)\.currencyFor\(sender_id\)\)?;\s*currency_code = statedMoney\s*\?\s*String\(statedMoney\)\.toUpperCase\(\)\s*:\s*null;/.test(chits));

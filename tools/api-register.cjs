@@ -101,6 +101,11 @@ function routerFilesOf() {
   return found;
 }
 
+/** the owner area of a route file: its name, except that routes/chits-<part>.js (LEAN-PLAN §8: routes/chits.js split by owner area) is still the chits area, so a move-only split changes a row's file and line and nothing else */
+/* a part of a split router answers in its parent's group (routes/chits-trace.js, and routes/chit-proposals.js which routes/chits.js uses: tools/server-mounts.cjs partParents) */
+const PARTS = require('./server-mounts.cjs').partParents(path.join(ROOT, 'routes'));
+const areaOfFile = (file) => path.basename(PARTS[path.basename(file)] || file, '.js').replace(/^chits-.+$/, 'chits');
+
 /** the functions every route shares (middleware/*.js exports): not "own" code of a route, never hashed with it */
 function sharedFunctions() {
   const shared = new Set();
@@ -310,10 +315,13 @@ function rowOf(leaf, context) {
   const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
   const line = lineOf(fileText, leaf);
-  const area = path.basename(info.file, '.js');
+  const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return { key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) };
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key]));
 }
+
+/** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
+const basisOf = (columns, evidence) => (columns.output_allowlist && evidence && evidence.output_allowlist_basis === 'recordings' ? { output_allowlist_basis: 'recordings' } : {});
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
 const testedStatuses = (context, key) => (context.errorTests[key] || []).concat((context.contract[key] && context.contract[key].statuses) || []);
@@ -377,6 +385,27 @@ function signoffProblems(signoffs, rows) {
   });
 }
 
+/**
+ * M7: one router mounted at two prefixes (server.js mounts routes/ctp.js at / and at /api/ctp, deliberately) is ONE handler, so ONE row.
+ * Leaves with the same method, the same router and the same handler functions fold into the one with the longest path
+ * (the /api one); the shorter paths are listed on it as `aliases`. Nothing else folds: a different handler is a different endpoint.
+ */
+function foldAliases(all) {
+  const groups = new Map();
+  all.forEach((leaf) => {
+    const same = [...groups.keys()].find((head) => head.method === leaf.method && head.router === leaf.router && head.fns.length === leaf.fns.length && head.fns.every((fn, at) => fn === leaf.fns[at]));
+    groups.set(same || leaf, (groups.get(same || leaf) || []).concat(leaf));
+  });
+  const leaves = [];
+  const aliasesOf = new Map();
+  groups.forEach((members) => {
+    const sorted = members.slice().sort((first, second) => second.path.length - first.path.length);
+    leaves.push(sorted[0]);
+    if (sorted.length > 1) aliasesOf.set(sorted[0], sorted.slice(1).map((leaf) => leaf.path).sort());
+  });
+  return { leaves, aliasesOf };
+}
+
 /** walk the real app and build the whole register: one row per method and path, counts, hashes */
 function buildRegister() {
   const loader = require(path.join(TOOLS_DIR, 'load-app.cjs'));
@@ -387,10 +416,9 @@ function buildRegister() {
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
   const context = { tables: card.knownTables(ROOT), app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: hardeningEvidence(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
-  const rows = loader
-    .leavesOf(app, true)
-    .filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path))
-    .map((leaf) => rowOf(leaf, context))
+  const { leaves, aliasesOf } = foldAliases(loader.leavesOf(app, true).filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path)));
+  const rows = leaves
+    .map((leaf) => Object.assign(rowOf(leaf, context), aliasesOf.has(leaf) ? { aliases: aliasesOf.get(leaf) } : {}))
     .sort((left, right) => (left.key < right.key ? -1 : 1));
   mergeHuman(rows, readSignoffs());
   addEffect(rows, context.budget);
@@ -419,7 +447,8 @@ function legacyRoutes() {
 function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
-  return { routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns };
+  const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
 const mark = (value) => (value === true ? 'yes' : value === false ? 'no' : '-');
@@ -438,14 +467,15 @@ function renderMarkdown(register) {
     '',
     '**API standard: ' + counts.meets + ' of ' + counts.routes + ' meet** - partial ' + counts.partial + ' - not started ' + counts.not_started + '.',
     '',
+  ].concat(counts.output_allowlist_from_recordings ? ['**Output allow-list closed from recordings only: ' + counts.output_allowlist_from_recordings + ' routes** (`output_allowlist_basis: recordings` in `docs/api-register.json`; their keys are the recorded answers, so a new key is reported and kept, never dropped, until the handler names its keys).', ''] : []).concat([
     'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
     '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
-  ];
+  ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
-    lines.push('| ' + [row.method, row.path, row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
+    lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
   });
   return lines.concat(card.renderCards(register.routes)).join('\n') + '\n';
 }
@@ -493,4 +523,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

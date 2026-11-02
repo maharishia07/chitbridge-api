@@ -92,7 +92,7 @@ function installStubs() {
       return patch;
     }
   });
-  mock('routes/keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
+  mock('lib/api-keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
   mock('lib/profile', {
     profileValues: async () => {
       if (world.profileFails) throw new Error(SECRET_SQL);

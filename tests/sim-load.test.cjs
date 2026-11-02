@@ -12,6 +12,7 @@
  * Run: node tests/sim-load.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -87,7 +88,7 @@ ok('the plan starts on the pack\'s first month (April IN · July AU · January A
 ok('a one-rate pack\'s basket draws at its standard rate (AU 10 % · AE 5 %), an IN basket from its slab', /item\.rate === rateOf\(rate\)/.test(src));
 
 /* 4 · one clock on the chit */
-const chits = read('routes/chits.js'), mint = read('lib/mint.js'), b300 = read('migrations/archive/b300_chit_deliver_clock.sql');
+const chits = CF.read(ROOT), mint = read('lib/mint.js'), b300 = read('migrations/archive/b300_chit_deliver_clock.sql');
 ok('routes/chits.js stamps a chit with the shop clock (CLOCK.now()), never new Date() for `now`', /const now = CLOCK\.now\(\)/.test(chits) && !/const now = new Date\(\)/.test(chits));
 ok('…hands it to mint.header (created_at · sent_at)', /created_at: now,\s*sent_at: now/.test(chits));
 ok('…and the legacy in-transaction inserts use it too (no NOW(),NOW() on chit_header)', !/NOW\(\),NOW\(\)\)`/.test(chits) && /'sent',\s*now\s*\]/.test(chits) && /'received',\s*now\s*\]/.test(chits));

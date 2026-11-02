@@ -192,6 +192,18 @@ function writeAllowList(proved) {
   fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
 }
 
+/** S33 strict input: each of the 13 writes refuses a body key no one reads with the old 400 (CRM_BAD_REQUEST, its three keys) naming the key as UNKNOWN_FIELD (middleware/validate.js) */
+async function checkStrictInput(port) {
+  console.log('\n-- strict input: a key no one reads is refused by name --');
+  for (const [method, path] of S.STRICT_WRITES) {
+    prepare({ setup: {} });
+    const answer = await lab.send(port, method, MOUNT + path.replace(':id', S.IDS.chola).replace(':key', 'regular'), { zz_unknown_field: 'x' });
+    const body = answer.json || {};
+    const named = (body.errors || []).some((entry) => entry.field === 'zz_unknown_field' && entry.code === 'UNKNOWN_FIELD');
+    check(method + ' ' + MOUNT + path + ': zz_unknown_field is refused 400 by name, in the CRM\'s three keys', answer.status === 400 && named && body.code === 'CRM_BAD_REQUEST' && body.message === body.error, { status: answer.status, body });
+  }
+}
+
 /** the "signed in as another shop" world: every route addressed by an id or a name in its path (API-STANDARD S35) */
 async function foreignWorld(port) {
   console.log('\n-- the 9th world: signed in as another shop --');
@@ -207,12 +219,15 @@ async function foreignWorld(port) {
     ['DELETE /api/crm/parties/:id', 'DELETE', '/parties/' + S.IDS.plain],
     ['PATCH /api/crm/followups/:id', 'PATCH', '/followups/' + S.P(21), { done: true }],
     ['DELETE /api/crm/followups/:id', 'DELETE', '/followups/' + S.P(21)],
-    ['DELETE /api/crm/groups/:name', 'DELETE', '/groups/Dealers']
+    ['DELETE /api/crm/groups/:name', 'DELETE', '/groups/Dealers'],
+    ['POST /api/crm/segments/:key/send', 'POST', '/segments/group:Dealers/send', { text: 'x', dry: true }],
+    ['POST /api/crm/privacy-requests/:id/answer', 'POST', '/privacy-requests/' + REQUEST_A + '/answer', { outcome: 'done', answer: 'x' }, (world) => world.requestRows.push(S.requestRow(REQUEST_A, SHOP_A))]
   ];
-  const cases = asks.map(([route, method, url, body]) => ({
+  const cases = asks.map(([route, method, url, body, plant]) => ({
     route,
     play: async (who, planted) => {
       prepare({ setup: { who: who === 'owner' ? 'owner' : 'stranger' } });
+      if (planted && plant) plant(W); /* a record the world W holds rather than the stand-in's lists (a privacy request) */
       if (!planted) Object.assign(D, { cust: D.cust.filter((one) => one.owner !== SHOP_A), sup: [], followups: D.followups.filter((one) => one.owner !== SHOP_A) });
       return lab.send(port, method, MOUNT + url, body).catch(() => null);
     }
@@ -224,6 +239,7 @@ async function foreignWorld(port) {
   return seen.proved();
 }
 const SHOP_A = S.SHOP;
+const REQUEST_A = '30000000-0000-4000-8000-0000000000a1'; /* shop A's open privacy request */
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
@@ -254,6 +270,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkCodesRegistered();
   checkContractShape(routes);
   checkFrozen503(recording);
+  await checkStrictInput(port);
   const proved = await foreignWorld(port);
   const allowed200 = checkAllowList(recording);
   server.close();

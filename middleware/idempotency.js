@@ -205,18 +205,25 @@ function answerExisting(req, res, held, hash, isVerified) {
   return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: legacy.message, legacy });
 }
 
-/** we own the key: record the handler's JSON answer through the store it was claimed in, then run the route */
+/**
+ * we own the key: record the handler's JSON answer through the store it was claimed in, then run the route.
+ * ⭐ PLT-66 (BH-2): THE ANSWER LEAVES ONLY AFTER THE KEY IS SETTLED. Before, finalize ran in the background and the answer was flushed at once,
+ * so a retry sent right after (the outbox after a lost answer) found the claim still 'in_progress' and got 409. Now the answer waits for
+ * finalize (one database round trip). A finalize failure is warned and the answer still goes out. A true concurrent duplicate, sent while the
+ * first route is still running, is unchanged: it still gets 409, because waiting for a running request is not safe (it may never finish).
+ */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
   const origJson = res.json.bind(res);
   res.json = (body) => {
-    if (!captured) {
-      captured = true;
-      store
-        .finalize(claim.entity, claim.key, res.statusCode, body)
-        .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }));
-    }
-    return origJson(body);
+    if (captured) return origJson(body);
+    captured = true;
+    const status = res.statusCode;
+    store
+      .finalize(claim.entity, claim.key, status, body)
+      .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
+      .then(() => origJson(body));
+    return res;
   };
   next();
 }

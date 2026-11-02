@@ -4,6 +4,7 @@
  * Needs the books engines for the route half. Run: node tests/finance-terms.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs'), path = require('path'), http = require('http');
 const H = require('./support/books-harness.cjs');
 const T = require('../lib/finance-terms');
@@ -98,7 +99,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   ok('no limit anywhere → never over', (await T.creditSaleCheck('E1', bill('On credit', 999999))).over === false);
   hooks.isOn = async () => null; LIMIT = 100000;
   ok('ledger off → no check', (await T.creditSaleCheck('E1', bill('On credit', 1500))).over === false);
-  const chits = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const chits = CF.read(path.join(__dirname, '..'));
   ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /ov\.by && \(req\.till \|\| isOwner\(req\)\)/.test(chits));
 
   /* ── the routes before b298 has run ── */

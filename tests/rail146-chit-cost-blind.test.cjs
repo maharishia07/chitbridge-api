@@ -332,12 +332,13 @@ function unitCases() {
   [owner, granted, blind] = await read('/api/chits/rollup?group_by=state');
   t('rollup | owner: the sum as the statement gave it (the stand-in answers the member column to everyone)', [owner.status, owner.body.groups[0].total_value, owner.body.groups[0].cost_hidden], [200, String(SECRET.total * 2), undefined]);
   same('rollup', owner, granted);
-  t('rollup | blind: the sale alone, two chits, cost_hidden', blind.body.groups[0], { key: 'pending', chits: 2, total_value: SECRET.total.toFixed(2), cost_hidden: true });
+  /* REP-50 (sit/run6): a group also carries by_currency, one row per currency (the stand-in answers no currency_code) */
+  t('rollup | blind: the sale alone, two chits, cost_hidden', blind.body.groups[0], { key: 'pending', chits: 2, by_currency: [{ currency_code: null, chits: 2, total_value: SECRET.total.toFixed(2) }], cost_hidden: true, total_value: SECRET.total.toFixed(2) }); /* sit/run6: the REP-50 fold writes by_currency, then the strip its marker and the folded sum (the keys in wire order) */
   noLeak('rollup', blind.raw, [String(SECRET.total)]);
   const crowd = Array.from({ length: 201 }, () => member(SALE));
   SCENE = { groups: [{ key: 'pending', chits: 500, total_value: '99999.00', members: crowd }] };
   [owner, granted, blind] = await read('/api/chits/rollup?group_by=state');
-  t('rollup | a group too big to sum honestly (members capped on the wire): blind reads no sum, the count; owner reads the statement\'s', [blind.body.groups[0], owner.body.groups[0].total_value], [{ key: 'pending', chits: 500, total_value: null, cost_hidden: true }, '99999.00']);
+  t('rollup | a group too big to sum honestly (members capped on the wire): blind reads no sum, the count; owner reads the statement\'s', [blind.body.groups[0], owner.body.groups[0].total_value], [{ key: 'pending', chits: 500, by_currency: [{ currency_code: null, chits: 500, total_value: null }], cost_hidden: true, total_value: null }, '99999.00']);
 
   server.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

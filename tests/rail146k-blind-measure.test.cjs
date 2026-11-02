@@ -45,6 +45,7 @@ dbMod.withEntity = async (entity, fn) => realWithEntity(entity, (c) => fn({ quer
   const text = String(sql).replace(/\s+/g, ' ');
   if (/SELECT folder_id, parent_id, name FROM folder/.test(text)) return { rows: [{ folder_id: FA, parent_id: null, name: 'Buying' }, { folder_id: FB, parent_id: null, name: 'Selling' }] };
   if (/SELECT scope FROM folder/.test(text)) return { rows: [{ scope: null }] };
+  if (/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/.test(text)) return { rows: [FA, FB].includes(p[0]) ? [{ folder_id: p[0], name: 'Buying', kind: null }] : [] }; /* S35: the two folders are this shop's filed folders (routes/folders.js viewFolder) */
   if (/FROM channel_outbound/.test(text)) return { rows: SENDS };
   return c.query(sql, p);
 } }));

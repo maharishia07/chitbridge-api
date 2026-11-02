@@ -89,6 +89,7 @@ function extraOf(D, W) {
       const head = { total: all.length, n_open: all.filter((r) => !r.answered_at).length, n_late: 0 };
       return { rows: all.length ? all.map((r) => Object.assign({}, head, r)) : [Object.assign({ request_id: null }, head)] };
     }
+    if (/^SELECT 1 FROM privacy_request WHERE owner_entity_id = \$1 AND request_id = \$2/.test(sql)) return { rows: W.requestRows.filter((x) => x.owner === p[0] && x.request_id === p[1]).map(() => ({ held: 1 })) }; /* lib/privacy unanswerable: is the request this shop's */
     if (/^UPDATE privacy_request SET answered_at = now\(\)/.test(sql)) {
       const r = W.requestRows.find((x) => x.owner === p[0] && x.request_id === p[1] && !x.answered_at);
       if (!r) return { rows: [] };
@@ -141,6 +142,13 @@ const boom = async () => {
   throw new Error(SECRET_SQL);
 };
 
+/** one privacy request of a shop (b307), answered when `answeredAt` is given */
+const requestRow = (id, owner, answeredAt) => ({ request_id: id, owner, party_id: null, who: 'Lata', kind: 'access', country: 'IN', received_at: '2026-10-01T00:00:00.000Z', due_at: '2026-10-31T00:00:00.000Z', answered_at: answeredAt || null });
+/** S33 strict input: the 13 writes whose body refuses a key no one reads, by name, in the old 400 (tests/api-problem-crm.test.cjs checkStrictInput) */
+const STRICT_WRITES = [
+  ['POST', '/parties/:id/interactions'], ['POST', '/followups'], ['PATCH', '/followups/:id'], ['POST', '/leads'], ['POST', '/parties/:id/outcome'], ['POST', '/leads/import'], ['POST', '/parties/:id/stage'],
+  ['POST', '/walk-ins/add'], ['POST', '/parties/:id/contact-prefs'], ['POST', '/privacy-requests'], ['POST', '/privacy-requests/:id/answer'], ['POST', '/groups'], ['POST', '/segments/:key/send']
+];
 /** every named scene: [id, route, expected status, options]. Options: who, key, signedOut, db ('fail'), world (a change to W), data (a change to D), url, body, patch. */
 function extras() {
   const X = (id, route, status, o) => Object.assign({ id, route, expect: status, setup: {} }, o || {});
@@ -281,7 +289,8 @@ function extras() {
     X('request-unknown-party', 'POST ' + C + '/privacy-requests', 404, { body: { kind: 'access', who: 'Lata', party_id: A.unknown } }),
     X('request-not-migrated', 'POST ' + C + '/privacy-requests', 503, { body: { kind: 'access', who: 'Lata' }, setup: { world: { requests: false } } }),
     X('request-answered', 'POST ' + C + '/privacy-requests/:id/answer', 200, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'Sent the copy.' }, world: (W) => { W.requestRows.push({ request_id: '30000000-0000-4000-8000-000000000001', owner: SHOP, party_id: null, who: 'Lata', kind: 'access', country: 'IN', received_at: '2026-10-01T00:00:00.000Z', due_at: '2026-10-31T00:00:00.000Z', answered_at: null }); } }),
-    X('request-answered-twice', 'POST ' + C + '/privacy-requests/:id/answer', 409, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000002/answer', body: { outcome: 'done', answer: 'Sent.' } }),
+    X('request-answered-twice', 'POST ' + C + '/privacy-requests/:id/answer', 409, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000002/answer', body: { outcome: 'done', answer: 'Sent.' }, world: (W) => { W.requestRows.push(requestRow('30000000-0000-4000-8000-000000000002', SHOP, '2026-10-02T00:00:00.000Z')); } }),
+    N('request-answer-unknown-id', 'POST ' + C + '/privacy-requests/:id/answer', 404, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000003/answer', body: { outcome: 'done', answer: 'Sent.' } }), /* S35: a request this shop does not hold is the 404 (was the 409 of an answered one) */
     X('request-answer-no-outcome', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: {} }),
     X('request-answer-by-staff', 'POST ' + C + '/privacy-requests/:id/answer', 403, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'x' }, setup: { who: 'staff' } }),
     X('request-answer-not-an-id', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/nope/answer', body: { outcome: 'done', answer: 'x' } }),
@@ -301,6 +310,7 @@ function extras() {
     X('segment-send-preview', 'POST ' + C + '/segments/:key/send', 200, { url: C + '/segments/regular/send', body: { text: 'A new offer', dry: true } }),
     X('segment-send-by-viewer', 'POST ' + C + '/segments/:key/send', 403, { url: C + '/segments/regular/send', body: { text: 'x', dry: true }, setup: { who: 'viewer' } }),
     X('segment-send-unknown-key', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/nope/send', body: { text: 'x', dry: true } }),
+    N('segment-send-unknown-group', 'POST ' + C + '/segments/:key/send', 404, { url: C + '/segments/group:Nobody/send', body: { text: 'x', dry: true } }), /* S35: a group none of my customers carries is DELETE /groups/:name's 404 */
     X('segment-send-no-text', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { dry: true } }),
     X('segment-send-bad-channel', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', channel: 'sms', dry: true } }),
     X('segment-send-a-service-message', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', purpose: 'service', dry: true } }),
@@ -308,4 +318,4 @@ function extras() {
   ];
 }
 
-module.exports = { preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day };
+module.exports = { preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day, requestRow, STRICT_WRITES };

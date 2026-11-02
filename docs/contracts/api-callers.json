@@ -2,13 +2,27 @@
  "about": "Web screens that call each route, and the routes the web outbox queues offline, derived from the web checkout by node tools/api-register.cjs --callers (api(key) calls and literal paths, screens only). Read by the register; refresh by hand, never in CI.",
  "routes": {
   "DELETE /api/actors/:id/pin": [
-   "cap-employees.js"
+   "cap-employees.js",
+   "cap-workforce.js",
+   "core.js"
   ],
   "DELETE /api/books/recurring/:id": [
    "cap-period.js"
   ],
+  "DELETE /api/channels/:id": [
+   "cap-admin.js"
+  ],
   "DELETE /api/chits/:chit_id": [
+   "app.html",
+   "core.js",
    "till.html"
+  ],
+  "DELETE /api/chits/:chit_id/payment": [
+   "app.html"
+  ],
+  "DELETE /api/chits/:chit_id/purge": [
+   "app.html",
+   "core.js"
   ],
   "DELETE /api/combo-templates/:id": [
    "combo-mode.js"
@@ -52,6 +66,7 @@
    "catalogue-lines.js"
   ],
   "DELETE /api/products/:id/schedule/:sid": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "DELETE /api/relationships/suppliers/:id": [
@@ -59,13 +74,39 @@
    "cap-suppliers.js",
    "core.js"
   ],
+  "DELETE /api/schemas/fields/:field_key": [
+   "cap-catsetup.js"
+  ],
   "GET /api/actors": [
-   "cap-worklist.js"
+   "app.html",
+   "cap-admin.js",
+   "cap-chit2.js",
+   "cap-workforce.js",
+   "cap-worklist.js",
+   "core.js"
+  ],
+  "GET /api/actors/check-login": [
+   "app.html"
+  ],
+  "GET /api/actors/settings": [
+   "cap-admin.js"
+  ],
+  "GET /api/adopt/:chit_id": [
+   "cap-adopt.js"
+  ],
+  "GET /api/assist/catalogue-mine": [
+   "app.html"
+  ],
+  "GET /api/assist/catalogue-sources": [
+   "cap-catsetup.js"
   ],
   "GET /api/assist/questions": [
    "app.html",
    "cap-admin.js",
    "cap-assist.js"
+  ],
+  "GET /api/assist/standards": [
+   "app.html"
   ],
   "GET /api/assist/whoami": [
    "app.html",
@@ -175,12 +216,19 @@
    "cap-period.js"
   ],
   "GET /api/capture/pending": [
+   "cap-intake.js",
    "intake.html"
   ],
   "GET /api/catalogue-face": [
    "app.html",
    "cap-catalogue.js",
    "cap-catsetup.js"
+  ],
+  "GET /api/catalogue/:bridge_id/my-orders": [
+   "app.html"
+  ],
+  "GET /api/catalogue/enquiry/:item_id": [
+   "app.html"
   ],
   "GET /api/channels": [
    "cap-admin.js"
@@ -209,6 +257,9 @@
    "tasks.html",
    "till.html"
   ],
+  "GET /api/chits/:chit_id/catalogue-overlay": [
+   "app.html"
+  ],
   "GET /api/chits/:chit_id/disputes": [
    "app.html",
    "cap-dispute.js",
@@ -236,11 +287,58 @@
    "cap-admin.js",
    "cap-dispute.js"
   ],
+  "GET /api/chits/folder": [
+   "app.html",
+   "cap-admin.js"
+  ],
+  "GET /api/chits/inbox": [
+   "app.html",
+   "authority-forms.html",
+   "cap-admin.js"
+  ],
+  "GET /api/chits/pulse": [
+   "app.html"
+  ],
+  "GET /api/chits/raida/report": [
+   "cap-register.js"
+  ],
+  "GET /api/chits/register/attachables": [
+   "cap-register.js"
+  ],
+  "GET /api/chits/register/subjects": [
+   "cap-register.js"
+  ],
+  "GET /api/chits/register/walk/:from": [
+   "cap-register.js"
+  ],
+  "GET /api/chits/rollup": [
+   "app.html",
+   "till.html"
+  ],
+  "GET /api/chits/sent": [
+   "app.html",
+   "authority-forms.html",
+   "cap-admin.js",
+   "cap-bank.js",
+   "cap-connector.js",
+   "cap-crm-groups.js",
+   "cap-marketing.js",
+   "cap-mis.js",
+   "cap-repeat.js",
+   "rail-advice.js",
+   "screen-id.js",
+   "till.html"
+  ],
   "GET /api/chits/trace/batches": [
    "cap-traceability.js"
   ],
   "GET /api/chits/trace/by-batch": [
    "cap-traceability.js"
+  ],
+  "GET /api/chits/unread": [
+   "app.html",
+   "cap-folders.js",
+   "cap-mis.js"
   ],
   "GET /api/combo-templates": [
    "combo-mode.js"
@@ -298,6 +396,10 @@
    "cap-catsetup.js",
    "core.js"
   ],
+  "GET /api/definitions/:id": [
+   "app.html",
+   "cap-categories.js"
+  ],
   "GET /api/entities/constitutions": [
    "register-form.js"
   ],
@@ -308,7 +410,6 @@
    "shell.js"
   ],
   "GET /api/entities/me": [
-   "_walk-panel.js",
    "app.html",
    "avatar.js",
    "cap-admin.js",
@@ -324,12 +425,24 @@
    "cap-catalogue.js",
    "cap-catsetup.js"
   ],
+  "GET /api/entities/mis": [
+   "app.html"
+  ],
   "GET /api/entities/policy": [
    "cap-admin.js",
    "cap-catsetup.js",
    "cap-country.js",
    "cap-crm-groups.js",
    "cap-settings.js"
+  ],
+  "GET /api/entities/populations": [
+   "app.html"
+  ],
+  "GET /api/entities/routing": [
+   "cap-admin.js"
+  ],
+  "GET /api/entities/routing/preview": [
+   "app.html"
   ],
   "GET /api/entities/search": [
    "app.html",
@@ -424,6 +537,9 @@
   "GET /api/governance/readiness/:bridge_id": [
    "app.html"
   ],
+  "GET /api/governance/supplier-acceptance/:handle": [
+   "app.html"
+  ],
   "GET /api/identity/documents": [
    "cap-iddocs.js"
   ],
@@ -464,16 +580,31 @@
    "cap-marketing.js"
   ],
   "GET /api/network-design": [
+   "cap-network.js",
    "network-app.js"
   ],
+  "GET /api/network-design/availability": [
+   "cap-network-member.js"
+  ],
   "GET /api/network-design/stores": [
+   "cap-network-member.js",
    "network-app.js"
   ],
   "GET /api/network-offers": [
    "cap-admin.js",
    "network-app.js"
   ],
+  "GET /api/network/entities/:id/subtree": [
+   "cap-network.js"
+  ],
+  "GET /api/network/entities/lookup": [
+   "cap-network.js"
+  ],
+  "GET /api/network/place": [
+   "cap-network.js"
+  ],
   "GET /api/notifications": [
+   "app.html",
    "rail-bell.js"
   ],
   "GET /api/people": [
@@ -501,6 +632,7 @@
    "catalogue-lines.js"
   ],
   "GET /api/products/:id/versions": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "GET /api/products/export.csv": [
@@ -515,6 +647,8 @@
    "catalogue-lines.js"
   ],
   "GET /api/products/starter-columns": [
+   "app.html",
+   "cap-catsetup.js",
    "catalogue-lines.js"
   ],
   "GET /api/products/template": [
@@ -525,8 +659,16 @@
    "catalogue-lines.js",
    "till.html"
   ],
+  "GET /api/relationships/customers": [
+   "app.html",
+   "cap-definitions.js"
+  ],
   "GET /api/relationships/customers/:id/rewards": [
    "cap-rewards.js"
+  ],
+  "GET /api/relationships/customers/groups": [
+   "app.html",
+   "cap-definitions.js"
   ],
   "GET /api/relationships/suppliers": [
    "app.html",
@@ -535,6 +677,10 @@
    "cap-suppliers.js"
   ],
   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": [
+   "app.html",
+   "cap-chit2.js"
+  ],
+  "GET /api/relationships/suppliers/availability": [
    "app.html"
   ],
   "GET /api/repeat": [
@@ -548,11 +694,17 @@
    "cap-catalogue.js",
    "cap-catsetup.js"
   ],
+  "GET /api/service/:chit_id": [
+   "cap-service.js"
+  ],
   "GET /api/signin/devices": [
    "cap-settings.js"
   ],
   "GET /api/signin/sessions": [
    "cap-settings.js"
+  ],
+  "GET /api/supplies": [
+   "cap-supplies.js"
   ],
   "GET /api/tax/gstr": [
    "cap-admin.js",
@@ -635,7 +787,8 @@
   ],
   "PATCH /api/actors/:id": [
    "cap-employees.js",
-   "cap-workforce.js"
+   "cap-workforce.js",
+   "core.js"
   ],
   "PATCH /api/books/payments/:id": [
    "rail-advice.js"
@@ -655,6 +808,9 @@
   ],
   "PATCH /api/crm/followups/:id": [
    "cap-crm.js"
+  ],
+  "PATCH /api/entities/me/exposure": [
+   "cap-admin.js"
   ],
   "PATCH /api/entities/me/prefs/:kind": [
    "avatar.js",
@@ -703,17 +859,59 @@
    "cap-suppliers.js",
    "core.js"
   ],
+  "PATCH /api/schemas/fields/:field_key": [
+   "cap-catsetup.js"
+  ],
+  "PATCH /api/schemas/fields/order": [
+   "cap-catsetup.js"
+  ],
   "POST /api/actors": [
-   "cap-employees.js"
+   "app.html",
+   "cap-employees.js",
+   "cap-workforce.js"
+  ],
+  "POST /api/actors/:id/otp": [
+   "cap-workforce.js"
+  ],
+  "POST /api/actors/login": [
+   "app.html"
+  ],
+  "POST /api/actors/set-pin": [
+   "app.html"
   ],
   "POST /api/actors/suggest-key": [
    "cap-employees.js"
+  ],
+  "POST /api/adopt/:chit_id": [
+   "cap-adopt.js"
+  ],
+  "POST /api/assist": [
+   "app.html",
+   "cap-assist.js",
+   "screen-id.js",
+   "tasks.html"
+  ],
+  "POST /api/assist/catalogue-adopt": [
+   "app.html"
+  ],
+  "POST /api/assist/catalogue-structure": [
+   "app.html"
+  ],
+  "POST /api/assist/conform": [
+   "app.html"
   ],
   "POST /api/assist/publish": [
    "app.html",
    "cap-admin.js",
    "cap-assist.js",
    "core.js"
+  ],
+  "POST /api/assist/resolve": [
+   "core.js"
+  ],
+  "POST /api/attachments": [
+   "app.html",
+   "attach-ui.js"
   ],
   "POST /api/books/accounts": [
    "cap-books.js"
@@ -826,24 +1024,57 @@
    "cap-period.js"
   ],
   "POST /api/capture/:id/convert": [
+   "app.html",
    "intake.html"
   ],
   "POST /api/capture/:id/dismiss": [
+   "cap-intake.js",
    "intake.html"
   ],
+  "POST /api/capture/:id/raise": [
+   "cap-intake.js"
+  ],
   "POST /api/capture/:id/structure": [
+   "cap-intake.js",
    "intake.html"
   ],
   "POST /api/capture/simulate": [
+   "cap-intake.js",
    "intake.html"
+  ],
+  "POST /api/catalogue/:bridge_id/login/verify": [
+   "app.html"
+  ],
+  "POST /api/catalogue/enquiry/:item_id": [
+   "app.html"
   ],
   "POST /api/channels": [
    "cap-admin.js"
+  ],
+  "POST /api/channels/:id/auto-raise": [
+   "cap-admin.js"
+  ],
+  "POST /api/channels/:id/template": [
+   "cap-admin.js"
+  ],
+  "POST /api/chits/:chit_id/amend": [
+   "app.html",
+   "workflow.js"
+  ],
+  "POST /api/chits/:chit_id/archive": [
+   "app.html",
+   "cap-chit2.js",
+   "core.js",
+   "screens.js"
   ],
   "POST /api/chits/:chit_id/assign-lines": [
    "cap-chit2.js",
    "cap-tasks.js",
    "cap-worklist.js"
+  ],
+  "POST /api/chits/:chit_id/books-request": [
+   "app.html",
+   "cap-admin.js"
   ],
   "POST /api/chits/:chit_id/deliver-lines": [
    "cap-chit2.js",
@@ -864,14 +1095,55 @@
   "POST /api/chits/:chit_id/messages": [
    "rail-thread.js"
   ],
+  "POST /api/chits/:chit_id/payment": [
+   "app.html"
+  ],
+  "POST /api/chits/:chit_id/raida": [
+   "cap-register.js"
+  ],
   "POST /api/chits/:chit_id/raida/:raida_id/close": [
    "cap-worklist.js"
   ],
   "POST /api/chits/:chit_id/reprice": [
    "cap-chit2.js"
   ],
+  "POST /api/chits/:chit_id/restore": [
+   "app.html",
+   "core.js"
+  ],
+  "POST /api/chits/:chit_id/unarchive": [
+   "app.html",
+   "core.js"
+  ],
+  "POST /api/chits/:chit_id/unread": [
+   "app.html",
+   "core.js"
+  ],
+  "POST /api/chits/assign-bulk": [
+   "app.html",
+   "core.js"
+  ],
+  "POST /api/chits/register/entries/:raida_id/close": [
+   "cap-register.js"
+  ],
+  "POST /api/chits/register/entries/:raida_id/revise": [
+   "cap-register.js"
+  ],
+  "POST /api/chits/register/subjects": [
+   "cap-register.js"
+  ],
+  "POST /api/chits/register/subjects/:subject_id/close": [
+   "cap-register.js"
+  ],
+  "POST /api/chits/register/subjects/:subject_id/entries": [
+   "cap-register.js"
+  ],
   "POST /api/chits/send": [
+   "app.html",
+   "cap-readiness.js",
+   "cap-tasks.js",
    "intake.html",
+   "rail-advice.js",
    "till.html"
   ],
   "POST /api/combo-templates": [
@@ -956,6 +1228,12 @@
    "cap-definitions.js",
    "core.js"
   ],
+  "POST /api/definitions/freeze": [
+   "app.html"
+  ],
+  "POST /api/entities/populations": [
+   "app.html"
+  ],
   "POST /api/entities/register": [
    "app.html",
    "cap-register.js",
@@ -1014,6 +1292,9 @@
    "cap-readiness.js",
    "core.js"
   ],
+  "POST /api/governance/supplier-acceptance": [
+   "app.html"
+  ],
   "POST /api/governance/verify": [
    "cap-readiness.js",
    "core.js"
@@ -1042,6 +1323,13 @@
   "POST /api/kyb/field": [
    "know-your-business.html"
   ],
+  "POST /api/network-design/build": [
+   "cap-network.js",
+   "screens.js"
+  ],
+  "POST /api/network-design/reissue": [
+   "cap-network.js"
+  ],
   "POST /api/network-design/validate": [
    "network-app.js"
   ],
@@ -1064,10 +1352,35 @@
   "POST /api/network-offers/catalogue/publish": [
    "cap-admin.js"
   ],
+  "POST /api/network/connections": [
+   "cap-admin.js"
+  ],
+  "POST /api/network/connections/:id/approve": [
+   "cap-admin.js",
+   "core.js"
+  ],
+  "POST /api/network/connections/:id/decline": [
+   "cap-admin.js",
+   "core.js"
+  ],
+  "POST /api/network/connections/:id/disconnect": [
+   "cap-admin.js",
+   "core.js"
+  ],
+  "POST /api/network/connections/:id/resume": [
+   "cap-admin.js",
+   "core.js"
+  ],
+  "POST /api/network/connections/:id/suspend": [
+   "cap-admin.js",
+   "core.js"
+  ],
   "POST /api/notifications/dismiss": [
+   "app.html",
    "rail-bell.js"
   ],
   "POST /api/notifications/seen": [
+   "app.html",
    "rail-bell.js"
   ],
   "POST /api/privacy/me/consent": [
@@ -1085,6 +1398,7 @@
    "catalogue-lines.js"
   ],
   "POST /api/products/:id/schedule": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "POST /api/products/availability/bulk": [
@@ -1094,6 +1408,7 @@
    "catalogue-lines.js"
   ],
   "POST /api/products/bulk-update": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "POST /api/products/import": [
@@ -1110,15 +1425,21 @@
    "catalogue-lines.js"
   ],
   "POST /api/products/starter-columns": [
+   "app.html",
+   "cap-catsetup.js",
    "catalogue-lines.js"
   ],
   "POST /api/products/status/bulk": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "POST /api/relationships/customers": [
    "app.html",
    "cap-crm-record.js",
    "cap-crm.js"
+  ],
+  "POST /api/relationships/customers/:id/groups": [
+   "app.html"
   ],
   "POST /api/relationships/suppliers": [
    "app.html",
@@ -1136,6 +1457,21 @@
   "POST /api/repeat/sweep": [
    "cap-repeat.js"
   ],
+  "POST /api/service/:chit_id/pause": [
+   "cap-service.js"
+  ],
+  "POST /api/service/:chit_id/pause/:pause_id/answer": [
+   "cap-service.js"
+  ],
+  "POST /api/service/:chit_id/pause/:pause_id/end": [
+   "cap-service.js"
+  ],
+  "POST /api/service/:chit_id/resolve": [
+   "cap-service.js"
+  ],
+  "POST /api/service/:chit_id/respond": [
+   "cap-service.js"
+  ],
   "POST /api/signin/ask": [
    "signin-ui.js"
   ],
@@ -1151,11 +1487,26 @@
   "POST /api/signin/verify": [
    "signin-ui.js"
   ],
+  "POST /api/supplies": [
+   "cap-supplies.js"
+  ],
+  "POST /api/supplies/:id/issue": [
+   "cap-supplies.js"
+  ],
+  "POST /api/supplies/purchase": [
+   "cap-supplies.js"
+  ],
   "POST /api/tax/compute": [
    "cap-admin.js"
   ],
   "POST /api/tax/rate": [
    "cap-admin.js"
+  ],
+  "POST /api/testing/incidents": [
+   "app.html"
+  ],
+  "POST /api/testing/requirements": [
+   "app.html"
   ],
   "POST /api/till/alias": [
    "till.html"
@@ -1182,6 +1533,7 @@
    "till.html"
   ],
   "POST /api/till/pair": [
+   "app.html",
    "till.html"
   ],
   "POST /api/till/pair/claim": [
@@ -1234,10 +1586,14 @@
    "till.html"
   ],
   "PUT /api/actors/:id/delegate": [
-   "cap-employees.js"
+   "cap-employees.js",
+   "cap-workforce.js",
+   "core.js"
   ],
   "PUT /api/actors/:id/status": [
-   "cap-employees.js"
+   "cap-employees.js",
+   "cap-workforce.js",
+   "core.js"
   ],
   "PUT /api/actors/assign/:chit_id": [
    "app.html",
@@ -1245,6 +1601,17 @@
    "cap-tasks.js",
    "core.js",
    "workflow.js"
+  ],
+  "PUT /api/actors/break": [
+   "app.html",
+   "core.js"
+  ],
+  "PUT /api/actors/change-pin": [
+   "cap-admin.js"
+  ],
+  "PUT /api/actors/settings": [
+   "cap-admin.js",
+   "core.js"
   ],
   "PUT /api/catalogue-face": [
    "app.html",
@@ -1254,6 +1621,18 @@
    "cap-dispute.js",
    "core.js",
    "screens.js"
+  ],
+  "PUT /api/chits/:chit_id/priority": [
+   "app.html",
+   "core.js"
+  ],
+  "PUT /api/chits/:chit_id/priority-flag": [
+   "app.html",
+   "core.js"
+  ],
+  "PUT /api/chits/:chit_id/star": [
+   "app.html",
+   "core.js"
   ],
   "PUT /api/chits/:chit_id/status": [
    "app.html",
@@ -1291,14 +1670,31 @@
    "cap-books.js",
    "chit-sheet.js"
   ],
+  "PUT /api/chits/:chit_id/void": [
+   "app.html",
+   "core.js"
+  ],
+  "PUT /api/connections/:id/respond": [
+   "core.js"
+  ],
   "PUT /api/definitions/:id": [
    "app.html",
    "cap-categories.js",
    "cap-definitions.js",
    "core.js"
   ],
+  "PUT /api/entities/populations/:code/desk": [
+   "app.html"
+  ],
+  "PUT /api/entities/routing": [
+   "cap-admin.js"
+  ],
   "PUT /api/governance/country-setup": [
    "cap-country.js"
+  ],
+  "PUT /api/governance/profile": [
+   "cap-readiness.js",
+   "core.js"
   ],
   "PUT /api/governance/profile/vault": [
    "cap-print.js",
@@ -1313,12 +1709,14 @@
    "cap-admin.js"
   ],
   "PUT /api/network-design": [
-   "cap-network.js"
+   "cap-network.js",
+   "core.js"
   ],
   "PUT /api/network-offers/policy": [
    "cap-admin.js"
   ],
   "PUT /api/products/:id/availability": [
+   "app.html",
    "catalogue-lines.js"
   ],
   "PUT /api/products/:id/status": [
@@ -1326,15 +1724,22 @@
    "cap-catalogue.js",
    "catalogue-lines.js"
   ],
+  "PUT /api/service/:chit_id": [
+   "cap-service.js"
+  ],
   "PUT /api/testing/cmdb/:ci": [
    "record.html"
   ]
  },
  "queueable": [
+  "DELETE /api/actors/:id/pin",
+  "DELETE /api/chits/:chit_id",
+  "DELETE /api/chits/:chit_id/purge",
   "DELETE /api/connectors/:actorId",
   "DELETE /api/folders/:id",
   "DELETE /api/products/:id",
   "DELETE /api/relationships/suppliers/:id",
+  "PATCH /api/actors/:id",
   "PATCH /api/connectors/:actorId/connections/:connId",
   "PATCH /api/entities/me/prefs/:kind",
   "PATCH /api/entities/profile",
@@ -1342,12 +1747,34 @@
   "PATCH /api/products/:id",
   "PATCH /api/relationships/suppliers/:id",
   "POST /api/assist/publish",
+  "POST /api/assist/resolve",
+  "POST /api/chits/:chit_id/archive",
+  "POST /api/chits/:chit_id/restore",
+  "POST /api/chits/:chit_id/unarchive",
+  "POST /api/chits/:chit_id/unread",
+  "POST /api/chits/assign-bulk",
   "POST /api/folders/move",
   "POST /api/governance/compliance",
   "POST /api/governance/verify",
+  "POST /api/network/connections/:id/approve",
+  "POST /api/network/connections/:id/decline",
+  "POST /api/network/connections/:id/disconnect",
+  "POST /api/network/connections/:id/resume",
+  "POST /api/network/connections/:id/suspend",
+  "PUT /api/actors/:id/delegate",
+  "PUT /api/actors/:id/status",
   "PUT /api/actors/assign/:chit_id",
+  "PUT /api/actors/break",
+  "PUT /api/actors/settings",
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
+  "PUT /api/chits/:chit_id/priority",
+  "PUT /api/chits/:chit_id/priority-flag",
+  "PUT /api/chits/:chit_id/star",
   "PUT /api/chits/:chit_id/status",
-  "PUT /api/governance/profile/vault"
+  "PUT /api/chits/:chit_id/void",
+  "PUT /api/connections/:id/respond",
+  "PUT /api/governance/profile",
+  "PUT /api/governance/profile/vault",
+  "PUT /api/network-design"
  ]
 }

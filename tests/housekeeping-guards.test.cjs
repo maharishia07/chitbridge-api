@@ -17,6 +17,7 @@
  * Run: node tests/housekeeping-guards.test.cjs · no DB, no network beyond 127.0.0.1.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -150,7 +151,7 @@ const says = (r, why, status) => r.status === status && r.body.why === why && r.
   world({ down: true });
   r = await call('POST', '/api/chits/' + C1 + '/archive', entity(R));
   t('⭐ the dispute table unreadable → 503 disputes_unknown and NOT archived (it used to count 0 and archive)', says(r, 'disputes_unknown', 503) && !COPIES[1].archived_at && written().length === 0, r.status + ' ' + JSON.stringify(r.body));
-  const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const SRC = CF.read(API);
   const archiveSrc = SRC.slice(SRC.indexOf("router.post('/:chit_id/archive'"), SRC.indexOf("router.put('/:chit_id/star'"));
   t('the archive route has no empty catch and no count-of-zero fallback', !/\.catch\(\s*\(\)\s*=>/.test(archiveSrc) && !/count: 0/.test(archiveSrc));
 

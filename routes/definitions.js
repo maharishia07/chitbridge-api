@@ -267,6 +267,7 @@ const currentRulesOf = async (db, definition) =>
 const editorChangesRate = async (req, db, definition, rules) => !rateDoor.setsRate(req) && !!rules && rateDoor.defaultSlabChanged(rules, await currentRulesOf(db, definition));
 /** the refusals an edit meets before anything is written: a rate the caller may not set, or a rule left without its value (null = go on) */
 async function editRefusal(req, db, definition, rules) {
+  if (liveNeedsYes(req, definition.kind, definition.status)) return { unconfirmed: true };
   if (await editorChangesRate(req, db, definition, rules)) return { rateRefused: true };
   const bad = rules && require('../lib/definition-check').missingValue(definition.kind, definition.sub_kind, rules);
   return bad ? { bad } : null;
@@ -274,9 +275,10 @@ async function editRefusal(req, db, definition, rules) {
 
 /** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
 function answerEditRefusal(req, res, out) {
-  if (out.rateRefused) rateRefused(req, res);
+  if (out.unconfirmed) problem(req, res, { status: 428, ...words.liveUnconfirmed() });
+  else if (out.rateRefused) rateRefused(req, res);
   else if (out.bad) problem(req, res, { status: 422, ...words.incomplete(out.bad) });
-  return !!(out.rateRefused || out.bad);
+  return !!(out.unconfirmed || out.rateRefused || out.bad);
 }
 
 /** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
@@ -285,8 +287,14 @@ const bornWithoutRate = (req, res, next) => {
   return !rateDoor.setsRate(req) && rateDoor.defaultSlabChanged(rules, {}) ? rateRefused(req, res) : next();
 };
 
+/** UX-110: an offer becomes live only with the shop's explicit yes — the page asks first (CBLabKit.confirm) and then sends `confirmed: true`. A draft, a pause, a retire, any other kind, and an offer already live are never asked. */
+const liveNeedsYes = (req, kind, wasStatus) => kind === 'offer' && req.body && req.body.status === 'live' && wasStatus !== 'live' && req.body.confirmed !== true;
+
+/** UX-110: an offer born live without the yes is refused before anything is read or written (a gate, like bornWithoutRate) */
+const bornLiveWithoutYes = (req, res, next) => (liveNeedsYes(req, String((req.body && req.body.kind) || '').trim(), 'draft') ? problem(req, res, { status: 428, ...words.liveUnconfirmed() }) : next());
+
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
-router.post('/', auth, ...checked('POST /'), bornWithoutRate, async (req, res) => {
+router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { kind, sub_kind, name, note } = req.body || {};

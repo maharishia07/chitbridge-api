@@ -66,6 +66,9 @@ function extras(tools) {
     X('search-too-short', 'GET ' + at('/search'), 400, { url: at('/search?q=a') }),
     X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),
     X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
+    N('search-place-unknown', 'GET ' + at('/search'), 404, { url: at('/search?q=shop&where=sit-nowhere') }),
+    N('search-places-listed', 'GET ' + at('/search/places'), 200, {}),
+    N('search-places-fails', 'GET ' + at('/search/places'), 500, { patch: { search: { places: async () => { throw new Error(SECRET_SQL); } } } }),
     X('search-db-fails', 'GET ' + at('/search'), 500, { url: at('/search?q=shop'), setup: failing }),
     /* the header as lib/entity-header.js build() makes it from a shop row and one gathered licence the country's rules do not know (the same keys, a licence of each kind) */
     X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => require('../../lib/entity-header').build({ me: { display_name: 'Shop A', country: 'IN', currency_code: 'INR', phone: '9000000000', address: '1 Main Rd', gstn: '29ABCDE1234F1Z5', policy_flags: {} }, profile: {}, vault: null, compliance: [{ standard_key: 'unknown_scheme', doc_key: 'some_doc', valid_until: '2027-01-01', verification: { number_masked: 'XXXX1234' } }], docs: {} }) } } }),

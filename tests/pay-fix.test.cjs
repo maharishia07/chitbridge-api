@@ -13,6 +13,7 @@
  * Run: node tests/pay-fix.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
 const H = require('./support/books-harness.cjs');
@@ -130,7 +131,7 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
       ok('paymentsOfChit names every payment the chit carries (the three keys), oldest first — the DELETE door names them all', mine.length === 3 && mine[0].payment_id === r1.payment.payment_id, JSON.stringify(mine));
     } finally { TCp.entryFor = wasEntryFor; }
     const fs = require('fs');
-    const route = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+    const route = CF.read(H.API);
     const doorSrc = route.slice(routeAt(route, 'post', '/:chit_id/payment'), routeAt(route, 'post', '/:chit_id/books-request'));
     ok('POST /chits/:id/payment takes body.client_ref (≤ 80) into business_json.payment.client_ref, and answers "Already recorded" for a replay, "Payment recorded" otherwise',
       /client_ref: trimmedUpTo\(80\)/.test(fs.readFileSync(path.join(H.API, 'lib', 'chits-input.js'), 'utf8')) && /client_ref/.test(doorSrc.slice(0, doorSrc.indexOf('hooks.chitPaid'))) && /'Already recorded'/.test(doorSrc) && /'Payment recorded'/.test(doorSrc));

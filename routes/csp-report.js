@@ -18,7 +18,7 @@
  * CARD 28-platform-and-operations/limits-idempotency-rate-limits
  */
 const express = require('express');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
 const log = require('../lib/logger');
 
 const router = express.Router();

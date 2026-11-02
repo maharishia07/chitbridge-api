@@ -35,6 +35,7 @@ const vault = require('../lib/vaultcrypto');
 const { query, withEntity } = require('../db');
 const crypto = require('crypto');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { UUID_RE } = require('../lib/trace'); // CMP-22: the one uuid test
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
@@ -199,6 +200,14 @@ async function resolveSubject(req, wanted) {
      one would connect to this line. One parameter removes the whole question. */
   const raw = String(wanted || '').trim();
   if (!raw || raw === req.identity.identity_id) return { id: req.identity.identity_id, onBehalf: false };
+
+  /* CMP-22 (BH-10): an id that is not a uuid names nobody this shop holds, the same one answer as a stranger's id — said here, before the database puts its own words (22P02) into a 500 */
+  if (!UUID_RE.test(raw)) {
+    const e = new Error('That person is not one of your co-assists.');
+    e.status = 403;
+    e.code = 'IDOC_SUBJECT_FORBIDDEN';
+    throw e;
+  }
 
   if (req.identity.identity_type === 'actor') {
     const e = new Error('Only the account owner can record a document for someone else.');

@@ -1,20 +1,20 @@
 {
  "version": 1,
  "stage": "2",
- "updated": "2026-10-30",
- "total": 635,
- "not_meeting": 511,
- "codes_total": 490,
- "codes_pending": 37,
+ "updated": "2026-11-02",
+ "total": 637,
+ "not_meeting": 469,
+ "codes_total": 542,
+ "codes_pending": 0,
  "raw_error_writes": 3,
- "routes_without_does": 625,
+ "routes_without_does": 627,
  "columns_failing": {
-  "strict_input": 330,
-  "output_allowlist": 238,
-  "foreign_id_404": 102,
+  "strict_input": 262,
+  "output_allowlist": 228,
+  "foreign_id_404": 88,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
-  "trips_budgeted": 164
+  "trips_budgeted": 153
  },
  "debt": []
 }

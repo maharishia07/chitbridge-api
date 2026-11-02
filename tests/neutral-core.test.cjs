@@ -4,6 +4,7 @@
  * Run: node tests/neutral-core.test.cjs   (no database, no network)
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const path = require('path');
 const API = path.join(__dirname, '..');
 let pass = 0, fail = 0;
@@ -25,7 +26,7 @@ const readOf = (row) => async () => ({ rows: row ? [row] : [] });
   ok('the sentence says where to set it', /Country setup/.test(CS.DOC_UNSTATED));
   const kept = CS.clean({ country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false }, source: { country: 'backfill b299 (today’s facts)', currency: 'typed' } });
   ok('saving an assumed (b299) country is the one-tap confirm: its source stops saying backfill', kept.source.country === 'confirmed by the owner' && kept.source.currency === 'typed');
-  const src = require('fs').readFileSync(path.join(API, 'routes/chits.js'), 'utf8');
+  const src = CF.read(API);
   ok('the send route asks the gate right after the sender is known, and lets a draft through', /sendSender,\s*sendMoneyStated,/.test(src) && /if \(req\.body\.is_draft\) return false;\s*\n\s*const refusal/.test(src));
 const fs = require('fs');
   /* ── N1: one reader per fact returns null + a reason, never India ── */
@@ -56,7 +57,7 @@ const fs = require('fs');
   ok('N3: datePhrase - an India shop reads 18 Oct 2026 at 01:30 its time; the same moment, no clock stated, is 17 Oct 2026 (UTC)', CS.datePhrase(lateEvening, inClock) === '18 Oct 2026' && CS.datePhrase(lateEvening, null) === '17 Oct 2026');
   ok('N3: datePhrase - a Sydney shop writes its own day', CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' })).startsWith('18 Oct 2026') || /18/.test(CS.datePhrase('2026-10-17T20:00:00Z', CS.clockOf({ country: 'AU', timezone: 'Australia/Sydney' }))));
   const zoneSql = CS.zoneCaseSql('z');
-  ok('N3: the SQL zone is built from the packs (India\'s row says Asia/Kolkata) with no literal in the route', /WHEN 'IN' THEN 'Asia\/Kolkata'/.test(zoneSql) && !/Asia\/Kolkata/.test(stripComments(fs.readFileSync(path.join(API, 'routes/chits.js'), 'utf8'))) && /, 'UTC'\)`;/.test(fs.readFileSync(path.join(API, 'routes/chits.js'), 'utf8')));
+  ok('N3: the SQL zone is built from the packs (India\'s row says Asia/Kolkata) with no literal in the route', /WHEN 'IN' THEN 'Asia\/Kolkata'/.test(zoneSql) && !/Asia\/Kolkata/.test(stripComments(CF.read(API))) && /, 'UTC'\)`;/.test(CF.read(API)));
   const offers = require(path.join(API, 'lib/network-offers'));
   const oldIst = (now) => { const IST = 330 * 60000; const d = new Date(new Date(now).getTime() + IST); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1, 0, 0, 0) - IST).toISOString(); };
   const sameAsBefore = ['2026-10-17T00:00:00Z', '2026-10-17T10:00:00Z', '2026-10-17T18:29:59Z', '2026-10-17T18:30:00Z', '2026-12-31T23:59:00Z', '2027-02-28T12:00:00Z'].every((moment) => offers.nextOpening(moment, 'Asia/Kolkata') === oldIst(moment) && offers.nextOpening(moment, 'IN') === oldIst(moment));

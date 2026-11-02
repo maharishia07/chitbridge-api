@@ -19,6 +19,7 @@
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-payments.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
 const path = require('path');
 const http = require('http');
@@ -374,7 +375,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     } finally { TCp.entryFor = wasEntryFor; }
 
     /* the shape that makes it so: the chit route reads the copy, calls the door and marks the copy on ONE handle; no state_log row, no second "paid" */
-    const csrc = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+    const csrc = CF.read(H.API);
     const route = csrc.slice(routeAt(csrc, 'post', '/:chit_id/payment'), routeAt(csrc, 'delete', '/:chit_id/payment'));
     /* PAY-FIX shrink: the one-handle body is markChitPaid (called inside ONE withEntity by the route); the refusals are payFailure */
     const tx = csrc.slice(csrc.indexOf('async function markChitPaid('), routeAt(csrc, 'post', '/:chit_id/payment'));
@@ -601,7 +602,9 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     { const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', 'b295_books_payment_advice_update.sql'), 'utf8');
       ok('b295 opens ONLY the two advice columns (column-level GRANT), keeps DELETE and every other column insert-only', /GRANT UPDATE \(advice_chit_id, advice_shared_at\) ON books_payment TO cb_app/.test(sql) && /TG_OP = 'UPDATE'/.test(sql) && /to_jsonb\(NEW\) - 'advice_chit_id' - 'advice_shared_at'/.test(sql) && !/GRANT UPDATE ON/.test(sql)); }
     ok('an empty patch → 400 "Nothing to change"', p4.status === 400 && /Nothing to change/.test(p4.body.error), JSON.stringify(p4.body));
-    ok('a patch of a field not named (note, amount) changes nothing', (await q('PATCH', '/payments/' + payId, { amount_minor: 1 })).status === 400 && X.T.payments.find((p) => p.payment_id === payId).amount_minor === 200000);
+    /* S33 (Job E, 1 Nov): a field the patch does not name is refused 422 UNKNOWN_FIELD, named (was 400 "Nothing to change"); either way nothing changes */
+    { const unnamed = await q('PATCH', '/payments/' + payId, { amount_minor: 1 });
+      ok('a patch of a field not named (note, amount) is refused by name and changes nothing', unnamed.status === 422 && /UNKNOWN_FIELD/.test(JSON.stringify(unnamed.body)) && X.T.payments.find((p) => p.payment_id === payId).amount_minor === 200000, JSON.stringify(unnamed.body)); }
     X.T.disputes.push({ entity_id: SHOP, chit_id: CH1, status: 'open' });
     const st2 = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.find((l) => l.payment_id === payId);
     ok('a dispute open on the advice → the line reads disputed (co-held; the payer never reads the payee\'s accept)', st2.advice.state === 'disputed', JSON.stringify(st2.advice));

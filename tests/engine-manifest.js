@@ -210,8 +210,25 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
+     the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
+     No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
+  'netcert.js',
+  'netmember.js',
+  'netsync.js',
+  'installer-token.js',
+  'network-search.js',
+  'business-search.js',
+  'remote-catalogue.js',
+  'message-limit.js',
+  'ctp-repair.js',
+  /* RAIL-101: adds a business that lives on another installation, by address (asks the far end, writes the local party row) — database plumbing over the CTP seams, not a rule of the platform. (2026-10-25) */
+  'remote-party.js',
   /* API-1 slice 1a: the one error body every route and the server answer with (RFC 9457 plus our code) — HTTP plumbing, not a rule of the platform. (2026-10-22) */
   'problem.js',
+  /* S7 (2026-10-30): the API-key list and the counter register on an entity, moved out of routes/keys.js and routes/counters.js — per-shop state in policy_flags, no rule of the platform. */
+  'api-keys.js',
+  'counters-store.js',
   /* API-4 sweep: the contract of the ledger, tax and invoice routes (their OpenAPI operations and the words of their refusals) and the kit that builds an area's operations — the contract of a door, not a rule of the platform. (2026-10-23) */
   'contract-kit.js',
   /* API-1 output allow-list (S34): the filter that keeps a success answer to the keys its closed schema lists — HTTP plumbing, not a rule of the platform. (2026-10-23) */
@@ -226,6 +243,8 @@ const INFRA_LIBS = [
   'governance-contract.js',
   /* API-4 sweep, till: the counter routes' OpenAPI operations and the words of their refusals — the contract of a door, not a rule of the platform. (2026-10-23) */
   'till-contract.js',
+  /* API-4 sweep, the proposal doors: their OpenAPI operations (closed bodies and answers) and the library refusals they publish — the contract of a door, not a rule of the platform. (2026-10-25) */
+  'chit-proposals-contract.js',
   /* API-4 sweep, finance: the contract of the folders, Home-facts and pricing routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'folders-contract.js',
   'facts-contract.js',
@@ -318,6 +337,7 @@ const INFRA_LIBS = [
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
   'knownerr.js',
+  'input-hygiene.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
   'limits.js',
@@ -492,6 +512,7 @@ const INFRA_LIBS = [
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'limiter-key.js',       // SEC-79: the limiters' bucket key (verified token id, else address); request plumbing, no business rule
+  'rate-limit.js',        // API-16: the one limiter factory and its 429 problem+json answer; request plumbing, no business rule
   'person-session.js',     // M05: a person signed in on a device — policy_flags.devices listing, 60 s jti cache, renew/logout/revoke
   'schema.js',             // hasColumn/hasTable probes for the deploy-before-migration window
   'select.js',             // shaped SELECT builders
@@ -722,6 +743,10 @@ const ENGINE_OTHER = [
   /* CTP’s READ verb (2026-09-16): a signed question to a peer — resolve a handle, pull a public catalogue. Like
      the other ctp* files it leaves as a SPECIFICATION, not a library (docs/SOFTWARE-ASSETS.md). */
   'ctpquery.js',
+  /* sit/run6 (RAIL-106, 2026-10-25): the rail's own decisions across installations: the return path (a status, message, dispute or proposal told to the far side and
+     applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
+  'ctpreturn.js',
+  'chit-proposal.js',
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
@@ -848,6 +873,9 @@ const ENGINE_OTHER = [
   /* ⭐ T1-RAIL (2026-10-14) — rail-status.js is the ONE status write: read my copy → rail.move → UPDATE, on the caller's transaction.
      moveStatus and every door that moves a status call it; tests/rail-status.test.cjs holds every other SET current_status out. */
   'rail-status.js',
+  /* LEAN-PLAN §8 #3 (2026-10-31) — chit-move.js is moveStatus lifted out of routes/chits.js (the ONE status writer over rail-status, so lib no longer
+     requires a route); chit-crossing.js is the delivery-agent crossing + message copies it needs, lifted with it. CB's own plumbing, no engine rule. */
+  'chit-move.js', 'chit-crossing.js',
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',

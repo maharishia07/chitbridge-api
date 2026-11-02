@@ -9,7 +9,7 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const read = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').replace(/\r\n/g, '\n');
-const chits = read('routes/chits.js');
+const chits = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')); /* the ONE list of chits files */
 const copy = read('lib/tax-copy.js');
 const fnBody = (src, sig) => { const d = src.slice(src.indexOf(sig)); return d.slice(0, d.indexOf('\n}\n') + 1); };
 
@@ -21,12 +21,20 @@ const ok = (name, fn) => {
 
 console.log('\n══ MONEY AT THE ORIGIN (ACC-192) ══\n');
 const money = fnBody(chits, 'async function sendMoney(');
+const sendMoneyLib = read('lib/send-money.js');
+const proposal = read('lib/chit-proposal.js');
 const issued = fnBody(chits, 'async function sendIssued(');
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
   assert.ok(/originInvoice: invoice/.test(money) && /await sendMoneyScope\.invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice the engine answered at send (lib/send-money)');
   assert.ok(/business_json\.invoice = st\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
   assert.ok(/!business_json\.invoice && st\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
+});
+ok('ONE calculation on every path: a send and a change order (RAIL-106) both ask lib/send-money invoiceOfLines; no route keeps a second one', () => {
+  assert.ok(/return invoiceOfLines\(/.test(fnBody(sendMoneyLib, 'async function invoiceAtSend(')), 'invoiceAtSend must be the send door of invoiceOfLines');
+  assert.ok(/require\('\.\/send-money'\)\.invoiceOfLines\(/.test(fnBody(proposal, 'async function priceMoney(')), 'a change order must price by the same call');
+  assert.ok(!/function moneyOfLines\(|function keepOffer\(/.test(chits), 'no second calculation left in the chits route');
+  assert.ok(/total_value: priced2\.block\.total/.test(proposal), 'a change order\'s total_value is the engine total, never the net');
 });
 ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', () => {
   const cond = issued.slice(issued.indexOf('if ('), issued.indexOf('moneyOfInvoice('));

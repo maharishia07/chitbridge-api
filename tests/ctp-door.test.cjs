@@ -19,7 +19,13 @@ const SENDER = '22222222-2222-4222-8222-222222222222';
 function rows(s, p, ctx) {
   if (/SELECT identity_id FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.labelHere ? [{ identity_id: 'LOCAL-SHOP' }] : [];
   if (/FROM installation WHERE installation_key = \$1/.test(s)) { if (ctx.peerThrows) throw new Error('no table'); return ctx.peer ? [ctx.peer] : []; }
+  /* RAIL-107: the sender is looked up by bridge id (stubFor); a window-shopping sender has no row here yet and one is made */
+  if (/f_installation_of/.test(s) && /FROM identities WHERE bridge_id/.test(s)) return ctx.senderRow ? [ctx.senderRow] : []; /* sit/run6: its own key, so a case that names the envelope sender (ctx.sender) does not plant a row */
+  if (/^INSERT INTO identities/.test(s)) return [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX Pumps' }];
+  if (/f_place_entity/.test(s)) return [];
   if (/FROM identities WHERE bridge_id = \$1/.test(s)) return ctx.to ? [ctx.to] : [];
+  /* RAIL-107 (sit/run6): localParties reads OUR recipient's bridge id — its own read, not the sender check below */
+  if (/^SELECT bridge_id FROM identities WHERE identity_id = \$1/.test(s)) return ctx.to ? [{ bridge_id: 'CBRECV0001' }] : [];
   /* RAIL-138 (b): is the sender a business with a row here, and which installation is it stamped to? */
   if (/FROM identities WHERE identity_id = \$1/.test(s)) { if (ctx.homeThrows) throw new Error('rls'); return ctx.senderHere ? [{ identity_id: p[0] }] : []; }
   if (/f_installation_of/.test(s)) { if (ctx.homeThrows) throw new Error('fn missing'); return [{ installation_key: p[0] === 'LOCAL-SHOP' ? ctx.labelHome || null : ctx.senderHome || null }]; }
@@ -76,13 +82,15 @@ const CASES = [
   ['deliver · the sender is a business of THIS installation', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: null }), 403, 'the sender named is not a business of the installation that signed this envelope'],
   ['deliver · the sender is stamped to a third installation', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: 'zz-9' }), 403, 'the sender named is not a business of the installation that signed this envelope'],
   ['deliver · whose the sender is cannot be read → refuse', 'deliver', env(), Object.assign({}, ok, { homeThrows: true }), 503, 'this installation cannot check whose business the sender is — refusing'],
-  ['deliver · the sender is not an id', 'deliver', env(), Object.assign({}, ok, { sender: 'sender-1' }), 400, 'the copy names its sender by something that is not an id'],
+  /* sit/run6 (RAIL-107 x RAIL-138 b): the copy's sender id is the far side's own and is replaced by OUR row of that sender, found by bridge id, before the check,
+     so a copy naming its sender by a non-id is written under the local row (never under 'sender-1'); the rule (never write under an id that is not ours to check) holds */
+  ['deliver · the sender is not an id: written under OUR row of that sender, found by bridge id', 'deliver', env(), Object.assign({}, ok, { sender: 'sender-1' }), 200, undefined, true],
   ['deliver · a foreign sender wearing the bridge id of one of OUR shops', 'deliver', env(), Object.assign({}, ok, { labelHere: true, labelHome: null }), 403, 'the sender named is not a business of the installation that signed this envelope'],
   ['deliver · a sender whose bridge id is held here for the signing installation is accepted', 'deliver', env(), Object.assign({}, ok, { labelHere: true, labelHome: 'mx-1' }), 200, undefined, true],
   ['deliver · a sender held here for the signing installation is accepted', 'deliver', env(), Object.assign({}, ok, { senderHere: true, senderHome: 'mx-1' }), 200, undefined, true],
   ['deliver · our store fails → 500, said', 'deliver', env(), Object.assign({}, ok, { storeThrows: true }), 500, 'this installation failed to store it', true],
   ['deliver · accepted, written as OUR recipient', 'deliver', env(), ok, 200, undefined, true],
-  ['deliver · the same envelope again → accepted, nothing written twice', 'deliver', env(), Object.assign({}, ok, { heldFrom: SENDER }), 200, undefined, false],
+  ['deliver · the same envelope again → accepted, nothing written twice', 'deliver', env(), Object.assign({}, ok, { heldFrom: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' }), 200, undefined, false], /* sit/run6 (RAIL-107): held from OUR row of the sender */
   ['deliver · the same chit id from another sender → refused in words', 'deliver', env(), Object.assign({}, ok, { heldFrom: '33333333-3333-4333-8333-333333333333' }), 409, 'a chit with that id is already here from another sender'],
   ['query · not a CTP/1 query', 'query', { ctp: '1', kind: 'deliver' }, ok, 400, 'not a CTP/1 query'],
   ['query · no installation named', 'query', { ctp: '1', kind: 'query', from: {} }, ok, 400, 'the question does not say which installation is asking'],

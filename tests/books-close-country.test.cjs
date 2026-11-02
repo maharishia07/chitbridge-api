@@ -14,6 +14,8 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const H = require('./support/books-harness.cjs');
+const Capture = require('./support/books-capture.cjs');
+let NOTE = () => {}; /* --capture F: set once the router is loaded */
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
@@ -30,7 +32,7 @@ const authStub = Object.assign((req, res, next) => { req.identity = WHO; next();
 const call = (port, method, p, body) => new Promise((done) => {
   const b = JSON.stringify(body || {});
   const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
-    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) { j = { raw }; } done({ status: res.statusCode, body: j }); }); });
+    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}, parsed = true; try { j = JSON.parse(raw || '{}'); } catch (_) { j = { raw }; parsed = false; } NOTE(method, p, res.statusCode, j, parsed); done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });
 
@@ -47,7 +49,9 @@ const call = (port, method, p, body) => new Promise((done) => {
   for (const m of ['tax-copy', 'bill-use']) delete require.cache[require.resolve(path.join(H.API, 'lib', m))];
   require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const booksRouter = require(path.join(H.API, 'routes', 'books'));
+  const app = express(); app.use(express.json()); app.use('/api/books', booksRouter);
+  const rec = Capture.recorder(Capture.captureFile(process.argv), booksRouter, '/api/books', 'close'); NOTE = rec.note;
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);
   let DAY = '2026-10-20'; const realDay = K.dayOf;
@@ -79,7 +83,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('…no India word anywhere in the answer', !/challan|cpin|cgst/i.test(JSON.stringify(r.body)), JSON.stringify(r.body));
   const closeId = r.body.entry_id;
   eq('…the entry: Dr 2200 GST collected 30.00 · Cr GST paid 30.00, dated the quarter end, narrated as the pack says', [linesOf(AU, closeId), String(entryOf(AU, closeId).posting_date).slice(0, 10), entryOf(AU, closeId).narration],
-    [[['2200', 3000, 0], [codeOfRole(AU, 'gst_paid'), 0, 3000]], '2026-09-30', 'GST set-off 2026-27 Q1 (Jul–Sep 2026)']);
+    [[['2200', 3000, 0], [codeOfRole(AU, 'gst_paid'), 0, 3000]], '2026-09-30', 'GST set-off FY27 Q1 (Jul–Sep 2026)']);
   const again = await q('POST', '/gst/close', { period: '2026-Q1', client_ref: 'c2' });
   ok('closing Q1 again is the SAME entry (duplicate: true), with the figures', again.status === 200 && again.body.duplicate === true && again.body.entry_id === closeId && again.body.pay_total_minor === 7000, JSON.stringify(again.body));
 
@@ -132,6 +136,9 @@ const call = (port, method, p, body) => new Promise((done) => {
     r.status === 422 && r.body.code === 'RCM_NETTING_NOT_BUILT' && /nets them on the form/.test(r.body.message) && !X.T.entries.some((x) => x.entity_id === AE && x.source_ref === 'gstclose:VAT201:2026-05/2026-07'), JSON.stringify(r.body));
 
   srv.close();
+  rec.save();
+  { const drift = rec.differences(require('path').join(H.API, 'docs', 'contracts', 'books-answers.json')); ok('the answers this test gets hold exactly the keys of docs/contracts/books-answers.json (the output allow-list is closed over them; rebuild: tests/support/books-capture.cjs)', drift.length === 0 || !!Capture.captureFile(process.argv), drift.join(' · ')); }
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

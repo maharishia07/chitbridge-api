@@ -49,6 +49,18 @@ function extras(tools) {
   const inserted = answering(/INSERT INTO definition /, [{ definition_id: PARTY }]);
   const change = { summary: 'Fix it', backout: 'Revert', cites: { ref: 'INC-1' } };
   return [
+    /* SEC-122: a read of the shared board by a caller who is not a board writer */
+    N('read-not-a-reader-cases', 'GET ' + T + '/cases', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cases-gherkin', 'GET ' + T + '/cases/gherkin', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-results', 'GET ' + T + '/results', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-runs', 'GET ' + T + '/runs', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-coverage', 'GET ' + T + '/coverage', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-report', 'GET ' + T + '/report', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-reliability', 'GET ' + T + '/reliability', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-stale', 'GET ' + T + '/stale', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-engine', 'GET ' + T + '/engine', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cmdb', 'GET ' + T + '/cmdb', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cmdb--ci', 'GET ' + T + '/cmdb/:ci', 403, { url: T + '/cmdb/CAP-SIGNIN', patch: cannotWrite }),
     /* POST /cases/close */
     X('close-no-case', 'POST ' + T + '/cases/close', 400, { body: {} }),
     X('close-unknown-case', 'POST ' + T + '/cases/close', 404, { body: { case_key: 'CTR-05' } }),

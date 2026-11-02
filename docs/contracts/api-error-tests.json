@@ -87,11 +87,13 @@
  "DELETE /api/folders/:id": [
   400,
   401,
+  404,
   500
  ],
  "DELETE /api/folders/rules/:rule_id": [
   400,
   401,
+  404,
   500,
   503
  ],
@@ -126,6 +128,7 @@
  "DELETE /api/quick-keys/groups/:id/items/:productId": [
   401,
   403,
+  404,
   500
  ],
  "DELETE /api/relationships/suppliers/:id": [
@@ -486,6 +489,13 @@
   403,
   500
  ],
+ "GET /api/chits/:chit_id/proposals": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
  "GET /api/chits/:chit_id/raida": [
   401,
   403,
@@ -689,12 +699,6 @@
   401,
   500
  ],
- "GET /api/entities/lookup": [
-  400,
-  401,
-  404,
-  500
- ],
  "GET /api/entities/me": [
   401,
   404,
@@ -729,6 +733,11 @@
  ],
  "GET /api/entities/search": [
   400,
+  401,
+  404,
+  500
+ ],
+ "GET /api/entities/search/places": [
   401,
   500
  ],
@@ -780,6 +789,7 @@
  "GET /api/folders/:id/rules": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/folders/groupsum": [
@@ -795,6 +805,7 @@
   500
  ],
  "GET /api/folders/mis": [
+  400,
   401,
   500
  ],
@@ -1119,6 +1130,7 @@
  ],
  "GET /api/relationships/scorecard/:entity_id": [
   401,
+  404,
   500
  ],
  "GET /api/relationships/suppliers": [
@@ -1178,10 +1190,12 @@
  "GET /api/testing/cases": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/cases/gherkin": [
   401,
+  403,
   500
  ],
  "GET /api/testing/changes": [
@@ -1191,21 +1205,25 @@
  ],
  "GET /api/testing/cmdb": [
   401,
+  403,
   500
  ],
  "GET /api/testing/cmdb/:ci": [
   400,
   401,
+  403,
   404,
   500
  ],
  "GET /api/testing/coverage": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/engine": [
   401,
+  403,
   500
  ],
  "GET /api/testing/incidents": [
@@ -1220,11 +1238,13 @@
  "GET /api/testing/reliability": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/report": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/requirements": [
@@ -1235,15 +1255,18 @@
  "GET /api/testing/results": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/runs": [
   400,
   401,
+  403,
   500
  ],
  "GET /api/testing/stale": [
   401,
+  403,
   500
  ],
  "GET /api/testing/trace": [
@@ -1473,6 +1496,7 @@
   400,
   401,
   403,
+  404,
   500
  ],
  "PATCH /api/relationships/customers/:id": [
@@ -1749,14 +1773,6 @@
   401,
   403,
   404,
-  500
- ],
- "POST /api/books/money-check/resolve": [
-  400,
-  401,
-  403,
-  404,
-  422,
   500
  ],
  "POST /api/books/move-in/import": [
@@ -2114,6 +2130,43 @@
   422,
   500
  ],
+ "POST /api/chits/:chit_id/proposals": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/accept": [
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/counter": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/chits/:chit_id/proposals/:proposal_id/reject": [
+  401,
+  403,
+  404,
+  422,
+  500,
+  503
+ ],
  "POST /api/chits/:chit_id/raida": [
   400,
   401,
@@ -2388,6 +2441,7 @@
   400,
   401,
   403,
+  404,
   409,
   500,
   503
@@ -2396,6 +2450,7 @@
   400,
   401,
   403,
+  404,
   500
  ],
  "POST /api/crm/walk-ins/add": [
@@ -2425,6 +2480,7 @@
   401,
   409,
   422,
+  428,
   500,
   503
  ],
@@ -2984,6 +3040,7 @@
  "POST /api/supplies/:id/issue": [
   400,
   401,
+  404,
   500
  ],
  "POST /api/supplies/purchase": [
@@ -3390,6 +3447,7 @@
   404,
   409,
   422,
+  428,
   500,
   503
  ],
