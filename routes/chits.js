@@ -1342,10 +1342,10 @@ async function sendMoney(st, req, res) {
  * (lib/chit-proposal). This installation sends what and how many, runs no tax of its own on someone else's goods, and carries NO money: null, never 0 (ACC-206).
  * The request is stamped a QUOTATION; F7: with no money stated by the sender's screen the send is refused (a draft is the author's own copy and is let through).
  */
-async function sendQuotation(st, sellerPlace, req, res) {
-  Object.assign(st, { originInvoice: null, moneyBlock: null });
-  await stampQuotation(st.business_json, st.sender_id, sellerPlace).catch(cbLog.orElse('chits sendQuotation: the quotation stamp was not written', null));
-  if (!statedCurrencyOf(st.business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
+async function sendQuotation(sendState, sellerPlace, req, res) {
+  Object.assign(sendState, { originInvoice: null, moneyBlock: null });
+  await stampQuotation(sendState.business_json, sendState.sender_id, sellerPlace).catch(cbLog.orElse('chits sendQuotation: the quotation stamp was not written', null));
+  if (!statedCurrencyOf(sendState.business_json) && !req.body.is_draft) return refuseCurrencyRequired(req, res);
 }
 
 /**

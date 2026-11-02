@@ -10,7 +10,7 @@
  "routes_without_does": 627,
  "columns_failing": {
   "strict_input": 262,
-  "output_allowlist": 228,
+  "output_allowlist": 227,
   "foreign_id_404": 88,
   "idempotent_money_write": 12,
   "inbound_validated": 2,

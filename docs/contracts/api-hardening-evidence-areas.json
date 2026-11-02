@@ -600,6 +600,9 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
+  "POST /api/books/money-check/resolve": {
+   "output_allowlist": true
+  },
   "POST /api/books/move-in/preflight": {
    "output_allowlist": true
   },

@@ -367,7 +367,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/books/gst/pay | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | no | partial |
 | POST | /api/books/loans | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | POST | /api/books/loans/:ref/emi | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial |
-| POST | /api/books/money-check/resolve | books-money | routes/books-money.js:24 | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | yes | yes | partial |
+| POST | /api/books/money-check/resolve | books-money | routes/books-money.js:24 | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/books/move-in/import | books | routes/books.js:1833 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/books/move-in/preflight | books | routes/books.js:1780 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/books/move-in/preview | books | routes/books.js:1823 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
