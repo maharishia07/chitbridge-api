@@ -36,6 +36,12 @@ ok('ONE calculation on every path: a send and a change order (RAIL-106) both ask
   assert.ok(!/function moneyOfLines\(|function keepOffer\(/.test(chits), 'no second calculation left in the chits route');
   assert.ok(/total_value: priced2\.block\.total/.test(proposal), 'a change order\'s total_value is the engine total, never the net');
 });
+ok('ONE rule on every path (Athi 2026-11-02, "refuse both"): a change order the engine cannot price is refused like a send, 503 MONEY_NOT_COMPUTED, never "Tax not decided"', () => {
+  const price = fnBody(proposal, 'async function priceMoney(');
+  assert.ok(/throw refused\(503, 'MONEY_NOT_COMPUTED', 'The money could not be worked out: '/.test(price), 'priceMoney must refuse in the send words');
+  assert.ok(/'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: '/.test(money), 'the send refuses the same way');
+  assert.ok(!/not_decided|Tax not decided/.test(proposal), 'no "Tax not decided" round is left in the change order');
+});
 ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', () => {
   const cond = issued.slice(issued.indexOf('if ('), issued.indexOf('moneyOfInvoice('));
   assert.ok(!/counterBill/.test(cond), 'the mapping must not depend on counterBill');
