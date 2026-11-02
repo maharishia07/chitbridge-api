@@ -6137,7 +6137,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-10-10.t2a';
+var TILL_BUILD = '2026-11-02.acc206';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -18905,6 +18905,9 @@ function billMoney(){
              Pos: CBTax.placeOfSupply({ delivery: BILL_DELIVERY }, sc) },
     lines: CART.map(function(c){ return { id: c.key || c.item_id || null, name: c.name, unit: c.unit, hsn: c.hsn || '',
       qty: Number(c.qty) || 0, unit_price: c.unitPrice != null ? c.unitPrice : (Number(c.price) || 0), discount: c.save || 0,
+      /* ⭐ ACC-206 (engines v1.75.1): the catalogue price rides to the engine as the send body's list_price does, so a line sold below it
+         (a price structure, no offer) shows the same gross and savings on the counter's bill as on a send; an offer's stated discount wins */
+      list_price: c.price,
       gst_rate: taxed ? (Number(c.gst_rate) || 0) : 0, cess_rate: taxed ? (Number(c.cess_rate) || 0) : 0 }; }),
     priceIncludesTax: taxed && inclusive, zeroRated: !taxed
   }) : null;
