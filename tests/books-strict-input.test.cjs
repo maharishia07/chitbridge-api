@@ -20,7 +20,8 @@ const fs = require('fs');
 const path = require('path');
 
 const HERE = path.join(__dirname, '..');
-const ROUTE_FILE = fs.readFileSync(path.join(HERE, 'routes', 'books.js'), 'utf8');
+/* the books mount: routes/books.js and the route files it mounts under /api/books (ACC-206 B: routes/books-money.js holds POST /money-check/resolve) */
+const ROUTE_FILE = ['books.js', 'books-money.js'].map((name) => fs.readFileSync(path.join(HERE, 'routes', name), 'utf8')).join('\n');
 const ROUTE_LINES = ROUTE_FILE.split('\n');
 const C = require(path.join(HERE, 'lib', 'books-contract.js'));
 

@@ -133,9 +133,24 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   console.log('normalised slabs: 3 passed');
 }
 
-/* the gate (scripts/guards.cjs) reads "<n> checks": the node:test cases declared above, plus the two plain blocks' 6 —
+/* ACC-206 (critic 2 Nov): a list price the line does not GIVE (absent · null · blank) reaches the engine as NO list_price key — num() reads null and '' as 0,
+   and a 0 list beside a negative price was the v1.75.0 bug; a given one (a number or a numeric string) rides as a number */
+{
+  const T = require('../lib/tax-lines'); const tax = require('../lib/tax'); const assert = require('assert');
+  const real = tax.determine, seen = [];
+  tax.determine = (input) => { seen.push(input.lines[0]); return real(input); };
+  try {
+    for (const list_price of [undefined, null, '', '  ']) T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 10, list_price }], seller: { Country: 'AU' }, buyer: { Country: 'AU' } });
+    T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 10, list_price: '12.5' }], seller: { Country: 'AU' }, buyer: { Country: 'AU' } });
+  } finally { tax.determine = real; }
+  seen.slice(0, 4).forEach((line, at) => assert.ok(!('list_price' in line), 'case ' + at + ': no list_price key'));
+  assert.strictEqual(seen[4].list_price, 12.5, 'a given list price rides as a number');
+  console.log('list price presence: 5 passed');
+}
+
+/* the gate (scripts/guards.cjs) reads "<n> checks": the node:test cases declared above, plus the three plain blocks' 11 —
    printed AFTER the runner has finished, and a failing case still fails the file through its exit code */
 require('node:test').after(() => {
   const declared = (require('fs').readFileSync(__filename, 'utf8').match(/^\s*test\('/gm) || []).length;
-  console.log('  ' + (declared + 6) + ' checks');
+  console.log('  ' + (declared + 11) + ' checks');
 });

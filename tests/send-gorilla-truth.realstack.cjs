@@ -144,11 +144,12 @@ const CHECKS = [
     return moved < 0 ? null : 'line ' + moved + ' sent ' + JSON.stringify([record.line_items[moved].particulars.slice(0, 20), record.line_items[moved].quantity, record.line_items[moved].price]) +
       ', read ' + JSON.stringify([String(seen.lines[moved].particulars).slice(0, 20), seen.lines[moved].quantity, seen.lines[moved].price]);
   } },
-  { id: 'GS-3', title: "its value, to the paisa: the invoice's TotInvVal when one is carried, else its line totals rounded once", check: (record, seen) => {
+  { id: 'GS-3', title: "its value, to the paisa: the invoice's TotInvVal when one is carried; with none, NO figure is invented (ACC-206: the route adds nothing up)", check: (record, seen) => {
     if (!stored(seen)) return null;
     const invoice = record.business_json.invoice;
-    const expected = invoice ? round2(Number(invoice.ValDtls.TotInvVal)) : round2(record.line_items.reduce((sum, item) => sum + lineTotal(item), 0));
-    return sameMoney(seen.value, expected) ? null : 'value ' + seen.value + ', expected ' + expected + (invoice ? ' (the invoice, ' + record._invoice + ')' : ' (the lines)');
+    if (!invoice) return seen.value === null || Number(seen.value) === 0 ? null : 'value ' + seen.value + ' on a bill that carries no invoice: a sum was invented (the column holds 0 for not-applicable)';
+    const expected = round2(Number(invoice.ValDtls.TotInvVal));
+    return sameMoney(seen.value, expected) ? null : 'value ' + seen.value + ', expected ' + expected + ' (the invoice, ' + record._invoice + ')';
   } },
   { id: 'GS-4', title: 'the tender is kept as the counter sent it', check: (record, seen) => {
     if (!stored(seen)) return null;

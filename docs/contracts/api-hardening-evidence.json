@@ -1182,6 +1182,9 @@
   "POST /api/books/fx-revalue": {
    "strict_input": true
   },
+  "POST /api/books/money-check/resolve": {
+   "strict_input": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },

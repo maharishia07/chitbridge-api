@@ -2512,4 +2512,6 @@ module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
+/* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
+module.exports.gates = { noKey, editor, on };
 module.exports.alreadyPaid = alreadyPaid;

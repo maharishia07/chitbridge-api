@@ -1775,6 +1775,14 @@
   404,
   500
  ],
+ "POST /api/books/money-check/resolve": [
+  400,
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
  "POST /api/books/move-in/import": [
   400,
   401,
