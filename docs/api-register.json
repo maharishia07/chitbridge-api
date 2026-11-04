@@ -17481,7 +17481,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 978,
+   "line": 982,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -17568,7 +17568,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 830,
+   "line": 832,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -17657,7 +17657,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 715,
+   "line": 717,
    "hash": "70de3a5a5b1f6993",
    "does": "",
    "errors": {
@@ -17746,7 +17746,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 956,
+   "line": 960,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -17833,7 +17833,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 748,
+   "line": 750,
    "hash": "f97d3783abe3f0d1",
    "does": "",
    "errors": {
@@ -44092,7 +44092,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 632,
+   "line": 634,
    "hash": "0781f6879ca92518",
    "does": "",
    "errors": {
@@ -44195,7 +44195,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 935,
+   "line": 939,
    "hash": "2ef735f570ed04cc",
    "does": "",
    "errors": {
@@ -44280,7 +44280,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 669,
+   "line": 671,
    "hash": "afb388714ad3d9af",
    "does": "",
    "errors": {
@@ -44370,7 +44370,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 798,
+   "line": 800,
    "hash": "918358dc8a020ca7",
    "does": "",
    "errors": {
@@ -44554,7 +44554,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1007,
+   "line": 1011,
    "hash": "144599f781125548",
    "does": "",
    "errors": {
@@ -57406,7 +57406,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 757,
+   "line": 759,
    "hash": "1d8791f0df7ece41",
    "does": "",
    "errors": {
