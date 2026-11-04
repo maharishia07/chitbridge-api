@@ -4,8 +4,8 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 21,
-  "partial": 448,
+  "not_started": 19,
+  "partial": 450,
   "meets": 168,
   "columns": {
    "strict_input": {
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 227
+    "failing": 226
    },
    "foreign_id_404": {
     "applies": 230,
@@ -2680,12 +2680,17 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 144,
-   "hash": "7d975202c510f93b",
+   "line": 156,
+   "hash": "59c0a217613d2a9f",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     401,
+     404,
+     422,
+     500
+    ],
     "codes": []
    },
    "reads": [
@@ -2705,12 +2710,12 @@
    ],
    "columns": {
     "schema_in": true,
-    "schema_out": false,
+    "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -2726,9 +2731,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19461,12 +19472,16 @@
    "owner_area": "people",
    "owner_agent": "cb-people",
    "file": "routes/people.js",
-   "line": 26,
-   "hash": "acbea6a6931629fe",
+   "line": 28,
+   "hash": "2f9990d0578e7fb9",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     401,
+     422,
+     500
+    ],
     "codes": []
    },
    "reads": [
@@ -19482,13 +19497,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -19504,9 +19519,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -19515,7 +19535,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -28950,12 +28970,18 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 186,
-   "hash": "9f5085b47dbf0034",
+   "line": 193,
+   "hash": "1c08a40c893e81d9",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     422,
+     500
+    ],
     "codes": []
    },
    "reads": [
@@ -28976,13 +29002,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
+    "schema_in": true,
+    "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -28998,9 +29024,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -41416,12 +41449,18 @@
    "owner_area": "csp-report",
    "owner_agent": "cb-security",
    "file": "routes/csp-report.js",
-   "line": 80,
-   "hash": "96a88062a37bc9c4",
+   "line": 82,
+   "hash": "21a51c23f6a6bef6",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     413,
+     422,
+     429,
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -41434,15 +41473,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41456,7 +41495,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    413,
+    422,
+    429,
+    500
+   ],
    "notes": [],
    "human": {
     "names_clear": null,
@@ -41465,7 +41510,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

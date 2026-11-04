@@ -51,6 +51,9 @@ stub(path.join('middleware', 'auth'), stubAuth);
 const ROUTES = [
   /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
   // ── src/routes/network.js
+  // ── routes/adopt.js
+  ['/api/adopt', 'routes/adopt.js', 'GET', '/api/adopt/abc', undefined, 'Not found'],
+  ['/api/adopt', 'routes/adopt.js', 'POST', '/api/adopt/abc', { accept: [{ line: 0, name: 'Tea', sku: 'T1' }] }, 'Not found'],
   // ── routes/actors.js
   // ── routes/catalogue.js
   // ── routes/channels.js
