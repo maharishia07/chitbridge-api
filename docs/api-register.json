@@ -4,8 +4,8 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 21,
-  "partial": 448,
+  "not_started": 20,
+  "partial": 449,
   "meets": 168,
   "columns": {
    "strict_input": {
@@ -21923,7 +21923,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 133,
+   "line": 134,
    "hash": "44b050cddc91b9e8",
    "does": "",
    "errors": {
@@ -22004,7 +22004,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 106,
+   "line": 107,
    "hash": "3d96a78c38ea06b5",
    "does": "",
    "errors": {
@@ -50162,12 +50162,16 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 964,
-   "hash": "e872fc56e1fade59",
+   "line": 972,
+   "hash": "28f4d503742eb33f",
    "does": "",
    "errors": {
     "count": 1,
-    "statuses": [],
+    "statuses": [
+     400,
+     409,
+     500
+    ],
     "codes": [
      "AMBIGUOUS_NAME"
     ]
@@ -50186,13 +50190,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50208,7 +50212,11 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    409,
+    500
+   ],
    "notes": [],
    "human": {
     "names_clear": null,
@@ -50241,7 +50249,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 96,
+   "line": 97,
    "hash": "84b6041b552384e3",
    "does": "",
    "errors": {
@@ -50316,12 +50324,16 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 966,
-   "hash": "7032d4cf101ec273",
+   "line": 974,
+   "hash": "b3b2c66b8c80de1f",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -50336,13 +50348,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50358,7 +50370,11 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50369,7 +50385,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "signin-ui.js"
    ],
@@ -50393,12 +50409,17 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 72,
-   "hash": "7448baae28dc0c9a",
+   "line": 73,
+   "hash": "b494fb71a9c4325d",
    "does": "",
    "errors": {
     "count": 2,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     403,
+     500
+    ],
     "codes": [
      "KEY_CANNOT_SIGN_IN",
      "NO_DEVICE"
@@ -50414,13 +50435,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50436,7 +50457,12 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50471,12 +50497,18 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 155,
-   "hash": "cd1b084e1c218968",
+   "line": 156,
+   "hash": "c33c8228d107195e",
    "does": "",
    "errors": {
     "count": 1,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     500
+    ],
     "codes": [
      "KEY_CANNOT_SIGN_IN"
     ]
@@ -50493,13 +50525,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50515,7 +50547,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50552,12 +50590,18 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 965,
-   "hash": "d392c9d09d159c7f",
+   "line": 973,
+   "hash": "c72d1ca1450f4918",
    "does": "",
    "errors": {
     "count": 1,
-    "statuses": [],
+    "statuses": [
+     400,
+     403,
+     409,
+     500,
+     503
+    ],
     "codes": [
      "AMBIGUOUS_NAME"
     ]
@@ -50581,12 +50625,12 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
@@ -50603,7 +50647,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500,
+    503
+   ],
    "notes": [],
    "human": {
     "names_clear": null,

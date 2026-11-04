@@ -40,6 +40,7 @@ const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
 
@@ -69,7 +70,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
-router.post('/renew', auth, personOnly, async (req, res) => {
+router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), async (req, res) => {
   try {
     const shop = shopOf(req);
     let s;
@@ -152,7 +153,7 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
   }
 });
 
-router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
+router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke'), async (req, res) => {
   try {
     const b = req.body || {},
       shop = shopOf(req);
@@ -253,6 +254,10 @@ const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
   return refused(req, res, 'NO_ACCOUNT');
 };
+/** K-1: a typed value with a NUL byte names no account and no database can hold it (Postgres refuses it, 22021): it is answered as an unknown value is, before any lookup */
+const holdsNul = (value) => String(value == null ? '' : value).includes(' ');
+/** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
+const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
 const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED)$/.test(String(reason || ''));
 
@@ -336,6 +341,7 @@ async function ask(req, res, next) {
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
+    if (holdsNul(input)) return unknownAccount(req, res);
     /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
     const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
 
@@ -345,7 +351,7 @@ async function ask(req, res, next) {
      * REGISTER a new entity under it. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead.
      * ⚠️ AMBIGUOUS is refused, never guessed.
      */
-    const found = await identityAuth.findLoginIdentity(query, input, { shop: req.body.shop });
+    const found = await identityAuth.findLoginIdentity(query, input, { shop: shopNamed(req) });
     if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
@@ -543,6 +549,7 @@ async function verify(req, res) {
     if (!email && !handle && !id) {
       return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
+    if (holdsNul(email) || holdsNul(handle) || holdsNul(id)) return unknownAccount(req, res);
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
@@ -552,7 +559,7 @@ async function verify(req, res) {
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
-      const f = await identityAuth.findLoginIdentity(query, id, { shop: req.body.shop });
+      const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
@@ -836,6 +843,7 @@ async function actorLogin(req, res) {
     if (!username.includes('@')) {
       return res.status(400).json({ error: 'Invalid format', message: 'Actor login format is: yourname@entityname' });
     }
+    if (holdsNul(username)) return unknownAccount(req, res);
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
     if (e.ambiguous) {
@@ -961,9 +969,10 @@ async function pin(req, res) {
   }
 }
 
-router.post('/ask', door('signin'), askChecks, validate, ask);
-router.post('/verify', door('signin'), verifyChecks, validate, verify);
-router.post('/pin', auth, pinChecks, validate, pin);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, ask);
+router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verify);
+router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask, verify, pin, checkLogin };
 Object.assign(router, { door, askChecks, verifyChecks, pinChecks, sendCode, events });
