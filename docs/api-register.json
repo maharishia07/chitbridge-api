@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 21,
-  "partial": 448,
-  "meets": 168,
+  "partial": 451,
+  "meets": 165,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -1308,7 +1308,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 341,
+   "line": 342,
    "hash": "19db281b1b056633",
    "does": "",
    "errors": {
@@ -1402,7 +1402,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 608,
+   "line": 609,
    "hash": "0f950ed6f05d88ea",
    "does": "",
    "errors": {
@@ -14022,7 +14022,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 79,
+   "line": 80,
    "hash": "3aa7dc583807a82a",
    "does": "",
    "errors": {
@@ -14113,7 +14113,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 482,
+   "line": 483,
    "hash": "cb977f1f071be92d",
    "does": "",
    "errors": {
@@ -14208,7 +14208,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 540,
+   "line": 541,
    "hash": "0a9799fceae934b2",
    "does": "",
    "errors": {
@@ -14298,7 +14298,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 565,
+   "line": 566,
    "hash": "c9015e5f5ab99f12",
    "does": "",
    "errors": {
@@ -14388,8 +14388,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 900,
-   "hash": "d090f0c5527ea986",
+   "line": 901,
+   "hash": "319255d7497bbba8",
    "does": "",
    "errors": {
     "count": 0,
@@ -14445,10 +14445,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#577 stage2 (RAIL-146g, 13 of 13 read)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "319255d7497bbba8"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-folders.js"
    ],
@@ -14474,7 +14475,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 141,
+   "line": 142,
    "hash": "b6e727a5f02eaf0b",
    "does": "",
    "errors": {
@@ -14554,7 +14555,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 708,
+   "line": 709,
    "hash": "60877e20b8df1857",
    "does": "",
    "errors": {
@@ -14648,7 +14649,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1053,
+   "line": 1054,
    "hash": "cf257228ec420cb3",
    "does": "",
    "errors": {
@@ -14738,7 +14739,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 951,
+   "line": 952,
    "hash": "24556c31722fa718",
    "does": "",
    "errors": {
@@ -14826,7 +14827,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 654,
+   "line": 655,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -14914,7 +14915,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 633,
+   "line": 634,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -14993,8 +14994,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 867,
-   "hash": "9cf17566745c9c6b",
+   "line": 868,
+   "hash": "9b7793fe6cd2601a",
    "does": "",
    "errors": {
     "count": 0,
@@ -15052,10 +15053,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9b7793fe6cd2601a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-messages.js",
@@ -27213,7 +27215,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 284,
+   "line": 285,
    "hash": "007ce890480821fb",
    "does": "",
    "errors": {
@@ -27307,7 +27309,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 598,
+   "line": 599,
    "hash": "24e27419f0177ff2",
    "does": "",
    "errors": {
@@ -42239,7 +42241,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 195,
+   "line": 196,
    "hash": "a35c61b13fd33d04",
    "does": "",
    "errors": {
@@ -42333,7 +42335,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 585,
+   "line": 586,
    "hash": "b022225c5bd68eb7",
    "does": "",
    "errors": {
@@ -42421,8 +42423,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 846,
-   "hash": "e27c9a3090cd4d06",
+   "line": 847,
+   "hash": "bc9ca085c0569993",
    "does": "",
    "errors": {
     "count": 0,
@@ -42484,10 +42486,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#616 stage2 (re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "bc9ca085c0569993"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-messages.js"
    ],
@@ -42513,7 +42516,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 357,
+   "line": 358,
    "hash": "036e66b26b2d9570",
    "does": "",
    "errors": {
@@ -42605,7 +42608,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 621,
+   "line": 622,
    "hash": "3a864d8cf722d2b5",
    "does": "",
    "errors": {
@@ -56924,7 +56927,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 158,
+   "line": 159,
    "hash": "8651504faa64e8e9",
    "does": "",
    "errors": {

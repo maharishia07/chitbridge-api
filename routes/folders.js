@@ -15,8 +15,9 @@ const router = express.Router();
 const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { schemaValidate, sanitise, queryDay } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { schemaValidate, sanitise, queryDay, isCalendarDay } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { said, failed, faultOf, schemaOptionsFor, operationFor, pathsOf } = require('../lib/folders-contract'); // the contract (each route's operation) and the words of a refusal
+const { UUID } = require('../lib/namedentity'); /* the one uuid shape: Postgres takes exactly this, so a 36-character run of dashes is no id */
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
@@ -845,7 +846,7 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
  */
 router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:message_id/mark'), async (req, res) => {
   const id = String(req.params.message_id || '');
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
+  if (!UUID.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
   const read = 'read' in req.body ? !!req.body.read : null;
   const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
@@ -867,7 +868,7 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
 router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
     const due = String(req.query.due_on || '').trim();
-    if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
+    if (due && !isCalendarDay(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
     /**
      * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
      *
@@ -883,7 +884,7 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
     const aid = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
     const answer = await assign.byPerson(ent(req), {
       due_on: due || undefined,
-      actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
+      actor_id: UUID.test(aid) ? aid : undefined,
       /* So the screen can say "your work" honestly rather than guessing from the row count. */
       _scoped_to_self: isActor
     });
@@ -913,7 +914,7 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
       .slice(0, 500);
     const sum = await groupsum.requirement(me, {
       scope: req.query.scope === 'order' ? 'order' : 'task',
-      folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
+      folder_id: UUID.test(fid) ? fid : null,
       archived: req.query.archived === '1',
       chit_ids: ids.length ? ids : undefined,
       overdue_days: flags.overdue_days,
