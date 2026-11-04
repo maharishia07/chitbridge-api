@@ -10,6 +10,7 @@ const net = require('../services/network');
 const auth = require('../../middleware/auth'); // require a valid JWT on every network route
 const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
+const { ownerOnly } = require('../../lib/owner'); // the ONE owner gate: a co-assist (staff, till, AI actor) or a key is refused
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
@@ -37,6 +38,8 @@ router.param(
     req.path.startsWith('/connections/') ? { detail: 'edge not found', legacy: { error: 'edge not found', code: 'EDGE_NOT_FOUND' }, code: 'EDGE_NOT_FOUND' } : { detail: 'not found', legacy: { error: 'not found', code: 'NOT_FOUND' } }
   )
 );
+/** NET-55: deciding on a connection is the business's own act — never a co-assist's or a key's (build and reissue already say the same in network-design) */
+const ownerDecides = ownerOnly('Only the business owner can decide on a connection. Sign in as the business itself.');
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
@@ -162,6 +165,7 @@ router.post(
 router.post(
   '/connections/:id/approve',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/approve'),
   h(async (req) => _told(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
@@ -169,6 +173,7 @@ router.post(
 router.post(
   '/connections/:id/decline',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/decline'),
   h(async (req) => _told(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
@@ -176,6 +181,7 @@ router.post(
 router.post(
   '/connections/:id/suspend',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/suspend'),
   h(async (req) => _told(await net.suspend(req.params.id, await actorOf(req))))
@@ -183,6 +189,7 @@ router.post(
 router.post(
   '/connections/:id/resume',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/resume'),
   h(async (req) => _told(await net.resume(req.params.id, await actorOf(req))))
@@ -190,6 +197,7 @@ router.post(
 router.post(
   '/connections/:id/disconnect',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/disconnect'),
   h(async (req) => _told(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))
