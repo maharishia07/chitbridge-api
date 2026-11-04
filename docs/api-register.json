@@ -1207,7 +1207,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 476,
+   "line": 481,
    "hash": "2f1f2eb1c5052ee7",
    "does": "",
    "errors": {
@@ -2152,7 +2152,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 188,
-   "hash": "680c9ed819105397",
+   "hash": "588cd5b7bd548bbe",
    "does": "",
    "errors": {
     "count": 0,
@@ -12233,7 +12233,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 76,
+   "line": 81,
    "hash": "9f1facaf7a219650",
    "does": "",
    "errors": {
@@ -12330,7 +12330,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 217,
+   "line": 222,
    "hash": "bce30c09234b6736",
    "does": "",
    "errors": {
@@ -27885,8 +27885,8 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 305,
-   "hash": "a5de8807e0b9826d",
+   "line": 306,
+   "hash": "87d503f40ee2b8a7",
    "does": "",
    "errors": {
     "count": 0,
@@ -27981,7 +27981,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 246,
+   "line": 247,
    "hash": "9389f29f5f100aba",
    "does": "",
    "errors": {
@@ -28075,7 +28075,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 406,
+   "line": 408,
    "hash": "6a6e1ccd21d59062",
    "does": "",
    "errors": {
@@ -41690,7 +41690,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 297,
+   "line": 302,
    "hash": "850355bceb894a99",
    "does": "",
    "errors": {
@@ -41795,7 +41795,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 537,
+   "line": 542,
    "hash": "839f910941610693",
    "does": "",
    "errors": {
@@ -56624,7 +56624,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 365,
+   "line": 370,
    "hash": "47c980784df872d2",
    "does": "",
    "errors": {

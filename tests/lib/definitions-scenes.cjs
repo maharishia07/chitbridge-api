@@ -61,7 +61,7 @@ function extras(tools) {
     /* GET /:id */
     X('read-one', 'GET ' + D + '/:id', 200, { setup: withRows(firstOf(found(), answering(/FROM definition_version/, [{ version: 1, rules: { qty: 6 }, note: null, created_at: '2026-10-01T00:00:00.000Z', created_by: SHOP }]), answering(/definition_status_log/, [{ status: 'live', changed_at: '2026-10-02T00:00:00.000Z', changed_by: SHOP, changed_by_name: 'Test shop' }]))) }),
     X('read-one-not-migrated', 'GET ' + D + '/:id', 503, { setup: withRows(migrated(/SELECT \* FROM definition WHERE/)) }),
-    X('read-one-id-is-not-a-uuid', 'GET ' + D + '/:id', 500, { url: D + '/' + NOT_AN_ID, setup: withRows(raising(/SELECT \* FROM definition WHERE/, '22P02')) }),
+    X('read-one-id-is-not-a-uuid', 'GET ' + D + '/:id', 404, { url: D + '/' + NOT_AN_ID }),
     X('read-one-history-fails', 'GET ' + D + '/:id', 500, { setup: withRows(firstOf(found(), raising(/FROM definition_version/, '08006'))) }),
     /* POST / */
     X('create-nothing-sent', 'POST ' + D, 400, { body: {} }),
@@ -102,7 +102,7 @@ function extras(tools) {
     X('save-live-offer-rename-is-not-asked', 'PUT ' + D + '/:id', 200, { body: { name: 'Diwali' }, setup: withRows(firstOf(found(Object.assign({ status: 'live' }, OFFER)), updated())) }),
     X('save-name-taken', 'PUT ' + D + '/:id', 409, { body: { name: 'Box' }, setup: withRows(firstOf(found(), raising(/UPDATE definition\s+SET name/, '23505'))) }),
     X('save-not-migrated', 'PUT ' + D + '/:id', 503, { body: { name: 'Box' }, setup: withRows(migrated(/SELECT \* FROM definition WHERE/)) }),
-    X('save-id-is-not-a-uuid', 'PUT ' + D + '/:id', 500, { url: D + '/' + NOT_AN_ID, body: { name: 'Box' }, setup: withRows(raising(/SELECT \* FROM definition WHERE/, '22P02')) }),
+    X('save-id-is-not-a-uuid', 'PUT ' + D + '/:id', 404, { url: D + '/' + NOT_AN_ID, body: { name: 'Box' } }),
     X('save-update-fails', 'PUT ' + D + '/:id', 500, { body: { name: 'Box' }, setup: withRows(firstOf(found(), raising(/UPDATE definition\s+SET name/, '08006'))) }),
     X('save-clash-check-throws', 'PUT ' + D + '/:id', 500, { body: { status: 'live', confirmed: true, rules: { percent: 10 } }, setup: withRows(found(OFFER)), patch: { clash: { check: boom } } }),
     X('save-body-is-a-list', 'PUT ' + D + '/:id', 400, { body: [], after: true, setup: withRows(firstOf(found(), updated())) }),
@@ -119,7 +119,7 @@ function extras(tools) {
     X('retire-takeover-given-twice', 'DELETE ' + D + '/:id', 400, { url: D + '/' + DEF + '?takeover=' + DEF + '&takeover=' + SLAB_B, after: true, setup: withRows(firstOf(kindAndStatus(tax), cited)) }),
     X('retire-guard-throws', 'DELETE ' + D + '/:id', 500, { setup: withRows(kindAndStatus(tax)), patch: { slab: { guard: boom } } }),
     X('retire-not-migrated', 'DELETE ' + D + '/:id', 503, { setup: withRows(migrated(/SELECT kind, status FROM definition/)) }),
-    X('retire-id-is-not-a-uuid', 'DELETE ' + D + '/:id', 500, { url: D + '/' + NOT_AN_ID, setup: withRows(raising(/SELECT kind, status FROM definition/, '22P02')) }),
+    X('retire-id-is-not-a-uuid', 'DELETE ' + D + '/:id', 404, { url: D + '/' + NOT_AN_ID }),
     X('retire-update-fails', 'DELETE ' + D + '/:id', 500, { setup: withRows(firstOf(kindAndStatus(), raising(/UPDATE definition SET status = 'retired'/, '08006'))) }),
     /* POST /freeze */
     X('freeze-nothing-sent', 'POST ' + D + '/freeze', 400, { body: {} }),

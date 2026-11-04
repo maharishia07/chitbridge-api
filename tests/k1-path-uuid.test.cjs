@@ -58,6 +58,8 @@ const ROUTES = [
   // ── routes/combo-templates.js
   // ── routes/connections.js
   // ── routes/definitions.js
+  ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
+  ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
   // ── routes/forms.js
   // ── routes/identity-docs.js
   // ── routes/integrations.js
