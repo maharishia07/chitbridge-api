@@ -25,6 +25,9 @@ async function attrsReady() {
   return schema.hasColumn('schema_fields', 'unit');
 }
 
+/* K-1: field_key is TEXT (no uuid guard), but a NUL byte names no column and Postgres refuses it in text (22021 → 500): answered as the unknown column it is, before any query */
+router.param('field_key', (req, res, next, key) => (String(key).includes('\0') ? problem(req, res, { status: 404, ...words.noSuchColumn() }) : next()));
+
 // GET /api/schemas/my — does entity have a schema?
 router.get('/my', auth, ...checked('GET /my'), async (req, res) => {
   try {
@@ -189,7 +192,6 @@ router.delete('/fields/:field_key', auth, ...checked('DELETE /fields/:field_key'
   try {
     const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
     const key = String(req.params.field_key || '').trim();
-    if (key.includes('\0')) return problem(req, res, { status: 404, ...words.noSuchColumn() }); /* K-1: a NUL byte names no column, and Postgres refuses it in text (22021 → 500) */
     if (!key) return problem(req, res, { status: 400, ...words.noColumn() });
     if (columnRules.LOCKED.has(key)) {
       return problem(req, res, { status: 409, ...words.locked(key) });
@@ -311,7 +313,6 @@ router.patch(
     try {
       const entity_id = auth.entityOf ? auth.entityOf(req) : req.identity.identity_id;
       const key = String(req.params.field_key || '').trim();
-      if (key.includes('\0')) return problem(req, res, { status: 404, ...words.noSuchColumn() }); /* K-1: as DELETE */
       const f = await query(
         `SELECT sf.field_id, sf.field_name, sf.field_type, sf.required, sf.schema_id
            FROM schema_fields sf
