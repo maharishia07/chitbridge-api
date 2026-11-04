@@ -36587,14 +36587,14 @@
     },
     {
      "scenario": "ref-malformed-id",
-     "status": 500,
+     "status": 404,
      "body_keys": {
       "error": "Update failed",
-      "message": "Something went wrong — please try again."
+      "message": "Binding not found"
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Something went wrong — please try again."
+      "message": "Binding not found"
      }
     },
     {
@@ -36797,14 +36797,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Template update failed",
-      "message": "Unknown template"
+      "message": "Binding not found"
      },
      "fixture": {
       "error": "Template update failed",
-      "message": "Unknown template"
+      "message": "Binding not found"
      }
     },
     {

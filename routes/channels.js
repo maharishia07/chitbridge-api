@@ -12,11 +12,16 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { faultOf, adminOff, adminWrongKey, checked } = require('../lib/channels-contract'); // API-4: the contract (each route's operation) and the words of a refusal
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { faultOf, bindingUnknown, adminOff, adminWrongKey, checked } = require('../lib/channels-contract'); // API-4: the contract (each route's operation) and the words of a refusal
 const channels = require('../lib/channels');
 
 const entityId = (req) => auth.entityOf(req);
+
+/* K-1 (API-10) — a binding id that is not a uuid names no binding: 404 with the words an unknown one gets, before the database answers in a 500.
+ * The platform doors judge the id only AFTER their key gate (admin below): the gate refuses before any lookup, with one body whatever the id. */
+const knownBinding = uuidParam(bindingUnknown);
+router.param('id', (req, res, next, id) => (req.route.stack[0].handle === admin ? next() : knownBinding(req, res, next, id)));
 
 // GET / — every channel, its provider state, and this entity's bindings. One read, so the panel cannot show a
 // binding and a provider state that disagree with each other.
@@ -103,7 +108,7 @@ function admin(req, res, next) {
   // Constant-time-ish: compare length first, then a crypto compare, so a wrong key leaks nothing by timing.
   const ok = typeof given === 'string' && given.length === key.length && require('crypto').timingSafeEqual(Buffer.from(given), Buffer.from(key));
   if (!ok) return problem(req, res, { status: 403, ...adminWrongKey() });
-  next();
+  knownBinding(req, res, next, req.params.id);
 }
 // @does A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).
 router.post('/:id/approve', admin, ...checked('POST /:id/approve'), async (req, res) => {

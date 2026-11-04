@@ -17,7 +17,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:764 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2304 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1966 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| DELETE | /api/channels/:id | channels | routes/channels.js:136 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/channels/:id | channels | routes/channels.js:141 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5911 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4790 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6172 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -101,8 +101,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2055 | yes | yes | yes | yes | yes | no | yes | yes | no | no | yes | yes | yes | partial |
 | GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:664 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:931 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/channels | channels | routes/channels.js:24 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/channels/outbound | channels | routes/channels.js:34 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/channels | channels | routes/channels.js:29 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/channels/outbound | channels | routes/channels.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id | chits | routes/chits.js:3312 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4616 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/costs | chits | routes/chits.js:3863 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
@@ -405,13 +405,13 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2078 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:800 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:1987 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/channels | channels | routes/channels.js:80 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/channels/:id/approve | channels | routes/channels.js:109 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/channels/:id/auto-raise | channels | routes/channels.js:60 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/channels/:id/provider-ref | channels | routes/channels.js:44 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/channels/:id/revoke | channels | routes/channels.js:127 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/channels/:id/template | channels | routes/channels.js:69 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/channels/:id/template-approve | channels | routes/channels.js:118 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/channels | channels | routes/channels.js:85 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/channels/:id/approve | channels | routes/channels.js:114 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/channels/:id/auto-raise | channels | routes/channels.js:65 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/channels/:id/provider-ref | channels | routes/channels.js:49 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/channels/:id/revoke | channels | routes/channels.js:132 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/channels/:id/template | channels | routes/channels.js:74 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/channels/:id/template-approve | channels | routes/channels.js:123 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4506 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6064 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4407 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
@@ -1646,7 +1646,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): - · callers: - · actions: -
+- reads (derived): channel_binding · writes (derived): - · callers: - · actions: -
 
 **POST /api/channels/:id/auto-raise** · channels · cb-connect · partial
 - does: On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.
@@ -1664,7 +1664,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): - · callers: - · actions: -
+- reads (derived): channel_binding · writes (derived): - · callers: - · actions: -
 
 **POST /api/channels/:id/template** · channels · cb-connect · partial
 - does: A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.
@@ -1676,7 +1676,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): channel_binding · callers: - · actions: -
+- reads (derived): channel_binding · writes (derived): channel_binding · callers: - · actions: -
 
 ### chits (cb-rail, 0 of 65 with a description)
 
