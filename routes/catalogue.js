@@ -8,12 +8,13 @@ const logger = require('../lib/logger');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const idempotency = require('../middleware/idempotency'); // API-3 S36: the public money doors require an Idempotency-Key
-const { problem, fromError } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
+const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-1 slice 1e: every public storefront refusal is a Problem that keeps its old body
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape (K-1: the enquiry thread read)
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
 const { query, withTransaction, withEntity, trySavepoint } = require('../db');
 const { sanitise, schemaValidate } = require('../middleware/validate');
@@ -571,6 +572,18 @@ async function shopDatePhrase(identityId) {
    claims to have come from the live world. */
 const SHOP_COLS = 'identity_id, display_name, bridge_id, user_id, currency_code, gstn, is_verified, logo_url, address, business_status, population';
 const SHOP_LIVE = "identity_type = 'entity' AND status = 'active' AND COALESCE(sealed, false) = false";
+/* ⭐ K-1: a shop handle holding a NUL (Postgres text cannot store it → 22021 → 500) names no shop: answered EXACTLY as an unknown one (S41), before the database.
+   The shopper's own lists (my-orders · my-documents) never read the handle, so they keep their sign-in gate first. */
+const noShopWords = (req) => {
+  const legacy = /[/]support[/]preview$/.test(req.path) ? storefront.PREVIEW_NO_SHOP : storefront.NO_SHOP;
+  return { status: 404, code: 'NOT_FOUND', field: undefined, detail: legacy.message || legacy.why, legacy };
+};
+const handleOk = textParam(noShopWords);
+router.param('bridge_id', (req, res, next, value, name) => (/^[/][^/]+[/]my-/.test(req.path) ? next() : handleOk(req, res, next, value, name)));
+/* ⭐ K-1: an item id that is not a uuid names no product (catalogue_items.item_id and chit_messages.subject_id are uuid). The POST answers it as it answers a uuid that
+   names none: 404. The GET reads a thread and answers a product it was never part of with an empty list (RLS), so it answers a non-uuid the same way — in its handler. */
+const noSuchProduct = uuidParam(() => words.noSuchProduct());
+router.param('item_id', (req, res, next, value, name) => (req.method === 'GET' ? next() : noSuchProduct(req, res, next, value, name)));
 async function resolveEntity(handle) {
   const r = await query(
     `SELECT ${SHOP_COLS}
@@ -661,7 +674,7 @@ async function orderableOf(ids, network) {
   const shown = new Set((await publicItemsOfShops(shops.filter((shop) => stores.has(String(shop.identity_id))))).map((item) => String(item.item_id)));
   return found.filter((item) => shown.has(String(item.item_id)));
 }
-router.get('/network-store/:networkId', async (req, res) => {
+router.get('/network-store/:networkId', doorCheck('GET /network-store/:networkId'), async (req, res) => {
   try {
     const network = await networkStoreOf(req.params.networkId);
     if (!network) return refuseAs(req, res, { status: 404, code: 'NO_SUCH_NETWORK', legacy: storefront.NO_SUCH_NETWORK });
@@ -928,7 +941,7 @@ router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:n
  */
 const MAX_DEPARTMENTS = 40;
 
-router.get('/network/:bridge_id', async (req, res) => {
+router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (req, res) => {
   try {
     const root = await resolveEntity(req.params.bridge_id);
     if (!root) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
@@ -1152,7 +1165,7 @@ router.get('/:bridge_id', async (req, res) => {
 // GET /api/catalogue/:bridge_id/capture-fields — what the storefront must ASK the customer for (increment 3): the
 // chit-scope required items from THIS shop's assimilated standards. The order form renders these; order/confirm captures
 // them → conformance passes. Public (the customer isn't logged in).
-router.get('/:bridge_id/capture-fields', async (req, res) => {
+router.get('/:bridge_id/capture-fields', doorCheck('GET /:bridge_id/capture-fields'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
@@ -1227,7 +1240,7 @@ router.post(
  * ⭐ AND THE SHOP'S OWN ROUTING ANSWERS IT, because lib/raiseticket resolves under the RECIPIENT's id: the
  * buyer knows nothing about the shop's folders, people or teams, and needs to know nothing.
  */
-router.get('/:bridge_id/support/preview', async (req, res) => {
+router.get('/:bridge_id/support/preview', doorCheck('GET /:bridge_id/support/preview'), async (req, res) => {
   /**
    * ⚠⚠ DELIBERATELY LESS THAN THE SIGNED-IN PREVIEW. That one names the folder and the person who will answer;
    * this page is READ BY ANYONE, and "filed in 00-support, for Ravi Kumar" published to the open web is the
@@ -1966,6 +1979,7 @@ router.get('/:bridge_id/my-documents', customerAuth, ...routeCheck('GET /:bridge
 router.delete('/:bridge_id/my-documents/:id', customerAuth, ...routeCheck('DELETE /:bridge_id/my-documents/:id'), async (req, res) => {
   try {
     const me = req.customer.identity_id;
+    if (!UUID.test(req.params.id)) return problem(req, res, { status: 404, ...words.noSuchDocument() }); // K-1: not a uuid names no document — the answer of one that is not theirs (and after the sign-in gate)
     const r = await withEntity(me, (db) => db.query(`DELETE FROM cb_attachment WHERE id = $1 AND entity_id = $2 RETURNING id`, [req.params.id, me]));
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.noSuchDocument() });
     res.json({ ok: true, deleted: r.rows[0].id });
@@ -2059,14 +2073,16 @@ router.get('/enquiry/:item_id', auth, ...routeCheck('GET /enquiry/:item_id'), as
        You can only read a thread you were delivered into, so there is nothing extra to check and nothing to
        leak — asking about a product you were never part of returns an empty list, exactly like one with no
        messages. */
-    const r = await withEntity(me, (db) =>
-      db.query(
-        `SELECT * FROM chit_messages
+    const r = !UUID.test(req.params.item_id)
+      ? { rows: [] } // K-1: not a uuid names no product: the empty list a product you were never part of gets, and Postgres is not asked
+      : await withEntity(me, (db) =>
+          db.query(
+            `SELECT * FROM chit_messages
         WHERE subject_type = 'product' AND subject_id = $1
         ORDER BY created_at ASC`,
-        [req.params.item_id]
-      )
-    );
+            [req.params.item_id]
+          )
+        );
     res.json(Object.assign({ count: r.rows.length }, PL.pageOut('messages', r.rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     /* b161/b162 not applied on this deployment → an empty thread, not a broken screen. */

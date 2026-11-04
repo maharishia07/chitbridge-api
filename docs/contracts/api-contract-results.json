@@ -434,6 +434,14 @@
     400
    ]
   },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "cases": 3,
    "failed": 0,
@@ -450,6 +458,14 @@
     400
    ]
   },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/enquiry": {
    "cases": 2,
    "failed": 0,
@@ -459,6 +475,22 @@
    ]
   },
   "GET /api/catalogue/enquiry/:item_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network/:bridge_id": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
