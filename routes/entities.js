@@ -1,6 +1,7 @@
-// routes/entities.js — Entity registration, login, search.   CARD 28-platform-and-operations/entities-routes
-// OWNS the entity door: register · OTP login · search · profile · header · sides · policy · country setup · CALLED BY server.js (app.use('/api/entities')).
-// FLOW  validate → auth → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data, error }
+// routes/entities.js — the entity door: sign-up and sign-in, search, the profile, policy, preferences, routing, populations, the platform report, erasure.   CARD 28-platform-and-operations/entities-routes
+// OWNS      every route under /api/entities (25): register · verify · constitutions · search · header · sides · me · policy · prefs · exposure · profile · routing · populations · usage · mis · entitlements · erase.
+// CALLED BY server.js (app.use('/api/entities')) · the web's sign-in, Settings, Platform and shell header · tools/api-register.cjs · tests/api-problem-entities.test.cjs.
+// FLOW      path guards (uuidParam id · textParam code) → auth → platform door (root | platform) → schemaValidate (lib/entities-contract.js) → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data } | problem()
 const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
