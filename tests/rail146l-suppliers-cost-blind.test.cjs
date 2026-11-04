@@ -21,6 +21,7 @@ const ROOT = path.join(__dirname, '..');
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const SUP = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const FIGURE = -4242500;
+const LIMIT = 7654321; /* the supplier's credit limit (party field, any ledger state) */
 const stub = (rel, exports) => {
   const file = require.resolve(path.join(ROOT, rel));
   require.cache[file] = { id: file, filename: file, loaded: true, exports };
@@ -39,7 +40,7 @@ const WHO = {
 const auth = (req, res, next) => ((req.identity = WHO[seen]), next());
 auth.entityOf = () => SHOP;
 stub(path.join('middleware', 'auth'), auth);
-stub(path.join('lib', 'party-fields'), { decorate: async (w, o, rows) => (ledgerOn && rows.forEach((r) => (r.balance_minor = FIGURE)), rows), ensureNo: async () => null });
+stub(path.join('lib', 'party-fields'), { decorate: async (w, o, rows) => (rows.forEach((r) => { r.credit_limit_minor = LIMIT; if (ledgerOn) r.balance_minor = FIGURE; }), rows), ensureNo: async () => null });
 stub(path.join('lib', 'cost'), { isCostBlind: async (req) => req.identity.identity_type === 'actor' && req.identity === WHO.blind });
 const app = express();
 app.use(express.json());
@@ -54,15 +55,16 @@ const get = (server) =>
   let a = await get(server);
   check(a.status === 200 && a.body.suppliers[0].balance_minor === null && a.body.suppliers[0].cost_hidden === true, 'a cost-blind login: balance_minor null + cost_hidden:true');
   check(!JSON.stringify(a.body).includes(String(Math.abs(FIGURE))), 'a cost-blind login: the figure is nowhere in the body');
+  check(a.body.suppliers[0].credit_limit_minor === null && !JSON.stringify(a.body).includes(String(LIMIT)), 'a cost-blind login: the supplier credit limit is null (dues-view R5, the CRM record rule)');
   for (const who of ['owner', 'allowed']) {
     seen = who;
     a = await get(server);
-    check(a.status === 200 && a.body.suppliers[0].balance_minor === FIGURE && a.body.suppliers[0].cost_hidden === undefined, who + ': the figure as before');
+    check(a.status === 200 && a.body.suppliers[0].balance_minor === FIGURE && a.body.suppliers[0].cost_hidden === undefined && a.body.suppliers[0].credit_limit_minor === LIMIT, who + ': the figure and the credit limit as before');
   }
   seen = 'blind';
   ledgerOn = false;
   a = await get(server);
-  check(a.status === 200 && !('balance_minor' in a.body.suppliers[0]) && !('cost_hidden' in a.body.suppliers[0]), 'ledger off, cost-blind: no balance key, no flag');
+  check(a.status === 200 && !('balance_minor' in a.body.suppliers[0]) && a.body.suppliers[0].credit_limit_minor === null, 'ledger off, cost-blind: no balance key, the credit limit still hidden');
   server.close();
   console.log(failed ? failed + ' FAILED' : 'all passed');
   process.exit(failed ? 1 : 0);

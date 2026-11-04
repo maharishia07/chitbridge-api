@@ -305,11 +305,13 @@ function listSuppliers(db, owner) {
   );
 }
 
-/** one supplier row for a cost-blind reader: the balance goes through lib/dues-view's own rule; a ledger-off row (no balance_minor key) stays as it is */
+/** one supplier row for a cost-blind reader, through lib/dues-view's own rules: the balance (R2, blindDues) and the supplier's credit limit (R5, blindTerms, RAIL-146l
+    follow-up); a key the row does not carry (ledger off: no balance_minor) stays absent */
 function hideOwed(row) {
-  if (row.balance_minor === undefined) return row;
-  const { balance_minor, cost_hidden } = require('../lib/dues-view').blindDues({ side: 'supplier', balance_minor: row.balance_minor });
-  return Object.assign(row, { balance_minor, cost_hidden });
+  const view = require('../lib/dues-view');
+  if (row.balance_minor !== undefined) Object.assign(row, view.blindDues({ side: 'supplier', balance_minor: row.balance_minor }));
+  if (row.credit_limit_minor !== undefined) Object.assign(row, view.blindTerms({ supplier: { credit_limit_minor: row.credit_limit_minor } }).supplier);
+  return row;
 }
 
 // List my suppliers — has_catalogue reflects an active default schema only
