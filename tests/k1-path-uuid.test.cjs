@@ -145,15 +145,6 @@ const ask = (server, method, url, body) =>
   }
 
   const server = app.listen(0);
-  const same = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.cancelled, a.body.enabled, a.body.pending, a.type]);
-  for (const [, , method, url, goodUrl, body] of SAME_ROUTES) {
-    const label = method + ' ' + url.replace('/api/', '');
-    queries.length = 0;
-    const junk = await ask(server, method, url, body);
-    const unknown = await ask(server, method, goodUrl, body);
-    check(junk.status < 500 && !/invalid input syntax|22P02/i.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
-    check(same(junk) === same(unknown), label + ' → answered exactly as an unknown uuid (' + same(junk) + ' vs ' + same(unknown) + ')');
-  }
   for (const [, , method, url, body, legacyError] of ROUTES) {
     queries.length = 0;
     const a = await ask(server, method, url, body);
@@ -166,6 +157,18 @@ const ask = (server, method, url, body) =>
     if (legacyError) check(a.body.error === legacyError, label + ' → legacy error "' + legacyError + '" (got ' + a.body.error + ')');
   }
   server.close();
+  /* a junk id answers EXACTLY as an unknown uuid (SAME_ROUTES), on its own server below the shared loops so sibling PRs never touch these lines */
+  const sameServer = app.listen(0);
+  const same = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.cancelled, a.body.enabled, a.body.pending, a.type]);
+  for (const [, , method, url, goodUrl, body] of SAME_ROUTES) {
+    const label = method + ' ' + url.replace('/api/', '');
+    queries.length = 0;
+    const junk = await ask(sameServer, method, url, body);
+    const unknown = await ask(sameServer, method, goodUrl, body);
+    check(junk.status < 500 && !/invalid input syntax|22P02/i.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(same(junk) === same(unknown), label + ' → answered exactly as an unknown uuid (' + same(junk) + ' vs ' + same(unknown) + ')');
+  }
+  sameServer.close();
   console.log('\n' + checks + ' checks');
   console.log(failed ? failed + ' FAILED' : 'all passed');
   process.exit(failed ? 1 : 0);
