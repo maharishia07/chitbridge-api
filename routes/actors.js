@@ -69,7 +69,7 @@ const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(Stri
 async function loginIdFor(actor_key, req) {
   let handle = null;
   try {
-    const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    const r = await db('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
   } catch (e) {
     logger.fellBack(
