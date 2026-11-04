@@ -57,6 +57,7 @@ const ROUTES = [
   // ── routes/chits.js
   // ── routes/combo-templates.js
   // ── routes/connections.js
+  ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
   // ── routes/forms.js
   // ── routes/identity-docs.js

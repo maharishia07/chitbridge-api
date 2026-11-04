@@ -10,7 +10,7 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const log = require('../lib/logger');
 const router = express.Router();
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
@@ -115,6 +115,9 @@ router.get('/pending', auth, checked('GET /pending'), async (req, res) => {
     problem(req, res, contract.failed(err, req, 'Failed to get requests'));
   }
 });
+
+/* K-1 (API-10) — a request id that is not a uuid names no request: 404 before the database answers with its own words in a 500 */
+router.param('id', uuidParam(contract.words.requestUnknown));
 
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request

@@ -27621,24 +27621,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      }
     },
     {

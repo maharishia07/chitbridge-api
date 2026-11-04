@@ -583,10 +583,12 @@
   500
  ],
  "GET /api/connections/list": [
+  400,
   401,
   500
  ],
  "GET /api/connections/pending": [
+  400,
   401,
   500
  ],

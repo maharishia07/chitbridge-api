@@ -130,7 +130,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/chits/trace/networks | chits | routes/chits-trace.js:480 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/unread | chits | routes/chits.js:3277 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/combo-templates | combo-templates | routes/combo-templates.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/connections/list | connections | routes/connections.js:202 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/connections/list | connections | routes/connections.js:205 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/pending | connections | routes/connections.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connectors | connectors | routes/connectors.js:769 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connectors/:actorId/connections | connectors | routes/connectors.js:953 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -634,7 +634,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4885 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4204 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6230 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| PUT | /api/connections/:id/respond | connections | routes/connections.js:121 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/connections/:id/respond | connections | routes/connections.js:124 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:365 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1612 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/entities/routing | entities | routes/entities.js:1531 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
