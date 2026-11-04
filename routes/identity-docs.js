@@ -15,7 +15,8 @@
  *
  * ⭐ WHAT THE EMPLOYER SEES IS THE VERDICT, NOT THE DOCUMENT — verified, when, by whom. That is
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
- 
+ *
+ * OWNS      the four /api/identity routes: a person's own document list (mask and verdict, never the number), filing one document, and the code that confirms a phone or e-mail (send · verify).
  * FLOW      PUT /documents/:scheme -> normalise -> docHash (keyed for Aadhaar, plain for the rest) -> upsert · identity-auth / keys.js recompute the PHONE and EMAIL hash
  *           auth (any signed-in login; the person is the token, or a co-assist the owner names) -> schema check (lib/identity-docs-contract.js) -> the handler -> lib/iddoc-verify.js for the code flow
  *           a refusal -> problem(req, res, ...) with the old { error, code, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
