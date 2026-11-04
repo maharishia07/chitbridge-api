@@ -42418,6 +42418,18 @@
      }
     },
     {
+     "scenario": "drop-key-with-a-nul",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
      "scenario": "drop-blank-key",
      "status": 400,
      "body_keys": {
@@ -42687,6 +42699,18 @@
     },
     {
      "scenario": "patch-unknown-column",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-key-with-a-nul",
      "status": 404,
      "body_keys": {
       "error": "Not found",
@@ -54031,14 +54055,12 @@
     },
     {
      "scenario": "retire-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {
@@ -54167,14 +54189,12 @@
     },
     {
      "scenario": "read-one-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {
@@ -55003,14 +55023,12 @@
     },
     {
      "scenario": "save-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {

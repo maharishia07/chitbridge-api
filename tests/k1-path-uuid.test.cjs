@@ -62,6 +62,8 @@ const ROUTES = [
   // ── routes/connections.js
   ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
+  ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
+  ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
   // ── routes/forms.js
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
