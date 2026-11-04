@@ -151,10 +151,7 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     // Log to state_log — for both entities
     const logAction = action === 'accept' ? 'connection_accepted' : 'connection_rejected';
 
-    const detail =
-      action === 'accept'
-        ? `${req.identity.display_name} accepted connection from ${conn.rows[0].from_display_name}`
-        : `${req.identity.display_name} rejected connection from ${conn.rows[0].from_display_name}`;
+    const detail = `${req.identity.display_name} ${newStatus} connection from ${conn.rows[0].from_display_name}`; // newStatus is the word: accepted | rejected
 
     // Log for receiver (the responder's OWN copy). B1 RLS: withEntity(me).
     await withEntity(entity_id, (c) =>

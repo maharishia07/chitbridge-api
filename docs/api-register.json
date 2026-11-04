@@ -10779,7 +10779,7 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 205,
+   "line": 202,
    "hash": "9785c5ff74a411a3",
    "does": "",
    "errors": {
@@ -56533,7 +56533,7 @@
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
    "line": 124,
-   "hash": "6470089e3312598d",
+   "hash": "7a3bc57baac8093c",
    "does": "",
    "errors": {
     "count": 0,
@@ -56597,8 +56597,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7a3bc57baac8093c"
    },
    "status": "partial",
    "callers": [
