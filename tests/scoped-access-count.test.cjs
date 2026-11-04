@@ -22,8 +22,10 @@ const path = require('path');
 const ROUTES = path.join(__dirname, '..', 'routes');
 
 /* the count on 2026-10-21 (api origin/main 6fa94519): 43 chit read routes, 0 of them call seesWholeEntity */
-const BASELINE_SKIPPING = 43;
-const READS_CHITS = /\bchit_(header|status|detail|line|participants)\b|\bwork\.\w+\(/;
+const BASELINE_SKIPPING = 34; /* SEC-115, 4 Nov 2026: 34 once the scan counts real reads only (41 by the old text match on this commit) */
+/* SEC-115: a REAL read — a chit table after FROM / JOIN in a query, or a lib/work-rows call. The table's name merely appearing
+   (a row mapper that names the column `chit_status`) is not a read and used to raise the count. */
+const READS_CHITS = /\b(FROM|JOIN)\s+(public\.)?chit_(header|status|detail|line|participants)\b|\bwork\.\w+\(/i;
 
 /** chitReadRoutes() → [{ file, path, scoped }] — every GET handler in routes/ that reads chits, and whether it asks the one check */
 function chitReadRoutes() {
