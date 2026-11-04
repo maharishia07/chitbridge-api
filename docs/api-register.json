@@ -738,7 +738,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 255,
+   "line": 258,
    "hash": "e72ad7c32f415e59",
    "does": "",
    "errors": {
@@ -10705,7 +10705,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 60,
+   "line": 63,
    "hash": "c0dd4ca7465ccd30",
    "does": "",
    "errors": {
@@ -15101,7 +15101,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 23,
+   "line": 31,
    "hash": "a83a138eb0767172",
    "does": "",
    "errors": {
@@ -15185,7 +15185,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 31,
+   "line": 39,
    "hash": "e8c36f2d5c0ed626",
    "does": "",
    "errors": {
@@ -15269,7 +15269,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 63,
+   "line": 71,
    "hash": "386ad563bf93c10a",
    "does": "",
    "errors": {
@@ -15357,7 +15357,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 55,
+   "line": 63,
    "hash": "6bb088a3711770a5",
    "does": "",
    "errors": {
@@ -26296,8 +26296,8 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 103,
-   "hash": "849fd3576c06a88d",
+   "line": 106,
+   "hash": "ee35a66a82088109",
    "does": "",
    "errors": {
     "count": 1,
@@ -38920,8 +38920,8 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 77,
-   "hash": "26d6feec20d0b5cb",
+   "line": 80,
+   "hash": "25169367b3ef91a7",
    "does": "",
    "errors": {
     "count": 0,
@@ -38932,7 +38932,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "combo_templates"
+   ],
    "writes": [
     "combo_templates"
    ],
@@ -39006,7 +39008,7 @@
    "owner_area": "combo-templates",
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
-   "line": 211,
+   "line": 214,
    "hash": "a9d0257c4e37305f",
    "does": "",
    "errors": {
@@ -42705,7 +42707,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 47,
+   "line": 55,
    "hash": "6bb72f6be968bf6c",
    "does": "",
    "errors": {
@@ -42793,7 +42795,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 39,
+   "line": 47,
    "hash": "0821b35501620684",
    "does": "",
    "errors": {
@@ -42879,7 +42881,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 79,
+   "line": 87,
    "hash": "e234eb853c333178",
    "does": "",
    "errors": {
@@ -42971,7 +42973,7 @@
    "owner_area": "forms",
    "owner_agent": "cb-compliance",
    "file": "routes/forms.js",
-   "line": 71,
+   "line": 79,
    "hash": "e804ea712cacf61d",
    "does": "",
    "errors": {
@@ -56546,8 +56548,8 @@
    "owner_area": "connections",
    "owner_agent": "cb-network",
    "file": "routes/connections.js",
-   "line": 121,
-   "hash": "6470089e3312598d",
+   "line": 124,
+   "hash": "7a3bc57baac8093c",
    "does": "",
    "errors": {
     "count": 0,
@@ -56611,8 +56613,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7a3bc57baac8093c"
    },
    "status": "partial",
    "callers": [

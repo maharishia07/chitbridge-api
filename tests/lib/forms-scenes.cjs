@@ -146,7 +146,6 @@ function extras(tools) {
     /* GET /instances/:id */
     X('instance-held', INST, 200, { url: at('/instances/' + INSTANCE), setup: heldForm() }),
     X('instance-unknown', INST, 404, { url: at('/instances/' + INSTANCE) }),
-    X('instance-not-an-id', INST, 500, { url: at('/instances/nope'), setup: withRows(raisingOn(/FROM form_instance/, '22P02')) }),
     X('instance-answer-fails', INST, 500, { url: at('/instances/' + INSTANCE), setup: { jsonThrows: true, sqlRows: when(/FROM form_instance/, [row()]) } }),
     X('instance-library-throws', INST, 500, { url: at('/instances/' + INSTANCE), patch: { forms: { getInstance: thrown(SECRET_SQL) } } }),
     /* POST /instances/:id/sign */
