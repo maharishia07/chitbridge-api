@@ -9136,7 +9136,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 28,
+   "line": 41,
    "hash": "e0f68ab161a07cc0",
    "does": "",
    "errors": {
@@ -9224,7 +9224,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 55,
+   "line": 68,
    "hash": "bddc64e2800083d8",
    "does": "",
    "errors": {
@@ -10339,7 +10339,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 255,
+   "line": 259,
    "hash": "e4d84f8cefe1d1a4",
    "does": "",
    "errors": {
@@ -10427,7 +10427,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 299,
+   "line": 303,
    "hash": "f15e538c4e88a8b4",
    "does": "",
    "errors": {
@@ -10518,7 +10518,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 480,
+   "line": 475,
    "hash": "8f9238406a761e84",
    "does": "",
    "errors": {
