@@ -37,7 +37,7 @@
  *
  * ANSWERS (API-STANDARD S1): every refusal is a Problem that keeps the keys it always had { code, error, message, why? } (docs/contracts/api-legacy.json); the words and the
  *   contract of each route are lib/crm-contract.js. FLOW  auth → noKey → schema check → handler (idOf: a party or follow-up id that is no uuid is 400 BAD_ID) → res.json | problem(req, res, crmFault(e, req) | keyFence() | notYourParty() | noSuchFollowup())
- *   a value no column can hold (a NUL byte in text) is crmFault's 400 'Bad value', never a 500; a body id that is no uuid answers as an unknown one (lib/crm-followups, lib/crm-calls)
+ *   a value no column can hold (a NUL byte in text) is crmFault's 400 'Cannot save this text', never a 500; a body id that is no uuid answers as an unknown one (lib/crm-followups, lib/crm-calls)
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
  *   summary_json, party_item) — "compute once, everyone reads". ⭐ Every read runs AS THE SHOP (withEntity): one shop never sees another's party.

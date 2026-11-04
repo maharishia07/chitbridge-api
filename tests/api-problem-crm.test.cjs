@@ -139,7 +139,7 @@ function checkJunk(recording) {
   const answers = Object.entries(recording).filter(([key]) => /\|junk-/.test(key));
   check('every junk scene answers, and none answers a 5xx (' + answers.length + ' scenes)', answers.length >= 18 && answers.every(([, one]) => one.status < 500), answers.filter(([, one]) => one.status >= 500).map(([key]) => key));
   const stored = answers.filter(([key]) => /-nul$/.test(key) && !/-(group|group-drop|stage|segment-key|send-text)-nul$/.test(key));
-  check('a NUL byte in text a column keeps is the one Bad value 400, with no word of the database (' + stored.length + ' routes)', stored.length >= 8 && stored.every(([, one]) => one.status === 400 && one.body.code === 'CRM_BAD_REQUEST' && one.body.error === 'Bad value' && !/invalid|byte sequence|pg 2/.test(JSON.stringify(one.body))));
+  check('a NUL byte in text a column keeps is the one "Cannot save this text" 400, with no word of the database (' + stored.length + ' routes)', stored.length >= 8 && stored.every(([, one]) => one.status === 400 && one.body.code === 'CRM_BAD_REQUEST' && one.body.error === 'Cannot save this text' && !/invalid|byte sequence|pg 2/.test(JSON.stringify(one.body))));
   const pair = (junk, unknown) => {
     const [a, b] = [junk, unknown].map((id) => Object.entries(recording).find(([key]) => key.endsWith('|' + id)));
     const same = (one) => JSON.stringify({ status: one.status, code: one.body.code, error: one.body.error, message: one.body.message });
