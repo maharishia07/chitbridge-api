@@ -261,6 +261,12 @@ const unknownAccount = async (req, res) => {
 const holdsNul = (value) => String(value == null ? '' : value).includes(' ');
 /** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
 const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
+/** what the ask door looks up: the first of e-mail, user id, id that was typed */
+const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.body.id || '').trim();
+/** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
+const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
+/** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
+const junkAsUnknown = (handler, typedBy) => (req, res, next) => (holdsNul(typedBy(req)) ? unknownAccount(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
 const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED)$/.test(String(reason || ''));
 
@@ -340,11 +346,10 @@ async function firstCodeFor(actor, toMail) {
 
 async function ask(req, res, next) {
   try {
-    const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
+    const input = typedByAsk(req);
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
-    if (holdsNul(input)) return unknownAccount(req, res);
     /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
     const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
 
@@ -552,7 +557,6 @@ async function verify(req, res) {
     if (!email && !handle && !id) {
       return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
-    if (holdsNul(email) || holdsNul(handle) || holdsNul(id)) return unknownAccount(req, res);
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
@@ -846,7 +850,6 @@ async function actorLogin(req, res) {
     if (!username.includes('@')) {
       return res.status(400).json({ error: 'Invalid format', message: 'Actor login format is: yourname@entityname' });
     }
-    if (holdsNul(username)) return unknownAccount(req, res);
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
     if (e.ambiguous) {
@@ -972,11 +975,13 @@ async function pin(req, res) {
   }
 }
 
-router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, ask);
-router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verify);
+const askDoor = junkAsUnknown(ask, typedByAsk);
+const verifyDoor = junkAsUnknown(verify, typedByVerify);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
+router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
 router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
-router.handlers = { ask, verify, pin, checkLogin };
+router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
 Object.assign(router, { door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

@@ -50162,26 +50162,20 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 975,
-   "hash": "28f4d503742eb33f",
+   "line": 980,
+   "hash": "1619118ca55a191c",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      409,
      500
     ],
-    "codes": [
-     "AMBIGUOUS_NAME"
-    ]
+    "codes": []
    },
-   "reads": [
-    "identities"
-   ],
-   "writes": [
-    "identities"
-   ],
+   "reads": [],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -50194,7 +50188,7 @@
     "schema_out": true,
     "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
@@ -50324,7 +50318,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 977,
+   "line": 982,
    "hash": "b3b2c66b8c80de1f",
    "does": "",
    "errors": {
@@ -50590,11 +50584,11 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 976,
-   "hash": "c72d1ca1450f4918",
+   "line": 981,
+   "hash": "009c20842cd7b499",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      403,
@@ -50602,21 +50596,10 @@
      500,
      503
     ],
-    "codes": [
-     "AMBIGUOUS_NAME"
-    ]
+    "codes": []
    },
-   "reads": [
-    "constitution",
-    "entity_governance",
-    "identities",
-    "installation"
-   ],
-   "writes": [
-    "entity_governance",
-    "identities",
-    "signup_context"
-   ],
+   "reads": [],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -50628,7 +50611,7 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": false,
