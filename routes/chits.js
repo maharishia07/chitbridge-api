@@ -114,7 +114,7 @@ const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(ask
 const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
 const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
 const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
-const canAmend = (c, me) => railActions.can(c, me, 'amend');
+const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
 const CHIT_GONE = {
   'GET /:chit_id': notHere('Chit not found or you do not have access'),
   'GET /:chit_id/use': notHere('Chit not found'),
@@ -130,7 +130,7 @@ const CHIT_GONE = {
   'PUT /:chit_id/disputes/:dispute_id/resolve': said404({ error: 'Dispute not found' }),
   'POST /:chit_id/amend': ownCopyOf(canAmend),
   'POST /:chit_id/reprice': ownCopyOf(canAmend),
-  'POST /:chit_id/assign-lines': ownCopyOf((c, me) => railActions.can(c, me, 'assign')),
+  'POST /:chit_id/assign-lines': ownCopyOf((copy, caller) => railActions.can(copy, caller, 'assign')),
   'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
   'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
   'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
