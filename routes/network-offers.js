@@ -18,7 +18,7 @@
  */
 /* OWNS a brand's network offers: release to the stores, withdraw, what each store holds
  * CALLED BY server.js (mounted under /api/network-offers); the web Offers screens
- * FLOW auth -> the brand's own offer -> release / withdraw at the brand's next opening (its own zone) -> pushToNetwork
+ * FLOW auth -> session only -> the schema check (lib/network-offers-contract.js) -> the brand's own offer -> release / withdraw at the brand's next opening (its own zone) -> pushToNetwork
  * CARD network-and-trade/network-offers */
 'use strict';
 const express = require('express');
@@ -44,8 +44,10 @@ const sessionOnly = (req, res, next) => {
 };
 
 /** the brand's own live offer, or null — nobody releases an offer that is not theirs */
+/** the shape of an offer id (36 hex and dashes); the database still has the last word on whether it is a uuid */
+const OFFER_ID_SHAPE = /^[0-9a-f-]{36}$/i;
 async function ownOffer(entity_id, id) {
-  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) return null;
+  if (!OFFER_ID_SHAPE.test(String(id || ''))) return null;
   const r = await withEntity(entity_id, (db) =>
     db.query(`SELECT definition_id, name, status, current_version FROM definition WHERE entity_id = $1 AND definition_id = $2 AND kind = 'offer'`, [
       entity_id,
@@ -210,15 +212,7 @@ function networkRow(me, brand_id, st, nestedWho, rows, choices) {
   };
 }
 
-/**
- * ⭐ EFF-TRIPS (2026-10-15): THREE TRIPS, NOT 3 + 3 PER BRAND + 2 PER MEMBER. Every read this screen needs is batched (db readBatch):
- *   readOwn      — everything keyed by ME (my identities row ONCE — it was read three times · own offers · place on the tree · roster ·
- *                  adoptions WITH their source · the brands I have an edge with · own sources · own products)
- *   readPeople   — everything keyed by the brands and members found (identities · titles · standing · membership)
- *   readReleased — each brand's released offers under THAT brand's binding (FORCE RLS on definition)
- * The answer is the same shape, row for row (tests/network-offers-shape.test.cjs). ⚠️ A batch that fails answers membership's 503 + code
- * (the reads used to degrade one by one to "none"; a half-read network is not an answer).
- */
+/** GET / — the three trips of the note above readOwn (readOwn · readPeople · readReleased), then the brand's and the store's halves of the screen */
 router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -340,6 +334,29 @@ router.post('/catalogue/price', auth, sessionOnly, ...contract.checked('POST /ca
   }
 });
 
+/**
+ * the record of a release at `at` until `until`, reading the brand's flags once.
+ * ⭐⭐ THE RELEASE PINS THE VERSION. An edit to a released offer is a new version the stores do NOT see until it is
+ * released again — otherwise "changing the offer" would reach every store in the middle of the day, which is the one
+ * thing a controlled release exists to prevent. And the version already running KEEPS running until the new one's
+ * moment, so a re-release never leaves a gap where neither applies.
+ */
+async function releaseRecord(brandId, offer, at, until, req) {
+  const { flags: bf } = await net.flagsOf(brandId);
+  const cur = ((bf.network_offers || {}).released || {})[offer.definition_id] || null;
+  /* ⚠️ the old version is kept only if it actually RUNS before the new one starts — re-releasing an offer that has not
+     begun simply replaces it (a kept copy would have an empty window, and would show twice as "waiting") */
+  const curLive = cur && cur.version && cur.at && cur.at < at && (!cur.until || cur.until > at);
+  return {
+    version: Number(offer.current_version) || 1,
+    at,
+    until,
+    released_at: new Date().toISOString(),
+    released_by: who(req),
+    prev: curLive && Number(cur.version) !== Number(offer.current_version) ? { version: cur.version, at: cur.at, until: at } : null
+  };
+}
+
 router.post('/:id/release', auth, sessionOnly, ...contract.checked('POST /:id/release'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
@@ -352,25 +369,7 @@ router.post('/:id/release', auth, sessionOnly, ...contract.checked('POST /:id/re
     const until = b.until ? net.whenOf(b.until, null) : null;
     if (until && until <= at)
       return refuse(req, res, { status: 400, code: 'OFFER_ENDS_BEFORE_START', error: 'validation', message: 'The offer would end before it starts.' });
-    /**
-     * ⭐⭐ THE RELEASE PINS THE VERSION. An edit to a released offer is a new version the stores do NOT see until it is
-     * released again — otherwise "changing the offer" would reach every store in the middle of the day, which is the one
-     * thing a controlled release exists to prevent. And the version already running KEEPS running until the new one's
-     * moment, so a re-release never leaves a gap where neither applies.
-     */
-    const { flags: bf } = await net.flagsOf(me);
-    const cur = ((bf.network_offers || {}).released || {})[o.definition_id] || null;
-    /* ⚠️ the old version is kept only if it actually RUNS before the new one starts — re-releasing an offer that has not
-       begun simply replaces it (a kept copy would have an empty window, and would show twice as "waiting") */
-    const curLive = cur && cur.version && cur.at && cur.at < at && (!cur.until || cur.until > at);
-    const rec = {
-      version: Number(o.current_version) || 1,
-      at,
-      until,
-      released_at: new Date().toISOString(),
-      released_by: (req.identity && (req.identity.display_name || req.identity.identity_id)) || null,
-      prev: curLive && Number(cur.version) !== Number(o.current_version) ? { version: cur.version, at: cur.at, until: at } : null
-    };
+    const rec = await releaseRecord(me, o, at, until, req);
     await net.setReleased(me, o.definition_id, rec);
     /* ⭐ the push: every member store is told, and each store's counters are the clients subscribed under it */
     const pushed = await net.pushToNetwork(me, 'network offer released');
@@ -404,7 +403,7 @@ router.post('/:id/choice', auth, sessionOnly, ...contract.checked('POST /:id/cho
     const id = String(req.params.id || '');
     const c = (req.body || {}).choice;
     const choice = c === 'in' || c === 'out' ? c : null;
-    if (!/^[0-9a-f-]{36}$/i.test(id)) return refuse(req, res, { status: 400, code: 'OFFER_UNKNOWN', error: 'validation', message: 'Unknown offer.' });
+    if (!OFFER_ID_SHAPE.test(id)) return refuse(req, res, { status: 400, code: 'OFFER_UNKNOWN', error: 'validation', message: 'Unknown offer.' });
     await net.setIn(me, 'network_choices', id, choice);
     /* ⭐ the store's own counters re-read at once */
     require('../lib/shopchanged').shopChanged(me, 'network offer choice');
