@@ -88,8 +88,7 @@ const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
-const { UUID_RE } = require('../lib/trace');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
@@ -97,7 +96,8 @@ const signin = require('./signin');
 
 /** the schema check of one route, to spread after its chain (lib/actors-contract.js): a body that is not an object, or a page asked twice, is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 /* PPL-26 (BH-12, the api #649 pattern): a person id in the address that is not a uuid names nobody in this shop. Answered 404 in words here, before the database puts its own words into a 500 */
-router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.coAssistGone() })));
+router.param('id', uuidParam(words.coAssistGone)); /* K-1: the one shared guard, the same words */
+router.param('chit_id', uuidParam(words.chitNotFound)); /* K-1: chit_status.chit_id is a uuid column; a bad id names no chit */
 
 /* PPL-26: a chain's trim() turns a list or an object into the text "[object Object]" BEFORE the schema looks, so a field that is trimmed is checked for being one plain value first (the message is the chain's way, the body its old "Validation failed") */
 const plainValue = (value) => value === null || typeof value !== 'object';

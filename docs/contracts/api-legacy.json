@@ -38909,24 +38909,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      }
     },
     {

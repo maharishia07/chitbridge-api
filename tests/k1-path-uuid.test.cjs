@@ -52,6 +52,7 @@ const ROUTES = [
   /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
   // ── src/routes/network.js
   // ── routes/actors.js
+  ['/api/actors', 'routes/actors.js', 'PUT', '/api/actors/assign/abc', { action: 'pull' }, 'Chit not found'],
   // ── routes/catalogue.js
   // ── routes/channels.js
   // ── routes/chits.js
