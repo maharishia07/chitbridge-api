@@ -1385,6 +1385,7 @@ router.post(
 router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
+    if (Array.isArray(v)) return problem(req, res, { status: 400, ...words.queryGivenTwice('vertical') }); // B2 (K-1): a value given twice has no one meaning
     if (!v) return res.json({ verticals: starter.list() });
     res.json({ starter: starter.starterFor(v), verticals: starter.list() });
   } catch (e) {

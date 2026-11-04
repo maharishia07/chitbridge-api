@@ -1089,6 +1089,7 @@
   503
  ],
  "GET /api/products/starter-columns": [
+  400,
   401,
   500
  ],
