@@ -3060,7 +3060,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/catalogue-overlay"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue-overlay"
       }
     },
     "GET /api/chits/:chit_id/costs": {
@@ -3139,7 +3139,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/costs"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/costs"
       }
     },
     "GET /api/chits/:chit_id/diagnosis": {
@@ -3334,7 +3334,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/raida"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/raida"
       }
     },
     "GET /api/chits/:chit_id/use": {

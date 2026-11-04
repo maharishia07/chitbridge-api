@@ -59,7 +59,7 @@ async function countryOfEntity(entity_id) {
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
 const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
@@ -100,6 +100,73 @@ const entityId = (req) => auth.entityOf(req);
 /* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
 const holdsCopy = async (entity_id, chit_id) =>
   (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
+
+/**
+ * ⭐ K-1 (API-10) — AN ID IN THE ADDRESS THAT IS NOT A UUID NAMES NO ROW. chit_header.chit_id · register_entry.raida_id · register_subject.subject_id · chit_disputes.dispute_id
+ * are all uuid columns, so the cast failed in the database and came back a 500. Each route now answers it EXACTLY as it answers a uuid that names nothing (S41: same status,
+ * same code, same old body), before the body and before the database, through the ONE guard (lib/problem uuidParam). The words are the route's own, by "METHOD path";
+ * a route not listed here (it answers an unknown id 200, or never reads the id) is left as it was. Signed-out callers still get their 401 first: a junk id is judged after sign-in.
+ * tests/k1-chits-guard.test.cjs proves each entry equals the answer of an unknown uuid on the same route, so the two cannot drift.
+ */
+const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
+const notHere = (message) => said404({ error: 'Not found', message });
+const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
+const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
+const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
+const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
+const canAmend = (c, me) => railActions.can(c, me, 'amend');
+const CHIT_GONE = {
+  'GET /:chit_id': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/use': notHere('Chit not found'),
+  'GET /:chit_id/messages': noCopy,
+  'GET /:chit_id/disputes': noCopy,
+  'GET /:chit_id/diagnosis': noCopy,
+  'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
+  'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
+  'PUT /:chit_id/void': notHere('Chit not found'),
+  'PUT /:chit_id/priority': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/priority-flag': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/star': notHere('Chit not found'),
+  'PUT /:chit_id/disputes/:dispute_id/resolve': said404({ error: 'Dispute not found' }),
+  'POST /:chit_id/amend': ownCopyOf(canAmend),
+  'POST /:chit_id/reprice': ownCopyOf(canAmend),
+  'POST /:chit_id/assign-lines': ownCopyOf((c, me) => railActions.can(c, me, 'assign')),
+  'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
+  'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' })() : said404({ error: 'Not found' })()),
+  'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
+  'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
+  'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
+  'POST /:chit_id/archive': notHere('Chit not found or already archived'),
+  'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
+  'POST /:chit_id/restore': notHere('Chit not found in Trash'),
+  'POST /:chit_id/unread': notHere('Chit not found'),
+  'DELETE /:chit_id': notHere('Chit not found or already deleted'),
+  'DELETE /:chit_id/payment': said404({ error: 'Not found' }),
+  'DELETE /:chit_id/purge': notHere('Draft not found')
+};
+const RAIDA_GONE = {
+  'POST /register/entries/:raida_id/accept': registerSays('Failed to record the acceptance', 'No such entry.'),
+  'POST /register/entries/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /register/entries/:raida_id/revise': registerSays('Failed to revise it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/dispute': (req) => registerSays('Failed to link the dispute', req.body && req.body.dispute_id ? 'No issue with that id.' : 'A dispute id is required.')(req)
+};
+const SUBJECT_GONE = {
+  'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
+};
+const DISPUTE_GONE = { 'PUT /:chit_id/disputes/:dispute_id/resolve': CHIT_GONE['PUT /:chit_id/disputes/:dispute_id/resolve'] };
+const routeKey = (req) => req.method + ' ' + req.route.path;
+/** router.param callback: a uuid, or a route with no words here, goes on; anything else is answered by uuidParam with the route's words, after sign-in (the 401 stays first) */
+const junkIdGuard = (table) => {
+  const judge = uuidParam((req) => table[routeKey(req)](req));
+  return (req, res, next, id, name) =>
+    trace.UUID_RE.test(String(id)) || !table[routeKey(req)] ? next() : auth(req, res, (err) => (err ? next(err) : judge(req, res, next, id, name)));
+};
+router.param('chit_id', junkIdGuard(CHIT_GONE));
+router.param('raida_id', junkIdGuard(RAIDA_GONE));
+router.param('subject_id', junkIdGuard(SUBJECT_GONE));
+router.param('dispute_id', junkIdGuard(DISPUTE_GONE));
 
 
 /**

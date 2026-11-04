@@ -55,6 +55,30 @@ const ROUTES = [
   // ── routes/catalogue.js
   // ── routes/channels.js
   // ── routes/chits.js
+  /* the other chits routes (a 403 or 400 for an unknown id; the register ones) are proved in tests/k1-chits-guard.test.cjs, which compares each with an unknown uuid */
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc/payment', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc/purge', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'GET', '/api/chits/abc', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'GET', '/api/chits/abc/use', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/amend', { edits: [{ line_id: '44444444-4444-4444-8444-444444444444', quantity: 1 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/archive', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/assign-lines', { edits: [{ line_id: '44444444-4444-4444-8444-444444444444', assignee_id: '44444444-4444-4444-8444-444444444444' }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/books-request', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/costs', { rows: [{ kind: 'fuel', amount: 5 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/deliver-lines', { rows: [{ line_id: '44444444-4444-4444-8444-444444444444', quantity: 1 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/raida', { kind: 'risk', body: 'a risk' }, 'Failed to record it'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/reprice', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/restore', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/unarchive', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/unread', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/disputes/abc/resolve', { resolution_note: 'done' }, 'Dispute not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/priority', { priority: 'high' }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/priority-flag', { priority: true }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/star', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/status', { status: 'accepted' }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/use', {}, 'Not saved'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/void', { reason: 'wrong chit' }, 'Not found'],
   // ── routes/combo-templates.js
   // ── routes/connections.js
   // ── routes/definitions.js
