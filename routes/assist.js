@@ -471,7 +471,7 @@ router.put('/container', auth, ...contract.checked('PUT /container'), async (req
         schema_version: b.schema_version
       });
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/container.js:29 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/container.js: another brand's id, said as an unknown one (S6) */
       return problem(req, res, { status: 503, ...words.containerStoreMissing() });
     }
     log.info('container authored', { id: req.id, container_id, version: out.version, is_new: out.is_new_container });
@@ -533,8 +533,7 @@ router.put('/region-override', auth, ...contract.checked('PUT /region-override')
     try {
       await regional.setRegionOverride(owner, container_id, region, overrides);
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/regional.js:39 — a fixed sentence */
-      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer(e.message) }); /* lib/regional.js:34 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/regional.js: unknown or another brand's (S6) */
       return problem(req, res, { status: 503, ...words.regionStoreMissing() });
     }
     res.json({ ok: true, container_id, region });

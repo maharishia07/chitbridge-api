@@ -41375,14 +41375,14 @@
     },
     {
      "scenario": "container-of-another-brand",
-     "status": 403,
+     "status": 404,
      "body_keys": {
       "ok": false,
-      "error": "This product container is owned by another brand."
+      "error": "Unknown container."
      },
      "fixture": {
       "ok": false,
-      "error": "This product container is owned by another brand."
+      "error": "Unknown container."
      }
     },
     {
@@ -41489,14 +41489,14 @@
     },
     {
      "scenario": "region-of-another-brand",
-     "status": 403,
+     "status": 404,
      "body_keys": {
       "ok": false,
-      "error": "This container is owned by another brand."
+      "error": "Unknown container."
      },
      "fixture": {
       "ok": false,
-      "error": "This container is owned by another brand."
+      "error": "Unknown container."
      }
     },
     {
