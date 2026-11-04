@@ -93,6 +93,10 @@ const withEntity = async (entity_id, fn) => fn({
       return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.reason === 'sale'
                                       && (refs || []).indexOf(m.ref) >= 0).slice(0, 1) };
     }
+    if (/SELECT 1 FROM stock_movement/.test(sql)) {                              /* issue(): has this sale line moved already? */
+      const [entity_id, ref, line_ref, reason] = args;
+      return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.ref === ref && m.line_ref === line_ref && m.reason === reason).slice(0, 1) };
+    }
     if (/FROM stock_movement/.test(sql)) {
       const [entity_id, item_id, location] = args;
       return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.item_id === item_id
@@ -387,6 +391,16 @@ await ita('⚠️⚠️ selling more than every batch holds is ALLOWED, and the 
   assert.strictEqual(r.short, 12, '8 on hand, 20 sold — the shop is 12 short and needs to count');
   const lots = await store.lotsOf(SHOP, MED, withEntity);
   assert.strictEqual(lots.length, 0, 'nothing is left holding positive stock');
+});
+
+await ita('⭐⭐ OPS-80: a replay AFTER the batches are empty is a duplicate, not a shortfall on the untracked pool', async () => {
+  const before = MOVES.length;
+  const again = await store.issue(SHOP, { item_id: MED, reason: 'sale', qty: 20, tracked: true,
+    ref: 'B-OVER', line_ref: '1', at: at(23) }, withEntity);
+  assert.strictEqual(again.duplicate, 1);
+  assert.strictEqual(again.moved, 0);
+  assert.strictEqual(again.short, 0, 'the retry re-planned from the emptied lots and posted a shortfall');
+  assert.strictEqual(MOVES.length, before, 'a replay wrote a movement');
 });
 
 await ita('⭐ an untracked product still goes through issue() as ONE ordinary movement', async () => {
