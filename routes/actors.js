@@ -1713,6 +1713,28 @@ router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) =>
   }
 });
 
+/** PUT /:id/tasks/route: the chit must be this shop's, and the person whose task count moves one of this shop's people
+ *  (S41: another shop's person, or no one, answers as GET /:id/tasks does, before a count is touched). Returns the words key of the 404, or null. */
+async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
+  const chit = await handle(
+    `SELECT chit_id, assigned_to_actor_id
+     FROM chit_status
+     WHERE chit_id = $1 AND entity_id = $2`,
+    [chit_id, entity_id]
+  );
+  if (chit.rows.length === 0) return 'taskNotFound';
+  const actor = await handle(
+    `SELECT identity_id, display_name, actor_key,
+            break_status, current_task_count, max_tasks
+     FROM identities
+     WHERE identity_id = $1
+     AND parent_entity_id = $2
+     AND identity_type = 'actor'`,
+    [from_actor_id, entity_id]
+  );
+  return actor.rows.length === 0 ? 'tasksActorGone' : null;
+}
+
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
@@ -1730,32 +1752,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
     // the tx client so the existing calls flow through the context (and become atomic).
     await withEntity(entity_id, async (client) => {
       const handle = (t, p) => client.query(t, p);
-      // Verify chit belongs to this entity and is assigned to actor
-      const chit = await handle(
-        `SELECT chit_id, assigned_to_actor_id
-         FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-
-      if (chit.rows.length === 0) {
-        return problem(req, res, { status: 404, ...words.taskNotFound() });
-      }
-
-      /* S41: the person whose task count this moves must be one of this shop's people; another shop's (or no one's)
-         id answers as GET /:id/tasks does, before a count is touched */
-      const actor = await handle(
-        `SELECT identity_id, display_name, actor_key,
-                break_status, current_task_count, max_tasks
-         FROM identities
-         WHERE identity_id = $1
-         AND parent_entity_id = $2
-         AND identity_type = 'actor'`,
-        [from_actor_id, entity_id]
-      );
-      if (actor.rows.length === 0) {
-        return problem(req, res, { status: 404, ...words.tasksActorGone() });
-      }
+      const missing = await routeTargetMissing(handle, chit_id, from_actor_id, entity_id);
+      if (missing) return problem(req, res, { status: 404, ...words[missing]() });
 
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)

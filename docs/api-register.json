@@ -2436,7 +2436,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1834,
+   "line": 1832,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -54954,8 +54954,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1719,
-   "hash": "b08fa9018a9e2224",
+   "line": 1741,
+   "hash": "abee707135b53f2d",
    "does": "",
    "errors": {
     "count": 0,
