@@ -37,6 +37,9 @@ const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this neve
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
 const SINGLE_LIMIT = 200;
 
+/** the asking business's own row as the two network reads need it (its bridge id, its name and where it sits), or undefined when the account cannot be read */
+const placeOf = async (me) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
   try {
@@ -400,7 +403,7 @@ async function visibleStores(meRow) {
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     const { visible, truncated } = await visibleStores(meRow);
@@ -442,7 +445,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
       return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
 
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.

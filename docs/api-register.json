@@ -18448,7 +18448,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 41,
+   "line": 44,
    "hash": "25a38d6265b84af6",
    "does": "",
    "errors": {
@@ -18460,6 +18460,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "network_design"
    ],
    "writes": [],
@@ -18537,8 +18538,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 437,
-   "hash": "70a7f3df7daba6bd",
+   "line": 440,
+   "hash": "d294249e32a8d364",
    "does": "",
    "errors": {
     "count": 0,
@@ -18554,7 +18555,8 @@
    "reads": [
     "catalogue_items",
     "cb_entity",
-    "identities"
+    "identities",
+    "network_design"
    ],
    "writes": [],
    "money": false,
@@ -18604,7 +18606,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "70a7f3df7daba6bd"
+    "stale_since": "d294249e32a8d364"
    },
    "status": "partial",
    "callers": [
@@ -18632,8 +18634,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 400,
-   "hash": "d12a4e5a95ee71e8",
+   "line": 403,
+   "hash": "25df31a097bacda5",
    "does": "",
    "errors": {
     "count": 0,
@@ -18647,7 +18649,8 @@
    },
    "reads": [
     "cb_entity",
-    "identities"
+    "identities",
+    "network_design"
    ],
    "writes": [],
    "money": false,
@@ -18696,7 +18699,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d12a4e5a95ee71e8"
+    "stale_since": "25df31a097bacda5"
    },
    "status": "partial",
    "callers": [
@@ -45013,7 +45016,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 180,
+   "line": 183,
    "hash": "3bd2f825c064ee81",
    "does": "",
    "errors": {
@@ -45110,7 +45113,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 278,
+   "line": 281,
    "hash": "4e20a219521eee5f",
    "does": "",
    "errors": {
@@ -45205,7 +45208,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 142,
+   "line": 145,
    "hash": "28e823f3e932e564",
    "does": "",
    "errors": {
@@ -57503,7 +57506,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 52,
+   "line": 55,
    "hash": "cdeabf905d724935",
    "does": "",
    "errors": {
@@ -57517,6 +57520,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "network_design"
    ],
    "writes": [
