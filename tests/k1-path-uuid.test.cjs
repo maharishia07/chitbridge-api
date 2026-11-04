@@ -25,12 +25,13 @@ const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';
 const GOOD = '33333333-3333-4333-8333-333333333333';
 const DRIVER_TEXT = 'invalid input syntax for type uuid: "abc"';
+const NUL_TEXT = 'invalid byte sequence for encoding "UTF8": 0x00';
 const queries = [];
 
 /* the stand-in db: like Postgres, a non-uuid value where a uuid goes gets the driver's words; nothing is ever found */
 const run = async (sql, params) => {
   queries.push(sql);
-  if ((params || []).some((p) => typeof p === 'string' && p.includes('\u0000'))) throw Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { code: '22021' });
+  if ((params || []).some((p) => typeof p === 'string' && p.includes('\u0000'))) throw Object.assign(new Error(NUL_TEXT), { code: '22021' });
   if ((params || []).some((p) => p === 'abc')) throw Object.assign(new Error(DRIVER_TEXT), { code: '22P02' });
   return { rows: [], rowCount: 0 };
 };
