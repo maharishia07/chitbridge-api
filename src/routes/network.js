@@ -20,9 +20,8 @@ const contract = require('../../lib/network-contract'); // the contract (each ro
 /* ⭐ 2026-09-17: the authority half is built (src/services/network.js — the actor comes from the token, per-op rules), so writes
    are ON unless switched off. NETWORK_WRITE_ENABLED=false is the kill switch. */
 const WRITES_ENABLED = process.env.NETWORK_WRITE_ENABLED !== 'false';
-const auth_ = require('../../middleware/auth');
 /** the signed-in business's node — made a root the first time it takes part */
-const actorOf = (req) => net.nodeOf(auth_.entityOf(req), { ensure: true });
+const actorOf = (req) => net.nodeOf(auth.entityOf(req), { ensure: true });
 const gateWrite = (req, res, next) => (WRITES_ENABLED ? next() : problem(req, res, { status: 503, ...contract.words.writesOff() }));
 /** the schema check of one route (its own operation in lib/network-contract.js) */
 const checked = (route) => schemaValidate(contract.network.operationFor(route), contract.schemaOptions.network);
@@ -68,7 +67,7 @@ router.post(
   auth,
   gateWrite,
   checked('POST /entities/:id/claim'),
-  h((req) => net.claim(req.params.id, auth_.entityOf(req)))
+  h((req) => net.claim(req.params.id, auth.entityOf(req)))
 );
 /**
  * ⭐⭐ GET /network/place?bridgeId=… — "where do I sit, and what is the whole network?", in ONE round trip.
