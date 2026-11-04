@@ -77,6 +77,14 @@ const ROUTES = [
   ['POST', ':c/raida/:r/dispute', { dispute_id: LINE }], ['POST', 'register/subjects/:s/close', {}]
 ];
 
+/** routes answered in their handlers, not by the guard: an unknown uuid is a 200 empty list or a 400 of lib/raida's, and a junk id must give exactly that (S41) */
+const SAME = [
+  ['GET', ':c/costs'],
+  ['GET', ':c/raida'],
+  ['GET', ':c/raida?line_id=' + LINE],
+  ['POST', 'register/subjects/:s/entries', { kind: 'risk', body: 'a risk' }]
+];
+
 const app = express();
 app.use(express.json());
 app.use((req, res, next) => {
@@ -139,6 +147,14 @@ const fill = (template, id) => '/api/chits/' + template.replace(':c', id).replac
     check(asked === 0, label + ' → the database was never asked (' + asked + ')');
     const signedOut = await ask(server, method, fill(template, 'abc'), body, false);
     check(signedOut.status === 401, label + ' → signed out: 401 before the junk id is judged (got ' + signedOut.status + ')');
+  }
+  const sameBody = (a) => JSON.stringify([a.status, a.type, a.text.replace(/"request_id":"[^"]*"/, '')]);
+  for (const [method, template, body] of SAME) {
+    const label = method + ' ' + template + ' (answered by the handler)';
+    const unknown = await ask(server, method, fill(template, GOOD), body);
+    const junk = await ask(server, method, fill(template, 'abc'), body);
+    check(junk.status < 500 && !/invalid input syntax|22P02/i.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(sameBody(junk) === sameBody(unknown), label + ' → answered exactly as an unknown uuid (' + unknown.status + ')');
   }
   server.close();
   console.log('\n' + checks + ' checks');

@@ -168,6 +168,8 @@ const breaking = (pattern) => (sql) => {
 /** the seller's identity row the engine reads at send (ACC-206: a billing document asks the engine, and a seller that is not on record is a 503 — it used to send with no money) */
 const SELLER_ROW = { identity_id: SHOP, gstn: null, display_name: 'Test shop', policy_flags: {}, country: 'IN' };
 const knowsSeller = (sql) => (/FROM identities WHERE identity_id = ANY/.test(sql) ? { rows: [SELLER_ROW], rowCount: 1 } : null);
+/** the register an entry names exists (K-1: lib/raida asks first, so an unknown or junk one is the 400 of its siblings) */
+const knowsRegister = (sql) => (/SELECT 1 FROM register_subject/.test(sql) ? { rows: [{ '?column?': 1 }], rowCount: 1 } : null);
 const SELF_BILL = { recipients: [{ self: true }], purpose: 'order', line_items: [{ particulars: 'Tea', quantity: 1, price: 10 }] };
 /** a counter bill that carries its series number and the till that made it */
 const TILL_BILL = (till) => ({ recipients: [{ self: true }], purpose: 'order', client_ref: 'B-1', business_json: { till: { id: till }, billed_at: '2026-10-23T10:00:00Z' } });
@@ -331,7 +333,8 @@ const EXTRAS = [
   X('template-kind-missing', 'POST ' + C + '/register/templates', 400, { body: {}, setup: { migrated: true } }),
   X('template-save-fails', 'POST ' + C + '/register/templates', 500, { body: { title: 'Late delivery', kind: 'risk', body: 'x' }, setup: { migrated: true } }),
   X('entry-kind-missing', 'POST ' + C + '/register/subjects/:subject_id/entries', 400, { body: {}, setup: { migrated: true } }),
-  X('entry-record-fails', 'POST ' + C + '/register/subjects/:subject_id/entries', 500, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true } }),
+  X('entry-record-fails', 'POST ' + C + '/register/subjects/:subject_id/entries', 500, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true, sqlRows: knowsRegister } }),
+  X('entry-on-an-unknown-register', 'POST ' + C + '/register/subjects/:subject_id/entries', 400, { body: { kind: 'risk', body: 'x' }, setup: { migrated: true } }),
   X('entry-needs-a-disposition', 'POST ' + C + '/register/entries/:raida_id/close', 400, { body: { body: 'done' }, setup: { migrated: true } }),
   X('entry-close-fails', 'POST ' + C + '/register/entries/:raida_id/close', 500, { body: { disposition: 'resolved' }, setup: { migrated: true, sqlRows: breaking(/raida/) } }),
   X('walk-answers', 'GET ' + C + '/register/walk/:from', 200, { url: C + '/register/walk/' + PARTY + '?backwards=1&depth=2', setup: { migrated: true } }),
@@ -530,7 +533,7 @@ const EXTRAS = [
   X('register-found-again', 'POST ' + C + '/register/subjects', 200, { body: { type_key: 'audit', ref_id: OTHER, name: 'Q4 audit' }, setup: { migrated: true, sqlRows: answering(/SELECT subject_id, closed_at FROM register_subject/, [SUBJECT_REF]) } }),
   X('register-closed', 'POST ' + C + '/register/subjects/:subject_id/close', 200, { setup: { migrated: true, sqlRows: answeringAll([[/SELECT subject_id, name, closed_at FROM register_subject/, [{ subject_id: PARTY, name: 'Q4 audit', closed_at: null }]], [/FROM register_entry e/, []], [/UPDATE register_subject/, [SUBJECT_REF]]]) } }),
   X('template-saved', 'POST ' + C + '/register/templates', 200, { body: { kind: 'risk', title: 'Late delivery', body: 'The van is late', likelihood: 3, severity: 4 }, setup: { migrated: true, sqlRows: answering(/INSERT INTO register_template \(/, [{ template_id: PARTY }]) } }),
-  X('subject-entry-recorded', 'POST ' + C + '/register/subjects/:subject_id/entries', 200, { body: { kind: 'risk', body: 'Wet rice', standards: ['iso9001'] }, setup: { migrated: true, sqlRows: answering(/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]) } }),
+  X('subject-entry-recorded', 'POST ' + C + '/register/subjects/:subject_id/entries', 200, { body: { kind: 'risk', body: 'Wet rice', standards: ['iso9001'] }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT 1 FROM register_subject/, [{ '?column?': 1 }]], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
   X('entry-closed', 'POST ' + C + '/register/entries/:raida_id/close', 200, { body: { disposition: 'resolved', body: 'Dried' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT kind, line_id, closes_id/, [ENTRY_ROW]], [/SELECT 1 FROM register_entry/, []], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),
   X('walk-found', 'GET ' + C + '/register/walk/:from', 200, { url: C + '/register/walk/' + PARTY + '?depth=3&backwards=0', setup: { migrated: true, sqlRows: answering(/to_id IS NOT NULL/, EDGE_ROWS) } }),
   X('entry-revised', 'POST ' + C + '/register/entries/:raida_id/revise', 200, { body: { body: 'Drier', treatment: 'Dry store' }, setup: { migrated: true, sqlRows: answeringAll([[/SELECT chit_id, line_id, subject_id, kind, closes_id, body FROM register_entry/, [ENTRY_ROW]], [/SELECT 1 FROM register_entry/, []], [/INSERT INTO register_entry\s/, [{ raida_id: OTHER, created_at: AT }]]]) } }),

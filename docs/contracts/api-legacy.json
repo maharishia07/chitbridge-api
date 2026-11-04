@@ -24150,6 +24150,18 @@
       "error": "Failed to record it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "entry-on-an-unknown-register",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "No such register."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "No such register."
+     }
     }
    ]
   },
