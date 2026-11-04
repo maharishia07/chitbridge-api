@@ -4,7 +4,7 @@
  *       rail's `actions`), moveStatus (the ONE status writer, through lib/rail-status), amend · reprice · assign · deliver,
  *       disputes, and the housekeeping of MY copy (delete · restore · archive · unarchive · purge · star · unread).
  * called by: the web app (EP map in app.html · cap-chit2.js · chit-sheet.js), the till, lib/autoraise, CTP's deliver door.
- * FLOW  auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
+ * FLOW  (an id in the address that is no uuid is answered first, after sign-in: router.param → CHIT_GONE · RAIDA_GONE · SUBJECT_GONE, the route's own words) auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
  * INIT  express → lib (logger · money · rail-actions · dispute-may · rail-status · assign-chit) → db → the routes in file order
  *       (every literal path — /sent · /folder · /raida/report — is mounted BEFORE /:chit_id, so a word is never read as an id)
  * // CARD 01-rail-core-the-chit/chits-routes
@@ -133,7 +133,7 @@ const CHIT_GONE = {
   'POST /:chit_id/assign-lines': ownCopyOf((c, me) => railActions.can(c, me, 'assign')),
   'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
   'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
-  'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' })() : said404({ error: 'Not found' })()),
+  'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
   'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
   'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
   'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
@@ -155,7 +155,7 @@ const RAIDA_GONE = {
 const SUBJECT_GONE = {
   'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
 };
-const DISPUTE_GONE = { 'PUT /:chit_id/disputes/:dispute_id/resolve': CHIT_GONE['PUT /:chit_id/disputes/:dispute_id/resolve'] };
+const DISPUTE_GONE = { 'PUT /:chit_id/disputes/:dispute_id/resolve': CHIT_GONE['PUT /:chit_id/disputes/:dispute_id/resolve'] }; /* both its ids name the same dispute copy: one answer */
 const routeKey = (req) => req.method + ' ' + req.route.path;
 /** router.param callback: a uuid, or a route with no words here, goes on; anything else is answered by uuidParam with the route's words, after sign-in (the 401 stays first) */
 const junkIdGuard = (table) => {
