@@ -75,6 +75,9 @@ function softIdentity(req) {
   }
 }
 
+/** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
+const sourceOf = (req) => (req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1');
+
 router.post('/', ...contract.checked('POST /'), async (req, res) => {
   try {
     const q = req.body && typeof req.body.q === 'string' ? req.body.q.trim() : '';
@@ -197,7 +200,7 @@ router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: 
 // stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
 router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structure'), async (req, res) => {
   try {
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
@@ -254,7 +257,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
 router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource() });
     // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the

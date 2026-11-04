@@ -2763,7 +2763,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 333,
+   "line": 336,
    "hash": "0c2c7c81bc7f741b",
    "does": "",
    "errors": {
@@ -2853,7 +2853,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 611,
+   "line": 614,
    "hash": "3b739df1cfe5c008",
    "does": "",
    "errors": {
@@ -2934,7 +2934,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 192,
+   "line": 195,
    "hash": "89e9e2e28d556f48",
    "does": "",
    "errors": {
@@ -3015,7 +3015,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 484,
+   "line": 487,
    "hash": "fceee6110bab1d76",
    "does": "",
    "errors": {
@@ -3098,7 +3098,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 496,
+   "line": 499,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3184,7 +3184,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 733,
+   "line": 736,
    "hash": "d8cba703bbee9a55",
    "does": "",
    "errors": {
@@ -3263,7 +3263,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 579,
+   "line": 582,
    "hash": "081cd5e34de055c2",
    "does": "",
    "errors": {
@@ -3348,7 +3348,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 625,
+   "line": 628,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3437,7 +3437,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 545,
+   "line": 548,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3516,7 +3516,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 563,
+   "line": 566,
    "hash": "462430efe946fbbf",
    "does": "",
    "errors": {
@@ -3602,7 +3602,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 189,
+   "line": 192,
    "hash": "b36c489344b0d879",
    "does": "",
    "errors": {
@@ -3681,7 +3681,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 746,
+   "line": 749,
    "hash": "330f509bff08f482",
    "does": "",
    "errors": {
@@ -29035,7 +29035,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 78,
+   "line": 81,
    "hash": "43ec3db496e1bf2a",
    "does": "",
    "errors": {
@@ -29129,8 +29129,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 254,
-   "hash": "01efb016eb825fbb",
+   "line": 257,
+   "hash": "b2f3d624f80db544",
    "does": "",
    "errors": {
     "count": 0,
@@ -29197,7 +29197,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "01efb016eb825fbb"
+    "stale_since": "b2f3d624f80db544"
    },
    "status": "partial",
    "callers": [
@@ -29225,8 +29225,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 198,
-   "hash": "d69320eb9db604b8",
+   "line": 201,
+   "hash": "51a061d0d4040a3c",
    "does": "",
    "errors": {
     "count": 0,
@@ -29285,7 +29285,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d69320eb9db604b8"
+    "stale_since": "51a061d0d4040a3c"
    },
    "status": "partial",
    "callers": [
@@ -29313,7 +29313,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 134,
+   "line": 137,
    "hash": "eb4a657ee89de7d7",
    "does": "",
    "errors": {
@@ -29399,7 +29399,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 661,
+   "line": 664,
    "hash": "86ff97ac61ac9146",
    "does": "",
    "errors": {
@@ -29479,7 +29479,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 678,
+   "line": 681,
    "hash": "b2df6dc4cadf72b1",
    "does": "",
    "errors": {
@@ -29578,7 +29578,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 740,
+   "line": 743,
    "hash": "9f02935797a24cbc",
    "does": "",
    "errors": {
@@ -55427,7 +55427,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 392,
+   "line": 395,
    "hash": "45850a50048a8d1f",
    "does": "",
    "errors": {
@@ -55518,7 +55518,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 454,
+   "line": 457,
    "hash": "d5b388a9f6f07d0f",
    "does": "",
    "errors": {
@@ -55605,7 +55605,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 522,
+   "line": 525,
    "hash": "941db05fb558acda",
    "does": "",
    "errors": {
