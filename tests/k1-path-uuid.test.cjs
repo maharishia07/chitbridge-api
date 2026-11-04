@@ -20,6 +20,7 @@ const express = require('express');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
+process.env.CB_ADMIN_KEY = 'k1-admin-key'; /* the platform doors judge the id after their key gate */
 
 const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';
@@ -54,6 +55,13 @@ const ROUTES = [
   // ── routes/actors.js
   // ── routes/catalogue.js
   // ── routes/channels.js
+  ['/api/channels', 'routes/channels.js', 'DELETE', '/api/channels/abc', {}, 'Unbind failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/provider-ref', { provider_ref: '123' }, 'Update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/auto-raise', { on: true }, 'Auto-raise update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template', { name: 'x', state: 'pending' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template-approve', { entity_id: ME, name: 'x' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/approve', {}, 'Approve failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/revoke', {}, 'Revoke failed'],
   // ── routes/chits.js
   // ── routes/combo-templates.js
   ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
@@ -95,7 +103,7 @@ const check = (ok, label) => {
 const ask = (server, method, url, body) =>
   new Promise((resolve) => {
     const data = JSON.stringify(body || {});
-    const req = http.request({ port: server.address().port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
+    const req = http.request({ port: server.address().port, method, path: url, headers: { 'x-cb-admin-key': process.env.CB_ADMIN_KEY, 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
       res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'] || '', text, body: (() => { try { return JSON.parse(text); } catch (e) { return {}; } })() }));

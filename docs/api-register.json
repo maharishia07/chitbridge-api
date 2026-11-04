@@ -347,7 +347,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 136,
+   "line": 140,
    "hash": "173f30d993cc4781",
    "does": "A channel id of yours -> we remove that binding -> a confirmation that it is gone.",
    "errors": {
@@ -8073,7 +8073,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 24,
+   "line": 29,
    "hash": "6abebaef86c0a788",
    "does": "Nothing in -> we read your channels, whether each provider is set up and your bound numbers in one go -> the list for the Channels panel.",
    "errors": {
@@ -8159,7 +8159,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 34,
+   "line": 39,
    "hash": "63a4d9d7af15d68d",
    "does": "Optional purpose and page in -> we read the messages we tried to send for you and what became of each -> a page of sent-message receipts.",
    "errors": {
@@ -35588,7 +35588,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 80,
+   "line": 84,
    "hash": "e42bbcbc9f41b572",
    "does": "A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.",
    "errors": {
@@ -35676,8 +35676,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 109,
-   "hash": "e78f662943d6bd69",
+   "line": 113,
+   "hash": "daa1e2e3f204410f",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -35690,7 +35690,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35761,7 +35763,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 60,
+   "line": 62,
    "hash": "21dd980fccb62059",
    "does": "On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.",
    "errors": {
@@ -35853,7 +35855,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 44,
+   "line": 49,
    "hash": "0e6cd0eb4a0af590",
    "does": "The provider's line id for one of your channels -> we save it so sends can be addressed -> the updated channel.",
    "errors": {
@@ -35941,8 +35943,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 127,
-   "hash": "5fc7f68307a8aede",
+   "line": 131,
+   "hash": "4fec3ffef1fe9308",
    "does": "A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -35955,7 +35957,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36026,7 +36030,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 69,
+   "line": 73,
    "hash": "57f7e760fa596da2",
    "does": "A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.",
    "errors": {
@@ -36118,8 +36122,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 118,
-   "hash": "ada7221cca259f40",
+   "line": 122,
+   "hash": "addfba275c3956e0",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -36132,7 +36136,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [
     "channel_binding"
    ],
