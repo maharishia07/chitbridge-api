@@ -1,5 +1,5 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
-// OWNS the products door: list · search · create · bulk · update · retire · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter.
+// OWNS the products door: list · search · create · bulk · update · retire · import · export · schedule · media · versions · starter columns · ready-made lists · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter. An id in the address is judged before the database: router.param (uuidParam for :id and :item_id; the two schedule routes judge theirs in the handler).
 // FLOW  auth → schema check (lib/products-contract.js) → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged;
 //       a refusal → problem(req, res, { status, ...words.x() } | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 const express = require('express');
