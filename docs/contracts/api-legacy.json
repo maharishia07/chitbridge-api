@@ -27621,24 +27621,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      }
     },
     {
@@ -44413,14 +44403,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      },
      "fixture": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      }
     },
     {
@@ -55127,6 +55117,28 @@
      "fixture": {
       "error": "Could not read your saved combos",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "list-limit-asked-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "limit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "limit",
+        "message": "Invalid value"
+       }
+      ]
      }
     }
    ]
