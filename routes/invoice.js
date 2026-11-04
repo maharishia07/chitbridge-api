@@ -23,6 +23,7 @@ const auth = require('../middleware/auth');
 const S = require('../lib/services');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
+const shopClock = require('../lib/shop-clock'); // the seller's day, not the server's UTC
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
 /** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
@@ -83,7 +84,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
         DocDtls: {
           Typ: 'INV',
           No: null,
-          Dt: require('../lib/shop-clock').today(seller && seller.Country)
+          Dt: shopClock.today(seller && seller.Country)
         } /* the seller's day (dayOf), not the server's UTC */,
         currency
       },
@@ -140,90 +141,5 @@ router.get(
   }
 );
 
-router.openapi = {
-  paths: {
-    '/api/invoice/build': {
-      post: {
-        summary: 'Build an invoice: pricing structure → offers → tax → INV-01 block (nothing is issued)',
-        tags: ['invoice'],
-        security: [{ apiKey: [] }, { bearer: [] }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceBody' } } } },
-        responses: {
-          200: {
-            description: 'the built invoice and how it was arrived at',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceResult' } } }
-          }
-        }
-      }
-    },
-    '/api/invoice/{chit_id}': {
-      get: {
-        summary: 'The tax invoice of a chit this entity holds',
-        tags: ['invoice'],
-        security: [{ apiKey: [] }, { bearer: [] }],
-        parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'invoice' }, 404: { description: 'not held' } }
-      }
-    }
-  },
-  schemas: {
-    Party: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        Gstin: { type: 'string' },
-        State: { type: 'string', description: 'GST state code, e.g. 29' },
-        Pos: { type: 'string', description: 'place of supply (state code)' },
-        Country: { type: 'string', description: 'ISO 3166-1 alpha-2' },
-        RegType: { type: 'string', enum: ['regular', 'composition', 'unregistered'] }
-      }
-    },
-    InvoiceLine: {
-      type: 'object',
-      required: ['qty'],
-      properties: {
-        key: { type: 'string' },
-        item_id: { type: 'string' },
-        code: { type: 'string' },
-        name: { type: 'string' },
-        qty: { type: 'number' },
-        listPrice: { type: 'number' },
-        unit: { type: 'string' },
-        pricing: { $ref: '#/components/schemas/PricingStructure' },
-        discount: { type: 'number' },
-        gst_rate: { type: 'number' },
-        cess_rate: { type: 'number' },
-        hsn: { type: 'string' },
-        categories: { type: 'array', items: { type: 'string' } }
-      }
-    },
-    InvoiceBody: {
-      type: 'object',
-      required: ['lines'],
-      properties: {
-        seller: { $ref: '#/components/schemas/Party' },
-        buyer: { $ref: '#/components/schemas/Party' },
-        lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } },
-        offers: { type: 'array', items: { $ref: '#/components/schemas/Offer' } },
-        currency: { type: 'string' },
-        priceIncludesTax: { type: 'boolean' },
-        reverseCharge: { type: 'boolean' },
-        scheme: { type: 'string', description: 'GST (default) or a VAT-type scheme' }
-      }
-    },
-    InvoiceResult: {
-      type: 'object',
-      properties: {
-        pricing: { type: 'array', items: { type: 'object' } },
-        offers: { type: 'object' },
-        rates: { type: 'array', items: { type: 'object' } },
-        seller: { $ref: '#/components/schemas/Party' },
-        buyer: { $ref: '#/components/schemas/Party' },
-        invoice: { type: 'object', description: 'INV-01 shape: ItemList[], ValDtls, _cb{scheme,supply,notes}' },
-        heads: { type: 'object' }
-      }
-    }
-  }
-};
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

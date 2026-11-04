@@ -17918,7 +17918,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 123,
+   "line": 124,
    "hash": "aef8555d8e1a9f95",
    "does": "",
    "errors": {
@@ -44644,8 +44644,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 34,
-   "hash": "ca164b350ae30031",
+   "line": 35,
+   "hash": "6ce122667bc22cdd",
    "does": "",
    "errors": {
     "count": 1,
@@ -44710,8 +44710,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6ce122667bc22cdd"
    },
    "status": "partial",
    "callers": [],
