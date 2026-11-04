@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 21,
-  "partial": 448,
-  "meets": 168,
+  "partial": 449,
+  "meets": 167,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -7305,11 +7305,12 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1150,
-   "hash": "baa5a1ee9cdc5a82",
+   "hash": "57086e1ed0d15b39",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      404,
      500
     ],
@@ -7352,6 +7353,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500
    ],
@@ -7362,10 +7364,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "57086e1ed0d15b39"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

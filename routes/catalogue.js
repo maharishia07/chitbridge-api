@@ -1147,7 +1147,7 @@ router.get('/enquiry', auth, ...routeCheck('GET /enquiry'), async (req, res) => 
   }
 });
 
-router.get('/:bridge_id', async (req, res) => {
+router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });

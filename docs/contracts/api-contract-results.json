@@ -434,6 +434,14 @@
     400
    ]
   },
+  "GET /api/catalogue/:bridge_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/:bridge_id/capture-fields": {
    "cases": 3,
    "failed": 0,
