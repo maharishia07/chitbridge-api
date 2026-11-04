@@ -21,7 +21,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5911 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4790 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6172 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:255 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1002 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:418 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:698 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -129,7 +129,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/chits/trace/by-batch | chits | routes/chits-trace.js:299 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/trace/networks | chits | routes/chits-trace.js:480 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/unread | chits | routes/chits.js:3277 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/combo-templates | combo-templates | routes/combo-templates.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/combo-templates | combo-templates | routes/combo-templates.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/list | connections | routes/connections.js:202 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/pending | connections | routes/connections.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connectors | connectors | routes/connectors.js:769 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -178,10 +178,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/folders/rules | folders | routes/folders.js:654 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/folders/rules/vocabulary | folders | routes/folders.js:633 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/folders/worklist | folders | routes/folders.js:867 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/forms | forms | routes/forms.js:23 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/forms/:key | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/forms/instances/:id | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/forms/instances/all | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/forms | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/forms/:key | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/forms/instances/:id | forms | routes/forms.js:71 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/forms/instances/all | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/governance/ai-skills | governance | routes/governance.js:587 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/governance/ai-usage | governance | routes/governance.js:573 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/governance/boilerplate/:key | governance | routes/governance.js:255 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
@@ -306,7 +306,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/actors/:id | actors | routes/actors.js:516 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1340 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | partial |
 | PATCH | /api/books/recurring/:id | books | routes/books.js:2294 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
-| PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:103 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:106 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/counters/:id | counters | routes/counters.js:104 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/crm/followups/:id | crm | routes/crm.js:408 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -441,8 +441,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/chits/register/subjects/:subject_id/entries | chits | routes/chits.js:3976 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/chits/register/templates | chits | routes/chits.js:3955 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/chits/send | chits | routes/chits.js:303 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/combo-templates | combo-templates | routes/combo-templates.js:77 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/combo-templates/:id/push | combo-templates | routes/combo-templates.js:211 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/combo-templates | combo-templates | routes/combo-templates.js:80 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/combo-templates/:id/push | combo-templates | routes/combo-templates.js:214 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/connections/request | connections | routes/connections.js:26 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/connectors | connectors | routes/connectors.js:183 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/connectors/:actorId/connections | connectors | routes/connectors.js:913 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -482,10 +482,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:846 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/move | folders | routes/folders.js:357 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/rules/preview | folders | routes/folders.js:621 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/forms/:key/issue | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| POST | /api/forms/:key/resolve | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| POST | /api/forms/instances/:id/attach | forms | routes/forms.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| POST | /api/forms/instances/:id/sign | forms | routes/forms.js:71 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| POST | /api/forms/:key/issue | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| POST | /api/forms/:key/resolve | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| POST | /api/forms/instances/:id/attach | forms | routes/forms.js:87 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| POST | /api/forms/instances/:id/sign | forms | routes/forms.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | POST | /api/governance/ai-draft | governance | routes/governance.js:558 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/governance/boilerplate/:key/adopt | governance | routes/governance.js:269 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/governance/compliance | governance | routes/governance.js:647 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
@@ -634,7 +634,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4885 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4204 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6230 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| PUT | /api/connections/:id/respond | connections | routes/connections.js:121 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| PUT | /api/connections/:id/respond | connections | routes/connections.js:124 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:365 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1612 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
 | PUT | /api/entities/routing | entities | routes/entities.js:1531 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -2094,7 +2094,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money y (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): - · writes (derived): combo_templates · callers: combo-mode.js · actions: -
+- reads (derived): combo_templates · writes (derived): combo_templates · callers: combo-mode.js · actions: -
 
 **POST /api/combo-templates/:id/push** · combo-templates · cb-catalogue · partial
 - does: _not yet written_

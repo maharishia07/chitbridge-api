@@ -56,9 +56,15 @@ const ROUTES = [
   // ── routes/channels.js
   // ── routes/chits.js
   // ── routes/combo-templates.js
+  ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'PATCH', '/api/combo-templates/abc', { name: 'x' }, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'POST', '/api/combo-templates/abc/push', {}, 'Not found'],
   // ── routes/connections.js
+  ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
   // ── routes/forms.js
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
   // ── routes/identity-docs.js
   // ── routes/integrations.js
   // ── routes/products.js
