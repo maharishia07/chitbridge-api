@@ -875,14 +875,17 @@
  ],
  "GET /api/governance/instruments": [
   401,
+  422,
   500
  ],
  "GET /api/governance/journey": [
   401,
+  422,
   500
  ],
  "GET /api/governance/lanes": [
   401,
+  422,
   500
  ],
  "GET /api/governance/profile": [
@@ -899,6 +902,7 @@
  ],
  "GET /api/governance/readiness": [
   401,
+  422,
   500
  ],
  "GET /api/governance/readiness/:bridge_id": [
@@ -2594,6 +2598,7 @@
  ],
  "POST /api/governance/conformance": [
   401,
+  422,
   500
  ],
  "POST /api/governance/entities": [
