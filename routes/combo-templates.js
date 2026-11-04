@@ -14,7 +14,7 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { said, validationOptions, faultOf, contract } = require('../lib/combo-templates-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity } = require('../db');
@@ -27,6 +27,7 @@ function checked(route) {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, validationOptions)] : [];
 }
 const ctx = (req) => auth.entityOf(req);
+router.param('id', uuidParam({ detail: 'Not found', legacy: { error: 'Not found' } })); // K-1: every :id here is combo_templates.id (uuid); a junk id is a 404, not a database cast error
 
 /** ⚠️ a name is the whole point of "save as" — an unnamed row is a row nobody can find again to reopen */
 function badName(name) {
