@@ -71,19 +71,21 @@ function checkJunkAsUnknown(recording, scenes) {
   lab.installStubs();
   const router = require(path.join(HERE, 'routes', 'signin.js'));
   const routes = lab.routesOf(router, MOUNT);
-  const server = lab.appOf([{ mount: MOUNT, router }]).listen(0);
+  const entities = require(path.join(HERE, 'routes', 'entities.js'));
+  const registerRoutes = lab.routesOf(entities, '/api/entities'); /* the register door is entities.js's: only the named scenes run there */
+  const server = lab.appOf([{ mount: MOUNT, router }, { mount: '/api/entities', router: entities }]).listen(0);
   const recording = {};
   const declared = contractModule().contract.allowedStatuses();
-  const allowed = (route) => NO_INPUT[route] || declared(route);
+  const allowed = (route) => NO_INPUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
   const scenes = S.extras();
-  const scenarios = lab.scenariosOf(routes, WORLDS, scenes, {});
+  const scenarios = lab.scenariosOf(routes, WORLDS, scenes.filter((one) => routes[one.route]), {}).concat(lab.scenariosOf(registerRoutes, [], scenes.filter((one) => registerRoutes[one.route]), {}));
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, modules);
   server.close();
   checkContract(routes);
   checkJunkAsUnknown(recording, scenes);
   check('a caller who is not signed in is refused with 401 on every route that asks for it', ['POST /api/signin/renew', 'POST /api/signin/logout', 'GET /api/signin/sessions', 'GET /api/signin/devices', 'POST /api/signin/sessions/revoke', 'POST /api/signin/pin'].every((key) => recording[key + '|signed-out'].status === 401));
   check('no 5xx of any scene carries a failure\'s cause', Object.values(recording).filter((one) => one.status >= 500).every((one) => !JSON.stringify(one.body).includes(SECRET_SQL) && !/SELECT|vault|relation "/.test(JSON.stringify(one.body))));
-  const coverage = lab.coverageOf(tested);
+  const coverage = Object.fromEntries(Object.entries(lab.coverageOf(tested)).filter(([route]) => lab.mine(route))); /* the register door's rows are entities.js's own sweep's */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {

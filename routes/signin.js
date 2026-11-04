@@ -258,7 +258,7 @@ const unknownAccount = async (req, res) => {
   return refused(req, res, 'NO_ACCOUNT');
 };
 /** K-1: a typed value with a NUL byte names no account and no database can hold it (Postgres refuses it, 22021): it is answered as an unknown value is, before any lookup */
-const holdsNul = (value) => String(value == null ? '' : value).includes(' ');
+const holdsNul = (value) => String(value == null ? '' : value).includes('\u0000');
 /** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
 const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
 /** what the ask door looks up: the first of e-mail, user id, id that was typed */
@@ -983,5 +983,5 @@ router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate,
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
-Object.assign(router, { door, askChecks, verifyChecks, pinChecks, sendCode, events });
+Object.assign(router, { holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

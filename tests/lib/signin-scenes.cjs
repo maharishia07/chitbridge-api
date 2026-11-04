@@ -78,6 +78,12 @@ function extras() {
     X('verify-actor-unknown', 'POST ' + at('/verify'), 400, { body: { username: 'ghost@shop-a', otp: '123456' } }),
     X('verify-actor-username-with-a-nul-byte', 'POST ' + at('/verify'), 400, { body: { username: 'gh' + NUL + 'ost@shop-a', otp: '123456' }, setup: NUL_DB, like: 'verify-actor-unknown' }),
     X('verify-actor-db-fails', 'POST ' + at('/verify'), 500, { body: { username: 'ghost@shop-a', otp: '123456' }, setup: FAILING }),
+    /* register (routes/entities.js mounts this file's ask, then registerNew for a new address) */
+    X('register-empty-user-id', 'POST /api/entities/register', 400, { body: { email: 'new@x.com', display_name: '!!!' } }),
+    X('register-unknown-handle', 'POST /api/entities/register', 400, { body: { email: 'ghost' } }),
+    X('register-display-name-with-a-nul-byte', 'POST /api/entities/register', 400, { body: { email: 'new@x.com', display_name: 'Te' + NUL + 'a Shop' }, setup: NUL_DB, like: 'register-empty-user-id' }),
+    X('register-user-id-with-a-nul-byte', 'POST /api/entities/register', 400, { body: { email: 'new@x.com', display_name: '!!!', user_id: 'te' + NUL + 'a' }, setup: NUL_DB, like: 'register-empty-user-id' }),
+    X('register-email-with-a-nul-byte', 'POST /api/entities/register', 400, { body: { email: 'ne' + NUL + 'w@x.com' }, setup: NUL_DB, like: 'register-unknown-handle' }),
     /* pin */
     X('pin-too-short', 'POST ' + at('/pin'), 400, { body: { pin: '12', confirm_pin: '12' }, setup: { who: STAFF } }),
     X('pin-does-not-match', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '4321' }, setup: { who: STAFF } }),

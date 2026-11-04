@@ -148,20 +148,20 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/ctp/.well-known/ctp.json (also /.well-known/ctp.json) | ctp | routes/ctp.js:210 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/definitions | definitions | routes/definitions.js:76 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/definitions/:id | definitions | routes/definitions.js:217 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/constitutions | entities | routes/entities.js:342 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/entitlements | entities | routes/entities.js:2352 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/header | entities | routes/entities.js:449 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/me | entities | routes/entities.js:476 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/me/can-see-costs | entities | routes/entities.js:833 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/mis | entities | routes/entities.js:1667 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/policy | entities | routes/entities.js:420 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/populations | entities | routes/entities.js:1557 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/routing | entities | routes/entities.js:1421 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/routing/preview | entities | routes/entities.js:1405 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/search | entities | routes/entities.js:370 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/search/places | entities | routes/entities.js:387 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/entities/sides | entities | routes/entities.js:465 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/entities/usage | entities | routes/entities.js:1228 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/constitutions | entities | routes/entities.js:348 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/entitlements | entities | routes/entities.js:2358 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/header | entities | routes/entities.js:455 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/me | entities | routes/entities.js:482 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/me/can-see-costs | entities | routes/entities.js:839 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/mis | entities | routes/entities.js:1673 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/policy | entities | routes/entities.js:426 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/populations | entities | routes/entities.js:1563 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/routing | entities | routes/entities.js:1427 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/routing/preview | entities | routes/entities.js:1411 | yes | yes | no | no | yes | no | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/search | entities | routes/entities.js:376 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/search/places | entities | routes/entities.js:393 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/entities/sides | entities | routes/entities.js:471 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/entities/usage | entities | routes/entities.js:1234 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/events/stats | events | routes/events.js:42 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/events/stream | events | routes/events.js:30 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/facts/:card | facts | routes/facts.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial |
@@ -310,12 +310,12 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/counters/:id | counters | routes/counters.js:104 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/crm/followups/:id | crm | routes/crm.js:408 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1200 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
-| PATCH | /api/entities/me/exposure | entities | routes/entities.js:806 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/me/locale | entities | routes/entities.js:846 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:800 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PATCH | /api/entities/policy | entities | routes/entities.js:431 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PATCH | /api/entities/profile | entities | routes/entities.js:879 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1206 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
+| PATCH | /api/entities/me/exposure | entities | routes/entities.js:812 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/me/locale | entities | routes/entities.js:852 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:806 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PATCH | /api/entities/policy | entities | routes/entities.js:437 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/entities/profile | entities | routes/entities.js:885 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/folders/:id | folders | routes/folders.js:284 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PATCH | /api/folders/rules/:rule_id | folders | routes/folders.js:598 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PATCH | /api/products/:id | products | routes/products.js:1526 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
@@ -473,9 +473,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/ctp/query (also /query) | ctp | routes/ctp.js:548 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/definitions | definitions | routes/definitions.js:297 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/definitions/freeze | definitions | routes/definitions.js:537 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/entities/populations | entities | routes/entities.js:1641 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/entities/register | entities | routes/entities.js:331 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
-| POST | /api/entities/verify | entities | routes/entities.js:332 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
+| POST | /api/entities/populations | entities | routes/entities.js:1647 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/entities/register | entities | routes/entities.js:337 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
+| POST | /api/entities/verify | entities | routes/entities.js:338 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/folders | folders | routes/folders.js:195 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:585 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -636,8 +636,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6230 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:121 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:365 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1612 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
-| PUT | /api/entities/routing | entities | routes/entities.js:1531 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1618 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial |
+| PUT | /api/entities/routing | entities | routes/entities.js:1537 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:158 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/governance/country-setup | governance | routes/governance.js:530 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/governance/profile | governance | routes/governance.js:417 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
