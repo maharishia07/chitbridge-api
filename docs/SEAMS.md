@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 146 | `list` | `amend.js` |  |
 | 119 | `rows` | `crm.js` | still in them: |
 | 110 | `withEntity` | `books-hooks.js` |  |
-| 108 | `words` | `variant.browser.js` |  |
+| 109 | `words` | `variant.browser.js` |  |
 | 104 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 101 | `read` | `books-cashflow.js` | Trips: |
 | 91 | `answer` | `availability.js` | from March; then nearest. |
