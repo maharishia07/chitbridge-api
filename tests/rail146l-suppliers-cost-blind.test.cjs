@@ -45,8 +45,8 @@ stub(path.join('lib', 'cost'), { isCostBlind: async (req) => req.identity.identi
 const app = express();
 app.use(express.json());
 app.use('/api/relationships', require(path.join(ROOT, 'routes', 'relationships.js')));
-let failed = 0;
-const check = (ok, label) => (console.log((ok ? 'ok   ' : 'FAIL ') + label), ok || failed++);
+let failed = 0, checks = 0;
+const check = (ok, label) => (checks++, console.log((ok ? 'ok   ' : 'FAIL ') + label), ok || failed++);
 const get = (server) =>
   new Promise((resolve) => http.get({ port: server.address().port, path: '/api/relationships/suppliers' }, (r) => { let t = ''; r.on('data', (c) => (t += c)); r.on('end', () => resolve({ status: r.statusCode, body: JSON.parse(t) })); }));
 (async () => {
@@ -66,6 +66,6 @@ const get = (server) =>
   a = await get(server);
   check(a.status === 200 && !('balance_minor' in a.body.suppliers[0]) && a.body.suppliers[0].credit_limit_minor === null, 'ledger off, cost-blind: no balance key, the credit limit still hidden');
   server.close();
-  console.log(failed ? failed + ' FAILED' : 'all passed');
+  console.log(checks + ' checks, ' + failed + ' failed'); /* scripts/guards.cjs reads the last "<n> checks" */
   process.exit(failed ? 1 : 0);
 })();
