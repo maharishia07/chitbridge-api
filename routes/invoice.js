@@ -14,6 +14,7 @@
  * ⚠️ IT BUILDS, IT DOES NOT ISSUE. Nothing is written; an invoice number, a signature and the freeze belong to the chit.
  */
 const express = require('express');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no chit (K-1)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { readFault, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
@@ -127,8 +128,10 @@ router.get(
   async (req, res) => {
     try {
       const me = auth.entityOf(req);
+      const notHeld = () => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
+      if (!UUID.test(String(req.params.chit_id))) return notHeld(); /* K-1: a junk id answers as an unknown one, not a 500 with the driver's words */
       const hdr = await C.copyOf(req.params.chit_id, me);
-      if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
+      if (!hdr) return notHeld();
       /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/tax/invoice/:id */
       res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
     } catch (e) {
