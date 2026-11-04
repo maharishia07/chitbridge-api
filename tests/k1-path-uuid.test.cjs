@@ -51,6 +51,14 @@ stub(path.join('middleware', 'auth'), stubAuth);
 const ROUTES = [
   /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
   // ── src/routes/network.js
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/approve', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/decline', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/disconnect', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/resume', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/suspend', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/entities/abc/claim', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/subtree', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/connections', {}, 'not found'],
   // ── routes/actors.js
   // ── routes/catalogue.js
   // ── routes/channels.js

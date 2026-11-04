@@ -221,10 +221,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/network-design/availability | network-design | routes/network-design.js:436 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/network-design/stores | network-design | routes/network-design.js:399 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/network-offers | network-offers | routes/network-offers.js:217 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
-| GET | /api/network/entities/:id/connections | network | src/routes/network.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/network/entities/:id/subtree | network | src/routes/network.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/network/entities/lookup | network | src/routes/network.js:50 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/network/place | network | src/routes/network.js:83 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/network/entities/:id/connections | network | src/routes/network.js:141 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/network/entities/:id/subtree | network | src/routes/network.js:135 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/network/entities/lookup | network | src/routes/network.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/network/place | network | src/routes/network.js:90 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/notifications | notifications | routes/notifications.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/offers/kinds | offers | routes/offers.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/offers/openapi.json | offers | routes/offers.js:109 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -516,14 +516,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/network-offers/catalogue/cancel | network-offers | routes/network-offers.js:311 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/network-offers/catalogue/price | network-offers | routes/network-offers.js:321 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/network-offers/catalogue/publish | network-offers | routes/network-offers.js:293 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/network/connections | network | src/routes/network.js:140 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/network/connections/:id/approve | network | src/routes/network.js:156 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/network/connections/:id/decline | network | src/routes/network.js:163 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/network/connections/:id/disconnect | network | src/routes/network.js:184 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/network/connections/:id/resume | network | src/routes/network.js:177 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/network/connections/:id/suspend | network | src/routes/network.js:170 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/network/entities | network | src/routes/network.js:43 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/network/entities/:id/claim | network | src/routes/network.js:59 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/connections | network | src/routes/network.js:147 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/network/connections/:id/approve | network | src/routes/network.js:163 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/connections/:id/decline | network | src/routes/network.js:170 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/connections/:id/disconnect | network | src/routes/network.js:191 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/connections/:id/resume | network | src/routes/network.js:184 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/connections/:id/suspend | network | src/routes/network.js:177 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
+| POST | /api/network/entities | network | src/routes/network.js:50 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/network/entities/:id/claim | network | src/routes/network.js:66 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/notifications/dismiss | notifications | routes/notifications.js:212 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/notifications/seen | notifications | routes/notifications.js:183 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/offers/evaluate | offers | routes/offers.js:105 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |

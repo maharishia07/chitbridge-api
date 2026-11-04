@@ -8,7 +8,7 @@
 const router = require('express').Router();
 const net = require('../services/network');
 const auth = require('../../middleware/auth'); // require a valid JWT on every network route
-const { problem } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
@@ -31,6 +31,13 @@ const namesOne = (req, res, next) => {
   const refusal = contract.unknownSide(req.body || {});
   return refusal ? problem(req, res, refusal) : next();
 };
+/** K-1 (API-10, S41): an id in the address that is not a uuid names no row — answered exactly as an unknown uuid: an edge says EDGE_NOT_FOUND, a business says NOT_FOUND (the service's own words), before the database is asked */
+router.param(
+  'id',
+  uuidParam((req) =>
+    req.path.startsWith('/connections/') ? { detail: 'edge not found', legacy: { error: 'edge not found', code: 'EDGE_NOT_FOUND' }, code: 'EDGE_NOT_FOUND' } : { detail: 'not found', legacy: { error: 'not found', code: 'NOT_FOUND' } }
+  )
+);
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
