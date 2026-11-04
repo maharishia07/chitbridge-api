@@ -205,7 +205,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/integrations/docs/:id | integrations | routes/integrations.js:275 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/download/:id | integrations | routes/integrations.js:380 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/kit | integrations | routes/integrations.js:249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | no | partial |
+| GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/integrations/profile-map | integrations | routes/integrations.js:982 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/integrations/reconcile | integrations | routes/integrations.js:832 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/integrations/status | integrations | routes/integrations.js:717 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
@@ -3070,7 +3070,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/integrations/kit/*** · integrations · cb-connect · partial
 - does: _not yet written_
-- errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 500 · money n (derived)
+- errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 

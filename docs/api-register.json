@@ -17398,13 +17398,14 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 258,
-   "hash": "ed7608357d719bb9",
+   "hash": "d3fac63fc6b983c4",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
      404,
+     422,
      500
     ],
     "codes": [
@@ -17427,7 +17428,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -17446,6 +17447,7 @@
    "declared": [
     401,
     404,
+    422,
     500
    ],
    "notes": [
@@ -17458,7 +17460,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ed7608357d719bb9"
+    "stale_since": "d3fac63fc6b983c4"
    },
    "status": "partial",
    "callers": [],
