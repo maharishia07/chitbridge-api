@@ -54,7 +54,7 @@ const refusal = async (promise) => {
   });
   await t('edits that name no existing line ask the database nothing', async () => {
     const db = dbWith(40);
-    assert.strictEqual(await refusal(amend.guard(db, 'e', 'c', [{ line: { quantity: 1 } }])), null);
+    assert.strictEqual(await refusal(amend.guard(db, 'e', 'c', [{ line: { particulars: 'Rice', quantity: 1 } }])), null);
     assert.strictEqual(db.asked, 0);
   });
   await t('removing a delivered line: 409 LINE_DELIVERED, naming the line and what went out', async () => {
@@ -78,6 +78,26 @@ const refusal = async (promise) => {
   });
   await t('an environment that has not run b144 refuses nothing (the relation is missing: no deliveries)', async () => {
     assert.strictEqual(await refusal(amend.guard(dbWith(0, 'kg', true), 'e', 'c', edit(null))), null);
+  });
+
+  console.log('\n== RAIL-148: line_id and line_index must name the same line, for every caller ==\n');
+  const OTHER = '22222222-2222-4222-8222-222222222222';
+  const frozen = (ids) => ({ asked: 0, query: async function () { this.asked++; return { rows: [{ line_items: ids.map((id) => ({ line_id: id })) }] }; } });
+  const both = (idx, id) => amend.prepare([{ line_index: idx, line_id: id, line: { particulars: 'Rice', quantity: 1 } }]);
+  await t('a pair naming two lines: 400, the sentence says so, before anything is written', async () => {
+    const e = await refusal(amend.refuseMismatch(frozen([OTHER, LINE]), 'e', 'c', both(0, LINE)));
+    assert.ok(e && e.status === 400 && e.code === 'AMEND_LINE_INDEX' && /two different lines/.test(e.message));
+  });
+  await t('a pair naming the same line passes (and costs one read)', async () => {
+    const db = frozen([LINE, OTHER]);
+    assert.strictEqual(await refusal(amend.refuseMismatch(db, 'e', 'c', both(0, LINE))), null);
+    assert.strictEqual(db.asked, 1);
+  });
+  await t('an edit with no line_id, or a position the payload holds no id for, is not judged', async () => {
+    const none = frozen([LINE]);
+    assert.strictEqual(await refusal(amend.refuseMismatch(none, 'e', 'c', amend.prepare([{ line_index: 0, line: { particulars: 'Rice', quantity: 1 } }]))), null);
+    assert.strictEqual(none.asked, 0, 'no line_id, no read');
+    assert.strictEqual(await refusal(amend.refuseMismatch(frozen([]), 'e', 'c', both(5, LINE))), null);
   });
 
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
