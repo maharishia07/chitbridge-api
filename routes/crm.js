@@ -3,8 +3,10 @@
 // @stage-note follow-ups, remove a party from the list, walk-in → party. 503 "not migrated yet" for what needs b276.
 'use strict';
 /**
- * CALLED BY server.js (mounted at /api/crm), CB CRM (cap-crm*.js) and the storefront's privacy sheet.
- * CARD 11-crm-and-marketing/crm-routes
+ * OWNS      the 24 routes of /api/crm: the one party list (read, record, timeline), follow-ups, the call desk, leads and their import, the walk-in, consent rows, privacy requests,
+ *           segments and named groups. Each route's contract and the words of its refusals are lib/crm-contract.js; the work is lib/crm*.js, lib/privacy.js, lib/memberships.js.
+ * CALLED BY server.js (mounted at /api/crm), CB CRM (cap-crm*.js) and the storefront's privacy sheet · tools/api-register.cjs (router.openapi) · tests/api-problem-crm.test.cjs.
+ * CARD      11-crm-and-marketing/crm-routes
  * routes/crm.js — docs/design/crm/PLAN.md Phases 3 and 4 (API side). The page is the browser's; this file shapes answers.
  *
  *   GET    /api/crm/parties                     the whole list, ONE row per party (a party on both lists is one row, two roles); total · page · limit
@@ -24,7 +26,6 @@
  *   POST   /api/crm/parties/:id/outcome         one tap after a call: call logged + next follow-up + stage, ONE transaction (b276; b297 for a stage move)
  *   POST   /api/crm/parties/:id/stage           "Move to…" — a new memberships row (kind lead_stage); the old rows are the history      (b297)
  *   POST   /api/crm/walk-ins/add                a phone that holds points → a local customer; the points move to them
- *   GET    /api/crm/parties/:id/contact-prefs   CO1 K2: every consent row, newest first, + may/why per channel × purpose          (b306)
  *   POST   /api/crm/parties/:id/contact-prefs   one new row: yes · no · withdraw (append-only — the old rows are the proof)        (b306)
  *   GET    /api/crm/privacy-requests            CO1 K4/K11: the register of privacy requests and grievances, ?open=1              (b307)
  *   POST   /api/crm/privacy-requests            log one: who · kind · when it came in → the due date the law sets                 (b307)
@@ -35,7 +36,8 @@
  *   POST   /api/crm/segments/:key/send          { text, dry? } — a message to a segment or a group through the one gate; dry = the count, by code
  *
  * ANSWERS (API-STANDARD S1): every refusal is a Problem that keeps the keys it always had { code, error, message, why? } (docs/contracts/api-legacy.json); the words and the
- *   contract of each route are lib/crm-contract.js. FLOW  auth → noKey → schema check → handler → res.json | problem(req, res, crmFault(e, req) | keyFence() | notYourParty() | noSuchFollowup())
+ *   contract of each route are lib/crm-contract.js. FLOW  auth → noKey → schema check → handler (idOf: a party or follow-up id that is no uuid is 400 BAD_ID) → res.json | problem(req, res, crmFault(e, req) | keyFence() | notYourParty() | noSuchFollowup())
+ *   a value no column can hold (a NUL byte in text) is crmFault's 400 'Bad value', never a 500; a body id that is no uuid answers as an unknown one (lib/crm-followups, lib/crm-calls)
  *
  * ⭐ THIS FILE COMPUTES NO MONEY. Dues, totals and values are READ from what the Ledger and the chits stored (party-fields.decorate,
  *   summary_json, party_item) — "compute once, everyone reads". ⭐ Every read runs AS THE SHOP (withEntity): one shop never sees another's party.
@@ -50,7 +52,8 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { contract, schemaOptions, crmFault, keyFence, notYourParty, noSuchFollowup } = require('../lib/crm-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity, query } = require('../db');
-const { isOwner } = require('../lib/owner');
+const { isOwner, may: ownerMay } = require('../lib/owner');
+const access = require('../lib/access');
 const crm = require('../lib/crm');
 const F = require('../lib/crm-followups');
 const M = require('../lib/memberships');
@@ -72,7 +75,7 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
  * lib/access.mayWrite (the owner or an editor; else the rail's read_only / comment_only sentence, the same answer hat-gate refuses with) and
  * `remove` is lib/owner.may (owner only, the sentence DELETE /parties/:id refuses with). A screen greys a button WITH `why`; it decides nothing from a hat.
  */
-const crmMay = (req) => ({ write: require('../lib/access').mayWrite(req), remove: require('../lib/owner').may(req, REMOVE_WHY) });
+const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY) });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
   next();
@@ -672,7 +675,7 @@ router.post('/privacy-requests/:id/answer', auth, noKey, ...checked('POST /priva
 
 /* ── T3-P2-CRM: segments & groups (lib/crm-groups.js) — the ONE segment definition counted, named groups written, a set messaged through the one gate ── */
 const CG = require('../lib/crm-groups');
-const whoIs = (req) => ({ owner: isOwner(req), editor: require('../lib/access').canEdit(req.identity) });
+const whoIs = (req) => ({ owner: isOwner(req), editor: access.canEdit(req.identity) });
 /** who may: anyone signed in to the shop reads it (a viewer sees every action greyed with the server's sentence — `may`) */
 router.get('/segments', auth, noKey, ...checked('GET /segments'), async (req, res) => {
   try {
