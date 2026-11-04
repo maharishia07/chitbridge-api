@@ -204,6 +204,25 @@ const seg = (r, k) => r.body.segments.find((s) => s.key === k);
     const r = await t.post('/segments/group:Many/send', { text: 'hi' }); assert.strictEqual(r.status, 400, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'TOO_MANY'); assert.ok(/101/.test(r.body.message));
     assert.strictEqual(T.outbound.length, n); seed();
   });
+  await ita('CRM-39: setCustomerGroups replaces one customers whole set through setGroup (clean, add the new, remove the old, nothing else touched)', async () => {
+    const groups = require('../lib/crm-groups');
+    const A = P(3001), B = P(3002), OWN = 'E1';
+    const rows = [{ id: A, groups: ['Old', 'Keep'] }, { id: B, groups: ['Keep'] }];
+    const h = { query: async (sql, a) => {
+      if (/^SELECT groups/.test(sql.trim())) { const r = rows.find((x) => x.id === a[1]); return { rows: r ? [{ groups: r.groups }] : [] }; }
+      if (/array_append/.test(sql)) { const out = []; rows.forEach((r) => { if (a[2].indexOf(r.id) >= 0 && r.groups.indexOf(a[1]) < 0) { r.groups.push(a[1]); out.push({ customer_identity_id: r.id, n: r.groups.length }); } }); return { rows: out }; }
+      if (/array_remove/.test(sql)) { const out = []; rows.forEach((r) => { if (a[2].indexOf(r.id) >= 0 && r.groups.indexOf(a[1]) >= 0) { r.groups = r.groups.filter((g) => g !== a[1]); out.push({ customer_identity_id: r.id }); } }); return { rows: out }; }
+      if (/count[(]/.test(sql)) return { rows: [{ n: 1 }] };
+      throw new Error('unexpected statement ' + sql);
+    } };
+    const r = await groups.setCustomerGroups(h, OWN, A, ['  Keep ', 'New', 'bad*name', 'New']);
+    assert.deepStrictEqual(r, { groups: ['Keep', 'New'], added: ['New'], removed: ['Old'] });
+    assert.deepStrictEqual(rows[0].groups.slice().sort(), ['Keep', 'New']);
+    assert.deepStrictEqual(rows[1].groups, ['Keep'], 'another customer was touched');
+    assert.deepStrictEqual(await groups.setCustomerGroups(h, OWN, A, []), { groups: [], added: [], removed: ['Keep', 'New'] });
+    await assert.rejects(() => groups.setCustomerGroups(h, OWN, P(3999), ['x']), (e) => e.code === 'NOT_FOUND');
+    await assert.rejects(() => groups.setCustomerGroups(h, OWN, 'nope', ['x']), (e) => e.code === 'BAD_ID');
+  });
   t.close();
   console.log('\n' + pass + ' passed' + (process.exitCode ? ' · FAILURES above' : '') + '\n');
 })();
