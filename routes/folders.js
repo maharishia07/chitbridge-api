@@ -1,9 +1,9 @@
-// routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per
+// routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per entity;
 // OWNS  /api/folders: a per-entity tree for filing any chit, and a folder's chit list (paged; a cut list says so).
 // CALLED BY server.js (mounted at /api/folders), the Task and Order lists, the folder panes and rules builder, MIS and the messages inbox.
 // FLOW  auth → schema check (lib/folders-contract.js) → the folder read (withEntity) → pageOut; a refusal → problem(req, res, said(...) | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 // CARD 01-rail-core-the-chit/folders
-// entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
+// filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -910,7 +910,7 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
     const ids = String(req.query.chit_ids || '')
       .split(',')
       .map((item) => item.trim())
-      .filter((item) => /^[0-9a-f-]{36}$/i.test(item))
+      .filter((item) => UUID.test(item))
       .slice(0, 500);
     const sum = await groupsum.requirement(me, {
       scope: req.query.scope === 'order' ? 'order' : 'task',
