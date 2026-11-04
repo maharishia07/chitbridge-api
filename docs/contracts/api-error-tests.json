@@ -691,6 +691,9 @@
   500,
   503
  ],
+ "GET /api/entities/constitutions": [
+  400
+ ],
  "GET /api/entities/entitlements": [
   401,
   500
@@ -700,6 +703,7 @@
   500
  ],
  "GET /api/entities/me": [
+  400,
   401,
   404,
   500
@@ -709,6 +713,7 @@
   500
  ],
  "GET /api/entities/mis": [
+  400,
   401,
   403,
   404,
@@ -729,6 +734,7 @@
   500
  ],
  "GET /api/entities/routing/preview": [
+  400,
   401
  ],
  "GET /api/entities/search": [
@@ -746,6 +752,7 @@
   500
  ],
  "GET /api/entities/usage": [
+  400,
   401,
   500
  ],
@@ -1431,6 +1438,7 @@
   400,
   401,
   403,
+  404,
   500
  ],
  "PATCH /api/entities/me/exposure": [

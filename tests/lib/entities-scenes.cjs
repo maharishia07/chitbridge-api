@@ -62,10 +62,12 @@ function extras(tools) {
   const reads = [
     X('constitutions-listed', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: answering(/FROM constitution/, [{ key: 'general', version: 1, label: 'General', vertical: 'general', capabilities: [], is_default: true }]) } }),
     X('constitutions-with-a-zone', 'GET ' + at('/constitutions'), 200, { url: at('/constitutions?tz=Asia/Kolkata') }),
+    N('constitutions-zone-twice', 'GET ' + at('/constitutions'), 400, { url: at('/constitutions?tz=Asia/Kolkata&tz=Asia/Dubai') }),
     X('constitutions-catalogue-unread', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: raising(/FROM constitution/, '42P01') } }),
     X('search-too-short', 'GET ' + at('/search'), 400, { url: at('/search?q=a') }),
     X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),
     X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
+    N('search-asked-twice', 'GET ' + at('/search'), 400, { url: at('/search?q=shop&q=store') }),
     N('search-place-unknown', 'GET ' + at('/search'), 404, { url: at('/search?q=shop&where=sit-nowhere') }),
     N('search-places-listed', 'GET ' + at('/search/places'), 200, {}),
     N('search-places-fails', 'GET ' + at('/search/places'), 500, { patch: { search: { places: async () => { throw new Error(SECRET_SQL); } } } }),
@@ -81,6 +83,7 @@ function extras(tools) {
     /* SEC-94: the capability read fails with a sentence that names the database: the 200 must not carry it */
     X('me-capabilities-fail-leaks-nothing', 'GET ' + at('/me'), 200, { setup: { who: STAFF, sqlRows: (sql) => { if (/SELECT capabilities FROM identities/.test(sql)) throw new Error(SECRET_SQL); return meRow(sql); } } }),
     X('me-unknown', 'GET ' + at('/me'), 404, {}),
+    N('me-include-twice', 'GET ' + at('/me'), 400, { url: at('/me?include=readiness&include=vault'), setup: { sqlRows: meRow } }),
     X('me-db-fails', 'GET ' + at('/me'), 500, { setup: failing }),
     X('can-see-costs-owner', 'GET ' + at('/me/can-see-costs'), 200, {}),
     X('can-see-costs-staff', 'GET ' + at('/me/can-see-costs'), 200, { setup: { who: STAFF, sqlRows: row(/SELECT can_see_costs/, { can_see_costs: true }) } }),
@@ -91,6 +94,7 @@ function extras(tools) {
     X('lookup-asked-twice', 'GET ' + at('/lookup'), 404, { url: at('/lookup?user_id=a&user_id=b') }),
     X('lookup-db-fails', 'GET ' + at('/lookup'), 500, { url: at('/lookup?user_id=shop-b'), setup: failing }),
     X('usage-read', 'GET ' + at('/usage'), 200, {}),
+    N('usage-days-twice', 'GET ' + at('/usage'), 400, { url: at('/usage?days=7&days=30') }),
     X('usage-window', 'GET ' + at('/usage'), 200, { url: at('/usage?days=7') }),
     X('usage-not-enabled', 'GET ' + at('/usage'), 200, { setup: { sqlRows: sqlState('42P01', 'relation "usage_ledger" does not exist') } }),
     X('usage-db-fails', 'GET ' + at('/usage'), 500, { setup: failing }),
@@ -195,6 +199,7 @@ function extras(tools) {
     X('population-registry-missing', 'POST ' + at('/populations'), 409, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, '42P01') } }),
     X('population-db-fails', 'POST ' + at('/populations'), 500, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, 'XX000') } }),
     N('population-body-a-list', 'POST ' + at('/populations'), 400, { body: [] }),
+    N('mis-population-twice', 'GET ' + at('/mis'), 400, { url: at('/mis?population=live&population=test') }),
     X('mis-no-root', 'GET ' + at('/mis'), 404, { patch: noRoot }),
     X('mis-not-root', 'GET ' + at('/mis'), 403, { setup: { who: STRANGER } }),
     X('mis-read', 'GET ' + at('/mis'), 200, { setup: { sqlRows: () => ({ rows: [{ n: 1 }], rowCount: 1 }) } }),
@@ -206,6 +211,7 @@ function extras(tools) {
 
   const routing = [
     X('routing-preview', 'GET ' + at('/routing/preview'), 200, {}),
+    N('routing-preview-kind-twice', 'GET ' + at('/routing/preview'), 400, { url: at('/routing/preview?kind=spec&kind=incident') }),
     X('routing-preview-of-a-kind', 'GET ' + at('/routing/preview'), 200, { url: at('/routing/preview?kind=spec&audience=customer') }),
     X('routing-preview-fails', 'GET ' + at('/routing/preview'), 200, { setup: failing }),
     X('routing-read', 'GET ' + at('/routing'), 200, {}),

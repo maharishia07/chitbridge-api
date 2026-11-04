@@ -12,12 +12,17 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
+
+/* K-1 (API-10): an address that names no business or population is answered as one that is unknown, before the database turns it into a 500 */
+router.param('id', uuidParam(contract.words.identityUnknown));
+const populationCode = (req) => String(req.params.code || '').trim().toLowerCase(); /* the code as a population is stored: trimmed, lower case */
+router.param('code', textParam((req) => ({ status: 404, ...contract.words.noSuchPopulation(populationCode(req)) })));
 
 /** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 const checked = (route) => {
@@ -339,7 +344,7 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 // STD2: `?tz=<the device's IANA zone>` (optional) → each country row carries `offer { timezone, from, source }` — the zone the server WILL store
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
-router.get('/constitutions', async (req, res) => {
+router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
   const CS = require('../lib/country-setup');
   const at = await CS.atSignup();
   const spin = {
@@ -367,7 +372,7 @@ router.get('/constitutions', async (req, res) => {
  * Reply { results:[{bridge_id, display_name, user_id, kind, hits, address, installation_key, domain, where}], count, answers:[{installation_key, ok, why}] }.
  * Who may call: any signed-in business. Round trips: Here 2 (+ up to 26 for kind=product); each installation asked is one signed call.
  */
-router.get('/search', auth, async (req, res) => {
+router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
     if (q.length < 2) return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
@@ -473,7 +478,7 @@ router.get('/sides', auth, async (req, res) => {
   }
 });
 
-router.get('/me', auth, async (req, res) => {
+router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   try {
     /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —
        so _tzCol was a ReferenceError here and defined where nothing used it. Same borrowed-variable class as
@@ -1225,7 +1230,7 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
  * print it as "chits sent".
  */
-router.get('/usage', auth, async (req, res) => {
+router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const me = req.identity.identity_id;
     const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
@@ -1402,7 +1407,7 @@ const ROUTABLE = [
  * ⚠️ ALWAYS 200. ‘This will not work, and here is why’ is the answer, not an error: a 500 on a preview puts
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
-router.get('/routing/preview', auth, async (req, res) => {
+router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
   const me = auth.entityOf(req);
   const q = req.query || {};
   try {
@@ -1610,9 +1615,7 @@ router.get('/populations', auth, rootGate, async (req, res) => {
  * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
  */
 router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populations/:code/desk'), async (req, res) => {
-  const code = String(req.params.code || '')
-    .trim()
-    .toLowerCase();
+  const code = populationCode(req);
   const v = (req.body || {}).desk_entity_id;
   const desk = v === '' || v === undefined || v === null ? null : String(v);
   try {
@@ -1664,7 +1667,7 @@ router.post('/populations', auth, rootGate, ...checked('POST /populations'), asy
   }
 });
 
-router.get('/mis', auth, async (req, res) => {
+router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const platformroot = require('../lib/platformroot');
