@@ -50535,14 +50535,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      }
     },
     {
@@ -50697,14 +50695,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      }
     },
     {

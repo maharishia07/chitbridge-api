@@ -23,7 +23,7 @@ const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
 const { validateAsProblem, sanitise, schemaValidate, queryDay } = require('../middleware/validate');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { words, partyRefusal, mintRefusal, removeFault, failed, contract, schemaOptions, PARTY_KEYS } = require('../lib/relationships-contract'); // the contract (each route's operation), the words of a refusal and the party fields a PATCH may carry
 const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner');
@@ -64,6 +64,13 @@ async function numberParty(owner, party_id) {
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
+
+/* K-1 (API-10) — an id that is not a uuid names no row: 404 in this file's own words before the database answers with its own in a 500.
+   :id is a list-row uuid (supplier_list_id · customer_list_id) EXCEPT on /customers/:id/rewards, where it is a text holder value (reward_ledger.holder_value) — that one is left as it was. */
+const idGuard = uuidParam(words.notFound());
+router.param('id', (req, res, next, id) => (req.path.endsWith('/rewards') ? next() : idGuard(req, res, next, id)));
+router.param('supplier_entity_id', uuidParam(words.notOnYourList())); // identities.identity_id / supplier_list.supplier_entity_id are uuid; the catalogue refuses a stranger with these words
+router.param('entity_id', uuidParam(words.notFound())); // the scorecard's counterparty: compared as ::uuid in lib/select
 /** the schema check of one route (its own operation in lib/relationships-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);

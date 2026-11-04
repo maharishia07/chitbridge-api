@@ -47,7 +47,7 @@ const stubAuth = (req, res, next) => {
 stubAuth.entityOf = (req) => req.identity.identity_id;
 stub(path.join('middleware', 'auth'), stubAuth);
 
-/** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error] — one row per route closed by uuidParam */
+/** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error, its 404 code (default NOT_FOUND)] — one row per route closed by uuidParam; the code is the one an unknown uuid answers on that route (S41) */
 const ROUTES = [
   /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
   // ── src/routes/network.js
@@ -63,6 +63,12 @@ const ROUTES = [
   // ── routes/integrations.js
   // ── routes/products.js
   // ── routes/relationships.js
+  ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'POST', '/api/relationships/customers/abc/groups', { groups: ['dealers'] }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/suppliers/abc', { nickname: 'x' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/customers/abc', { segment_override: 'new' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/scorecard/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/suppliers/abc/catalogue', undefined, 'Not found', 'REL_NOT_ON_YOUR_LIST'],
   // ── routes/schemas.js
 ];
 
@@ -125,12 +131,12 @@ const ask = (server, method, url, body) =>
   }
 
   const server = app.listen(0);
-  for (const [, , method, url, body, legacyError] of ROUTES) {
+  for (const [, , method, url, body, legacyError, code = 'NOT_FOUND'] of ROUTES) {
     queries.length = 0;
     const a = await ask(server, method, url, body);
     const label = method + ' ' + url.replace('/api/', '');
     check(a.status === 404, label + ' → 404 (got ' + a.status + ')');
-    check(a.body.code === 'NOT_FOUND', label + ' → code NOT_FOUND (got ' + a.body.code + ')');
+    check(a.body.code === code, label + ' → code ' + code + ' (got ' + a.body.code + ')');
     check(/problem\+json/.test(a.type), label + ' → application/problem+json');
     check(!/invalid input syntax|22P02/i.test(a.text), label + ' → no driver text');
     check(queries.length === 0, label + ' → the database was never asked (' + queries.length + ')');
