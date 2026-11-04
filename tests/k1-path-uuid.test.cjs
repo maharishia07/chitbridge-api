@@ -56,6 +56,9 @@ const ROUTES = [
   // ── routes/channels.js
   // ── routes/chits.js
   // ── routes/combo-templates.js
+  ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'PATCH', '/api/combo-templates/abc', { name: 'x' }, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'POST', '/api/combo-templates/abc/push', {}, 'Not found'],
   // ── routes/connections.js
   ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
