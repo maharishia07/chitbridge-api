@@ -49,6 +49,21 @@ stub(path.join('middleware', 'auth'), stubAuth);
 
 /** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error] — one row per route closed by uuidParam */
 const ROUTES = [
+  /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
+  // ── src/routes/network.js
+  // ── routes/actors.js
+  // ── routes/catalogue.js
+  // ── routes/channels.js
+  // ── routes/chits.js
+  // ── routes/combo-templates.js
+  // ── routes/connections.js
+  // ── routes/definitions.js
+  // ── routes/forms.js
+  // ── routes/identity-docs.js
+  // ── routes/integrations.js
+  // ── routes/products.js
+  // ── routes/relationships.js
+  // ── routes/schemas.js
 ];
 
 const app = express();
