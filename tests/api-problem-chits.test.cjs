@@ -575,7 +575,19 @@ const EXTRAS = [
   X('trace-forward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?network=net1', setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD, TRACE_BARE]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-red', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answeringAll([[/\?\| \$1::text\[\]/, [TRACE_CHILD]], [/WHERE chit_id = \$1/, [TRACE_SEED]]]) } }),
   X('trace-forward-alone', 'GET ' + C + '/:id/trace', 200, { setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),
-  X('trace-backward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?dir=backward', setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } })
+  X('trace-backward', 'GET ' + C + '/:id/trace', 200, { url: C + '/' + PARTY + '/trace?dir=backward', setup: { sqlRows: answering(/WHERE chit_id = \$1/, [TRACE_SEED]) } }),
+  /* B2 (K-1): a handler-made refusal for each read that tested only 401/403/500 — a query value given twice is refused 422 by the route's own schema */
+  X('sent-a-value-asked-twice', 'GET ' + C + '/sent', 422, { url: C + '/sent?limit=1&limit=2' }),
+  X('inbox-a-value-asked-twice', 'GET ' + C + '/inbox', 422, { url: C + '/inbox?status=a&status=b' }),
+  X('folder-a-value-asked-twice', 'GET ' + C + '/folder', 422, { url: C + '/folder?view=a&view=b' }),
+  X('rollup-a-value-asked-twice', 'GET ' + C + '/rollup', 422, { url: C + '/rollup?group_by=a&group_by=b' }),
+  X('disputes-queue-a-value-asked-twice', 'GET ' + C + '/disputes/queue', 422, { url: C + '/disputes/queue?status=a&status=b' }),
+  X('raida-report-a-value-asked-twice', 'GET ' + C + '/raida/report', 422, { url: C + '/raida/report?standard=a&standard=b' }),
+  X('register-subjects-a-value-asked-twice', 'GET ' + C + '/register/subjects', 422, { url: C + '/register/subjects?type_key=a&type_key=b' }),
+  X('register-walk-a-value-asked-twice', 'GET ' + C + '/register/walk/:from', 422, { url: C + '/register/walk/' + PARTY + '?depth=1&depth=2' }),
+  X('catalogue-overlay-a-value-asked-twice', 'GET ' + C + '/:chit_id/catalogue-overlay', 422, { url: C + '/' + PARTY + '/catalogue-overlay?q=a&q=b' }),
+  X('messages-read-a-value-asked-twice', 'GET ' + C + '/:chit_id/messages', 422, { url: C + '/' + PARTY + '/messages?page=1&page=2' }),
+  X('raida-read-a-value-asked-twice', 'GET ' + C + '/:chit_id/raida', 422, { url: C + '/' + PARTY + '/raida?line_id=a&line_id=b' })
 ];
 
 function send(port, method, urlPath, body) {

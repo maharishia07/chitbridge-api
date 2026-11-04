@@ -1,6 +1,16 @@
 {
  "_about": "API-STANDARD S2/S14 (slice 1a): the legacy keys each route answered BEFORE the standard, frozen. A Problem body adds fields beside these and never changes them. Recorded from the code before the change (tests/api-problem.test.cjs --capture); tests/api-problem.test.cjs replays every answer and compares status and keys. The generator copies a route entry into its OpenAPI operation as x-legacy-keys. A route drops its entry only when the web repo no longer reads any of its keys and cb-api has signed backward_compatible.",
  "routes": {
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "answers": [
+    {
+     "scenario": "catalogue-overlay-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
+    }
+   ]
+  },
   "GET /api/keys": {
    "answers": [
     {
@@ -20608,6 +20618,12 @@
      "fixture": {
       "error": "Forbidden"
      }
+    },
+    {
+     "scenario": "messages-read-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20636,6 +20652,12 @@
       "error": "Failed to read the register",
       "message": "Nope."
      }
+    },
+    {
+     "scenario": "raida-read-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20832,6 +20854,12 @@
       "error": "Get dispute queue failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "disputes-queue-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20848,6 +20876,12 @@
       "error": "Failed to get folder",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "folder-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20864,6 +20898,12 @@
       "error": "Failed to get inbox",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "inbox-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20880,6 +20920,12 @@
       "error": "Failed to read the register",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "raida-report-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20924,6 +20970,12 @@
       "error": "Failed to list registers",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "register-subjects-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20956,6 +21008,12 @@
       "error": "Failed to walk it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "register-walk-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20972,6 +21030,12 @@
       "error": "Rollup failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "rollup-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20988,6 +21052,12 @@
       "error": "Failed to get sent items",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "sent-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },

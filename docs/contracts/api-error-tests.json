@@ -467,7 +467,8 @@
   500
  ],
  "GET /api/chits/:chit_id/catalogue-overlay": [
-  401
+  401,
+  422
  ],
  "GET /api/chits/:chit_id/costs": [
   401,
@@ -487,6 +488,7 @@
  "GET /api/chits/:chit_id/messages": [
   401,
   403,
+  422,
   500
  ],
  "GET /api/chits/:chit_id/proposals": [
@@ -499,6 +501,7 @@
  "GET /api/chits/:chit_id/raida": [
   401,
   403,
+  422,
   500
  ],
  "GET /api/chits/:chit_id/use": [
@@ -520,14 +523,17 @@
  ],
  "GET /api/chits/disputes/queue": [
   401,
+  422,
   500
  ],
  "GET /api/chits/folder": [
   401,
+  422,
   500
  ],
  "GET /api/chits/inbox": [
   401,
+  422,
   500
  ],
  "GET /api/chits/pulse": [
@@ -535,6 +541,7 @@
  ],
  "GET /api/chits/raida/report": [
   401,
+  422,
   500
  ],
  "GET /api/chits/register/attachables": [
@@ -543,6 +550,7 @@
  ],
  "GET /api/chits/register/subjects": [
   401,
+  422,
   500
  ],
  "GET /api/chits/register/templates": [
@@ -551,14 +559,17 @@
  ],
  "GET /api/chits/register/walk/:from": [
   401,
+  422,
   500
  ],
  "GET /api/chits/rollup": [
   401,
+  422,
   500
  ],
  "GET /api/chits/sent": [
   401,
+  422,
   500
  ],
  "GET /api/chits/trace/batches": [
