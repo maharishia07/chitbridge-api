@@ -64541,6 +64541,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-service.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: THE 7 SERVICE CLOCK ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A VALUE NO COLUMN CAN HOLD IS A 400.",
+   "claim": "API-4 SWEEP: THE 7 SERVICE CLOCK ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A VALUE NO COLUMN CAN HOLD IS A 400.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 107 lines. Run: node chitbridge-api/tests/api-problem-service.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 100,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-assist.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

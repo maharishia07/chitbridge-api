@@ -1167,6 +1167,12 @@
   401,
   500
  ],
+ "GET /api/service/:chit_id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/simulator/content": [
   500
  ],
@@ -3031,6 +3037,35 @@
   401,
   500
  ],
+ "POST /api/service/:chit_id/pause": [
+  400,
+  401,
+  404,
+  409
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/answer": [
+  400,
+  401,
+  404,
+  409
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/end": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/service/:chit_id/resolve": [
+  400,
+  401,
+  404
+ ],
+ "POST /api/service/:chit_id/respond": [
+  401,
+  404,
+  500
+ ],
  "POST /api/simulator/feedback": [
   400,
   500
@@ -3541,6 +3576,12 @@
   400,
   401,
   403,
+  500
+ ],
+ "PUT /api/service/:chit_id": [
+  400,
+  401,
+  404,
   500
  ],
  "PUT /api/testing/cmdb/:ci": [

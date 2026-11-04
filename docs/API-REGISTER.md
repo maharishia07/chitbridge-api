@@ -256,7 +256,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/repeat/:id | repeat-supply | routes/repeat-supply.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/schemas/fields | schemas | routes/schemas.js:90 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/schemas/my | schemas | routes/schemas.js:29 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/service/:chit_id | service | routes/service.js:61 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/service/:chit_id | service | routes/service.js:72 | yes | yes | no | no | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/signin/devices | signin | routes/signin.js:133 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/signin/sessions | signin | routes/signin.js:106 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/simulator/content | simulator | routes/simulator.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -560,11 +560,11 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| POST | /api/service/:chit_id/pause | service | routes/service.js:255 | no | no | no | yes | no | no | no | no | no | no | yes | yes | yes | partial |
-| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:339 | no | no | no | yes | no | no | no | no | no | no | yes | yes | yes | partial |
-| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:314 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
-| POST | /api/service/:chit_id/resolve | service | routes/service.js:225 | no | no | no | yes | no | no | no | no | no | no | yes | yes | yes | partial |
-| POST | /api/service/:chit_id/respond | service | routes/service.js:203 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
+| POST | /api/service/:chit_id/pause | service | routes/service.js:263 | yes | yes | no | no | no | no | no | no | no | no | yes | yes | yes | partial |
+| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:345 | yes | yes | no | no | no | no | no | no | no | no | yes | yes | yes | partial |
+| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:321 | yes | yes | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
+| POST | /api/service/:chit_id/resolve | service | routes/service.js:234 | yes | yes | no | no | no | no | no | no | no | no | yes | yes | yes | partial |
+| POST | /api/service/:chit_id/respond | service | routes/service.js:213 | yes | yes | no | no | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/signin/ask | signin | routes/signin.js:964 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/signin/logout | signin | routes/signin.js:96 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/signin/pin | signin | routes/signin.js:966 | no | no | no | no | no | no | no | no | no | yes | yes | yes | no | not started |
@@ -649,7 +649,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/products/:id/availability | products | routes/products.js:1709 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | PUT | /api/products/:id/status | products | routes/products.js:1739 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:135 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/service/:chit_id | service | routes/service.js:157 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/service/:chit_id | service | routes/service.js:167 | yes | yes | no | no | no | no | no | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1109 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | no | partial |
 
 ## Endpoint cards
@@ -3938,43 +3938,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/service/:chit_id** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/answer** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/end** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 1 code(s) [VALIDATION_FAILED] · statuses - · money n (derived)
+- errors: 1 code(s) [VALIDATION_FAILED] · statuses 400, 401, 404, 409, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/resolve** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/respond** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **PUT /api/service/:chit_id** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses - · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
