@@ -55,6 +55,8 @@ function badPrice(price) {
   if (!Number.isFinite(n) || n < 0) return 'Price must be a number, and cannot be negative.';
   return null;
 }
+/** the price a request carries as a stored value: absent, null or '' is none yet (null), else the number */
+const priceOrNull = (price) => (price === undefined || price === null || price === '' ? null : Number(price));
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
@@ -84,7 +86,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
     if (defErr) return problem(req, res, said(400, 'COMBO_INVALID', 'Invalid combo', defErr));
     const priceErr = badPrice(req.body.price);
     if (priceErr) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', priceErr));
-    const price = req.body.price === undefined || req.body.price === null || req.body.price === '' ? null : Number(req.body.price);
+    const price = priceOrNull(req.body.price);
     const r = await withEntity(entity_id, (db) =>
       db.query(
         `INSERT INTO combo_templates (entity_id, name, definition, price) VALUES ($1,$2,$3,$4)
@@ -122,7 +124,7 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const name = 'name' in req.body ? String(req.body.name).trim() : cur.rows[0].name;
     const definition = 'definition' in req.body ? req.body.definition : cur.rows[0].definition;
-    const price = 'price' in req.body ? (req.body.price === null || req.body.price === '' ? null : Number(req.body.price)) : cur.rows[0].price;
+    const price = 'price' in req.body ? priceOrNull(req.body.price) : cur.rows[0].price;
     /* ⚠️ NOT VALIDATED AGAINST catalogue_items HERE — same "not a foreign key" tolerance as the column
      * itself (b267): a bogus or cross-entity id simply never resolves at push time and that push falls back
      * to a clean create, exactly like a dangling link left by a deleted product. */
