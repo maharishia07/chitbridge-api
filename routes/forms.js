@@ -22,8 +22,8 @@ const entityId = (req) => auth.entityOf(req);
 /* K-1 (API-10) — an issued-form id that is not a uuid names no form: the route's own 404 words (its screen's label, the library's sentence) before the database answers in a 500 */
 const NOT_FOUND_LABEL = { GET: 'Get instance failed', sign: 'Sign form failed', attach: 'Attach form failed' };
 const unknownInstance = (req) => {
-  const { detail, legacy } = faultOf(Object.assign(new Error('Form instance not found'), { status: 404 }), req, NOT_FOUND_LABEL[req.method === 'GET' ? 'GET' : req.path.split('/').pop()]);
-  return { detail, legacy };
+  const { code, detail, legacy } = faultOf(Object.assign(new Error('Form instance not found'), { status: 404 }), req, NOT_FOUND_LABEL[req.method === 'GET' ? 'GET' : req.path.split('/').pop()]);
+  return { code, detail, legacy }; // FORMS_NOT_FOUND, the code an unknown uuid answers: a bad id answers exactly as an unknown one (S41)
 };
 router.param('id', uuidParam(unknownInstance));
 
