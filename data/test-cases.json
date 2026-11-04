@@ -96491,6 +96491,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/net-53-closed-shop-search.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "NET-53: THE B833 MIGRATION KEEPS NETWORK_SEARCH SECURITY DEFINER, ITS SCOPING AND SIGNATURE, AND ADDS ONE FILTER SO A CLOSED SHOP IS NOT SEARCHED IN ITS NETWORK.",
+   "claim": "NET-53: THE B833 MIGRATION KEEPS NETWORK_SEARCH SECURITY DEFINER, ITS SCOPING AND SIGNATURE, AND ADDS ONE FILTER SO A CLOSED SHOP IS NOT SEARCHED IN ITS NETWORK.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 43 lines. Run: node chitbridge-api/tests/net-53-closed-shop-search.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 43,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
