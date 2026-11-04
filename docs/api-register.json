@@ -12425,7 +12425,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 348,
+   "line": 349,
    "hash": "39b4dd0064f69ab7",
    "does": "",
    "errors": {
@@ -12508,7 +12508,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2356,
+   "line": 2363,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -12594,7 +12594,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 455,
+   "line": 456,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -12678,7 +12678,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 482,
+   "line": 483,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -12789,7 +12789,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 839,
+   "line": 840,
    "hash": "b43d5b8b4da152b9",
    "does": "",
    "errors": {
@@ -12877,7 +12877,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1671,
+   "line": 1678,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -12973,7 +12973,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 426,
+   "line": 427,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -13065,7 +13065,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1563,
+   "line": 1564,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -13156,7 +13156,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1427,
+   "line": 1428,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -13245,7 +13245,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1411,
+   "line": 1412,
    "hash": "d2915e172199d763",
    "does": "",
    "errors": {
@@ -13332,7 +13332,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 376,
+   "line": 377,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -13423,7 +13423,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 393,
+   "line": 394,
    "hash": "01d70f4bd8eeb16d",
    "does": "",
    "errors": {
@@ -13502,7 +13502,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 471,
+   "line": 472,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -13586,7 +13586,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1234,
+   "line": 1235,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -26668,7 +26668,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1206,
+   "line": 1207,
    "hash": "e0c040a82e4ebfc4",
    "does": "",
    "errors": {
@@ -26758,7 +26758,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 812,
+   "line": 813,
    "hash": "7d19b7065fef8cc8",
    "does": "",
    "errors": {
@@ -26848,7 +26848,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 852,
+   "line": 853,
    "hash": "e55ea05cc2141a4a",
    "does": "",
    "errors": {
@@ -26932,7 +26932,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 806,
+   "line": 807,
    "hash": "3a7c9f99a608bfbf",
    "does": "",
    "errors": {
@@ -27024,7 +27024,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 437,
+   "line": 438,
    "hash": "e190a37baf2cd8ee",
    "does": "",
    "errors": {
@@ -27122,7 +27122,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 885,
+   "line": 886,
    "hash": "21b4715aa77e270e",
    "does": "",
    "errors": {
@@ -41898,7 +41898,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1645,
+   "line": 1652,
    "hash": "c303d29a52083779",
    "does": "",
    "errors": {
@@ -41992,7 +41992,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 337,
+   "line": 338,
    "hash": "353129a910091984",
    "does": "",
    "errors": {
@@ -42082,7 +42082,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 338,
+   "line": 339,
    "hash": "cfc1e63a162440a5",
    "does": "",
    "errors": {
@@ -56748,8 +56748,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1618,
-   "hash": "231c43a8f123dcca",
+   "line": 1619,
+   "hash": "b4af9ed6eee146e4",
    "does": "",
    "errors": {
     "count": 0,
@@ -56763,7 +56763,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "population"
+   ],
    "writes": [
     "population"
    ],
@@ -56815,7 +56817,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "231c43a8f123dcca"
+    "stale_since": "b4af9ed6eee146e4"
    },
    "status": "partial",
    "callers": [
@@ -56843,7 +56845,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1537,
+   "line": 1538,
    "hash": "c36c30c620c32f6b",
    "does": "",
    "errors": {

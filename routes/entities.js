@@ -13,7 +13,8 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { problem, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam, textParam } = require('../lib/problem');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
@@ -1620,6 +1621,12 @@ router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populatio
   const v = (req.body || {}).desk_entity_id;
   const desk = v === '' || v === undefined || v === null ? null : String(v);
   try {
+    /* K-1: a desk id that is no uuid names no business — answered as the database's trigger answers an unknown one (409 on a population that exists, 404 on one that does not), never the cast error's 500 */
+    if (desk !== null && !UUID.test(desk)) {
+      const known = await query('SELECT 1 FROM ops.population WHERE code = $1', [code]);
+      if (!known.rowCount) return problem(req, res, { status: 404, ...contract.words.noSuchPopulation(code) });
+      return problem(req, res, { status: 409, ...contract.words.notADesk({ message: 'no such entity for the ' + code + ' desk', hint: 'Create the operator entity first, then name it here.' }) });
+    }
     const u = await query('UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
     /* ⚠️ an UPDATE matching nothing is not an error. Without this, setting a desk on a population that does
        not exist answers ok and changes nothing. [[feedback-silence-is-the-bug]] */
