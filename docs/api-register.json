@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 21,
-  "partial": 448,
-  "meets": 168,
+  "partial": 450,
+  "meets": 166,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -2250,11 +2250,12 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 811,
-   "hash": "db74ffb600c474b0",
+   "hash": "d244d298c4147b45",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -2295,6 +2296,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -2306,10 +2308,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d244d298c4147b45"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -2435,11 +2438,12 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1819,
-   "hash": "8c0f3b62f8a5d36a",
+   "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -2481,6 +2485,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -2492,10 +2497,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6458c8b9839b8b36"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

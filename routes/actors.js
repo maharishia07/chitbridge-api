@@ -808,7 +808,7 @@ router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate,
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
     const entity_id = auth.entityOf(req);
@@ -1816,7 +1816,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
-router.get('/access-events', auth, async (req, res) => {
+router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const subject = String(req.query.subject || '').trim();
