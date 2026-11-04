@@ -18,7 +18,7 @@ const TAKEN = 'taken@local.test';
 const tx = {
   query: async (sql, args) => {
     const s = String(sql);
-    if (/FROM customer_list WHERE customer_list_id/.test(s)) return { rows: [{ customer_identity_id: args[0] === 'CL-OTHER' ? OTHER : PRIYA }] };
+    if (/FROM customer_list WHERE customer_list_id/.test(s)) return { rows: [{ customer_identity_id: args[0] === 'cccccccc-cccc-4ccc-8ccc-0000000000ff' ? OTHER : PRIYA }] };
     if (/FROM supplier_list WHERE supplier_list_id/.test(s)) return { rows: [{ supplier_entity_id: PRIYA }] };
     if (/SELECT otp_contact, email, parent_entity_id FROM identities/.test(s)) return { rows: [ids[args[0]] ? Object.assign({}, ids[args[0]]) : undefined].filter(Boolean) };
     const set = /UPDATE identities SET (otp_contact|email) = \$2/.exec(s);
@@ -60,46 +60,46 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
     return { status: r.status, body: await r.json() };
   };
 
-  const a = await patch('/customers/CL-1', { phone: '9000000001', email: 'Priya@Local.test' });
+  const a = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { phone: '9000000001', email: 'Priya@Local.test' });
   ok('phone and e-mail: 200 and both named as changed', a.status === 200 && a.body.party && a.body.party.changed.join() === 'phone,email', JSON.stringify(a));
   ok('phone kept in identities.otp_contact (the reader lib/crm.js uses)', ids[PRIYA].otp_contact === '9000000001' || /9000000001$/.test(ids[PRIYA].otp_contact || ''), String(ids[PRIYA].otp_contact));
   ok('e-mail kept lower-case in identities.email', ids[PRIYA].email === 'priya@local.test', String(ids[PRIYA].email));
 
-  const same = await patch('/customers/CL-1', { email: 'priya@local.test' });
+  const same = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: 'priya@local.test' });
   ok('the same value again: 200, nothing to change, not an error', same.status === 200 && same.body.party.changed.length === 0, JSON.stringify(same));
 
-  const clear = await patch('/customers/CL-1', { email: null });
+  const clear = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: null });
   ok('null clears the e-mail', clear.status === 200 && ids[PRIYA].email === null && clear.body.party.changed.join() === 'email', JSON.stringify(clear));
 
-  const unk = await patch('/customers/CL-1', { phone_number: '9000000002', mobile: 'x' });
+  const unk = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { phone_number: '9000000002', mobile: 'x' });
   ok('unknown keys: 400 UNKNOWN_FIELD naming both, nothing 200', unk.status === 400 && unk.body.code === 'UNKNOWN_FIELD' && unk.body.fields.join() === 'phone_number,mobile' && /phone_number/.test(unk.body.message), JSON.stringify(unk));
 
-  const badPhone = await patch('/customers/CL-1', { phone: 'abc' });
+  const badPhone = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { phone: 'abc' });
   ok('a phone that is not a phone: 400 in words', badPhone.status === 400 && /phone number/.test(badPhone.body.message), JSON.stringify(badPhone));
 
-  const badMail = await patch('/customers/CL-1', { email: 'not-an-email' });
+  const badMail = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: 'not-an-email' });
   ok('an e-mail that is not an e-mail: 400 in words', badMail.status === 400 && /e-mail/.test(badMail.body.message), JSON.stringify(badMail));
 
   /* CRM-42: the shape check once lost its escapes and refused any address with an "s" */
   for (const good of ['sam@shop.com', 'sam+orders@shop.com', 'sales@mail.shop.co.in', 's.s@ss.ss', 'first.last@sub.domain.example']) {
-    const r = await patch('/customers/CL-1', { email: good });
+    const r = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: good });
     ok('a real address is kept: ' + good, r.status === 200 && ids[PRIYA].email === good, JSON.stringify(r));
   }
   for (const wrong of ['a b@x.yz', 'sam@shop', 'sam@@shop.com', 'sam@shop..com', 'sam@.shop.com', 'sam@shop.com.', '@shop.com', 'sam@shop com.in']) {
-    const r = await patch('/customers/CL-1', { email: wrong });
+    const r = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: wrong });
     ok('a wrong shape is refused in words: ' + wrong, r.status === 400 && /e-mail/.test(r.body.message), JSON.stringify(r));
   }
 
-  const real = await patch('/customers/CL-OTHER', { phone: '9000000003' });
+  const real = await patch('/customers/cccccccc-cccc-4ccc-8ccc-0000000000ff', { phone: '9000000003' });
   ok('a real ChitBridge business: 403 in words, contact untouched', real.status === 403 && ids[OTHER].otp_contact === '+919000000009', JSON.stringify(real));
 
-  const taken = await patch('/customers/CL-1', { email: TAKEN });
+  const taken = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: TAKEN });
   ok('an e-mail another account holds: 409, words never name the holder', taken.status === 409 && !/taken@|identities/.test(JSON.stringify(taken.body)), JSON.stringify(taken));
 
-  const sup = await patch('/suppliers/SL-1', { phone: '9000000004' });
+  const sup = await patch('/suppliers/5555cccc-cccc-4ccc-8ccc-000000000001', { phone: '9000000004' });
   ok('a supplier keeps a phone the same way', sup.status === 200 && /9000000004$/.test(ids[PRIYA].otp_contact || ''), JSON.stringify(sup));
 
-  const seg = await patch('/customers/CL-1', { segment_override: 'regular' });
+  const seg = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { segment_override: 'regular' });
   ok('segment_override still passes the key check (reaches its own write)', seg.status !== 400 || seg.body.code !== 'UNKNOWN_FIELD', JSON.stringify(seg));
 
   srv.close();
