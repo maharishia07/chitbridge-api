@@ -104,7 +104,7 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
     );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) {
-    problem(req, res, contract.failed(err, req, 'Save failed'));
+    problem(req, res, contract.savedText(err, req, 'Save failed')); /* K-1: a NUL byte in a name of the drawing is a 400, not a 500 */
   }
 });
 
@@ -283,6 +283,7 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     const me = req.identity.identity_id;
     const uid = String((req.body && req.body.user_id) || '').trim();
     if (!uid) return problem(req, res, { status: 400, ...contract.words.noStoreNamed() });
+    if (uid.includes('\u0000')) return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) }); /* K-1: a handle holding a NUL byte names no store of yours: answered as an unknown one, before the database */
 
     const r = await query(
       `SELECT identity_id, display_name, user_id FROM identities
@@ -453,7 +454,9 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    const like = '%' + text.toLowerCase() + '%';
+    /* K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as it is for any text that finds nothing. */
+    const searched = text.replace(/\u0000/g, '\uFFFD');
+    const like = '%' + searched.toLowerCase() + '%';
     const rows = [];
     /**
      * The one place the availability answer is written, so its keys are named once (S34 output allow-list). A row is what the handler built from the store and the item, then what
@@ -493,7 +496,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, text, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searched, SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.

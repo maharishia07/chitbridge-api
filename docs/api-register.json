@@ -18537,8 +18537,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 436,
-   "hash": "d1a389470b2e79c1",
+   "line": 437,
+   "hash": "70a7f3df7daba6bd",
    "does": "",
    "errors": {
     "count": 0,
@@ -18604,7 +18604,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d1a389470b2e79c1"
+    "stale_since": "70a7f3df7daba6bd"
    },
    "status": "partial",
    "callers": [
@@ -18632,7 +18632,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 399,
+   "line": 400,
    "hash": "d12a4e5a95ee71e8",
    "does": "",
    "errors": {
@@ -45111,7 +45111,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 278,
-   "hash": "62029f6165abba94",
+   "hash": "4e20a219521eee5f",
    "does": "",
    "errors": {
     "count": 0,
@@ -45175,8 +45175,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4e20a219521eee5f"
    },
    "status": "partial",
    "callers": [
@@ -57503,7 +57504,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 52,
-   "hash": "0a0f0647d76be8ad",
+   "hash": "cdeabf905d724935",
    "does": "",
    "errors": {
     "count": 0,
@@ -57565,8 +57566,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cdeabf905d724935"
    },
    "status": "partial",
    "callers": [

@@ -218,8 +218,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/kyb/yourself | kyb | routes/kyb.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/marketing/came-back | marketing | routes/marketing.js:36 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/network-design | network-design | routes/network-design.js:41 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/network-design/availability | network-design | routes/network-design.js:436 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/network-design/stores | network-design | routes/network-design.js:399 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/network-design/availability | network-design | routes/network-design.js:437 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/network-design/stores | network-design | routes/network-design.js:400 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/network-offers | network-offers | routes/network-offers.js:217 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/network/entities/:id/connections | network | src/routes/network.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/network/entities/:id/subtree | network | src/routes/network.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
