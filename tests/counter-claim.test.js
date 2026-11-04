@@ -45,6 +45,14 @@ const CLAIM = (function () {
 
 console.log('\nONE COUNTER, ONE HOLDER\n');
 
+it('CTR-179: the claim marks the counter held in the SAME transaction as the check, before the key is minted', () => {
+  const check = CLAIM.indexOf('heldRefusal(counterView, want)');
+  const marker = CLAIM.indexOf('pendingMarker()');
+  const mint = CLAIM.indexOf('nestedKeys.mint(');
+  assert.ok(check > 0 && marker > check && mint > marker, 'the pending holder must be written after the held check and before the mint');
+  assert.ok(/held_by: null, held_at: null/.test(CLAIM), 'a failed mint must give the counter back');
+});
+
 it('claiming refuses a counter somebody else is holding', () => {
   assert.ok(/!takeover &&/.test(CLAIM), 'refusing is no longer the default');
   assert.ok(/status: 409/.test(CLAIM), 'a held counter no longer answers 409');
