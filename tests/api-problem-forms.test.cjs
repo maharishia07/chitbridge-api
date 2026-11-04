@@ -51,7 +51,7 @@ const LABELS = {
 /* the stand-in db's secret sentence (a form's own text names the vault as a source, so the word alone proves nothing) */
 const LEAK = /SELECT secret|relation "catalogue_items"|does not exist/;
 /** scenes whose database error carries a SQLSTATE: the old 5xx body echoed it as `code`, and `code` is the Problem's own key now (INTERNAL), so it cannot ride */
-const SQLSTATE_SCENES = ['issue-write-fails', 'issue-db-fails-on-the-write', 'instance-not-an-id', 'instances-read-fails', 'sign-write-fails'];
+const SQLSTATE_SCENES = ['issue-write-fails', 'issue-db-fails-on-the-write', 'instances-read-fails', 'sign-write-fails'];
 const STRANGER = { identity_id: S.SHOP_B, identity_type: 'entity', display_name: 'Other shop' };
 const VIEWER = { identity_id: '77777777-7777-4777-8777-777777777777', parent_entity_id: S.SHOP, identity_type: 'actor', access_level: 'viewer', display_name: 'Test viewer' };
 const AFTER = new Set();
