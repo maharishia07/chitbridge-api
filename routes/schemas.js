@@ -6,7 +6,7 @@
 // CARD      07-catalogue-and-pricing/catalogue-setup
 const express = require('express');
 const router = express.Router();
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, fault, createRefused, checked } = require('../lib/schemas-contract'); // the contract (each route's operation) and the words of a refusal
 /* ⚠️ withEntity, not bare query, for anything reading catalogue_items: that table carries the b49 per-entity
    policy, and a read with no tenant context matches NOTHING rather than everything. */
@@ -25,8 +25,8 @@ async function attrsReady() {
   return schema.hasColumn('schema_fields', 'unit');
 }
 
-/* K-1: field_key is TEXT (no uuid guard), but a NUL byte names no column and Postgres refuses it in text (22021 → 500): answered as the unknown column it is, before any query */
-router.param('field_key', (req, res, next, key) => (String(key).includes('\0') ? problem(req, res, { status: 404, ...words.noSuchColumn() }) : next()));
+/* K-1: field_key is TEXT (no uuid guard), but a NUL byte names no column and Postgres refuses it in text (22021 → 500): answered as the unknown column it is, before any query (the one text guard) */
+router.param('field_key', textParam(() => ({ status: 404, ...words.noSuchColumn() }))); // lib/problem textParam (K-1 Q2), with this file's frozen 404 words
 
 // GET /api/schemas/my — does entity have a schema?
 router.get('/my', auth, ...checked('GET /my'), async (req, res) => {
