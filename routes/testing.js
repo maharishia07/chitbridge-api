@@ -1,7 +1,7 @@
 /*
- * OWNS      the test board: cases, results, incidents, requirements, changes and releases.
- * CALLED BY web Testing screens · CI key.
- * FLOW      auth → entity scope → record → release closes the loop for the root
+ * OWNS      the test board (the 33 routes of /api/testing): cases and their import, results and runs, JUnit and Gherkin, the CMDB, requirements, incidents, changes and releases; each route's contract and the words of its refusals are lib/testing-contract.js.
+ * CALLED BY server.js (mounted at /api/testing) · web Testing screens · CI key · tools/api-register.cjs (router.openapi) · tests/api-problem-testing.test.cjs.
+ * FLOW      query filter read (a NUL byte matches nothing) → auth → board gate → schema check (lib/testing-contract.js) → entity scope → record (an id that is no uuid is an unknown one) → res | problem(faultOf: a NUL byte in text is a 400, any other fault a 500 that says nothing of its cause)
  * CARD      28-platform-and-operations/testing
  */
 /**
@@ -74,23 +74,28 @@ function checked(route) {
 }
 /** a query value holding a NUL byte (a character Postgres text cannot keep) can name nothing on the board: it is read as a value that matches nothing, which is what any other unknown value answers (never a 500 from the database) */
 const NO_MATCH = '\uFFFD';
+/** one query value with its NUL bytes read as the character no row holds (a list of values: each one) */
 const readable = (value) => (typeof value === 'string' ? value.split('\u0000').join(NO_MATCH) : Array.isArray(value) ? value.map(readable) : value);
+/** every query value of the board's routes is read through `readable` before a handler sees it */
 router.use((req, res, next) => {
   Object.keys(req.query || {}).forEach((name) => {
     req.query[name] = readable(req.query[name]);
   });
   next();
 });
-/** a run id that is not a uuid names no run: it is read as the id of a run that was never made, which is what an unknown uuid is */
-const NO_RUN = '00000000-0000-0000-0000-000000000000';
-const runIdOf = (value) => (UUID.test(String(value)) ? String(value) : NO_RUN);
+/** the id of a row that was never made */
+const NO_ROW = '00000000-0000-0000-0000-000000000000';
+/** an id that is not a uuid names no row: it is read as the id of one that was never made, which is what an unknown uuid is (so it answers as one: S41) */
+const uuidOrNone = (value) => (UUID.test(String(value)) ? String(value) : NO_ROW);
 /** SEC-93: the copy to our support queue failed — the caller reads the safe sentence and the request id, never the error's own words (which can name an environment variable); the cause is logged with the same id */
 function notCopied(e, req) {
   logger.fellBack('testing: the copy to the support queue failed — answered in the safe words (ref ' + req.id + ')', e);
   return { copied: false, why: SAFE_SENTENCE + ' (ref ' + req.id + ')' };
 }
 /** the words of an unknown id on the two records a path id names: said for an id that is no uuid exactly as for one nobody holds */
+/** the words of an unknown requirement id */
 const noRequirement = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
+/** the words of an unknown incident id */
 const noIncident = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
 /* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
    NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
@@ -1273,6 +1278,27 @@ function badResult(r) {
   return null;
 }
 
+/** the sitting a post names: its project (see projectOf), and its run id, which is a uuid or nothing (a junk run id is refused in words, never stored under another id) */
+function sittingOf(post) {
+  return post.run_id && !UUID.test(String(post.run_id)) ? { error: 'the run id is not a run id — leave it out and one is made for the sitting' } : projectOf(post.project);
+}
+/** one result as the INSERT takes it: the case it names (its definition and current version, null when the board does not hold it), the module it belongs to, and the tester stamped from the token */
+function resultRowOf(item, by, tester) {
+  const key = String(item.case_key).trim();
+  const d = by[key] || null;
+  return {
+    key: key,
+    definition_id: d ? d.definition_id : null,
+    case_version: d ? d.current_version : null,
+    module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
+    status: item.status,
+    run_kind: item.run_kind,
+    layer: item.layer || null,
+    tester_name: tester.name /* SEC-FIX3 S10: stamped from the token, never the body */,
+    note: item.note || null,
+    evidence: item.evidence || null
+  };
+}
 /**
  * POST /api/testing/results — record one result, or a whole run of them.
  *
@@ -1297,9 +1323,8 @@ async function recordResults(entity_id, who, b) {
    * twice is FOLDED here, worst result first — never left to ON CONFLICT DO NOTHING, which kept the first and
    * dropped the rest silently, so a fail after a pass vanished (N01). A single result passes through as it was.
    */
-  const pj = projectOf(b.project);
+  const pj = sittingOf(b);
   if (pj.error) return { status: 422, body: { error: 'Not recorded', message: pj.error } };
-  if (b.run_id && !UUID.test(String(b.run_id))) return { status: 422, body: { error: 'Not recorded', message: 'the run id is not a run id — leave it out and one is made for the sitting' } };
   const list = junitresults.fold(given);
   {
     /* ⭐ ONE run id for the whole post unless the caller supplies one — a sitting is a sitting. */
@@ -1332,22 +1357,7 @@ async function recordResults(entity_id, who, b) {
          * ⚠ ON CONFLICT DO NOTHING still applies per row, so a replayed suite is still a quiet no-op, and the
          * rows that were skipped are simply not returned — which is what `skipped` counts.
          */
-        const norm = list.map((item) => {
-          const key = String(item.case_key).trim();
-          const d = by[key] || null;
-          return {
-            key: key,
-            definition_id: d ? d.definition_id : null,
-            case_version: d ? d.current_version : null,
-            module_key: item.module_key || (d && d.sub_kind) || key.split('-')[0] || null,
-            status: item.status,
-            run_kind: item.run_kind,
-            layer: item.layer || null,
-            tester_name: who.name /* SEC-FIX3 S10: stamped from the token, never the body */,
-            note: item.note || null,
-            evidence: item.evidence || null
-          };
-        });
+        const norm = list.map((item) => resultRowOf(item, by, who));
 
         const ins = await db.query(
           `INSERT INTO test_result
@@ -1467,7 +1477,7 @@ router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (r
           '*',
           `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
           'at DESC',
-          [entity_id, q.case_key || runIdOf(q.run_id), pj.project],
+          [entity_id, q.case_key || uuidOrNone(q.run_id), pj.project],
           q,
           PAGE.history
         )
@@ -1858,7 +1868,6 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
     const observed = String(b.observed || '').trim();
     const requirement = String(b.requirement || '').trim();
     const case_key = String(b.case_key || '').trim() || null;
-
     /**
      * ── ⚠️⚠️ THE CASE AND THE REQUIREMENT NO LONGER LIVE IN THE SAME ENTITY ───────────────────────────────
      *
@@ -2144,15 +2153,13 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
     if (state === 'rejected' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
-
-    if (!UUID.test(String(req.params.id))) return problem(req, res, noRequirement()); /* K-1: a junk id answers as an unknown one, after the sign-in gate and the body's own checks */
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'spec' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]
+        [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
       const row = c.rows[0];
       if (!row) return null;
@@ -2278,7 +2285,6 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
        and it would show as a negative delay on the one number this board exists to make visible. */
     let happened = String(b.happened_at || '').trim() || now;
     if (!(Date.parse(happened) > 0) || Date.parse(happened) > Date.parse(now)) happened = now;
-
     const out = await withEntity(entity_id, async (db) => {
       const name = String(b.ref || '').trim() || 'INC-' + now.slice(2, 10).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
       const rules = {
@@ -2533,15 +2539,13 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
     if (state === 'closed' && !why) {
       return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
-
-    if (!UUID.test(String(req.params.id))) return problem(req, res, noIncident()); /* K-1: a junk id answers as an unknown one, after the sign-in gate and the body's own checks */
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
            FROM definition d JOIN definition_version v
              ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'incident' AND d.definition_id = $2::uuid`,
-        [entity_id, req.params.id]
+        [entity_id, uuidOrNone(req.params.id)] /* K-1: an id that is no uuid is looked up as one that names no row: the unknown id's own answer */
       );
       const row = c.rows[0];
       if (!row) return null;
@@ -2764,7 +2768,7 @@ router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, 
 router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? runIdOf(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
@@ -2948,7 +2952,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
 router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? runIdOf(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? uuidOrNone(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
@@ -3923,7 +3927,6 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
 
     if (!name) return problem(req, res, { status: 400, ...unnamedRelease() });
     if (!ids.length) return problem(req, res, { status: 400, ...emptyRelease() });
-    const held = ids.filter((id) => UUID.test(id)); /* an id that is no uuid names no change: carried as an unknown one is (nothing) */
 
     const carried = await withEntity(entity_id, async (db) => {
       const got = await db.query(
@@ -3931,7 +3934,7 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
            FROM definition d
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'change' AND d.definition_id = ANY($2::uuid[])`,
-        [entity_id, held]
+        [entity_id, ids.filter((id) => UUID.test(id))] /* an id that is no uuid names no change: carried as an unknown one is (nothing) */
       );
 
       const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
