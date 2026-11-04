@@ -381,6 +381,9 @@ function junkBranch(tools) {
   const evidence = { data_base64: PNG_B64, mime: 'image/png', name: 'a.png' };
   const NL = '%00';
   return [
+    /* SEC-93: the copy to our support queue fails with a message that names an environment variable: the caller reads the safe sentence and the request id */
+    N('requirement-support-fails', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not' }, setup: held(rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'CLAUSE-1' }])), patch: { raiseticket: { raise: async () => { throw new Error('PLATFORM_ROOT_ENTITY is not set'); } } } }),
+    N('incident-support-fails', 'POST ' + T + '/incidents', 200, { body: { observed: 'It broke' }, setup: held(rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'INC-1' }])), patch: { raiseticket: { raise: async () => { throw new Error('PLATFORM_ROOT_ENTITY is not set'); } } } }),
     /* a read's filter */
     N('results-run-id-not-a-uuid', 'GET ' + T + '/results', 200, { url: T + '/results?run_id=abc', setup: held() }),
     N('results-case-with-a-nul-byte', 'GET ' + T + '/results', 200, { url: T + '/results?case_key=a' + NL + 'b', setup: held() }),

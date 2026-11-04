@@ -61,6 +61,7 @@ const {
   contract
 } = require('../lib/testing-contract'); // the contract (each route's operation) and the words of a refusal
 const logger = require('../lib/logger');
+const { SAFE_SENTENCE } = require('../lib/respond');
 const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
@@ -83,6 +84,11 @@ router.use((req, res, next) => {
 /** a run id that is not a uuid names no run: it is read as the id of a run that was never made, which is what an unknown uuid is */
 const NO_RUN = '00000000-0000-0000-0000-000000000000';
 const runIdOf = (value) => (UUID.test(String(value)) ? String(value) : NO_RUN);
+/** SEC-93: the copy to our support queue failed — the caller reads the safe sentence and the request id, never the error's own words (which can name an environment variable); the cause is logged with the same id */
+function notCopied(e, req) {
+  logger.fellBack('testing: the copy to the support queue failed — answered in the safe words (ref ' + req.id + ')', e);
+  return { copied: false, why: SAFE_SENTENCE + ' (ref ' + req.id + ')' };
+}
 /** the words of an unknown id on the two records a path id names: said for an id that is no uuid exactly as for one nobody holds */
 const noRequirement = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
 const noIncident = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
@@ -2013,10 +2019,11 @@ router.post('/requirements', auth, ...checked('POST /requirements'), async (req,
             audience: b.audience,
             to_bridge_id: b.to_bridge_id
           },
-          w2
+          w2,
+          req.id
         );
       } catch (e) {
-        support = { copied: false, why: String(e.message || e) };
+        support = notCopied(e, req);
       }
       require('../lib/testnews').testRaised(entity_id, 'requirement', out && (out.clause || out.ref), {
         screen: (req.body || {}).screen_code,
@@ -2370,10 +2377,11 @@ router.post('/incidents', auth, ...checked('POST /incidents'), async (req, res) 
           audience: b.audience,
           to_bridge_id: b.to_bridge_id
         },
-        testerOf(req)
+        testerOf(req),
+        req.id
       );
     } catch (e) {
-      support = { copied: false, why: String(e.message || e) };
+      support = notCopied(e, req);
     }
 
     res.json({ recorded: true, state: 'raised', support, definition_id: out.definition_id, ref: out.ref, severity: out.severity,
