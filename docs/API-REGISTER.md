@@ -264,23 +264,23 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/tax/gstr | tax | routes/tax.js:84 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:35 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/tax/ledger | tax | routes/tax.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/testing/cases | testing | routes/testing.js:406 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/cases/gherkin | testing | routes/testing.js:1661 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/testing/changes | testing | routes/testing.js:3823 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/cmdb | testing | routes/testing.js:1061 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/cmdb/:ci | testing | routes/testing.js:1085 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/testing/coverage | testing | routes/testing.js:2736 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/engine | testing | routes/testing.js:899 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/incidents | testing | routes/testing.js:2373 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/releases | testing | routes/testing.js:4070 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/reliability | testing | routes/testing.js:3555 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/report | testing | routes/testing.js:2920 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/requirements | testing | routes/testing.js:2024 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/results | testing | routes/testing.js:1431 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/runs | testing | routes/testing.js:1483 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/stale | testing | routes/testing.js:2675 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/trace | testing | routes/testing.js:329 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/testing/vocabulary | testing | routes/testing.js:341 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/cases | testing | routes/testing.js:422 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/cases/gherkin | testing | routes/testing.js:1678 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/testing/changes | testing | routes/testing.js:3843 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/cmdb | testing | routes/testing.js:1077 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/cmdb/:ci | testing | routes/testing.js:1101 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/testing/coverage | testing | routes/testing.js:2756 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/engine | testing | routes/testing.js:915 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/incidents | testing | routes/testing.js:2392 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/releases | testing | routes/testing.js:4091 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/reliability | testing | routes/testing.js:3575 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/report | testing | routes/testing.js:2940 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/requirements | testing | routes/testing.js:2042 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/results | testing | routes/testing.js:1448 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/runs | testing | routes/testing.js:1500 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/stale | testing | routes/testing.js:2695 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/trace | testing | routes/testing.js:345 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/testing/vocabulary | testing | routes/testing.js:357 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/till/bills | till | routes/till.js:3422 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/till/catalogue/blueprints | till | routes/till.js:3310 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/till/counters | till | routes/till.js:1804 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -327,8 +327,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/schemas/fields/order | schemas | routes/schemas.js:246 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | PATCH | /api/schemas/visibility | schemas | routes/schemas.js:406 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | PATCH | /api/supplies/:id | supplies | routes/supplies.js:81 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PATCH | /api/testing/incidents/:id | testing | routes/testing.js:2484 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| PATCH | /api/testing/requirements/:id | testing | routes/testing.js:2103 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| PATCH | /api/testing/incidents/:id | testing | routes/testing.js:2503 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| PATCH | /api/testing/requirements/:id | testing | routes/testing.js:2121 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/actors | actors | routes/actors.js:256 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/actors/:id/otp | actors | routes/actors.js:902 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/actors/check-key | actors | routes/actors.js:222 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
@@ -578,19 +578,19 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:113 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | yes | yes | partial |
 | POST | /api/tax/compute | tax | routes/tax.js:163 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/tax/rate | tax | routes/tax.js:126 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/testing/cases/close | testing | routes/testing.js:259 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/cases/gherkin | testing | routes/testing.js:1718 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/testing/cases/import | testing | routes/testing.js:838 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/cases/seed | testing | routes/testing.js:911 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/changes | testing | routes/testing.js:3749 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/testing/cmdb/seed | testing | routes/testing.js:1125 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/testing/evidence | testing | routes/testing.js:2638 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/incidents | testing | routes/testing.js:2239 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/releases | testing | routes/testing.js:3888 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/testing/requirements | testing | routes/testing.js:1829 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/results | testing | routes/testing.js:1402 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/testing/results/junit | testing | routes/testing.js:1580 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/testing/trace | testing | routes/testing.js:316 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/cases/close | testing | routes/testing.js:275 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/cases/gherkin | testing | routes/testing.js:1736 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/testing/cases/import | testing | routes/testing.js:854 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/cases/seed | testing | routes/testing.js:927 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/changes | testing | routes/testing.js:3769 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/testing/cmdb/seed | testing | routes/testing.js:1141 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/testing/evidence | testing | routes/testing.js:2658 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/incidents | testing | routes/testing.js:2258 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/releases | testing | routes/testing.js:3908 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/testing/requirements | testing | routes/testing.js:1847 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/results | testing | routes/testing.js:1419 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/testing/results/junit | testing | routes/testing.js:1597 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/testing/trace | testing | routes/testing.js:332 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/till/alias | till | routes/till.js:3825 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/till/catalogue | till | routes/till.js:3189 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/till/close | till | routes/till.js:1620 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
@@ -650,7 +650,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/products/:id/status | products | routes/products.js:1739 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:135 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/service/:chit_id | service | routes/service.js:157 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1109 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | no | partial |
+| PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1125 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | no | partial |
 
 ## Endpoint cards
 

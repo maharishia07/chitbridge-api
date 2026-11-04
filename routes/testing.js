@@ -65,11 +65,27 @@ const storage = require('../lib/storage');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const teststatus = require('../lib/teststatus');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no row on the board
 /** the schema check of one route (its own operation in lib/testing-contract.js), as a list to spread after the gate: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, schemaOptions)] : [];
 }
+/** a query value holding a NUL byte (a character Postgres text cannot keep) can name nothing on the board: it is read as a value that matches nothing, which is what any other unknown value answers (never a 500 from the database) */
+const NO_MATCH = '\uFFFD';
+const readable = (value) => (typeof value === 'string' ? value.split('\u0000').join(NO_MATCH) : Array.isArray(value) ? value.map(readable) : value);
+router.use((req, res, next) => {
+  Object.keys(req.query || {}).forEach((name) => {
+    req.query[name] = readable(req.query[name]);
+  });
+  next();
+});
+/** a run id that is not a uuid names no run: it is read as the id of a run that was never made, which is what an unknown uuid is */
+const NO_RUN = '00000000-0000-0000-0000-000000000000';
+const runIdOf = (value) => (UUID.test(String(value)) ? String(value) : NO_RUN);
+/** the words of an unknown id on the two records a path id names: said for an id that is no uuid exactly as for one nobody holds */
+const noRequirement = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
+const noIncident = () => ({ status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
 /* ⚠️ `query` as well as withEntity: the operator copy reads identities, which has no RLS, so it must
    NOT be wrapped in withEntity — that would pin the read to one entity for no reason. */
 const { withEntity, query } = require('../db');
@@ -1277,6 +1293,7 @@ async function recordResults(entity_id, who, b) {
    */
   const pj = projectOf(b.project);
   if (pj.error) return { status: 422, body: { error: 'Not recorded', message: pj.error } };
+  if (b.run_id && !UUID.test(String(b.run_id))) return { status: 422, body: { error: 'Not recorded', message: 'the run id is not a run id — leave it out and one is made for the sitting' } };
   const list = junitresults.fold(given);
   {
     /* ⭐ ONE run id for the whole post unless the caller supplies one — a sitting is a sitting. */
@@ -1444,7 +1461,7 @@ router.get('/results', auth, boardReadGate, ...checked('GET /results'), async (r
           '*',
           `FROM test_result WHERE entity_id = $1 ${where} AND ${projectWhere(await projectReady(db, pj.project), 3)}`,
           'at DESC',
-          [entity_id, q.case_key || q.run_id, pj.project],
+          [entity_id, q.case_key || runIdOf(q.run_id), pj.project],
           q,
           PAGE.history
         )
@@ -1701,7 +1718,8 @@ router.get('/cases/gherkin', auth, boardReadGate, ...checked('GET /cases/gherkin
        describes, is reviewed in a diff, and is edited by hand. Returning it as JSON would make the one thing
        Gherkin is actually for — being readable and editable by a person — into the caller's problem. */
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge') + '.feature"');
+    /* the file's name is the module as asked, but a header holds printable ASCII only: any other character (a module nobody has is still a module somebody can ask for) is an underscore, never a 500 */
+    res.setHeader('Content-Disposition', 'attachment; filename="' + (only || 'chitbridge').replace(/[^ -!#-~]/g, '_') + '.feature"');
     res.send(gherkin.toFeatures(groups));
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Could not export'));
@@ -2120,6 +2138,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
       return problem(req, res, { status: 400, ...badRequest('Say why', 'A rejected requirement needs its reason, or the next tester raises it again.') });
     }
 
+    if (!UUID.test(String(req.params.id))) return problem(req, res, noRequirement()); /* K-1: a junk id answers as an unknown one, after the sign-in gate and the body's own checks */
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
@@ -2161,7 +2180,7 @@ router.patch('/requirements/:id', auth, ...checked('PATCH /requirements/:id'), a
       };
     });
 
-    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No requirement with that id.' }) });
+    if (!out) return problem(req, res, noRequirement());
     /* ⭐ accepted or rejected, the person who raised it hears — a rejection nobody is told about is how the
        same requirement gets raised a third time. See the argument in lib/testnews.js. */
     try {
@@ -2507,6 +2526,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
       return problem(req, res, { status: 400, ...badRequest('Say why', 'Closing is a decision — record it, or the next person reopens the same thing.') });
     }
 
+    if (!UUID.test(String(req.params.id))) return problem(req, res, noIncident()); /* K-1: a junk id answers as an unknown one, after the sign-in gate and the body's own checks */
     const out = await withEntity(entity_id, async (db) => {
       const c = await db.query(
         `SELECT d.definition_id, d.name, d.created_by, d.current_version, v.rules
@@ -2586,7 +2606,7 @@ router.patch('/incidents/:id', auth, ...checked('PATCH /incidents/:id'), async (
       };
     });
 
-    if (!out) return problem(req, res, { status: 404, ...notFound({ error: 'Not found', message: 'No incident with that id.' }) });
+    if (!out) return problem(req, res, noIncident());
     /**
      * ── ⭐⭐⭐ THE RETURN LEG ─────────────────────────────────────────────────────────────────────────────
      *
@@ -2736,7 +2756,7 @@ router.get('/stale', auth, boardReadGate, ...checked('GET /stale'), async (req, 
 router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? runIdOf(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
     /* ⭐ ?project= narrows every RESULT read below to that project's rows; the cases are the board's either way */
@@ -2920,7 +2940,7 @@ router.get('/coverage', auth, boardReadGate, ...checked('GET /coverage'), async 
 router.get('/report', auth, boardReadGate, ...checked('GET /report'), async (req, res) => {
   try {
     const entity_id = testboard.entityFor(auth.entityOf(req));
-    const run_id = req.query && req.query.run_id ? String(req.query.run_id) : null;
+    const run_id = req.query && req.query.run_id ? runIdOf(req.query.run_id) : null;
     const pj = projectOf((req.query || {}).project);
     if (pj.error) return problem(req, res, { status: 400, ...badRequest('Not read', pj.error) });
 
@@ -3895,6 +3915,7 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
 
     if (!name) return problem(req, res, { status: 400, ...unnamedRelease() });
     if (!ids.length) return problem(req, res, { status: 400, ...emptyRelease() });
+    const held = ids.filter((id) => UUID.test(id)); /* an id that is no uuid names no change: carried as an unknown one is (nothing) */
 
     const carried = await withEntity(entity_id, async (db) => {
       const got = await db.query(
@@ -3902,7 +3923,7 @@ router.post('/releases', auth, ...checked('POST /releases'), async (req, res) =>
            FROM definition d
            JOIN definition_version v ON v.definition_id = d.definition_id AND v.version = d.current_version
           WHERE d.entity_id = $1 AND d.kind = 'change' AND d.definition_id = ANY($2::uuid[])`,
-        [entity_id, ids]
+        [entity_id, held]
       );
 
       const rows = got.rows.map((x) => ({ id: x.definition_id, ref: x.name, v: x.current_version, rules: x.rules || {} }));
