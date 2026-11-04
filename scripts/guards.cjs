@@ -598,7 +598,17 @@ const NEEDS_ENGINES = [
   'two-sided-books.test.cjs',
   'pay-fix-void.test.cjs' // QA-80: runs the real chits router over the books harness
 ];
-const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
+/**
+ * HLT-5 · A WORKTREE WITHOUT THE WEB TWIN SAYS SO. These guards read chitbridge-web/public (the pages and the vendored till); with no
+ * sibling checkout they used to fail as "missing .../app.html" / "till.html has never been vendored" - true, and no help. Where the
+ * web checkout is (CB_WEB_DIR, else ../chitbridge-web) is looked up once: absent on a laptop = a named skip with the fix; absent in CI
+ * (CI=true) still FAILS, because there the twin is always checked out beside.
+ */
+const NEEDS_WEB = ['pages-parse.test.js', 'till-vendor.test.js'];
+const WEB_DIR = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR) : path.join(__dirname, '..', '..', 'chitbridge-web');
+const WEB_ABSENT = !fs.existsSync(path.join(WEB_DIR, 'public'));
+const SKIP_WEB = WEB_ABSENT && !process.env.CI;
+const ENGINES_ABSENT =!fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
 
 /**
@@ -623,6 +633,12 @@ for (const text of files) {
     console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   — needs chitbridge-engines (private; set ENGINES_READ_TOKEN)');
     console.log('::warning::' + text + ' skipped — chitbridge-engines is not checked out (add the ENGINES_READ_TOKEN secret)');
     report.push({ name: KEY(text), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
+    continue;
+  }
+  if (SKIP_WEB && NEEDS_WEB.indexOf(text) >= 0) {
+    const why = 'needs the web checkout - none at ' + WEB_DIR + ' (clone chitbridge-web beside this tree, or set CB_WEB_DIR=<path to it>)';
+    console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   - ' + why);
+    report.push({ name: KEY(text), status: 'skipped', message: why });
     continue;
   }
   const t0 = Date.now();
