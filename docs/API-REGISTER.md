@@ -217,9 +217,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/kyb/risk | kyb | routes/kyb.js:43 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/kyb/yourself | kyb | routes/kyb.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/marketing/came-back | marketing | routes/marketing.js:36 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/network-design | network-design | routes/network-design.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/network-design/availability | network-design | routes/network-design.js:440 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/network-design/stores | network-design | routes/network-design.js:403 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/network-design | network-design | routes/network-design.js:46 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/network-design/availability | network-design | routes/network-design.js:442 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/network-design/stores | network-design | routes/network-design.js:405 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/network-offers | network-offers | routes/network-offers.js:217 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/network/entities/:id/connections | network | src/routes/network.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/network/entities/:id/subtree | network | src/routes/network.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
@@ -507,9 +507,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/keys | keys | routes/keys.js:150 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/kyb/field | kyb | routes/kyb.js:51 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/network-design/build | network-design | routes/network-design.js:183 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/network-design/reissue | network-design | routes/network-design.js:281 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/network-design/validate | network-design | routes/network-design.js:145 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/network-design/build | network-design | routes/network-design.js:185 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/network-design/reissue | network-design | routes/network-design.js:283 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/network-design/validate | network-design | routes/network-design.js:147 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/network-offers/:id/choice | network-offers | routes/network-offers.js:392 | no | no | no | no | no | no | no | no | no | no | yes | yes | yes | not started |
 | POST | /api/network-offers/:id/release | network-offers | routes/network-offers.js:337 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/network-offers/:id/withdraw | network-offers | routes/network-offers.js:375 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
@@ -644,7 +644,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/governance/profile/vault | governance | routes/governance.js:468 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:234 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:757 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| PUT | /api/network-design | network-design | routes/network-design.js:55 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PUT | /api/network-design | network-design | routes/network-design.js:57 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:275 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | PUT | /api/products/:id/availability | products | routes/products.js:1709 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | PUT | /api/products/:id/status | products | routes/products.js:1739 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |

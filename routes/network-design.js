@@ -38,7 +38,9 @@ const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this neve
 const SINGLE_LIMIT = 200;
 
 /** the asking business's own row as the two network reads need it (its bridge id, its name and where it sits), or undefined when the account cannot be read */
-const placeOf = async (me) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+const placeOf = async (identityId) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+/** K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as for any text that finds nothing. */
+const searchable = (text) => text.replace(/\u0000/g, '\uFFFD');
 
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
@@ -457,9 +459,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    /* K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as it is for any text that finds nothing. */
-    const searched = text.replace(/\u0000/g, '\uFFFD');
-    const like = '%' + searched.toLowerCase() + '%';
+    const like = '%' + searchable(text).toLowerCase() + '%';
     const rows = [];
     /**
      * The one place the availability answer is written, so its keys are named once (S34 output allow-list). A row is what the handler built from the store and the item, then what
@@ -499,7 +499,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searched, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searchable(text), SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
