@@ -36,6 +36,7 @@ const { query, withEntity } = require('../db');
 const crypto = require('crypto');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { UUID_RE } = require('../lib/trace'); // CMP-22: the one uuid test
+const { hasNul } = require('../lib/input-hygiene'); // K-1: a NUL byte in a value names nothing a column holds
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
@@ -348,9 +349,12 @@ router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:sche
 async function loadDoc(req, scheme) {
   const subject = await resolveSubject(req, req.body.identity_id || req.query.identity_id);
   const entity_id = auth.entityOf(req);
-  const r = await withEntity(entity_id, (db) =>
-    db.query(`SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme])
-  );
+  /* K-1 (B2): a scheme with a NUL byte in it names no document, so no row — the answer an unknown scheme gets, said before the database turns it into a 500 */
+  const r = hasNul(scheme)
+    ? { rows: [] }
+    : await withEntity(entity_id, (db) =>
+        db.query(`SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme])
+      );
   const row = r.rows[0];
   let value = null;
   if (row && row.value_enc) {

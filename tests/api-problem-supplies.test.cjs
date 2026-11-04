@@ -74,6 +74,7 @@ function checkWords() {
   check('notReady: the 503 sentence is the old one (Not ready, run b217 first)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'run b217 first' }), later);
   const lost = words.faultOf(new Error(SECRET_SQL), req, 'Could not record the purchase');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && lost.legacy.error === 'Could not record the purchase' && !THROWN.test(JSON.stringify(lost)), lost);
+  check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 in the old validation keys and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(Object.assign(new Error(SECRET_SQL), { code }), req, 'Could not add the supply'); return one.status === 400 && one.code === 'SUPPLY_INVALID' && sameValue(one.legacy, { error: 'validation', message: 'Cannot save this text. Type it again.' }) && !THROWN.test(JSON.stringify(one)); }));
   check('notMigrated: a missing table is a 42P01 and nothing else', words.notMigrated({ code: '42P01' }) === true && words.notMigrated({ code: '23505' }) === false && words.notMigrated(null) === false);
 }
 

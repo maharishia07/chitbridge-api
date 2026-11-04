@@ -16958,7 +16958,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 134,
+   "line": 135,
    "hash": "d07dcfc2b934bf94",
    "does": "",
    "errors": {
@@ -28162,11 +28162,12 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 81,
-   "hash": "2ea7dda86e1cb9cb",
+   "hash": "fb54367fb55e7b28",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      404,
      422,
@@ -28209,6 +28210,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     404,
     422,
@@ -43888,7 +43890,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 399,
+   "line": 403,
    "hash": "aa6e3b0fed35babd",
    "does": "",
    "errors": {
@@ -43990,7 +43992,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 418,
+   "line": 422,
    "hash": "56a0c919759a7368",
    "does": "",
    "errors": {
@@ -57302,7 +57304,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 234,
+   "line": 235,
    "hash": "dac8fb5cb05cc83a",
    "does": "",
    "errors": {

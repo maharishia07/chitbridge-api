@@ -11,13 +11,15 @@
  * `plant(store)` puts the rows a scenario needs into a fresh store before the request. The store never throws: a database that fails is the harness's `db: 'fail'`.
  */
 'use strict';
-const { SHOP } = require('./problem-world.cjs');
+const { SHOP, sqlError } = require('./problem-world.cjs');
+const PG_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const OTHER_SHOP = '99999999-9999-4999-8999-999999999999';
 const STRANGER = { identity_id: OTHER_SHOP, identity_type: 'entity', display_name: 'Another shop' };
 const GROUP = '00000000-0000-4000-8000-0000000000a1';
 const TEA = '00000000-0000-4000-8000-0000000000b1';
 const BUN = '00000000-0000-4000-8000-0000000000b2';
+const UNKNOWN_PRODUCT = '00000000-0000-4000-8000-0000000000b9'; /* a well-formed id no catalogue holds */
 const STAMP = '2026-10-23T00:00:00.000Z';
 const Q = '/api/quick-keys';
 
@@ -50,6 +52,8 @@ function store() {
     }],
     [/SELECT id FROM quick_key_group WHERE id=\$1 AND entity_id=\$2 AND NOT is_deleted/, (p) => rows([groupOf(p[0], p[1])].filter((one) => one && !one.is_deleted).map((one) => ({ id: one.id })))],
     [/INSERT INTO quick_key_group_item/, (p) => {
+      if (!PG_UUID.test(String(p[2]))) throw sqlError('22P02'); /* product_id is a uuid column */
+      if (!data.catalogue[p[2]]) throw sqlError('23503'); /* and a foreign key to catalogue_items: a product nobody holds is refused */
       const found = data.items.find((one) => same(one.group_id, p[0]) && same(one.product_id, p[2]));
       const row = found || { group_id: p[0], entity_id: p[1], product_id: p[2], position: 0 };
       row.position = p[3];
@@ -100,12 +104,15 @@ function extras() {
     X('group-make-blank-name', R('POST', '/groups'), 400, { body: { name: '   ' } }),
     X('group-make-fails', R('POST', '/groups'), 500, Object.assign({ body: { name: 'x' } }, failing)),
     N('group-make-body-a-list', R('POST', '/groups'), 400, { body: [{ name: 'x' }] }),
+    N('group-make-name-with-a-nul-byte', R('POST', '/groups'), 400, { body: { name: 'a\u0000b' } }),
+    N('group-make-colour-with-a-nul-byte', R('POST', '/groups'), 400, { body: { name: 'x', color: 'a\u0000b' } }),
     X('group-change', R('PATCH', '/groups/:id'), 200, Object.assign({ body: { name: 'Evening', version: 1 } }, at('/groups/' + GROUP), planted())),
     X('group-change-no-version', R('PATCH', '/groups/:id'), 200, Object.assign({ body: { color: '#0a0' } }, at('/groups/' + GROUP), planted())),
     X('group-change-stale', R('PATCH', '/groups/:id'), 409, Object.assign({ body: { name: 'Evening', version: 7 } }, at('/groups/' + GROUP), planted())),
     X('group-change-unknown', R('PATCH', '/groups/:id'), 404, Object.assign({ body: { name: 'Evening' } }, at('/groups/' + GROUP))),
     X('group-change-deleted', R('PATCH', '/groups/:id'), 404, Object.assign({ body: { name: 'Evening' } }, at('/groups/' + GROUP), planted({ is_deleted: true }))),
     X('group-change-fails', R('PATCH', '/groups/:id'), 500, Object.assign({ body: { name: 'Evening' } }, failing)),
+    N('group-change-name-with-a-nul-byte', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { name: 'a\u0000b' } }, at('/groups/' + GROUP), planted())),
     N('group-change-body-a-list', R('PATCH', '/groups/:id'), 400, Object.assign({ body: [] }, at('/groups/' + GROUP), planted())),
     X('group-drop', R('DELETE', '/groups/:id'), 200, Object.assign({ body: { version: 1 } }, at('/groups/' + GROUP), planted())),
     X('group-drop-stale', R('DELETE', '/groups/:id'), 409, Object.assign({ body: { version: 3 } }, at('/groups/' + GROUP), planted())),
@@ -117,6 +124,10 @@ function extras() {
     X('key-add-no-product', R('POST', items), 400, Object.assign({ body: { position: 1 } }, at('/groups/' + GROUP + '/items'), planted())),
     X('key-add-unknown-group', R('POST', items), 404, Object.assign({ body: { product_id: BUN } }, at('/groups/' + GROUP + '/items'))),
     X('key-add-fails', R('POST', items), 500, Object.assign({ body: { product_id: BUN } }, failing)),
+    N('key-add-product-is-not-a-uuid', R('POST', items), 404, Object.assign({ body: { product_id: 'abc' } }, at('/groups/' + GROUP + '/items'), planted())),
+    N('key-add-product-with-a-nul-byte', R('POST', items), 404, Object.assign({ body: { product_id: 'a\u0000b' } }, at('/groups/' + GROUP + '/items'), planted())),
+    N('key-add-product-no-shop-holds', R('POST', items), 404, Object.assign({ body: { product_id: UNKNOWN_PRODUCT } }, at('/groups/' + GROUP + '/items'), planted())),
+    N('key-add-position-with-a-nul-byte', R('POST', items), 400, Object.assign({ body: { product_id: BUN, position: 'a\u0000b' } }, at('/groups/' + GROUP + '/items'), planted())),
     N('key-add-body-a-list', R('POST', items), 400, Object.assign({ body: [] }, at('/groups/' + GROUP + '/items'), planted())),
     X('key-remove', R('DELETE', '/groups/:id/items/:productId'), 200, Object.assign(at('/groups/' + GROUP + '/items/' + TEA), planted())),
     X('key-remove-unknown', R('DELETE', '/groups/:id/items/:productId'), 200, at('/groups/' + GROUP + '/items/' + TEA)),
@@ -125,6 +136,7 @@ function extras() {
     X('keys-reorder-no-list', R('PATCH', items), 200, Object.assign({ body: {} }, at('/groups/' + GROUP + '/items'), planted())),
     N('keys-reorder-unknown-group', R('PATCH', items), 404, Object.assign({ body: { items: [{ product_id: TEA, position: 1 }] } }, at('/groups/' + GROUP + '/items'))),
     X('keys-reorder-fails', R('PATCH', items), 500, Object.assign({ body: { items: [{ product_id: TEA, position: 1 }] } }, failing)),
+    N('keys-reorder-extra-key-with-a-nul-byte', R('PATCH', items), 400, Object.assign({ body: { items: [{ product_id: TEA, position: 1, note: 'a\u0000b' }] } }, at('/groups/' + GROUP + '/items'), planted())),
     N('keys-reorder-body-a-list', R('PATCH', items), 400, Object.assign({ body: [] }, at('/groups/' + GROUP + '/items'), planted())),
     X('screen-read-empty', R('GET', '/screen-config/default'), 200, {}),
     X('screen-read-set', R('GET', '/screen-config/default'), 200, { plant: (world) => { world.data.config[SHOP] = { cols: 4, tiles: [1, 2] }; } }),
@@ -132,6 +144,7 @@ function extras() {
     X('screen-write', R('PUT', '/screen-config/default'), 200, { body: { config: { cols: 5 } } }),
     X('screen-write-no-config', R('PUT', '/screen-config/default'), 200, { body: {} }),
     X('screen-write-fails', R('PUT', '/screen-config/default'), 500, Object.assign({ body: { config: {} } }, failing)),
+    N('screen-write-config-with-a-nul-byte', R('PUT', '/screen-config/default'), 400, { body: { config: { cols: 'a\u0000b' } } }),
     N('screen-write-body-a-list', R('PUT', '/screen-config/default'), 400, { body: [] })
   ];
 }

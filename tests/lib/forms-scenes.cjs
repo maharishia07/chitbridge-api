@@ -18,6 +18,7 @@ const INSTANCE = '22222222-2222-4222-8222-222222222222';
 const CHIT = '33333333-3333-4333-8333-333333333333';
 const OTHER_CHIT = '66666666-6666-4666-8666-666666666666';
 const FORM = 'authority-application';
+const PG_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const FULL = { applicant: 'Test shop', address: '1 High Street', signatory: 'R Kumar', purpose: 'Trade licence renewal' };
 
 /** an issued form as the routes select it (every column any statement reads) */
@@ -89,6 +90,13 @@ function extras(tools) {
   const at = (suffix) => F + suffix;
   const roster = withRows(firstOf(when(/FROM form_instance WHERE entity_id = \$1 AND form_id = \$2/, [row()]), when(/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/, [{ all_recipients: [{ entity_id: SHOP, role: 'receiver' }] }])));
   const signable = withRows(firstOf(when(/UPDATE form_instance SET signatory/, [{ form_id: INSTANCE, signed_at: '2026-10-02T00:00:00Z', signatory: { name: 'R Kumar', designation: null } }]), when(/FROM form_instance WHERE entity_id = \$1 AND form_id = \$2/, [row()])));
+  /* K-1 (B2): the uuid columns as Postgres keeps them: a chit id (chit_header) and a deal (form_instance.context_ref) that is no uuid is refused 22P02 */
+  const uuidColumns = (sql, params) => {
+    if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(String(sql)) && !PG_UUID.test(String(params[0]))) throw sqlError('22P02');
+    if (/INSERT INTO form_instance/.test(String(sql)) && params[2] != null && !PG_UUID.test(String(params[2]))) throw sqlError('22P02');
+    return null;
+  };
+  const issuable = firstOf(uuidColumns, when(/INSERT INTO form_instance/, [{ form_id: INSTANCE, created_at: '2026-10-01T00:00:00Z' }]));
   const filed = { storage: { putForParticipants: async () => 'att-0001' } };
   return [
     /* GET / */
@@ -171,6 +179,16 @@ function extras(tools) {
     X('attach-storage-fails', ATTACH, 500, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: CHIT }, setup: roster, patch: { storage: { putForParticipants: thrown(SECRET_SQL) } } }),
     X('attach-answer-fails', ATTACH, 500, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: CHIT }, setup: { jsonThrows: true, sqlRows: roster.sqlRows }, patch: filed }),
     X('attach-library-throws', ATTACH, 500, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: CHIT }, patch: { forms: { attachToChit: thrown(SECRET_SQL) } } }),
+    /* K-1 (B2): a value no column can hold, and an id that is shaped like none. A NUL byte in the typed values is a 400 in plain words; a deal that is no chit id is the file's own BAD_CONTEXT (as GET /instances/all says it); a chit that is no id is the chit no shop is on (403, as an unknown one) */
+    A('issue-manual-with-a-nul-byte', ISSUE, 400, { url: at('/' + FORM + '/issue'), body: { manual: Object.assign({}, FULL, { purpose: 'Trade\u0000licence' }) }, setup: withRows(issuable) }),
+    A('issue-deal-is-not-a-chit-id', ISSUE, 400, { url: at('/' + FORM + '/issue'), body: { context_ref: 'nope', manual: FULL }, setup: withRows(issuable) }),
+    A('issue-deal-with-a-nul-byte', ISSUE, 400, { url: at('/' + FORM + '/issue'), body: { context_ref: 'a\u0000b', manual: FULL }, setup: withRows(issuable) }),
+    A('issue-deal-no-chit-holds', ISSUE, 200, { url: at('/' + FORM + '/issue'), body: { context_ref: OTHER_CHIT, manual: FULL }, setup: withRows(issuable) }),
+    A('sign-name-with-a-nul-byte', SIGN, 400, { url: at('/instances/' + INSTANCE + '/sign'), body: { name: 'R\u0000Kumar' }, setup: signable }),
+    A('sign-designation-with-a-nul-byte', SIGN, 400, { url: at('/instances/' + INSTANCE + '/sign'), body: { name: 'R Kumar', designation: 'Part\u0000ner' }, setup: signable }),
+    A('attach-chit-is-not-an-id', ATTACH, 403, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: 'nope' }, setup: withRows(firstOf(uuidColumns, heldForm().sqlRows)) }),
+    A('attach-chit-with-a-nul-byte', ATTACH, 403, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: 'a\u0000b' }, setup: withRows(firstOf(uuidColumns, heldForm().sqlRows)) }),
+    A('attach-chit-no-shop-holds', ATTACH, 403, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: OTHER_CHIT }, setup: withRows(firstOf(uuidColumns, heldForm().sqlRows)) }),
     A('attach-unknown-key', ATTACH, 422, { url: at('/instances/' + INSTANCE + '/attach'), body: { chit_id: CHIT, junk: 1 }, setup: roster, patch: filed })
   ];
 }
