@@ -59,6 +59,8 @@ const ROUTES = [
   // ── routes/connections.js
   // ── routes/definitions.js
   // ── routes/forms.js
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed'],
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed'],
   // ── routes/identity-docs.js
   // ── routes/integrations.js
   // ── routes/products.js

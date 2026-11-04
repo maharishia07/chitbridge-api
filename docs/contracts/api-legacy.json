@@ -44413,14 +44413,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      },
      "fixture": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      }
     },
     {

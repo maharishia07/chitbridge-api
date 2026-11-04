@@ -178,10 +178,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/folders/rules | folders | routes/folders.js:654 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/folders/rules/vocabulary | folders | routes/folders.js:633 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/folders/worklist | folders | routes/folders.js:867 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/forms | forms | routes/forms.js:23 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/forms/:key | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| GET | /api/forms/instances/:id | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/forms/instances/all | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/forms | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/forms/:key | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| GET | /api/forms/instances/:id | forms | routes/forms.js:71 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/forms/instances/all | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/governance/ai-skills | governance | routes/governance.js:587 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/governance/ai-usage | governance | routes/governance.js:573 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/governance/boilerplate/:key | governance | routes/governance.js:255 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
@@ -482,10 +482,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:846 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/move | folders | routes/folders.js:357 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/rules/preview | folders | routes/folders.js:621 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/forms/:key/issue | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| POST | /api/forms/:key/resolve | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| POST | /api/forms/instances/:id/attach | forms | routes/forms.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| POST | /api/forms/instances/:id/sign | forms | routes/forms.js:71 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| POST | /api/forms/:key/issue | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| POST | /api/forms/:key/resolve | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
+| POST | /api/forms/instances/:id/attach | forms | routes/forms.js:87 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| POST | /api/forms/instances/:id/sign | forms | routes/forms.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | POST | /api/governance/ai-draft | governance | routes/governance.js:558 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/governance/boilerplate/:key/adopt | governance | routes/governance.js:269 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/governance/compliance | governance | routes/governance.js:647 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
