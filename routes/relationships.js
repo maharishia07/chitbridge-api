@@ -300,6 +300,13 @@ function listSuppliers(db, owner) {
   );
 }
 
+/** one supplier row for a cost-blind reader: the balance goes through lib/dues-view's own rule; a ledger-off row (no balance_minor key) stays as it is */
+function hideOwed(row) {
+  if (row.balance_minor === undefined) return row;
+  const { balance_minor, cost_hidden } = require('../lib/dues-view').blindDues({ side: 'supplier', balance_minor: row.balance_minor });
+  return Object.assign(row, { balance_minor, cost_hidden });
+}
+
 // List my suppliers — has_catalogue reflects an active default schema only
 router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
   try {
@@ -360,6 +367,8 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
     }
     for (const row of rows) delete row.supplier_money; /* read above for the supplier's own offer wording; not part of the answer */
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
+    /* RAIL-146l: what the shop owes a supplier is purchase money - a login without can_see_costs gets null + cost_hidden (lib/dues-view R2), as on GET /dues and the CRM list; ONE can_see_costs read, the owner pays none */
+    if (await require('../lib/cost').isCostBlind(req, owner)) rows.forEach(hideOwed);
     res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     problem(req, res, failed(err, req, 'Get suppliers failed'));
