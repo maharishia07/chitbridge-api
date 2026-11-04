@@ -33,6 +33,13 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
+/** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
+function unknownKeyRefusal(body, allowed) {
+  const unknown = Object.keys(body || {}).filter((item) => allowed.indexOf(item) < 0);
+  if (!unknown.length) return null;
+  const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + allowed.join(', ') + '.';
+  return { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } };
+}
 const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
@@ -359,6 +366,7 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
   }
 });
 
+const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
 router.patch(
@@ -377,6 +385,8 @@ router.patch(
   async (req, res) => {
     try {
       const owner = ctx(req);
+      const refused = unknownKeyRefusal(req.body, SUPPLIER_PATCH_KEYS); /* CRM-44: the keys the Suppliers screens send are all here */
+      if (refused) return problem(req, res, refused);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
       const sets = [],
@@ -964,12 +974,8 @@ router.patch(
   async (req, res) => {
     try {
       const owner = ctx(req);
-      /* R14: a key this route does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) */
-      const unknown = Object.keys(req.body || {}).filter((item) => CUSTOMER_PATCH_KEYS.indexOf(item) < 0);
-      if (unknown.length) {
-        const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + CUSTOMER_PATCH_KEYS.join(', ') + '.';
-        return problem(req, res, { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } });
-      }
+      const refused = unknownKeyRefusal(req.body, CUSTOMER_PATCH_KEYS);
+      if (refused) return problem(req, res, refused);
       const party = await partyPatch(req, res, 'customer');
       if (party === false) return;
       if (!('segment_override' in (req.body || {}))) {

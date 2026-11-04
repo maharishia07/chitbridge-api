@@ -50954,6 +50954,24 @@
       "error": "Another party already has this tax id.",
       "message": "Another party already has this tax id."
      }
+    },
+    {
+     "scenario": "supplier-patch-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
+     },
+     "fixture": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
+     }
     }
    ]
   },
