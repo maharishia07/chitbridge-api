@@ -37,8 +37,8 @@ const ctx = (req) => auth.entityOf(req);
 /** what every catch answers: the migration not run (503), a value no column can hold (400), else the fault in no words of its cause (500). timeField names the time this route reads. */
 function failed(req, res, e, timeField) {
   if (notMigrated(e)) return gone(res);
-  if (BAD_TEXT.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'A value holds a character we cannot keep.', legacy: { error: 'Bad value' } });
-  if (timeField && BAD_TIME.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'That time is not a time we can read.', field: timeField, legacy: { error: 'Bad time' } });
+  if (BAD_TEXT.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'A value holds a character we cannot keep.', legacy: { error: 'Cannot save this text. Type it again.' } });
+  if (timeField && BAD_TIME.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'That time is not a time we can read.', field: timeField, legacy: { error: 'Cannot read this time. Pick it again.' } });
   return fromError(req, res, e, { error: 'Failed' });
 }
 
@@ -325,7 +325,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, ...contract.checked('POST /:c
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
     const to = req.body.to || null;
     if (to !== null && (typeof to !== 'string' || Number.isNaN(Date.parse(to))))
-      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Bad time' } });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Cannot read this time. Pick it again.' } });
     const n = await withEntity(entity_id, (db) =>
       db.query(`SELECT chit_sla_pause_end($1,$2,$3) AS copies`, [req.params.chit_id, req.params.pause_id, to])
     );
