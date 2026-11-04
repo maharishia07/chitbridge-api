@@ -21842,7 +21842,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 72,
+   "line": 73,
    "hash": "58704aeeba95e199",
    "does": "",
    "errors": {
@@ -21872,10 +21872,10 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
@@ -49772,7 +49772,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 263,
+   "line": 264,
    "hash": "846f90faabfcc47e",
    "does": "",
    "errors": {
@@ -49802,7 +49802,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
@@ -49866,7 +49866,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 345,
+   "line": 346,
    "hash": "1f8bcaf18f86ea47",
    "does": "",
    "errors": {
@@ -49895,7 +49895,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
@@ -49959,7 +49959,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 321,
+   "line": 322,
    "hash": "cda33b4bc1ff76f4",
    "does": "",
    "errors": {
@@ -49990,7 +49990,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
@@ -50054,7 +50054,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 234,
+   "line": 235,
    "hash": "67b1b3a282f7987e",
    "does": "",
    "errors": {
@@ -50084,7 +50084,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
@@ -50147,7 +50147,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 213,
+   "line": 214,
    "hash": "2212a262f4635fec",
    "does": "",
    "errors": {
@@ -50177,7 +50177,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,
@@ -58025,7 +58025,7 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 167,
+   "line": 168,
    "hash": "c9f031a055c5df55",
    "does": "",
    "errors": {
@@ -58055,7 +58055,7 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
     "error_tests": false,

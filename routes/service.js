@@ -1,8 +1,8 @@
 'use strict';
-// owns: the service clock routes of a chit (start, respond, resolve, pause, end, answer) and their plain answers when an id or a time is not valid.
-// called by: server.js (mounted at /api/service) · the web service panel.
-// FLOW  auth → router.param uuid guard → mine(entity, chit) → withEntity → chit_sla / pause functions → res | problem
-// INIT  express → middleware/auth · lib/sla · lib/problem · db
+// OWNS      the seven service clock routes of a chit (read, start, respond, resolve, pause, end, answer) and their plain answers when an id, a time or a text value is not valid.
+// CALLED BY server.js (app.use('/api/service')) · the web service panel (cap-service.js) · tools/api-register.cjs (router.openapi) · tests/api-problem-service.test.cjs · tests/rail-158-service-errors.test.cjs · tests/rail-161-service-catches.test.cjs
+// FLOW      router.param id guard (404, before sign-in) → auth → schemaValidate (lib/service-contract.js) → handler: mine(entity, chit) → withEntity → chit_sla / pause functions → res | failed() (503 not migrated · 400 a value no column can hold · 500)
+// INIT      express → middleware/auth · lib/sla · lib/problem · lib/service-contract · db
 // CARD 03-disputes-service-and-register/service-request-sla-pause
 /**
  * routes/service.js — a chit AS A SERVICE REQUEST. The clock, and the pause that gets argued about.
@@ -48,8 +48,9 @@ const noSuch = (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : prob
 router.param('chit_id', noSuch);
 router.param('pause_id', noSuch);
 
-/** A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority. */
 /**
+ * A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority.
+ *
  * ⚠️ TAKES AN OPTIONAL CLIENT — `onEntity(id, db, fn)` runs on a transaction the caller already owns, or opens
  * its own when passed nothing (db/index.js). Every one of the eight existing callers passes nothing and is
  * untouched; the one that has a transaction in hand now shares it instead of opening a second.
