@@ -20838,6 +20838,12 @@
       "error": "Not found",
       "message": "Chit not visible to you"
      }
+    },
+    {
+     "scenario": "trace-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -21074,6 +21080,12 @@
       "error": "Failed to list batches",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "batches-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
