@@ -347,7 +347,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 141,
+   "line": 140,
    "hash": "173f30d993cc4781",
    "does": "A channel id of yours -> we remove that binding -> a confirmation that it is gone.",
    "errors": {
@@ -35588,7 +35588,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 85,
+   "line": 84,
    "hash": "e42bbcbc9f41b572",
    "does": "A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.",
    "errors": {
@@ -35676,7 +35676,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 114,
+   "line": 113,
    "hash": "daa1e2e3f204410f",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
@@ -35763,7 +35763,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 65,
+   "line": 62,
    "hash": "21dd980fccb62059",
    "does": "On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.",
    "errors": {
@@ -35943,7 +35943,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 132,
+   "line": 131,
    "hash": "4fec3ffef1fe9308",
    "does": "A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).",
    "errors": {
@@ -36030,7 +36030,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 74,
+   "line": 73,
    "hash": "57f7e760fa596da2",
    "does": "A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.",
    "errors": {
@@ -36122,7 +36122,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 123,
+   "line": 122,
    "hash": "addfba275c3956e0",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {

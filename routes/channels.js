@@ -54,9 +54,6 @@ router.post('/:id/provider-ref', auth, ...checked('POST /:id/provider-ref'), asy
   }
 });
 
-// POST /:id/template — the OWNER states Meta approved a template on their number. { name, state }
-// ⚠️ An entity action, not an admin one: only the owner can see Meta's approval screen, and asserting wrongly
-// costs them a rejected send rather than anyone else's isolation.
 /**
  * POST /:id/auto-raise { on } — hands-free raising for ONE line (b131).
  * ⚠️ The switch is not the permission: an unverified binding auto-raises nothing whatever this says.
@@ -70,6 +67,8 @@ router.post('/:id/auto-raise', auth, ...checked('POST /:id/auto-raise'), async (
   }
 });
 
+// POST /:id/template — the owner says a template is waiting at Meta. { name, state }
+// ⚠️ An entity action, not an admin one: a shop may only say "pending"; "approved" is the platform's word (template-approve below, SEC-FIX3 S7).
 // @does A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.
 router.post('/:id/template', auth, ...checked('POST /:id/template'), async (req, res) => {
   try {
