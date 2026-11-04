@@ -243,7 +243,9 @@ async function checkFindings(recording) {
   const outcome = await storageAfterOneFailure();
   console.log('  FINDING F4 cb-rail/cb-platform: lib/storage.js ensureTable() keeps its FIRST result in a module variable, a rejected promise included: after one failed first query every later upload and download answers 500 until the process restarts: ' + JSON.stringify(outcome));
   check('F4: a library loaded fresh fails on its first call (the database is down) and STILL fails on the second (the database is back)', outcome.first === 'threw' && outcome.second === 'threw', outcome);
-  console.log('  FINDING F5 cb-security: GET /:id reads WHERE id = $1 with no entity predicate of its own (lib/storage.js getBlob): row-level security alone decides whose copy it is (RAIL-80). The 9th world below passes where RLS applies (the cb_app role, FORCE ROW LEVEL SECURITY, baseline); it does not on a connection that bypasses RLS (the local stack runs as postgres).');
+  console.log('  FINDING F5 cb-security: GET /:id used to read WHERE id = $1 with no entity predicate (lib/storage.js getBlob, RAIL-88: now AND entity_id = $2, a second lock beside row-level security; RAIL-80 still open: run the local api as cb_app). The 9th world below passes where RLS applies (the cb_app role, FORCE ROW LEVEL SECURITY, baseline); it does not on a connection that bypasses RLS (the local stack runs as postgres).');
+  const reads = (sqlLog[getKey('get-png-opens-inline')] || []).filter((one) => /FROM cb_attachment\s+WHERE id = \$1/.test(one.sql));
+  check('F5 closed (RAIL-88): the download reads WHERE id = $1 AND entity_id = $2 with the caller\'s shop as $2, a second lock beside RLS', reads.length === 1 && /WHERE id = \$1 AND entity_id = \$2/.test(reads[0].sql) && reads[0].p[1] === SHOP, reads.map((one) => [one.sql, one.p]));
 }
 
 /** a fresh copy of lib/storage.js, called once with the database down and once with it back: does it recover? (ensureTable caches its first answer) */
