@@ -4,8 +4,8 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 21,
-  "partial": 448,
+  "not_started": 13,
+  "partial": 456,
   "meets": 168,
   "columns": {
    "strict_input": {
@@ -18726,13 +18726,19 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 217,
-   "hash": "3f6c4bd2a94b38c8",
+   "line": 222,
+   "hash": "79e8a97494645b0f",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "catalogue_adoption",
@@ -18751,13 +18757,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18773,9 +18779,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18784,7 +18795,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -45295,13 +45306,23 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 392,
-   "hash": "0eefeb9f64320612",
+   "line": 401,
+   "hash": "672d1332f9a4753a",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "OFFER_UNKNOWN",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -45313,13 +45334,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -45335,9 +45356,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45346,7 +45375,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -45374,13 +45403,26 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 337,
-   "hash": "a4e76d40d80bda40",
+   "line": 343,
+   "hash": "2cfc3febe13dabdf",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 4,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": [
+     "NOT_FOUND",
+     "OFFER_ENDS_BEFORE_START",
+     "OFFER_NOT_LIVE",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "definition",
@@ -45395,13 +45437,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45417,9 +45459,18 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45428,7 +45479,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45454,13 +45505,24 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 375,
-   "hash": "849fb04dc5aabc73",
+   "line": 383,
+   "hash": "4cb60c200ef584b5",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 3,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": [
+     "NOT_FOUND",
+     "OFFER_NOT_RELEASED",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "definition",
@@ -45475,13 +45537,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45497,9 +45559,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45508,7 +45578,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45534,18 +45604,27 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 311,
-   "hash": "4b44d5d0f6b0a9b6",
+   "line": 317,
+   "hash": "e2f896a8f59e3ee4",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "identities"
    ],
-   "writes": [],
+   "writes": [
+    "catalogue_adoption"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -45554,13 +45633,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45576,9 +45655,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45587,7 +45672,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45613,16 +45698,25 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 321,
-   "hash": "3900fd763a0ab467",
+   "line": 327,
+   "hash": "fa78d9c144e2dd67",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "catalogue_adoption"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -45631,13 +45725,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45653,9 +45747,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45664,7 +45764,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45690,13 +45790,20 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 293,
-   "hash": "562fa0e9213aff5e",
+   "line": 299,
+   "hash": "e5282d27e356eb80",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "identities"
@@ -45712,13 +45819,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45734,9 +45841,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45745,7 +45858,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -57596,13 +57709,22 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 275,
-   "hash": "9ae0898160a35ede",
+   "line": 280,
+   "hash": "c366a186bcc54fb2",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "POLICY_NOT_VALID",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -57614,13 +57736,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -57636,9 +57758,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -57647,7 +57776,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],

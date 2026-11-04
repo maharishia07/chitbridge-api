@@ -57318,6 +57318,534 @@
      }
     }
    ]
+  },
+  "GET /api/network-offers": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    },
+    {
+     "scenario": "network-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "members-not-read",
+     "status": 503,
+     "body_keys": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     },
+     "fixture": {
+      "error": "Network not read",
+      "message": "We could not read who is in the network just now. Nothing was changed. Try again in a minute.",
+      "code": "NETWORK_READ_FAILED"
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/choice": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Unknown offer."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Unknown offer."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "choice-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/release": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "offer-not-live",
+     "status": 409,
+     "body_keys": {
+      "error": "Not live",
+      "message": "Make the offer live before releasing it to your stores."
+     },
+     "fixture": {
+      "error": "Not live",
+      "message": "Make the offer live before releasing it to your stores."
+     }
+    },
+    {
+     "scenario": "ends-before-start",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "The offer would end before it starts."
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "The offer would end before it starts."
+     }
+    },
+    {
+     "scenario": "release-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "That is not one of your offers."
+     }
+    },
+    {
+     "scenario": "never-released",
+     "status": 409,
+     "body_keys": {
+      "error": "Not released",
+      "message": "That offer was never released to your stores."
+     },
+     "fixture": {
+      "error": "Not released",
+      "message": "That offer was never released to your stores."
+     }
+    },
+    {
+     "scenario": "withdraw-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     },
+     "fixture": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 409,
+     "body_keys": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     },
+     "fixture": {
+      "error": "none",
+      "message": "Nothing is waiting to be published."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "choice must be use, keep or ok"
+     }
+    },
+    {
+     "scenario": "price-answer-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     },
+     "fixture": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     },
+     "fixture": {
+      "error": "not_yours",
+      "message": "That catalogue is not one you publish."
+     }
+    }
+   ]
+  },
+  "PUT /api/network-offers/policy": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Network offers are managed by a signed-in person."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "policy must be opt_in or opt_out"
+     }
+    },
+    {
+     "scenario": "policy-write-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {
