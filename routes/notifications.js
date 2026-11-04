@@ -16,6 +16,7 @@ const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
+const { UUID } = require('../lib/namedentity'); // the one uuid shape
 const FEED_PAGE = 30,
   FEED_MAX = 100; /* the bell shows the newest thirty */
 
@@ -213,8 +214,10 @@ router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, 
   try {
     const entity_id = auth.entityOf(req);
     const all = req.body && req.body.all === true;
-    const ids = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
-    if (!all && !ids.length) {
+    const asked = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
+    /* K-1 (B2): a value that is no uuid names no event: it clears nothing, as an id nobody has does (it reached unnest($2::uuid[]): 22P02, a 500) */
+    const ids = asked.filter((one) => UUID.test(String(one)));
+    if (!all && !asked.length) {
       return problem(req, res, { status: 400, ...words.nothingToClear() });
     }
     const out = await withEntity(entity_id, async (c) => {

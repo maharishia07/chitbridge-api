@@ -8,7 +8,7 @@
  *           rows of docs/contracts/api-error-tests.json, and what the tour does: the lead gate mints a token with a SEPARATE secret (S1: the identity secret does not verify it, its claims and 7 days are
  *           byte for byte under a frozen clock), the notification wording and its three no-op doors. Also: no answer of ANY status (a 2xx included) carries the text of a thrown error, a 2xx is never a Problem,
  *           the frozen 500 bodies are replayed word for word, no answer outside the statuses the contract declares (lib/simulator-contract.js), its words as units, and the FINDINGS the sweep lists for
- *           cb-security: the foreign-key oracle on `leadId` (a real lead id answers 200, an unknown uuid and a non-uuid answer the same 500), a rating the column cannot hold, `name` and `section` reaching an
+ *           cb-security: the foreign-key oracle on `leadId` (a real lead id answers 200, an unknown uuid answers 500; a non-uuid is ignored, 200), a rating the column cannot hold (null, 200), `name` and `section` reaching an
  *           e-mail SUBJECT unescaped, the SELECT * of /content, and the secret fallback. All three routes are signed out, so there is no "another shop" and no id in any path: the 9th world (S35) has nothing to
  *           ask; the id surface is the body's `leadId`. None is a money write.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db that MODELS sim_leads and sim_feedback (its foreign key and column types), and a stand-in e-mail provider
@@ -174,7 +174,7 @@ function checkFrozen5xx(recording) {
     replayed++;
     check(route + ' · ' + frozen.scenario + ': the frozen ' + frozen.status + ' body is kept, key by key and in order', !!now && now.status === frozen.status && sameValue(order.map((name) => now.body[name]), order.map((name) => frozen.fixture[name])) && sameValue(Object.keys(now.body).slice(0, order.length), order), now && now.body);
   }));
-  check('at least fifteen 500 answers (every route x a failing db, a thrown answer, a rating or a lead the column refuses) were frozen and replayed (' + replayed + ')', replayed >= 15, replayed);
+  check('at least ten 500 answers (every route x a failing db, a thrown answer, a lead the foreign key refuses) were frozen and replayed (' + replayed + ')', replayed >= 10, replayed);
   check('there is no 502 or 503 on these routes to replay: no relay mode, no provider answer reaches the caller (the e-mail provider is called after the insert and never answers the visitor)', Object.keys(recording).every((key) => ![502, 503].includes(recording[key].status)));
 }
 
@@ -246,7 +246,7 @@ function checkStored(recording) {
   check('only the four fields are read: an id, a created_at or an admin flag reaches no statement', sameValue(feedback('feedback-extra-keys-dropped')[0].p, [scenes.KNOWN_LEAD, 'pricing', 4, 'Test message']));
   const rating = (id) => feedback(id)[0].p[2];
   check('the rating is +value when that is a finite number: "5" is 5, [5] is 5, true is 1, "" and null are 0, "abc" is null, -3 stays -3', rating('feedback-rating-as-text') === 5 && rating('feedback-rating-in-a-list') === 5 && rating('feedback-rating-true') === 1 && rating('feedback-rating-empty-text') === 0 && rating('feedback-rating-null') === 0 && rating('feedback-rating-not-a-number') === null && rating('feedback-rating-negative') === -3);
-  check('FINDING: a rating that is finite but not a whole number the column holds (3.5, 5000000000) reaches the INSERT and is Postgres 22P02 / 22003: the generic 500, and nothing is written', ['feedback-rating-decimal', 'feedback-rating-too-big-for-the-column'].every((id) => answerOf(recording, FEEDBACK, id).status === 500 && rating(id) !== undefined));
+  check('K-1 (B2): a rating the integer column cannot hold (3.5, 5000000000) is no rating, as "abc" is none: stored as null, answered 200 (it was Postgres 22P02 / 22003, a 500)', ['feedback-rating-decimal', 'feedback-rating-too-big-for-the-column'].every((id) => answerOf(recording, FEEDBACK, id).status === 200 && rating(id) === null));
   check('a lead id of the wrong length is ignored (lead_id null): 3 characters and 37 characters', feedback('feedback-lead-too-short-ignored')[0].p[0] === null && feedback('feedback-lead-too-long-ignored')[0].p[0] === null);
   check('a refused feedback writes nothing (nothing sent, blank, 0, a list)', ['feedback-nothing-sent', 'feedback-message-blank', 'feedback-message-zero', 'feedback-body-a-list'].every((id) => feedback(id).length === 0 && answerOf(recording, FEEDBACK, id).status === 400));
 }
@@ -261,7 +261,7 @@ function checkOracle(recording) {
   const hex = answerOf(recording, FEEDBACK, 'feedback-lead-36-hex-digits');
   const inList = answerOf(recording, FEEDBACK, 'feedback-lead-in-a-list');
   check('a real lead id answers 200 { ok: true }', known.status === 200 && sameValue(known.body, { ok: true }), known.body);
-  check('a well-formed uuid nobody holds answers 500 (the foreign key, 23503), and a 36-character non-uuid (36 hyphens, 36 hex digits, a list holding an id) answers the very same 500: the key and the cast are not told apart', [unknown, dashes, hex, inList].every((one) => one.status === 500) && masked(unknown) === masked(dashes) && masked(dashes) === masked(hex) && masked(hex) === masked(inList), [unknown.status, dashes.status, hex.status, inList.status]);
+  check('a well-formed uuid nobody holds answers 500 (the foreign key, 23503); K-1 (B2): a 36-character non-uuid (36 hyphens, 36 hex digits, a list holding an id) is no lead id at all, ignored (lead_id null) as a 3-character one is: 200 { ok: true }', unknown.status === 500 && [dashes, hex, inList].every((one) => one.status === 200 && sameValue(one.body, { ok: true })) && [dashes, hex, inList].every((_, index) => insertsOf(FEEDBACK, ['feedback-lead-not-a-uuid', 'feedback-lead-36-hex-digits', 'feedback-lead-in-a-list'][index], 'sim_feedback')[0].p[0] === null), [unknown.status, dashes.status, hex.status, inList.status]);
   check('SO 200 against 500 tells a signed-out caller whether a uuid is a lead; it needs a candidate id first (gen_random_uuid, 122 random bits, never listed): rated LOW', known.status !== unknown.status);
   check('the uppercase id, and the id with its hyphens in other places, are the same lead to Postgres: 200', answerOf(recording, FEEDBACK, 'feedback-lead-uppercase').status === 200 && answerOf(recording, FEEDBACK, 'feedback-lead-hyphens-moved').status === 200);
   check('the model of the key is the baseline: sim_feedback.lead_id is a uuid column REFERENCES sim_leads(id) with no RLS on either table; rating is an integer column', (() => {
@@ -367,7 +367,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkNoBodyParser(router);
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
-  check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 30, frozen);
+  check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 20, frozen);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));

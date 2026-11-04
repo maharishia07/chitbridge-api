@@ -22,7 +22,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4790 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
 | DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6172 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:255 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1002 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1012 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:418 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/groups/:name | crm | routes/crm.js:698 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/parties/:id | crm | routes/crm.js:434 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -132,10 +132,10 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/combo-templates | combo-templates | routes/combo-templates.js:60 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/list | connections | routes/connections.js:202 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/pending | connections | routes/connections.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/connectors | connectors | routes/connectors.js:769 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/connectors/:actorId/connections | connectors | routes/connectors.js:953 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/connectors/:actorId/provisioning | connectors | routes/connectors.js:793 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/connectors/:actorId/receipts | connectors | routes/connectors.js:709 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/connectors | connectors | routes/connectors.js:777 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/connectors/:actorId/connections | connectors | routes/connectors.js:961 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/connectors/:actorId/provisioning | connectors | routes/connectors.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/connectors/:actorId/receipts | connectors | routes/connectors.js:717 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/counters | counters | routes/counters.js:61 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/crm/calls | crm | routes/crm.js:484 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/crm/followups | crm | routes/crm.js:378 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -225,7 +225,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/network/entities/:id/subtree | network | src/routes/network.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/network/entities/lookup | network | src/routes/network.js:50 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | GET | /api/network/place | network | src/routes/network.js:83 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
-| GET | /api/notifications | notifications | routes/notifications.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/notifications | notifications | routes/notifications.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/offers/kinds | offers | routes/offers.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/offers/openapi.json | offers | routes/offers.js:109 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/openapi.json | openapi | routes/openapi.js:34 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
@@ -259,7 +259,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/service/:chit_id | service | routes/service.js:61 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/signin/devices | signin | routes/signin.js:133 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/signin/sessions | signin | routes/signin.js:106 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/simulator/content | simulator | routes/simulator.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| GET | /api/simulator/content | simulator | routes/simulator.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/supplies | supplies | routes/supplies.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/tax/gstr | tax | routes/tax.js:84 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:35 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
@@ -307,7 +307,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PATCH | /api/books/payments/:id | books | routes/books.js:1340 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | partial |
 | PATCH | /api/books/recurring/:id | books | routes/books.js:2294 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
 | PATCH | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:103 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:974 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:982 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/counters/:id | counters | routes/counters.js:104 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | PATCH | /api/crm/followups/:id | crm | routes/crm.js:408 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PATCH | /api/entities/:id/erase | entities | routes/entities.js:1200 | yes | yes | yes | yes | yes | no | yes | no | no | no | yes | yes | no | partial |
@@ -444,14 +444,14 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/combo-templates | combo-templates | routes/combo-templates.js:77 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/combo-templates/:id/push | combo-templates | routes/combo-templates.js:211 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/connections/request | connections | routes/connections.js:26 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
-| POST | /api/connectors | connectors | routes/connectors.js:183 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/connectors/:actorId/connections | connectors | routes/connectors.js:913 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/connectors/:actorId/erp-test | connectors | routes/connectors.js:734 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/connectors/:actorId/ping | connectors | routes/connectors.js:898 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/connectors/:actorId/regenerate-key | connectors | routes/connectors.js:851 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/connectors/erp-ingest | connectors | routes/connectors.js:668 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
-| POST | /api/connectors/ingest | connectors | routes/connectors.js:527 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
-| POST | /api/connectors/reissue-code | connectors | routes/connectors.js:826 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors | connectors | routes/connectors.js:191 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors/:actorId/connections | connectors | routes/connectors.js:921 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors/:actorId/erp-test | connectors | routes/connectors.js:742 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors/:actorId/ping | connectors | routes/connectors.js:906 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors/:actorId/regenerate-key | connectors | routes/connectors.js:859 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
+| POST | /api/connectors/erp-ingest | connectors | routes/connectors.js:676 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/connectors/ingest | connectors | routes/connectors.js:535 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | partial |
+| POST | /api/connectors/reissue-code | connectors | routes/connectors.js:834 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/counters | counters | routes/counters.js:77 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/counters/:id/assign | counters | routes/counters.js:133 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/counters/:id/open | counters | routes/counters.js:161 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
@@ -524,8 +524,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/network/connections/:id/suspend | network | src/routes/network.js:170 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
 | POST | /api/network/entities | network | src/routes/network.js:43 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/network/entities/:id/claim | network | src/routes/network.js:59 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | no | partial |
-| POST | /api/notifications/dismiss | notifications | routes/notifications.js:212 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
-| POST | /api/notifications/seen | notifications | routes/notifications.js:183 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/notifications/dismiss | notifications | routes/notifications.js:213 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/notifications/seen | notifications | routes/notifications.js:184 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/offers/evaluate | offers | routes/offers.js:105 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/offers/explain | offers | routes/offers.js:106 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/pricing/price | pricing | routes/pricing.js:52 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial |
@@ -571,8 +571,8 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/signin/renew | signin | routes/signin.js:72 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/signin/sessions/revoke | signin | routes/signin.js:155 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/signin/verify | signin | routes/signin.js:965 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | no | partial |
-| POST | /api/simulator/feedback | simulator | routes/simulator.js:94 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
-| POST | /api/simulator/lead | simulator | routes/simulator.js:69 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/simulator/feedback | simulator | routes/simulator.js:98 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
+| POST | /api/simulator/lead | simulator | routes/simulator.js:73 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/supplies | supplies | routes/supplies.js:57 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:126 | yes | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | partial |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:113 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | no | yes | yes | partial |
@@ -2138,7 +2138,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/connectors** · connectors · cb-connect · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): - · callers: cap-workforce.js · actions: -
 

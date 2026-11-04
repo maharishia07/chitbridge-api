@@ -666,6 +666,14 @@
     400
    ]
   },
+  "GET /api/connectors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/connectors/:actorId/connections": {
    "cases": 3,
    "failed": 0,

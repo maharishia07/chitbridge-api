@@ -9,6 +9,7 @@
 // pipe is down). Every route is auth'd + gated on the entity's 'connector' capability. (b62 schema.)
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const logger = require('../lib/logger');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -150,7 +151,7 @@ const deviceKey = (label) =>
 async function deviceMayAddress(entity_id, cc) {
   if (!cc || String(cc) === String(entity_id)) return null;
   const no = (reason) => words.deviceRefused(reason);
-  if (!/^[0-9a-f-]{36}$/i.test(String(cc))) return no('the recipient is not a ChitBridge id');
+  if (!UUID.test(String(cc))) return no('the recipient is not a ChitBridge id'); /* K-1 (B2): 36 hex-or-hyphen characters is not yet an id: '-' x 36 reached the uuid column and answered 500 */
   const r = await withEntity(entity_id, (c) =>
     c.query(
       `SELECT i.display_name,
@@ -167,6 +168,13 @@ async function deviceMayAddress(entity_id, cc) {
   const v = await localIdentity.mayTrade(entity_id, cc);
   return no(v.ok ? (row.display_name || 'that party') + ' cannot receive it' : v.say);
 }
+
+/** a whole number (as the route chain checked it) that a bigint column can hold */
+const BIGINT_MAX = 9223372036854775807n;
+const fitsBigint = (digits) => {
+  const asked = BigInt(digits);
+  return asked <= BIGINT_MAX && asked >= -BIGINT_MAX - 1n;
+};
 
 // ownership guard — the connector actor must be an actor identities row under this entity
 async function ownedConnector(actor_id, entity_id) {
@@ -766,7 +774,7 @@ router.post('/:actorId/erp-test', auth, requireConnector, [param('actorId').isUU
 });
 
 // GET /api/connectors — list connector actors (site, config, health) so the UI can group by site
-router.get('/', auth, requireConnector, async (req, res) => {
+router.get('/', auth, requireConnector, ...checked('GET /'), async (req, res) => {
   try {
     const entity_id = ownerEntityId(req);
     const r = await db(
@@ -981,6 +989,8 @@ router.patch(
   async (req, res) => {
     try {
       const entity_id = ownerEntityId(req);
+      /* K-1 (B2): connection_id is a bigint: a whole number beyond it is a connection nobody has, answered as one (it was a 500, 22003) */
+      if (!fitsBigint(req.params.connId)) return problem(req, res, { status: 404, ...words.notFound() });
       const actor = await ownedConnector(req.params.actorId, entity_id);
       if (!actor) return problem(req, res, { status: 404, ...words.notFound() });
       const r = await db(

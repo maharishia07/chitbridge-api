@@ -829,7 +829,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1002,
+   "line": 1012,
    "hash": "e5b9eacc9c599271",
    "does": "",
    "errors": {
@@ -10947,12 +10947,13 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 769,
-   "hash": "18b660d23a4e9f0c",
+   "line": 777,
+   "hash": "6ca601755fb8a40b",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      403,
      500
@@ -10995,6 +10996,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     500
@@ -11036,7 +11038,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 953,
+   "line": 961,
    "hash": "c25e2cdac9334f07",
    "does": "",
    "errors": {
@@ -11129,7 +11131,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 793,
+   "line": 801,
    "hash": "e71c276b6e4827f0",
    "does": "",
    "errors": {
@@ -11222,7 +11224,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 709,
+   "line": 717,
    "hash": "dde18b4db413b9dc",
    "does": "",
    "errors": {
@@ -19150,7 +19152,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 56,
+   "line": 57,
    "hash": "75e5cc9c3b5f0480",
    "does": "",
    "errors": {
@@ -22085,7 +22087,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 44,
+   "line": 48,
    "hash": "381d8655bc80219d",
    "does": "",
    "errors": {
@@ -26374,8 +26376,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 974,
-   "hash": "0c53fd88d5c09c6d",
+   "line": 982,
+   "hash": "1cf3e7639cafff38",
    "does": "",
    "errors": {
     "count": 0,
@@ -39183,7 +39185,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 183,
+   "line": 191,
    "hash": "68b57a10310aaeca",
    "does": "",
    "errors": {
@@ -39275,7 +39277,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 913,
+   "line": 921,
    "hash": "39788dad152dccf2",
    "does": "",
    "errors": {
@@ -39369,7 +39371,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 734,
+   "line": 742,
    "hash": "71943cd74062c482",
    "does": "",
    "errors": {
@@ -39463,7 +39465,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 898,
+   "line": 906,
    "hash": "6162c106b4962e57",
    "does": "",
    "errors": {
@@ -39558,7 +39560,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 851,
+   "line": 859,
    "hash": "810725499624c700",
    "does": "",
    "errors": {
@@ -39652,7 +39654,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 668,
+   "line": 676,
    "hash": "6429866ee83c4653",
    "does": "",
    "errors": {
@@ -39743,7 +39745,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 527,
+   "line": 535,
    "hash": "85810ec14448e0e3",
    "does": "",
    "errors": {
@@ -39841,7 +39843,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 826,
+   "line": 834,
    "hash": "835f24dcf599a1db",
    "does": "",
    "errors": {
@@ -46473,8 +46475,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 212,
-   "hash": "d59f0da9b304d519",
+   "line": 213,
+   "hash": "71f2cb057b4c7dc5",
    "does": "",
    "errors": {
     "count": 0,
@@ -46567,7 +46569,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 183,
+   "line": 184,
    "hash": "010892fd7215ad6f",
    "does": "",
    "errors": {
@@ -50636,8 +50638,8 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 94,
-   "hash": "1cea72366c798274",
+   "line": 98,
+   "hash": "3b063917503a0f42",
    "does": "",
    "errors": {
     "count": 0,
@@ -50717,7 +50719,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 69,
+   "line": 73,
    "hash": "ef1c1dc647a9ede5",
    "does": "",
    "errors": {
