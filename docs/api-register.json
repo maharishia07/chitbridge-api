@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 21,
-  "partial": 449,
-  "meets": 167,
+  "partial": 448,
+  "meets": 168,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -7364,11 +7364,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "57086e1ed0d15b39"
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#706 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
