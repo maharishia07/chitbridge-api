@@ -86,6 +86,23 @@ const big = (bytes) => JSON.stringify({ pad: 'x'.repeat(bytes) });
   r = await call(port, 'GET', '/api/products/import-slow');
   ok(r.status === 200 && r.body.imported, 'a bulk route (large budget) has no request deadline — an import is never cut off mid-write (got ' + r.status + ')');
 
+  /* PLT-70: the deadline is NOT skipped for the money paths that merely have a big BODY allowance */
+  ['/api/chits/send', '/api/till/bill', '/api/offers/x', '/api/invoice/build', '/api/catalogue/x/order/confirm', '/api/books/post'].forEach((p) =>
+    ok(limits.isLarge({ path: p }) && !limits.hasNoDeadline({ path: p }), 'PLT-70: ' + p + ' keeps its 30 s deadline although its body budget is large'));
+  ['/api/products/import', '/api/connectors/tally', '/api/crm/leads/import', '/api/events/stream'].forEach((p) =>
+    ok(limits.hasNoDeadline({ path: p }), 'PLT-70: ' + p + ' (bulk import / stream) has no deadline'));
+
+  /* SEC-125: a blank or non-numeric setting is the default, never "off" and never NaN */
+  const keep = { t: process.env.REQUEST_TIMEOUT_MS, w: process.env.IDEMPOTENCY_WINDOW_HOURS, r: process.env.AUTH_RATE_LIMIT_MAX };
+  process.env.REQUEST_TIMEOUT_MS = ''; ok(limits.requestTimeoutMs() === 30000, 'SEC-125: REQUEST_TIMEOUT_MS="" is the 30 s default, not 0 (deadline off)');
+  process.env.REQUEST_TIMEOUT_MS = '0'; ok(limits.requestTimeoutMs() === 0, 'SEC-125: REQUEST_TIMEOUT_MS=0 still means off, said on purpose');
+  process.env.AUTH_RATE_LIMIT_MAX = '30s'; ok(limits.envPositiveInt('AUTH_RATE_LIMIT_MAX', 30) === 30, 'SEC-125: AUTH_RATE_LIMIT_MAX="30s" falls back to 30, not NaN');
+  process.env.AUTH_RATE_LIMIT_MAX = '12'; ok(limits.envPositiveInt('AUTH_RATE_LIMIT_MAX', 30) === 12, 'SEC-125: a good number is kept');
+  process.env.AUTH_RATE_LIMIT_MAX = '0'; ok(limits.envPositiveInt('AUTH_RATE_LIMIT_MAX', 30) === 30, 'SEC-125: 0 is no cap at all, so it falls back too');
+  process.env.IDEMPOTENCY_WINDOW_HOURS = '48h'; ok(require(path.join(API, 'middleware', 'idempotency')) && limits.envPositiveInt('IDEMPOTENCY_WINDOW_HOURS', 48) === 48, 'SEC-125: IDEMPOTENCY_WINDOW_HOURS="48h" falls back to 48');
+  process.env.REQUEST_TIMEOUT_MS = keep.t; if (keep.w === undefined) delete process.env.IDEMPOTENCY_WINDOW_HOURS; else process.env.IDEMPOTENCY_WINDOW_HOURS = keep.w;
+  if (keep.r === undefined) delete process.env.AUTH_RATE_LIMIT_MAX; else process.env.AUTH_RATE_LIMIT_MAX = keep.r;
+
   srv.close();
 
   /* ── the statement deadline ── */

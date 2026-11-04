@@ -251,7 +251,7 @@ function holdKey(req, res, next, claim) {
     .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
 }
 /** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
-const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS);
+const windowHours = () => require('../lib/limits').envPositiveInt('IDEMPOTENCY_WINDOW_HOURS', DEFAULT_WINDOW_HOURS);
 
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
 
