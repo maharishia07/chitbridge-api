@@ -1,6 +1,9 @@
 'use strict';
 /**
  * /api/signin — A PERSON'S SESSIONS: renew · logout · list · revoke (M05, SPEC-iam-build §4.2, D3, D14).
+ * OWNS      every route under /api/signin (8): renew · logout · sessions · devices · sessions/revoke · ask · verify · pin, and the handler functions the old paths (/api/entities/register, /verify, /api/actors/login, /check-login, /set-pin) mount as aliases.
+ * FLOW      door(name) → [session routes: auth → personOnly (a key is refused) → schemaValidate (lib/signin-contract.js)] · [ask · verify: schemaValidate → chains → validate → handler → lib/identity-auth.js] → the one answer an unknown account and a wrong secret share (SEC-81)
+ *           ⚠️ a typed value with a NUL byte names no account: it is answered as an unknown one before any lookup (K-1).
  * CARD 18-identity-sign-in-and-access/sign-in
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
@@ -26,7 +29,7 @@
  * 200 (nothing listed to remove — the page clears itself), and renew turns it into a listed session when the request
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  
- * CALLED BY routes/actors.js, routes/entities.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * CALLED BY server.js (app.use('/api/signin') and the /api/signin/{ask,verify,pin} rate-limit list) · routes/actors.js and routes/entities.js (the alias mounts) · the web's sign-in (signin-ui.js) · tests/api-problem-signin.test.cjs · tests/signin-routes.test.cjs
  */
 const express = require('express');
 const log = require('../lib/logger');
