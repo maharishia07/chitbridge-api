@@ -1,5 +1,5 @@
 /*
- * OWNS      supplier list, customer list and promotions.
+ * OWNS      supplier list, customer list, promotions and the counterparty scorecard.
  * CALLED BY web Suppliers · Customers.
  * FLOW      handle lookup (businesses only) → list row → numbered party
  * CARD      11-crm-and-marketing/relationships
