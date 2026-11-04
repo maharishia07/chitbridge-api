@@ -141,6 +141,17 @@ async function supplierKind(entity_id, supplier_entity_id) {
   }
 }
 
+/** who sent the goods: the trade on the chit, and this shop's own designation of the supplier (resale or own_use, and its nickname) laid over it */
+async function senderWithKind(entity_id, chit) {
+  const from = await senderOf(chit);
+  const kind = await supplierKind(entity_id, chit.sender_entity_id);
+  if (kind) {
+    from.supply_kind = kind.supply_kind;
+    from.name = kind.nickname || from.name;
+  }
+  return from;
+}
+
 /** ⭐ WHAT THIS DELIVERY OFFERS — reads only. Grouped the way a person reads it, never as forty rows. */
 router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
@@ -148,12 +159,7 @@ router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, 
     const chit = await deliveryOf(entity_id, String(req.params.chit_id));
     if (!chit) return problem(req, res, { status: 404, ...words.notFound() });
 
-    const from = await senderOf(chit);
-    const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) {
-      from.supply_kind = kind.supply_kind;
-      from.name = kind.nickname || from.name;
-    }
+    const from = await senderWithKind(entity_id, chit);
     const me = await receiverOf(entity_id);
 
     const out = adopt.considerAll(chit.line_items || [], from, me, {});
@@ -193,12 +199,7 @@ router.post('/:chit_id', auth, ...contract.checked('POST /:chit_id'), async (req
     const chit = await deliveryOf(entity_id, String(req.params.chit_id));
     if (!chit) return problem(req, res, { status: 404, ...words.notFound() });
     const lines = chit.line_items || [];
-    const from = await senderOf(chit);
-    const kind = await supplierKind(entity_id, chit.sender_entity_id);
-    if (kind) {
-      from.supply_kind = kind.supply_kind;
-      from.name = kind.nickname || from.name;
-    }
+    const from = await senderWithKind(entity_id, chit);
     const me = await receiverOf(entity_id);
 
     const made = [],

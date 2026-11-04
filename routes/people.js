@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * OWNS      GET /api/people: the shop's people for the Employees app, with what this login may do to each.
  * routes/people.js — P1: GET /api/people, the shop's people for the Employees app. ONE read, ONE trip.
  *
  * The five actions (add · what they can do · reset code · switch off/on · cover) are NOT wrapped: routes/actors.js already
