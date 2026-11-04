@@ -22087,7 +22087,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 48,
+   "line": 55,
    "hash": "381d8655bc80219d",
    "does": "",
    "errors": {
@@ -46475,8 +46475,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 213,
-   "hash": "71f2cb057b4c7dc5",
+   "line": 235,
+   "hash": "e159347a693a404b",
    "does": "",
    "errors": {
     "count": 0,
@@ -50638,8 +50638,8 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 98,
-   "hash": "3b063917503a0f42",
+   "line": 105,
+   "hash": "d2d60042664d65c0",
    "does": "",
    "errors": {
     "count": 0,
@@ -50719,7 +50719,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 73,
+   "line": 80,
    "hash": "ef1c1dc647a9ede5",
    "does": "",
    "errors": {
