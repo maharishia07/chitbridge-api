@@ -4,7 +4,7 @@
  * k1-path-uuid.test.cjs — K-1 (API-10, BUG-HUNT-2026-10-31 appendix B): a write route whose address carries an id that is not a uuid answers
  * 404 NOT_FOUND as problem+json, never a 500 with the database's words, and the database is never asked.
  *
- * OWNS      the proof for every route closed through lib/problem.js uuidParam (the ONE guard), one row per route in ROUTES; a valid uuid still
+ * OWNS      the proof for every route closed through lib/problem.js uuidParam (the ONE guard) and its text twin textParam, one row per route in ROUTES; a valid uuid still
  *           passes the guard (next() is called); a route file's own not-found words ride along as its frozen legacy body.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over a stand-in sign-in and a db that throws Postgres's own words.
  * FLOW      stub db + auth → each real router mounted at its prefix → request with id "abc" → status · code · content type · no driver text · no query
@@ -112,6 +112,22 @@ const ask = (server, method, url, body) =>
     const res = { status: (s) => ((sent = { s }), res), set: () => res, json: (b) => ((sent.b = b), res), locals: {} };
     uuidParam(() => ({ detail: 'gone', legacy: { error: 'Gone' } }))({ id: 'r' }, res, () => (sent = 'next'), id);
     check(sent && sent.s === 404 && sent.b.code === 'NOT_FOUND' && sent.b.error === 'Gone', 'uuidParam answers ' + JSON.stringify(id) + ' 404 with the route words');
+  }
+
+  /* textParam (K-1 Q2): a value Postgres text cannot hold is refused 400 INVALID_INPUT naming the field; any other text passes; a file's own words win */
+  const { textParam } = require(path.join(ROOT, 'lib', 'problem'));
+  for (const value of ['abc', 'IN-GST-18', 'ñandú 東京', 'x'.repeat(5000), '']) {
+    let through = false;
+    textParam()({}, {}, () => (through = true), value, 'key');
+    check(through, 'textParam lets ' + JSON.stringify(value.slice(0, 20)) + ' through');
+  }
+  for (const value of ['\u0000', 'a\u0000b']) {
+    let sent = null;
+    const res = { status: (s) => ((sent = { s }), res), set: () => res, json: (b) => ((sent.b = b), res), locals: {} };
+    textParam()({ id: 'r' }, res, () => (sent = 'next'), value, 'field_key');
+    check(sent && sent.s === 400 && sent.b.code === 'INVALID_INPUT' && sent.b.field === 'field_key' && !JSON.stringify(sent.b).includes('22021'), 'textParam answers ' + JSON.stringify(value) + ' 400 INVALID_INPUT naming the field');
+    textParam({ status: 404, code: 'NOT_FOUND', detail: 'No such column.', legacy: { error: 'Not found' } })({ id: 'r' }, res, () => (sent = 'next'), value, 'field_key');
+    check(sent && sent.s === 404 && sent.b.error === 'Not found', 'textParam with the file own words answers in them');
   }
 
   const server = app.listen(0);
