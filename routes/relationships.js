@@ -40,6 +40,11 @@ function unknownKeyRefusal(body, allowed) {
   const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + allowed.join(', ') + '.';
   return { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } };
 }
+/** the gate of a PATCH: a body key the route does not know ends the request before any handler work */
+const refuseUnknownKeys = (allowed) => (req, res, next) => {
+  const refused = unknownKeyRefusal(req.body, allowed);
+  return refused ? problem(req, res, refused) : next();
+};
 const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
@@ -391,11 +396,10 @@ router.patch(
   auth,
   validateAsProblem,
   ...checked('PATCH /suppliers/:id'),
+  refuseUnknownKeys(SUPPLIER_PATCH_KEYS), // CRM-44: the keys the Suppliers screens send are all in the list
   async (req, res) => {
     try {
       const owner = ctx(req);
-      const refused = unknownKeyRefusal(req.body, SUPPLIER_PATCH_KEYS); /* CRM-44: the keys the Suppliers screens send are all here */
-      if (refused) return problem(req, res, refused);
       const party = await partyPatch(req, res, 'supplier');
       if (party === false) return;
       const sets = [],
@@ -980,11 +984,10 @@ router.patch(
   auth,
   validateAsProblem,
   ...checked('PATCH /customers/:id'),
+  refuseUnknownKeys(CUSTOMER_PATCH_KEYS),
   async (req, res) => {
     try {
       const owner = ctx(req);
-      const refused = unknownKeyRefusal(req.body, CUSTOMER_PATCH_KEYS);
-      if (refused) return problem(req, res, refused);
       const party = await partyPatch(req, res, 'customer');
       if (party === false) return;
       if (!('segment_override' in (req.body || {}))) {
