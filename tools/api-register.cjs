@@ -153,10 +153,22 @@ function impliedStatuses(leaf, hasValidation, usesAuth) {
   return { implied, takesInput: BODY_METHODS.includes(leaf.method) || hasValidation };
 }
 
+/**
+ * API-4a · the statuses a route's answers come from a SHARED refusal mapper rather than a literal in its own handler (the books ledger's, an area's
+ * limiter...) are declared on the operation under that area's `x-<area>-refusals` extension (lib/contract-kit.js, one list of {status, code}).
+ * They count as declared and as allowed beyond the handler's own literals - read from every such extension, not from one area's name.
+ */
+function sharedRefusalStatuses(operation) {
+  return Object.keys(operation || {})
+    .filter((name) => /^x-[a-z0-9-]+-refusals$/.test(name) && Array.isArray(operation[name]))
+    .flatMap((name) => operation[name].map((item) => Number(item && item.status)))
+    .filter((status) => status >= 400);
+}
+
 /** the status_codes column: declared statuses against the res.status() literals in the handler */
-function statusColumn(declared, used, leaf, stackFacts) {
+function statusColumn(declared, used, leaf, stackFacts, shared) {
   const { implied, takesInput } = impliedStatuses(leaf, stackFacts.hasValidation, stackFacts.usesAuth);
-  const allowedExtra = (stackFacts.hasGate ? [401, 403] : []).concat(stackFacts.gateStatuses);
+  const allowedExtra = (stackFacts.hasGate ? [401, 403] : []).concat(stackFacts.gateStatuses, shared || []);
   if (!declared.length) return false;
   const covers = used.concat(implied).every((status) => declared.includes(status));
   const inputAnswered = !takesInput || declared.includes(400) || declared.includes(422);
@@ -289,7 +301,7 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
     error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
-    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
+    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts, sharedRefusalStatuses(operation)),
     strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
     foreign_id_404: foreignIdColumn(leaf, evidence, scope.publicIds.has(key)),
