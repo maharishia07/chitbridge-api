@@ -17398,7 +17398,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 258,
-   "hash": "9f494cd2f4297967",
+   "hash": "ed7608357d719bb9",
    "does": "",
    "errors": {
     "count": 1,
@@ -17427,7 +17427,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": true,
+    "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -17456,8 +17456,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ed7608357d719bb9"
    },
    "status": "partial",
    "callers": [],

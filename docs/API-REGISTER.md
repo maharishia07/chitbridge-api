@@ -205,7 +205,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/integrations/docs/:id | integrations | routes/integrations.js:275 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/download/:id | integrations | routes/integrations.js:380 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/integrations/kit | integrations | routes/integrations.js:249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
+| GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | no | partial |
 | GET | /api/integrations/profile-map | integrations | routes/integrations.js:982 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/integrations/reconcile | integrations | routes/integrations.js:832 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/integrations/status | integrations | routes/integrations.js:717 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |

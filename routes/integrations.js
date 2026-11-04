@@ -255,7 +255,7 @@ router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
     fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
   }
 });
-router.get('/kit/*', auth, (req, res) => {
+router.get('/kit/*', auth, schemaValidate(KIT_FILE_OPERATION), (req, res) => {
   try {
     /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
     const name = String(req.params[0] || '');
