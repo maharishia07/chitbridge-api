@@ -189,6 +189,16 @@ async function checkForeignIds(port) {
 
 /** a text answer as it was recorded: its text, or (when it happens to parse as JSON, a bare number) the value written back */
 const shown = (answer) => (answer.text !== undefined ? answer.text : JSON.stringify(answer.body));
+/** K-1 (B2): a value no column can hold is a 400 in words and never a 500; a webhook given junk still answers the 200 it always did */
+function checkJunk(recording) {
+  console.log('\n-- a junk value is refused in words, never a 500 --');
+  const answers = Object.entries(recording).filter(([key]) => /\|junk-/.test(key));
+  check('every junk scene answers, and none answers a 5xx (' + answers.length + ' scenes)', answers.length >= 13 && answers.every(([, one]) => one.status < 500), answers.filter(([, one]) => one.status >= 500).map(([key]) => key));
+  const stored = answers.filter(([key]) => /\|junk-(simulate|stores-(name|address|notes))-/.test(key));
+  check('a NUL byte in text a column keeps is the one "Cannot save this text" 400, with no word of the database (' + stored.length + ' routes)', stored.length >= 8 && stored.every(([, one]) => one.status === 400 && one.body.code === 'INVALID_INPUT' && one.body.message === 'Cannot save this text. Type it again.' && !/byte sequence|UTF8|unsupported|pg 2/.test(JSON.stringify(one.body))));
+  check('the two provider webhooks answer 200 to a junk delivery, as they do to every signed one', answers.filter(([key]) => /\|junk-(whatsapp|email)-/.test(key)).every(([, one]) => one.status === 200));
+}
+
 /** the answer of a named scene, from the recording */
 const sceneOf = (recording, route, id) => recording[route + '|' + id];
 const jsonOf = (answer) => (answer ? answer.body : null);
@@ -278,6 +288,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkContractShape(routes);
   checkFrozenFaults(recording);
   checkWebhooks(recording);
+  checkJunk(recording);
   await checkAfterTheAnswer();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
