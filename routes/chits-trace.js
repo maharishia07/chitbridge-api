@@ -20,13 +20,13 @@ const { LIST_MAX, LIST_PAGE } = require('../lib/chits-input');
 
 const entityId = (req) => auth.entityOf(req);
 /** a chit's parties as a list: all_recipients arrives as a list or as JSON text; text that does not parse is none */
-function recipientsOf(row, who) {
+function recipientsOf(row, caller) {
   let list = row.all_recipients;
   if (typeof list === 'string') {
     try {
       list = JSON.parse(list);
     } catch (e) {
-      cbLog.fellBack('chits ' + who + ': did not parse — answered with none', e, 'debug');
+      cbLog.fellBack('chits ' + caller + ': did not parse — answered with none', e, 'debug');
       list = [];
     }
   }
