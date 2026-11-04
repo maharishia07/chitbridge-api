@@ -38790,6 +38790,18 @@
      }
     },
     {
+     "scenario": "route-another-shops-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
      "scenario": "route-colleague-not-active",
      "status": 400,
      "body_keys": {

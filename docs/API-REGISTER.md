@@ -39,7 +39,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:188 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/actors | actors | routes/actors.js:811 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/actors/:id/tasks | actors | routes/actors.js:1643 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| GET | /api/actors/access-events | actors | routes/actors.js:1819 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/actors/access-events | actors | routes/actors.js:1834 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | GET | /api/actors/check-login | actors | routes/actors.js:698 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/actors/settings | actors | routes/actors.js:1513 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:144 | yes | no | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial |
