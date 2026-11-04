@@ -1,6 +1,6 @@
 // CARD 10-online-shop-and-storefront-orders/order-start-confirm
-// owns: the public storefront routes (catalogue, order start / confirm, buyer login).
-// called by: server.js mounts it at /api/catalogue.
+// owns: the public storefront routes (catalogue, order start / confirm, buyer login) and the signed-in ones (the shopper's own orders and documents, product enquiries, the photo read).
+// called by: server.js mounts it at /api/catalogue; routes/ctp.js reuses publicViewFor / resolveEntity. A path value is judged before the database: router.param (textParam for a shop handle, uuidParam for an item id).
 // FLOW  order/start (issue code) → order/confirm (verify, reprice, spend once, mint both copies) → token
 // routes/catalogue.js — B3.7 Public catalogue + end-customer order (no business login)
 const express = require('express');
