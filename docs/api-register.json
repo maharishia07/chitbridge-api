@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 423,
-  "meets": 204,
+  "partial": 422,
+  "meets": 205,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -33038,11 +33038,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9a64aceb18529725"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#750 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
