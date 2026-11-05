@@ -175,12 +175,14 @@ function create() {
         r.dr_minor += b.dr_minor; r.cr_minor += b.cr_minor; r.line_count += b.line_count; T.balances.set(k, r);
       }
     },
+    /* FIN-63: ONE moment per list, as Postgres stamps one transaction (now() is the transaction start); item_id is a string, as pg returns a bigint */
     async insertItems(db, e, items) {
+      const at = now();
       for (const it of items) {
         if (['bill', 'advance', 'on_account', 'allocation', 'reversal', 'status'].indexOf(it.ref_kind) < 0) throw new Error('party_item_kind_chk');
         if (['receivable', 'payable'].indexOf(it.side) < 0) throw new Error('party_item_side_chk');
         if (!it.ref || !it.against_ref || !it.party_id || !it.account_id || !it.currency) throw new Error('party_item not null: ' + JSON.stringify(it));
-        T.items.push(Object.assign({ item_id: ++itemSeq, entity_id: e, created_at: now() }, clone(it)));
+        T.items.push(Object.assign({ item_id: String(++itemSeq), entity_id: e, created_at: at }, clone(it)));
       }
     },
     /* CS2: a never-posted ledger is RE-CHARTED in place (no DELETE on the setup tables): parked, the new pack laid over the codes that exist, the year's periods re-labelled by number */

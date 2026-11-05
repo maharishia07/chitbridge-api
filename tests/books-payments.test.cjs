@@ -747,6 +747,142 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     ok("…the caller's own id is found on each (the 404 is about whose id it is)", (await q('GET', '/payments/' + first.body.payment.payment_id + '/advice')).status === 200 && (await q('POST', '/payments/' + first.body.payment.payment_id + '/propose', {})).status === 200);
   });
 
+  /* ═══ 9 · FIN-63 step 2 ═══ */
+  await section('9 · FIN-63 step 2: a repeated confirm answers duplicate: true and never settles twice (window 2 min, FIN-63b)', async () => {
+    const BP = require(path.join(H.API, 'lib', 'bill-privacy')), wasSteps = BP.moneySteps;
+    let stepCalls = 0;
+    BP.moneySteps = async function () { stepCalls++; return wasSteps.apply(this, arguments); };
+    let seq9 = 0;
+    const top = () => X.T.items.reduce((m, i) => Math.max(m, Number(i.item_id)), 0);
+    /** move the moment of every row written after `since` to `ms` ago (the stand-in's own clock is September: the window reads the shop clock) */
+    const age = (since, ms) => X.T.items.forEach((i) => { if (Number(i.item_id) > since) i.created_at = new Date(Date.now() - ms).toISOString(); });
+    /** a supplier with bills { A: 50000, … } (minor units) and one 100000 payment on account */
+    async function shop9(bills) {
+      const n = ++seq9, party = '44444444-4444-4444-8444-' + String(n).padStart(12, '0'), ref = {};
+      X.T.parties.push({ owner: SHOP, party_id: party, party_no: 'P-9' + n, name: 'Nine ' + n, supplier: true, credit_days: 30 });
+      let i = 0;
+      for (const [k, minor] of Object.entries(bills)) {
+        ref[k] = 'c9000000-0000-4000-8000-' + String(n * 100 + ++i).padStart(12, '0');
+        await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-20', currency: 'INR', party, source_chit_id: ref[k], source_ref: 'chit:9-' + n + k, by_rate: [{ rate: 0, taxable: minor / 100, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
+      }
+      const pay = await X.dbStub.withEntity(SHOP, (db) => X.B.recordPayment(db, SHOP, { party_id: party, direction: 'out', amount_minor: 100000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', client_ref: 'nine-' + n, by: SHOP }));
+      return { party, ref, pid: pay.payment.payment_id, entry: pay.posted.entry_id };
+    }
+    const confirm = (s, list) => q('POST', '/payments/' + s.pid + '/confirm', { allocations: list.map(([k, minor]) => ({ against_ref: s.ref[k] || k, amount_minor: minor })) });
+    const openOf = async (s, k) => Math.abs(X.E.receivables().outstanding(await X.B.partyItems(X.db, SHOP, s.party, null)).by_ref[s.ref[k]].outstanding_minor);
+    const noDup = (r) => !Object.prototype.hasOwnProperty.call(r.body, 'duplicate');
+
+    /* (a) (b) (n) bills A 50000, B 30000, payment 100000 */
+    const s1 = await shop9({ A: 50000, B: 30000 });
+    let before = X.T.items.length, since = top();
+    const a = await confirm(s1, [['A', 40000], ['B', 20000]]);
+    eq('(a) [A 40000, B 20000] → 200, items 4, allocated 60000, party_item +4', [a.status, a.body.ok, a.body.items, a.body.allocated_minor, X.T.items.length - before], [200, true, 4, 60000, 4]);
+    ok('(a) …a posting answer carries NO duplicate key (never duplicate: false)', noDup(a), JSON.stringify(a.body));
+    eq('(a) …the money steps ran once', stepCalls, 1);
+    age(since, 10000);
+    before = X.T.items.length;
+    const b = await confirm(s1, [['B', 20000], ['A', 40000]]);
+    eq('(b) the same two bills, other order, 10 s later → 200 duplicate, items 4, allocated 60000', [b.status, b.body.duplicate, b.body.items, b.body.allocated_minor], [200, true, 4, 60000]);
+    eq('(b) …party_item +0, the money steps did not run again', [X.T.items.length - before, stepCalls], [0, 1]);
+    eq('(n) A owes 10000 and B 10000: the replay settled nothing more', [await openOf(s1, 'A'), await openOf(s1, 'B')], [10000, 10000]);
+    const pv = await q('POST', '/payments/preview', { party_id: s1.party, direction: 'out', amount_minor: 100, currency: 'INR' });
+    ok('(n) …and the one reader (preview) agrees: 20000 open (10000 + 10000)', pv.status === 200 && pv.body.open_minor === 20000, JSON.stringify(pv.body.open_minor));
+
+    /* (c) (d) (e) (h) (f) (g) bills A 10000, B 5000 */
+    const s2 = await shop9({ A: 10000, B: 5000 });
+    since = top();
+    const c = await confirm(s2, [['A', 10000]]);
+    eq('(c) [A 10000] → posts: items 2, allocated 10000, A owes 0', [c.status, c.body.items, c.body.allocated_minor, await openOf(s2, 'A')], [200, 2, 10000, 0]);
+    age(since, 5000);
+    before = X.T.items.length;
+    const d = await confirm(s2, [['A', 10000]]);
+    eq('(d) [A 10000] again 5 s later → duplicate (A is exhausted: it would be refused), +0', [d.status, d.body.duplicate, d.body.items, d.body.allocated_minor, X.T.items.length - before], [200, true, 2, 10000, 0]);
+    const noGuard = await X.dbStub.withEntity(SHOP, (db) => X.B.postEntry(db, SHOP, { type: 'allocation', party: s2.party, side: 'supplier', credit_ref: 'pay:' + s2.pid, payment_id: s2.pid, allocations: [{ against_ref: s2.ref.A, amount_minor: 10000 }], currency: 'INR', by: SHOP })).then(() => 'posted', (err) => err.message);
+    ok('(d) …counter-check: without the replay question the same call is REFUSED by confirmItems, in words', noGuard !== 'posted' && /owes|left|more|already|settled/i.test(noGuard), noGuard);
+    const e = await confirm(s2, [['A', 10000], ['B', 0]]);
+    eq('(e) [A 10000, B 0] → duplicate (zero amounts are dropped), +0', [e.status, e.body.duplicate, X.T.items.length - before], [200, true, 0]);
+    const h = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: [{ against_ref: '  ' + s2.ref.A + ' ', amount_minor: 10000 }] });
+    eq('(h) the bill id padded with spaces is the same bill → duplicate (the trimmed value feeds the hash and the engine), +0', [h.status, h.body.duplicate, X.T.items.length - before], [200, true, 0]);
+    const f = await confirm(s2, [['A', 10000], ['A', 5000]]);
+    eq('(f) the same bill twice → 422 in words, nothing written', [f.status, f.body.code, /listed twice/.test(f.body.error), X.T.items.length - before], [422, 'BOOKS_REFUSED', true, 0]);
+    const bad = [[[{ against_ref: s2.ref.A, amount_minor: -1 }], /negative/], [[{ against_ref: s2.ref.A, amount_minor: 12.5 }], /whole number/], [[null], /names a bill/], [['x'], /names a bill/], [[{ against_ref: ' ', amount_minor: 100 }], /names the bill/], [[{ against_ref: s2.ref.A }], /whole number/]];
+    for (const [list, words] of bad) {
+      const r = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: list });
+      ok('(g) ' + JSON.stringify(list).replace(s2.ref.A, 'A') + ' → 422 in words (never a 500), nothing written', r.status === 422 && words.test(r.body.error) && X.T.items.length - before === 0, JSON.stringify([r.status, r.body]));
+    }
+    const notList = await q('POST', '/payments/' + s2.pid + '/confirm', { allocations: 'x' });
+    ok('(g) allocations that is not a list → refused as nothing to allocate (422), nothing written', notList.status === 422 && X.T.items.length - before === 0, JSON.stringify(notList.body));
+
+    /* (i) the top-up: payment 100000, bill C 100000 */
+    const s3 = await shop9({ C: 100000 });
+    since = top();
+    const i1 = await confirm(s3, [['C', 50000]]);
+    eq('(i) [C 50000] → posts, C owes 50000', [i1.status, noDup(i1), await openOf(s3, 'C')], [200, true, 50000]);
+    age(since, 3 * 60000);
+    const i2 = await confirm(s3, [['C', 50000]]);
+    eq('(i) [C 50000] again 3 minutes later → POSTS (a top-up after the window), C owes 0', [i2.status, noDup(i2), i2.body.allocated_minor, await openOf(s3, 'C')], [200, true, 50000, 0]);
+    const s3b = await shop9({ C: 100000 });
+    since = top();
+    await confirm(s3b, [['C', 50000]]);
+    age(since, 119000);
+    const i3 = await confirm(s3b, [['C', 50000]]);
+    eq('(i) FIN-63b: the identical top-up 119 s later (inside 2 minutes) IS a replay: duplicate, C still owes 50000', [i3.body.duplicate, await openOf(s3b, 'C')], [true, 50000]);
+    const s3c = await shop9({ C: 100000 });
+    since = top();
+    await confirm(s3c, [['C', 50000]]);
+    age(since, 121000);
+    const i4 = await confirm(s3c, [['C', 50000]]);
+    eq('(i) …and 121 s later it posts: C owes 0', [noDup(i4), await openOf(s3c, 'C')], [true, 0]);
+
+    /* (j) not the latest: payment R, bills D, E of 20000 */
+    const s4 = await shop9({ D: 20000, E: 20000 });
+    since = top();
+    await confirm(s4, [['D', 10000]]);
+    await confirm(s4, [['E', 10000]]);
+    age(since, 10000);
+    const j = await confirm(s4, [['D', 10000]]);
+    eq('(j) [D 10000], [E 10000], then [D 10000] within the window → POSTS (D is not the latest batch), D owes 0, E owes 10000', [j.status, noDup(j), await openOf(s4, 'D'), await openOf(s4, 'E')], [200, true, 0, 10000]);
+
+    /* (k) a reversed batch is not a replay: the engine refuses in words */
+    const s5 = await shop9({ A: 10000 });
+    since = top();
+    const k1 = await confirm(s5, [['A', 10000]]);
+    age(since, 10000);
+    const rev = await q('POST', '/entries/' + s5.entry + '/reverse', { reason: 'Wrong payment' });
+    const k2 = await confirm(s5, [['A', 10000]]);
+    ok('(k) after the payment is reversed, the same pairs are NOT a replay: no duplicate key; the engine answers in words', k1.status === 200 && rev.status === 200 && noDup(k2) && k2.status === 422 && typeof k2.body.error === 'string', JSON.stringify([rev.status, k2.status, k2.body]));
+
+    /* (l) a batch the one-call record made (settleBills) replays too */
+    const s6 = await shop9({ A: 30000 });
+    since = top();
+    const rec = await q('POST', '/payments', { party_id: s6.party, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 30000, allocate: 'oldest_first' });
+    age(since, 10000);
+    before = X.T.items.length;
+    const l = await q('POST', '/payments/' + rec.body.payment.payment_id + '/confirm', { allocations: [{ against_ref: s6.ref.A, amount_minor: 30000 }] });
+    eq('(l) POST /payments allocate oldest_first, then the identical confirm → duplicate, items 2, allocated 30000, +0', [rec.status, l.status, l.body.duplicate, l.body.items, l.body.allocated_minor, X.T.items.length - before], [200, 200, true, 2, 30000, 0]);
+
+    /* (m) a 3-pair batch replayed in another order equals the first answer plus duplicate */
+    const s7 = await shop9({ A: 10000, B: 20000, C: 30000 });
+    since = top();
+    const m1 = await confirm(s7, [['A', 1000], ['B', 2000], ['C', 3000]]);
+    age(since, 10000);
+    const m2 = await confirm(s7, [['C', 3000], ['A', 1000], ['B', 2000]]);
+    const sorted = (o) => JSON.stringify(Object.keys(o).sort().map((key) => [key, o[key]]));
+    eq('(m) the replay body equals the first body plus duplicate: true (ok, items 6, allocated 6000)', [sorted(m2.body), m1.body.items, m1.body.allocated_minor], [sorted(Object.assign({}, m1.body, { duplicate: true })), 6, 6000]);
+
+    /* (j2) the batch rank is item_id, never created_at: the later batch carries the EARLIER moment (it started first and waited on the lock) */
+    const s8 = await shop9({ A: 30000, B: 30000 });
+    since = top();
+    await confirm(s8, [['A', 10000]]);
+    const mid = top();
+    await confirm(s8, [['B', 10000]]);
+    age(since, 20000);
+    age(mid, 50000);   /* B's batch: higher item_ids, EARLIER created_at */
+    const rank = await confirm(s8, [['A', 10000]]);
+    eq('(j2) [A], then [B] (an earlier created_at, a higher item_id), then [A] again → POSTS: B is the latest by item_id; ranking by created_at would have called it a replay', [rank.status, noDup(rank), await openOf(s8, 'A')], [200, true, 10000]);
+    BP.moneySteps = wasSteps;
+  });
+
   srv.close();
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
