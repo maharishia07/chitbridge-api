@@ -15,6 +15,7 @@
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 
+const CHIT1 = '55555555-5555-4555-8555-555555555555'; /* K-1: lib/raida reads a chit by a uuid; an id that is none names no row */
 let ROWS = [], SQL = [], TABLES = new Set(), COLS = new Set();
 const fakeDb = {
   query: async (text, args) => {
@@ -50,7 +51,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
 (async () => {
   console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f which schema is on this database --');
   TABLES = new Set();
-  t('nothing migrated: a read is empty, not an error', (await raida.list('e1', 'c1')).migrated === false);
+  t('nothing migrated: a read is empty, not an error', (await raida.list('e1', CHIT1)).migrated === false);
   const w0 = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x' }));
   t('nothing migrated: a write refuses, naming b182', !!w0 && w0.status === 503 && /b182/.test(w0.message));
 
@@ -77,7 +78,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
     { raida_id: 'r4', line_id: null, kind: 'dependency', body: 'crane confirmed', closes_id: 'r3', revises_id: null,
       disposition: 'resolved', created_by_name: 'K', created_at: '04' },
   ];
-  const L = await raida.list('e1', 'c1', 'L1');
+  const L = await raida.list('e1', CHIT1, 'L1');
   t('revisions and closing rows are not entries', L.entries.length === 2, L.entries.length + ' entries');
   const e1 = L.entries.find((e) => e.raida_id === 'r1');
   t('the revision wins on the field it changed', !!e1 && e1.severity === 3, e1 && String(e1.severity));
