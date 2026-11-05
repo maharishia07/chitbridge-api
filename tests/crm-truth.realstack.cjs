@@ -136,6 +136,15 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       const tl = ok(await j('/api/crm/parties/' + first.party_id + '/timeline', { token: A.token }), 'timeline').b;
       expect((tl.entries || []).some((x) => x.kind === 'interaction' && JSON.stringify(x).indexOf(said) >= 0), 'timeline kinds ' + (tl.entries || []).map((x) => x.kind).join(','));
     }, 'R82: the walk saw logged calls not listed; GET /calls is the to-call queue, not the log (owner cb-crm decides where the log lists)');
+
+    /* K-1 Q2 (laptop1, 4 Nov): a rewards holder value is bound as TEXT; Postgres refuses a NUL in text (22021). lib/reward-store binds the holder only when the shop runs a live reward programme: on main this shop (none) answers 200 points 0, a shop WITH one answers 500 (22021).
+       With lib/problem textParam the answer is 400 INVALID_INPUT naming the field either way, before any query. */
+    await kase('CR-K1-NUL', 'GET /relationships/customers/:id/rewards with a NUL in the holder answers 400 INVALID_INPUT, never a 500 with the database words', async () => {
+      const r = await j('/api/relationships/customers/a%00b/rewards', { token: A.token });
+      expect(r.status === 400 && (r.b || {}).code === 'INVALID_INPUT' && (r.b || {}).field === 'id' && !/22021|invalid byte sequence/i.test(JSON.stringify(r.b)), 'answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+      const plain = await j('/api/relationships/customers/holder-' + RUN + '/rewards', { token: A.token });
+      expect(plain.status === 200, 'a plain unknown holder still answers 200, got ' + plain.status);
+    });
   } finally { await pg.end(); }
   finish('crm-truth', process.env.CRM_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('crm truth could not run:', e && e.message); process.exit(2); });

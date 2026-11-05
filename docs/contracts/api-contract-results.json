@@ -186,12 +186,36 @@
     422
    ]
   },
+  "GET /api/actors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/actors/access-events": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/adopt/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/assist/catalogue-mine": {
@@ -434,6 +458,22 @@
     400
    ]
   },
+  "GET /api/catalogue/:bridge_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "cases": 3,
    "failed": 0,
@@ -450,6 +490,14 @@
     400
    ]
   },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/enquiry": {
    "cases": 2,
    "failed": 0,
@@ -459,6 +507,22 @@
    ]
   },
   "GET /api/catalogue/enquiry/:item_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network/:bridge_id": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -978,6 +1042,14 @@
     422
    ]
   },
+  "GET /api/integrations/kit/*": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/integrations/reconcile": {
    "cases": 2,
    "failed": 0,
@@ -1067,6 +1139,14 @@
    ]
   },
   "GET /api/notifications": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/people": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -1656,6 +1736,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/adopt/:chit_id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/assist": {
@@ -2696,6 +2784,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/csp-report": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/ctp/deliver": {
