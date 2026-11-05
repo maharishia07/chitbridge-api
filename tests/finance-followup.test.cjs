@@ -110,6 +110,11 @@ function partOne() {
   t('no due date · the PARTY\'s own 45 days over the shop\'s: 16 Sep + 45 = 31 Oct, 5 late → d0_30', E.followRow(n.follow, P.NODUE_OWN), fu({ d0_30: TEN }, 'd0_30'));
   t('no due date · no credit days anywhere: aged from the bill date (50 late → d31_60), the amount flagged, terms not_set', E.followRow(n.follow, P.NODUE_NONE), fu({ d31_60: TEN }, 'd31_60', TEN));
   t('the bills\' own objects were not changed (no due_date written into the engine\'s answer)', Object.values(n.open.by_ref).every((x) => !x.due_date && !x.no_terms), true);
+  /* the books writer stores due = bill date when it knows no terms (lib/books.js, credit_days 0): no days anywhere → still flagged; a party with 0 days SET → not flagged (SIT 6 Nov) */
+  const sameDay = [bill(P.NODUE_NONE, 'b:sd', TEN, BILL_DATE_50, BILL_DATE_50), bill(P.NODUE_OWN, 'b:s0', TEN, BILL_DATE_50, BILL_DATE_50)];
+  const s = E.dues(sameDay, ASOF, 'receivable', { creditDaysOf: (pid) => (pid === P.NODUE_OWN ? 0 : null) });
+  t('due = bill date as the writer stores it · no credit days anywhere: 50 late → d31_60, flagged, terms not_set', E.followRow(s.follow, P.NODUE_NONE), fu({ d31_60: TEN }, 'd31_60', TEN));
+  t('due = bill date · the party\'s own 0 days (cash, set on purpose): 50 late → d31_60, NOT flagged', E.followRow(s.follow, P.NODUE_OWN), fu({ d31_60: TEN }, 'd31_60'));
   t('page total of those three: 5 keys 100000 + 100000 + 100000, no_terms 100000, terms not_set', E.followTotal([{ follow_up: E.followRow(n.follow, P.NODUE_SHOP) }, { follow_up: E.followRow(n.follow, P.NODUE_OWN) }, { follow_up: E.followRow(n.follow, P.NODUE_NONE) }]),
     fu({ d0_30: TEN, d31_60: 2 * TEN }, 'd31_60', TEN));
 
