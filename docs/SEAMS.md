@@ -32,6 +32,7 @@ of file each thing is; this says what already does the job.
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 58 | `entry` | `books-store.js` |  |
 | 58 | `items` | `books-store.js` | PERF1: |
+| 58 | `failed` | `service.js` | what every catch answers: |
 | 60 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 66 | `register` | `regulation.js` | register(pack) → the pack — |
 | 54 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
