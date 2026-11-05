@@ -29,7 +29,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const EVIDENCE_ABOUT =
   "Evidence for the two columns a static read cannot prove (API-STANDARD S34, S35). routes['METHOD /path'] = { output_allowlist: true } once a contract test has shown the answer holds only schema_out fields; { foreign_id_404: true } once a test has shown another shop's id gets the same 404 as an unknown id. Written by the area's test, never by hand. Empty today.";
 /* what this run proved, per route: every 200 it saw was closed (output_allowlist), a hidden shop answered as an unknown one (foreign_id_404) */
@@ -166,6 +166,8 @@ function rowsFor(sql, params) {
     if (world.itemsFail) throw new Error(SECRET_SQL);
     return world.items;
   }
+  /* SEC-126: the network store's live members, by id (routes/catalogue liveShopsOf) */
+  if (/FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND identity_type = 'entity'/.test(s)) return (params[0] || []).map((id) => ({ identity_id: id, bridge_id: id === SHOP_ID ? 'shop-s' : 'member-' + id.slice(0, 4), display_name: 'Member' }));
   if (/SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY/.test(s)) {
     return world.operator ? [{ identity_id: SHOP_ID, bridge_id: 'shop-s', display_name: 'Shop S' }] : [];
   }
@@ -217,7 +219,11 @@ function installStubs() {
   mock(
     'lib/catalogue-view',
     Object.assign({}, view, {
-      buildPublicView: async () => world.view,
+      /* the real view throws when its items read fails, and lists only the shop's own items (SEC-126: the network store reads through it) */
+      buildPublicView: async ({ entity }) => {
+        if (world.itemsFail) throw new Error(SECRET_SQL);
+        return Object.assign({}, world.view, { items: (world.items || []).filter((item) => String(item.entity_id) === String(entity && entity.identity_id)) });
+      },
       getOrderInput: async () => {
         if (world.orderInput instanceof Error) throw world.orderInput;
         return world.orderInput;
@@ -1077,7 +1083,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
-  /* the hardening evidence: this file owns its routes' rows of docs/contracts/api-hardening-evidence.json, and writes only what it proved */
+  /* the hardening evidence: this file owns its routes' rows of docs/contracts/api-hardening-evidence-areas.json, and writes only what it proved */
   const evidenceOnDisk = fs.existsSync(EVIDENCE_FILE) ? JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')) : { about: EVIDENCE_ABOUT, routes: {} };
   const evidence = Object.fromEntries(
     Object.keys(proved)
@@ -1107,7 +1113,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     );
     fs.writeFileSync(EVIDENCE_FILE, JSON.stringify({ about: evidenceOnDisk.about || EVIDENCE_ABOUT, routes: ordered }, null, 1) + '\n');
   } else
-    check('docs/contracts/api-hardening-evidence.json holds exactly what these scenarios proved for the public storefront', sameValue(evidenceMine, evidence), {
+    check('docs/contracts/api-hardening-evidence-areas.json holds exactly what these scenarios proved for the public storefront', sameValue(evidenceMine, evidence), {
       onDisk: evidenceMine,
       proved: evidence
     });

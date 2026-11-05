@@ -41,19 +41,28 @@ t('owner: email is shown and may.email is open', withMail({ owner: true }).email
 t('colleague: email is null, has_email says one is on file', withMail({ owner: false }).email === null && withMail({ owner: false }).has_email === true);
 process.env.NODE_ENV = 'production';
 const sealed = require(path.join(API, 'lib', 'dev-otp')).isSealed();
-if (sealed) t('sealed with no e-mail: reset is greyed with a sentence', !people.view([row({ has_email: false })], { owner: true }).people[0].may.reset_pin.ok);
+if (sealed) {
+  t('R112 sealed with no e-mail: reset is OPEN (the owner is shown the code)', people.view([row({ has_email: false })], { owner: true }).people[0].may.reset_pin.ok === true);
+  t('R112 sealed with an e-mail and no sender: reset is greyed with the refusal sentence', (() => { const g = people.view([row({ has_email: true })], { owner: true }).people[0].may.reset_pin; return g.ok === false && /e-mail sender/.test(g.why); })());
+}
 else console.log('  note sealed-environment case is not reachable here');
 /* CX6 (E1): every pack lists payroll as out of scope — the line is said for IN, AU, AE and an unknown country; the shop row with no people is not a person */
 for (const c of ['IN', 'AU', 'AE', null]) t('payroll said for ' + (c || 'no country'), people.view([], { owner: true, country: c }).payroll.said === people.payrollWord('IN').said && people.view([], { owner: true, country: c }).payroll.here === false);
 t('the line names no country and no statute', !/India|Australia|UAE|PAYG|ESI/.test(people.payrollWord('AU').said));
 process.env.NODE_ENV = 'test';
 
+/* ── R112: the list line reads the code_issued trail row; the owner sees it, a colleague does not ── */
+const given = row({ code_at: new Date('2026-10-24T09:00:00Z'), code_by: 'Anil', code_channel: 'screen' });
+t('R112 code_given: who, when and how, for the owner', JSON.stringify(people.view([given], { owner: true }).people[0].code_given) === JSON.stringify({ by: 'Anil', at: given.code_at, channel: 'screen' }));
+t('R112 code_given: null for a colleague, and null when no code was ever given', people.view([given], { owner: false }).people[0].code_given === null && people.view([row({})], { owner: true }).people[0].code_given === null);
+
 /* ── the route ── */
 const seen = [];
 const dbPath = require.resolve(path.join(API, 'db'));
 const realDb = require(dbPath);
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: Object.assign({}, realDb, {
-  query: async (sql, params) => { seen.push({ sql: String(sql), params }); return { rows }; } }) };
+  query: async (sql, params) => { seen.push({ sql: String(sql), params }); return { rows }; },
+  readBatch: async (entity, actor, stmts) => stmts.map((x) => { seen.push({ sql: String(x.text), params: x.params, entity, actor }); return { rows }; }) }) };
 let who = { identity_id: 'e1', identity_type: 'entity' };
 const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
@@ -70,6 +79,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     t('ONE statement for the whole list (one trip)', seen.length === 1);
     t('scoped to the shop by parent_entity_id', /e\.identity_id = \$1/.test(seen[0].sql) && /i\.parent_entity_id = e\.identity_id/.test(seen[0].sql) && seen[0].params[0] === 'e1');
     t('CX6: the shop\'s country rides the same statement; payroll is said', /e\.country AS entity_country/.test(seen[0].sql) && r.body.payroll && r.body.payroll.here === false && !!r.body.payroll.said);
+    t('R112: the code_issued trail rides the SAME statement (one join, no extra trip), read in the shop scope', /LEFT JOIN LATERAL/.test(seen[0].sql) && /action = 'code_issued'/.test(seen[0].sql) && seen[0].entity === 'e1');
     t('removed people are never listed', /IS DISTINCT FROM 'removed'/.test(seen[0].sql));
     t('people only (not connectors)', /actor_type, 'human'\) = 'human'/.test(seen[0].sql));
     seen.length = 0;

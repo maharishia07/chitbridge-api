@@ -8,10 +8,12 @@
 // owns: the Idempotency-Key contract (idempotency_key table, b109) and the in-process memory that stands in when the store is off.
 // CARD 28-platform-and-operations/idempotency
 // called by: server.js (app.use('/api', …) after auth-then-parse, before the routers); lib/autoraise sends the header;
-//            routes/catalogue.js mounts requireKey() on the public money doors (order/start, order/confirm).
+//            routes/catalogue.js mounts requireKey({ shopOf, contactOf }) on the public money doors (order/start, order/confirm);
+//            routes/books.js mounts requireKey() (the bearer form, FIN-63) on POST /payments, PATCH /payments/:id, POST /payments/:id/confirm, POST /gst/pay.
 // FLOW  key? → scopeOf(token) → fingerprint(body) → store.begin → { existing → (bearer door: middleware/auth FIRST) → answerExisting | claimed → capture res.json → next → store.finalize }
 //       store off (table missing · store error · body unfingerprintable) → the SAME flow on memoryStore, every answer marked X-Idempotency: unverified
 //       public door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · shopOf + contactOf → (shop entity, hashed contact + key) → the SAME flow
+//       bearer door: no key → 422 IDEMPOTENCY_KEY_REQUIRED · held by the pass above already → next · else (auth's entity, key) → the SAME flow
 //
 // ⭐ LIM2 (W1-PLAT, 15 Oct): WHEN IDEMPOTENCY IS OFF, A RETRY WARNS AND IS REFUSED. Before, three silent paths ran a retried
 // mutation A SECOND TIME with no trace: an unreadable token (`catch (_) { return null }`), a body the canon could not
@@ -86,6 +88,17 @@ function fingerprint(req) {
   }
 }
 
+/** the answer fields that hold a sign-in CODE in clear: dev_otp / otp (a local stack's echo) and show_code (the owner's one-time screen, R112) */
+const CODE_FIELDS = ['otp', 'dev_otp', 'show_code'];
+
+/**
+ * carriesCode(body) → true when an answer holds a sign-in code (SEC-106). Unlike a token (kept for a few minutes, then swept), a code answer is
+ * NEVER recorded: the store would keep a live credential in clear. The retry that follows a lost answer runs again and makes a new code.
+ */
+function carriesCode(body) {
+  return Boolean(body && typeof body === 'object' && CODE_FIELDS.some((field) => body[field]));
+}
+
 /** carriesToken(body) → true when a recorded answer holds a token, a signed-in session */
 function carriesToken(body) {
   return Boolean(body && typeof body === 'object' && body.token);
@@ -123,8 +136,8 @@ const dbStore = {
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (notSettled(status)) {
-        // a server error or a refused token is NOT a completed outcome — let a retry re-run it
+      if (notSettled(status) || carriesCode(body)) {
+        // a server error, a refused token or an answer that carries a code is NOT recorded — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
       } else {
         // 2xx/3xx/4xx are settled outcomes — record so replays are consistent
@@ -165,8 +178,8 @@ const memoryStore = {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
     if (!held) return;
-    if (notSettled(status))
-      unverified.delete(memoryKey); // not a completed outcome — a retry may run again
+    if (notSettled(status) || carriesCode(body))
+      unverified.delete(memoryKey); // not a completed outcome (or it carries a code) — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
   size: () => unverified.size,
@@ -194,18 +207,25 @@ function answerExisting(req, res, held, hash, isVerified) {
   return problem(req, res, { status: 409, code: 'IDEMPOTENCY_IN_PROGRESS', detail: legacy.message, legacy });
 }
 
-/** we own the key: record the handler's JSON answer through the store it was claimed in, then run the route */
+/**
+ * we own the key: record the handler's JSON answer through the store it was claimed in, then run the route.
+ * ⭐ PLT-66 (BH-2): THE ANSWER LEAVES ONLY AFTER THE KEY IS SETTLED. Before, finalize ran in the background and the answer was flushed at once,
+ * so a retry sent right after (the outbox after a lost answer) found the claim still 'in_progress' and got 409. Now the answer waits for
+ * finalize (one database round trip). A finalize failure is warned and the answer still goes out. A true concurrent duplicate, sent while the
+ * first route is still running, is unchanged: it still gets 409, because waiting for a running request is not safe (it may never finish).
+ */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
   const origJson = res.json.bind(res);
   res.json = (body) => {
-    if (!captured) {
-      captured = true;
-      store
-        .finalize(claim.entity, claim.key, res.statusCode, body)
-        .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }));
-    }
-    return origJson(body);
+    if (captured) return origJson(body);
+    captured = true;
+    const status = res.statusCode;
+    store
+      .finalize(claim.entity, claim.key, status, body)
+      .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
+      .then(() => origJson(body));
+    return res;
   };
   next();
 }
@@ -224,8 +244,9 @@ function runUnverified(req, res, next, claim, why) {
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, false) : runAndRecord(req, res, next, memoryStore, claim)));
 }
 
-/** the key is ours to hold: the durable store, or the memory when the store is off */
+/** the key is ours to hold: the durable store, or the memory when the store is off. `req.idempotencyHeld` says so to a gate further down the chain (FIN-63) */
 function holdKey(req, res, next, claim) {
+  req.idempotencyHeld = claim.key;
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
   return dbStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
@@ -261,28 +282,43 @@ const KEY_REQUIRED = {
   error: 'Missing Idempotency-Key',
   message: 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.'
 };
-/** requireKey({ shopOf, contactOf }) → the gate a public money door mounts; tools/api-register.cjs finds it by its name */
-function requireKey({ shopOf, contactOf }) {
-  /** the gate: no key is refused; otherwise the key is held for (this shop, this contact) and the route runs at most once */
+/** the public door's claim: (the shop the door is on, the shopper's hashed contact + key); null when the route must answer first (no such shop, no usable contact) */
+async function publicClaim(req, key, { shopOf, contactOf }) {
+  const shop = await shopOf(req);
+  const contact = shop && contactOf(req);
+  if (!contact) return null;
+  const contactHash = crypto.createHash('sha256').update(String(contact)).digest('hex').slice(0, 32);
+  return { entity: shop.identity_id, key: 'public ' + contactHash + ' ' + key, hash: fingerprint(req), windowHrs: windowHours() };
+}
+/**
+ * ⭐ FIN-63 (5 Nov): THE BEARER MONEY DOORS (the ledger's POST /payments, its PATCH, confirm, /gst/pay) REQUIRE the key too. The pass above
+ * already holds a sent key for the token's entity (server.js mounts it before every router), so this claim is null when `req.idempotencyHeld`
+ * says so; a router served without that pass (a test, a direct mount) holds the key here for the entity the route's auth resolved — the same
+ * scope (parent_entity_id || identity_id, middleware/auth entityOf) the pass uses. No identity: the route's auth answers, nothing runs twice.
+ */
+function bearerClaim(req, key) {
+  if (req.idempotencyHeld) return null;
+  const entity = req.identity ? require('./auth').entityOf(req) : null;
+  return entity ? { entity, key, hash: fingerprint(req), windowHrs: windowHours() } : null;
+}
+/**
+ * requireKey(reader?) → the gate a money door mounts; tools/api-register.cjs finds it by its name (requireIdempotencyKey).
+ * With { shopOf, contactOf } it is the PUBLIC form (a storefront order: no bearer); with nothing it is the BEARER form (FIN-63).
+ */
+function requireKey(reader) {
+  const claimOf = reader ? (req, key) => publicClaim(req, key, reader) : bearerClaim;
+  /** the gate: no key is refused 422; otherwise the key is held for its scope and the route runs at most once */
   async function requireIdempotencyKey(req, res, next) {
     const key = req.headers['idempotency-key'];
     if (!key || String(key).length > KEY_MAX_LENGTH)
       return problem(req, res, { status: 422, code: 'IDEMPOTENCY_KEY_REQUIRED', detail: KEY_REQUIRED.message, legacy: KEY_REQUIRED });
-    let shop = null;
+    let claim = null;
     try {
-      shop = await shopOf(req);
+      claim = await claimOf(req, String(key));
     } catch (e) {
       return next(); /* the route reads the shop again and answers its own 500; nothing ran, so nothing can run twice */
     }
-    const contact = shop && contactOf(req);
-    if (!contact) return next(); /* no such shop, or no usable contact: the route refuses it before anything is written */
-    const contactHash = crypto.createHash('sha256').update(String(contact)).digest('hex').slice(0, 32);
-    return holdKey(req, res, next, {
-      entity: shop.identity_id,
-      key: 'public ' + contactHash + ' ' + String(key),
-      hash: fingerprint(req),
-      windowHrs: windowHours()
-    });
+    return claim ? holdKey(req, res, next, claim) : next(); /* no claim: already held by the pass, or the route refuses it before anything is written */
   }
   requireIdempotencyKey.addsStatuses = ADDS_STATUSES;
   return requireIdempotencyKey;
@@ -296,3 +332,4 @@ module.exports._memory = memoryStore;
 module.exports.IN_PROGRESS_STALE_MINUTES = IN_PROGRESS_STALE_MINUTES;
 module.exports.TOKEN_REPLAY_MINUTES = TOKEN_REPLAY_MINUTES;
 module.exports.UNVERIFIED_MEMORY_MAX = UNVERIFIED_MEMORY_MAX;
+module.exports._carriesCode = carriesCode;

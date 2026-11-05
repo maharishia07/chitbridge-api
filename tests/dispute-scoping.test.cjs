@@ -50,7 +50,7 @@ let STATUS, DISPUTES, LOG, MSGS, RAIDA, SQL, BELL;
 function reset() {
   STATUS = [A, B, C, D].map((e) => ({ chit_id: CH, entity_id: e, current_status: 'pending', deleted_at: null }));
   DISPUTES = []; LOG = []; MSGS = []; SQL = []; BELL = [];
-  RAIDA = [A, B, C].map((e) => ({ entity_id: e, raida_id: 'r-' + e.slice(0, 1), kind: 'issue', chit_id: CH, dispute_id: null }));
+  RAIDA = [A, B, C].map((e) => ({ entity_id: e, raida_id: e.slice(0, 1).repeat(8) + '-1111-4111-8111-111111111111', kind: 'issue', chit_id: CH, dispute_id: null }));
 }
 const rlsErr = (t) => new Error('new row violates row-level security policy for table "' + t + '"');
 const raise = (m) => { const e = new Error(m); e.code = 'P0001'; return e; };
@@ -87,9 +87,10 @@ function run(sql, p, ctx) {
   /* the two reads whose text also names other tables — matched first */
   if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue (before T3)
   /* T3-DISPUTES-ASSIST: the widened queue — $2 status · $3 side · $4 ILIKE words · $5 limit · $6 offset, RLS = my copies; _total = count(*) OVER() */
-  if (/FROM chit_disputes cd WHERE \(\$2::text = 'all'/.test(s)) {
+  if (/FROM chit_disputes cd WHERE cd\.entity_id = \$1 AND \(\$2::text = 'all'/.test(s)) {
     const [me, st, side, like, lim, off] = p, re = like ? new RegExp(like.replace(/^%|%$/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
-    let r = mine(DISPUTES, ctx).filter((d) => st === 'all' || (st === 'open' ? d.status === 'open' : d.status !== 'open'))
+    let r = mine(DISPUTES, ctx).filter((d) => d.entity_id === me)   /* SEC-105: the SQL names my copies, not RLS alone */
+      .filter((d) => st === 'all' || (st === 'open' ? d.status === 'open' : d.status !== 'open'))
       .filter((d) => !side || (side === 'mine' ? d.raised_by_entity_id === me : d.raised_by_entity_id !== me))
       .map((d) => Object.assign({}, d, { auto_subject: 'Order 7 — brake pads', purpose: 'order', sender_display_name: NAME[A] }))
       .filter((d) => !re || re.test([d.auto_subject, d.purpose, d.category, d.reason, d.raised_by_display_name, d.resolution_note].join(' ')));
@@ -97,7 +98,7 @@ function run(sql, p, ctx) {
     const total = r.length; r = r.slice(off || 0, lim == null ? undefined : (off || 0) + lim);
     return r.map((d) => Object.assign(d, { _total: total }));
   }
-  if (/count\(\*\) FILTER \(WHERE status = 'open'\)::int AS open/.test(s)) { const r = mine(DISPUTES, ctx); return [{ open: r.filter((d) => d.status === 'open').length, resolved: r.filter((d) => d.status !== 'open').length }]; }
+  if (/count\(\*\) FILTER \(WHERE status = 'open'\)::int AS open/.test(s)) { const r = mine(DISPUTES, ctx).filter((d) => d.entity_id === p[0]); return [{ open: r.filter((d) => d.status === 'open').length, resolved: r.filter((d) => d.status !== 'open').length }]; }
   if (/CROSS JOIN LATERAL chit_dispute_roster\(u.did\)/.test(s))   // the roster for a whole page (definer: every copy)
     return DISPUTES.filter((d) => (p[0] || []).indexOf(d.dispute_id) >= 0).map((d) => ({ dispute_id: d.dispute_id, entity_id: d.entity_id, role: d.role, status: d.status }));
   /* ── the bell's feed (routes/notifications.js FEED_FROM) — state_log under RLS = my own rows ── */
@@ -347,11 +348,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const sch = require(path.join(API, 'lib', 'schema'));
     const _ht = sch.hasTable; sch.hasTable = async (t) => t === 'chit_line_raida';
     const _hc = sch.hasColumn; sch.hasColumn = async () => false;
-    const lk = await as(A, 'POST', U + '/raida/r-a/dispute', { dispute_id: D4 });
+    const lk = await as(A, 'POST', U + '/raida/aaaaaaaa-1111-4111-8111-111111111111/dispute', { dispute_id: D4 });
     ok('RAIDA door: A links its issue to the dispute it raised', lk.status === 200 && RAIDA.find((x) => x.entity_id === A).dispute_id === D4, JSON.stringify(lk));
     ok('…the link stamps A\'s own register row only — B\'s and C\'s are untouched', RAIDA.filter((x) => x.entity_id !== A).every((x) => x.dispute_id === null));
     ok('…and the link raises nothing: still exactly the two copies (A, B), no copy for C', DISPUTES.length === 2 && disputesOf(C).length === 0);
-    const lc = await as(C, 'POST', U + '/raida/r-c/dispute', { dispute_id: D4 });
+    const lc = await as(C, 'POST', U + '/raida/cccccccc-1111-4111-8111-111111111111/dispute', { dispute_id: D4 });
     const gc2 = await as(C, 'GET', U + '/disputes');
     ok('…C linking that id to its own issue does not make the dispute visible to C', gc2.body.disputes.length === 0 && disputesOf(C).length === 0 && logOf(C).length === 0, 'link ' + lc.status + ' ' + JSON.stringify(gc2.body));
     sch.hasTable = _ht; sch.hasColumn = _hc;
@@ -433,6 +434,24 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const vw = dm.resolve(rail.can({ held: true }, { level: 'viewer' }, 'dispute'), { open: true, raisedByMe: true }), cm = dm.raise(rail.can({ held: true }, { level: 'commenter' }, 'dispute'));
     ok('lib/dispute-may: a viewer may not resolve (read_only, the rail\'s sentence); a commenter may not raise (comment_only)',
       vw.ok === false && vw.why === 'read_only' && vw.say === rail.WHY.read_only && cm.ok === false && cm.why === 'comment_only', JSON.stringify([vw, cm])); }
+    console.log('\n══ 7 · RAIL-162 — a CHIT-WIDE dispute that names nobody is held by every party, who can answer it and see it resolved ══\n');
+    reset();
+    const w = await as(B, 'POST', U + '/disputes', { category: 'payment', reason: 'The recipient disputes the order as a whole', chit_wide: true });
+    const WD = w.body.dispute_id;
+    ok('RAIL-162: the recipient raises chit-wide, naming nobody (200, scope chit_wide)', w.status === 200 && WD && w.body.scope === 'chit_wide', JSON.stringify(w.body));
+    ok('RAIL-162: every holder of the chit has its own copy (B raiser; A, C, D party), not the raiser alone',
+      [A, B, C, D].every((e) => disputesOf(e).length === 1) && disputesOf(B)[0].role === 'raiser' && [A, C, D].every((e) => disputesOf(e)[0].role === 'party'), JSON.stringify(DISPUTES.map((d) => [d.entity_id.slice(0, 1), d.role])));
+    const wl = await as(A, 'GET', U + '/disputes');
+    ok("RAIL-162: the OTHER party's dispute list holds the dispute (it was empty)", wl.status === 200 && (wl.body.disputes || []).some((d) => d.dispute_id === WD), JSON.stringify(wl.body).slice(0, 200));
+    const wm = await as(A, 'POST', U + '/messages', { message_text: 'We hear you', thread_type: 'external', is_dispute: true, dispute_id: WD });
+    ok('RAIL-162: the other party answers inside the dispute (was 403 "Not a party to this dispute")', wm.status === 200 || wm.status === 201, JSON.stringify([wm.status, wm.body]));
+    const wr = await as(B, 'PUT', U + '/disputes/' + WD + '/resolve', { resolution_note: 'Settled' });
+    const wafter = await as(A, 'GET', U + '/disputes');
+    ok('RAIL-162: the raiser resolves and the other party reads it resolved', wr.status === 200 && ((wafter.body.disputes || []).find((d) => d.dispute_id === WD) || {}).status === 'resolved', JSON.stringify([wr.status, wr.body, wafter.body]).slice(0, 300));
+    reset();
+    const sw = await as(A, 'POST', U + '/disputes', { category: 'quantity', reason: 'The sender disputes on its own order', chit_wide: true });
+    const sl = await as(C, 'GET', U + '/disputes');
+    ok('RAIL-162: the sender raising on its own order is held by the recipients too', sw.status === 200 && (sl.body.disputes || []).some((d) => d.dispute_id === sw.body.dispute_id), JSON.stringify(sl.body).slice(0, 200));
   } catch (e) { fail++; console.log('   FAIL threw: ' + (e && e.stack)); }
   console.log('\n' + pass + ' passed, ' + fail + ' failed' + (known ? ' (' + known + ' of the passes are KNOWN BREAKS — see section 5)' : '') + ' · ' + (pass + fail) + ' checks\n');
   srv.close(); process.exit(fail ? 1 : 0);

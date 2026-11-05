@@ -25,25 +25,28 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the request
 const { work: contract, schemaOptions, staffOnly, chitNotFound, failed } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const work = require('../lib/work-rows');
 const railActions = require('../lib/rail-actions');
+const cost = require('../lib/cost'); // RAIL-146b: can_see_costs, read ONCE per request
 
 /** the schema check of one route (its own operation in lib/orders-contract.js) */
 const checked = (route) => schemaValidate(contract.operationFor(route), schemaOptions.work);
 
-/** who is asking, or null after answering the refusal */
-function who(req, res) {
+/** who is asking, or null after answering the refusal; `blind` = a co-assist without can_see_costs (RAIL-146b, the one read) */
+async function who(req, res) {
   if (req.api_key || (req.identity && req.identity.identity_type === 'customer')) {
     problem(req, res, { status: 403, ...staffOnly() });
     return null;
   }
-  return { entity: auth.entityOf(req), actor: req.identity && req.identity.identity_id, me: railActions.meOf(req) };
+  const entity = auth.entityOf(req);
+  return { entity, actor: req.identity && req.identity.identity_id, me: railActions.meOf(req), blind: await cost.isCostBlind(req, entity) };
 }
 
 router.get('/list', auth, checked('GET /list'), async (req, res) => {
-  const ctx = who(req, res);
+  const ctx = await who(req, res);
   if (!ctx) return;
   const q = req.query || {};
   try {
-    res.json(await work.list(ctx, { view: q.view, status: q.status, assigned: q.assigned, q: q.q, page: q.page, limit: q.limit }));
+    const out = await work.list(ctx, { view: q.view, status: q.status, assigned: q.assigned, q: q.q, page: q.page, limit: q.limit });
+    res.json({ view: out.view, page: out.page, limit: out.limit, truncated: out.truncated, counts: out.counts, total: out.total, rows: out.rows }); // S34: every root key named
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -51,22 +54,29 @@ router.get('/list', auth, checked('GET /list'), async (req, res) => {
 
 /* before /:chit_id, which would call it a chit */
 router.get('/facts', auth, checked('GET /facts'), async (req, res) => {
-  const ctx = who(req, res);
+  const ctx = await who(req, res);
   if (!ctx) return;
   try {
-    res.json(await work.facts(ctx, { unbilled: req.query && req.query.unbilled === '1' }));
+    const out = await work.facts(ctx, { unbilled: req.query && req.query.unbilled === '1' });
+    res.json({ truncated: out.truncated, counts: out.counts, lines: out.lines, figures: out.figures });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
 });
 
 router.get('/:chit_id', auth, checked('GET /:chit_id'), async (req, res) => {
-  const ctx = who(req, res);
+  const ctx = await who(req, res);
   if (!ctx) return;
   try {
     const row = await work.one(ctx, req.params.chit_id);
     if (!row) return problem(req, res, { status: 404, ...chitNotFound() });
-    res.json(row);
+    res.json({
+      chit_id: row.chit_id, kind: row.kind, tab: row.tab, stage: row.stage, word: row.word, status: row.status, side: row.side, subject: row.subject, ref: row.ref,
+      party: row.party, party_id: row.party_id, channel: row.channel, fulfilment: row.fulfilment, address: row.address, requested_for: row.requested_for,
+      remark: row.remark, total_minor: row.total_minor, currency: row.currency, lines_n: row.lines_n, lines_open_n: row.lines_open_n, billed: row.billed,
+      despatched: row.despatched, assignee: row.assignee, lines_assigned_n: row.lines_assigned_n, created_at: row.created_at, age_days: row.age_days,
+      actions: row.actions, lines: row.lines, cost_hidden: row.cost_hidden
+    });
   } catch (e) {
     problem(req, res, failed(e, req));
   }

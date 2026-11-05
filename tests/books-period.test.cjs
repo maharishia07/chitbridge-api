@@ -15,6 +15,8 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const H = require('./support/books-harness.cjs');
+const Capture = require('./support/books-capture.cjs');
+let NOTE = () => {}; /* --capture F: set once the router is loaded */
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
@@ -29,10 +31,12 @@ const authStub = Object.assign((req, res, next) => { req.identity = WHO; next();
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
-const call = (port, method, p, body) => new Promise((done) => {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
-    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
+    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}, parsed = true; try { j = JSON.parse(raw || '{}'); } catch (_) { parsed = false; } NOTE(method, p, res.statusCode, j, parsed); done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });
 
@@ -75,7 +79,9 @@ function memoryRegister() {
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const reg = memoryRegister(); Assets.use(reg.store);
   const P = X.E.posting();
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const booksRouter = require(path.join(H.API, 'routes', 'books'));
+  const app = express(); app.use(express.json()); app.use('/api/books', booksRouter);
+  const rec = Capture.recorder(Capture.captureFile(process.argv), booksRouter, '/api/books', 'period'); NOTE = rec.note;
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);
   /* the shop's day: after the year end of 2026-27, so its depreciation can run; a test moves it back to prove the refusal */
@@ -231,6 +237,21 @@ function memoryRegister() {
       && m4.body.from_ledger.value_minor === 240000 && m4.body.from_ledger.lines === 1 && movesUntil === '2026-10-31T18:30:00.000Z', JSON.stringify([m4.body, movesUntil]));
     eq('…its lines are the engine\'s closing_stock for that value (book 55,000 → 2,400)', me && stored(me), engine({ type: 'closing_stock', mode: 'manual', book: 55000, amount: 2400, date: '2026-10-31', currency: 'INR' }));
     ok('…said where it came from: the narration names the stock ledger', me && /from the stock ledger/.test(String(me.narration || '')), me && me.narration);
+
+    /* R104: a tiffin shop — Masala Dosa sold 5 times, never received (−5): made to order, NOT stock, so the ledger values without refusing */
+    const DOSA = 'a1000000-0000-4000-8000-00000000d05a'; NAMES[DOSA] = 'Masala Dosa';
+    const G = require(path.join(H.API, 'lib', 'govresolve')); const verticalWas = G.verticalOf;
+    G.verticalOf = async () => G.verticalFrom({ sectors: ['tiffin'] });
+    const dq1 = X.db.query;
+    X.db.query = async (t, p) => /item_data->'stocked'/.test(String(t)) ? { rows: [{ item_id: RICE, batch_tracked: null, stocked: true }, { item_id: DOSA, batch_tracked: null, stocked: null }] } : dq1(t, p);
+    MOVES = MOVES.concat([mv(DOSA, -2, null, 'sale', '2026-10-20T06:00:00.000Z'), mv(DOSA, -3, null, 'sale', '2026-10-25T06:00:00.000Z')]);
+    /* a month later (31 Oct is already posted above): 1 kg rice left at 400; the dish's −5 must not stop the valuation */
+    const m5 = await q('POST', '/closing-stock', { date: '2026-11-30', method: 'automatic', client_ref: 'cs-auto-dish' });
+    ok('R104 a tiffin shop with a dish at −5: no STOCK_BELOW_ZERO — closing stock values from the ledger (1 kg rice = 400, 1 line, the dish not in it)', m5.status === 200 && m5.body.ok && m5.body.from_ledger && m5.body.from_ledger.value_minor === 40000 && m5.body.from_ledger.lines === 1, JSON.stringify(m5.body));
+    G.verticalOf = async () => G.verticalFrom({ sectors: ['vegetables'] });
+    const m6 = await q('POST', '/closing-stock', { date: '2026-11-30', method: 'automatic', client_ref: 'cs-auto-veg' });
+    ok('…the same rows in a vegetable shop: the unflagged dish IS counted → 422 STOCK_BELOW_ZERO naming Masala Dosa (nothing changed for them)', m6.status === 422 && m6.body.code === 'STOCK_BELOW_ZERO' && /Masala Dosa/.test(m6.body.message), JSON.stringify(m6.body));
+    G.verticalOf = verticalWas;
     X.db.query = dq0; SCH.hasTable = hasT0;
   }
   await q('POST', '/periods/2026-27/7/lock', { reason: 'x' });
@@ -394,6 +415,44 @@ function memoryRegister() {
     && X.T.lines.filter((l) => l.entry_id === cdsp.body.entry_id).some((l) => l.code === codeOf2('loss_on_disposal') && l.dr_minor === 1000), JSON.stringify(cdsp.body).slice(0, 300));
   WHO = OWNER;
 
+  /* ═══ EVERY ANSWER BRANCH, for the output allow-list (S34): tools/api-allowlist.cjs closes these routes from the answers recorded here (--capture), so each branch of the answer is played once.
+     The one a route cannot reach by itself is the ledger switched off between its gate and its writer (postEntry answers { ok: false, off: true }); it is played by a setting read that says "off" for the writer only. ═══ */
+  console.log('\n── every answer branch of the period routes (the output allow-list) ──\n');
+  let WRITER_SEES_OFF = false, INSIDE_WRITER = false;
+  const setting0 = X.store.setting.bind(X.store), post0 = X.B.postEntry;
+  X.store.setting = async (...args) => { const s = await setting0(...args); return WRITER_SEES_OFF && INSIDE_WRITER ? Object.assign({}, s, { enabled: false }) : s; };
+  X.B.postEntry = async (...args) => { INSIDE_WRITER = true; try { return await post0(...args); } finally { INSIDE_WRITER = false; } };
+  const off = async (m, p, b) => { WRITER_SEES_OFF = true; try { return await q(m, p, b); } finally { WRITER_SEES_OFF = false; } };
+  const isOff = (r) => r.status === 200 && r.body.ok === false && r.body.off === true;
+  const offs = [];
+  const mark = async (name, run) => { const r = await run(); if (!isOff(r)) offs.push(name + ' → ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 120)); };
+  await mark('assets', () => off('POST', '/assets', { name: 'Off asset', class: 'computers', cost: 1000, date: '2026-12-02', how: 'bank', client_ref: 'off-asset' }));
+  const prn = await q('POST', '/assets', { name: 'Printer', class: 'computers', cost: 9000, date: '2026-12-03', how: 'bank', client_ref: 'prn-1' });
+  await mark('dispose', () => off('POST', '/assets/' + (prn.body.asset || {}).asset_id + '/dispose', { date: '2026-12-20', proceeds_minor: 100000, into: 'bank', client_ref: 'off-dispose' }));
+  await mark('closing-stock', () => off('POST', '/closing-stock', { date: '2026-12-31', value_minor: 7000000, method: 'manual', client_ref: 'cs-off' }));
+  await mark('loans', () => off('POST', '/loans', { ref: 'LN-OFF', lender: 'State Bank', amount_minor: 100000, into: 'bank', kind: 'secured', date: '2026-12-05' }));
+  await mark('emi', () => off('POST', '/loans/LN-1/emi', { principal_minor: 100, interest_minor: 10, from: 'bank', date: '2026-12-10', client_ref: 'off-emi' }));
+  await mark('accruals', () => off('POST', '/accruals', { ref: 'OFF-1', kind: 'outstanding', class: 'electricity', amount_minor: 100, date: '2026-12-31' }));
+  const acc2 = await q('POST', '/accruals', { ref: 'OFF-2', kind: 'outstanding', class: 'electricity', amount_minor: 100, date: '2026-11-30' });
+  await mark('accruals/reverse', () => off('POST', '/accruals/OFF-2/reverse', {}));
+  await mark('contra', () => off('POST', '/contra', { from: 'cash', to: 'bank', amount_minor: 100, date: '2026-12-05', client_ref: 'off-contra' }));
+  /* a month with tax to set off (March 2027): the close and the challan, off then on; a month with none (October 2026): nothing to set off, then the double tap on it */
+  await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2027-03-05', currency: 'INR', party: CUST, source_chit_id: 'c0000000-0000-4000-8000-00000000000c', source_ref: 'chit:c', by_rate: [{ rate: 18, taxable: 1000, cgst: 90, sgst: 90, igst: 0 }], paid: {}, round_off: 0 });
+  await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2027-03-06', currency: 'INR', party: SUPP, source_chit_id: 'c0000000-0000-4000-8000-00000000000d', source_ref: 'chit:d', by_rate: [{ rate: 18, taxable: 500, cgst: 45, sgst: 45, igst: 0 }], paid: {}, round_off: 0 });
+  await mark('gst/close', () => off('POST', '/gst/close', { fy: '2026-27', period: 12 }));
+  const gcm = await q('POST', '/gst/close', { fy: '2026-27', period: 12 });
+  await mark('gst/pay', () => off('POST', '/gst/pay', { fy: '2026-27', period: 12, amounts: { cgst_minor: 100 }, bank: 'bank', challan_no: 'CPIN-OFF', date: '2027-04-05' }));
+  const gco = await q('POST', '/gst/close', { fy: '2026-27', period: 7 });
+  const gco2 = await q('POST', '/gst/close', { fy: '2026-27', period: 7 });
+  /* depreciation for a year that has ended: off */
+  DAY = '2028-04-10';
+  await q('POST', '/assets', { name: 'Server', class: 'computers', cost: 50000, date: '2027-06-01', how: 'bank', client_ref: 'srv-1' });
+  await mark('depreciation/run', () => off('POST', '/depreciation/run', { fy: '2027-28' }));
+  DAY = '2027-04-10';
+  ok('EVERY BRANCH: each of the eleven writers answers { ok: false, off: true } when the ledger is off at the writer, and the closes name nothing to set off', offs.length === 0 && gcm.body.ok === true && gco.body.nothing_to_set_off === true && gco2.body.duplicate === true && gco2.body.nothing_to_set_off === true && acc2.body.ok === true,
+    offs.join(' · ') + ' ' + JSON.stringify([gcm.body, gco.body, gco2.body]).slice(0, 400));
+  X.store.setting = setting0; X.B.postEntry = post0;
+
   /* ── the register's REAL SQL (b280), inspected: binds = placeholders, the shop is $1, a missing table is the one refusal ── */
   const seen = [], dbq = { query: async (text, params) => { const ph = (text.match(/\$(\d+)/g) || []).map((s) => Number(s.slice(1))); seen.push({ n: (params || []).length, max: ph.length ? Math.max.apply(null, ph) : 0, first: (params || [])[0] }); return { rows: [] }; } };
   await Assets.sql.exists(dbq, SHOP); await Assets.sql.list(dbq, SHOP); await Assets.sql.get(dbq, SHOP, ID1); await Assets.sql.bySourceEntry(dbq, SHOP, ID1, 'x');
@@ -406,6 +465,9 @@ function memoryRegister() {
   Assets.use(reg.store);
 
   srv.close();
+  rec.save();
+  { const drift = rec.differences(require('path').join(H.API, 'docs', 'contracts', 'books-answers.json')); ok('the answers this test gets hold exactly the keys of docs/contracts/books-answers.json (the output allow-list is closed over them; rebuild: tests/support/books-capture.cjs)', drift.length === 0 || !!Capture.captureFile(process.argv), drift.join(' · ')); }
+
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });

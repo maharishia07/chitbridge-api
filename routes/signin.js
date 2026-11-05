@@ -1,6 +1,9 @@
 'use strict';
 /**
  * /api/signin — A PERSON'S SESSIONS: renew · logout · list · revoke (M05, SPEC-iam-build §4.2, D3, D14).
+ * OWNS      every route under /api/signin (8): renew · logout · sessions · devices · sessions/revoke · ask · verify · pin, and the handler functions the old paths (/api/entities/register, /verify, /api/actors/login, /check-login, /set-pin) mount as aliases.
+ * FLOW      door(name) → [session routes: auth → personOnly (a key is refused) → schemaValidate (lib/signin-contract.js)] · [ask · verify: schemaValidate → chains → validate → handler → lib/identity-auth.js] → the one answer an unknown account and a wrong secret share (SEC-81)
+ *           ⚠️ a typed value with a NUL byte names no account: it is answered as an unknown one before any lookup (K-1).
  * CARD 18-identity-sign-in-and-access/sign-in
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
@@ -26,7 +29,7 @@
  * 200 (nothing listed to remove — the page clears itself), and renew turns it into a listed session when the request
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  
- * CALLED BY routes/actors.js, routes/entities.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * CALLED BY server.js (app.use('/api/signin') and the /api/signin/{ask,verify,pin} rate-limit list) · routes/actors.js and routes/entities.js (the alias mounts) · the web's sign-in (signin-ui.js) · tests/api-problem-signin.test.cjs · tests/signin-routes.test.cjs
  */
 const express = require('express');
 const log = require('../lib/logger');
@@ -36,7 +39,11 @@ const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
+const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
+const { OTP_HASH_COL } = require('../lib/otp');
+const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
 
@@ -66,7 +73,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
-router.post('/renew', auth, personOnly, async (req, res) => {
+router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), async (req, res) => {
   try {
     const shop = shopOf(req);
     let s;
@@ -149,7 +156,7 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
   }
 });
 
-router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
+router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke'), async (req, res) => {
   try {
     const b = req.body || {},
       shop = shopOf(req);
@@ -250,6 +257,16 @@ const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
   return refused(req, res, 'NO_ACCOUNT');
 };
+/** K-1: a typed value with a NUL byte names no account and no database can hold it (Postgres refuses it, 22021): it is answered as an unknown value is, before any lookup */
+const holdsNul = (value) => String(value == null ? '' : value).includes('\u0000');
+/** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
+const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
+/** what the ask door looks up: the first of e-mail, user id, id that was typed */
+const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.body.id || '').trim();
+/** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
+const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
+/** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
+const junkAsUnknown = (handler, typedBy) => (req, res, next) => (holdsNul(typedBy(req)) ? unknownAccount(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
 const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED)$/.test(String(reason || ''));
 
@@ -311,9 +328,25 @@ async function sendCode(req, res, { identity_id, email, display_name }, extra) {
   );
 }
 
+/**
+ * firstCodeFor(actor, toMail) -> { otp, fresh }: otp = the plain code to e-mail or echo on a local stack (null when the held one is kept),
+ * fresh = a new code was made (SEC-106). TOP-CORRECT: the code the admin shared is KEPT while it is live, a new one only when none is held.
+ * A code kept as a hash cannot be read back to e-mail, so a mailed ask makes a NEW code (empCode.issue, attempts back to 0) — but this door has no
+ * session, so empCode.mayReplaceOnAsk allows that only a few times per person per hour and not twice within a minute; past that the held
+ * code is kept, the guess count is NOT reset, and the answer is the same as any other ask.
+ */
+async function firstCodeFor(actor, toMail) {
+  const wantsNew = toMail || !identityAuth.holdsLiveCode(actor);
+  if (wantsNew && (await empCode.mayReplaceOnAsk(actor.identity_id))) {
+    return { otp: (await empCode.issue(query, actor.identity_id, { ttlMs: SIGNIN_ASK_TTL_MS })).otp, fresh: true };
+  }
+  return { otp: identityAuth.heldOtp(actor), fresh: false };
+}
+
+
 async function ask(req, res, next) {
   try {
-    const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
+    const input = typedByAsk(req);
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
@@ -326,7 +359,7 @@ async function ask(req, res, next) {
      * REGISTER a new entity under it. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead.
      * ⚠️ AMBIGUOUS is refused, never guessed.
      */
-    const found = await identityAuth.findLoginIdentity(query, input, { shop: req.body.shop });
+    const found = await identityAuth.findLoginIdentity(query, input, { shop: shopNamed(req) });
     if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
@@ -342,20 +375,15 @@ async function ask(req, res, next) {
         note(req, a, 'ask', 'pin');
         return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
       }
-      /* ⭐ TOP-CORRECT: the code the admin shared is KEPT while it is live (identityAuth.heldOtp) — this line used to re-issue and
-         overwrite it, so the employee typed a code that was no longer in the row. A new code only when none is held. */
-      const otp = identityAuth.heldOtp(a) || (await identityAuth.issueOtp(query, a));
-      note(req, a, 'ask', 'otp');
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
-      const sent = toMail ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
+      const { otp, fresh } = await firstCodeFor(a, toMail);
+      note(req, a, 'ask', 'otp');
+      const sent = toMail && fresh ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
       return res.json(
         Object.assign(
           {
-            message:
-              sent && sent.delivered
-                ? 'Verification code sent to your email'
-                : 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.',
+            message: empCode.askMessage(toMail, fresh, sent),
             user_id: a.user_id,
             ...(devOtp.mayExposeOtp() && { dev_otp: otp })
           },
@@ -405,9 +433,9 @@ async function ask(req, res, next) {
     if (isEmail) {
       email = input.toLowerCase();
       display_name = sanitise(req.body.display_name || input);
-      const existing = await query('SELECT identity_id, bridge_id FROM identities WHERE email = $1', [email]);
-      if (existing.rows.length > 0) {
-        identity_id = existing.rows[0].identity_id;
+      const existing = (await query('SELECT identity_id, bridge_id, user_id FROM identities WHERE email = $1', [email])).rows.filter(identityAuth.isAccount); // SEC-130
+      if (existing.length > 0) {
+        identity_id = existing[0].identity_id;
         console.log(`Existing entity login: ${email}`);
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
@@ -420,18 +448,17 @@ async function ask(req, res, next) {
        * display name — and the name must be UNAMBIGUOUS: taking rows[0] once mailed a code to the wrong owner and locked
        * the other out. Ambiguity is refused with how to be specific.
        */
-      let rows = await query(
-        `SELECT identity_id, bridge_id, email, display_name FROM identities
-         WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`,
-        [input]
+      const accounts = async (sql) => ({ rows: (await query(sql, [input])).rows.filter(identityAuth.isAccount) }); // SEC-130: a minted party is no account
+      let rows = await accounts(
+        `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
+         WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`
       );
       if (!rows.rows.length) {
-        rows = await query(
-          `SELECT identity_id, bridge_id, email, display_name FROM identities
+        rows = await accounts(
+          `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
            WHERE LOWER(display_name) = LOWER($1)
            AND identity_type = 'entity'
-           AND status = 'active'`,
-          [input]
+           AND status = 'active'`
         );
         if (rows.rows.length > 1) {
           res.locals.code = 'AMBIGUOUS_NAME';
@@ -530,15 +557,15 @@ async function verify(req, res) {
       return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
 
-    /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
+    /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
-                    pin_hash, pin_attempts, pin_locked_at, otp_code, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
+                    pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
-    if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows;
-    else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
+    if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows.filter(identityAuth.isAccount);
+    else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows.filter(identityAuth.isAccount);
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
-      const f = await identityAuth.findLoginIdentity(query, id, { shop: req.body.shop });
+      const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
@@ -838,7 +865,7 @@ async function actorLogin(req, res) {
     const actor = await query(
       `SELECT identity_id, bridge_id, display_name, actor_key,
               actor_role, actor_type, break_status,
-              otp_code, otp_expires_at, otp_attempts, max_tasks,
+              otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, max_tasks,
               pin_hash, pin_attempts, pin_locked_at
        FROM identities
        WHERE actor_key = $1
@@ -947,10 +974,13 @@ async function pin(req, res) {
   }
 }
 
-router.post('/ask', door('signin'), askChecks, validate, ask);
-router.post('/verify', door('signin'), verifyChecks, validate, verify);
-router.post('/pin', auth, pinChecks, validate, pin);
+const askDoor = junkAsUnknown(ask, typedByAsk);
+const verifyDoor = junkAsUnknown(verify, typedByVerify);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
+router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
+router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
-router.handlers = { ask, verify, pin, checkLogin };
-Object.assign(router, { door, askChecks, verifyChecks, pinChecks, sendCode, events });
+router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
+Object.assign(router, { holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;

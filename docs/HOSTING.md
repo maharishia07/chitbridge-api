@@ -142,6 +142,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `TESTER_CODE` | optional | `<8+ characters, Athi's secret>` | **yes** | The one sign-in code testers use, for the sign-in names listed in `TESTER_NAMES` only (empty list = nobody), on as many shops as they like. Checked on verify only (never issued, e-mailed, logged or echoed; timing-safe). Unset or shorter than 8 → no tester code works. Works in a sealed env too. May carry ONE `{yymmdd}` / `{yyyymmdd}` (a daily code, SEC1b). ⚠️ TEMPORARY — remove before real users (boot warns while set). |
 | `TESTER_CODE_TZ` | optional | `Australia/Sydney` | no | SEC1b, TEMPORARY: the zone whose day fills `{yymmdd}` / `{yyyymmdd}` in `TESTER_CODE` (default `Asia/Kolkata`). Remove with `TESTER_CODE` before real users. |
 | `TESTER_NAMES` | optional | `*@test.chitbridge,anil-tester` | no | Comma list of exact sign-in names or `*` patterns; **fails closed**: unset or empty → the tester code works for NOBODY (and a boot WARN "set TESTER_NAMES"); set → only those names; a bare `*` (every account) is honoured only on a local stack or a test run — in production, staging or an unset/odd `NODE_ENV` it is refused. Up to 5 wrong tester-code guesses per account per 15 minutes, then the tester door is shut to that account. |
+| `TESTER_ALL_UNTIL` | optional | `2026-11-05` | no | ⚠️ TEMPORARY, time-boxed (Athi, 28 Oct). `YYYY-MM-DD`: while today (in `TESTER_CODE_TZ`, default Asia/Kolkata) is on or before that day, the valid tester code opens EVERY account. Needs `TESTER_CODE`. Unset, unparsable, past, or more than 62 days ahead → shut (fail closed; a too-far date is named in the boot log). Build chrome (dev tools) is NOT shown to every shop. Guess limit and account lock unchanged. Every boot WARNs *"tester code opens EVERY account until <date>"* while open. A leaked code opens any account until the date. Remove at cutover. |
 | **Local stack only — refused anywhere else** | | | | |
 | `DEV_OTP` | local stack only | `1` | no | Arms the fixed entity / customer / connector codes (values: lib/dev-otp.js LOCAL STACK block, docs/SIM-LOAD.md). They work ONLY when DATABASE_URL's host is 127.0.0.1 / localhost / ::1 AND `NODE_ENV=development`; a sealed env refuses to boot with it. |
 | `DEV_OTP_CUSTOMER` / `DEV_OTP_CONNECTOR` | local stack only | `<digits>` | no | Override the fixed customer / connector codes while `DEV_OTP` armed (local stack only). |
@@ -270,7 +271,7 @@ keep the fixed part private and change it if it leaks. Every boot logs at WARN *
 phase). Remove TESTER_CODE before real users."*
 
 ### Before real users — REMOVE
-- [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`; web repo → Secrets → DELETE `E2E_TESTER_CODE`.
+- [ ] Railway → Variables → DELETE `TESTER_CODE`, `TESTER_NAMES`, `TESTER_CODE_TZ`, `TESTER_ALL_UNTIL`; web repo → Secrets → DELETE `E2E_TESTER_CODE`.
 - [ ] Boot log shows no "TEMPORARY: a tester sign-in code is active" line. (The cutover checklist at the top of lib/dev-otp.js, item 4.)
 
 ## Going sealed — checklist (INT7c, after the 15 Oct 20:39–21:05 outage: `NODE_ENV=production` crashed on `OTP_EMAIL_ENABLED`)

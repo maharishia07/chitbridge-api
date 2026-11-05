@@ -1,7 +1,7 @@
 {
   "limit": 80,
-  "long_functions": 230,
-  "worst_complexity": 183,
+  "long_functions": 214,
+  "worst_complexity": 176,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
@@ -12,10 +12,6 @@
     ],
     "lib/ai.js": [
       "invokeSkill"
-    ],
-    "lib/amend.js": [
-      "(anonymous)",
-      "record"
     ],
     "lib/assign.js": [
       "byPerson"
@@ -42,7 +38,6 @@
       "build"
     ],
     "lib/books-payables.js": [
-      "(anonymous)",
       "view"
     ],
     "lib/books-period.js": [
@@ -56,8 +51,7 @@
       "todo"
     ],
     "lib/books.js": [
-      "enable",
-      "writeReversal"
+      "enable"
     ],
     "lib/capture.js": [
       "(anonymous)",
@@ -97,9 +91,6 @@
       "matchHeader",
       "preflight"
     ],
-    "lib/ctpaddress.js": [
-      "resolveAddress"
-    ],
     "lib/dayopen.js": [
       "(anonymous)"
     ],
@@ -129,6 +120,8 @@
     ],
     "lib/gst-returns.js": [
       "(anonymous)",
+      "(anonymous)",
+      "(anonymous)",
       "gstr1",
       "gstr3b"
     ],
@@ -156,9 +149,6 @@
     ],
     "lib/lotfields.js": [
       "(anonymous)"
-    ],
-    "lib/mint.js": [
-      "deliver"
     ],
     "lib/money.js": [
       "(anonymous)"
@@ -239,7 +229,8 @@
       "(anonymous)"
     ],
     "lib/reg-in.js": [
-      "(anonymous)"
+      "(anonymous)",
+      "tallyXml"
     ],
     "lib/reg-jp.js": [
       "(anonymous)"
@@ -287,9 +278,6 @@
       "(anonymous)",
       "post"
     ],
-    "lib/supply-store.js": [
-      "purchase"
-    ],
     "lib/tax-copy.js": [
       "partiesFor"
     ],
@@ -305,17 +293,23 @@
       "(anonymous)",
       "(anonymous)",
       "(anonymous)",
-      "determine_"
+      "(anonymous)",
+      "determine_",
+      "moneyOf_",
+      "resolveBelow",
+      "tallyXml"
     ],
-    "lib/tax-lines.js": [
-      "gstr1"
+    "lib/tax-packs.js": [
+      "(anonymous)"
     ],
     "lib/tax-slab.js": [
-      "(anonymous)"
+      "(anonymous)",
+      "resolveBelow"
     ],
     "lib/tax.js": [
       "(anonymous)",
-      "determine_"
+      "determine_",
+      "moneyOf_"
     ],
     "lib/units.js": [
       "(anonymous)"
@@ -346,8 +340,6 @@
       "PATCH /:id",
       "POST /",
       "PUT /:id/status",
-      "PUT /assign/:chit_id",
-      "PUT /assign/:chit_id",
       "PUT /break"
     ],
     "routes/adopt.js": [
@@ -374,11 +366,9 @@
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
       "POST /assign-bulk",
-      "PUT /:chit_id/disputes/:dispute_id/resolve",
       "PUT /:chit_id/status",
       "PUT /:chit_id/void",
       "chitFilters",
-      "moveStatus",
       "sendCopies",
       "sendCopyPolicy",
       "sendLegacyReceiverRows",
@@ -395,13 +385,11 @@
       "POST /deliver"
     ],
     "routes/definitions.js": [
-      "GET /",
-      "PUT /:id"
+      "GET /"
     ],
     "routes/entities.js": [
       "GET /me",
       "GET /mis",
-      "GET /search",
       "PATCH /profile"
     ],
     "routes/folders.js": [
@@ -418,10 +406,6 @@
     "routes/invoice.js": [
       "POST /build"
     ],
-    "routes/keys.js": [
-      "(anonymous)",
-      "claimDevice"
-    ],
     "routes/network-design.js": [
       "GET /availability",
       "POST /build"
@@ -435,13 +419,11 @@
     "routes/products.js": [
       "GET /",
       "GET /:id/versions",
-      "GET /lists",
       "POST /import",
       "POST /lists/adopt",
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers",
       "GET /suppliers/availability",
       "PATCH /suppliers/:id",
       "POST /customers",
@@ -466,23 +448,12 @@
       "GET /report",
       "GET /report",
       "PATCH /incidents/:id",
-      "PATCH /requirements/:id",
       "POST /incidents",
       "POST /releases",
       "POST /requirements",
       "POST /requirements",
       "importCases",
       "recordResults"
-    ],
-    "routes/till.js": [
-      "GET /bills",
-      "GET /match",
-      "GET /match",
-      "GET /snapshot",
-      "GET /worth-an-offer",
-      "POST /catalogue",
-      "POST /shop",
-      "tillItem"
     ]
   }
 }

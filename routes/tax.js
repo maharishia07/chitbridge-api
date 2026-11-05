@@ -12,6 +12,8 @@ const { taxSaid, faultOf, readFault, taxContract: contract } = require('../lib/t
 const auth = require('../middleware/auth');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
 const ctx = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
@@ -35,20 +37,8 @@ router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async
     const me = ctx(req);
     const hdr = await C.copyOf(req.params.chit_id, me);
     if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
-    const e = await C.entryFor(hdr, me);
-    res.json({
-      chit_id: e.chit_id,
-      direction: e.direction,
-      status: e.status,
-      provisional: e.provisional,
-      frozen: e.frozen,
-      rated: e.rated,
-      unrated: e.unrated,
-      seller: e.seller,
-      buyer: e.buyer,
-      invoice: e.invoice,
-      heads: T.heads(e.invoice)
-    });
+    /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/invoice/:id */
+    res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
   } catch (err) {
     problem(req, res, readFault(err, req));
   }
@@ -90,13 +80,15 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   }
 });
 
-/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON. Validate before filing. */
+/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
     const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
+    /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
+    if (out.ok === false) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', out.why));
     res.setHeader('Content-Disposition', `attachment; filename="${form}-${bounds.period}.json"`);
     res.json(out);
   } catch (err) {

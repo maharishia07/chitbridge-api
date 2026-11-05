@@ -13,6 +13,7 @@
  * complaint, so all three are asserted here.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), path = require('path'), fs = require('fs');
 const L = require(path.join(__dirname, '..', 'lib', 'local-identity.js'));
 const H = require(path.join(__dirname, '..', 'lib', 'handle.js'));
@@ -231,7 +232,7 @@ it('⭐⭐⭐ the recipient resolver refuses a minted party, on every branch', (
    * ⚠️⚠️ THE DISPLAY-NAME BRANCH IS THE DANGEROUS ONE: minted names are ordinary shop names, so "Corner Hardware"
    * typed by a DIFFERENT business would otherwise resolve to this one's private record.
    */
-  const s = src('routes/chits.js');
+  const s = CF.read(path.join(__dirname, '..'));
   assert.ok(/isMinted\(typedAny\)/.test(s), 'nothing rejects a typed minted handle before the lookups run');
   assert.ok(/cannot receive chits/.test(s), 'the refusal must say why, or it reads as "we lost your supplier"');
   const byName = s.match(/WHERE LOWER\(display_name\) = LOWER\(\$1\)[\s\S]{0,900}?`/);
@@ -259,9 +260,16 @@ it('⭐⭐⭐ the business search excludes them — asserted in the file that do
   assert.ok(from >= 0, 'GET /entities/search moved — this guard is now blind and must be repointed');
   const next = s.indexOf('\nrouter.', from + 10);
   const m = [s.slice(from, next < 0 ? s.length : next)];
-  assert.ok(/ORDER BY/.test(m[0]), 'the search handler no longer has an ORDER BY — repoint this guard');
-  assert.ok(/NOT LIKE '~%'/.test(m[0]),
-    'the business search no longer excludes minted parties — every local supplier is now public');
+  /* sit/run6 (NET-39): the handler is one call, lib/network-search (Here and There), which reads through lib/business-search and its own exact match;
+     the excluding is asserted in THOSE files: every identities read in them leaves the minted handles out */
+  assert.ok(/require\('\.\.\/lib\/network-search'\)\.search\(/.test(m[0]), 'GET /entities/search no longer goes through lib/network-search — repoint this guard');
+  assert.ok(/require\('\.\/business-search'\)/.test(src('lib/network-search.js')), 'lib/network-search no longer reads through lib/business-search — repoint this guard');
+  for (const file of ['lib/business-search.js', 'lib/network-search.js']) {
+    const reads = src(file).split('FROM identities').slice(1).map((rest) => rest.slice(0, rest.indexOf('`')));
+    assert.ok(reads.length >= 1 && reads.every((sql) => /ORDER BY|LIMIT/.test(sql)), file + ': a search read moved — repoint this guard');
+    assert.ok(reads.every((sql) => /NOT LIKE '~%'/.test(sql)),
+      file + ': the business search no longer excludes minted parties — every local supplier is now public');
+  }
 });
 
 it('⭐⭐ and one shop cannot add another shop\'s minted party', () => {

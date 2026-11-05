@@ -29,6 +29,7 @@ const t = (name, ok, extra) => { if (ok) { pass++; say('  ok  ' + name); } else 
 const FUT = (min) => new Date(Date.now() + min * 60000);
 let DB = {};
 const reset = () => {
+  require(path.join(API, 'lib', 'employee-code'))._resetAsk(); /* SEC-106: each scene is a fresh person, with no earlier asks counted */
   DB = {
     shop: { identity_type: 'entity', display_name: 'Mayur Bhavan', user_id: 'mayuri123', email: 'owner@mayur.test', bridge_id: 'B-SHOP',
             status: 'active', otp_attempts: 0 },
@@ -169,6 +170,7 @@ async function firstDay(name, { ask, verify, pin, setPin }) {
 
     say('\n── sealed: the fixed code never exists and is never accepted ──');
     process.env.NODE_ENV = 'production';
+    process.env.VAULT_ENC_KEY = Buffer.alloc(32, 9).toString('base64'); /* SEC-106: a sealed stack keeps a code only as a keyed hash, so it needs the key production has */
     reset();
     const minted = require(path.join(API, 'lib', 'employee-code')).mint().otp;
     t('a sealed env mints a real code for a new employee, not DEV_OTP', /^\d{6}$/.test(minted) && minted !== '123456', minted);
@@ -177,6 +179,7 @@ async function firstDay(name, { ask, verify, pin, setPin }) {
     const sv = await call('POST', '/api/entities/verify', { user_id: ID, otp: '123456' });
     t('sealed verify with 123456: refused (400), nobody signed in', sv.status === 400 && !sv.body.token, sv.status + ' ' + JSON.stringify(sv.body));
     process.env.NODE_ENV = 'development';
+    delete process.env.VAULT_ENC_KEY;
   } finally { server.close(); }
   say('\n' + (pass + fail) + ' checks · ' + pass + ' passed · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

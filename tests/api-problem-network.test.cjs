@@ -5,7 +5,7 @@
  * OWNS      the proof that each refusal of the network routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
  *           each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in the path answers another
- *           shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json. Also: no answer
+ *           shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json. Also: no answer
  *           outside the statuses the route's contract declares (lib/network-contract.js), its words as units, and the schemas that replaced the connections' validator chains.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route files over a stand-in db, auth and network tables (tests/lib/network-memory.cjs).
  * FLOW      route list (read from the three routers) x world (signed out, staff, a bad id, a failing db, an empty db) + the named extras (tests/lib/network-scenes.cjs) → real route →
@@ -13,7 +13,7 @@
  * CARD      04-network/connections-and-invitations
  *
  *   node tests/api-problem-network.test.cjs                    check
- *   node tests/api-problem-network.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-network.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-network.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-network.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-network.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -46,7 +46,7 @@ const lab = harness({
 const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const STRANGER = { identity_id: B, identity_type: 'entity', display_name: 'Shop B' };
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
@@ -232,6 +232,13 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
+  /* K-1: a NUL byte in text no column can hold is never a 500, and a search for one is answered as any search that finds nothing (no false "degraded" mark) */
+  const junkKeys = Object.keys(recording).filter((key) => /nul-byte/.test(key) && /network-design/.test(key));
+  check('a NUL byte in a drawing, a store name or a search is never a 5xx (' + junkKeys.length + ' answers)', junkKeys.length >= 6 && junkKeys.every((key) => recording[key].status < 500), junkKeys.map((key) => [key, recording[key].status]));
+  const savedJunk = junkKeys.filter((key) => /^PUT /.test(key));
+  check('a NUL byte in a name of the drawing is a 400 in words that say nothing of the database', savedJunk.length === 2 && savedJunk.every((key) => recording[key].status === 400 && /Type it again/.test(JSON.stringify(recording[key].body)) && !/byte sequence|Unicode escape|22021|22P05/.test(JSON.stringify(recording[key].body))), savedJunk.map((key) => recording[key]));
+  const searchJunk = junkKeys.filter((key) => /availability/.test(key));
+  check('a search for text holding a NUL byte answers as one that finds nothing: 200 with no degraded mark', searchJunk.length === 1 && searchJunk.every((key) => recording[key].status === 200 && recording[key].body && recording[key].body.degraded === undefined), searchJunk.map((key) => recording[key]));
   check('the writes switched off answer 503 on all eight writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 8 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
@@ -243,7 +250,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the three network route files', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

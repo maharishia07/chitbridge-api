@@ -563,12 +563,12 @@
   "status": 400,
   "body": {
    "error": "Failed to record delivery",
-   "message": "Something went wrong — please try again.",
+   "message": "Nothing to record",
    "type": "https://chitbridge.com/problems/chit_bad_request",
    "title": "Chit request not accepted",
    "status": 400,
    "code": "CHIT_BAD_REQUEST",
-   "detail": "Something went wrong — please try again.",
+   "detail": "Nothing to record",
    "hint": "Read the message, fix what it names and try again.",
    "request_id": null
   },

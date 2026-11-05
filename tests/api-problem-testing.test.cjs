@@ -6,7 +6,7 @@
  * OWNS      the proof that each refusal of the test board's routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded
  *           from the code before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json
  *           (the statuses each route is tested for, which the register's error_tests column reads), and the "signed in as another shop" world: a record addressed by an id in the path
- *           answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence.json.
+ *           answers another shop's id exactly as it answers an unknown id (API-STANDARD S35, tests/lib/foreign-id-world.cjs), recorded in docs/contracts/api-hardening-evidence-areas.json.
  *           Also: no answer outside the statuses the route's contract declares (lib/testing-contract.js), and that contract's words as units.
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real route file over a stand-in db and auth (tests/lib/problem-world.cjs, scenes in tests/lib/testing-scenes.cjs).
  * FLOW      route list (read from the router itself) x world (signed out, staff, a failing db, an empty db, a bad id) + the named extras → real route → body →
@@ -15,7 +15,7 @@
  * CARD      28-platform-and-operations/testing
  *
  *   node tests/api-problem-testing.test.cjs                    check
- *   node tests/api-problem-testing.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence.json
+ *   node tests/api-problem-testing.test.cjs --write            rewrite this file's rows of docs/contracts/api-error-tests.json and api-hardening-evidence-areas.json
  *   node tests/api-problem-testing.test.cjs --capture F        (run on the code BEFORE the change) record each answer to file F
  *   node tests/api-problem-testing.test.cjs --freeze F         merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-testing.test.cjs --compare F        the answers now against a capture F: byte for byte for a success, the old keys in order for a refusal
@@ -32,11 +32,17 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 delete process.env.TEST_BOARD_ENTITY;
+/* --capture / --compare replay the same answers byte for byte: the clock in milliseconds (a trace's `until`) and the random suffix of a minted reference (REQ-…, INC-…, CHG-…) are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  Date.now = () => 1800000000000;
+}
 const MOUNT = '/api/testing';
 const OTHER_SHOP = '99999999-9999-4999-8999-999999999999';
 const STRANGER = { identity_id: OTHER_SHOP, identity_type: 'entity', display_name: 'Other shop' };
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const tools = { PARTY, OWNER, STAFF, SECRET_SQL, answering, firstOf };
 /** the scenes that are answers the sweep ADDS (the schema's refusal): never frozen */
@@ -46,11 +52,17 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: 'routes/testing.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
+  before: () => {
+    /* every scenario meets the project column as the first read of a fresh process does: not asked yet (routes/testing.js _proj is the cache of that one question) */
+    const cache = require(path.join(HERE, 'routes', 'testing.js'))._proj;
+    cache.has = null;
+    cache.at = 0;
+  },
   inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out',
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario)
 });
 const { check } = lab;
-const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')) });
+const sources = () => ({ raiseticket: require(path.join(HERE, 'lib', 'raiseticket')), board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')), fs: require('fs') });
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
   { id: 'staff-asks', setup: { who: STAFF } },
@@ -128,6 +140,35 @@ async function foreignWorld(port) {
   return seen.proved();
 }
 
+/** S41 (K-1, B2): a junk value answers exactly as the unknown value it stands for — the same status, the same body but for the request id — and a NUL byte in stored text is a 400 in plain words */
+async function junkWorld(port) {
+  console.log('\n-- a junk value answers as an unknown one --');
+  const bodyOf = (answer) => JSON.stringify(Object.assign({}, answer.json, { request_id: null, generated_at: null }));
+  for (const pair of scenes.pairs(tools)) {
+    const ask = async (url, body) => {
+      Object.assign(lab.world, { realAuth: false, db: 'ok', who: OWNER, sqlRows: pair.setup.sqlRows });
+      return lab.send(port, pair.method, url, body);
+    };
+    const junk = await ask(pair.junk, pair.body);
+    const unknown = await ask(pair.unknown, pair.unknownBody);
+    check(pair.id + ': the junk value answers exactly as the unknown one (' + unknown.status + ', same body)', junk.status < 500 && junk.status === unknown.status && bodyOf(junk) === bodyOf(unknown), { junk: junk.status, unknown: unknown.status });
+  }
+  const words = contractModule();
+  const text = words.faultOf(Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { code: '22021' }), { id: 'r1' }, 'Could not record it');
+  check('faultOf: a NUL byte in text (22021, 22P05 in a jsonb value) is a 400 in plain words, nothing of the database in it', text.status === 400 && sameValue(text.legacy, { error: 'Cannot save this text', message: 'Cannot save this text. Type it again.' }) && words.faultOf(Object.assign(new Error('x'), { code: '22P05' }), {}, 'x').status === 400, text);
+  check('bareFaultOf: the same 400 for the reads that never carried a message', words.bareFaultOf(Object.assign(new Error('x'), { code: '22021' }), {}, 'Failed').status === 400);
+  Object.assign(lab.world, { sqlRows: null });
+}
+
+/** SEC-93: a failed copy to the support queue says the safe sentence and the request id — never the error's own words (which named an environment variable) */
+function checkSupportWords(recording) {
+  console.log('\n-- the support copy that fails says nothing of its cause --');
+  ['POST /api/testing/requirements|requirement-support-fails', 'POST /api/testing/incidents|incident-support-fails'].forEach((key) => {
+    const why = (((recording[key] || {}).body || {}).support || {}).why;
+    check(key.split('|')[0] + ': support.why is the safe sentence and the request id, nothing of the cause', typeof why === 'string' && /^Something went wrong — please try again.\ \(ref [^)]+\)$/.test(why) && !/PLATFORM_ROOT_ENTITY/.test(why), why);
+  });
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -152,9 +193,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkWords();
+  checkSupportWords(recording);
   checkCodesRegistered();
   checkContractShape(routes);
   const proved = await foreignWorld(server.address().port);
+  await junkWorld(server.address().port);
   server.close();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
@@ -171,7 +214,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/testing.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+    check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

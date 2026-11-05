@@ -14,6 +14,7 @@
  * Run: node tests/books-writer.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -74,7 +75,7 @@ ok('b273: cb_app loses UPDATE and DELETE on the insert-only five', /REVOKE UPDAT
 ok('b273: the trigger function refuses, it does not ignore', /RAISE EXCEPTION/.test(b273));
 
 /* 4 · the chit never waits on the ledger */
-const chits = read('routes/chits.js');
+const chits = CF.read(ROOT);
 const hook = chits.slice(chits.indexOf("require('../lib/books-hooks')") - 400, chits.indexOf("require('../lib/books-hooks')") + 700);
 ok('routes/chits.js calls the ledger hook', chits.indexOf("require('../lib/books-hooks')") > 0);
 ok('…inside try, in setImmediate, never awaited', /try \{/.test(hook) && /setImmediate\(/.test(hook) && !/await\s+hooks\./.test(hook) && !/await\s+require\('\.\.\/lib\/books-hooks'\)/.test(hook));

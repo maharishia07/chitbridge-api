@@ -301,5 +301,6 @@ async function cases() {
   const pass = results.filter((r) => r.pass).length, fail = results.length - pass;
   console.log('\n── ' + results.length + ' cases · ' + pass + ' pass · ' + fail + ' fail (' + results.filter((r) => !r.pass && r.gap).length + ' of them known gaps) ──');
   if (process.env.STOCK_TRUTH_JSON) require('fs').writeFileSync(process.env.STOCK_TRUTH_JSON, JSON.stringify({ run: RUN, shop: SHOP && SHOP.bridge, results }, null, 2));
-  process.exitCode = fail ? 1 : 0;
+  /* the harness rule (tests/lib/truth-harness.cjs): a FAIL without a `gap:` marker is a real red; known gaps are recorded, not red */
+  process.exitCode = results.some((r) => !r.pass && !r.gap) ? 1 : 0;
 })().catch((e) => { console.error('stock truth could not run:', e && e.message); process.exit(2); });

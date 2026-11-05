@@ -132,6 +132,16 @@ it('an offer comes off the total and is shown as a saving, never as a lower pric
   assert.strictEqual(m.gross, 90); assert.strictEqual(m.save, 9); assert.strictEqual(m.net, 81);
 });
 
+it('⭐ ACC-206: a line priced below its catalogue price (a price structure, no offer) shows the engine\'s gross and savings, as a send does', () => {
+  P.CART = [{ price: 309, unitPrice: 284, qty: 2, gross: 568, net: 568, save: 0 }, { price: 30, qty: 3, gross: 90, net: 81, save: 9 }];
+  P.S = { shop: { reg_type: 'unregistered' } };
+  const m = P.billMoney();
+  assert.strictEqual(m.gross, 618 + 90, 'gross at the catalogue price');
+  assert.strictEqual(m.save, 50 + 9, 'the structure\'s 50 and the offer\'s 9, both said by the engine');
+  assert.strictEqual(m.net, 568 + 81, 'what the customer pays does not move');
+  assert.deepStrictEqual([m.invoice.ItemList[0].UnitPrice, m.invoice.ItemList[0].Discount, m.invoice.ItemList[1].Discount], [309, 50, 9]);
+});
+
 it('a registered shop splits the tax OUT of the shelf price — the customer pays what the shelf said', () => {
   P.CART = [{ price: 118, qty: 1, gross: 118, net: 118, save: 0, gst_rate: 18 }];
   P.S = { shop: { reg_type: 'regular', gstin: '33ABCDE1234F1Z5', country: 'IN' } };   /* ⚠️ registered MEANS a GSTIN */
@@ -963,12 +973,13 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
   const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
   assert.ok(/'\/app\/signin-ui\.js'/.test(vendor.slice(vendor.indexOf('const KEEP ='), vendor.indexOf('self.addEventListener'))), 'the window is not on the service worker\'s shelf');
-  assert.ok(/const SHELF = 'cb-till-v6'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js */
+  assert.ok(/const SHELF = 'cb-till-v7'/.test(vendor), 'the shelf was not bumped');   /* v5: HX1 put /config.js on the boot path · v6: FX-F10W2 /app/their-bill.js · v7: F5 W1a /app/tax-slab-ui.js */
   /* read, not required — requiring the route would open the database */
   const kitNames = (fs.readFileSync(path.join(API, 'routes', 'integrations.js'), 'utf8').match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '';
   assert.ok(/'signin-ui\.js'/.test(kitNames), 'the kit zip does not carry the window');
   const sw = fs.readFileSync(path.join(WEB, 'till-sw.js'), 'utf8');
-  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v6/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/signin-ui\.js'/.test(sw) && /cb-till-v7/.test(sw) && /'\/config\.js'/.test(sw), 'the vendored service worker is stale');
+  assert.ok(/'\/app\/tax-slab-ui\.js'/.test(sw), 'the rate menu (F5 W1a) is not on the shelf');
 }]);
 /**
  * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule, both hosts and the books: the master is api lib/their-bill.js (books-hooks receiptBill

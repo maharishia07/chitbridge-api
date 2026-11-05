@@ -13,8 +13,50 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the request
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { words, failed, schemaOptionsFor, face: faceContract } = require('../lib/catalogue-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
+const rateDoor = require('../lib/rate-door'); // CAT-211: the shop's default rate (face.tax.default_slab) is owner or manager only, like every rate door
 
 const ent = (req) => auth.entityOf(req);
+/** CAT-211: would this save change the shop's default rate? Only asked of a caller who may not set one (an editor pays the one stored read; an owner or manager never does). */
+async function editorChangesDefaultRate(req, entityId, face) {
+  if (rateDoor.setsRate(req)) return false;
+  const stored = await withEntity(entityId, (db) => db.query(`SELECT face FROM catalogue_face WHERE entity_id = $1`, [entityId]));
+  return rateDoor.faceRateChanged(face, stored.rows.length ? stored.rows[0].face : null);
+}
+/** every declaration of this face that the catalogue cannot enforce, in words (T1.1 follow-up; moved out of the PUT so the route reads as its steps) */
+async function declarationErrors(face, e) {
+  // T1.1 follow-up — TELL THE OWNER when a declaration cannot be enforced.
+  // resolve() reports unsupported keywords, but nothing surfaced them, so declaring `pattern` on a GSTIN field was
+  // still silently dropped — the same class of problem the whitelist exists to end, moved one step later. The save
+  // is REJECTED here, at the moment the owner writes it, which is the only point where the message is useful.
+  const orderInput = require('../lib/order-input');
+  const declErrors = [];
+  if (face.order_input) declErrors.push(...orderInput.resolve(face.order_input).errors.map((item) => 'catalogue: ' + item));
+  for (const it of Array.isArray(face.items) ? face.items : []) {
+    if (it && it.order_input) {
+      declErrors.push(...orderInput.resolve(it.order_input).errors.map((item) => `item "${it.name || it.product || '?'}": ${item}`));
+    }
+  }
+  // Same rule for the IDENTITY declaration: what makes a line unique, which field names the product it belongs
+  // to, and which fields distinguish variants. A declaration naming a column the catalogue does not have is worse
+  // than no declaration — every line would fail to identify, so every upload would look like a catalogue full of
+  // brand new products, and a second upload of the same sheet would duplicate all of them.
+  if (face.identity) {
+    const identity = require('../lib/identity');
+    const ident = identity.resolve(face);
+    // Plain query, like products.js: schema_fields/entity_schemas are read the same way there.
+    const cols = await query(
+      `SELECT sf.field_key FROM schema_fields sf
+         JOIN entity_schemas es ON es.schema_id = sf.schema_id
+        WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`,
+      [e]
+    ).catch(log.orElse('catalogue-face PUT /: the read failed — answered with none', { rows: [] }));
+    const have = cols.rows.map((item) => item.field_key);
+    // Only check when there is something to check against — an entity with no schema yet would otherwise be told
+    // every field it names is missing.
+    if (have.length) declErrors.push(...identity.check(ident, have).map((item) => 'identity: ' + item));
+  }
+  return declErrors;
+}
 const MAX_BYTES = 1_000_000; // a face is a small config object; cap so this never becomes a document store
 
 // GET /api/catalogue-face — this entity's saved face (null if none yet).
@@ -39,37 +81,8 @@ router.put('/', auth, schemaValidate(faceContract.operationFor('PUT /'), schemaO
     if (Buffer.byteLength(JSON.stringify(face)) > MAX_BYTES) {
       return problem(req, res, { status: 413, ...words.faceTooLarge(MAX_BYTES) });
     }
-    // T1.1 follow-up — TELL THE OWNER when a declaration cannot be enforced.
-    // resolve() reports unsupported keywords, but nothing surfaced them, so declaring `pattern` on a GSTIN field was
-    // still silently dropped — the same class of problem the whitelist exists to end, moved one step later. The save
-    // is REJECTED here, at the moment the owner writes it, which is the only point where the message is useful.
-    const orderInput = require('../lib/order-input');
-    const declErrors = [];
-    if (face.order_input) declErrors.push(...orderInput.resolve(face.order_input).errors.map((item) => 'catalogue: ' + item));
-    for (const it of Array.isArray(face.items) ? face.items : []) {
-      if (it && it.order_input) {
-        declErrors.push(...orderInput.resolve(it.order_input).errors.map((item) => `item "${it.name || it.product || '?'}": ${item}`));
-      }
-    }
-    // Same rule for the IDENTITY declaration: what makes a line unique, which field names the product it belongs
-    // to, and which fields distinguish variants. A declaration naming a column the catalogue does not have is worse
-    // than no declaration — every line would fail to identify, so every upload would look like a catalogue full of
-    // brand new products, and a second upload of the same sheet would duplicate all of them.
-    if (face.identity) {
-      const identity = require('../lib/identity');
-      const ident = identity.resolve(face);
-      // Plain query, like products.js: schema_fields/entity_schemas are read the same way there.
-      const cols = await query(
-        `SELECT sf.field_key FROM schema_fields sf
-           JOIN entity_schemas es ON es.schema_id = sf.schema_id
-          WHERE es.entity_id = $1 AND es.status='active' AND es.is_default=true`,
-        [e]
-      ).catch(log.orElse('catalogue-face PUT /: the read failed — answered with none', { rows: [] }));
-      const have = cols.rows.map((item) => item.field_key);
-      // Only check when there is something to check against — an entity with no schema yet would otherwise be told
-      // every field it names is missing.
-      if (have.length) declErrors.push(...identity.check(ident, have).map((item) => 'identity: ' + item));
-    }
+    if (await editorChangesDefaultRate(req, e, face)) return problem(req, res, { status: 403, ...words.rateOwnerOnly() }); // the whole save is refused, nothing written
+    const declErrors = await declarationErrors(face, e);
     if (declErrors.length) {
       return problem(req, res, { status: 422, ...words.notSupported(declErrors) });
     }

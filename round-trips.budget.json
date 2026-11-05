@@ -125,6 +125,14 @@
       "fired": true,
       "status": 200
     },
+    "DELETE /api/quick-keys/groups/:id/items/:productId": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "DELETE /api/relationships/suppliers/:id": {
       "file": "relationships.js",
       "trips": 1,
@@ -139,10 +147,34 @@
       "fired": true,
       "status": 404
     },
+    "GET /.well-known/ctp.json": {
+      "file": "ctp.js",
+      "trips": 4,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/actors": {
       "file": "actors.js",
       "trips": 2,
       "wire": 2,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/actors/:id/tasks": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/actors/access-events": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -182,12 +214,44 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/assist/erp-handoffs": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/gaps": {
+      "file": "assist.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/assist/penetration": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/assist/questions": {
       "file": "assist.js",
       "trips": 1,
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/assist/regions": {
+      "file": "assist.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/assist/standards": {
       "file": "assist.js",
@@ -423,12 +487,28 @@
       "fired": true,
       "status": 422
     },
+    "GET /api/capture/consolidate": {
+      "file": "capture.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/capture/pending": {
       "file": "capture.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 200
+    },
+    "GET /api/capture/stores": {
+      "file": "capture.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/catalogue-face": {
       "file": "catalogue-face.js",
@@ -439,18 +519,18 @@
     },
     "GET /api/catalogue/:bridge_id": {
       "file": "catalogue.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 404,
       "extra": true
     },
     "GET /api/catalogue/enquiry": {
       "file": "catalogue.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 1,
+      "wire": 4,
       "fired": true,
-      "status": 404,
+      "status": 200,
       "extra": true
     },
     "GET /api/channels": {
@@ -459,6 +539,17 @@
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/channels/outbound": {
+      "file": "channels.js",
+      "trips": 2,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
     },
     "GET /api/chits/:chit_id": {
       "file": "chits.js",
@@ -473,6 +564,14 @@
       "wire": 8,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/:chit_id/costs": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/chits/:chit_id/disputes": {
       "file": "chits.js",
@@ -489,12 +588,28 @@
       "fired": true,
       "status": 403
     },
+    "GET /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/chits/:chit_id/raida": {
       "file": "chits.js",
       "trips": 3,
       "wire": 6,
       "fired": true,
       "status": 200
+    },
+    "GET /api/chits/:id/children": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/chits/:id/trace": {
       "file": "chits.js",
@@ -553,6 +668,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/chits/register/templates": {
+      "file": "chits.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/chits/register/walk/:from": {
       "file": "chits.js",
       "trips": 1,
@@ -588,12 +711,44 @@
       "fired": true,
       "status": 400
     },
+    "GET /api/chits/trace/networks": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/chits/unread": {
       "file": "chits.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 200
+    },
+    "GET /api/combo-templates": {
+      "file": "combo-templates.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/connections/list": {
+      "file": "connections.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/connections/pending": {
+      "file": "connections.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/connectors": {
       "file": "connectors.js",
@@ -646,7 +801,7 @@
     },
     "GET /api/crm/parties": {
       "file": "crm.js",
-      "trips": 3,
+      "trips": 1,
       "wire": 14,
       "fired": true,
       "status": 200
@@ -687,28 +842,6 @@
         "since": "2026-10-13"
       }
     },
-    "GET /api/marketing/came-back": {
-      "file": "marketing.js",
-      "trips": 3,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
-        "since": "2026-10-22"
-      }
-    },
-    "GET /api/channels/outbound": {
-      "file": "channels.js",
-      "trips": 2,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
-        "since": "2026-10-22"
-      }
-    },
     "GET /api/crm/segments": {
       "file": "crm.js",
       "trips": 3,
@@ -719,6 +852,14 @@
         "pr": "web#282 (T3-P2-CRM: CB CRM › Groups & segments · Shop window)",
         "since": "2026-10-14"
       }
+    },
+    "GET /api/ctp/.well-known/ctp.json": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
     },
     "GET /api/definitions": {
       "file": "definitions.js",
@@ -738,6 +879,14 @@
       "file": "entities.js",
       "trips": 3,
       "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/entities/entitlements": {
+      "file": "entities.js",
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200,
       "extra": true
@@ -807,6 +956,14 @@
       "fired": true,
       "status": 400
     },
+    "GET /api/entities/search/places": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/entities/sides": {
       "file": "entities.js",
       "trips": 15,
@@ -834,209 +991,14 @@
       "file": "events.js",
       "trips": 0,
       "wire": 0,
-      "fired": false,
-      "extra": true,
-      "why": "event stream held open: the ticket is checked in memory, no database read"
-    },
-    "GET /api/facts/account": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
       "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/accounts": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/assist": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/combo-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/compare": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 6,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/connectors": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/counters": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/country-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/crm": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 14,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/disputes": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/finance": {
-      "file": "facts.js",
-      "trips": 4,
-      "wire": 9,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/governance": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/marketing": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 200,
-      "awaiting_client": {
-        "pr": "MKT web round: the Marketing card on Home / CB CRM",
-        "since": "2026-10-14"
-      }
-    },
-    "GET /api/facts/offer-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/operations": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/orders": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 10,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/people": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/plan": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 2,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/product-lab": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/rail": {
-      "file": "facts.js",
-      "trips": 3,
-      "wire": 19,
-      "fired": true,
-      "status": 200,
+      "status": 401,
       "extra": true
     },
     "GET /api/facts/rail/chits": {
       "file": "facts.js",
       "trips": 2,
       "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/reports": {
-      "file": "facts.js",
-      "trips": 2,
-      "wire": 5,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/storefront": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/tax-lab": {
-      "file": "facts.js",
-      "trips": 4,
-      "wire": 13,
-      "fired": true,
-      "status": 200,
-      "extra": true
-    },
-    "GET /api/facts/till": {
-      "file": "facts.js",
-      "trips": 1,
-      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1076,6 +1038,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/folders/inventory": {
+      "file": "folders.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/folders/messages": {
       "file": "folders.js",
       "trips": 1,
@@ -1105,6 +1075,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/folders/rules/vocabulary": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/folders/worklist": {
       "file": "folders.js",
       "trips": 1,
@@ -1112,10 +1090,50 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/forms": {
+      "file": "forms.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/forms/instances/all": {
       "file": "forms.js",
       "trips": 1,
       "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-skills": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/ai-usage": {
+      "file": "governance.js",
+      "trips": 3,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/boilerplate/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "GET /api/governance/commerce-standards": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1128,6 +1146,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/governance/entities/:id": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/governance/instruments": {
       "file": "governance.js",
       "trips": 0,
@@ -1135,10 +1161,18 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/governance/journey": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/governance/lanes": {
       "file": "governance.js",
-      "trips": 5,
-      "wire": 13,
+      "trips": 2,
+      "wire": 4,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1149,6 +1183,22 @@
       "wire": 10,
       "fired": true,
       "status": 200
+    },
+    "GET /api/governance/profile/path": {
+      "file": "governance.js",
+      "trips": 8,
+      "wire": 16,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/profile/readiness": {
+      "file": "governance.js",
+      "trips": 7,
+      "wire": 15,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/governance/readiness": {
       "file": "governance.js",
@@ -1165,6 +1215,14 @@
       "fired": true,
       "status": 404
     },
+    "GET /api/governance/source/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/governance/supplier-acceptance/:handle": {
       "file": "governance.js",
       "trips": 2,
@@ -1172,12 +1230,44 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/governance/track-record": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/vault-schema": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/identity/documents": {
+      "file": "identity-docs.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/integrations/catalogue": {
       "file": "integrations.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 200
+    },
+    "GET /api/integrations/kit": {
+      "file": "integrations.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/integrations/profile-map": {
       "file": "integrations.js",
@@ -1222,6 +1312,41 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/kyb/position": {
+      "file": "kyb.js",
+      "trips": 2,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/risk": {
+      "file": "kyb.js",
+      "trips": 9,
+      "wire": 24,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/kyb/yourself": {
+      "file": "kyb.js",
+      "trips": 14,
+      "wire": 34,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/marketing/came-back": {
+      "file": "marketing.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "awaiting_client": {
+        "pr": "web: MKT first slice (Marketing face of crm.html: Offers sent · Who came back)",
+        "since": "2026-10-22"
+      }
+    },
     "GET /api/network-design": {
       "file": "network-design.js",
       "trips": 1,
@@ -1257,10 +1382,42 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/offers/kinds": {
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/offers/openapi.json": {
+      "file": "offers.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/openapi.json": {
+      "file": "openapi.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/people": {
       "file": "people.js",
       "trips": 1,
       "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/pricing/kinds": {
+      "file": "pricing.js",
+      "trips": 0,
+      "wire": 0,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1273,7 +1430,8 @@
       "status": 200,
       "awaiting_client": {
         "pr": "CO1 follow-up: CRM record › Privacy block + Standards live check",
-        "since": "2026-10-13"
+        "since": "2026-10-28",
+        "redated": "re-dated 2026-10-28 (Athi): web round in BACKLOG this week"
       }
     },
     "GET /api/privacy/me": {
@@ -1291,12 +1449,36 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/products/:id/schedule": {
+      "file": "products.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/products/:id/versions": {
       "file": "products.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 404
+    },
+    "GET /api/products/export.csv": {
+      "file": "products.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/products/lists": {
+      "file": "products.js",
+      "trips": 3,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/products/starter-columns": {
       "file": "products.js",
@@ -1311,6 +1493,30 @@
       "wire": 13,
       "fired": true,
       "status": 200
+    },
+    "GET /api/products/workbook.xlsx": {
+      "file": "products.js",
+      "trips": 4,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/quick-keys/groups": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/quick-keys/screen-config/default": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/relationships/customers": {
       "file": "relationships.js",
@@ -1333,6 +1539,22 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/relationships/scorecard": {
+      "file": "relationships.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/relationships/scorecard/:entity_id": {
+      "file": "relationships.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/relationships/suppliers": {
       "file": "relationships.js",
       "trips": 2,
@@ -1343,9 +1565,9 @@
     "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
       "file": "relationships.js",
       "trips": 1,
-      "wire": 1,
+      "wire": 4,
       "fired": true,
-      "status": 200
+      "status": 404
     },
     "GET /api/relationships/suppliers/availability": {
       "file": "relationships.js",
@@ -1375,6 +1597,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/schemas/my": {
+      "file": "schemas.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,
@@ -1395,6 +1625,14 @@
       "wire": 1,
       "fired": true,
       "status": 200
+    },
+    "GET /api/simulator/content": {
+      "file": "simulator.js",
+      "trips": 6,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/supplies": {
       "file": "supplies.js",
@@ -1424,14 +1662,29 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/cases/gherkin": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/changes": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/cmdb": {
       "file": "testing.js",
       "trips": 1,
       "wire": 4,
       "fired": true,
       "status": 200,
-      "extra": true,
-      "why": "W1-SET: paged through readPage (one statement carries the page and its count); called by public/cmdb/record.html outside the registry"
+      "extra": true
     },
     "GET /api/testing/coverage": {
       "file": "testing.js",
@@ -1440,12 +1693,44 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/engine": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/incidents": {
       "file": "testing.js",
       "trips": 1,
       "wire": 5,
       "fired": true,
       "status": 200
+    },
+    "GET /api/testing/releases": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/reliability": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 8,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/testing/report": {
+      "file": "testing.js",
+      "trips": 2,
+      "wire": 13,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "GET /api/testing/requirements": {
       "file": "testing.js",
@@ -1461,6 +1746,14 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/runs": {
+      "file": "testing.js",
+      "trips": 1,
+      "wire": 6,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/testing/stale": {
       "file": "testing.js",
       "trips": 1,
@@ -1475,10 +1768,34 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/testing/vocabulary": {
+      "file": "testing.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/till/bills": {
       "file": "till.js",
       "trips": 1,
       "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/catalogue/blueprints": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/counters": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
       "fired": true,
       "status": 200,
       "extra": true
@@ -1490,6 +1807,46 @@
       "fired": true,
       "status": 200
     },
+    "GET /api/till/quick-keys/groups": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/hidden": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/quick-keys/screen-config": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/screens": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/snapshot": {
+      "file": "till.js",
+      "trips": 15,
+      "wire": 46,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "GET /api/till/stock": {
       "file": "till.js",
       "trips": 1,
@@ -1499,6 +1856,30 @@
       "extra": true
     },
     "GET /api/till/summary": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/tasks": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 10,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/verify": {
+      "file": "till.js",
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "GET /api/till/worth-an-offer": {
       "file": "till.js",
       "trips": 1,
       "wire": 4,
@@ -1584,6 +1965,14 @@
       "fired": true,
       "status": 400
     },
+    "PATCH /api/entities/me/locale": {
+      "file": "entities.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "PATCH /api/entities/me/prefs/:kind": {
       "file": "entities.js",
       "trips": 0,
@@ -1626,6 +2015,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "PATCH /api/quick-keys/groups/:id/items": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "PATCH /api/relationships/customers/:id": {
       "file": "relationships.js",
@@ -1685,6 +2082,14 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/actors/check-key": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/actors/login": {
       "file": "actors.js",
       "trips": 0,
@@ -1698,6 +2103,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/actors/suggest-key": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/adopt/:chit_id": {
       "file": "adopt.js",
@@ -1783,6 +2196,13 @@
       "fired": true,
       "status": 422
     },
+    "POST /api/books/events": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
     "POST /api/books/entries": {
       "file": "books.js",
       "trips": 1,
@@ -1859,6 +2279,14 @@
       "wire": 3,
       "fired": true,
       "status": 422
+    },
+    "POST /api/books/money-check/resolve": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422,
+      "extra": true
     },
     "POST /api/books/outbox/retry": {
       "file": "books.js",
@@ -1965,12 +2393,28 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/capture/webhook/email": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/capture/webhook/whatsapp": {
+      "file": "capture.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/catalogue/enquiry/:item_id": {
       "file": "catalogue.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 404,
+      "status": 400,
       "extra": true
     },
     "POST /api/channels": {
@@ -2006,8 +2450,7 @@
       "trips": 1,
       "wire": 7,
       "fired": true,
-      "status": 404,
-      "why": "W2-RAIL R2: the open-dispute count and the UPDATE in ONE withEntity (was two); the count is savepointed (SAVEPOINT · COUNT · RELEASE) so an unreadable dispute table refuses 503, never archives"
+      "status": 404
     },
     "POST /api/chits/:chit_id/assign-lines": {
       "file": "chits.js",
@@ -2051,6 +2494,38 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/chits/:chit_id/proposals": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+      "file": "chits.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "POST /api/chits/:chit_id/raida": {
       "file": "chits.js",
@@ -2335,6 +2810,30 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/csp-report": {
+      "file": "csp-report.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "extra": true
+    },
+    "POST /api/ctp/deliver": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
+    },
+    "POST /api/ctp/query": {
+      "file": "ctp.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does"
+    },
     "POST /api/definitions": {
       "file": "definitions.js",
       "trips": 0,
@@ -2414,6 +2913,38 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/governance/boilerplate/:key/adopt": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/governance/entities": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/entities/:id/reattest": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "PUT /api/folders/inventory/:code": {
+      "file": "folders.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "POST /api/governance/ai-draft": {
       "file": "governance.js",
       "trips": 0,
@@ -2429,14 +2960,21 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/governance/conformance": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/governance/source": {
       "file": "governance.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 403,
-      "extra": true,
-      "why": "W1-SET: the platform door (lib/platformroot.refuseUnlessPlatform) answers before any read; no web screen calls it (the runbook does)"
+      "extra": true
     },
     "POST /api/governance/supplier-acceptance": {
       "file": "governance.js",
@@ -2475,12 +3013,28 @@
       "fired": true,
       "status": 400
     },
+    "POST /api/integrations/heartbeat": {
+      "file": "integrations.js",
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/keys": {
       "file": "keys.js",
       "trips": 50,
       "wire": null,
       "fired": false,
       "why": "answered 500 on the stub"
+    },
+    "POST /api/kyb/field": {
+      "file": "kyb.js",
+      "trips": 5,
+      "wire": 14,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "POST /api/network-design/build": {
       "file": "network-design.js",
@@ -2783,6 +3337,14 @@
       "fired": true,
       "status": 404
     },
+    "POST /api/signin/logout": {
+      "file": "signin.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/signin/sessions/revoke": {
       "file": "signin.js",
       "trips": 0,
@@ -2875,6 +3437,14 @@
       "fired": true,
       "status": 200
     },
+    "POST /api/till/listen": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/till/pair": {
       "file": "till.js",
       "trips": 1,
@@ -2890,14 +3460,45 @@
       "status": 400,
       "extra": true
     },
+    "POST /api/till/rate": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
+    "POST /api/till/reconcile": {
+      "file": "till.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "POST /api/till/reward": {
       "file": "till.js",
       "trips": 0,
       "wire": 0,
       "fired": true,
       "status": 400,
-      "extra": true,
-      "why": "W2-REW by hand: the empty stub answers 400 (ref required) before any trip. Live, with a programme: + lock + the SERVER'S bill (lib/counter-bill byRef) + balance + writes in one TX; an on_items category rule adds the category master + the catalogue (2)."
+      "extra": true
+    },
+    "POST /api/till/shop": {
+      "file": "till.js",
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
+    "POST /api/till/state": {
+      "file": "till.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "extra": true
     },
     "PUT /api/actors/:id/delegate": {
       "file": "actors.js",
@@ -2909,10 +3510,10 @@
     },
     "PUT /api/actors/:id/status": {
       "file": "actors.js",
-      "trips": 5,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). SEC2 (2026-10-14), counted by hand: the owner gate (lib/owner ownerOnly) is 0 trips — a colleague is refused before any statement (auth's own actor read only). reactivate: the actor read + its e-mail + ONE UPDATE + the login handle; deactivate/remove: the actor read + ONE withEntity transaction + the disputes withEntity (3). PEOPLE-SRV1 (2026-10-14), counted by hand: the sign-out (person-session closeBy + keys endKeysBy: two FOR UPDATE reads of the shop row + at most two policy_flags writes) runs INSIDE the one withEntity transaction — 0 extra trips, up to 4 more statements on the wire. PEOPLE-SRV1 second dispatch (compliance), by hand: + ONE withEntity for the access_events break_changed row (recordBreak), after the act's COMMIT as the PATCH's audit is — 5 on every path (reactivate 4+1, deactivate/remove 4+1).",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     },
     "PUT /api/actors/:id/tasks/route": {
@@ -2933,10 +3534,10 @@
     },
     "PUT /api/actors/break": {
       "file": "actors.js",
-      "trips": 8,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js (actors router is mounted by variable). PEOPLE-SRV1 (2026-10-14), counted by hand: the owner gate is 0 trips; the subject read (the named person for the owner, G6 — and since the second dispatch the person's OWN row too, so the audit row carries the real before-state) + who they cover + their own cover (+ that cover's state, only when one is set) + ONE UPDATE for a short break or back; leave: + the open-jobs count (withEntity) + the stand-in read (only when routed to a person) + ONE withEntity transaction; + ONE withEntity for the access_events break_changed row (recordBreak) after the COMMIT. Worst path 8.",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
       "extra": true
     },
     "PUT /api/actors/change-pin": {
@@ -3011,14 +3612,6 @@
       "wire": 0,
       "fired": true,
       "status": 400,
-      "extra": true
-    },
-    "PUT /api/chits/:id/use": {
-      "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
-      "fired": true,
-      "status": 404,
       "extra": true
     },
     "PUT /api/definitions/:id": {
@@ -3100,6 +3693,14 @@
       "fired": true,
       "status": 400
     },
+    "PUT /api/quick-keys/screen-config/default": {
+      "file": "quick-keys.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "extra": true
+    },
     "PUT /api/service/:chit_id": {
       "file": "service.js",
       "trips": 1,
@@ -3107,10 +3708,38 @@
       "fired": true,
       "status": 404
     },
-    "GET /api/facts/trend": {
-      "file": "facts.js",
+    "POST /api/books/parties/:id/dispute": {
+      "file": "books.js",
       "trips": 1,
-      "wire": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 422
+    },
+    "GET /api/catalogue/:bridge_id/my-orders": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 401
+    },
+    "GET /api/catalogue/enquiry/:item_id": {
+      "file": "catalogue.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200
+    },
+    "POST /api/catalogue/:bridge_id/login/verify": {
+      "file": "catalogue.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "GET /api/facts/:card": {
+      "file": "facts.js",
+      "trips": 4,
+      "wire": 13,
       "fired": true,
       "status": 200,
       "extra": true

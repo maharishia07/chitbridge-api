@@ -114,10 +114,10 @@ it('⚠️⚠️ a counter’s pairing code yields a SCREEN key only, naming the
   const pair = src.slice(src.indexOf("router.post('/pair',"), src.indexOf("router.post('/enrol'"));
   const claim = src.slice(src.indexOf("router.post('/pair/claim'"), src.indexOf("router.get('/screens'"));
   /* M04 — the counter test reads the holder (req.till.key), the shape middleware/auth builds for every request */
-  assert.ok(pair.includes("tk.scopes.includes('till')") && pair.includes('const tk = req.till && req.till.key'), '/pair no longer limits key-bearers to a COUNTER key');
-  assert.ok(pair.includes('parent: viaCounter ? tk.jti'), '/pair does not remember which counter key asked');
+  assert.ok(pair.includes("holder.scopes.includes('till')") && pair.includes('const holder = req.till && req.till.key'), '/pair no longer limits key-bearers to a COUNTER key');
+  assert.ok(pair.includes('parent: viaCounter ? holder.jti'), '/pair does not remember which counter key asked');
   assert.ok(claim.includes("scopes: ['screen']"), '/pair/claim mints something other than a screen key');
-  assert.ok(claim.includes('parent: got.parent'), '/pair/claim drops the parent — the screen would outlive its counter');
+  assert.ok(claim.includes('parent: pending.parent'), '/pair/claim drops the parent — the screen would outlive its counter');
 });
 
 it('⚠️⚠️ a screen key dies with the counter key that paired it', () => {
@@ -199,6 +199,9 @@ it('⭐⭐ every route in routes/till.js is reachable by a till key, or is a nam
     /* ⚠️ found BY this guard on the day it was written: built for the three-way match and wired to no caller. Left closed
        on purpose — a key should not reach a route nothing calls. Open it in KEY_ROUTES when something actually asks. */
     'GET /api/till/match': 'built, not yet called by anything — the key stays narrow until it is',
+    /* F5 A1: the "which rate?" door is answered by the signed-in OWNER or MANAGER (their hat, read from the DB), never by the
+       counter's key — a till key may not edit tax (POST /flags: "catalogue decisions"); the handler refuses a key 403 in words too */
+    'POST /api/till/rate': 'a key never edits tax — the door checks the signed-in person’s hat, and refuses a key itself (TILL_RATE_OWNER_ONLY)',
   };
 
   const re = /router\.(get|post)\(\s*'([^']+)'/g;

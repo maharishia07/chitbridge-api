@@ -87,7 +87,12 @@ const ASOF = '2026-10-12';
   /* ── disputed and cheques written: F3's rules, not a second copy ── */
   const disputed = { item_id: 'i-s1d', party: SRI, side: 'payable', ref_kind: 'status', ref: 'S1', against_ref: 'S1', amount_minor: 0, currency: 'INR', date: '2026-08-01', status: 'disputed' };
   const vd = P.view(Object.assign({}, base, { payable_items: items.concat([disputed]) }));
-  ok('a disputed bill is frozen (C4): not in Payables', !vd.by_party[SRI] && vd.total_minor === 15400000 - 1000000, String(vd.total_minor));
+  const held = vd.by_party[SRI].bills.filter((b) => b.disputed), liveOnly = P.view(Object.assign({}, base, { payable_items: items.filter((b) => b.ref !== 'S1') }));
+  ok('a disputed bill is frozen (C4): listed with disputed:true and the books words, but in no total', held.length === 1 && held[0].ref === 'S1' && held[0].open_minor === 1000000
+    && held[0].held_words === 'Held — in dispute with you' && vd.total_minor === 15400000 - 1000000 && vd.by_party[SRI].total_minor === 0, JSON.stringify(vd.by_party[SRI]));
+  ok('R106 · column 13: with the held row listed, every total, bucket and group is what it was without it', vd.total_minor === liveOnly.total_minor && Object.keys(liveOnly.by_party).every((pid) => JSON.stringify(Object.assign({}, vd.by_party[pid], { bills: null })) === JSON.stringify(Object.assign({}, liveOnly.by_party[pid], { bills: null }))), JSON.stringify([vd.total_minor, liveOnly.total_minor]));
+  const lone = P.view(Object.assign({}, base, { payable_items: [bill('H1', RAVI, 70000, '2026-10-01', '2026-10-30'), Object.assign({}, disputed, { party: RAVI, ref: 'H1', against_ref: 'H1' })] }));
+  ok('a supplier whose only bill is held still has a row (zero owed, the bill on it) so Release has somewhere to sit', lone.total_minor === 0 && lone.by_party[RAVI].total_minor === 0 && lone.by_party[RAVI].bills.length === 1 && lone.by_party[RAVI].bills[0].disputed === true, JSON.stringify(lone));
   const chq = { payment_id: 'p1', party_id: RAVI, direction: 'out', amount_minor: 150000, cheque_no: '000123', cheque_date: '2026-10-14', status: 'received' };
   const vc = P.view(Object.assign({}, base, { cheques: [chq] }));
   ok('a cheque written to Ravi covers ₹1,500 of R1: ₹2,500 left to pay', vc.by_party[RAVI].total_minor === 250000 && vc.total_minor === 15400000 - 150000, String(vc.by_party[RAVI].total_minor));

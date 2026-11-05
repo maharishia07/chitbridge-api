@@ -16,6 +16,10 @@
  *
  * node tools/simulate-years.cjs [--years 3] [--seed 7] [--json]      exit 1 when any line is RED (a FINDING is reported, never silent, and does not fail)
  * The days themselves come from tools/sim-plan.cjs (Y1b) — tools/sim-load.cjs loads the SAME plan into a local Postgres.
+ * OWNS the three-year in-memory ledger check (the five per-year lines and the known timezone finding); it owns no posting code, it drives routes/books.js.
+ * CALLED BY the morning sweep and by hand (node tools/simulate-years.cjs); nothing requires it.
+ * FLOW args → fresh shop on the in-memory store → plan days from tools/sim-plan.cjs posted through routes/books.js → after each year the five checks → report lines, exit 1 on any RED
+ * CARD 28-platform-and-operations/load-simulation
  */
 'use strict';
 process.env.NODE_ENV = 'test';
@@ -88,7 +92,9 @@ const rup = (minor) => (minor / 100).toFixed(2);
             let j = {};
             try {
               j = JSON.parse(raw || '{}');
-            } catch (_) {}
+            } catch (parseError) {
+              require('../lib/logger').fellBack('simulate-years: the reply was not JSON — body stays empty', parseError);
+            }
             done({ status: res.statusCode, body: j });
           });
         }

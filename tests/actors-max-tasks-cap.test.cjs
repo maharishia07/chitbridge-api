@@ -15,10 +15,11 @@ ok(/async function entityTaskCap\(entity_id\)[\s\S]*?schema\.hasTable\('entity_a
   'one reader of the ceiling, safe before the table exists');
 ok(src.includes("sent === undefined || sent === null || sent === ''") && src.indexOf('return next();', src.indexOf('async function taskCapGuard')) < src.indexOf('await entityTaskCap(auth.entityOf(req))'),
   'no max_tasks in the body = no read (round-trip budget); a new person keeps the default of 10');
-ok(src.includes('ceiling && parseInt(sent, 10) > ceiling) return res.status(400).json(overTaskCap(ceiling))'), 'the guard refuses above the ceiling with the number');
+ok(src.includes('ceiling && parseInt(sent, 10) > ceiling) return problem(req, res, { status: 400, ...words.overTaskCap(ceiling) })'), 'the guard refuses above the ceiling with the number (API-4: as a Problem, the old keys kept)');
 ok(/router\.post\(\s*'\/',\s*auth,\s*ownerWrite,\s*taskCapGuard,/.test(src) && /router\.patch\(\s*'\/:id',\s*auth,\s*ownerWrite,\s*taskCapGuard,/.test(src), 'create and edit both run the guard before the handler');
 ok((src.match(/await entityTaskCap\(/g) || []).length === 1, 'exactly one call site (the guard), no second path');
-ok(/MAX_TASKS_OVER_ENTITY/.test(src) && /MAX_TASKS_OVER_ENTITY/.test(fields), 'the code the client can branch on is in FIELDS.md');
+const contractSrc = fs.readFileSync(path.join(root, 'lib', 'actors-contract.js'), 'utf8'); /* API-4: the words of the refusal moved to the contract (overTaskCap) */
+ok(/MAX_TASKS_OVER_ENTITY/.test(contractSrc) && /MAX_TASKS_OVER_ENTITY/.test(fields), 'the code the client can branch on is in FIELDS.md');
 ok(/default_max_tasks` ceiling on `identities\.max_tasks`/.test(fields), 'FIELDS.md names the key, its layer and who sets it');
 ok(/ONE tax-not-applicable decision \(SET-20\)/.test(fields) && /policy_flags\.gst_registration/.test(fields), 'SET-20: gst_registration is named as the single tax-not-applicable decision');
 console.log(n + ' checks passed');

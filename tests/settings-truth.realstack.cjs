@@ -8,7 +8,14 @@
  * SE-06 the KYB / readiness screen sends no vertical or origin of its own making (a static scan of the web files) ·
  * SE-08a an AU shop is offered the AU registration kinds, in the AU pack's words · SE-08b an India-only kind (composition) is refused with a sentence and a code ·
  * SE-08c no India-only word (GSTIN, PAN, CGST, composition, rupee) in the whole policy schema an AU shop is served.
- * Not here: SE-04 leave without Save, SE-05 review-and-confirm, SE-07 no dev toolbar (all screens: they need a walk) · SE-01/03/09/10 stay on their offline files.
+ * SE-08d an AU shop's own kinds are accepted and stored, both ways (regular, then unregistered) ·
+ * SE-09a the units a shop chooses are what the policy read offers every picker (policy.units, and the stored flag on /me) ·
+ * SE-09b a junk unit is dropped, an empty choice is refused so the chosen set stands (400, in words) ·
+ * SE-10a the resolved governance names where it came from (entity_stamp, not a fallback) and every basic sits inside the constitution's allowed envelope ·
+ * SE-10b a malformed currency is refused in words and a currency outside allowed.currencies is refused 422 CURRENCY_NOT_ALLOWED with the allowed list; nothing is stored.
+ * Not here: SE-04 leave without Save, SE-05 review-and-confirm, SE-07 no dev toolbar (all screens: they need a walk) ·
+ *   SE-01 (a scan: policy-one-writer.test.cjs) · SE-03 (needs a co-assist SIGN-IN, not provable offline: settings-owner-gate.test.cjs holds it) ·
+ *   SE-10 "cached" (the memo is internal and flipping the constitution needs a database write: conf-cache.test.cjs, govresolve-ctp.test.cjs).
  * A `gap:` FAIL is a RECORDED finding (SETTINGS-BACKLOG "K-TRUTH-1 2026-10-19"), never fixed here. LOCAL ONLY; the database is only read.
  * Break-tested 2026-10-19: each passing case was run once with its expectation flipped and went red.
  * Run: node tests/settings-truth.realstack.cjs   (one realstack file at a time on :3100; CB_WEB_DIR for SE-06, default C:/dev/chitbridge-web)
@@ -19,6 +26,10 @@ const H = require('./lib/truth-harness.cjs');
 const { j, ok, kase, expect, freshShop, finish } = H;
 const RUN = 'setx' + (Date.now() % 1e8).toString(36);
 const WEB = process.env.CB_WEB_DIR || 'C:/dev/chitbridge-web';
+const UNITS_CHOSEN = ['kg', 'gram', 'litre'];          /* three of lib/policy.js FLAGS.units.options */
+const UNIT_JUNK = 'not-a-unit';
+const CURRENCY_MALFORMED = 'zz9';                       /* three characters, not letters: refused whatever the constitution says */
+const CURRENCY_CANDIDATES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'NZD'];   /* the first one outside allowed.currencies is asked for */
 const INDIA_ONLY = /GSTIN|\bPAN\b|CGST|SGST|IGST|composition|\bSEZ\b|India|\u20b9|\bINR\b/i;
 
 (async () => {
@@ -61,6 +72,51 @@ const INDIA_ONLY = /GSTIN|\bPAN\b|CGST|SGST|IGST|composition|\bSEZ\b|India|\u20b
     const hits = [...new Set((s.match(new RegExp(INDIA_ONLY, 'gi')) || []).map((x) => x.toLowerCase()))];
     const where = Object.entries(policy.schema).filter(([, v]) => INDIA_ONLY.test(JSON.stringify(v && v.ui ? [v.ui.label, v.ui.help, v.ui.labels, v.ui.options] : ''))).map(([k]) => k);
     expect(!hits.length || !where.length, 'India-only words ' + JSON.stringify(hits) + ' in the UI text of: ' + where.join(', '));
+  });
+
+  await kase('SE-08d', 'an AU shop\'s own registration kinds are accepted and stored, both ways', async () => {
+    for (const kind of ['regular', 'unregistered']) {
+      const r = await j('/api/entities/policy', { method: 'PATCH', token: AU.token, body: { gst_registration: kind } });
+      const stored = ok(await j('/api/entities/policy', { token: AU.token }), 'policy again').b.flags.gst_registration;
+      expect(r.status === 200 && r.b.flags.gst_registration === kind && stored === kind, kind + ' answered ' + r.status + ' ' + JSON.stringify(r.b) + ' and the read says ' + stored);
+    }
+  });
+
+  await kase('SE-09a', 'the units a shop chooses are what the policy read offers: the same set, on the policy and on /me', async () => {
+    const r = await j('/api/entities/policy', { method: 'PATCH', token: IN.token, body: { units: UNITS_CHOSEN } });
+    const read = ok(await j('/api/entities/policy', { token: IN.token }), 'policy').b.flags.units;
+    const onMe = ok(await j('/api/entities/me', { token: IN.token }), 'me').b.entity.policy_flags.units;
+    const want = JSON.stringify(UNITS_CHOSEN);
+    expect(r.status === 200 && JSON.stringify(r.b.flags.units) === want && JSON.stringify(read) === want && JSON.stringify(onMe) === want,
+      'asked ' + want + ' · patch ' + r.status + ' ' + JSON.stringify(r.b.flags && r.b.flags.units) + ' · policy ' + JSON.stringify(read) + ' · /me ' + JSON.stringify(onMe));
+  });
+  await kase('SE-09b', 'a junk unit is dropped from the choice, and an empty choice is refused in words so the chosen set stands', async () => {
+    const mixed = await j('/api/entities/policy', { method: 'PATCH', token: IN.token, body: { units: [UNIT_JUNK, 'kg', 'litre', 'kg'] } });
+    expect(mixed.status === 200 && JSON.stringify(mixed.b.flags.units) === JSON.stringify(['kg', 'litre']), 'junk and a repeat should leave ["kg","litre"], saw ' + mixed.status + ' ' + JSON.stringify(mixed.b));
+    const empty = await j('/api/entities/policy', { method: 'PATCH', token: IN.token, body: { units: [] } });
+    const after = ok(await j('/api/entities/policy', { token: IN.token }), 'policy').b.flags.units;
+    expect(empty.status === 400 && /\w{4,}/.test(empty.b.message || ''), 'an empty choice answered ' + empty.status + ' ' + JSON.stringify(empty.b));
+    expect(JSON.stringify(after) === JSON.stringify(['kg', 'litre']), 'the set after the refusal is ' + JSON.stringify(after));
+  });
+
+  await kase('SE-10a', 'the resolved governance says where it came from and every basic sits inside the constitution\'s envelope', async () => {
+    const g = ok(await j('/api/entities/me', { token: IN.token }), 'me').b.entity.governance;
+    expect(g && g.resolved_from === 'entity_stamp' && g.fallback === false, 'a shop that did country-setup is stamped; saw ' + JSON.stringify(g && [g.resolved_from, g.fallback]));
+    for (const [basic, list] of [['currency', g.allowed.currencies], ['timezone', g.allowed.timezones], ['region', g.allowed.regions]]) {
+      expect(!Array.isArray(list) || !list.length || list.includes(g.basics[basic]), basic + ' ' + g.basics[basic] + ' is outside allowed ' + JSON.stringify(list));
+    }
+  });
+  await kase('SE-10b', 'a malformed currency is refused in words; a currency outside allowed.currencies is refused 422 with the allowed list; the stored currency never moves', async () => {
+    const meNow = async () => ok(await j('/api/entities/me', { token: IN.token }), 'me').b;
+    const before = await meNow();
+    const bad = await j('/api/entities/profile', { method: 'PATCH', token: IN.token, body: { currency_code: CURRENCY_MALFORMED } });
+    expect(bad.status === 400 && /\w{4,}/.test(bad.b.message || ''), 'a malformed currency answered ' + bad.status + ' ' + JSON.stringify(bad.b));
+    const allowed = before.entity.governance.allowed.currencies, outside = CURRENCY_CANDIDATES.find((c) => !(allowed || []).includes(c));
+    if (!Array.isArray(allowed) || !allowed.length || !outside) return 'no currency envelope on this constitution: the 422 half is not provable here';
+    const r = await j('/api/entities/profile', { method: 'PATCH', token: IN.token, body: { currency_code: outside } });
+    const after = await meNow();
+    expect(r.status === 422 && r.b.code === 'CURRENCY_NOT_ALLOWED' && JSON.stringify(r.b.allowed) === JSON.stringify(allowed), outside + ' answered ' + r.status + ' ' + JSON.stringify(r.b));
+    expect(after.entity.currency_code === before.entity.currency_code, 'the stored currency moved from ' + before.entity.currency_code + ' to ' + after.entity.currency_code);
   });
 
   finish('settings-truth', process.env.SETTINGS_TRUTH_JSON, { run: RUN });

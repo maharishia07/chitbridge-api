@@ -1,3 +1,5 @@
+// CALLED BY routes/catalogue.js, routes/privacy.js.
+// CARD      18-identity-sign-in-and-access/sign-in
 'use strict';
 /**
  * customer-auth.js — the STOREFRONT CUSTOMER's authenticated surface.
@@ -22,6 +24,7 @@
  */
 const { verifyJwt } = require('../lib/jwt-verify'); // E10 — the ONE verifier
 
+/** express middleware: verifies the storefront customer bearer token and sets req.customer, else a 401 */
 module.exports = function customerAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';

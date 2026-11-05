@@ -58,7 +58,8 @@ const GOV_H = { query: async (sql, params) => {
 } };
 const call = (port, method, p, body) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  /* FIN-63: send a key per call like the web does, so the money doors reach the books gate and answer its sentence */
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + process.hrtime.bigint() } },
     (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });
@@ -90,7 +91,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   console.log('— after b299: a NEW Indian shop registers (M196 wrote IN from the time zone) and completes the step —');
   setMigrated(true); ID = { country: 'IN', currency_code: 'INR', gstn: null, timezone: 'Europe/London', policy_flags: {} }; GOV = { fy_start_month: null, tax_registration: null, setup_source: null, country_setup_at: null }; WRITES = [];
   r = await g('GET', '/country-setup');
-  ok('GET: required true (the step is still to do), prefilled IN · INR · April · not registered', r.status === 200 && r.body.required === true && r.body.done === false && r.body.country.code === 'IN' && r.body.currency === 'INR' && r.body.fy_start_month === 4 && r.body.tax.registered === false, JSON.stringify(r.body));
+  ok('GET: required true (the step is still to do), prefilled IN · INR · April · tax unknown (not assumed registered or not)', r.status === 200 && r.body.required === true && r.body.done === false && r.body.country.code === 'IN' && r.body.currency === 'INR' && r.body.fy_start_month === 4 && r.body.tax.registered === null, JSON.stringify(r.body));
   /* CS2: the step is told whether the country may still change, the pack's zones, and the countries it may offer — exactly the registered packs */
   ok('CS2 GET: constituted false (no product, no transaction) with what was looked at; the India pack names ONE zone; countries = the registered packs with what each derives',
     r.body.constituted === false && JSON.stringify(r.body.constituted_by) === JSON.stringify({ products: false, chits: false, entries: false }) && JSON.stringify(r.body.zones) === '["Asia/Kolkata"]'
@@ -258,7 +259,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   const tillSrc = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   ok('books.enable reads country-setup.profile (country · currency · fy_start_month from their one home) — never \'IN\' before the profile', /(require\('\.\/country-setup'\)|CS)\.profile\(h, entity(, \{ constitution: false \})?\)/.test(booksSrc) && /cs\.country && cs\.country\.code/.test(booksSrc) && /o\.currency \|\| own\.currency/.test(booksSrc));
   ok('gstClose and gstPay are the PACK\'s (W2-BOOKS): a fallback chart is refused NOT_FOR_COUNTRY with a sentence, the period and the words come from the pack — no \'IN\' decides the close', /if \(pack\.fallback\)\s*throw refuse\([^)]*'NOT_FOR_COUNTRY'\s*\)/.test(periodSrc) && !/function indiaOnly/.test(periodSrc) && !/toUpperCase\(\) !== 'IN'/.test(periodSrc) && /function closeSpan\(shop, body, pack\)/.test(periodSrc) && /payWords\(pack\)/.test(periodSrc));
-  ok('the till snapshot reads a state off the tax number only under a state-split pack (tax-lines.splitsByState — STD2), and bills in the pack\'s money (none → null, never INR)', /const stateSplit = require\('\.\.\/lib\/tax-lines'\)\.splitsByState\(cbCountry\)/.test(tillSrc) && /state_code:\s*String\(gstin \|\| ''\)\.slice\(0, 2\) && stateSplit/.test(tillSrc) && /* SEC3: lifted to the one reader */ /country-setup'\)\.shopMoney\(party\.currency, cbCountry\)/.test(tillSrc) && CS.shopMoney(null, 'IN') === 'INR' && CS.shopMoney(null, null) === null && /currency: shopMoney,/.test(tillSrc));
+  ok('the till snapshot reads a state off the tax number only under a state-split pack (tax-lines.splitsByState — STD2), and bills in the pack\'s money (none → null, never INR)', /const stateSplit = require\('\.\.\/lib\/tax-lines'\)\.splitsByState\(country\)/.test(tillSrc) && /state_code:\s*String\(gstin \|\| ''\)\.slice\(0, 2\) && stateSplit/.test(tillSrc) && /* SEC3: lifted to the one reader */ /countrySetup\.shopMoney\(party\.currency, country\)/.test(tillSrc) && CS.shopMoney(null, 'IN') === 'INR' && CS.shopMoney(null, null) === null && /currency: shopMoney,/.test(tillSrc));
   ok('…and the setup\'s money and year count only when the profile row is THIS country\'s (a stub row of another country is not the shop\'s fact)', /String\(cs\.country\.code\)\.toUpperCase\(\) === country \? cs : \{\}/.test(booksSrc));
 
   gsrv.close(); bsrv.close();

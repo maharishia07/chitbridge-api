@@ -43,6 +43,12 @@ const sanitise = (str) => {
     .substring(0, 1000); // max length
 };
 
+/**
+ * isCalendarDay(value) — true only for a REAL calendar day written YYYY-MM-DD (2026-02-30 and 2026-13-01 are not days). CMP-23: a date column is fed
+ * from a body, and Postgres answers a bad day with its own words (22007, 22008) under a 500; callers refuse it first.
+ */
+const isCalendarDay = (value) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) && isDay(value); // date only, through the one day rule (isDay, API-17)
+
 /* one engine for the body (exact types: a number is not a string) and one for the URL (a query value is always text, so "5" may be the integer 5) */
 const AJV_OPTIONS = { allErrors: true, strict: false, allowUnionTypes: true };
 const bodyEngine = new Ajv2020(AJV_OPTIONS);
@@ -69,7 +75,7 @@ const urlSchemaOf = (operation) => {
 const fieldOf = (failure) => {
   const where = failure.instancePath.split('/').filter(Boolean);
   if (failure.keyword === 'required') where.push(failure.params.missingProperty);
-  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty);
+  if (failure.keyword === 'additionalProperties') where.push(failure.params.additionalProperty); /* S33: the unknown key is named, not the body */
   return where.join('.') || '(body)';
 };
 
@@ -100,7 +106,7 @@ function errorsOf(validator, value) {
 /**
  * schemaValidate(operation, options?) — express middleware. operation = the route's OpenAPI operation (requestBody + parameters).
  * options.status/code/legacy keep an outward route on its old refusal (S2: 400 and its frozen body) until its next major; default is S4's 422 INVALID_INPUT.
- * options.legacy(errors) → the frozen body for the first failure.
+ * options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that counts what was sent, as definitions' two chains did).
  */
 function schemaValidate(operation, options) {
   const choice = options || {};
@@ -117,7 +123,7 @@ function schemaValidate(operation, options) {
       detail: failures.length === 1 ? failures[0].detail : BODY_SENTENCE,
       field: failures[0].field,
       errors: failures,
-      legacy: choice.legacy ? choice.legacy(failures) : undefined
+      legacy: choice.legacy ? choice.legacy(failures, req) : undefined
     });
   };
   /* the register and the contract-test generator find a route's schema check by these two properties */
@@ -126,4 +132,25 @@ function schemaValidate(operation, options) {
   return schemaValidated;
 }
 
-module.exports = { validate, validateAsProblem, sanitise, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };
+/** a real calendar day (YYYY-MM-DD, optionally followed by a time): "7", "abc" and 2026-02-30 are not */
+const isDay = (text) => {
+  const found = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(text);
+  if (!found) return false;
+  const calendarDay = new Date(Date.UTC(+found[1], +found[2] - 1, +found[3]));
+  return calendarDay.getUTCFullYear() === +found[1] && calendarDay.getUTCMonth() === +found[2] - 1 && calendarDay.getUTCDate() === +found[3];
+};
+
+/**
+ * queryDay(...names) — express middleware (API-17, BH-6): each named query value, when given, must be ONE real day, else 400 VALIDATION_FAILED before any read.
+ * Postgres refuses "7" or "abc" for a timestamp with its own words, and that used to surface as a 500. An absent or empty value is left to the handler.
+ */
+const queryDay = (...names) =>
+  function queryDayChecked(req, res, next) {
+    const failures = names
+      .filter((name) => req.query[name] !== undefined && req.query[name] !== '' && !(typeof req.query[name] === 'string' && isDay(req.query[name].trim())))
+      .map((name) => ({ field: name, code: 'WRONG_VALUE', detail: name + ' must be a date (YYYY-MM-DD).' }));
+    if (!failures.length) return next();
+    return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: failures[0].detail, field: failures[0].field, errors: failures });
+  };
+
+module.exports = { queryDay, validate, validateAsProblem, sanitise, isCalendarDay, schemaValidate, errorsOf, bodySchemaOf, urlSchemaOf, bodyEngine };

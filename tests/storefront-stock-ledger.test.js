@@ -112,6 +112,27 @@ t('ONE reader: stock-store.onHand sums batches the same way for the counter (GET
   assert.deepStrictEqual(by[RICE], { qty: 6.5, value: 325 });
 });
 
+/* R104: a tiffin shop's dish (made to order, sold 40 times, never received) is not stock to a shopper either */
+t('R104: a made-to-order dish is UNKNOWN stock to the shopper — never hidden by qty_zero_hides, never "sold out" from −40', async () => {
+  reset(); POLICY = { qty_zero_hides: 'on' };
+  const G = require('../lib/govresolve');
+  const was = G.verticalOf;
+  G.verticalOf = async () => G.verticalFrom({ sectors: ['tiffin'] });
+  BALANCES = [bal(RICE, '', 4, 200), bal(DAL, '', -40, 0)];   /* dal stands in for the dish: no flag, so the trade decides; rice says counted */
+  const d = deps();
+  const inner = d.withEntity;
+  d.withEntity = async (e, fn) => inner(e, (db) => fn({ query: async (sql, p) => (/item_data->'stocked'/.test(sql)
+    ? { rows: [{ item_id: RICE, batch_tracked: null, stocked: true }, { item_id: DAL, batch_tracked: null, stocked: null }] } : db.query(sql, p)) }));
+  try {
+    const v = await view.buildPublicView(d);
+    const by = byId(v);
+    assert.ok(v.items.some((r) => r.item_id === DAL), 'the dish must still be on the shop');
+    assert.strictEqual(by[DAL].avail, undefined, 'no figure — unknown, not 0 and not −40');
+    assert.deepStrictEqual([by[RICE].avail.qty, by[RICE].avail.source], [4, 'ledger'], 'a counted item still shows its ledger figure');
+    assert.strictEqual(v.qty_zero_hidden, 0);
+  } finally { G.verticalOf = was; }
+});
+
 (async () => {
   for (const [name, fn] of CASES) {
     try { await fn(); console.log('\x1b[32mok\x1b[0m  ' + name); pass++; }
