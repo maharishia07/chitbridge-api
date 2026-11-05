@@ -98,7 +98,7 @@ router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
 
 /* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
  *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
- *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, unit_price?, discount?, rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
  *                                       → the INV-01 block + money (by rate) + currency + pack; a line without a rate takes the shelf's, without a price the shelf's
  *                                         price; seller omitted = this entity; priceIncludesTax omitted = the shop's own setting
  * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's
