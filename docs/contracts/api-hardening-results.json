@@ -5106,12 +5106,7 @@
   },
   "GET /api/facts/:card": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
+    "pass": true
    }
   },
   "GET /api/work/list": {

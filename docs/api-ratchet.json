@@ -10,8 +10,8 @@
  "routes_without_does": 627,
  "columns_failing": {
   "strict_input": 169,
-  "output_allowlist": 221,
-  "foreign_id_404": 74,
+  "output_allowlist": 219,
+  "foreign_id_404": 73,
   "idempotent_money_write": 7,
   "inbound_validated": 2,
   "trips_budgeted": 144

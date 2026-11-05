@@ -1355,6 +1355,9 @@
   "GET /api/facts/rail/chits": {
    "output_allowlist": true
   },
+  "GET /api/facts/:card": {
+   "output_allowlist": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },

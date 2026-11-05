@@ -281,6 +281,14 @@
   "GET /api/entities/usage": {
    "output_allowlist": true
   },
+  "GET /api/facts/:card": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/facts/rail/chits": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/folders": {
    "output_allowlist": true
   },
