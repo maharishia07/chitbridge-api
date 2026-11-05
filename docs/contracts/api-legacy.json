@@ -1,6 +1,16 @@
 {
  "_about": "API-STANDARD S2/S14 (slice 1a): the legacy keys each route answered BEFORE the standard, frozen. A Problem body adds fields beside these and never changes them. Recorded from the code before the change (tests/api-problem.test.cjs --capture); tests/api-problem.test.cjs replays every answer and compares status and keys. The generator copies a route entry into its OpenAPI operation as x-legacy-keys. A route drops its entry only when the web repo no longer reads any of its keys and cb-api has signed backward_compatible.",
  "routes": {
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "answers": [
+    {
+     "scenario": "catalogue-overlay-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
+    }
+   ]
+  },
   "GET /api/keys": {
    "answers": [
     {
@@ -20608,6 +20618,12 @@
      "fixture": {
       "error": "Forbidden"
      }
+    },
+    {
+     "scenario": "messages-read-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20636,6 +20652,12 @@
       "error": "Failed to read the register",
       "message": "Nope."
      }
+    },
+    {
+     "scenario": "raida-read-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20832,6 +20854,12 @@
       "error": "Get dispute queue failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "disputes-queue-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20848,6 +20876,12 @@
       "error": "Failed to get folder",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "folder-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20864,6 +20898,12 @@
       "error": "Failed to get inbox",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "inbox-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20880,6 +20920,12 @@
       "error": "Failed to read the register",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "raida-report-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20924,6 +20970,12 @@
       "error": "Failed to list registers",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "register-subjects-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20956,6 +21008,12 @@
       "error": "Failed to walk it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "register-walk-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20972,6 +21030,12 @@
       "error": "Rollup failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "rollup-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -20988,6 +21052,12 @@
       "error": "Failed to get sent items",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "sent-a-value-asked-twice",
+     "status": 422,
+     "body_keys": {},
+     "fixture": {}
     }
    ]
   },
@@ -21913,32 +21983,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "category",
-        "message": "Invalid category"
-       },
-       {
-        "field": "reason",
-        "message": "Reason must be at least 10 characters"
-       }
-      ]
+      "error": "Not a participant"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "category",
-        "message": "Invalid category"
-       },
-       {
-        "field": "reason",
-        "message": "Reason must be at least 10 characters"
-       }
-      ]
+      "error": "Not a participant"
      }
     },
     {
@@ -22189,32 +22239,16 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "message_text",
-        "message": "Message text required"
-       },
-       {
-        "field": "thread_type",
-        "message": "thread_type must be external or internal"
-       }
-      ]
+      "error": "Forbidden",
+      "message": "Not a participant on this chit",
+      "why": "not_participant"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "message_text",
-        "message": "Message text required"
-       },
-       {
-        "field": "thread_type",
-        "message": "thread_type must be external or internal"
-       }
-      ]
+      "error": "Forbidden",
+      "message": "Not a participant on this chit",
+      "why": "not_participant"
      }
     },
     {
@@ -22875,14 +22909,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      }
     },
     {
@@ -22963,14 +22997,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Failed to link the dispute",
-      "message": "Something went wrong — please try again."
+      "message": "A dispute id is required."
      },
      "fixture": {
       "error": "Failed to link the dispute",
-      "message": "Something went wrong — please try again."
+      "message": "A dispute id is required."
      }
     },
     {
@@ -23603,14 +23637,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Failed to record the acceptance",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      },
      "fixture": {
       "error": "Failed to record the acceptance",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      }
     },
     {
@@ -23691,14 +23725,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      },
      "fixture": {
       "error": "Failed to close it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      }
     },
     {
@@ -23779,14 +23813,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Failed to revise it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      },
      "fixture": {
       "error": "Failed to revise it",
-      "message": "Something went wrong — please try again."
+      "message": "No such entry."
      }
     },
     {
@@ -23943,14 +23977,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 503,
+     "status": 400,
      "body_keys": {
       "error": "Cannot close yet",
-      "message": "Something went wrong — please try again."
+      "message": "No such register."
      },
      "fixture": {
       "error": "Cannot close yet",
-      "message": "Something went wrong — please try again."
+      "message": "No such register."
      }
     },
     {
@@ -24115,6 +24149,18 @@
      "fixture": {
       "error": "Failed to record it",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "entry-on-an-unknown-register",
+     "status": 400,
+     "body_keys": {
+      "error": "Failed to record it",
+      "message": "No such register."
+     },
+     "fixture": {
+      "error": "Failed to record it",
+      "message": "No such register."
      }
     }
    ]
@@ -24753,24 +24799,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "resolution_note",
-        "message": "Resolution note required"
-       }
-      ]
+      "error": "Dispute not found"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "resolution_note",
-        "message": "Resolution note required"
-       }
-      ]
+      "error": "Dispute not found"
      }
     },
     {
@@ -24973,24 +25007,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "priority",
-        "message": "priority must be normal|high|urgent"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found for this entity"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "priority",
-        "message": "priority must be normal|high|urgent"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found for this entity"
      }
     },
     {
@@ -25153,24 +25177,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "priority",
-        "message": "priority must be true or false"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found for this entity"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "priority",
-        "message": "priority must be true or false"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found for this entity"
      }
     },
     {
@@ -25389,24 +25403,16 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "status",
-        "message": "Invalid status"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found",
+      "why": "not_received"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "status",
-        "message": "Invalid status"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found",
+      "why": "not_received"
      }
     },
     {
@@ -25715,24 +25721,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "reason",
-        "message": "A reason is required to void"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "reason",
-        "message": "A reason is required to void"
-       }
-      ]
+      "error": "Not found",
+      "message": "Chit not found"
      }
     },
     {
