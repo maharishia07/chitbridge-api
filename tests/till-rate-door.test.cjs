@@ -39,6 +39,8 @@ function rowsFor(sql, params) {
   if (/FROM catalogue_items WHERE entity_id = \$1 AND is_active = true ORDER BY updated_at/.test(text)) return { rows: world.items.map((d, i) => ({ item_id: i ? ITEM.replace(/^2/, '3') : ITEM, item_data: d, is_active: true, updated_at: '2026-10-24T05:00:00.000Z' })) };
   if (/SELECT item_data FROM catalogue_items WHERE entity_id = \$1 AND item_id = \$2/.test(text)) return { rows: world.items.length ? [{ item_data: world.items[0] }] : [] };
   if (/FROM identities WHERE identity_id = \$1/.test(text)) return { rows: [Object.assign({ display_name: 'Kaveri Mess', identity_id: SHOP }, world.shop)] };
+  /* CTR-170: the shop's governance row is what the case says (null = nothing said yet); b299 itself is answered by the schema stub below */
+  if (/FROM entity_governance WHERE entity_id = \$1/.test(text)) return { rows: world.gov ? [world.gov] : [] };
   if (/FROM definition d/.test(text)) return { rows: world.slabs };
   if (/^\s*UPDATE catalogue_items/.test(text)) { world.writes.push(params); return { rows: [{ item_id: ITEM }], rowCount: 1 }; }
   return { rows: [], rowCount: 0 };
@@ -58,6 +60,9 @@ function installStubs() {
     trySavepoint: async (handle, run, fallback) => run().catch(() => fallback), readBatch: async (entity, actor, statements) => statements.map(() => ({ rows: [], rowCount: 0 })) };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db); mock('db/index', db);
+  /* CTR-170: lib/schema bound the real db before this stub (auth loads it), so b299 is answered here — every other schema question stays the real module's */
+  const realSchema = require(path.join(HERE, 'lib', 'schema'));
+  mock('lib/schema', Object.assign({}, realSchema, { hasColumn: async (table, column) => (table === 'entity_governance' && column === 'country_setup_at') || realSchema.hasColumn(table, column) }));
   console.error = () => undefined; console.warn = () => undefined;
 }
 const call = (port, method, p, body) => new Promise((done) => {
@@ -69,7 +74,12 @@ const call = (port, method, p, body) => new Promise((done) => {
 
 let pass = 0, fail = 0;
 const ok = (name, fn) => { try { fn(); pass++; console.log('   ok   ' + name); } catch (e) { fail++; console.log('   FAIL ' + name + '\n          ' + e.message); } };
-const reset = (patch) => { Object.assign(world, { who: OWNER, key: null, shop: { gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'regular' } }, items: [], slabs: [], writes: [] }, patch || {}); };
+/* required AFTER installStubs (it reads the db): the registration reader caches a minute per shop, so every case forgets it */
+const forgetRegistration = () => require(path.join(HERE, 'lib', 'country-setup')).forget(SHOP);
+const reset = (patch) => { Object.assign(world, { who: OWNER, key: null, shop: { gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'regular' } }, gov: null, items: [], slabs: [], writes: [] }, patch || {}); forgetRegistration(); };
+/* CTR-170: a shop with no tax number that never said whether it is registered, and one whose owner said no */
+const NO_NUMBER = { gstn: null, country: 'IN', policy_flags: {} };
+const SAID_NO = { fy_start_month: 4, tax_registration: { registered: false }, setup_source: {}, country_setup_at: '2026-11-01' };
 
 (async () => {
   console.log('\n══ F5 A1 · the counter carries the item’s tax facts, and the owner sets a missing rate once ══\n');
@@ -115,6 +125,28 @@ const reset = (patch) => { Object.assign(world, { who: OWNER, key: null, shop: {
   ok('a composition shop WITH a GSTIN charges none: 409 TILL_NO_TAX_SCHEME, the pack’s word (GST), nothing written — never "has a GSTIN"', () => {
     assert.strictEqual(composition.status, 409); assert.strictEqual(composition.body.code, 'TILL_NO_TAX_SCHEME'); assert.strictEqual(composition.body.message, 'This shop charges no GST, so no rate is needed.');
     assert.strictEqual(world.writes.length, 0);
+  });
+  /* ── CTR-170 (R13): a registration nobody said is a QUESTION on the counter's doors too — never 'regular' ── */
+  reset({ items: [UNRATED], slabs: [GST5], shop: NO_NUMBER });
+  const snapUnknown = await q('GET', '/snapshot');
+  ok('CTR-170 · GET /snapshot for a shop with no tax number that never said: shop.reg_type is "unknown" (the ONE reader, country-setup.registrationOfShop), never "regular"', () => {
+    assert.strictEqual(snapUnknown.status, 200); assert.strictEqual(snapUnknown.body.shop.reg_type, 'unknown'); assert.strictEqual(snapUnknown.body.shop.gstin, null);
+  });
+  const askRate = await q('POST', '/rate', { item_id: ITEM, slab_id: 'gst-5' });
+  ok('CTR-170 · POST /rate for that shop: 409 TAX_REGISTRATION_UNKNOWN with the question in the pack’s word, nothing written — not "charges no GST"', () => {
+    assert.strictEqual(askRate.status, 409, JSON.stringify(askRate.body)); assert.strictEqual(askRate.body.code, 'TAX_REGISTRATION_UNKNOWN');
+    assert.strictEqual(askRate.body.message, 'Is this business registered for GST? Answer it in Settings → Country setup.'); assert.strictEqual(world.writes.length, 0);
+  });
+  reset({ items: [UNRATED], slabs: [GST5], shop: NO_NUMBER, gov: SAID_NO });
+  const saidNo = await q('GET', '/snapshot');
+  const saidNoRate = await q('POST', '/rate', { item_id: ITEM, slab_id: 'gst-5' });
+  ok('CTR-170 · the owner said "not registered": reg_type "unregistered" on the snapshot, and /rate answers TILL_NO_TAX_SCHEME as before (a no is a no, not a question)', () => {
+    assert.strictEqual(saidNo.body.shop.reg_type, 'unregistered'); assert.strictEqual(saidNoRate.status, 409); assert.strictEqual(saidNoRate.body.code, 'TILL_NO_TAX_SCHEME');
+  });
+  reset({ items: [UNRATED], slabs: [GST5], shop: { gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'sez' } } });
+  const sezSnap = await q('GET', '/snapshot');
+  ok('CTR-170 · a shop WITH a tax number keeps its stated scheme word (sez) on the snapshot — the one rule, country-setup.registrationWord, as tax-lines.partyOf reads it', () => {
+    assert.strictEqual(sezSnap.body.shop.reg_type, 'sez');
   });
   reset({ items: [UNRATED], slabs: [GST5] });
   const unknown = await q('POST', '/rate', { item_id: ITEM, slab_id: 'gst-99' });

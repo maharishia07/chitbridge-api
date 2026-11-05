@@ -128,6 +128,8 @@ const SLAB = '00000000-0000-4000-8000-0000000001d1'; /* a slab's definition id (
 const RATE_BODY = { item_id: ITEM, slab_id: SLAB };
 const RATE_SHOP = (registration) => (sql) =>
   /FROM identities WHERE identity_id = \$1/.test(sql) ? { rows: [{ gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: registration } }], rowCount: 1 } : undefined;
+/* …a shop with no tax number and no scheme flag (CTR-170: what the registration reader is asked about) */
+const RATE_SHOP_NONE = (sql) => (/FROM identities WHERE identity_id = \$1/.test(sql) ? { rows: [{ gstn: null, country: 'IN', policy_flags: {} }], rowCount: 1 } : undefined);
 const RATE_SHELF = (sql) =>
   RATE_SHOP('regular')(sql) || (/FROM definition d/.test(sql) ? { rows: [{ definition_id: SLAB, kind: 'tax', name: 'GST 5%', current_version: 1, status: 'live', rules: { rate: 5 } }], rowCount: 1 } : undefined);
 /* …and the product itself, unrated, so the door reaches its 200 (the success answer the output allow-list is derived from) */
@@ -222,6 +224,8 @@ const EXTRAS = [
   X('rate-cashier-asks', 'POST /api/till/rate', 403, { body: RATE_BODY, setup: { who: STAFF } }),
   X('rate-unknown-key-in-body', 'POST /api/till/rate', 400, { body: Object.assign({ colour: 'red' }, RATE_BODY) }),
   X('rate-shop-charges-none', 'POST /api/till/rate', 409, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('composition') } }),
+  /* CTR-170: the shop never said whether it is registered (the ONE reader answers unknown) → the question, 409, never "charges none" */
+  X('rate-shop-asks', 'POST /api/till/rate', 409, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP_NONE }, patch: [['lib/country-setup.js', 'registrationOfShop', async () => 'unknown']] }),
   X('rate-slab-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHOP('regular') } }),
   X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
   X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),

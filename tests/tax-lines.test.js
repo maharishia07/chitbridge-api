@@ -52,17 +52,22 @@ test('⭐ ledger: output on my sent copies, ITC on my received copies from a reg
   assert.equal(led.rows.find((r) => r.at === '2026-09-03').side, 'no-itc');
 });
 
+/* ACC-225 (2026-11-05): gstr1 is the adopted engine's (gst-returns.gstr1) — it asks a real 15-character GSTIN on me and refuses in words without one */
+const ME_GSTIN = '33AAAAA0000A1Z5';
 test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; gstr3b carries the totals and says it is provisional', () => {
   const inv = (buyer, rate) => T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 100, gst_rate: rate, hsn: '1006' }], seller: { Gstin: '33S', State: '33' }, buyer, chit_id: 'c1', at: '2026-09-04' }).invoice;
   const led = T.ledger([
     { chit_id: 'a', direction: 'sent', invoice: inv({ Gstin: '29B', Pos: '29' }, 18), provisional: true, seller: { entity_id: 'me' }, buyer: { entity_id: 'b' }, at: '2026-09-04' },
     { chit_id: 'b', direction: 'sent', invoice: inv({ Pos: '33' }, 5), provisional: false, seller: { entity_id: 'me' }, buyer: { entity_id: 'c' }, at: '2026-09-04' },
   ], { RegType: 'regular' });
-  const g1 = T.gstr1(led, { Gstin: '33S' }, '092026');
+  const g1 = T.gstr1(led, { Gstin: ME_GSTIN }, '092026');
   assert.equal(g1.b2b.length, 1); assert.equal(g1.b2b[0].ctin, '29B'); assert.equal(g1.b2b[0].inv[0].itms[0].itm_det.iamt, 18);
   assert.equal(g1.b2cs.length, 1); assert.equal(g1.b2cs[0].camt, 2.5);
+  assert.deepEqual(g1.b2cl, [], 'the B2CL table is there (empty here: nothing inter-state B2C above the limit)');
   assert.equal(g1.hsn.data[0].hsn_sc, '1006');
-  const g3 = T.gstr3b(led, { Gstin: '33S' }, '092026');
+  assert.equal(g1._cb.b2cl_limit, 100000, 'September 2026 files on the ₹1 lakh limit (Notification 12/2024)');
+  assert.equal(T.gstr1(led, { Gstin: '33S' }, '092026').ok, false, 'no 15-character GSTIN on me → the engine refuses in words, never a file with gstin null');
+  const g3 = T.gstr3b(led, { Gstin: ME_GSTIN }, '092026');
   assert.equal(g3.sup_details.osup_det.iamt, 18); assert.equal(g3._cb.provisional, true);
 });
 
@@ -98,14 +103,16 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
       ret('r2', { Gstin: '29B', Pos: '29' }, 18, 300, 'CN-0002'),           /* to a registered buyer: cdnr */
       ret('r3', { Pos: '29' }, 18, 300000, 'CN-0003', 'inter'),            /* B2C large, inter-state: cdnur */
     ], { RegType: 'regular' });
-    const g = T.gstr1(led, { Gstin: '33S' }, '092026');
+    const g = T.gstr1(led, { Gstin: ME_GSTIN }, '092026');
     assert.equal(g.b2cs.length, 1); assert.equal(g.b2cs[0].txval, 1300, 'the walk-in return did not net off b2cs (1500 − 200)');
     assert.equal(g.cdnr.length, 1); assert.equal(g.cdnr[0].ctin, '29B'); assert.equal(g.cdnr[0].nt[0].ntty, 'C'); assert.equal(g.cdnr[0].nt[0].nt_num, 'CN-0002');
     assert.equal(g.cdnur.length, 1); assert.equal(g.cdnur[0].typ, 'B2CL');
-    assert.equal(g.hsn.data[0].txval, 1500 - 200 - 300 - 300000, 'the HSN summary is not net of returns');
+    /* the engine's HSN summary is rate-wise (one row per HSN · UQC · rate, Table 12 since 2021), so the net is the sum over the rows */
+    assert.equal(g.hsn.data.reduce((sum, h) => sum + h.txval, 0), 1500 - 200 - 300 - 300000, 'the HSN summary is not net of returns');
     const t13 = g.doc_issue.doc_det;
-    assert.deepEqual(t13.map((d) => [d.doc_num, d.docs[0].from, d.docs[0].to, d.docs[0].totnum]),
-      [[1, 'C1-0001', 'C1-0002', 2], [5, 'CN-0001', 'CN-0003', 3]], 'Table 13 does not list the invoices and credit notes issued');
+    /* the engine serials Table 13's natures in its own order (invoices, then notes); the portal's fixed serial for a credit note (5) is an engines request (ACC-225 follow-up) */
+    assert.deepEqual(t13.map((d) => [d.doc_typ, d.docs[0].from, d.docs[0].to, d.docs[0].totnum]),
+      [['Invoices for outward supply', 'C1-0001', 'C1-0002', 2], ['Credit Note', 'CN-0001', 'CN-0003', 3]], 'Table 13 does not list the invoices and credit notes issued');
   });
 }
 

@@ -42056,6 +42056,32 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "rate-shop-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
