@@ -232,6 +232,13 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
+  /* K-1: a NUL byte in text no column can hold is never a 500, and a search for one is answered as any search that finds nothing (no false "degraded" mark) */
+  const junkKeys = Object.keys(recording).filter((key) => /nul-byte/.test(key) && /network-design/.test(key));
+  check('a NUL byte in a drawing, a store name or a search is never a 5xx (' + junkKeys.length + ' answers)', junkKeys.length >= 6 && junkKeys.every((key) => recording[key].status < 500), junkKeys.map((key) => [key, recording[key].status]));
+  const savedJunk = junkKeys.filter((key) => /^PUT /.test(key));
+  check('a NUL byte in a name of the drawing is a 400 in words that say nothing of the database', savedJunk.length === 2 && savedJunk.every((key) => recording[key].status === 400 && /Type it again/.test(JSON.stringify(recording[key].body)) && !/byte sequence|Unicode escape|22021|22P05/.test(JSON.stringify(recording[key].body))), savedJunk.map((key) => recording[key]));
+  const searchJunk = junkKeys.filter((key) => /availability/.test(key));
+  check('a search for text holding a NUL byte answers as one that finds nothing: 200 with no degraded mark', searchJunk.length === 1 && searchJunk.every((key) => recording[key].status === 200 && recording[key].body && recording[key].body.degraded === undefined), searchJunk.map((key) => recording[key]));
   check('the writes switched off answer 503 on all eight writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 8 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));

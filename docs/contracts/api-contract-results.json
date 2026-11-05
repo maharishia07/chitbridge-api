@@ -730,6 +730,14 @@
     400
    ]
   },
+  "GET /api/connectors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/connectors/:actorId/connections": {
    "cases": 3,
    "failed": 0,
@@ -820,6 +828,54 @@
   },
   "GET /api/definitions/:id": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/constitutions": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/me": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/mis": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/routing/preview": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/search": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/usage": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1256,6 +1312,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/service/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/supplies": {
@@ -3106,6 +3170,54 @@
     400
    ]
   },
+  "POST /api/network-offers/:id/choice": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/release": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/network/connections": {
    "cases": 2,
    "failed": 0,
@@ -3451,6 +3563,86 @@
    ]
   },
   "POST /api/schemas/create-default": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/ask": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/pin": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/renew": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/sessions/revoke": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/verify": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -4066,6 +4258,14 @@
     400
    ]
   },
+  "PUT /api/network-offers/policy": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "PUT /api/products/:id/availability": {
    "cases": 7,
    "failed": 0,
@@ -4088,6 +4288,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PUT /api/testing/cmdb/:ci": {

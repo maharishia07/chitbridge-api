@@ -1676,7 +1676,7 @@
   "PUT /api/network-offers/policy": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1686,7 +1686,7 @@
   "POST /api/network-offers/catalogue/publish": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1696,7 +1696,7 @@
   "POST /api/network-offers/catalogue/cancel": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1706,7 +1706,7 @@
   "POST /api/network-offers/catalogue/price": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1716,7 +1716,7 @@
   "POST /api/network-offers/:id/release": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1729,7 +1729,7 @@
   "POST /api/network-offers/:id/withdraw": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1742,7 +1742,7 @@
   "POST /api/network-offers/:id/choice": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -1755,7 +1755,7 @@
   "POST /api/signin/renew": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1784,7 +1784,7 @@
   "POST /api/signin/sessions/revoke": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1794,7 +1794,7 @@
   "POST /api/signin/ask": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1804,7 +1804,7 @@
   "POST /api/signin/verify": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -1814,7 +1814,7 @@
   "POST /api/signin/pin": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -4284,7 +4284,7 @@
   "PUT /api/service/:chit_id": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -4297,7 +4297,7 @@
   "POST /api/service/:chit_id/respond": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -4309,7 +4309,7 @@
   "POST /api/service/:chit_id/resolve": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -4323,7 +4323,7 @@
   "POST /api/service/:chit_id/pause": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -4337,7 +4337,7 @@
   "POST /api/service/:chit_id/pause/:pause_id/end": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -4350,7 +4350,7 @@
   "POST /api/service/:chit_id/pause/:pause_id/answer": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,

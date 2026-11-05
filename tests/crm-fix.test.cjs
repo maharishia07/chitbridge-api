@@ -108,10 +108,10 @@ const reset = () => { world.on = true; world.parties = [{ id: 'P1', phone: '9840
   });
   await ita('R5 an outcome closes only the follow-up the queue row came from; the colleague\'s stays open', async () => {
     prefs.length = 0; const at = new Date().toISOString();
-    D.followups.push({ owner: 'E1', party_id: P(2), followup_id: 'fa', what: 'Ring Ravi', due_at: at, created_at: at, assignee_user_id: 'E1', source: 'manual' },
-      { owner: 'E1', party_id: P(2), followup_id: 'fb', what: 'Collect cheque Friday', due_at: at, created_at: at, assignee_user_id: 'E1', source: 'manual' });
-    const r = await t.post('/parties/' + P(2) + '/outcome', { outcome: 'no_answer', followup_id: 'fa' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));
-    assert.ok(D.followups.find((f) => f.followup_id === 'fa').done_at, 'the one answered is closed'); assert.ok(!D.followups.find((f) => f.followup_id === 'fb').done_at, "Meena's follow-up is still open");
+    D.followups.push({ owner: 'E1', party_id: P(2), followup_id: 'f0000000-0000-4000-8000-0000000000fa', what: 'Ring Ravi', due_at: at, created_at: at, assignee_user_id: 'E1', source: 'manual' },
+      { owner: 'E1', party_id: P(2), followup_id: 'f0000000-0000-4000-8000-0000000000fb', what: 'Collect cheque Friday', due_at: at, created_at: at, assignee_user_id: 'E1', source: 'manual' });
+    const r = await t.post('/parties/' + P(2) + '/outcome', { outcome: 'no_answer', followup_id: 'f0000000-0000-4000-8000-0000000000fa' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));
+    assert.ok(D.followups.find((f) => f.followup_id === 'f0000000-0000-4000-8000-0000000000fa').done_at, 'the one answered is closed'); assert.ok(!D.followups.find((f) => f.followup_id === 'f0000000-0000-4000-8000-0000000000fb').done_at, "Meena's follow-up is still open");
   });
   await ita('R6 no Ledger setting: the follow-up day comes from the shop\'s identity zone, not UTC', async () => {
     const F = require('../lib/crm-followups'), h = { query: async (sql) => { sql = String(sql);

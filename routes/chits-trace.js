@@ -19,6 +19,19 @@ const PAGE_LIMIT = require('../lib/page-limit');
 const { LIST_MAX, LIST_PAGE } = require('../lib/chits-input');
 
 const entityId = (req) => auth.entityOf(req);
+/** a chit's parties as a list: all_recipients arrives as a list or as JSON text; text that does not parse is none */
+function recipientsOf(row, caller) {
+  let list = row.all_recipients;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch (e) {
+      cbLog.fellBack('chits ' + caller + ': did not parse — answered with none', e, 'debug');
+      list = [];
+    }
+  }
+  return Array.isArray(list) ? list : [];
+}
 
 // ─── GET /chits/:id/children ──────────────────────────────────────────────────────────────────────────────
 // Forward-link resolver (Fragment 1): the immediate children of a handoff = every chit whose trace.parents SET
@@ -108,16 +121,7 @@ router.get('/:id/trace', auth, ...checked('GET /:id/trace'), async (req, res) =>
 // came from (sender_name) so the walk renders as a readable tree. Names are topology the operator already
 // co-holds — not commercial terms — so this stays within the TR-6 lens.
 function traceToName(row) {
-  let list = row.all_recipients;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch (e) {
-      cbLog.fellBack('chits traceToName: did not parse — answered with none', e, 'debug');
-      list = [];
-    }
-  }
-  list = Array.isArray(list) ? list : [];
+  const list = recipientsOf(row, 'traceToName');
   const rec = list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator');
   return rec ? rec.display_name : null;
 }
@@ -336,16 +340,7 @@ router.get('/trace/by-batch', auth, ...checked('GET /trace/by-batch'), async (re
 
 /** the receiver of a handoff (by-batch chains on it): the 'receiver' row, else the first party that is not sender or operator */
 function traceRecipientOf(row) {
-  let list = row.all_recipients;
-  if (typeof list === 'string') {
-    try {
-      list = JSON.parse(list);
-    } catch (e) {
-      cbLog.fellBack('chits traceRecipientOf: did not parse — answered with none', e, 'debug');
-      list = [];
-    }
-  }
-  list = Array.isArray(list) ? list : [];
+  const list = recipientsOf(row, 'traceRecipientOf');
   return list.find((x) => x.role === 'receiver') || list.find((x) => x.role && x.role !== 'sender' && x.role !== 'operator') || null;
 }
 

@@ -14,7 +14,7 @@ const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel));
 function make() {
   const data = {
     cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
-    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2'], country: null, points: null,
+    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2', 'a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002'], country: null, points: null,
     queries: [], appended: [],
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');

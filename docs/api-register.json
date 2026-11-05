@@ -4,8 +4,8 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 19,
-  "partial": 450,
+  "not_started": 10,
+  "partial": 459,
   "meets": 168,
   "columns": {
    "strict_input": {
@@ -440,7 +440,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5911,
+   "line": 5978,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -538,7 +538,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4790,
+   "line": 4857,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -632,7 +632,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6172,
+   "line": 6239,
    "hash": "fc31a63bfe103fc8",
    "does": "",
    "errors": {
@@ -830,7 +830,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 1002,
+   "line": 1012,
    "hash": "e5b9eacc9c599271",
    "does": "",
    "errors": {
@@ -929,7 +929,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 418,
+   "line": 421,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1023,7 +1023,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 698,
+   "line": 701,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1115,7 +1115,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 434,
+   "line": 437,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -1309,7 +1309,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 341,
+   "line": 342,
    "hash": "19db281b1b056633",
    "does": "",
    "errors": {
@@ -1403,7 +1403,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 608,
+   "line": 609,
    "hash": "0f950ed6f05d88ea",
    "does": "",
    "errors": {
@@ -1594,7 +1594,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1769,
+   "line": 1776,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1692,7 +1692,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1919,
+   "line": 1926,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1786,8 +1786,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1650,
-   "hash": "e1ba6d46b5072d1f",
+   "line": 1657,
+   "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
     "count": 0,
@@ -2779,7 +2779,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 333,
+   "line": 336,
    "hash": "0c2c7c81bc7f741b",
    "does": "",
    "errors": {
@@ -2869,7 +2869,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 611,
+   "line": 613,
    "hash": "3b739df1cfe5c008",
    "does": "",
    "errors": {
@@ -2950,7 +2950,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 192,
+   "line": 195,
    "hash": "89e9e2e28d556f48",
    "does": "",
    "errors": {
@@ -3031,7 +3031,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 484,
+   "line": 487,
    "hash": "fceee6110bab1d76",
    "does": "",
    "errors": {
@@ -3114,7 +3114,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 496,
+   "line": 499,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3200,7 +3200,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 733,
+   "line": 735,
    "hash": "d8cba703bbee9a55",
    "does": "",
    "errors": {
@@ -3279,7 +3279,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 579,
+   "line": 581,
    "hash": "081cd5e34de055c2",
    "does": "",
    "errors": {
@@ -3364,7 +3364,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 625,
+   "line": 627,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3453,7 +3453,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 545,
+   "line": 547,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3532,7 +3532,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 563,
+   "line": 565,
    "hash": "462430efe946fbbf",
    "does": "",
    "errors": {
@@ -3618,7 +3618,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 189,
+   "line": 192,
    "hash": "b36c489344b0d879",
    "does": "",
    "errors": {
@@ -3697,7 +3697,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 746,
+   "line": 748,
    "hash": "330f509bff08f482",
    "does": "",
    "errors": {
@@ -6906,7 +6906,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 292,
+   "line": 287,
    "hash": "2c754880414516a4",
    "does": "",
    "errors": {
@@ -7076,7 +7076,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 316,
+   "line": 311,
    "hash": "96f6dbc935fffa9d",
    "does": "",
    "errors": {
@@ -8276,7 +8276,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3312,
+   "line": 3379,
    "hash": "6cba303a3817793d",
    "does": "",
    "errors": {
@@ -8414,7 +8414,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4616,
+   "line": 4683,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -8470,7 +8470,8 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -8505,7 +8506,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3863,
+   "line": 3930,
    "hash": "4a7a64bbf05a9fdb",
    "does": "",
    "errors": {
@@ -8595,7 +8596,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5651,
+   "line": 5718,
    "hash": "d314b7303243841c",
    "does": "",
    "errors": {
@@ -8686,7 +8687,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5605,
+   "line": 5672,
    "hash": "3d7ed7659b7e4ede",
    "does": "",
    "errors": {
@@ -8788,7 +8789,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5194,
+   "line": 5261,
    "hash": "92b767d1356f7beb",
    "does": "",
    "errors": {
@@ -8985,7 +8986,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4070,
+   "line": 4137,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -9075,7 +9076,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4181,
+   "line": 4248,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -9164,7 +9165,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 28,
+   "line": 41,
    "hash": "e0f68ab161a07cc0",
    "does": "",
    "errors": {
@@ -9252,7 +9253,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 55,
+   "line": 68,
    "hash": "bddc64e2800083d8",
    "does": "",
    "errors": {
@@ -9344,7 +9345,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5812,
+   "line": 5879,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -9442,7 +9443,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2867,
+   "line": 2934,
    "hash": "55d4d0593ffb2a8c",
    "does": "",
    "errors": {
@@ -9535,7 +9536,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3063,
+   "line": 3130,
    "hash": "043cd9e70f06789d",
    "does": "",
    "errors": {
@@ -9632,7 +9633,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3250,
+   "line": 3317,
    "hash": "54cb3e4dc8ed64b1",
    "does": "",
    "errors": {
@@ -9719,7 +9720,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4052,
+   "line": 4119,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -9807,7 +9808,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3892,
+   "line": 3959,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -9893,7 +9894,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3902,
+   "line": 3969,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -9981,7 +9982,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3944,
+   "line": 4011,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -10066,7 +10067,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4009,
+   "line": 4076,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -10156,7 +10157,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2962,
+   "line": 3029,
    "hash": "ad6796f3a4111cb6",
    "does": "",
    "errors": {
@@ -10248,7 +10249,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 2800,
+   "line": 2867,
    "hash": "81a3de9166377e50",
    "does": "",
    "errors": {
@@ -10367,7 +10368,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 255,
+   "line": 259,
    "hash": "e4d84f8cefe1d1a4",
    "does": "",
    "errors": {
@@ -10455,7 +10456,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 299,
+   "line": 303,
    "hash": "f15e538c4e88a8b4",
    "does": "",
    "errors": {
@@ -10546,7 +10547,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 480,
+   "line": 475,
    "hash": "8f9238406a761e84",
    "does": "",
    "errors": {
@@ -10628,7 +10629,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3277,
+   "line": 3344,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -10976,12 +10977,13 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 769,
-   "hash": "18b660d23a4e9f0c",
+   "line": 777,
+   "hash": "6ca601755fb8a40b",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      403,
      500
@@ -11024,6 +11026,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     500
@@ -11065,7 +11068,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 953,
+   "line": 961,
    "hash": "c25e2cdac9334f07",
    "does": "",
    "errors": {
@@ -11158,7 +11161,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 793,
+   "line": 801,
    "hash": "e71c276b6e4827f0",
    "does": "",
    "errors": {
@@ -11251,7 +11254,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 709,
+   "line": 717,
    "hash": "dde18b4db413b9dc",
    "does": "",
    "errors": {
@@ -11440,7 +11443,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 484,
+   "line": 487,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -11528,7 +11531,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 378,
+   "line": 381,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -11616,7 +11619,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 93,
+   "line": 96,
    "hash": "19ebdffc65bdaeac",
    "does": "",
    "errors": {
@@ -11708,7 +11711,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 115,
+   "line": 118,
    "hash": "8e2de5a48a92f87e",
    "does": "",
    "errors": {
@@ -11803,7 +11806,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 606,
+   "line": 609,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -11896,7 +11899,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 176,
+   "line": 179,
    "hash": "6cbf9daf9774ff55",
    "does": "",
    "errors": {
@@ -11999,7 +12002,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 636,
+   "line": 639,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -12089,7 +12092,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 677,
+   "line": 680,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -12454,12 +12457,13 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 342,
-   "hash": "90d643c3f36f275a",
+   "line": 355,
+   "hash": "39b4dd0064f69ab7",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      500
     ],
     "codes": []
@@ -12499,6 +12503,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     500
    ],
    "notes": [],
@@ -12535,7 +12540,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2352,
+   "line": 2369,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -12621,7 +12626,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 449,
+   "line": 462,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -12705,12 +12710,13 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 476,
-   "hash": "923ae667956b75ae",
+   "line": 489,
+   "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      404,
      500
@@ -12754,6 +12760,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     404,
     500
@@ -12766,7 +12773,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12813,7 +12820,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 833,
+   "line": 846,
    "hash": "b43d5b8b4da152b9",
    "does": "",
    "errors": {
@@ -12901,12 +12908,13 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1667,
-   "hash": "11720064f2b88a42",
+   "line": 1684,
+   "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      403,
      404,
@@ -12952,6 +12960,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     404,
@@ -12965,7 +12974,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12994,7 +13003,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 420,
+   "line": 433,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -13086,7 +13095,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1557,
+   "line": 1570,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -13177,7 +13186,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1421,
+   "line": 1434,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -13266,12 +13275,13 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1405,
-   "hash": "c0ac046521b15eac",
+   "line": 1418,
+   "hash": "d2915e172199d763",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -13312,6 +13322,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -13351,8 +13362,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 370,
-   "hash": "72535ba03adc05e5",
+   "line": 383,
+   "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
     "count": 0,
@@ -13410,7 +13421,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -13441,7 +13452,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 387,
+   "line": 400,
    "hash": "01d70f4bd8eeb16d",
    "does": "",
    "errors": {
@@ -13520,7 +13531,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 465,
+   "line": 478,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -13604,12 +13615,13 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1228,
-   "hash": "15ee27fbadd385d3",
+   "line": 1241,
+   "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -13650,6 +13662,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -13661,7 +13674,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -14051,7 +14064,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 79,
+   "line": 80,
    "hash": "3aa7dc583807a82a",
    "does": "",
    "errors": {
@@ -14142,7 +14155,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 482,
+   "line": 483,
    "hash": "cb977f1f071be92d",
    "does": "",
    "errors": {
@@ -14237,7 +14250,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 540,
+   "line": 541,
    "hash": "0a9799fceae934b2",
    "does": "",
    "errors": {
@@ -14327,7 +14340,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 565,
+   "line": 566,
    "hash": "c9015e5f5ab99f12",
    "does": "",
    "errors": {
@@ -14417,8 +14430,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 900,
-   "hash": "d090f0c5527ea986",
+   "line": 901,
+   "hash": "9070c62e570c1c83",
    "does": "",
    "errors": {
     "count": 0,
@@ -14474,7 +14487,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#577 stage2 (RAIL-146g, 13 of 13 read)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -14503,7 +14516,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 141,
+   "line": 142,
    "hash": "b6e727a5f02eaf0b",
    "does": "",
    "errors": {
@@ -14583,7 +14596,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 708,
+   "line": 709,
    "hash": "60877e20b8df1857",
    "does": "",
    "errors": {
@@ -14677,7 +14690,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 1053,
+   "line": 1054,
    "hash": "cf257228ec420cb3",
    "does": "",
    "errors": {
@@ -14767,7 +14780,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 951,
+   "line": 952,
    "hash": "24556c31722fa718",
    "does": "",
    "errors": {
@@ -14855,7 +14868,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 654,
+   "line": 655,
    "hash": "f389be46783c2688",
    "does": "",
    "errors": {
@@ -14943,7 +14956,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 633,
+   "line": 634,
    "hash": "acd81ea945245e41",
    "does": "",
    "errors": {
@@ -15022,8 +15035,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 867,
-   "hash": "9cf17566745c9c6b",
+   "line": 868,
+   "hash": "9b7793fe6cd2601a",
    "does": "",
    "errors": {
     "count": 0,
@@ -15081,7 +15094,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -15456,7 +15469,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 587,
+   "line": 590,
    "hash": "cf1d3b18bbcc525b",
    "does": "",
    "errors": {
@@ -15536,7 +15549,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 573,
+   "line": 576,
    "hash": "328373386394ebd9",
    "does": "",
    "errors": {
@@ -15616,7 +15629,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 255,
+   "line": 258,
    "hash": "7a0fb21d7292ba68",
    "does": "",
    "errors": {
@@ -15703,7 +15716,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 391,
+   "line": 394,
    "hash": "4345a64878ef69f5",
    "does": "",
    "errors": {
@@ -15783,7 +15796,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 518,
+   "line": 521,
    "hash": "334f5920ce6e77df",
    "does": "",
    "errors": {
@@ -15867,8 +15880,8 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 87,
-   "hash": "44628ee0285df8b6",
+   "line": 88,
+   "hash": "91f0cb25a0a8fdbf",
    "does": "",
    "errors": {
     "count": 1,
@@ -15936,7 +15949,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "44628ee0285df8b6"
+    "stale_since": "91f0cb25a0a8fdbf"
    },
    "status": "partial",
    "callers": [],
@@ -15960,7 +15973,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 371,
+   "line": 374,
    "hash": "0bce9d98503ac909",
    "does": "",
    "errors": {
@@ -16046,7 +16059,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 381,
+   "line": 384,
    "hash": "31b9ee010d1c6425",
    "does": "",
    "errors": {
@@ -16128,7 +16141,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 343,
+   "line": 346,
    "hash": "ed18220df1d5093b",
    "does": "",
    "errors": {
@@ -16214,7 +16227,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 401,
+   "line": 404,
    "hash": "094e8e3e410dcf65",
    "does": "",
    "errors": {
@@ -16304,7 +16317,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 497,
+   "line": 500,
    "hash": "16ad5c28a4f1437c",
    "does": "",
    "errors": {
@@ -16384,7 +16397,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 487,
+   "line": 490,
    "hash": "f5ab03811ab83248",
    "does": "",
    "errors": {
@@ -16464,7 +16477,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 325,
+   "line": 328,
    "hash": "bf302810e657e9d2",
    "does": "",
    "errors": {
@@ -16556,7 +16569,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 605,
+   "line": 608,
    "hash": "247f6375ed55e55e",
    "does": "",
    "errors": {
@@ -16648,7 +16661,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 311,
+   "line": 314,
    "hash": "4a4d526df2fabfe7",
    "does": "",
    "errors": {
@@ -16735,7 +16748,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 761,
+   "line": 764,
    "hash": "f61bf679b70b755a",
    "does": "",
    "errors": {
@@ -16826,7 +16839,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 357,
+   "line": 360,
    "hash": "c62ac0e212831a25",
    "does": "",
    "errors": {
@@ -16906,7 +16919,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 439,
+   "line": 442,
    "hash": "4f285b6f37f32fe8",
    "does": "",
    "errors": {
@@ -16987,7 +17000,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 134,
+   "line": 136,
    "hash": "d07dcfc2b934bf94",
    "does": "",
    "errors": {
@@ -17950,8 +17963,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 122,
-   "hash": "94b09992308a0171",
+   "line": 124,
+   "hash": "aef8555d8e1a9f95",
    "does": "",
    "errors": {
     "count": 1,
@@ -18015,7 +18028,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "94b09992308a0171"
+    "stale_since": "aef8555d8e1a9f95"
    },
    "status": "partial",
    "callers": [],
@@ -18480,7 +18493,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 41,
+   "line": 46,
    "hash": "25a38d6265b84af6",
    "does": "",
    "errors": {
@@ -18492,6 +18505,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "network_design"
    ],
    "writes": [],
@@ -18569,8 +18583,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 436,
-   "hash": "d1a389470b2e79c1",
+   "line": 442,
+   "hash": "999f7c1ba09a200c",
    "does": "",
    "errors": {
     "count": 0,
@@ -18586,7 +18600,8 @@
    "reads": [
     "catalogue_items",
     "cb_entity",
-    "identities"
+    "identities",
+    "network_design"
    ],
    "writes": [],
    "money": false,
@@ -18636,7 +18651,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d1a389470b2e79c1"
+    "stale_since": "999f7c1ba09a200c"
    },
    "status": "partial",
    "callers": [
@@ -18664,8 +18679,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 399,
-   "hash": "d12a4e5a95ee71e8",
+   "line": 405,
+   "hash": "25df31a097bacda5",
    "does": "",
    "errors": {
     "count": 0,
@@ -18679,7 +18694,8 @@
    },
    "reads": [
     "cb_entity",
-    "identities"
+    "identities",
+    "network_design"
    ],
    "writes": [],
    "money": false,
@@ -18728,7 +18744,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d12a4e5a95ee71e8"
+    "stale_since": "25df31a097bacda5"
    },
    "status": "partial",
    "callers": [
@@ -18758,13 +18774,19 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 217,
-   "hash": "3f6c4bd2a94b38c8",
+   "line": 216,
+   "hash": "79e8a97494645b0f",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "catalogue_adoption",
@@ -18783,13 +18805,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -18805,9 +18827,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -18816,7 +18843,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -19182,7 +19209,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 56,
+   "line": 57,
    "hash": "75e5cc9c3b5f0480",
    "does": "",
    "errors": {
@@ -19934,8 +19961,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1600,
-   "hash": "ea2d7e6880efeff6",
+   "line": 1607,
+   "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
     "count": 0,
@@ -20022,7 +20049,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1955,
+   "line": 1962,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -20208,7 +20235,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2070,
+   "line": 2077,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -20294,7 +20321,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1814,
+   "line": 1821,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -20384,7 +20411,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1385,
-   "hash": "63089576d01de346",
+   "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
     "count": 0,
@@ -20442,7 +20469,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "63089576d01de346"
+    "stale_since": "40bea3f52459651d"
    },
    "status": "partial",
    "callers": [
@@ -21883,12 +21910,18 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 61,
-   "hash": "739f3949436c3487",
+   "line": 73,
+   "hash": "58704aeeba95e199",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     401,
+     404,
+     422,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -21905,12 +21938,12 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
-    "error_tests": false,
+    "codes_registered": false,
+    "error_tests": true,
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
@@ -21927,7 +21960,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    404,
+    422,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -21964,7 +22003,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 133,
+   "line": 137,
    "hash": "44b050cddc91b9e8",
    "does": "",
    "errors": {
@@ -22045,7 +22084,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 106,
+   "line": 110,
    "hash": "3d96a78c38ea06b5",
    "does": "",
    "errors": {
@@ -22126,7 +22165,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 44,
+   "line": 57,
    "hash": "381d8655bc80219d",
    "does": "",
    "errors": {
@@ -22565,7 +22604,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 406,
+   "line": 433,
    "hash": "c7796f384914558e",
    "does": "",
    "errors": {
@@ -22657,8 +22696,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1661,
-   "hash": "225562369df44c8d",
+   "line": 1694,
+   "hash": "caff22a54386dc4d",
    "does": "",
    "errors": {
     "count": 0,
@@ -22725,7 +22764,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "225562369df44c8d"
+    "stale_since": "caff22a54386dc4d"
    },
    "status": "partial",
    "callers": [],
@@ -22749,7 +22788,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3823,
+   "line": 3855,
    "hash": "8cf4e576115ef2fb",
    "does": "",
    "errors": {
@@ -22839,7 +22878,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1061,
+   "line": 1088,
    "hash": "b4d8b2a2ed26256c",
    "does": "",
    "errors": {
@@ -22934,7 +22973,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1085,
+   "line": 1112,
    "hash": "cb27ce34e66cddf0",
    "does": "",
    "errors": {
@@ -23030,8 +23069,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2736,
-   "hash": "26fa1d41d4daf04f",
+   "line": 2768,
+   "hash": "46e6f0f00dc7dd6a",
    "does": "",
    "errors": {
     "count": 0,
@@ -23098,7 +23137,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "26fa1d41d4daf04f"
+    "stale_since": "46e6f0f00dc7dd6a"
    },
    "status": "partial",
    "callers": [],
@@ -23122,7 +23161,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 899,
+   "line": 926,
    "hash": "ef445392025c7505",
    "does": "",
    "errors": {
@@ -23211,7 +23250,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2373,
+   "line": 2406,
    "hash": "648b3631d4dd9f78",
    "does": "",
    "errors": {
@@ -23298,7 +23337,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 4070,
+   "line": 4102,
    "hash": "52497bb11fd4f7f5",
    "does": "",
    "errors": {
@@ -23388,7 +23427,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3555,
+   "line": 3587,
    "hash": "cde1efb7ead1d3ed",
    "does": "",
    "errors": {
@@ -23480,8 +23519,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2920,
-   "hash": "7b2f3e0bdc3f002d",
+   "line": 2952,
+   "hash": "9bca35743df8eeca",
    "does": "",
    "errors": {
     "count": 0,
@@ -23548,7 +23587,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7b2f3e0bdc3f002d"
+    "stale_since": "9bca35743df8eeca"
    },
    "status": "partial",
    "callers": [],
@@ -23572,7 +23611,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2024,
+   "line": 2058,
    "hash": "e85095280e6bcaf9",
    "does": "",
    "errors": {
@@ -23659,8 +23698,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1431,
-   "hash": "c333284f75c58fd6",
+   "line": 1464,
+   "hash": "7a7c9c5b27829f86",
    "does": "",
    "errors": {
     "count": 0,
@@ -23727,7 +23766,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c333284f75c58fd6"
+    "stale_since": "7a7c9c5b27829f86"
    },
    "status": "partial",
    "callers": [],
@@ -23751,7 +23790,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1483,
+   "line": 1516,
    "hash": "c2147cbd5b085bbb",
    "does": "",
    "errors": {
@@ -23843,7 +23882,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2675,
+   "line": 2707,
    "hash": "99f94adaaabe158a",
    "does": "",
    "errors": {
@@ -23933,7 +23972,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 329,
+   "line": 356,
    "hash": "4f251bf1eda67e5c",
    "does": "",
    "errors": {
@@ -24018,7 +24057,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 341,
+   "line": 368,
    "hash": "0b7aa4bfcc5d0706",
    "does": "",
    "errors": {
@@ -26415,8 +26454,8 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 974,
-   "hash": "0c53fd88d5c09c6d",
+   "line": 982,
+   "hash": "1cf3e7639cafff38",
    "does": "",
    "errors": {
     "count": 0,
@@ -26603,7 +26642,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 408,
+   "line": 411,
    "hash": "236c464e6aa84b3e",
    "does": "",
    "errors": {
@@ -26695,7 +26734,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1200,
+   "line": 1213,
    "hash": "e0c040a82e4ebfc4",
    "does": "",
    "errors": {
@@ -26728,7 +26767,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
@@ -26785,7 +26824,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 806,
+   "line": 819,
    "hash": "7d19b7065fef8cc8",
    "does": "",
    "errors": {
@@ -26875,7 +26914,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 846,
+   "line": 859,
    "hash": "e55ea05cc2141a4a",
    "does": "",
    "errors": {
@@ -26959,7 +26998,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 800,
+   "line": 813,
    "hash": "3a7c9f99a608bfbf",
    "does": "",
    "errors": {
@@ -27051,7 +27090,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 431,
+   "line": 444,
    "hash": "e190a37baf2cd8ee",
    "does": "",
    "errors": {
@@ -27149,7 +27188,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 879,
+   "line": 892,
    "hash": "21b4715aa77e270e",
    "does": "",
    "errors": {
@@ -27254,7 +27293,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 284,
+   "line": 285,
    "hash": "007ce890480821fb",
    "does": "",
    "errors": {
@@ -27348,7 +27387,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 598,
+   "line": 599,
    "hash": "24e27419f0177ff2",
    "does": "",
    "errors": {
@@ -27436,7 +27475,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1526,
+   "line": 1527,
    "hash": "2b44e4f050d7693b",
    "does": "",
    "errors": {
@@ -28201,11 +28240,12 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 81,
-   "hash": "2ea7dda86e1cb9cb",
+   "hash": "fb54367fb55e7b28",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      404,
      422,
@@ -28248,6 +28288,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     404,
     422,
@@ -28286,8 +28327,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2484,
-   "hash": "f63b0129e7b79af2",
+   "line": 2517,
+   "hash": "66994b83dd00f3da",
    "does": "",
    "errors": {
     "count": 0,
@@ -28354,7 +28395,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f63b0129e7b79af2"
+    "stale_since": "66994b83dd00f3da"
    },
    "status": "partial",
    "callers": [],
@@ -28378,8 +28419,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2103,
-   "hash": "61eb8f3ac5e44b4c",
+   "line": 2137,
+   "hash": "2e15269937e86790",
    "does": "",
    "errors": {
     "count": 0,
@@ -28446,7 +28487,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "61eb8f3ac5e44b4c"
+    "stale_since": "2e15269937e86790"
    },
    "status": "partial",
    "callers": [],
@@ -29087,7 +29128,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 78,
+   "line": 81,
    "hash": "43ec3db496e1bf2a",
    "does": "",
    "errors": {
@@ -29181,8 +29222,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 254,
-   "hash": "01efb016eb825fbb",
+   "line": 257,
+   "hash": "b2f3d624f80db544",
    "does": "",
    "errors": {
     "count": 0,
@@ -29249,7 +29290,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "01efb016eb825fbb"
+    "stale_since": "b2f3d624f80db544"
    },
    "status": "partial",
    "callers": [
@@ -29277,8 +29318,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 198,
-   "hash": "d69320eb9db604b8",
+   "line": 201,
+   "hash": "51a061d0d4040a3c",
    "does": "",
    "errors": {
     "count": 0,
@@ -29337,7 +29378,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d69320eb9db604b8"
+    "stale_since": "51a061d0d4040a3c"
    },
    "status": "partial",
    "callers": [
@@ -29365,7 +29406,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 134,
+   "line": 137,
    "hash": "eb4a657ee89de7d7",
    "does": "",
    "errors": {
@@ -29451,7 +29492,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 661,
+   "line": 663,
    "hash": "86ff97ac61ac9146",
    "does": "",
    "errors": {
@@ -29531,7 +29572,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 678,
+   "line": 680,
    "hash": "b2df6dc4cadf72b1",
    "does": "",
    "errors": {
@@ -29630,7 +29671,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 740,
+   "line": 742,
    "hash": "9f02935797a24cbc",
    "does": "",
    "errors": {
@@ -34654,7 +34695,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 325,
+   "line": 320,
    "hash": "f18fb314c3b1ffdd",
    "does": "",
    "errors": {
@@ -34736,8 +34777,8 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 238,
-   "hash": "970b221adf248a12",
+   "line": 240,
+   "hash": "39fe1022ec617edf",
    "does": "",
    "errors": {
     "count": 0,
@@ -36263,7 +36304,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4506,
+   "line": 4573,
    "hash": "604864a3e8107a0d",
    "does": "",
    "errors": {
@@ -36363,7 +36404,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6064,
+   "line": 6131,
    "hash": "cb34c7ed90a137a9",
    "does": "",
    "errors": {
@@ -36462,7 +36503,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4407,
+   "line": 4474,
    "hash": "4063fb6f59ac6ff8",
    "does": "",
    "errors": {
@@ -36559,7 +36600,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4841,
+   "line": 4908,
    "hash": "ee3617b9ff3ada02",
    "does": "",
    "errors": {
@@ -36656,7 +36697,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3845,
+   "line": 3912,
    "hash": "f9d325bb11b7f5e6",
    "does": "",
    "errors": {
@@ -36743,7 +36784,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4215,
+   "line": 4282,
    "hash": "e275be90e73d1615",
    "does": "",
    "errors": {
@@ -36846,7 +36887,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5421,
+   "line": 5488,
    "hash": "e9cb0216d0d90788",
    "does": "",
    "errors": {
@@ -36958,7 +36999,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5042,
+   "line": 5109,
    "hash": "c6a07b1aeacfccc8",
    "does": "",
    "errors": {
@@ -37055,7 +37096,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4753,
+   "line": 4820,
    "hash": "e497f7a73e38b01a",
    "does": "",
    "errors": {
@@ -37497,7 +37538,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4084,
+   "line": 4151,
    "hash": "479526d135d780a1",
    "does": "",
    "errors": {
@@ -37588,7 +37629,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4140,
+   "line": 4207,
    "hash": "a2a7aa5d1d83d8de",
    "does": "",
    "errors": {
@@ -37678,7 +37719,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4160,
+   "line": 4227,
    "hash": "a6b86a1d6d491d8f",
    "does": "",
    "errors": {
@@ -37764,7 +37805,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3806,
+   "line": 3873,
    "hash": "2a3bed85e5eb4b08",
    "does": "",
    "errors": {
@@ -37855,7 +37896,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6143,
+   "line": 6210,
    "hash": "de599def3fd8151d",
    "does": "",
    "errors": {
@@ -37951,7 +37992,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6122,
+   "line": 6189,
    "hash": "a4bc9af3df307f6e",
    "does": "",
    "errors": {
@@ -38046,7 +38087,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6104,
+   "line": 6171,
    "hash": "4b88a41af9602e17",
    "does": "",
    "errors": {
@@ -38141,7 +38182,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6383,
+   "line": 6450,
    "hash": "75e5de25ab8a058b",
    "does": "",
    "errors": {
@@ -38238,7 +38279,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4030,
+   "line": 4097,
    "hash": "40945af1720316ac",
    "does": "",
    "errors": {
@@ -38324,7 +38365,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3999,
+   "line": 4066,
    "hash": "4da9aa2267f6a5f5",
    "does": "",
    "errors": {
@@ -38414,7 +38455,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4020,
+   "line": 4087,
    "hash": "f562f4561052b995",
    "does": "",
    "errors": {
@@ -38504,7 +38545,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3916,
+   "line": 3983,
    "hash": "dc988275757c672d",
    "does": "",
    "errors": {
@@ -38596,7 +38637,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3934,
+   "line": 4001,
    "hash": "7631077758f063ea",
    "does": "",
    "errors": {
@@ -38686,7 +38727,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3976,
+   "line": 4043,
    "hash": "b7c1d5b5f6e060a8",
    "does": "",
    "errors": {
@@ -38776,7 +38817,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3955,
+   "line": 4022,
    "hash": "c3904d51d26c89aa",
    "does": "",
    "errors": {
@@ -38861,7 +38902,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 303,
+   "line": 370,
    "hash": "3c76bd61695c1790",
    "does": "",
    "errors": {
@@ -39243,7 +39284,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 183,
+   "line": 191,
    "hash": "68b57a10310aaeca",
    "does": "",
    "errors": {
@@ -39335,7 +39376,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 913,
+   "line": 921,
    "hash": "39788dad152dccf2",
    "does": "",
    "errors": {
@@ -39429,7 +39470,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 734,
+   "line": 742,
    "hash": "71943cd74062c482",
    "does": "",
    "errors": {
@@ -39523,7 +39564,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 898,
+   "line": 906,
    "hash": "6162c106b4962e57",
    "does": "",
    "errors": {
@@ -39618,7 +39659,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 851,
+   "line": 859,
    "hash": "810725499624c700",
    "does": "",
    "errors": {
@@ -39712,7 +39753,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 668,
+   "line": 676,
    "hash": "6429866ee83c4653",
    "does": "",
    "errors": {
@@ -39803,7 +39844,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 527,
+   "line": 535,
    "hash": "85810ec14448e0e3",
    "does": "",
    "errors": {
@@ -39901,7 +39942,7 @@
    "owner_area": "connectors",
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
-   "line": 826,
+   "line": 834,
    "hash": "835f24dcf599a1db",
    "does": "",
    "errors": {
@@ -40368,7 +40409,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 392,
+   "line": 395,
    "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
@@ -40465,7 +40506,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 687,
+   "line": 690,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -40557,7 +40598,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 450,
+   "line": 453,
    "hash": "5de81a35731a3e0b",
    "does": "",
    "errors": {
@@ -40651,7 +40692,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 518,
+   "line": 521,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -40739,7 +40780,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 623,
+   "line": 626,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -40831,7 +40872,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 356,
+   "line": 359,
    "hash": "785eb787c08de857",
    "does": "",
    "errors": {
@@ -40928,7 +40969,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 499,
+   "line": 502,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -41018,7 +41059,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 531,
+   "line": 534,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -41113,7 +41154,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 646,
+   "line": 649,
    "hash": "21948004b6ff4f9d",
    "does": "",
    "errors": {
@@ -41203,7 +41244,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 660,
+   "line": 663,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -41295,7 +41336,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 709,
+   "line": 712,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -41385,7 +41426,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 557,
+   "line": 560,
    "hash": "bfd12e4bf3f5c6ca",
    "does": "",
    "errors": {
@@ -41956,7 +41997,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1641,
+   "line": 1658,
    "hash": "c303d29a52083779",
    "does": "",
    "errors": {
@@ -42050,8 +42091,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 331,
-   "hash": "353129a910091984",
+   "line": 344,
+   "hash": "3ca46d82f2148ce9",
    "does": "",
    "errors": {
     "count": 0,
@@ -42140,7 +42181,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 332,
+   "line": 345,
    "hash": "cfc1e63a162440a5",
    "does": "",
    "errors": {
@@ -42311,7 +42352,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 195,
+   "line": 196,
    "hash": "a35c61b13fd33d04",
    "does": "",
    "errors": {
@@ -42405,7 +42446,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 585,
+   "line": 586,
    "hash": "b022225c5bd68eb7",
    "does": "",
    "errors": {
@@ -42493,8 +42534,8 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 846,
-   "hash": "e27c9a3090cd4d06",
+   "line": 847,
+   "hash": "bc9ca085c0569993",
    "does": "",
    "errors": {
     "count": 0,
@@ -42556,7 +42597,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#616 stage2 (re-sign)",
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42585,7 +42626,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 357,
+   "line": 358,
    "hash": "036e66b26b2d9570",
    "does": "",
    "errors": {
@@ -42677,7 +42718,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 621,
+   "line": 622,
    "hash": "3a864d8cf722d2b5",
    "does": "",
    "errors": {
@@ -43117,7 +43158,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 558,
+   "line": 561,
    "hash": "8f60089c003f5275",
    "does": "",
    "errors": {
@@ -43212,7 +43253,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 269,
+   "line": 272,
    "hash": "ef9b3cba7debb95b",
    "does": "",
    "errors": {
@@ -43303,7 +43344,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 647,
+   "line": 650,
    "hash": "e3a7d03b85c467bf",
    "does": "",
    "errors": {
@@ -43394,7 +43435,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 242,
+   "line": 245,
    "hash": "0b61f6fc54084304",
    "does": "",
    "errors": {
@@ -43477,7 +43518,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 131,
+   "line": 133,
    "hash": "f29bfe316de39fb8",
    "does": "",
    "errors": {
@@ -43580,8 +43621,8 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 179,
-   "hash": "9a3d62bae4a34d71",
+   "line": 181,
+   "hash": "df50727a70dcd740",
    "does": "",
    "errors": {
     "count": 1,
@@ -43653,7 +43694,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9a3d62bae4a34d71"
+    "stale_since": "df50727a70dcd740"
    },
    "status": "partial",
    "callers": [],
@@ -43677,7 +43718,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 293,
+   "line": 296,
    "hash": "f46d8269c7dba69a",
    "does": "",
    "errors": {
@@ -43764,7 +43805,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 721,
+   "line": 724,
    "hash": "5785df55e495737f",
    "does": "",
    "errors": {
@@ -43867,7 +43908,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 672,
+   "line": 675,
    "hash": "29ad6ebcee646be8",
    "does": "",
    "errors": {
@@ -43960,7 +44001,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 399,
+   "line": 404,
    "hash": "aa6e3b0fed35babd",
    "does": "",
    "errors": {
@@ -44062,7 +44103,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 418,
+   "line": 423,
    "hash": "56a0c919759a7368",
    "does": "",
    "errors": {
@@ -44716,8 +44757,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 33,
-   "hash": "ca164b350ae30031",
+   "line": 35,
+   "hash": "6ce122667bc22cdd",
    "does": "",
    "errors": {
     "count": 1,
@@ -44782,8 +44823,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6ce122667bc22cdd"
    },
    "status": "partial",
    "callers": [],
@@ -45085,7 +45127,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 180,
+   "line": 185,
    "hash": "3bd2f825c064ee81",
    "does": "",
    "errors": {
@@ -45182,8 +45224,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 278,
-   "hash": "62029f6165abba94",
+   "line": 283,
+   "hash": "4e20a219521eee5f",
    "does": "",
    "errors": {
     "count": 0,
@@ -45247,8 +45289,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4e20a219521eee5f"
    },
    "status": "partial",
    "callers": [
@@ -45276,7 +45319,7 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 142,
+   "line": 147,
    "hash": "28e823f3e932e564",
    "does": "",
    "errors": {
@@ -45367,13 +45410,23 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 392,
-   "hash": "0eefeb9f64320612",
+   "line": 400,
+   "hash": "e015926bdd4d30ff",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     422,
+     500
+    ],
+    "codes": [
+     "OFFER_UNKNOWN",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -45385,13 +45438,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": false,
@@ -45407,9 +45460,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45418,7 +45479,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -45446,13 +45507,26 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 337,
-   "hash": "a4e76d40d80bda40",
+   "line": 360,
+   "hash": "e293619dcba0d014",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 4,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": [
+     "NOT_FOUND",
+     "OFFER_ENDS_BEFORE_START",
+     "OFFER_NOT_LIVE",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "definition",
@@ -45467,13 +45541,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45489,9 +45563,18 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45500,7 +45583,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45526,13 +45609,24 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 375,
-   "hash": "849fb04dc5aabc73",
+   "line": 382,
+   "hash": "4cb60c200ef584b5",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 3,
+    "statuses": [
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": [
+     "NOT_FOUND",
+     "OFFER_NOT_RELEASED",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "definition",
@@ -45547,13 +45641,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45569,9 +45663,17 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45580,7 +45682,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45607,17 +45709,26 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 311,
-   "hash": "4b44d5d0f6b0a9b6",
+   "hash": "e2f896a8f59e3ee4",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "identities"
    ],
-   "writes": [],
+   "writes": [
+    "catalogue_adoption"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -45626,13 +45737,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45648,9 +45759,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45659,7 +45776,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45686,15 +45803,24 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 321,
-   "hash": "3900fd763a0ab467",
+   "hash": "fa78d9c144e2dd67",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "catalogue_adoption"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -45703,13 +45829,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45725,9 +45851,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45736,7 +45868,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -45763,12 +45895,19 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 293,
-   "hash": "562fa0e9213aff5e",
+   "hash": "e5282d27e356eb80",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "SESSION_ONLY"
+    ]
    },
    "reads": [
     "identities"
@@ -45784,13 +45923,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -45806,9 +45945,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -45817,7 +45962,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -46545,8 +46690,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 212,
-   "hash": "d59f0da9b304d519",
+   "line": 235,
+   "hash": "e159347a693a404b",
    "does": "",
    "errors": {
     "count": 0,
@@ -46639,7 +46784,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 183,
+   "line": 184,
    "hash": "010892fd7215ad6f",
    "does": "",
    "errors": {
@@ -47278,7 +47423,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1854,
+   "line": 1861,
    "hash": "58fd041e164a2b0c",
    "does": "",
    "errors": {
@@ -47376,7 +47521,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1618,
+   "line": 1625,
    "hash": "7ea6a92aeb157dc6",
    "does": "",
    "errors": {
@@ -47474,7 +47619,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1664,
+   "line": 1671,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -47947,7 +48092,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2172,
+   "line": 2179,
    "hash": "52a72c7438622ba6",
    "does": "",
    "errors": {
@@ -48038,7 +48183,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1395,
+   "line": 1396,
    "hash": "6aa71f5674d69c65",
    "does": "",
    "errors": {
@@ -49832,12 +49977,19 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 255,
-   "hash": "fe1d2aa5a9f8c44b",
+   "line": 264,
+   "hash": "846f90faabfcc47e",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     409,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -49853,11 +50005,11 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49875,7 +50027,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -49912,12 +50071,19 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 339,
-   "hash": "7a1f77d170ed0253",
+   "line": 346,
+   "hash": "1f8bcaf18f86ea47",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     409,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -49932,11 +50098,11 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -49954,7 +50120,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -49991,12 +50164,19 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 314,
-   "hash": "417065f1d66e833e",
+   "line": 322,
+   "hash": "6f00fd6c78cdfbc5",
    "does": "",
    "errors": {
     "count": 1,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     409,
+     500,
+     503
+    ],
     "codes": [
      "VALIDATION_FAILED"
     ]
@@ -50013,9 +50193,9 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
@@ -50035,7 +50215,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    409,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50072,12 +50259,18 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 225,
-   "hash": "efc6fee919fb5716",
+   "line": 235,
+   "hash": "67b1b3a282f7987e",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -50094,11 +50287,11 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -50116,7 +50309,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50153,12 +50352,18 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 203,
-   "hash": "e1f249fa4fc4cb6f",
+   "line": 214,
+   "hash": "2212a262f4635fec",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -50175,11 +50380,11 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -50197,7 +50402,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50234,22 +50445,20 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 964,
-   "hash": "e872fc56e1fade59",
+   "line": 980,
+   "hash": "1619118ca55a191c",
    "does": "",
    "errors": {
-    "count": 1,
-    "statuses": [],
-    "codes": [
-     "AMBIGUOUS_NAME"
-    ]
+    "count": 0,
+    "statuses": [
+     400,
+     409,
+     500
+    ],
+    "codes": []
    },
-   "reads": [
-    "identities"
-   ],
-   "writes": [
-    "identities"
-   ],
+   "reads": [],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -50258,13 +50467,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "codes_registered": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50280,7 +50489,11 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    409,
+    500
+   ],
    "notes": [],
    "human": {
     "names_clear": null,
@@ -50313,7 +50526,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 96,
+   "line": 100,
    "hash": "84b6041b552384e3",
    "does": "",
    "errors": {
@@ -50388,12 +50601,16 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 966,
-   "hash": "7032d4cf101ec273",
+   "line": 982,
+   "hash": "b3b2c66b8c80de1f",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -50408,13 +50625,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50430,7 +50647,11 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50441,7 +50662,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "signin-ui.js"
    ],
@@ -50465,12 +50686,17 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 72,
-   "hash": "7448baae28dc0c9a",
+   "line": 76,
+   "hash": "b494fb71a9c4325d",
    "does": "",
    "errors": {
     "count": 2,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     403,
+     500
+    ],
     "codes": [
      "KEY_CANNOT_SIGN_IN",
      "NO_DEVICE"
@@ -50486,13 +50712,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
     "error_tests": false,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50508,7 +50734,12 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50543,12 +50774,18 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 155,
-   "hash": "cd1b084e1c218968",
+   "line": 159,
+   "hash": "c33c8228d107195e",
    "does": "",
    "errors": {
     "count": 1,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     500
+    ],
     "codes": [
      "KEY_CANNOT_SIGN_IN"
     ]
@@ -50565,13 +50802,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -50587,7 +50824,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -50624,27 +50867,22 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 965,
-   "hash": "d392c9d09d159c7f",
+   "line": 981,
+   "hash": "009c20842cd7b499",
    "does": "",
    "errors": {
-    "count": 1,
-    "statuses": [],
-    "codes": [
-     "AMBIGUOUS_NAME"
-    ]
+    "count": 0,
+    "statuses": [
+     400,
+     403,
+     409,
+     500,
+     503
+    ],
+    "codes": []
    },
-   "reads": [
-    "constitution",
-    "entity_governance",
-    "identities",
-    "installation"
-   ],
-   "writes": [
-    "entity_governance",
-    "identities",
-    "signup_context"
-   ],
+   "reads": [],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -50653,12 +50891,12 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": false,
     "strict_input": false,
     "output_allowlist": false,
@@ -50675,7 +50913,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500,
+    503
+   ],
    "notes": [],
    "human": {
     "names_clear": null,
@@ -50708,8 +50952,8 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 94,
-   "hash": "1cea72366c798274",
+   "line": 107,
+   "hash": "3e8e43fc4a7acc4a",
    "does": "",
    "errors": {
     "count": 0,
@@ -50789,7 +51033,7 @@
    "owner_area": "simulator",
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
-   "line": 69,
+   "line": 82,
    "hash": "ef1c1dc647a9ede5",
    "does": "",
    "errors": {
@@ -51333,7 +51577,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 259,
+   "line": 286,
    "hash": "f13bb8d07407445b",
    "does": "",
    "errors": {
@@ -51426,7 +51670,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1718,
+   "line": 1752,
    "hash": "d2d2a16fb181822e",
    "does": "",
    "errors": {
@@ -51520,7 +51764,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 838,
+   "line": 865,
    "hash": "5bcf76fe43050cb3",
    "does": "",
    "errors": {
@@ -51612,7 +51856,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 911,
+   "line": 938,
    "hash": "ac4bce59d38715a0",
    "does": "",
    "errors": {
@@ -51704,7 +51948,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3749,
+   "line": 3781,
    "hash": "280da187b85f6274",
    "does": "",
    "errors": {
@@ -51793,7 +52037,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1125,
+   "line": 1152,
    "hash": "8ee0bc5c9fef1604",
    "does": "",
    "errors": {
@@ -51885,7 +52129,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2638,
+   "line": 2670,
    "hash": "c100f3afb42bf30b",
    "does": "",
    "errors": {
@@ -51974,8 +52218,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 2239,
-   "hash": "07f3c222969ac836",
+   "line": 2272,
+   "hash": "ab584ef73192e8cf",
    "does": "",
    "errors": {
     "count": 0,
@@ -52066,8 +52310,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 3888,
-   "hash": "4b5b7b925c19b8c9",
+   "line": 3920,
+   "hash": "9b194e9dba594af8",
    "does": "",
    "errors": {
     "count": 0,
@@ -52132,7 +52376,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4b5b7b925c19b8c9"
+    "stale_since": "9b194e9dba594af8"
    },
    "status": "partial",
    "callers": [],
@@ -52156,8 +52400,8 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1829,
-   "hash": "cc9a293306f1b39d",
+   "line": 1863,
+   "hash": "6319db7b3e9883c8",
    "does": "",
    "errors": {
     "count": 0,
@@ -52249,7 +52493,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1402,
+   "line": 1435,
    "hash": "3fa30109f7c3575d",
    "does": "",
    "errors": {
@@ -52338,7 +52582,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1580,
+   "line": 1613,
    "hash": "f3c36632f8490c7d",
    "does": "",
    "errors": {
@@ -52427,7 +52671,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 316,
+   "line": 343,
    "hash": "c4c0e50bdd1347d3",
    "does": "",
    "errors": {
@@ -55499,7 +55743,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 392,
+   "line": 395,
    "hash": "45850a50048a8d1f",
    "does": "",
    "errors": {
@@ -55590,14 +55834,14 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 454,
-   "hash": "d5b388a9f6f07d0f",
+   "line": 457,
+   "hash": "029d84fc977310c8",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
-     403,
+     404,
      422,
      500,
      503
@@ -55638,7 +55882,7 @@
    },
    "declared": [
     401,
-    403,
+    404,
     422,
     500,
     503
@@ -55653,7 +55897,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d5b388a9f6f07d0f"
+    "stale_since": "029d84fc977310c8"
    },
    "status": "partial",
    "callers": [],
@@ -55677,14 +55921,13 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 522,
-   "hash": "941db05fb558acda",
+   "line": 525,
+   "hash": "e6e1c7e444598660",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
-     403,
      404,
      422,
      500,
@@ -55730,7 +55973,6 @@
    },
    "declared": [
     401,
-    403,
     404,
     422,
     500,
@@ -55870,7 +56112,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5730,
+   "line": 5797,
    "hash": "9d26dd4d966ea939",
    "does": "",
    "errors": {
@@ -55973,7 +56215,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5956,
+   "line": 6023,
    "hash": "7c91c6607d810af7",
    "does": "",
    "errors": {
@@ -56069,7 +56311,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6012,
+   "line": 6079,
    "hash": "ac2768c0c89bd282",
    "does": "",
    "errors": {
@@ -56167,7 +56409,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6087,
+   "line": 6154,
    "hash": "9641c194ec49396a",
    "does": "",
    "errors": {
@@ -56263,7 +56505,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4885,
+   "line": 4952,
    "hash": "bdc0ab6cc433cce6",
    "does": "",
    "errors": {
@@ -56410,7 +56652,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4204,
+   "line": 4271,
    "hash": "bf8d67dc430c628c",
    "does": "",
    "errors": {
@@ -56505,7 +56747,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6230,
+   "line": 6297,
    "hash": "c304eb6c18afe880",
    "does": "",
    "errors": {
@@ -56807,8 +57049,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1612,
-   "hash": "bcdf0a12050562df",
+   "line": 1625,
+   "hash": "b4af9ed6eee146e4",
    "does": "",
    "errors": {
     "count": 0,
@@ -56822,7 +57064,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "population"
+   ],
    "writes": [
     "population"
    ],
@@ -56872,8 +57116,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b4af9ed6eee146e4"
    },
    "status": "partial",
    "callers": [
@@ -56901,7 +57146,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1531,
+   "line": 1544,
    "hash": "c36c30c620c32f6b",
    "does": "",
    "errors": {
@@ -56997,7 +57242,7 @@
    "owner_area": "folders",
    "owner_agent": "cb-rail",
    "file": "routes/folders.js",
-   "line": 158,
+   "line": 159,
    "hash": "8651504faa64e8e9",
    "does": "",
    "errors": {
@@ -57093,7 +57338,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 530,
+   "line": 533,
    "hash": "3c11eca1c1dff25a",
    "does": "",
    "errors": {
@@ -57187,7 +57432,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 417,
+   "line": 420,
    "hash": "ded5a9f36d8a0d5b",
    "does": "",
    "errors": {
@@ -57278,7 +57523,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 468,
+   "line": 471,
    "hash": "79600d795913fac1",
    "does": "",
    "errors": {
@@ -57375,7 +57620,7 @@
    "owner_area": "identity-docs",
    "owner_agent": "cb-compliance",
    "file": "routes/identity-docs.js",
-   "line": 234,
+   "line": 236,
    "hash": "dac8fb5cb05cc83a",
    "does": "",
    "errors": {
@@ -57575,8 +57820,8 @@
    "owner_area": "network-design",
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
-   "line": 52,
-   "hash": "0a0f0647d76be8ad",
+   "line": 57,
+   "hash": "cdeabf905d724935",
    "does": "",
    "errors": {
     "count": 0,
@@ -57589,6 +57834,7 @@
     "codes": []
    },
    "reads": [
+    "identities",
     "network_design"
    ],
    "writes": [
@@ -57638,8 +57884,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cdeabf905d724935"
    },
    "status": "partial",
    "callers": [
@@ -57669,13 +57916,22 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 275,
-   "hash": "9ae0898160a35ede",
+   "line": 274,
+   "hash": "c366a186bcc54fb2",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 2,
+    "statuses": [
+     400,
+     401,
+     403,
+     422,
+     500
+    ],
+    "codes": [
+     "POLICY_NOT_VALID",
+     "SESSION_ONLY"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -57687,13 +57943,13 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
     "foreign_id_404": true,
@@ -57709,9 +57965,16 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    422,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
     "names_clear": null,
@@ -57720,7 +57983,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -57746,7 +58009,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1709,
+   "line": 1716,
    "hash": "4542ca9a59f3af0b",
    "does": "",
    "errors": {
@@ -57839,7 +58102,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1739,
+   "line": 1746,
    "hash": "9c17b0e78a2b8f1c",
    "does": "",
    "errors": {
@@ -58020,12 +58283,18 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 157,
-   "hash": "14fcb960e1b5cc72",
+   "line": 168,
+   "hash": "c9f031a055c5df55",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     401,
+     404,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [
@@ -58042,11 +58311,11 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": true,
+    "codes_registered": false,
     "error_tests": false,
     "status_codes": false,
     "strict_input": false,
@@ -58064,7 +58333,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    404,
+    500,
+    503
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -58101,7 +58376,7 @@
    "owner_area": "testing",
    "owner_agent": "cb-qa",
    "file": "routes/testing.js",
-   "line": 1109,
+   "line": 1136,
    "hash": "3f9fb8b5cb7e82ea",
    "does": "",
    "errors": {

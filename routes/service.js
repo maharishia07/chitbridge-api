@@ -1,8 +1,8 @@
 'use strict';
-// owns: the service clock routes of a chit (start, respond, resolve, pause, end, answer) and their plain answers when an id or a time is not valid.
-// called by: server.js (mounted at /api/service) · the web service panel.
-// FLOW  auth → router.param uuid guard → mine(entity, chit) → withEntity → chit_sla / pause functions → res | problem
-// INIT  express → middleware/auth · lib/sla · lib/problem · db
+// OWNS      the seven service clock routes of a chit (read, start, respond, resolve, pause, end, answer) and their plain answers when an id, a time or a text value is not valid.
+// CALLED BY server.js (app.use('/api/service')) · the web service panel (cap-service.js) · tools/api-register.cjs (router.openapi) · tests/api-problem-service.test.cjs · tests/rail-158-service-errors.test.cjs · tests/rail-161-service-catches.test.cjs
+// FLOW      router.param id guard (404, before sign-in) → auth → schemaValidate (lib/service-contract.js) → handler: mine(entity, chit) → withEntity → chit_sla / pause functions → res | failed() (503 not migrated · 400 a value no column can hold · 500)
+// INIT      express → middleware/auth · lib/sla · lib/problem · lib/service-contract · db
 // CARD 03-disputes-service-and-register/service-request-sla-pause
 /**
  * routes/service.js — a chit AS A SERVICE REQUEST. The clock, and the pause that gets argued about.
@@ -25,11 +25,22 @@ const { validate } = require('../middleware/validate'); // ⚠️ a NAMED export
 const { withEntity, onEntity } = require('../db');
 const sla = require('../lib/sla');
 const { problem, fromError } = require('../lib/problem');
+const { contract } = require('../lib/service-contract'); // the operations of the seven routes (each reads the chit id in the address)
 const { UUID_RE } = require('../lib/trace');
 
 const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.code === '42883');
+/* K-1: Postgres refuses a NUL byte in text (22021; 22P05 inside a jsonb policy) and a time it cannot read (22007, 22008). That is the caller's value, not our fault: a 400 naming nothing of the database. */
+const BAD_TEXT = ['22021', '22P05'];
+const BAD_TIME = ['22007', '22008'];
 const gone = (res) => res.status(503).json({ error: 'Not migrated', message: 'The service clock needs b147 on this environment.' });
 const ctx = (req) => auth.entityOf(req);
+/** what every catch answers: the migration not run (503), a value no column can hold (400), else the fault in no words of its cause (500). timeField names the time this route reads. */
+function failed(req, res, e, timeField) {
+  if (notMigrated(e)) return gone(res);
+  if (BAD_TEXT.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'A value holds a character we cannot keep.', legacy: { error: 'Cannot save this text. Type it again.' } });
+  if (timeField && BAD_TIME.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'That time is not a time we can read.', field: timeField, legacy: { error: 'Cannot read this time. Pick it again.' } });
+  return fromError(req, res, e, { error: 'Failed' });
+}
 
 /* RAIL-158 — an id in the address that is not a uuid names nothing this shop holds: answered 404 here, before the database
    puts its own words ("invalid input syntax for type uuid") into the 500. One guard for every route of this file. */
@@ -37,8 +48,9 @@ const noSuch = (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : prob
 router.param('chit_id', noSuch);
 router.param('pause_id', noSuch);
 
-/** A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority. */
 /**
+ * A chit I actually hold. Same gate the amend route uses — an id in a URL is not authority.
+ *
  * ⚠️ TAKES AN OPTIONAL CLIENT — `onEntity(id, db, fn)` runs on a transaction the caller already owns, or opens
  * its own when passed nothing (db/index.js). Every one of the eight existing callers passes nothing and is
  * untouched; the one that has a transaction in hand now shares it instead of opening a second.
@@ -58,7 +70,7 @@ async function mine(entity_id, chit_id, db) {
  * number when the parties happen to agree would have no place to put the second when they stop agreeing, and the
  * disagreement is the entire point of the feature.
  */
-router.get('/:chit_id', auth, async (req, res) => {
+router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
@@ -142,8 +154,7 @@ router.get('/:chit_id', auth, async (req, res) => {
       urgencies: sla.URGENCY
     });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e);
   }
 });
 
@@ -157,6 +168,7 @@ router.get('/:chit_id', auth, async (req, res) => {
 router.put(
   '/:chit_id',
   auth,
+  ...contract.checked('PUT /:chit_id'),
   [body('impact').optional().isString(), body('urgency').optional().isString(), body('priority').optional().isString()],
   validate,
   async (req, res) => {
@@ -193,14 +205,13 @@ router.put(
       );
       res.json({ message: 'Service clock updated', record: r.rows[0] });
     } catch (e) {
-      if (notMigrated(e)) return gone(res);
-      fromError(req, res, e, { error: 'Failed' });
+      failed(req, res, e);
     }
   }
 );
 
 /** POST /:chit_id/respond — someone picked it up. Idempotent: the FIRST response is the one that counts. */
-router.post('/:chit_id/respond', auth, async (req, res) => {
+router.post('/:chit_id/respond', auth, ...contract.checked('POST /:chit_id/respond'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
@@ -216,13 +227,12 @@ router.post('/:chit_id/respond', auth, async (req, res) => {
     if (!r.rows.length) return res.status(404).json({ error: 'Not tracked', message: 'Start the service clock first.' });
     res.json({ message: 'Response recorded', responded_at: r.rows[0].responded_at });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e);
   }
 });
 
 /** POST /:chit_id/resolve — WHAT was done. Closure (did they accept it) is a separate act, deliberately. */
-router.post('/:chit_id/resolve', auth, [body('resolution_code').isString()], validate, async (req, res) => {
+router.post('/:chit_id/resolve', auth, ...contract.checked('POST /:chit_id/resolve'), [body('resolution_code').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
@@ -240,8 +250,7 @@ router.post('/:chit_id/resolve', auth, [body('resolution_code').isString()], val
     if (!r.rows.length) return res.status(404).json({ error: 'Not tracked', message: 'Start the service clock first.' });
     res.json({ message: 'Resolution recorded', ...r.rows[0] });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e);
   }
 });
 
@@ -252,7 +261,7 @@ router.post('/:chit_id/resolve', auth, [body('resolution_code').isString()], val
  * chit_line_deliver is. A pause only I can see is not a disputable fact — it is my private opinion about time,
  * which is what every other service desk already has.
  */
-router.post('/:chit_id/pause', auth, [body('reason').isString()], validate, async (req, res) => {
+router.post('/:chit_id/pause', auth, ...contract.checked('POST /:chit_id/pause'), [body('reason').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
@@ -305,19 +314,18 @@ router.post('/:chit_id/pause', auth, [body('reason').isString()], validate, asyn
       return res.status(409).json({ error: 'Already paused', message: 'This request is already paused by you — end that pause before starting another.' });
     res.json({ message: 'Clock paused', pause_id, copies: out.copies });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e, 'from');
   }
 });
 
 /** POST /:chit_id/pause/:pause_id/end — restart the clock. */
-router.post('/:chit_id/pause/:pause_id/end', auth, async (req, res) => {
+router.post('/:chit_id/pause/:pause_id/end', auth, ...contract.checked('POST /:chit_id/pause/:pause_id/end'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
     const to = req.body.to || null;
     if (to !== null && (typeof to !== 'string' || Number.isNaN(Date.parse(to))))
-      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Bad time' } });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Cannot read this time. Pick it again.' } });
     const n = await withEntity(entity_id, (db) =>
       db.query(`SELECT chit_sla_pause_end($1,$2,$3) AS copies`, [req.params.chit_id, req.params.pause_id, to])
     );
@@ -326,8 +334,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, async (req, res) => {
     if (!Number(n.rows[0].copies)) return res.status(409).json({ error: 'Not open', message: 'That pause is already ended — its end time cannot be moved.' });
     res.json({ message: 'Clock restarted', copies: n.rows[0].copies });
   } catch (e) {
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e, 'to');
   }
 });
 
@@ -336,7 +343,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, async (req, res) => {
  *
  * This is the disagreement, made into a fact. Everything else in this file is bookkeeping; this is the feature.
  */
-router.post('/:chit_id/pause/:pause_id/answer', auth, [body('accepted').isBoolean()], validate, async (req, res) => {
+router.post('/:chit_id/pause/:pause_id/answer', auth, ...contract.checked('POST /:chit_id/pause/:pause_id/answer'), [body('accepted').isBoolean()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
@@ -355,9 +362,10 @@ router.post('/:chit_id/pause/:pause_id/answer', auth, [body('accepted').isBoolea
     if (/cannot answer its own/.test(e.message || '')) {
       return res.status(409).json({ error: 'Your own claim', message: 'You raised this pause — the other party is the one who accepts or rejects it.' });
     }
-    if (notMigrated(e)) return gone(res);
-    fromError(req, res, e, { error: 'Failed' });
+    failed(req, res, e);
   }
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the seven routes (lib/service-contract.js)
 
 module.exports = router;

@@ -75,10 +75,36 @@ const SECRET_SQL = 'relation "folder" does not exist -- SELECT secret FROM vault
 const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false };
 const world = Object.assign({}, FRESH);
 
+/** an error the way pg raises one: a message and a SQLSTATE code */
+const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NUL = '\u0000';
+const holdsNul = (value) => (typeof value === 'string' ? value.includes(NUL) : Array.isArray(value) && value.some(holdsNul));
+const isRealDay = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
+/**
+ * K-1 (B2): the stand-in keeps the rules of Postgres a junk value breaks, so a request that lets one reach the database is the 500 it was: a NUL byte in text is refused 22021 (22P05 inside a jsonb value),
+ * a value cast to uuid ($n::uuid, $n::uuid[]) that is not one is 22P02, and a $n::date that is no calendar day is 22008.
+ */
+function pgRules(sql, params) {
+  (params || []).forEach((one) => {
+    if (holdsNul(one)) throw sqlError('22021');
+    if (typeof one === 'string' && /^[[{]/.test(one) && one.includes('\\u0000')) throw sqlError('22P05');
+  });
+  [...String(sql).matchAll(/\$(\d+)::uuid(\[\])?/g)].forEach((cast) => {
+    const given = (params || [])[Number(cast[1]) - 1];
+    if ((cast[2] ? given || [] : [given]).some((one) => one !== null && one !== undefined && !IS_UUID.test(String(one)))) throw sqlError('22P02');
+  });
+  [...String(sql).matchAll(/\$(\d+)::date/g)].forEach((cast) => {
+    const given = (params || [])[Number(cast[1]) - 1];
+    if (given !== null && given !== undefined && !isRealDay(String(given))) throw sqlError('22008');
+  });
+}
+
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
-function rowsFor(sql) {
+function rowsFor(sql, params) {
+  pgRules(sql, params);
   if (world.sqlRows) {
-    const given = world.sqlRows(String(sql));
+    const given = world.sqlRows(String(sql), params);
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
@@ -88,9 +114,6 @@ const mock = (relative, exported) => {
   const file = require.resolve(path.join(HERE, relative));
   require.cache[file] = { id: file, filename: file, loaded: true, exports: exported };
 };
-/** an error the way pg raises one: a message and a SQLSTATE code */
-const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
-
 function installStubs() {
   const realAuth = require(path.join(HERE, 'middleware', 'auth'));
   const stubAuth = (req, res, next) => {
@@ -100,8 +123,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
-  const client = { query: async (sql) => rowsFor(sql) };
-  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rowsFor(sql, params) };
+  const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
@@ -263,6 +286,40 @@ const SWEEP_2 = [
   /* RAIL-146g: a co-assist without can_see_costs reads the sum of the sales only, with cost_hidden: the closed groupsum shape holds the blind answer too */
   X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
 ];
+/**
+ * K-1 (B2): a value no column can hold, and an id that is shaped like one but is none. A NUL byte in a folder's or a rule's text is a 400 in plain words; a 36-character run of dashes in a query or
+ * address answers as any other junk word does (the route falls back, or refuses in its own words), never a 500. The stand-in db is pgRules: a request that reaches it with such a value is the 500 these were red on.
+ * B2: a query value given twice is the schema's own refusal (422) on the reads that took no other.
+ */
+const DASHES = '-'.repeat(36);
+const NL = '%00';
+const JUNK = [
+  N('create-name-with-a-nul-byte', 'POST ' + F, 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('create-view-name-with-a-nul-byte', 'POST ' + F, 400, { body: { name: 'a' + NUL + 'b', kind: 'view' } }),
+  N('rename-with-a-nul-byte', 'PATCH ' + F + '/:id', 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('rule-name-with-a-nul-byte', 'POST ' + F + '/:id/rules', 400, { body: { name: 'a' + NUL + 'b', when: { doc: 'invoice' } }, setup: { sqlRows: OWN_FOLDER } }),
+  N('rule-condition-with-a-nul-byte', 'POST ' + F + '/:id/rules', 400, { body: { when: { from: 'a' + NUL + 'b' } }, setup: { sqlRows: OWN_FOLDER } }),
+  N('rule-change-name-with-a-nul-byte', 'PATCH ' + F + '/rules/:rule_id', 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('rule-change-condition-with-a-nul-byte', 'PATCH ' + F + '/rules/:rule_id', 400, { body: { when: { from: 'a' + NUL + 'b' } } }),
+  N('worklist-actor-is-dashes', 'GET ' + F + '/worklist', 200, { url: F + '/worklist?actor_id=' + DASHES }),
+  N('worklist-day-that-is-not-a-day', 'GET ' + F + '/worklist', 400, { url: F + '/worklist?due_on=2026-02-30' }),
+  N('groupsum-folder-is-dashes', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?folder_id=' + DASHES }),
+  N('message-is-dashes', 'POST ' + F + '/messages/:message_id/mark', 400, { url: F + '/messages/' + DASHES + '/mark', body: { read: true } }),
+  N('messages-actor-reads', 'GET ' + F + '/messages', 200, { url: F + '/messages?all=1', setup: { who: STAFF } }),
+  N('list-state-with-a-nul-byte', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?state=a' + NL + 'b', setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [FILED_CHIT])) } }),
+  N('list-page-twice', 'GET ' + F, 422, { url: F + '?page=1&page=2' }),
+  N('rules-page-twice', 'GET ' + F + '/rules', 422, { url: F + '/rules?page=1&page=2' }),
+  N('groupsum-scope-twice', 'GET ' + F + '/groupsum', 422, { url: F + '/groupsum?scope=task&scope=order' }),
+  N('messages-count-twice', 'GET ' + F + '/messages', 422, { url: F + '/messages?count=1&count=0' }),
+  N('reconcile-scope-twice', 'GET ' + F + '/reconcile', 422, { url: F + '/reconcile?scope=task&scope=order' })
+];
+/** S41 (K-1, B2): each junk value and the word that stands for "no such value" on its route: the same status, the same body but for the request id */
+const JUNK_PAIRS = [
+  ['worklist-actor', 'GET ' + F + '/worklist', F + '/worklist?actor_id=' + DASHES, F + '/worklist?actor_id=abc'],
+  ['groupsum-folder', 'GET ' + F + '/groupsum', F + '/groupsum?folder_id=' + DASHES, F + '/groupsum?folder_id=abc'],
+  ['message-id', 'POST ' + F + '/messages/:message_id/mark', F + '/messages/' + DASHES + '/mark', F + '/messages/abc/mark', { read: true }]
+];
+
 const EXTRAS = [
   /* the express-validator chains: a validation refusal keeps its { error, details } body */
   X('name-missing', 'POST ' + F, 400, { body: {} }),
@@ -370,7 +427,8 @@ const EXTRAS = [
   X('priced-with-structure', 'POST /api/pricing/price', 200, { body: { lines: [{ qty: 2, listPrice: 10, pricing: { kind: 'fixed', amount: 8 } }] } }),
   X('shelf-fails', 'POST /api/pricing/price', 500, { setup: { db: 'fail' }, body: { lines: [{ code: 'tea', qty: 1 }] } }),
   X('kinds-answer-fails', 'GET /api/pricing/kinds', 500, { setup: { jsonThrows: true } }),
-  X('kinds', 'GET /api/pricing/kinds', 200, {})
+  X('kinds', 'GET /api/pricing/kinds', 200, {}),
+  ...JUNK
 ];
 
 function send(port, method, urlPath, body) {
@@ -708,6 +766,18 @@ async function checkStrictInput(port) {
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
+/** S41: a 36-character run of dashes answers exactly as a plain junk word does on its route: the same status, the same body but for the request id and the clock */
+async function checkJunkPairs(port) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (answer) => JSON.stringify(Object.assign({}, answer.json, { request_id: null, generated_at: null }));
+  for (const [id, route, junkUrl, plainUrl, body] of JUNK_PAIRS) {
+    const method = route.split(' ')[0];
+    const junk = await runScenario(port, { route, url: junkUrl, body, setup: {} });
+    const plain = await runScenario(port, { route, url: plainUrl, body, setup: {} });
+    check(id + ': the junk value answers exactly as the plain one (' + plain.status + ', same body)', junk.status < 500 && junk.status === plain.status && bodyOf(junk) === bodyOf(plain), { method, junk: junk.status, plain: plain.status });
+  }
+}
+
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
@@ -736,6 +806,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const tested = await checkRoutes(server.address().port, scenariosOf(routes), recording);
   if (!flagValue('--capture') && !flagValue('--compare')) await checkStrictInput(server.address().port);
+  if (!flagValue('--capture') && !flagValue('--compare')) await checkJunkPairs(server.address().port);
   server.close();
   if (flagValue('--compare')) process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {

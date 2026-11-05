@@ -37,6 +37,7 @@ const run = async (sql, params) => {
   return { rows: [], rowCount: 0 };
 };
 const stubDb = { query: run, connect: async () => ({ query: run, release() {} }) };
+process.env.PLATFORM_ROOT_ENTITY = ME; /* the signed-in stand-in is the deployment's root, so the platform doors of routes/entities.js let it through to the id */
 const stub = (rel, exports) => {
   const file = require.resolve(path.join(ROOT, rel));
   require.cache[file] = { id: file, filename: file, loaded: true, exports };
@@ -50,6 +51,17 @@ const stubAuth = (req, res, next) => {
 stubAuth.entityOf = (req) => req.identity.identity_id;
 stubAuth.requireScope = () => (req, res, next) => next();
 stub(path.join('middleware', 'auth'), stubAuth);
+stub(path.join('lib', 'storage-object'), { available: async () => true, get: async () => Buffer.from(''), put: async () => undefined, del: async () => undefined, objectKey: () => 'k', NOT_OWNER: 'NOT_OWNER' }); // products: the picture store is on, so the route reaches its id
+const realSchema = require(path.join(ROOT, 'lib', 'schema'));
+realSchema.hasTable = async () => true; // products: parked changes are on (b203 applied), so the schedule routes reach their ids
+
+/** [mount, router file, method, url with a junk id, url with a uuid that names nothing, body]: a junk id answers EXACTLY as the unknown uuid does (S41) where that answer is not a 404 (a list that is empty, a cancel that cancelled nothing); the database is never asked */
+const SAME_ROUTES = [
+  // ── same: routes/products.js
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/abc/schedule', '/api/products/' + GOOD + '/schedule', {}],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/' + GOOD + '/schedule/abc', '/api/products/' + GOOD + '/schedule/' + GOOD, {}],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc/schedule/abc', '/api/products/' + GOOD + '/schedule/' + GOOD, {}]
+];
 
 /** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error, its 404 code (default NOT_FOUND)] — one row per route closed by uuidParam; the code is the one an unknown uuid answers on that route (S41) */
 const ROUTES = [
@@ -79,6 +91,30 @@ const ROUTES = [
   ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/approve', {}, 'Approve failed'],
   ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/revoke', {}, 'Revoke failed'],
   // ── routes/chits.js
+  /* the other chits routes (a 403 or 400 for an unknown id; the register ones) are proved in tests/k1-chits-guard.test.cjs, which compares each with an unknown uuid */
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc/payment', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc/purge', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'GET', '/api/chits/abc', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'GET', '/api/chits/abc/use', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/amend', { edits: [{ line_id: '44444444-4444-4444-8444-444444444444', quantity: 1 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/archive', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/assign-lines', { edits: [{ line_id: '44444444-4444-4444-8444-444444444444', assignee_id: '44444444-4444-4444-8444-444444444444' }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/books-request', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/costs', { rows: [{ kind: 'fuel', amount: 5 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/deliver-lines', { rows: [{ line_id: '44444444-4444-4444-8444-444444444444', quantity: 1 }] }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/raida', { kind: 'risk', body: 'a risk' }, 'Failed to record it'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/reprice', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/restore', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/unarchive', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'POST', '/api/chits/abc/unread', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/disputes/abc/resolve', { resolution_note: 'done' }, 'Dispute not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/priority', { priority: 'high' }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/priority-flag', { priority: true }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/star', {}, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/status', { status: 'accepted' }, 'Not found'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/use', {}, 'Not saved'],
+  ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/void', { reason: 'wrong chit' }, 'Not found'],
   // ── routes/combo-templates.js
   ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
   ['/api/combo-templates', 'routes/combo-templates.js', 'PATCH', '/api/combo-templates/abc', { name: 'x' }, 'Not found'],
@@ -88,6 +124,9 @@ const ROUTES = [
   // ── routes/definitions.js
   ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
   ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
+  // ── routes/entities.js
+  ['/api/entities', 'routes/entities.js', 'PATCH', '/api/entities/abc/erase', {}, 'Not found'],
+  ['/api/entities', 'routes/entities.js', 'PUT', '/api/entities/populations/%00/desk', {}, 'No such population'],
   // ── routes/forms.js
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
@@ -96,6 +135,15 @@ const ROUTES = [
   ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/abc/approve', {}, 'Not found'],
   ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/ask/%00/stock', {}, 'Not found'],
   // ── routes/products.js
+  ['/api/products', 'routes/products.js', 'PATCH', '/api/products/abc', { item_data: { name: 'Tea' } }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'POST', '/api/products/abc/schedule', { item_data: { name: 'Tea' }, effective_at: '2026-12-01T00:00:00Z' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'PUT', '/api/products/abc/availability', { qty: 5 }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'PUT', '/api/products/abc/status', { status: 'unavailable' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'POST', '/api/products/abc/media', { url: 'https://youtu.be/dQw4w9WgXcQ' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc/media/m1', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/abc/versions', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/media/abc/m1', {}],
   // ── routes/relationships.js
   ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],
   ['/api/relationships', 'routes/relationships.js', 'POST', '/api/relationships/customers/abc/groups', { groups: ['dealers'] }, 'Not found'],
@@ -203,6 +251,18 @@ const ask = (server, method, url, body, headers) =>
     check(shape(junk) === shape(unknown), label + ' → answered exactly as an unknown handle (' + shape(junk) + ' vs ' + shape(unknown) + ')');
   }
   server.close();
+  /* a junk id answers EXACTLY as an unknown uuid (SAME_ROUTES), on its own server below the shared loops so sibling PRs never touch these lines */
+  const sameServer = app.listen(0);
+  const same = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.cancelled, a.body.enabled, a.body.pending, a.type]);
+  for (const [, , method, url, goodUrl, body] of SAME_ROUTES) {
+    const label = method + ' ' + url.replace('/api/', '');
+    queries.length = 0;
+    const junk = await ask(sameServer, method, url, body);
+    const unknown = await ask(sameServer, method, goodUrl, body);
+    check(junk.status < 500 && !/invalid input syntax|22P02/i.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(same(junk) === same(unknown), label + ' → answered exactly as an unknown uuid (' + same(junk) + ' vs ' + same(unknown) + ')');
+  }
+  sameServer.close();
   console.log('\n' + checks + ' checks');
   console.log(failed ? failed + ' FAILED' : 'all passed');
   process.exit(failed ? 1 : 0);
