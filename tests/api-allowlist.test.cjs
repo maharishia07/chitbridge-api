@@ -130,5 +130,7 @@ t('deriveShape: a passed-through value whose answers held no key stays open inst
   return shape.open.length === 1 && shape.schema.additionalProperties === undefined;
 })());
 
+t('prune: a key named like a prototype member (constructor, toString) is not on the list and is dropped (SEC-121)', (() => { const out = allow.prune(closed({ a: {} }), JSON.parse('{"a":1,"constructor":2,"toString":3,"__proto__":4}')).value; return Object.keys(out).join() === 'a'; })());
+
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
