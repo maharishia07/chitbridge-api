@@ -3054,6 +3054,26 @@
      "fixture": {
       "error": "Not found"
      }
+    },
+    {
+     "scenario": "chit-id-not-a-uuid",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "chit-id-holds-nul",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
     }
    ]
   },
