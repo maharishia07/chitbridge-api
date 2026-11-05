@@ -1314,6 +1314,14 @@
     400
    ]
   },
+  "GET /api/service/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/supplies": {
    "cases": 2,
    "failed": 0,
@@ -3562,6 +3570,46 @@
     422
    ]
   },
+  "POST /api/service/:chit_id/pause": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/signin/ask": {
    "cases": 2,
    "failed": 0,
@@ -4242,68 +4290,20 @@
     400
    ]
   },
-  "PUT /api/testing/cmdb/:ci": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "GET /api/service/:chit_id": {
-   "cases": 3,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/service/:chit_id/pause": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/service/:chit_id/pause/:pause_id/answer": {
-   "cases": 5,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/service/:chit_id/pause/:pause_id/end": {
-   "cases": 5,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/service/:chit_id/resolve": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
-  "POST /api/service/:chit_id/respond": {
-   "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "PUT /api/service/:chit_id": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   }
  }
