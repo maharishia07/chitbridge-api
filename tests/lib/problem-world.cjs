@@ -46,6 +46,18 @@ const safeParse = (text) => {
 };
 /** an error the way pg raises one: a message and a SQLSTATE code */
 const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+/**
+ * K-1 (B2): the one rule of Postgres every stand-in db keeps: a NUL byte is not text a column can hold. A bound string with one is refused 22021, and a jsonb value
+ * built from one (JSON.stringify writes it as the six characters backslash-u-0-0-0-0) is refused 22P05. A request that lets one reach the database is the 500 it was.
+ */
+const holdsNul = (value) => (typeof value === 'string' ? value.includes('\u0000') : Array.isArray(value) && value.some(holdsNul));
+const holdsNulEscape = (value) => typeof value === 'string' && /^[[{]/.test(value) && value.includes('\\u0000');
+function pgRefusesNul(params) {
+  (params || []).forEach((one) => {
+    if (holdsNul(one)) throw sqlError('22021');
+    if (holdsNulEscape(one)) throw sqlError('22P05');
+  });
+}
 /** a stand-in db that raises one SQLSTATE for statements matching a pattern */
 const raising = (pattern, code) => (sql) => {
   if (pattern.test(sql)) throw sqlError(code);
@@ -72,6 +84,7 @@ function harness(options) {
 
   /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
   function rowsFor(sql, params) {
+    pgRefusesNul(params);
     if (world.sqlRows) {
       const given = world.sqlRows(String(sql), params);
       if (given) return given;
