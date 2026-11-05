@@ -1270,7 +1270,7 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
           name: (req.identity && req.identity.display_name) || null
         });
       } catch (e2) {
-        logger.error('books confirm: the R-1400 money steps failed after the posting committed — the books are right, the history step is missing', { id: req.id, payment_id: id, err: e2.message });
+        console.error('bill money steps:', e2.message);
       }
     }
     res.json(await forPayer(req, e, 'record', direction, { ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice })); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
@@ -1474,7 +1474,7 @@ async function confirmSteps(req, e, id, pairs) {
     const pay = await withEntity(e, (h) => S.payment(h, e, id));
     await require('../lib/bill-privacy').moneySteps(e, pay, pairs, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
   } catch (e2) {
-    console.error('bill money steps:', e2.message);
+    logger.error('books confirm: the R-1400 money steps failed after the posting committed — the books are right, the history step is missing', { id: req.id, payment_id: id, err: e2.message });
   }
 }
 /**

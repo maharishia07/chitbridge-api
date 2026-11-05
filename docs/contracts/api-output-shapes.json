@@ -21610,6 +21610,9 @@
           "allocated_minor": {
             "type": "number"
           },
+          "duplicate": {
+            "type": "boolean"
+          },
           "off": {
             "type": "boolean"
           }
