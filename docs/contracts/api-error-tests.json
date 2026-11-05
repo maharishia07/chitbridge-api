@@ -1056,6 +1056,12 @@
   500,
   503
  ],
+ "GET /api/network-offers": [
+  401,
+  403,
+  500,
+  503
+ ],
  "GET /api/network/entities/:id/connections": [
   401,
   403,
@@ -2792,6 +2798,45 @@
   413,
   500
  ],
+ "POST /api/network-offers/:id/choice": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/network-offers/:id/release": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-offers/:id/withdraw": [
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
+ "POST /api/network-offers/catalogue/cancel": [
+  401,
+  403,
+  409,
+  500
+ ],
+ "POST /api/network-offers/catalogue/price": [
+  400,
+  401,
+  403,
+  500
+ ],
+ "POST /api/network-offers/catalogue/publish": [
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/network/connections": [
   400,
   401,
@@ -3584,6 +3629,12 @@
   400,
   401,
   413,
+  500
+ ],
+ "PUT /api/network-offers/policy": [
+  400,
+  401,
+  403,
   500
  ],
  "PUT /api/products/:id/availability": [
