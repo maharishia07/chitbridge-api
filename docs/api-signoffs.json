@@ -249,7 +249,7 @@
   "POST /api/books/contra": {"hash":"b7de4792f46dba1f","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#349","lifecycle":"stable"},
   "POST /api/books/depreciation/run": {"hash":"e6107dd2f522b2cd","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#349","lifecycle":"stable"},
   "POST /api/books/enable": {"hash":"0184f8490b3c9ecc","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-01 PR#687 stage2","lifecycle":"stable"},
-  "POST /api/books/entries": {"hash":"9de7666626d30c72","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-01 PR#687 stage2","lifecycle":"stable"},
+  "POST /api/books/entries": {"hash":"7f802d11b091f732","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api-reviewer 2026-11-05 PR#731 stage2","lifecycle":"stable"},
   "POST /api/books/entries/:id/reverse": {"hash":"35fbf3eb40416780","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#349","lifecycle":"stable"},
   "POST /api/books/events": {"hash":"494300b4ee1d7346","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#349","lifecycle":"stable"},
   "POST /api/books/fx-rates": {"hash":"e3bbffd0a43845a4","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-01 PR#687 stage2","lifecycle":"stable"},
