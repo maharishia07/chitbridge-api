@@ -1271,40 +1271,54 @@
   "GET /api/marketing/came-back": {
    "output_allowlist": true
   },
+  "POST /api/repeat": {
+   "strict_input": true
+  },
   "POST /api/repeat/sweep": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/accept": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/counter": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/decline": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/skip": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/agree": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/refuse": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/pause": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/resume": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/end": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/repeat/:id/run": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/csp-report": {
