@@ -38,6 +38,17 @@ const notify = async (subject, html) => {
   }
 };
 
+/** a uuid as Postgres reads one (hex digits, a hyphen after any four, 36 characters): the same lead the form was always attached to */
+const PG_UUID = /^(?:[0-9a-f]{4}-?){7}[0-9a-f]{4}$/i;
+const INT4_MAX = 2147483647;
+/** the lead id the gate gave, or null for anything that is not one (a short text, a list, 36 characters that are no uuid: it was a 500) */
+const leadIdOf = (given) => (typeof given === 'string' && given.length === 36 && PG_UUID.test(given) ? given : null);
+/** the rating as the integer column holds it, or null: 'abc' is none, and so is 3.5 or 5000000000 (they were a 500, 22P02 / 22003) */
+const ratingOf = (given) => {
+  const asked = +given;
+  return Number.isSafeInteger(asked) && Math.abs(asked) <= INT4_MAX ? asked : null;
+};
+
 const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
 
 // GET /api/simulator/content — everything the page renders from.
@@ -96,9 +107,9 @@ router.post('/feedback', ...contract.checked('POST /feedback'), async (req, res)
     const message = String(req.body.message || '').trim();
     if (!message) return problem(req, res, { status: 400, ...words.messageMissing() });
     const section = String(req.body.section || '').trim() || null;
-    const rating = Number.isFinite(+req.body.rating) ? +req.body.rating : null;
+    const rating = ratingOf(req.body.rating);
     // leadId is a uuid from the gate; ignore anything that isn't one.
-    const leadId = /^[0-9a-f-]{36}$/i.test(req.body.leadId || '') ? req.body.leadId : null;
+    const leadId = leadIdOf(req.body.leadId);
     await query('INSERT INTO sim_feedback (lead_id, section, rating, message) VALUES ($1, $2, $3, $4)', [leadId, section, rating, message]);
     notify(
       `Tour feedback (${section || 'page'}${rating ? `, ${rating}★` : ''})`,
