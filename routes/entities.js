@@ -1,6 +1,7 @@
-// routes/entities.js — Entity registration, login, search.   CARD 28-platform-and-operations/entities-routes
-// OWNS the entity door: register · OTP login · search · profile · header · sides · policy · country setup · CALLED BY server.js (app.use('/api/entities')).
-// FLOW  validate → auth → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data, error }
+// routes/entities.js — the entity door: sign-up and sign-in, search, the profile, policy, preferences, routing, populations, the platform report, erasure.   CARD 28-platform-and-operations/entities-routes
+// OWNS      every route under /api/entities (25): register · verify · constitutions · search · header · sides · me · policy · prefs · exposure · profile · routing · populations · usage · mis · entitlements · erase.
+// CALLED BY server.js (app.use('/api/entities')) · the web's sign-in, Settings, Platform and shell header · tools/api-register.cjs · tests/api-problem-entities.test.cjs.
+// FLOW      path guards (uuidParam id · textParam code) → auth → platform door (root | platform) → schemaValidate (lib/entities-contract.js) → withEntity (the caller's own entity) → the lib that owns the data (profile · policy · entity-header · sides) → { ok, data } | problem()
 const versionref = require('../lib/versionref');
 const express = require('express');
 const router = express.Router();
@@ -12,11 +13,18 @@ const { query, withEntity } = require('../db');
 const log = require('../lib/logger');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam, textParam } = require('../lib/problem');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
+const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
+
+/* K-1 (API-10): an address that names no business or population is answered as one that is unknown, before the database turns it into a 500 */
+router.param('id', uuidParam(contract.words.identityUnknown));
+const populationCode = (req) => String(req.params.code || '').trim().toLowerCase(); /* the code as a population is stored: trimmed, lower case */
+router.param('code', textParam((req) => ({ status: 404, ...contract.words.noSuchPopulation(populationCode(req)) })));
 
 /** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 const checked = (route) => {
@@ -29,7 +37,7 @@ function platformGate(req, res, next) {
   if (require('../lib/platformroot').refuseUnlessPlatform(req, res)) next();
 }
 const { sendOtpEmail } = require('../lib/notify'); // shared OTP email sender (F2 — extracted from here)
-const { resolveEntityGovernance, currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
+const { currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
 
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
@@ -67,6 +75,13 @@ const identityAuth = require('../lib/identity-auth');
  */
 const signin = require('./signin');
 
+/** the User ID asked for, judged, and the one to suggest instead. K-1: a NUL byte in the id or the name is no User ID: answered as an empty one is (no suggestion), before any lookup or insert. */
+function userIdVerdict(wanted, display_name) {
+  if (signin.holdsNul(display_name) || signin.holdsNul(wanted)) return { verdict: handleLib.checkRoot(''), suggestion: null };
+  const suggestion = handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null;
+  return { verdict: handleLib.checkRoot(wanted), suggestion };
+}
+
 /**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
@@ -83,9 +98,8 @@ async function registerNew(req, res) {
     const bridge_id = generateBridgeId();
     const identity_id = uuidv4();
     const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
-    const verdict = handleLib.checkRoot(wanted);
+    const { verdict, suggestion } = userIdVerdict(wanted, display_name);
     if (!verdict.ok) {
-      const suggestion = handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null;
       return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
     }
     /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */
@@ -137,6 +151,196 @@ async function registerNew(req, res) {
   }
 }
 
+/**
+ * PATCH /entities/me/locale — store the PERSON's localisation choice (b165).
+ *
+ * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
+ * status. This edits how one human reads the screen. Folding a personal preference into the business profile
+ * would mean a co-assist could not change their own language without write access to their employer's record,
+ * and that an owner changing the firm's address would be touching the same object as their clerk's numerals.
+ *
+ * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
+ * caller can write is their own. There is no id parameter to get wrong.
+ *
+ * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. Every value here ends up inside an Intl constructor or a
+ * BCP 47 -u- extension, and BCP 47 admits thousands of valid tags — a whitelist of the nine the screen currently
+ * offers would reject the tenth the day someone needs it, and would drift out of step with CLDR every release.
+ * So the shape is checked syntactically and the MEANING is checked by asking Intl to build the tag. If ICU can
+ * format with it, it is a real subtag; if it throws, it is not. Adopting the standard's own validator beats
+ * maintaining our opinion of what the standard contains.
+ */
+/**
+ * PATCH /entities/me/prefs/:kind — store one of the PERSON's own preference sets (b165 locale · b166 ui).
+ *
+ * ⚠️ ONE HANDLER, TWO COLUMNS — generalised rather than copied. Two near-identical prefs endpoints would drift
+ * the first time one of them gained validation, an audit line or a rate limit, and the one nobody remembered
+ * would be the one carrying somebody's accessibility setting.
+ *
+ * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
+ * status. This edits how one human reads the screen. Folding a personal preference into the business profile
+ * would mean a co-assist could not change their own language or contrast without write access to their
+ * employer's record, and that an owner editing the firm's address would be touching the same object as their
+ * clerk's numerals.
+ *
+ * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
+ * caller can write is their own. There is no id parameter to get wrong.
+ *
+ * ⚠️ AND THE COLUMN NAME IS NEVER TAKEN FROM THE URL. :kind selects an entry in PREF_SETS below; the column
+ * string comes from that entry and never from req.params. An unknown kind is a 404, not a query. Interpolating
+ * a caller-supplied identifier into SQL is exactly how a whitelist stops being a whitelist.
+ */
+const PREF_SETS = {
+  /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
+     locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
+  locale: {
+    column: 'locale_prefs',
+    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw', 'tz', 'workdays'],
+    /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
+       priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
+       commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
+       or an hour cycle, and a validator that accepts more than it needs to stops being a validator. */
+    /* CU3: `tz` is an IANA zone (`Asia/Kolkata`, `America/Argentina/Buenos_Aires`) and `workdays` an ISO weekday list
+       (`1,2,3,4,5,6`, 1 = Monday) — CBLocale sent both and the old key list dropped them silently. The generic pattern
+       admits neither `/` nor `,`, and one rejected key fails the whole save, so each carries its own. */
+    patterns: {
+      langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/,
+      tz: /^[A-Za-z][A-Za-z0-9_+-]{0,30}(\/[A-Za-z0-9_+-]{1,30}){0,2}$/,
+      workdays: /^[1-7](,[1-7]){0,6}$/
+    },
+    /**
+     * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
+     * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
+     * of step with CLDR every release. Syntax is checked generically above; MEANING is checked by asking Intl to
+     * build the tag. If it can format with it, it is a real subtag. Adopting the standard's own validator beats
+     * maintaining our opinion of what the standard contains.
+     */
+    check(prefs) {
+      try {
+        const list = ['nu', 'hc', 'ca', 'fw'].filter((item) => prefs[item]).map((item) => `${item}-${prefs[item]}`);
+        const tag = (prefs.locale || prefs.lang || 'en') + (list.length ? '-u-' + list.join('-') : '');
+        new Intl.NumberFormat(tag);
+        new Intl.DateTimeFormat(tag);
+      } catch (_) {
+        return 'That combination is not a locale ICU recognises';
+      }
+      /* the zone is ICU's to judge too (RangeError for one it does not know) — never a hand-kept list */
+      if (prefs.tz) {
+        try {
+          new Intl.DateTimeFormat('en', { timeZone: prefs.tz });
+        } catch (_) {
+          return 'Unknown time zone';
+        }
+      }
+      return null;
+    }
+  },
+  /**
+   * Appearance. ⚠️ HERE A CLOSED LIST IS RIGHT, and the contrast with locale above is the point: these are OUR
+   * enumerations, not a standard's. There is no external registry of themes that could add a sixteenth without
+   * us knowing, so anything outside the list is a bug or a probe rather than a value we have not caught up with.
+   * The theme itself stays open-ended in shape (a short slug) so shipping a new one needs no migration here.
+   */
+  ui: {
+    column: 'ui_prefs',
+    keys: [
+      'theme',
+      'fs',
+      'motion',
+      'stripes',
+      'edition',
+      'font',
+      'weight',
+      'kural'
+    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
+    check(prefs) {
+      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
+      if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
+      if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
+      if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
+      if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
+      if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
+      return null;
+    }
+  }
+};
+
+/**
+ * ⭐ RFC 7386 MERGE-PATCH FOR A PREFS COLUMN — the ONE expression every ui_prefs / locale_prefs write uses (CU2).
+ * $1 = the keys to set (jsonb) · $3 = the keys to remove (text[]). A key the caller did not send is left alone; a key
+ * sent as null or '' is removed ("follow the default"). `||` alone cannot remove, and `= $1` erased what it did not name.
+ */
+const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) || $1::jsonb`;
+
+/** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
+function prefPatch(set, payload) {
+  const out = {},
+    drop = [];
+  for (const k of set.keys) {
+    if (!(k in payload)) continue; // not sent = not touched
+    const v = String(payload[k] == null ? '' : payload[k]).trim();
+    if (!v) {
+      drop.push(k);
+      continue;
+    } // empty = "follow the default": removed
+    // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
+    const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
+    if (!pat.test(v)) return { error: `${k} is not a valid value` };
+    out[k] = v;
+  }
+  return { set: out, drop };
+}
+
+/**
+ * prefSetOf(kind) → the preference set the kind names, or null.
+ * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
+ *
+ * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
+ * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
+ * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
+ * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
+ *
+ * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
+ * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
+ */
+const prefSetOf = (kind) => (Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null);
+/** the kind a preference door writes: the shipped PATCH /me/locale is always 'locale', PATCH /me/prefs/:kind takes it from the path */
+const prefKindOf = (fixedKind, req) => fixedKind || String(req.params.kind || '');
+/**
+ * prefSetRoute(fixedKind) — the handler of the two preference doors, ONE function under two names.
+ * (The two refusals it makes carry their status in their words: only one of the two doors can answer a 404.)
+ */
+const prefSetRoute = (fixedKind) =>
+  async function savePrefSet(req, res) {
+    const kind = prefKindOf(fixedKind, req);
+    const set = prefSetOf(kind);
+    if (!set || !set.column) return problem(req, res, contract.words.unknownPrefSet());
+    try {
+      const p = prefPatch(set, req.body || {});
+      if (p.error) return problem(req, res, contract.words.badPreference(p.error));
+      const prefs = p.set;
+
+      const bad = set.check(prefs);
+      if (bad) return problem(req, res, contract.words.badPreference(bad));
+
+      /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
+         other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
+      const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
+        JSON.stringify(prefs),
+        req.identity.identity_id,
+        p.drop
+      ]);
+      const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
+      res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
+    } catch (err) {
+      /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
+         localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
+         over a setting they can see took effect. Code ships before the migration, always. */
+      if (new RegExp(set.column).test(String(err && err.message))) return res.json({ ok: false, pending: true });
+      console.error('Prefs error (' + kind + '):', err.message);
+      problem(req, res, failed(err, req, 'Failed to save'));
+    }
+  };
+
 router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
 router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
@@ -148,7 +352,7 @@ router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, valida
 // STD2: `?tz=<the device's IANA zone>` (optional) → each country row carries `offer { timezone, from, source }` — the zone the server WILL store
 // and the source it WILL record if that country is accepted (country-setup.offered: offerOf + sourceOf, the rules registerNew/verify use).
 // Who may call: anyone (pre-auth, read-only, nothing per-person stored). Round trips: 1 (constitution) + the cached installation read.
-router.get('/constitutions', async (req, res) => {
+router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) => {
   const CS = require('../lib/country-setup');
   const at = await CS.atSignup();
   const spin = {
@@ -167,96 +371,37 @@ router.get('/constitutions', async (req, res) => {
   }
 });
 
-// GET /entities/search
-router.get('/search', auth, async (req, res) => {
+/**
+ * GET /entities/search?q=&kind=business|product&limit=&where=here|<installation_key>|all   (NET-39)
+ * ONE search, Here and There (lib/network-search → lib/business-search.find): a NAME finds LISTED shops only (public storefront + the operator's cap + not closed);
+ * an exact handle or bridge id still resolves (finding is not reaching: "private" shops stay reachable by a person who knows the whole handle), and a minted
+ * "~" party or an internal entity (Athi, 2026-09-14: "you should not search and find cbincroot") is never shown. where=<key>|all asks the other installations
+ * we deal with, one after another, 5 s each; a silent one is said in words in answers[] and the rest still answer.
+ * Reply { results:[{bridge_id, display_name, user_id, kind, hits, address, installation_key, domain, where}], count, answers:[{installation_key, ok, why}] }.
+ * Who may call: any signed-in business. Round trips: Here 2 (+ up to 26 for kind=product); each installation asked is one signed call.
+ */
+router.get('/search', auth, ...checked('GET /search'), async (req, res) => {
   try {
     const q = sanitise(req.query.q || '');
-    if (q.length < 2) {
-      return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
-    }
-    const result = await query(
-      /**
-       * ⚠️⚠️ THE SEARCH DID NOT MATCH user_id — the one thing it should have matched first.
-       *
-       * Athi, 2026-08-19: *"a supplier can add this entity by alpha-timers only, not with Alpha timers."* He is
-       * right about the principle, and the code was worse than he thought: typing `alpha-timers` found NOTHING.
-       * It matched display_name and bridge_id only, so the ONLY ways to find a business were its NAME — which
-       * may repeat — or a ten-character generated code nobody remembers.
-       *
-       * ⭐ user_id is now matched too, and ORDERED FIRST, so an exact handle wins over a fuzzy name match. The
-       * name stays searchable because finding is not the same act as identifying: you may look someone up by
-       * name, but what gets stored is always their bridge_id.
-       */
-      `SELECT identity_id, bridge_id, display_name, user_id, created_at
-       FROM identities
-       WHERE (LOWER(user_id) LIKE LOWER($1) OR LOWER(display_name) LIKE LOWER($1) OR LOWER(bridge_id) LIKE LOWER($1))
-       AND identity_type = 'entity' AND status = 'active'
-       AND COALESCE(sealed, false) = false
-       /**
-        * ⚠️⚠️ AND NEVER A MINTED PARTY — a supplier or customer some business created by hand, whose handle starts
-        * with a tilde (lib/handle.js). They are ordinary active entities by design, so nothing else here excludes
-        * them, and two different things would go wrong at once: they cannot be traded with (nobody can sign in to
-        * receive), and WHO SUPPLIES YOU is one of the few genuinely competitive facts a small business holds.
-        * Without this line every local supplier a shop wrote down would be discoverable — and addable — by every
-        * competitor on the platform, with nothing on any screen to suggest it.
-        */
-       AND COALESCE(user_id, '') NOT LIKE '~%'
-       AND identity_id != $2
-       /*
-        * -- AND NOT AN INTERNAL ENTITY. Athi, 2026-09-14: "you should not search and find cbincroot."
-        *
-        * This is the FIRST thing anywhere to read entity_visibility (b234). Until now the column described a
-        * policy nothing applied: cbincroot and the seven ISO/ICC standards were findable by anyone who typed
-        * their name, and addable as a supplier straight from the result.
-        *
-        * internal ONLY -- not private, not network. Those two have ZERO members and their rules are not agreed;
-        * filtering on them here would hide nothing today and enforce an unaudited decision tomorrow.
-        * lib/visibility-cap.js records what that costs: "a value nobody has audited becomes policy the instant
-        * something starts reading it."
-        *
-        * SAFE BECAUSE IT WAS AUDITED FIRST. The Platform screen shows entity_visibility per row, and the count
-        * was checked before this line was written: exactly 9 rows are internal and every one is ours --
-        * cbincroot, the standards, GOV-01-Help. Nothing a customer could reach disappears.
-        *
-        * COALESCE, because a row minted before b234 ran would hold NULL and must stay findable. Absent is not
-        * the same as hidden.
-        *
-        * NOTE: plain SQL comment markers and NO BACKTICKS -- this block lives inside a JS template literal, and
-        * a backtick here terminates the query string. It did, once.
-        */
-       AND (
-         COALESCE(entity_visibility, 'public') NOT IN ('internal', 'private')
-         /*
-          * -- PRIVATE IS NOT FINDABLE, BUT IT IS REACHABLE. Athi, 2026-09-14, on the rule for 'private':
-          * "reachable only by someone who already holds the handle."
-          *
-          * So an EXACT handle still resolves; a partial or fuzzy match never does. Type "chola" and a private
-          * shop stays hidden; type its whole user_id and you get it, because you already knew it.
-          *
-          * That distinction is the same one rows 3 and 4 of the matrix turn on: FINDABLE and REACHABLE are
-          * different questions. Collapsing them would mean a private shop could never be sent a chit by anyone
-          * who did not already trade with it -- which is most of why a shop would choose private in the first
-          * place: quiet, not cut off.
-          *
-          * $3 is the raw query, already bound for the ORDER BY below.
-          *
-          * NOTE: zero rows are entity_visibility='private' today, so this changes nothing now. That is exactly
-          * why it is safe to write now -- the rule exists before anyone can be surprised by it.
-          */
-         OR (COALESCE(entity_visibility, 'public') = 'private' AND LOWER(user_id) = LOWER($3))
-       )
-       /**
-        * An exact handle beats a fuzzy name — someone who typed the identifier knew what they wanted.
-        * ⚠️ $3, NOT $2. $2 is the CALLER'S identity_id (the "not me" filter); comparing a user_id against it
-        * would never match, and the ordering would be silently inert — a ranking that looks implemented and
-        * ranks nothing. Caught by reading the parameter list rather than the query.
-        */
-       ORDER BY (LOWER(user_id) = LOWER($3)) DESC, display_name LIMIT 10`,
-      [`%${q}%`, req.identity.identity_id, q]
-    );
-    res.json({ results: result.rows, count: result.rows.length });
+    if (q.length < 2) return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
+    const kind = req.query.kind === 'product' ? 'product' : 'business';
+    const found = await require('../lib/network-search').search({ q, kind, limit: req.query.limit }, req.identity, req.query.where);
+    /* both statuses written in full: a place we do not deal with is a 404, a question too short is the 400 (tools/api-register.cjs reads the literals) */
+    if (!found.ok && found.code === 'SEARCH_PLACE_UNKNOWN') return problem(req, res, { status: 404, code: found.code, detail: found.why });
+    if (!found.ok) return problem(req, res, { status: 400, code: found.code, detail: found.why });
+    res.json({ results: found.results, count: found.count, answers: found.answers });
   } catch (err) {
     console.error('Search error:', err.message);
+    problem(req, res, failed(err, req, 'Search failed'));
+  }
+});
+
+// GET /entities/search/places — the installations the Where picker offers: remote and ACTIVE only (a suspended one drops out), each by name and domain
+router.get('/search/places', auth, async (req, res) => {
+  try {
+    res.json({ places: await require('../lib/network-search').places() });
+  } catch (err) {
+    console.error('Search places error:', err.message);
     problem(req, res, failed(err, req, 'Search failed'));
   }
 });
@@ -317,7 +462,9 @@ router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
 router.get('/header', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/entity-header').read(entity_id, req.identity.identity_id));
+    const header = await require('../lib/entity-header').read(entity_id, req.identity.identity_id);
+    /* S34: the three keys lib/entity-header.js build() answers, named (its one return) */
+    res.json({ business: header.business, licences: header.licences, trade_ready: header.trade_ready });
   } catch (err) {
     problem(req, res, failed(err, req, 'Header read failed'));
   }
@@ -331,13 +478,15 @@ router.get('/header', auth, async (req, res) => {
 router.get('/sides', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    res.json(await require('../lib/sides').read(entity_id, req.identity.identity_id, { req }));
+    const sides = await require('../lib/sides').read(entity_id, req.identity.identity_id, { req });
+    /* S34: the three keys lib/sides.js build() answers, named (its one return) */
+    res.json({ lean: sides.lean, use: sides.use, impact: sides.impact });
   } catch (err) {
     problem(req, res, failed(err, req, 'Sides read failed'));
   }
 });
 
-router.get('/me', auth, async (req, res) => {
+router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   try {
     /* ⚠️⚠️ THE PROBE BELONGS IN THIS FUNCTION. I first put it above the /search query — a different route —
        so _tzCol was a ReferenceError here and defined where nothing used it. Same borrowed-variable class as
@@ -533,7 +682,7 @@ router.get('/me', auth, async (req, res) => {
     // Best-effort; rides INSIDE entity (unwrap() drops siblings) so the client can read it. Null if not resolvable yet.
     let governance = null;
     try {
-      governance = await resolveEntityGovernance(auth.entityOf(req));
+      governance = await require('../lib/govresolve').resolveEntityGovernance(auth.entityOf(req)); /* by the module, so a test can make it fail */
     } catch (e) {
       log.fellBack('entities GET /me: failed — carried on without it', e);
     }
@@ -654,202 +803,12 @@ router.get('/me', auth, async (req, res) => {
       });
     }
 
-    res.json({ entity: entityOut, capabilities, capabilities_debug, governance, ...(want.length ? { included } : {}) });
+    res.json({ entity: entityOut, capabilities, capabilities_debug, governance, included: want.length ? included : undefined }); /* S34: `included` named; undefined (left out of the JSON as before) when ?include= asked for nothing */
   } catch (err) {
     console.error('Profile error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get profile'));
   }
 });
-
-/**
- * PATCH /entities/me/locale — store the PERSON's localisation choice (b165).
- *
- * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
- * status. This edits how one human reads the screen. Folding a personal preference into the business profile
- * would mean a co-assist could not change their own language without write access to their employer's record,
- * and that an owner changing the firm's address would be touching the same object as their clerk's numerals.
- *
- * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
- * caller can write is their own. There is no id parameter to get wrong.
- *
- * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. Every value here ends up inside an Intl constructor or a
- * BCP 47 -u- extension, and BCP 47 admits thousands of valid tags — a whitelist of the nine the screen currently
- * offers would reject the tenth the day someone needs it, and would drift out of step with CLDR every release.
- * So the shape is checked syntactically and the MEANING is checked by asking Intl to build the tag. If ICU can
- * format with it, it is a real subtag; if it throws, it is not. Adopting the standard's own validator beats
- * maintaining our opinion of what the standard contains.
- */
-/**
- * PATCH /entities/me/prefs/:kind — store one of the PERSON's own preference sets (b165 locale · b166 ui).
- *
- * ⚠️ ONE HANDLER, TWO COLUMNS — generalised rather than copied. Two near-identical prefs endpoints would drift
- * the first time one of them gained validation, an audit line or a rate limit, and the one nobody remembered
- * would be the one carrying somebody's accessibility setting.
- *
- * ⚠️ SEPARATE FROM PATCH /profile, deliberately. /profile edits the BUSINESS — its GSTN, address, logo, shop
- * status. This edits how one human reads the screen. Folding a personal preference into the business profile
- * would mean a co-assist could not change their own language or contrast without write access to their
- * employer's record, and that an owner editing the firm's address would be touching the same object as their
- * clerk's numerals.
- *
- * ⚠️ THE TARGET ROW IS NEVER TAKEN FROM THE BODY. identity_id comes from the verified token, so the only row a
- * caller can write is their own. There is no id parameter to get wrong.
- *
- * ⚠️ AND THE COLUMN NAME IS NEVER TAKEN FROM THE URL. :kind selects an entry in PREF_SETS below; the column
- * string comes from that entry and never from req.params. An unknown kind is a 404, not a query. Interpolating
- * a caller-supplied identifier into SQL is exactly how a whitelist stops being a whitelist.
- */
-const PREF_SETS = {
-  /* The six keys the localisation layer reads. `lang` and `locale` are language tags; the rest are the UTS #35
-     locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
-  locale: {
-    column: 'locale_prefs',
-    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw', 'tz', 'workdays'],
-    /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
-       priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
-       commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
-       or an hour cycle, and a validator that accepts more than it needs to stops being a validator. */
-    /* CU3: `tz` is an IANA zone (`Asia/Kolkata`, `America/Argentina/Buenos_Aires`) and `workdays` an ISO weekday list
-       (`1,2,3,4,5,6`, 1 = Monday) — CBLocale sent both and the old key list dropped them silently. The generic pattern
-       admits neither `/` nor `,`, and one rejected key fails the whole save, so each carries its own. */
-    patterns: {
-      langs: /^[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*(,[A-Za-z]{2,8}(-[A-Za-z0-9]{2,8})*){0,2}$/,
-      tz: /^[A-Za-z][A-Za-z0-9_+-]{0,30}(\/[A-Za-z0-9_+-]{1,30}){0,2}$/,
-      workdays: /^[1-7](,[1-7]){0,6}$/
-    },
-    /**
-     * ⚠️ ICU VALIDATES THE VALUES, NOT A HAND-WRITTEN LIST. BCP 47 admits thousands of valid tags; a whitelist of
-     * the nine the screen currently offers would reject the tenth the day someone needs it, and would drift out
-     * of step with CLDR every release. Syntax is checked generically above; MEANING is checked by asking Intl to
-     * build the tag. If it can format with it, it is a real subtag. Adopting the standard's own validator beats
-     * maintaining our opinion of what the standard contains.
-     */
-    check(prefs) {
-      try {
-        const list = ['nu', 'hc', 'ca', 'fw'].filter((item) => prefs[item]).map((item) => `${item}-${prefs[item]}`);
-        const tag = (prefs.locale || prefs.lang || 'en') + (list.length ? '-u-' + list.join('-') : '');
-        new Intl.NumberFormat(tag);
-        new Intl.DateTimeFormat(tag);
-      } catch (_) {
-        return 'That combination is not a locale ICU recognises';
-      }
-      /* the zone is ICU's to judge too (RangeError for one it does not know) — never a hand-kept list */
-      if (prefs.tz) {
-        try {
-          new Intl.DateTimeFormat('en', { timeZone: prefs.tz });
-        } catch (_) {
-          return 'Unknown time zone';
-        }
-      }
-      return null;
-    }
-  },
-  /**
-   * Appearance. ⚠️ HERE A CLOSED LIST IS RIGHT, and the contrast with locale above is the point: these are OUR
-   * enumerations, not a standard's. There is no external registry of themes that could add a sixteenth without
-   * us knowing, so anything outside the list is a bug or a probe rather than a value we have not caught up with.
-   * The theme itself stays open-ended in shape (a short slug) so shipping a new one needs no migration here.
-   */
-  ui: {
-    column: 'ui_prefs',
-    keys: [
-      'theme',
-      'fs',
-      'motion',
-      'stripes',
-      'edition',
-      'font',
-      'weight',
-      'kural'
-    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
-    check(prefs) {
-      if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
-      if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
-      if (prefs.stripes && !['off', 'light', 'strong'].includes(prefs.stripes)) return 'Unknown row stripes setting';
-      if (prefs.fs && !['s', 'm', 'l', 'xl'].includes(prefs.fs)) return 'Unknown text size';
-      if (prefs.motion && !['auto', 'reduce', 'full'].includes(prefs.motion)) return 'Unknown motion setting';
-      if (prefs.edition && !/^[a-z][a-z0-9-]{0,23}$/.test(prefs.edition)) return 'Unknown edition';
-      return null;
-    }
-  }
-};
-
-/**
- * ⭐ RFC 7386 MERGE-PATCH FOR A PREFS COLUMN — the ONE expression every ui_prefs / locale_prefs write uses (CU2).
- * $1 = the keys to set (jsonb) · $3 = the keys to remove (text[]). A key the caller did not send is left alone; a key
- * sent as null or '' is removed ("follow the default"). `||` alone cannot remove, and `= $1` erased what it did not name.
- */
-const MERGE_PATCH_SQL = (col) => `(COALESCE(${col}, '{}'::jsonb) - $3::text[]) || $1::jsonb`;
-
-/** prefPatch(set, body) → { set, drop } or { error }. Whitelisted keys only; '' / null = drop; a bad value = error. */
-function prefPatch(set, payload) {
-  const out = {},
-    drop = [];
-  for (const k of set.keys) {
-    if (!(k in payload)) continue; // not sent = not touched
-    const v = String(payload[k] == null ? '' : payload[k]).trim();
-    if (!v) {
-      drop.push(k);
-      continue;
-    } // empty = "follow the default": removed
-    // Short alphanumeric-and-hyphen tokens. Anything else is not one of these values at all.
-    const pat = (set.patterns && set.patterns[k]) || /^[A-Za-z0-9][A-Za-z0-9-]{0,34}$/;
-    if (!pat.test(v)) return { error: `${k} is not a valid value` };
-    out[k] = v;
-  }
-  return { set: out, drop };
-}
-
-/**
- * prefSetOf(kind) → the preference set the kind names, or null.
- * ⚠️ hasOwnProperty, NOT A TRUTHY LOOKUP — found by red-teaming this endpoint rather than by a failure.
- *
- * `PREF_SETS[kind]` walks the PROTOTYPE CHAIN, so `kind=__proto__`, `constructor`, `toString` and
- * `valueOf` all return something truthy and sail past the 404. None of them can write to a table — the
- * column comes from `set.column`, which is undefined for all of them — but the request then throws deep
- * inside the handler and surfaces as a 500 with a confusing log, when the honest answer is "no such set".
- *
- * The rule this is a case of: a whitelist consulted with bracket notation is not a whitelist unless the
- * lookup is own-property. That is the same class as interpolating a caller's string into SQL, one step back.
- */
-const prefSetOf = (kind) => (Object.prototype.hasOwnProperty.call(PREF_SETS, kind) ? PREF_SETS[kind] : null);
-/** the kind a preference door writes: the shipped PATCH /me/locale is always 'locale', PATCH /me/prefs/:kind takes it from the path */
-const prefKindOf = (fixedKind, req) => fixedKind || String(req.params.kind || '');
-/**
- * prefSetRoute(fixedKind) — the handler of the two preference doors, ONE function under two names.
- * (The two refusals it makes carry their status in their words: only one of the two doors can answer a 404.)
- */
-const prefSetRoute = (fixedKind) =>
-  async function savePrefSet(req, res) {
-    const kind = prefKindOf(fixedKind, req);
-    const set = prefSetOf(kind);
-    if (!set || !set.column) return problem(req, res, contract.words.unknownPrefSet());
-    try {
-      const p = prefPatch(set, req.body || {});
-      if (p.error) return problem(req, res, contract.words.badPreference(p.error));
-      const prefs = p.set;
-
-      const bad = set.check(prefs);
-      if (bad) return problem(req, res, contract.words.badPreference(bad));
-
-      /* ⚠️ A MERGE-PATCH, NEVER THE WHOLE COLUMN (CU2). This UPDATE used to write `= $1`, so a theme push erased every
-         other key in ui_prefs — the shop's product-rows choice with it. Only the keys sent change; the rest stay. */
-      const r = await query(`UPDATE identities SET ${set.column} = ${MERGE_PATCH_SQL(set.column)} WHERE identity_id = $2 RETURNING ${set.column} AS v`, [
-        JSON.stringify(prefs),
-        req.identity.identity_id,
-        p.drop
-      ]);
-      const merged = (r && r.rows && r.rows[0] && r.rows[0].v) || prefs;
-      res.json({ ok: true, kind, prefs: merged, [set.column]: merged });
-    } catch (err) {
-      /* ⚠️ Before the migration runs, the column does not exist. The person's preference still works from
-         localStorage and visibly applied, so this must degrade to "not synced yet" rather than surfacing an error
-         over a setting they can see took effect. Code ships before the migration, always. */
-      if (new RegExp(set.column).test(String(err && err.message))) return res.json({ ok: false, pending: true });
-      console.error('Prefs error (' + kind + '):', err.message);
-      problem(req, res, failed(err, req, 'Failed to save'));
-    }
-  };
 
 router.patch('/me/prefs/:kind', auth, ...checked('PATCH /me/prefs/:kind'), prefSetRoute(null));
 
@@ -898,25 +857,6 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
    cached app.html will keep calling it after the API updates. Removing it would turn a tidy-up into an outage
    for exactly as long as those caches live. */
 router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
-
-// GET /entities/lookup?user_id=<x> — resolve an entity by its external user_id (ATH-114).
-// The resolution primitive for adding suppliers / connecting by user_id instead of bridge_id.
-router.get('/lookup', auth, async (req, res) => {
-  try {
-    const uid = String(req.query.user_id || '').trim();
-    if (!uid) return problem(req, res, { status: 400, ...contract.words.lookupMissing() });
-    const result = await query(
-      `SELECT identity_id, bridge_id, display_name, user_id
-         FROM identities
-        WHERE LOWER(user_id) = LOWER($1) AND status = 'active' AND identity_type = 'entity'`,
-      [uid]
-    );
-    if (result.rows.length === 0) return problem(req, res, { status: 404, ...contract.words.lookupNone() });
-    res.json({ entity: result.rows[0] });
-  } catch (err) {
-    problem(req, res, failed(err, req, 'Lookup failed'));
-  }
-});
 
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
 
@@ -1298,7 +1238,7 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
  * print it as "chits sent".
  */
-router.get('/usage', auth, async (req, res) => {
+router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const me = req.identity.identity_id;
     const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
@@ -1475,7 +1415,7 @@ const ROUTABLE = [
  * ⚠️ ALWAYS 200. ‘This will not work, and here is why’ is the answer, not an error: a 500 on a preview puts
  * a red box on a form somebody has not filled in yet, and tells them nothing about the thing they asked.
  */
-router.get('/routing/preview', auth, async (req, res) => {
+router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (req, res) => {
   const me = auth.entityOf(req);
   const q = req.query || {};
   try {
@@ -1555,7 +1495,7 @@ router.get('/routing', auth, async (req, res) => {
     for (const r of out.rows) by[r.kind] = r;
     res.json({
       kinds: ROUTABLE.map((item) =>
-        Object.assign({}, item, {
+        Object.assign({ kind: item.kind, label: item.label, hint: item.hint }, {
           folder_id: (by[item.kind] || {}).folder_id || null,
           assignee_actor_id: (by[item.kind] || {}).assignee_actor_id || null,
           route_to_entity_id: out.teamsBy[item.kind] || null
@@ -1572,12 +1512,13 @@ router.get('/routing', auth, async (req, res) => {
 });
 
 /**
- * saveRouting(shop, kind, { folder, assignee, team }) → true when the row is written, false when the folder named is not this shop's and nothing is (SEC-100).
- * The foreign key on folder_id is checked WITHOUT row security, so the folder is looked up under THIS shop in the same transaction; a null folder still clears it.
+ * saveRouting(shop, kind, { folder, assignee, team }) → null when the row is written, else the name of the contract word that refuses it, because the folder or person named is not this shop's and nothing is written (SEC-100, SEC-103).
+ * The foreign key on folder_id is checked WITHOUT row security and assignee_actor_id has none, so both are looked up under THIS shop in the same transaction; a null still clears it.
  */
 async function saveRouting(shop, kind, fields) {
   return withEntity(shop, async (db) => {
-    if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return false;
+    if (fields.folder && !(await folderViews.folderOwned(db, shop, fields.folder))) return 'routingFolderNone';
+    if (fields.assignee && !(await shopActors.actorOwned(db, shop, fields.assignee))) return 'routingPersonNone';
     await db.query(
       `INSERT INTO entity_work_routing (entity_id, kind, folder_id, assignee_actor_id, route_to_entity_id, updated_at)
        VALUES ($1,$2,$3,$4,$5, now())
@@ -1586,7 +1527,7 @@ async function saveRouting(shop, kind, fields) {
              route_to_entity_id = EXCLUDED.route_to_entity_id, updated_at = now()`,
       [shop, kind, fields.folder, fields.assignee, fields.team]
     );
-    return true;
+    return null;
   });
 }
 
@@ -1611,9 +1552,9 @@ router.put('/routing', auth, ...checked('PUT /routing'), async (req, res) => {
      all three and null is an answer rather than an omission. */
   const nul = (v) => (v === '' || v === undefined || v === null ? null : String(v));
   try {
-    const saved = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
-    /* an unknown folder and another shop's folder are one answer */
-    if (!saved) return problem(req, res, { status: 404, ...contract.words.routingFolderNone() });
+    const refused = await saveRouting(me, kind, { folder: nul(b.folder_id), assignee: nul(b.assignee_actor_id), team: nul(b.route_to_entity_id) });
+    /* an unknown folder and another shop's folder are one answer; an unknown person and another shop's person are one answer */
+    if (refused) return problem(req, res, { status: 404, ...contract.words[refused]() });
     forgetRouting(me);
     res.json({ ok: true, kind });
   } catch (e) {
@@ -1682,12 +1623,16 @@ router.get('/populations', auth, rootGate, async (req, res) => {
  * ⚠️ AND '' CLEARS IT, deliberately: an operator must be able to take a desk back out without a deploy.
  */
 router.put('/populations/:code/desk', auth, rootGate, ...checked('PUT /populations/:code/desk'), async (req, res) => {
-  const code = String(req.params.code || '')
-    .trim()
-    .toLowerCase();
+  const code = populationCode(req);
   const v = (req.body || {}).desk_entity_id;
   const desk = v === '' || v === undefined || v === null ? null : String(v);
   try {
+    /* K-1: a desk id that is no uuid names no business — answered as the database's trigger answers an unknown one (409 on a population that exists, 404 on one that does not), never the cast error's 500 */
+    if (desk !== null && !UUID.test(desk)) {
+      const known = await query('SELECT 1 FROM ops.population WHERE code = $1', [code]);
+      if (!known.rowCount) return problem(req, res, { status: 404, ...contract.words.noSuchPopulation(code) });
+      return problem(req, res, { status: 409, ...contract.words.notADesk({ message: 'no such entity for the ' + code + ' desk', hint: 'Create the operator entity first, then name it here.' }) });
+    }
     const u = await query('UPDATE ops.population SET desk_entity_id = $2 WHERE code = $1', [code, desk]);
     /* ⚠️ an UPDATE matching nothing is not an error. Without this, setting a desk on a population that does
        not exist answers ok and changes nothing. [[feedback-silence-is-the-bug]] */
@@ -1736,7 +1681,7 @@ router.post('/populations', auth, rootGate, ...checked('POST /populations'), asy
   }
 });
 
-router.get('/mis', auth, async (req, res) => {
+router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const platformroot = require('../lib/platformroot');

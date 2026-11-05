@@ -193,6 +193,28 @@ function create() {
     async relabelPeriods(db, e, fromFy, rows) {
       (rows || []).forEach((r) => { const p = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fromFy && Number(x.period) === Number(r.period)); if (p) Object.assign(p, { fiscal_year: r.fiscal_year, start_date: r.start_date, end_date: r.end_date }); });
     },
+    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
+    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
+    async soldByDay(db, e) {
+      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
+        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
+        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+      });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+    },
+    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
+    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
+    async soldByDay(db, e) {
+      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
+        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
+        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+      });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+    },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
@@ -245,6 +267,8 @@ function create() {
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
+    /* RAIL-146: partyOn for many ids at once, as lib/books-store partiesOn answers it (Map id → { customer, supplier }; an unknown id → both false) */
+    async partiesOn(db, e, ids) { const out = new Map(); for (const id of ids || []) out.set(String(id), await this.partyOn(db, e, id)); return out; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
     async billNos(db, e, ids) { const o = {}; (ids || []).forEach((i) => { const c = T.chits.find((x) => x.chit_id === i); if (c) o[i] = c.bill_no; }); return o; },
@@ -296,6 +320,13 @@ function create() {
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
     async taxRegistration(db, e) { const i = T.identities.find((x) => x.identity_id === e) || {}; const flags = i.policy_flags || {};
       return { gstin: i.gstn || null, country: i.country || null, reg_type: flags.gst_registration || null }; },
+    /* ACC-206 B · the sales let through unbalanced and not yet resolved (a filter on the stored chits and the change log), and the state of one */
+    async moneyOverrides(db, e) { return clone(T.chits.filter((c) => c.entity_id === e && c.business_json && c.business_json.money_override
+      && !T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(c.chit_id)))
+      .map((c) => ({ chit_id: c.chit_id, ref: c.business_json.bill_no || null, by: c.business_json.money_override.by, at: c.business_json.money_override.at, why: c.business_json.money_override.why,
+        step: c.business_json.money_override.step, unexplained_minor: c.business_json.money_override.unexplained_minor, words: null }))); },
+    async moneyOverrideState(db, e, chit_id) { return { held: T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(chit_id) && c.business_json && c.business_json.money_override),
+      resolved: T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(chit_id)) }; },
     /* F5 A1 · the sale bills the books hold (an unreversed sale_bill or walk-in day entry) whose chit has a line with no rate — read only, newest first */
     async unratedSaleBills(db, e, from, to, limit) {
       const noRate = (l) => (l.gst_rate === undefined || l.gst_rate === null) && (l.rate === undefined || l.rate === null);
@@ -303,11 +334,13 @@ function create() {
         && h.posting_date >= from && h.posting_date <= to && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id));
       const out = new Map(); /* one row per bill, however many entries name it (the SQL groups by chit) */
       for (const h of homed) for (const chit_id of h.source_chit_id ? [h.source_chit_id] : h.source_chit_ids || []) {
-        const c = T.chits.find((x) => x.chit_id === chit_id && x.entity_id === e && x.direction !== 'received'); if (!c) continue;
+        /* ACC-203: the shop's one header row whichever direction ('received' first, as ORDER BY direction reads) */
+        const c = T.chits.filter((x) => x.chit_id === chit_id && x.entity_id === e).sort((p, q) => String(p.direction || '').localeCompare(String(q.direction || '')))[0]; if (!c) continue;
         const lines = c.line_items || [], bj = c.business_json || {}, unrated = lines.filter(noRate).length; if (!unrated) continue;
         const seen = out.get(chit_id);
         if (seen && seen.posting_date >= ymd(h.posting_date)) continue;
-        out.set(chit_id, { chit_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), printed_as: bj.printed_as || null, bill_no: bj.bill_no || null, billed_at: bj.billed_at || null, unrated, lines: lines.length });
+        out.set(chit_id, { chit_id, entry_no: h.entry_no, posting_date: ymd(h.posting_date), printed_as: bj.printed_as || null, bill_no: bj.bill_no || null, billed_at: bj.billed_at || null, unrated, lines: lines.length,
+          items: lines.filter(noRate).map((l) => l.name || l.particulars).filter(Boolean).slice(0, 5) });
       }
       return [...out.values()].sort((p, q) => (p.posting_date < q.posting_date ? 1 : p.posting_date > q.posting_date ? -1 : q.entry_no - p.entry_no)).slice(0, limit || 50);
     },

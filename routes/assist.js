@@ -35,6 +35,7 @@ const money = require('../lib/money'); // adoption commercials are the SECOND pr
 // The honest, no-oversell guardrail lives in lib/ai.js as the `assist-ask` skill (T1-AI) — server-side, never shipped to
 // the client — so it runs through the one model caller with the wallet, the platform daily cap and the usage ledger.
 const ai = require('../lib/ai');
+const access = require('../lib/access'); // b173 viewer / commenter / editor: the one test of what a login may do
 /* ⚠️ ASSIST_LLM_PROVIDER stays the ON-switch for CB Assist (dormant by default); the key and the model are the one
    caller's (ANTHROPIC_API_KEY · ai_skill.model / AI_MODEL). The entity is who pays: no signed-in entity → no model
    call, because a call that cannot be metered must not spend (lib/ai.js S1) — the caller's floor answers instead. */
@@ -67,12 +68,15 @@ function softIdentity(req) {
     // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
     // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
     if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
-    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null };
+    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null, identity_type: d.identity_type, access_level: d.access_level }; // the level rides the token (identity-auth FX-L2C), so a draft that costs money can ask lib/access
   } catch (e) {
     log.fellBack('assist softIdentity: the helper failed — answered with nothing', e);
     return null;
   }
 }
+
+/** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
+const sourceOf = (req) => (req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1');
 
 router.post('/', ...contract.checked('POST /'), async (req, res) => {
   try {
@@ -196,7 +200,7 @@ router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: 
 // stamp. Does NOT persist to a catalogue yet — this is the draft the business confirms before publishing.
 router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structure'), async (req, res) => {
   try {
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
@@ -216,7 +220,8 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
     // Designer intro — model-drafted RUNG-summarise layer, best-effort. It describes the ALREADY-structured
     // collection; it never invents items. Absent a key, the structure still stands (intro: null).
     let intro = null;
-    if (assistOn() && identity) {
+    /* PPL-27 (Q42): a View-only or Comment-only login keeps the free draft but never spends the shop's AI money: it gets the anonymous answer. lib/access is the ONE level test. */
+    if (assistOn() && identity && access.canEdit(identity)) {
       try {
         const out = await ai.invokeSkill(
           payerOf(identity),
@@ -252,7 +257,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
 router.post('/catalogue-adopt', auth, ...contract.checked('POST /catalogue-adopt'), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
-    const source = req.body && typeof req.body.source === 'string' ? req.body.source.trim() : 'beta-royale-play@v1';
+    const source = sourceOf(req);
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource() });
     // STAMP the adoption's commercials. This is the SECOND price home — `{ "Tussar": { price, unit, … } }` — and the
@@ -368,7 +373,9 @@ router.get('/catalogue-mine', auth, ...contract.checked('GET /catalogue-mine'), 
         }))
       )
     ).filter((item) => item.resolved);
-    res.json(Object.assign({ ok: true, count: catalogues.length }, PL.pageOut('catalogues', catalogues, pg)));
+    const answer = PL.pageOut('catalogues', catalogues, pg);
+    /* S34: the pager's keys named (capped and cap_note only when it cut the list); `resolved` is lib/catalogue-build's own record and stays open */
+    res.json({ ok: true, count: catalogues.length, catalogues: answer.catalogues, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     log.error('assist/catalogue-mine failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));
@@ -464,7 +471,7 @@ router.put('/container', auth, ...contract.checked('PUT /container'), async (req
         schema_version: b.schema_version
       });
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/container.js:29 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/container.js: another brand's id, said as an unknown one (S6) */
       return problem(req, res, { status: 503, ...words.containerStoreMissing() });
     }
     log.info('container authored', { id: req.id, container_id, version: out.version, is_new: out.is_new_container });
@@ -526,8 +533,7 @@ router.put('/region-override', auth, ...contract.checked('PUT /region-override')
     try {
       await regional.setRegionOverride(owner, container_id, region, overrides);
     } catch (e) {
-      if (e.status === 403) return problem(req, res, { status: 403, ...words.ownedByAnother(e.message) }); /* lib/regional.js:39 — a fixed sentence */
-      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer(e.message) }); /* lib/regional.js:34 — a fixed sentence */
+      if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/regional.js: unknown or another brand's (S6) */
       return problem(req, res, { status: 503, ...words.regionStoreMissing() });
     }
     res.json({ ok: true, container_id, region });
@@ -547,7 +553,8 @@ router.get('/regions', async (req, res) => {
     } catch (e) {
       log.fellBack('assist GET /regions: the read failed — carried on without it', e); /* b81 absent */
     }
-    res.json({ ok: true, regions: rows });
+    /* S34: a region is the columns the statement selects (region_layer: migrations/000_baseline_2026-10-21.sql; jurisdiction is jsonb, any value) */
+    res.json({ ok: true, regions: rows.map((x) => ({ region_code: x.region_code, currency: x.currency, units: x.units, language: x.language, jurisdiction: x.jurisdiction })) });
   } catch (err) {
     problem(req, res, failed(err, req, FAULTS.plain));
   }
@@ -593,7 +600,8 @@ router.get('/penetration', auth, ...contract.checked('GET /penetration'), async 
     }
     const total_orders = rows.reduce((total, x) => total + x.orders, 0);
     const localities = Array.from(new Set(rows.map((x) => x.locality)));
-    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows });
+    /* S34: a locality is the four columns the statement selects (aggregates only: no customer, no distributor id) */
+    res.json({ ok: true, total_orders, localities: localities.length, by_locality: rows.map((x) => ({ source_key: x.source_key, locality: x.locality, orders: x.orders, distributors: x.distributors })) });
   } catch (err) {
     log.error('assist/penetration failed', { id: req.id, err: err.message });
     problem(req, res, failed(err, req, FAULTS.plain));

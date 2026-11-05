@@ -35,6 +35,8 @@ let SQL = [], FLAGS = {}, ROWS = [], LOG = [], DISP = [], PI = [], PEOPLE = {}, 
 function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   SQL.push({ s, p });
+  /* RAIL-133 (c): every line asked about is on this chit */
+  if (/line_id::text = ANY/.test(s)) return p[2].map((line_id) => ({ line_id }));
   if (/SELECT policy_flags, self_copy_pref FROM identities/.test(s)) return [{ policy_flags: FLAGS, self_copy_pref: null }];
   if (/UPDATE identities SET policy_flags/.test(s)) { FLAGS = Object.assign({}, FLAGS, JSON.parse(p[0])); return []; }
   if (/FROM chit_status cs JOIN chit_header ch/.test(s) && /AS doc_kind/.test(s)) return ROWS;
@@ -49,7 +51,7 @@ function rowsFor(sql, p) {
   if (/FROM chit_header h/.test(s) && /WHERE h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return COPY ? [Object.assign({ current_status: CUR }, COPY)] : [];
   /* moveStatus */
   if (/SELECT current_status/.test(s) && /FROM chit_status/.test(s) && /direction = 'received'/.test(s)) return [{ current_status: CUR }];
-  if (/SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return HDR ? [HDR] : [];
+  if (/SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) /* sit/run6: the move header also reads all_recipients (RAIL-106 bell), same row */ return HDR ? [HDR] : [];
   /* the chit read */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return HDR ? [HDR] : [];
   if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return [{ detail_type: 'invoice', line_items: [{ line_id: 'l1', particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }] }];

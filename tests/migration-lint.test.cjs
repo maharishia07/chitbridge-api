@@ -185,6 +185,15 @@ function forbiddenWords(doc) {
   }
   return words;
 }
+/**
+ * A column that ALREADY RAN in production keeps its name (a live column is never renamed, checked below), so the vocabulary rule cannot be satisfied by renaming it; each such column is named here WITH
+ * ITS REASON. An entry nobody needs any more fails the stale check, so this list only shrinks. (F4, critic 25 Oct)
+ */
+const VOCABULARY_ALLOWED = {
+  'chit_proposal.currency_code': 'b796 already ran in PRODUCTION: the column carries the same value as chit_header/chit_detail.currency_code on the chit it proposes for (one name across the chit tables); never renamed',
+  'chit_proposal.note': 'b796 already ran in PRODUCTION: the round’s own one-line note, a different fact from the chit’s notes column; never renamed',
+  'membership_certificate.note': 'b790 already ran in PRODUCTION (25 Oct): the certificate’s one-line operator note (why it was suspended or revoked), a different fact from any chit notes column; never renamed (DB-85)'
+};
 const nearKey = (name) => name.toLowerCase().replace(/_/g, '').replace(/s$/, '');
 /** the problems with these new columns against the existing ones → ['table.column: why'] */
 function vocabularyProblems(fresh, existing, forbidden) {
@@ -206,8 +215,12 @@ else {
   const existing = [...new Set(inventory.filter((x) => x.born === BASE).flatMap((x) => x.cols))];
   const fresh = inventory.flatMap((x) => (x.born === BASE ? [] : x.cols).concat(x.added).map((column) => ({ table: x.name, column })));
   t('the vocabulary has forbidden words to check against', forbidden.has('shop_id') && forbidden.has('product_id'), forbidden.size + ' words');
-  const found = vocabularyProblems(fresh, existing, forbidden);
+  const problemsAll = vocabularyProblems(fresh, existing, forbidden);
+  const found = problemsAll.filter((line) => !Object.keys(VOCABULARY_ALLOWED).some((key) => line.startsWith(key + ':')));
   t('no new column after the baseline breaks the vocabulary or near-duplicates one', found.length === 0, fresh.length + ' new · ' + found.join(' | '));
+  t('every allowed column has a reason of a sentence and is still a problem the rule would raise (the list only shrinks)',
+    Object.entries(VOCABULARY_ALLOWED).every(([key, why]) => why.length > 40 && problemsAll.some((line) => line.startsWith(key + ':'))),
+    Object.keys(VOCABULARY_ALLOWED).filter((key) => !problemsAll.some((line) => line.startsWith(key + ':'))).join(', '));
   t('  ...the rule fires on a planted near-duplicate (retention_sources)',
     vocabularyProblems([{ table: 'chit_status', column: 'retention_sources' }], existing.concat(['retention_source']), forbidden).length === 1);
   t('  ...and on a planted forbidden synonym (shop_id)', vocabularyProblems([{ table: 'x', column: 'shop_id' }], existing, forbidden).length === 1);

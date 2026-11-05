@@ -32,6 +32,8 @@ const rowsFor = async (shop, phone) => (await pg.query('SELECT status, reason FR
 const scan = (re) => ['routes', 'lib'].flatMap((d) => fs.readdirSync(path.join(API_DIR, d)).filter((f) => f.endsWith('.js')).map((f) => [d + '/' + f, fs.readFileSync(path.join(API_DIR, d, f), 'utf8')])).filter(([, t]) => re.test(t)).map(([f]) => f);
 
 const DAY = 86400e3;
+/** ACC-206 (J2): a counter bill's money is the invoice the counter computed and carried (till.html billMoney); a bill with none has NO money (null, never a sum). So these bills carry one, as the till does: 1 × Rice 60, tax-free here. */
+const counterInvoice = (no) => ({ invoice: { DocDtls: { No: no }, ItemList: [{ SlNo: '1', PrdDesc: 'Rice', Qty: 1, UnitPrice: 60, TotAmt: 60, AssAmt: 60, TotItemVal: 60 }], ValDtls: { AssVal: 60, CgstVal: 0, SgstVal: 0, IgstVal: 0, TotInvVal: 60, RndOffAmt: 0 } } });
 const at = (days) => new Date(Date.now() - days * DAY).toISOString();
 /**
  * THE PASS TEST (MKT-critic 22 Oct 2026): a group of 10 - 7 agreed, 3 did not. Send -> Offers sent lists 10 rows (the 3 not messaged with their reason).
@@ -45,7 +47,7 @@ async function groupOfTen() {
   const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
   const makeCustomer = async (tag, phone) => {
     const l = ok(await j('/api/crm/leads', { method: 'POST', token: B.token, body: { name: 'Grp ' + tag, phone } }), 'lead').b.party;
-    const b = bill(RUN + 'g' + tag, [[P, 1]]);
+    const b = bill(RUN + 'g' + tag, [[P, 1]], counterInvoice(RUN + 'g' + tag));
     b.business_json.customer = { name: l.display_name, party_id: l.party_id, identity_id: l.party_id };
     ok(await j('/api/chits/send', { method: 'POST', token: B.token, body: b }), 'first bill');
     return { id: l.party_id, name: l.display_name, phone };
@@ -76,7 +78,7 @@ async function groupOfTen() {
   for (let c = 0; c < 7; c++) await pg.query('UPDATE channel_outbound SET created_at = $3 WHERE entity_id = $1 AND party_id = $2', [B.entity, C[c].id, at(c === 3 ? 15 : 5)]);
   const buyers = [C[0], C[1], C[2], C[3], C[7], outsider];
   for (const x of buyers) {
-    const b = bill(RUN + 'n' + x.phone.slice(-4), [[P, 1]]);
+    const b = bill(RUN + 'n' + x.phone.slice(-4), [[P, 1]], counterInvoice(RUN + 'n' + x.phone.slice(-4)));
     b.business_json.customer = { name: x.name, party_id: x.id, identity_id: x.id };
     ok(await j('/api/chits/send', { method: 'POST', token: B.token, body: b }), 'bill');
   }

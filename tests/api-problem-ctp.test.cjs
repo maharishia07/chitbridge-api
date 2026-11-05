@@ -58,17 +58,25 @@ function rowsFor(sql) {
     if (world.peerThrows) throw new Error(SECRET_SQL);
     return { rows: world.peer ? [world.peer] : [] };
   }
+  /* RAIL-138 (b): the sender's id and bridge id are looked up here too; this world's sender is a party of the peer with no row here */
+  if (/SELECT identity_id FROM identities WHERE (identity_id|bridge_id) = \$1$/.test(sql)) return { rows: [] };
+  if (/f_installation_of/.test(sql) && /FROM identities/.test(sql)) return { rows: [] }; /* RAIL-107: the sender has no row here yet: a stub is made */
+  if (/^INSERT INTO identities/.test(sql)) return { rows: [{ identity_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', display_name: 'MX' }] };
+  if (/f_place_entity/.test(sql)) return { rows: [] };
+  if (/FROM identities WHERE bridge_id = ANY/.test(sql)) return { rows: [] };
   if (/FROM identities/.test(sql)) return { rows: world.to ? [world.to] : [] };
   if (/f_ctp_may_deliver/.test(sql)) {
     if (world.crossThrows) throw new Error(SECRET_SQL);
     return { rows: [{ ok: !!world.mayCross }] };
   }
   if (/ops\.population/.test(sql)) return { rows: [{ code: 'live' }] };
+  if (/SELECT trade_mode FROM entity_profile/.test(sql)) return { rows: [{ trade_mode: 'export' }] }; /* NET-39: the shop asked about sells outside, so its catalogue is answered */
   return { rows: [] };
 }
 
 function installStubs() {
   const db = { query: async (sql) => rowsFor(sql) };
+  db.withEntity = async (_id, fn) => fn(db); /* RAIL-138 (c): the recipient's own copy is read as the recipient */
   mock('db', db);
   mock('db/index', db);
   mock('lib/ctpdirectory', { publicKeyFor: async (domain, ik) => (world.noKey ? { ok: false, why: 'no manifest at ' + domain } : { ok: true, public_key: 'PK-' + ik }) });
@@ -80,12 +88,15 @@ function installStubs() {
     verifyWith: () => true
   });
   mock('lib/ctpenvelope', {
+    digest: () => 'H-1',
     open: () =>
       world.openWhy
         ? { ok: false, why: world.openWhy }
-        : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: 'sender-1' }), header: {} }
+        : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: '22222222-2222-4222-8222-222222222222', sender_entity_bridge_id: 'CBSEND0001' }), header: {} }
   });
-  mock('lib/ctpquery', { open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
+  /* RAIL-96/97: the route reads which questions are the network's (NETWORK_WANTS) from the real module; the stand-in keeps those lists and replaces only the opener */
+  const realQuery = require(path.join(API, 'lib', 'ctpquery'));
+  mock('lib/ctpquery', { WANTS: realQuery.WANTS, NETWORK_WANTS: realQuery.NETWORK_WANTS, open: (q) => (world.openWhy ? { ok: false, why: world.openWhy } : { ok: true, ask: (q && q.ask) || {} }) });
   mock('lib/mint', {
     deliver: async () => {
       if (world.storeFails) throw Object.assign(new Error(SECRET_SQL), { code: '53100' });
@@ -104,7 +115,8 @@ function installStubs() {
 }
 
 /* ── the scenarios: every answer of routes/ctp.js. Each runs on both mounts (server.js: '/' and '/api/ctp'). ───────────────── */
-const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' } };
+/* RAIL-139 (b): the door checks the seal before the recipient, so the envelope carries one the stubbed digest matches */
+const ENV = { ctp: '1', from: { installation_key: 'mx-1', bridge_id: 'CBSEND0001' }, to: { bridge_id: 'CBRECV0001' }, sealed: { hash: 'H-1', sig: 'S-1' } };
 const env = (patch) => Object.assign({}, ENV, patch || {});
 const ASK = (ask) => ({ ctp: '1', kind: 'query', from: { installation_key: 'mx-1' }, ask });
 const DOORS = { manifest: 'GET /.well-known/ctp.json', deliver: 'POST /deliver', query: 'POST /query' };

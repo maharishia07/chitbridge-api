@@ -2,6 +2,8 @@
  * OWNS      the intake inbox and channel adapters (web simulate, webhooks).
  * CALLED BY web Inbox · WhatsApp / email webhooks.
  * FLOW      channel → capture → AI structure → human confirm → chit   (a WhatsApp STOP reply: capture → lib/optout withdraws consent, never a chit)
+ *           the nine signed-in routes: auth → checked(route) → handler → res.json | problem(req, res, faultOf(...) | storesFault(...) | failed(...)); the words and the contract are lib/capture-contract.js.
+ *           the three webhooks (an outside contract: Meta, the e-mail provider) are NOT in that contract and answer exactly as they always did.
  * CARD      11-crm-and-marketing/capture
  */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
@@ -11,7 +13,10 @@ const log = require('../lib/logger');
 const crypto = require('crypto');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { faultOf, storesFault, failed, checked } = require('../lib/capture-contract'); // API-4: the contract (each signed-in route's operation) and the words of a refusal
+const { UUID_RE } = require('../lib/trace');
+const { queryDay } = require('../middleware/validate'); // API-17: a ?since= that is not a day answers 400 VALIDATION_FAILED before any read
 const capture = require('../lib/capture');
 const channels = require('../lib/channels'); // b123 — the number/address → entity map the webhooks resolve against
 const optout = require('../lib/optout'); // CON-2 — a STOP reply withdraws marketing consent (new messages only, before auto-raise)
@@ -32,10 +37,21 @@ function hmacOk(rawBuf, secret, header, prefix) {
 
 const entityId = (req) => auth.entityOf(req);
 
+/** the label each /:id route has always answered a missing message under (frozen in docs/contracts/api-legacy.json) */
+const FAILED_LABEL = { structure: 'Structure failed', raise: 'Raise failed', convert: 'Convert failed', dismiss: 'Dismiss failed' };
+/* CON-100 — an id in the address that is not a uuid names no message of this shop: answered 404 before the database puts its own words into a 500. One guard for every /:id route. */
+router.param('id', (req, res, next, id) =>
+  UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'We could not find that message.', legacy: { error: FAILED_LABEL[req.path.split('/')[2]] || 'Not found', message: req.path.endsWith('/raise') || req.path.endsWith('/structure') ? 'Capture not found' : 'Capture not found or already handled' } })
+);
+/** a 400 for one field of the body that is not what the route takes; the database is never asked (CON-100/101) */
+const badField = (req, res, field, detail) => problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail, field, legacy: { error: 'Validation failed', message: detail } });
+/** a field that is given (not absent) and fails the test */
+const given = (value) => value !== undefined && value !== null && value !== '';
+
 // ── authenticated intake (the entity's own inbox) ──────────────────────────────────────────────────────────────
 // POST /simulate — record an inbound message as if it arrived on the web (testable WITHOUT a BSP/inbound-parse).
 // ⚠️ SEC-FIX3 S7: ALWAYS channel 'web' — a simulated 'whatsapp' message opened the 24-hour window for any number.
-router.post('/simulate', auth, async (req, res) => {
+router.post('/simulate', auth, ...checked('POST /simulate'), async (req, res) => {
   try {
     const b = req.body || {};
     res.json(
@@ -49,7 +65,7 @@ router.post('/simulate', auth, async (req, res) => {
       })
     );
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Capture failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Capture failed', 'any'));
   }
 });
 
@@ -57,16 +73,16 @@ router.get('/pending', auth, async (req, res) => {
   try {
     res.json(await capture.listPending(entityId(req)));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'List failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'List failed', 'none'));
   }
 });
 
 // POST /:id/structure — invoke the AI co-assist to structure the message into a chit draft (proposes; human confirms).
-router.post('/:id/structure', auth, async (req, res) => {
+router.post('/:id/structure', auth, ...checked('POST /:id/structure'), async (req, res) => {
   try {
     res.json(await capture.structureCapture(entityId(req), req.params.id));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Structure failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Structure failed', 'below500'));
   }
 });
 
@@ -77,29 +93,31 @@ router.post('/:id/structure', auth, async (req, res) => {
  * then calls /convert. The human confirm gate is exactly where it was — a person still presses send. What this
  * removes is the typing, not the deciding.
  */
-router.post('/:id/raise', auth, async (req, res) => {
+router.post('/:id/raise', auth, ...checked('POST /:id/raise'), async (req, res) => {
   // use_catalogue defaults TRUE; false makes every line carry exactly what the message said (see raisePayload).
   try {
     res.json(await capture.raisePayload(entityId(req), req.params.id, { useCatalogue: (req.body || {}).use_catalogue !== false }));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Raise failed', message: err.status && err.status < 500 ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Raise failed', 'below500'));
   }
 });
 
 // POST /:id/convert — the human has SENT the chit (via /api/chits/send); record the linkage. { chit_id }
-router.post('/:id/convert', auth, async (req, res) => {
+router.post('/:id/convert', auth, ...checked('POST /:id/convert'), async (req, res) => {
+  const chitId = (req.body || {}).chit_id;
+  if (given(chitId) && !(typeof chitId === 'string' && UUID_RE.test(chitId))) return badField(req, res, 'chit_id', 'The chit that was sent is not a valid id.');
   try {
-    res.json(await capture.markConverted(entityId(req), req.params.id, (req.body || {}).chit_id));
+    res.json(await capture.markConverted(entityId(req), req.params.id, chitId));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Convert failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Convert failed', 'any'));
   }
 });
 
-router.post('/:id/dismiss', auth, async (req, res) => {
+router.post('/:id/dismiss', auth, ...checked('POST /:id/dismiss'), async (req, res) => {
   try {
     res.json(await capture.dismissCapture(entityId(req), req.params.id));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Dismiss failed', message: err.status ? err.message || safeErr(err) : safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Dismiss failed', 'any'));
   }
 });
 
@@ -216,6 +234,8 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
   }
 });
 
+/** the bare address of a header value: "Anna <anna@example.com>" gives "anna@example.com" */
+const addressOf = (value) => String(value || '').replace(/.*</, '').replace(/>.*/, '').trim();
 // Inbound email (SendGrid Inbound Parse / Mailgun route). Inert until a signing secret AND an address→entity map exist.
 router.post('/webhook/email', express.raw({ type: () => true }), async (req, res) => {
   try {
@@ -234,21 +254,14 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
     } catch (_) {
       body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8')));
     }
-    const to = String(body.to || body.To || body.recipient || '')
-      .replace(/.*</, '')
-      .replace(/>.*/, '')
-      .trim();
+    const to = addressOf(body.to || body.To || body.recipient);
     const entity = await channels.ownerOf('email', to);
     if (!entity) return res.status(200).json({ ok: true, note: 'no binding for that address' });
     const text = String(body.text || body['body-plain'] || body.stripped_text || '').trim();
     if (!text) return res.status(200).json({ ok: true, note: 'nothing to capture' });
     await capture.createCapture(entity, {
       channel: 'email',
-      sender_ref:
-        String(body.from || body.From || body.sender || '')
-          .replace(/.*</, '')
-          .replace(/>.*/, '')
-          .trim() || null,
+      sender_ref: addressOf(body.from || body.From || body.sender) || null,
       subject: String(body.subject || body.Subject || '').slice(0, 200) || null,
       raw_text: text
     });
@@ -271,7 +284,7 @@ const consolidate = require('../lib/consolidate');
 const stores = require('../lib/stores');
 
 // GET /api/capture/consolidate?date=YYYY-MM-DD — the requirement + the attribution, per fulfilment date.
-router.get('/consolidate', auth, async (req, res) => {
+router.get('/consolidate', auth, queryDay('since'), ...checked('GET /consolidate'), async (req, res) => {
   try {
     const me = entityId(req);
     const cat = await consolidate.loadCatalogue(me);
@@ -290,7 +303,7 @@ router.get('/consolidate', auth, async (req, res) => {
       note: 'Flagged lines are EXCLUDED from every total — unmatched, variant-unspecified, date-unspecified. Unit-split lines are shown split, never converted without a declared factor.'
     });
   } catch (err) {
-    res.status(500).json({ error: 'Consolidate failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Consolidate failed'));
   }
 });
 
@@ -299,15 +312,20 @@ router.get('/stores', auth, async (req, res) => {
   try {
     res.json(await stores.list(entityId(req)));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Stores list failed', message: safeErr(err) });
+    problem(req, res, faultOf(err, req, 'Stores list failed', 'none'));
   }
 });
-router.post('/stores', auth, async (req, res) => {
+/** a phone is text of 7 to 15 digits (the E.164 ceiling) with only the marks a person types; stores.phoneMatchKey is the one reader of "enough digits" */
+const isPhoneText = (value) => typeof value === 'string' && /^[\d\s()+.-]+$/.test(value) && stores.phoneMatchKey(value) !== '' && value.replace(/\D/g, '').length <= 15;
+router.post('/stores', auth, ...checked('POST /stores'), async (req, res) => {
+  const phone = (req.body || {}).phone;
+  if (given(phone) && !isPhoneText(phone)) return badField(req, res, 'phone', 'Give the phone number as 7 to 15 digits.');
   try {
     res.json(await stores.upsert(entityId(req), req.body || {}));
   } catch (err) {
-    res.status(err.status || 500).json({ error: 'Store save failed', message: err.status ? err.message : safeErr(err) });
+    problem(req, res, storesFault(err, req));
   }
 });
 
+router.openapi = { paths: require('../lib/capture-contract').contract.pathsOf(), schemas: {} };
 module.exports = router;

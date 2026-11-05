@@ -1,0 +1,1743 @@
+{
+ "about": "The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs and tests/books-close-country.test.cjs (every answer branch of the period routes, the ledger-off writer included). PRODUCED, never typed, on 2026-11-01 with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json . Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). Both recording tests compare the keys they answer now with this file and fail until it is rebuilt.",
+ "answers": {
+  "GET /api/books/assets|period-004": {
+   "route": "GET /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "currency": "INR",
+    "asOf": "2026-09-30",
+    "assets": [
+     {
+      "entity": "11111111-1111-4111-8111-111111111111",
+      "asset_id": "55555555-5555-4555-8555-000000000001",
+      "name": "Laptop",
+      "asset_class": "computers",
+      "cost_minor": 4200000,
+      "currency": "INR",
+      "put_to_use": "2026-04-18",
+      "source_entry_id": "00000000-0000-4000-8000-000000000113",
+      "source_chit_id": null,
+      "accumulated_minor": 0,
+      "last_dep_fy": null,
+      "disposed_on": null,
+      "disposal_entry_id": null,
+      "proceeds_minor": null,
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "wdv_minor": 4200000
+     }
+    ],
+    "net_block": [
+     {
+      "asset_class": "computers",
+      "count": 1,
+      "cost_minor": 4200000,
+      "accumulated_minor": 0,
+      "wdv_minor": 4200000,
+      "ledger_cost_minor": 4200000,
+      "ledger_accumulated_minor": 0,
+      "ledger_wdv_minor": 4200000,
+      "agrees": true
+     }
+    ],
+    "total_wdv_minor": 4200000
+   }
+  },
+  "GET /api/books/assets|period-009": {
+   "route": "GET /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "currency": "INR",
+    "asOf": "2027-03-31",
+    "assets": [
+     {
+      "entity": "11111111-1111-4111-8111-111111111111",
+      "asset_id": "55555555-5555-4555-8555-000000000001",
+      "name": "Laptop",
+      "asset_class": "computers",
+      "cost_minor": 4200000,
+      "currency": "INR",
+      "put_to_use": "2026-04-18",
+      "source_entry_id": "00000000-0000-4000-8000-000000000113",
+      "source_chit_id": null,
+      "accumulated_minor": 1680000,
+      "last_dep_fy": "2026-27",
+      "disposed_on": null,
+      "disposal_entry_id": null,
+      "proceeds_minor": null,
+      "created_by": "11111111-1111-4111-8111-111111111111",
+      "wdv_minor": 2520000
+     }
+    ],
+    "net_block": [
+     {
+      "asset_class": "computers",
+      "count": 1,
+      "cost_minor": 4200000,
+      "accumulated_minor": 1680000,
+      "wdv_minor": 2520000,
+      "ledger_cost_minor": 4200000,
+      "ledger_accumulated_minor": 1680000,
+      "ledger_wdv_minor": 2520000,
+      "agrees": true
+     }
+    ],
+    "total_wdv_minor": 2520000
+   }
+  },
+  "GET /api/books/returns|close-006": {
+   "route": "GET /api/books/returns",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "currency": "AUD",
+    "pack": "AU",
+    "form": "BAS",
+    "name": "Business activity statement",
+    "short": "BAS",
+    "authority": "ATO",
+    "portal": "ATO Online services for business",
+    "prepared": "Prepared, not lodged",
+    "asked": {
+     "frequency": "quarterly",
+     "simpler": true
+    },
+    "periods": [
+     {
+      "period": "2025-Q1",
+      "label": "FY26 Q1 (Jul–Sep 2025)",
+      "frequency": "quarterly",
+      "start": "2025-07-01",
+      "end": "2025-09-30",
+      "due": "2025-10-28",
+      "ended": true
+     },
+     {
+      "period": "2025-Q2",
+      "label": "FY26 Q2 (Oct–Dec 2025)",
+      "frequency": "quarterly",
+      "start": "2025-10-01",
+      "end": "2025-12-31",
+      "due": "2026-02-28",
+      "ended": true
+     },
+     {
+      "period": "2026-Q3",
+      "label": "FY26 Q3 (Jan–Mar 2026)",
+      "frequency": "quarterly",
+      "start": "2026-01-01",
+      "end": "2026-03-31",
+      "due": "2026-04-28",
+      "ended": true
+     },
+     {
+      "period": "2026-Q4",
+      "label": "FY26 Q4 (Apr–Jun 2026)",
+      "frequency": "quarterly",
+      "start": "2026-04-01",
+      "end": "2026-06-30",
+      "due": "2026-07-28",
+      "ended": true
+     },
+     {
+      "period": "2026-Q1",
+      "label": "FY27 Q1 (Jul–Sep 2026)",
+      "frequency": "quarterly",
+      "start": "2026-07-01",
+      "end": "2026-09-30",
+      "due": "2026-10-28",
+      "ended": true
+     },
+     {
+      "period": "2026-Q2",
+      "label": "FY27 Q2 (Oct–Dec 2026)",
+      "frequency": "quarterly",
+      "start": "2026-10-01",
+      "end": "2026-12-31",
+      "due": "2027-02-28",
+      "ended": false
+     },
+     {
+      "period": "2027-Q3",
+      "label": "FY27 Q3 (Jan–Mar 2027)",
+      "frequency": "quarterly",
+      "start": "2027-01-01",
+      "end": "2027-03-31",
+      "due": "2027-04-28",
+      "ended": false
+     },
+     {
+      "period": "2027-Q4",
+      "label": "FY27 Q4 (Apr–Jun 2027)",
+      "frequency": "quarterly",
+      "start": "2027-04-01",
+      "end": "2027-06-30",
+      "due": "2027-07-28",
+      "ended": false
+     }
+    ],
+    "period": {
+     "period": "2026-Q1",
+     "label": "FY27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28",
+     "ended": true
+    },
+    "boxes": [
+     {
+      "code": "G1",
+      "label": "Total sales",
+      "amount_minor": 110000,
+      "tax_minor": null,
+      "roles": [
+       "sales",
+       "sales_export",
+       "sales_gst_free",
+       "sales_input_taxed",
+       "sales_returns",
+       "gst_collected"
+      ],
+      "accounts": [
+       {
+        "code": "4000",
+        "name": "Sales"
+       },
+       {
+        "code": "4010",
+        "name": "Export sales (GST-free)"
+       },
+       {
+        "code": "4020",
+        "name": "GST-free sales"
+       },
+       {
+        "code": "4030",
+        "name": "Input-taxed sales"
+       },
+       {
+        "code": "4090",
+        "name": "Sales returns and allowances"
+       },
+       {
+        "code": "2200",
+        "name": "GST collected"
+       }
+      ],
+      "note": null
+     },
+     {
+      "code": "1A",
+      "label": "GST on sales",
+      "amount_minor": 10000,
+      "tax_minor": null,
+      "roles": [
+       "gst_collected"
+      ],
+      "accounts": [
+       {
+        "code": "2200",
+        "name": "GST collected"
+       }
+      ],
+      "note": null
+     },
+     {
+      "code": "1B",
+      "label": "GST on purchases",
+      "amount_minor": 3000,
+      "tax_minor": null,
+      "roles": [
+       "gst_paid"
+      ],
+      "accounts": [
+       {
+        "code": "2210",
+        "name": "GST paid"
+       }
+      ],
+      "note": null
+     },
+     {
+      "code": "9",
+      "label": "Your payment or refund amount",
+      "amount_minor": 7000,
+      "tax_minor": null,
+      "roles": [
+       "gst_collected",
+       "gst_paid"
+      ],
+      "accounts": [
+       {
+        "code": "2200",
+        "name": "GST collected"
+       },
+       {
+        "code": "2210",
+        "name": "GST paid"
+       }
+      ],
+      "note": null
+     }
+    ],
+    "payable_minor": 7000,
+    "refund_minor": 0,
+    "net_minor": 7000,
+    "notes": [
+     "Simpler BAS: G1, 1A and 1B only (GST turnover under A$10 million)",
+     "The period's own set-off and tax payment entries (1) are left out of the boxes: they settle the tax, they are not sales or purchases."
+    ],
+    "cite": "ato.gov.au › GST labels on your BAS; Simpler BAS (turnover under A$10 million)"
+   }
+  },
+  "POST /api/books/accruals/:ref/reverse|period-038": {
+   "route": "POST /api/books/accruals/:ref/reverse",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000126",
+    "entry_no": "JV/2026-27/000007",
+    "posting_date": "2026-10-01",
+    "doc_date": "2026-10-01",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/accruals/:ref/reverse|period-039": {
+   "route": "POST /api/books/accruals/:ref/reverse",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000126",
+    "entry_no": "JV/2026-27/000007",
+    "posting_date": "2026-10-01"
+   }
+  },
+  "POST /api/books/accruals/:ref/reverse|period-057": {
+   "route": "POST /api/books/accruals/:ref/reverse",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/accruals|period-036": {
+   "route": "POST /api/books/accruals",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ref": "ELEC-9",
+    "kind": "outstanding",
+    "reverses_on": "2026-10-01",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000125",
+    "entry_no": "MJ/2026-27/000005",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/accruals|period-037": {
+   "route": "POST /api/books/accruals",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ref": "ELEC-9",
+    "kind": "outstanding",
+    "reverses_on": "2026-10-01",
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000125",
+    "entry_no": "MJ/2026-27/000005",
+    "posting_date": "2026-09-30"
+   }
+  },
+  "POST /api/books/accruals|period-040": {
+   "route": "POST /api/books/accruals",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ref": "INS-1",
+    "kind": "prepaid",
+    "reverses_on": "2026-10-01",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000127",
+    "entry_no": "MJ/2026-27/000006",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/accruals|period-055": {
+   "route": "POST /api/books/accruals",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ref": "OFF-1",
+    "kind": "outstanding",
+    "reverses_on": "2027-01-01",
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/accruals|period-056": {
+   "route": "POST /api/books/accruals",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ref": "OFF-2",
+    "kind": "outstanding",
+    "reverses_on": "2026-12-01",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000243",
+    "entry_no": "MJ/2026-27/000009",
+    "posting_date": "2026-11-30",
+    "doc_date": "2026-11-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/assets/:id/dispose|period-013": {
+   "route": "POST /api/books/assets/:id/dispose",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000115",
+    "entry_no": "MJ/2027-28/000001",
+    "posting_date": "2027-04-05",
+    "doc_date": "2027-04-05",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_chit_id": null,
+     "accumulated_minor": 1680000,
+     "last_dep_fy": "2026-27",
+     "disposed_on": "2027-04-05",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000115",
+     "proceeds_minor": 2000000,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 0
+    }
+   }
+  },
+  "POST /api/books/assets/:id/dispose|period-014": {
+   "route": "POST /api/books/assets/:id/dispose",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_chit_id": null,
+     "accumulated_minor": 1680000,
+     "last_dep_fy": "2026-27",
+     "disposed_on": "2027-04-05",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000115",
+     "proceeds_minor": 2000000,
+     "created_by": "11111111-1111-4111-8111-111111111111"
+    },
+    "entry_id": "00000000-0000-4000-8000-000000000115"
+   }
+  },
+  "POST /api/books/assets/:id/dispose|period-048": {
+   "route": "POST /api/books/assets/:id/dispose",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000241",
+    "entry_no": "MJ/2027-28/000001",
+    "posting_date": "2027-04-05",
+    "doc_date": "2027-04-05",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "22222222-2222-4222-8222-222222222222",
+     "asset_id": "55555555-5555-4555-8555-000000000002",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 10000,
+     "currency": "INR",
+     "put_to_use": "2026-10-01",
+     "source_entry_id": "00000000-0000-4000-8000-000000000239",
+     "source_chit_id": "as2",
+     "accumulated_minor": 4000,
+     "last_dep_fy": "2026-27",
+     "disposed_on": "2027-04-05",
+     "disposal_entry_id": "00000000-0000-4000-8000-000000000241",
+     "proceeds_minor": 5000,
+     "created_by": "22222222-2222-4222-8222-222222222222",
+     "wdv_minor": 0
+    }
+   }
+  },
+  "POST /api/books/assets/:id/dispose|period-051": {
+   "route": "POST /api/books/assets/:id/dispose",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/assets|period-002": {
+   "route": "POST /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-04-18",
+    "doc_date": "2026-04-18",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_chit_id": null,
+     "accumulated_minor": 0,
+     "last_dep_fy": null,
+     "disposed_on": null,
+     "disposal_entry_id": null,
+     "proceeds_minor": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 4200000
+    }
+   }
+  },
+  "POST /api/books/assets|period-003": {
+   "route": "POST /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000113",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-04-18",
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000001",
+     "name": "Laptop",
+     "asset_class": "computers",
+     "cost_minor": 4200000,
+     "currency": "INR",
+     "put_to_use": "2026-04-18",
+     "source_entry_id": "00000000-0000-4000-8000-000000000113",
+     "source_chit_id": null,
+     "accumulated_minor": 0,
+     "last_dep_fy": null,
+     "disposed_on": null,
+     "disposal_entry_id": null,
+     "proceeds_minor": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 4200000
+    }
+   }
+  },
+  "POST /api/books/assets|period-049": {
+   "route": "POST /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/assets|period-050": {
+   "route": "POST /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000242",
+    "entry_no": "MJ/2026-27/000008",
+    "posting_date": "2026-12-03",
+    "doc_date": "2026-12-03",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000003",
+     "name": "Printer",
+     "asset_class": "computers",
+     "cost_minor": 900000,
+     "currency": "INR",
+     "put_to_use": "2026-12-03",
+     "source_entry_id": "00000000-0000-4000-8000-000000000242",
+     "source_chit_id": null,
+     "accumulated_minor": 0,
+     "last_dep_fy": null,
+     "disposed_on": null,
+     "disposal_entry_id": null,
+     "proceeds_minor": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 900000
+    }
+   }
+  },
+  "POST /api/books/assets|period-064": {
+   "route": "POST /api/books/assets",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000247",
+    "entry_no": "MJ/2027-28/000002",
+    "posting_date": "2027-06-01",
+    "doc_date": "2027-06-01",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "asset": {
+     "entity": "11111111-1111-4111-8111-111111111111",
+     "asset_id": "55555555-5555-4555-8555-000000000004",
+     "name": "Server",
+     "asset_class": "computers",
+     "cost_minor": 5000000,
+     "currency": "INR",
+     "put_to_use": "2027-06-01",
+     "source_entry_id": "00000000-0000-4000-8000-000000000247",
+     "source_chit_id": null,
+     "accumulated_minor": 0,
+     "last_dep_fy": null,
+     "disposed_on": null,
+     "disposal_entry_id": null,
+     "proceeds_minor": null,
+     "created_by": "11111111-1111-4111-8111-111111111111",
+     "wdv_minor": 5000000
+    }
+   }
+  },
+  "POST /api/books/closing-stock|period-015": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 0,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_no": "JV/2026-27/000002",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/closing-stock|period-016": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 5000000,
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000117",
+    "entry_no": "JV/2026-27/000002",
+    "posting_date": "2026-09-30"
+   }
+  },
+  "POST /api/books/closing-stock|period-017": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 5000000,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000118",
+    "entry_no": "JV/2026-27/000003",
+    "posting_date": "2026-10-31",
+    "doc_date": "2026-10-31",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/closing-stock|period-018": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 5500000,
+    "from_ledger": {
+     "value_minor": 240000,
+     "lines": 1,
+     "movements": 2
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000119",
+    "entry_no": "JV/2026-27/000004",
+    "posting_date": "2026-10-31",
+    "doc_date": "2026-10-31",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/closing-stock|period-019": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 240000,
+    "from_ledger": {
+     "value_minor": 40000,
+     "lines": 1,
+     "movements": 5
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000120",
+    "entry_no": "JV/2026-27/000005",
+    "posting_date": "2026-11-30",
+    "doc_date": "2026-11-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/closing-stock|period-052": {
+   "route": "POST /api/books/closing-stock",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "book_minor": 40000,
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/contra|period-043": {
+   "route": "POST /api/books/contra",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000128",
+    "entry_no": "MJ/2026-27/000007",
+    "posting_date": "2026-09-15",
+    "doc_date": "2026-09-15",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/contra|period-044": {
+   "route": "POST /api/books/contra",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000128",
+    "entry_no": "MJ/2026-27/000007",
+    "posting_date": "2026-09-15"
+   }
+  },
+  "POST /api/books/contra|period-058": {
+   "route": "POST /api/books/contra",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/depreciation/run|period-007": {
+   "route": "POST /api/books/depreciation/run",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "fy": "2026-27",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "basis_rule": "it_act_wdv",
+    "by_class": [
+     {
+      "class": "computers",
+      "rate": 40,
+      "amount": 16800
+     }
+    ],
+    "by_asset": [
+     {
+      "id": "55555555-5555-4555-8555-000000000001",
+      "class": "computers",
+      "amount": 16800
+     }
+    ],
+    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2027-03-31",
+    "doc_date": "2027-03-31",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/depreciation/run|period-008": {
+   "route": "POST /api/books/depreciation/run",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000114",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2027-03-31",
+    "fy": "2026-27",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it."
+   }
+  },
+  "POST /api/books/depreciation/run|period-011": {
+   "route": "POST /api/books/depreciation/run",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "nothing_to_post": true,
+    "fy": "2025-26",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "why": "There are no assets in the register for 2025-26."
+   }
+  },
+  "POST /api/books/depreciation/run|period-047": {
+   "route": "POST /api/books/depreciation/run",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "fy": "2026-27",
+    "entity_basis": "proprietor",
+    "basis_assumed": true,
+    "entity_note": "The entity type is not set for this shop yet, so depreciation was worked as a proprietor (Income-tax Act written-down value). Set books.entity_basis to change it.",
+    "basis_rule": "it_act_wdv",
+    "by_class": [
+     {
+      "class": "computers",
+      "rate": 40,
+      "amount": 40
+     }
+    ],
+    "by_asset": [
+     {
+      "id": "55555555-5555-4555-8555-000000000002",
+      "class": "computers",
+      "amount": 40
+     }
+    ],
+    "entry_id": "00000000-0000-4000-8000-000000000240",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2027-03-31",
+    "doc_date": "2027-03-31",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/depreciation/run|period-065": {
+   "route": "POST /api/books/depreciation/run",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/enable|close-001": {
+   "route": "POST /api/books/enable",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "accounts_added": 101,
+    "fiscal_year": "2026-27",
+    "parties_numbered": null
+   }
+  },
+  "POST /api/books/enable|close-007": {
+   "route": "POST /api/books/enable",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "accounts_added": 104,
+    "fiscal_year": "2026",
+    "parties_numbered": null
+   }
+  },
+  "POST /api/books/enable|period-001": {
+   "route": "POST /api/books/enable",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "accounts_added": 110,
+    "fiscal_year": "2027-28",
+    "parties_numbered": null
+   }
+  },
+  "POST /api/books/gst/close|close-002": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "period": "2026-Q1",
+    "date": "2026-09-30",
+    "utilised": [
+     {
+      "from": "gst",
+      "against": "gst",
+      "amount_minor": 3000
+     }
+    ],
+    "payable_minor": {
+     "gst_minor": 7000
+    },
+    "carried_minor": {
+     "gst_minor": 0
+    },
+    "pay_total_minor": 7000,
+    "form": "BAS",
+    "heads": [
+     "gst"
+    ],
+    "return_period": {
+     "period": "2026-Q1",
+     "label": "FY27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28"
+    },
+    "ref_label": "Payment reference number",
+    "ref_hint": "The payment reference number on the BAS",
+    "carried_word": "GST refund due from the ATO",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000104",
+    "entry_no": "JV/2026-27/000001",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 1
+     },
+     {
+      "fiscal_year": "2026-27",
+      "period": 2
+     },
+     {
+      "fiscal_year": "2026-27",
+      "period": 3
+     }
+    ]
+   }
+  },
+  "POST /api/books/gst/close|close-003": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "period": "2026-Q1",
+    "date": "2026-09-30",
+    "utilised": [],
+    "payable_minor": {
+     "gst_minor": 7000
+    },
+    "carried_minor": {
+     "gst_minor": 0
+    },
+    "pay_total_minor": 7000,
+    "form": "BAS",
+    "heads": [
+     "gst"
+    ],
+    "return_period": {
+     "period": "2026-Q1",
+     "label": "FY27 Q1 (Jul–Sep 2026)",
+     "frequency": "quarterly",
+     "start": "2026-07-01",
+     "end": "2026-09-30",
+     "due": "2026-10-28"
+    },
+    "ref_label": "Payment reference number",
+    "ref_hint": "The payment reference number on the BAS",
+    "carried_word": "GST refund due from the ATO",
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000104",
+    "entry_no": "JV/2026-27/000001"
+   }
+  },
+  "POST /api/books/gst/close|close-008": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "period": "2026-02/2026-04",
+    "date": "2026-04-30",
+    "utilised": [
+     {
+      "from": "vat",
+      "against": "vat",
+      "amount_minor": 3000
+     }
+    ],
+    "payable_minor": {
+     "vat_minor": 2000
+    },
+    "carried_minor": {
+     "vat_minor": 0
+    },
+    "pay_total_minor": 4000,
+    "rcm_minor": {
+     "vat": 2000
+    },
+    "cash_minor": {
+     "vat": 4000
+    },
+    "form": "VAT201",
+    "heads": [
+     "vat"
+    ],
+    "return_period": {
+     "period": "2026-02/2026-04",
+     "label": "Feb–Apr 2026",
+     "stagger": 1,
+     "frequency": "quarterly",
+     "start": "2026-02-01",
+     "end": "2026-04-30",
+     "due": "2026-05-28",
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+    },
+    "ref_label": "Payment reference",
+    "ref_hint": "The EmaraTax payment reference",
+    "carried_word": "VAT recoverable from the FTA",
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000213",
+    "entry_no": "JV/2026/000001",
+    "posting_date": "2026-04-30",
+    "doc_date": "2026-04-30",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026",
+      "period": 2
+     },
+     {
+      "fiscal_year": "2026",
+      "period": 3
+     },
+     {
+      "fiscal_year": "2026",
+      "period": 4
+     }
+    ]
+   }
+  },
+  "POST /api/books/gst/close|period-022": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 6,
+    "date": "2026-09-30",
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     },
+     {
+      "from": "sgst",
+      "against": "sgst",
+      "amount_minor": 4500
+     }
+    ],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_no": "JV/2026-27/000006",
+    "posting_date": "2026-09-30",
+    "doc_date": "2026-09-30",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 6
+     }
+    ]
+   }
+  },
+  "POST /api/books/gst/close|period-023": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 6,
+    "date": "2026-09-30",
+    "utilised": [],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_no": "JV/2026-27/000006"
+   }
+  },
+  "POST /api/books/gst/close|period-027": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 6,
+    "date": "2026-09-30",
+    "utilised": [],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000121",
+    "entry_no": "JV/2026-27/000006"
+   }
+  },
+  "POST /api/books/gst/close|period-059": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 12,
+    "date": "2027-03-31",
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     },
+     {
+      "from": "sgst",
+      "against": "sgst",
+      "amount_minor": 4500
+     }
+    ],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/gst/close|period-060": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 12,
+    "date": "2027-03-31",
+    "utilised": [
+     {
+      "from": "cgst",
+      "against": "cgst",
+      "amount_minor": 4500
+     },
+     {
+      "from": "sgst",
+      "against": "sgst",
+      "amount_minor": 4500
+     }
+    ],
+    "payable_minor": {
+     "cgst_minor": 4500,
+     "sgst_minor": 4500,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 9000,
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000246",
+    "entry_no": "JV/2026-27/000008",
+    "posting_date": "2027-03-31",
+    "doc_date": "2027-03-31",
+    "moved": false,
+    "lines": 4,
+    "items": 0,
+    "note": null,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 12
+     }
+    ]
+   }
+  },
+  "POST /api/books/gst/close|period-062": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 7,
+    "date": "2026-10-31",
+    "utilised": [],
+    "payable_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 0,
+    "ok": true,
+    "nothing_to_set_off": true,
+    "locked": [
+     {
+      "fiscal_year": "2026-27",
+      "period": 7
+     }
+    ]
+   }
+  },
+  "POST /api/books/gst/close|period-063": {
+   "route": "POST /api/books/gst/close",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "fy": "2026-27",
+    "period": 7,
+    "date": "2026-10-31",
+    "utilised": [],
+    "payable_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "carried_minor": {
+     "cgst_minor": 0,
+     "sgst_minor": 0,
+     "igst_minor": 0,
+     "cess_minor": 0
+    },
+    "pay_total_minor": 0,
+    "ok": true,
+    "duplicate": true,
+    "nothing_to_set_off": true
+   }
+  },
+  "POST /api/books/gst/pay|close-004": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "payment_ref": "PRN-551234",
+    "paid_minor": {
+     "gst": 7000
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000105",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-10-15",
+    "doc_date": "2026-10-15",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/gst/pay|close-005": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "payment_ref": "PRN-551234",
+    "paid_minor": {
+     "gst": 7000
+    },
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000105",
+    "entry_no": "MJ/2026-27/000001",
+    "posting_date": "2026-10-15"
+   }
+  },
+  "POST /api/books/gst/pay|close-009": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "payment_ref": "GIBAN-77",
+    "paid_minor": {
+     "vat": 2000
+    },
+    "rcm_paid_minor": {
+     "vat": 2000
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000214",
+    "entry_no": "MJ/2026/000001",
+    "posting_date": "2026-05-20",
+    "doc_date": "2026-05-20",
+    "moved": false,
+    "lines": 3,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/gst/pay|period-024": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "challan_no": "CPIN24100001",
+    "payment_ref": "CPIN24100001",
+    "paid_minor": {
+     "cgst": 4500,
+     "sgst": 4500
+    },
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_no": "MJ/2026-27/000002",
+    "posting_date": "2026-10-02",
+    "doc_date": "2026-10-02",
+    "moved": false,
+    "lines": 3,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/gst/pay|period-025": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "challan_no": "CPIN24100001",
+    "payment_ref": "CPIN24100001",
+    "paid_minor": {
+     "cgst": 4500,
+     "sgst": 4500
+    },
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000122",
+    "entry_no": "MJ/2026-27/000002",
+    "posting_date": "2026-10-02"
+   }
+  },
+  "POST /api/books/gst/pay|period-061": {
+   "route": "POST /api/books/gst/pay",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "challan_no": "CPIN-OFF",
+    "payment_ref": "CPIN-OFF",
+    "paid_minor": {
+     "cgst": 100
+    },
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/loans/:ref/emi|period-032": {
+   "route": "POST /api/books/loans/:ref/emi",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000124",
+    "entry_no": "MJ/2026-27/000004",
+    "posting_date": "2026-07-10",
+    "doc_date": "2026-07-10",
+    "moved": false,
+    "lines": 3,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/loans/:ref/emi|period-033": {
+   "route": "POST /api/books/loans/:ref/emi",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000124",
+    "entry_no": "MJ/2026-27/000004",
+    "posting_date": "2026-07-10"
+   }
+  },
+  "POST /api/books/loans/:ref/emi|period-054": {
+   "route": "POST /api/books/loans/:ref/emi",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/loans|period-030": {
+   "route": "POST /api/books/loans",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_no": "MJ/2026-27/000003",
+    "posting_date": "2026-06-10",
+    "doc_date": "2026-06-10",
+    "moved": false,
+    "lines": 2,
+    "items": 0,
+    "note": null
+   }
+  },
+  "POST /api/books/loans|period-031": {
+   "route": "POST /api/books/loans",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "duplicate": true,
+    "entry_id": "00000000-0000-4000-8000-000000000123",
+    "entry_no": "MJ/2026-27/000003",
+    "posting_date": "2026-06-10"
+   }
+  },
+  "POST /api/books/loans|period-053": {
+   "route": "POST /api/books/loans",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": false,
+    "off": true
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-005": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 2,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-006": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 2,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-010": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 12,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-012": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 12,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-020": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 7,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-021": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 7,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-026": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 5,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-028": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 5,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-029": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 6,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-034": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 3,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-035": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 3,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-041": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 7,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-042": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 7,
+     "status": "open"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-045": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 6,
+     "status": "soft_locked"
+    }
+   }
+  },
+  "POST /api/books/periods/:fy/:p/:act|period-046": {
+   "route": "POST /api/books/periods/:fy/:p/:act",
+   "status": 200,
+   "type": "application/json",
+   "body": {
+    "ok": true,
+    "period": {
+     "fiscal_year": "2026-27",
+     "period": 6,
+     "status": "open"
+    }
+   }
+  }
+ }
+}

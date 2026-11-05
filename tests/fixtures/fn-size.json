@@ -1,7 +1,7 @@
 {
   "limit": 80,
-  "long_functions": 236,
-  "worst_complexity": 183,
+  "long_functions": 215,
+  "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
@@ -12,10 +12,6 @@
     ],
     "lib/ai.js": [
       "invokeSkill"
-    ],
-    "lib/amend.js": [
-      "(anonymous)",
-      "record"
     ],
     "lib/assign.js": [
       "byPerson"
@@ -55,8 +51,7 @@
       "todo"
     ],
     "lib/books.js": [
-      "enable",
-      "writeReversal"
+      "enable"
     ],
     "lib/capture.js": [
       "(anonymous)",
@@ -95,9 +90,6 @@
       "applyDecisions",
       "matchHeader",
       "preflight"
-    ],
-    "lib/ctpaddress.js": [
-      "resolveAddress"
     ],
     "lib/dayopen.js": [
       "(anonymous)"
@@ -157,9 +149,6 @@
     ],
     "lib/lotfields.js": [
       "(anonymous)"
-    ],
-    "lib/mint.js": [
-      "deliver"
     ],
     "lib/money.js": [
       "(anonymous)"
@@ -289,9 +278,6 @@
       "(anonymous)",
       "post"
     ],
-    "lib/supply-store.js": [
-      "purchase"
-    ],
     "lib/tax-copy.js": [
       "partiesFor"
     ],
@@ -383,11 +369,9 @@
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
       "POST /assign-bulk",
-      "PUT /:chit_id/disputes/:dispute_id/resolve",
       "PUT /:chit_id/status",
       "PUT /:chit_id/void",
       "chitFilters",
-      "moveStatus",
       "sendCopies",
       "sendCopyPolicy",
       "sendLegacyReceiverRows",
@@ -410,7 +394,6 @@
     "routes/entities.js": [
       "GET /me",
       "GET /mis",
-      "GET /search",
       "PATCH /profile"
     ],
     "routes/folders.js": [
@@ -427,10 +410,6 @@
     "routes/invoice.js": [
       "POST /build"
     ],
-    "routes/keys.js": [
-      "(anonymous)",
-      "claimDevice"
-    ],
     "routes/network-design.js": [
       "GET /availability",
       "POST /build"
@@ -444,13 +423,11 @@
     "routes/products.js": [
       "GET /",
       "GET /:id/versions",
-      "GET /lists",
       "POST /import",
       "POST /lists/adopt",
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers",
       "GET /suppliers/availability",
       "PATCH /suppliers/:id",
       "POST /customers",
@@ -475,22 +452,12 @@
       "GET /report",
       "GET /report",
       "PATCH /incidents/:id",
-      "PATCH /requirements/:id",
       "POST /incidents",
       "POST /releases",
       "POST /requirements",
       "POST /requirements",
       "importCases",
       "recordResults"
-    ],
-    "routes/till.js": [
-      "GET /bills",
-      "GET /match",
-      "GET /match",
-      "GET /snapshot",
-      "GET /worth-an-offer",
-      "POST /catalogue",
-      "POST /shop"
     ]
   }
 }

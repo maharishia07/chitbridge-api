@@ -1,9 +1,9 @@
-// routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per
+// routes/folders.js — FOLDERS: a per-entity tree for organising ANY chit (mailing-model). Folders are private per entity;
 // OWNS  /api/folders: a per-entity tree for filing any chit, and a folder's chit list (paged; a cut list says so).
 // CALLED BY server.js (mounted at /api/folders), the Task and Order lists, the folder panes and rules builder, MIS and the messages inbox.
 // FLOW  auth → schema check (lib/folders-contract.js) → the folder read (withEntity) → pageOut; a refusal → problem(req, res, said(...) | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 // CARD 01-rail-core-the-chit/folders
-// entity; filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
+// filing sets chit_status.folder_id on THIS entity's copy only. Current/Archive reuses chit_status.archived_at.
 // chit_status is RLS-protected -> any query touching it runs inside withEntity(caller). The folder table is entity-filtered.
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
@@ -15,8 +15,9 @@ const router = express.Router();
 const { withEntity } = require('../db'); // every folder-table query runs inside withEntity — `folder` is RLS-enforced (b64)
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
+const { schemaValidate, sanitise, queryDay, isCalendarDay } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { said, failed, faultOf, schemaOptionsFor, operationFor, pathsOf } = require('../lib/folders-contract'); // the contract (each route's operation) and the words of a refusal
+const { UUID } = require('../lib/namedentity'); /* the one uuid shape: Postgres takes exactly this, so a 36-character run of dashes is no id */
 const auth = require('../middleware/auth');
 
 const ent = (req) => auth.entityOf(req);
@@ -51,21 +52,28 @@ const views = require('../lib/folder-views'); // ⭐ VIEW folders — contents =
 const INV = require('../lib/folder-inventory'); // the folder inventory, numbered with the ledger
 const { isOwner } = require('../lib/owner');
 const select = require('../lib/select'); // WHICH chits — shared with the scorecard
-const measure = require('../lib/measure'); // ...and how they are counted
+const cost = require('../lib/cost'); // RAIL-146g/146j: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146j: what a cost-blind co-assist may read of a folder
 const policy = require('../lib/policy'); // overdue is a declared flag, not a magic number
 
+/** S35: no folder of this shop has the id — an unknown id and another shop's id are this one answer, the 404 of notHere() */
+const NOT_HERE = 'not_here';
+const notHere = () => ({ status: 404, ...said('NOT_FOUND', 'Not found') });
 /**
  * viewFolder(entity, id) → the VIEW folder behind an id: a system one (lib/folder-inventory; `false` when the shop switched it
- * off), or a shop's own (folder.kind = 'view', b275) — null for an ordinary filed folder. Every folder route asks this first.
+ * off), or a shop's own (folder.kind = 'view', b275) — null for an ordinary filed folder, NOT_HERE when this shop has no folder
+ * with the id (the same read, no extra trip). A failed read is taken as a filed folder, as before. Every folder route asks this first.
  */
 async function viewFolder(e, id) {
   const sys = await views.systemById(e, id);
   if (sys) return sys.on ? sys : false;
   const r = await withEntity(e, (db) =>
     db.query(`SELECT f.folder_id, f.name, to_jsonb(f)->>'kind' AS kind FROM folder f WHERE f.folder_id = $1 AND f.entity_id = $2`, [id, e])
-  ).catch(log.orElse('folders viewFolder: the read failed — answered with none', { rows: [] }));
+  ).catch(log.orElse('folders viewFolder: the read failed — answered as a filed folder', null));
+  if (!r) return null;
   const f = r.rows[0];
-  return f && f.kind === 'view' ? f : null;
+  if (!f) return NOT_HERE;
+  return f.kind === 'view' ? f : null;
 }
 
 // GET /api/folders — the entity's folder tree (flat rows; the client builds the tree) with CURRENT (non-archived) counts.
@@ -117,7 +125,10 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
       sysErr = safeErr(e2);
       console.error('system folders:', e2.message);
     }
-    res.json(Object.assign(PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)), sysErr ? { system_error: sysErr } : {}));
+    const answer = PL.pageOut('folders', list.concat(rows), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a system folder (lib/folder-views systemFolders) and a shop's folder (the statement above) each carry the keys they always did, in their own order; the pager adds capped and cap_note only when it cut the list; system_error only when the system folders failed */
+    // prettier-ignore
+    res.json({ folders: answer.folders.map((x) => (x.system ? { folder_id: x.folder_id, parent_id: x.parent_id, name: x.name, code: x.code, kind: x.kind, system: x.system, scope: x.scope, side: x.side, ledger: x.ledger, sort: x.sort, count: x.count, total: x.total } : { folder_id: x.folder_id, parent_id: x.parent_id, name: x.name, sort: x.sort, scope: x.scope, kind: x.kind, count: x.count })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, system_error: sysErr || undefined });
   } catch (err) {
     problem(req, res, failed(err, req, 'List failed'));
   }
@@ -206,7 +217,10 @@ router.post(
               [e, name, scope]
             )
           );
-          return res.json({ folder: Object.assign({}, r.rows[0], { count: 0 }) });
+          const made = r.rows[0];
+          /* S34: the view folder is the columns the INSERT above RETURNs, in its order, then its count */
+          // prettier-ignore
+          return res.json({ folder: { folder_id: made.folder_id, parent_id: made.parent_id, name: made.name, sort: made.sort, scope: made.scope, kind: made.kind, count: 0 } });
         } catch (ev) {
           if (missingCol(ev)) return problem(req, res, { status: 503, ...said('FOLDER_NOT_MIGRATED', 'Not migrated', 'View folders need b275 on this environment.') });
           throw ev;
@@ -242,12 +256,30 @@ router.post(
         row = await doInsert(false);
       }
       if (row.badParent) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad parent', 'Parent folder not found.') });
-      res.json({ folder: { ...row.folder, count: 0 } });
+      const made = row.folder || {}; /* no row read back: the answer stays { count: 0 }, as the spread made it */
+      /* S34: the folder is the columns the INSERT above RETURNs (scope only once b133 has run), then its count */
+      // prettier-ignore
+      res.json({ folder: { folder_id: made.folder_id, parent_id: made.parent_id, name: made.name, sort: made.sort, scope: made.scope, count: 0 } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Create failed'));
     }
   }
 );
+
+/** RAIL-137 (c): true when `parentId` is `folderId` itself or sits anywhere BELOW it, walked up through this shop's folders: putting a
+ *  folder under its own descendant takes the whole subtree out of the tree. UNION, so a loop already in the table ends the walk. */
+async function isInsideItself(db, entityId, folderId, parentId) {
+  const above = await db.query(
+    `WITH RECURSIVE up AS (
+       SELECT folder_id, parent_id FROM folder WHERE folder_id = $1 AND entity_id = $2
+       UNION
+       SELECT above.folder_id, above.parent_id FROM folder above JOIN up ON above.folder_id = up.parent_id WHERE above.entity_id = $2
+     )
+     SELECT 1 FROM up WHERE folder_id = $3 LIMIT 1`,
+    [parentId, entityId, folderId]
+  );
+  return above.rows.length > 0;
+}
 
 // PATCH /api/folders/:id — rename and/or re-parent (move a subtree)
 router.patch(
@@ -282,11 +314,15 @@ router.patch(
       params.push(e);
       const r = await withEntity(e, async (db) => {
         if (newParent && !(await views.folderOwned(db, e, newParent))) return null;
+        if (newParent && (await isInsideItself(db, e, req.params.id, newParent))) return 'inside_itself';
         return db.query(`UPDATE folder SET ${sets.join(', ')} WHERE folder_id = $${idIdx} AND entity_id = $${index} RETURNING folder_id, parent_id, name`, params);
       });
+      if (r === 'inside_itself') return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'A folder cannot go inside a folder that is inside it') });
       /* an unknown parent and another shop's parent are one answer, and the same as an unknown folder (SEC-100) */
       if (!r || !r.rows.length) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') });
-      res.json({ folder: r.rows[0] });
+      const saved = r.rows[0];
+      /* S34: the folder is the three columns the UPDATE above RETURNs, in its order */
+      res.json({ folder: { folder_id: saved.folder_id, parent_id: saved.parent_id, name: saved.name } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Update failed'));
     }
@@ -294,18 +330,24 @@ router.patch(
 );
 
 // DELETE /api/folders/:id — delete a folder (children cascade via FK); UNFILE its chits (folder_id -> NULL) so nothing is lost.
+/* RAIL-137 (b): the folder and EVERY folder below it (the foreign key cascades the whole subtree, and nothing constrains
+   chit_status.folder_id). Unfiling only the direct children left a chit in a grandchild pointing at a folder no one holds.
+   UNION, not UNION ALL, so a parent loop already in the table cannot make this walk forever. */
+const UNFILE_SUBTREE_SQL = `WITH RECURSIVE subtree AS (
+     SELECT folder_id FROM folder WHERE entity_id = $1 AND folder_id = $2
+     UNION
+     SELECT child.folder_id FROM folder child JOIN subtree ON child.parent_id = subtree.folder_id WHERE child.entity_id = $1
+   )
+   UPDATE chit_status SET folder_id = NULL WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM subtree)`;
 router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
   try {
     const e = ent(req);
     const deleted = await withEntity(e, async (db) => {
-      await db.query(
-        `UPDATE chit_status SET folder_id = NULL
-          WHERE entity_id = $1 AND folder_id IN (SELECT folder_id FROM folder WHERE entity_id = $1 AND (folder_id = $2 OR parent_id = $2))`,
-        [e, req.params.id]
-      );
+      await db.query(UNFILE_SUBTREE_SQL, [e, req.params.id]);
       const r = await db.query(`DELETE FROM folder WHERE folder_id = $1 AND entity_id = $2`, [req.params.id, e]);
       return r.rowCount;
     });
+    if (!deleted) return problem(req, res, notHere()); /* S35: nothing of this shop's was deleted (an unknown id, another shop's): said, not { deleted: 0 } */
     res.json({ deleted });
   } catch (err) {
     problem(req, res, failed(err, req, 'Delete failed'));
@@ -403,6 +445,36 @@ router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
   }
 });
 
+/**
+ * filedChits(entityId, folderId, archived, pager, blind) → { rows, total, roles }: one page of a FILED folder's chits, newest first, and the whole count.
+ * ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
+ * was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
+ * pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut.
+ */
+async function filedChits(entityId, folderId, archived, pager, blind) {
+  const limit = pager.asked ? pager.limit : FOLDER_LIST_MAX,
+    offset = pager.asked ? pager.offset : 0;
+  const read = await withEntity(entityId, async (db) => {
+    const found = await db.query(
+      `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
+            ch.business_json, ch.created_by_actor_id${costView.feedColsSql('ch', blind)},
+            (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
+            cs.direction, cs.current_status, COUNT(*) OVER() AS _total
+       FROM chit_status cs
+       JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
+      WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${archived ? 'NOT NULL' : 'NULL'}
+      ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`,
+      [entityId, folderId, limit, offset]
+    );
+    return { found, roles: await costView.rolesFor(db, entityId, found.rows, blind) }; /* RAIL-146j: ONE party-role read per page, only for a blind reader */
+  });
+  const total = read.found.rows.length ? Number(read.found.rows[0]._total) || 0 : 0;
+  read.found.rows.forEach((row) => {
+    delete row._total;
+  });
+  return { rows: read.found.rows, total, roles: read.roles };
+}
+
 // GET /api/folders/:id/chits?archived=0|1 — the chits filed in this folder.
 // ⚠️ ONE SIDE ONLY (b133). Filing enforces it, so a folder cannot acquire the wrong track — but a folder that was
 // mixed BEFORE b133 still holds both, and this list would show them side by side with the wrong actions. The
@@ -411,6 +483,8 @@ router.post('/move', auth, ...checked('POST /move'), async (req, res) => {
 router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) => {
   try {
     const e = ent(req);
+    const blind = await cost.isCostBlind(req, e),
+      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request */
     const arch = req.query.archived === '1' || req.query.archived === 'true';
     const pg = PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX);
     /**
@@ -419,39 +493,39 @@ router.get('/:id/chits', auth, ...checked('GET /:id/chits'), async (req, res) =>
      */
     const vf = await viewFolder(e, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
+    if (vf === NOT_HERE) return problem(req, res, notHere());
     if (vf) {
-      const m = await views.members(e, vf, { archived: arch, state: req.query.state });
       /* ⚠️ { chits, counts } and nothing else: the web's envelope collapses `chits` to the array and keeps only the siblings it
          knows (`counts` is one) — anything more would be dropped silently on the way in */
-      return res.json(Object.assign(PL.pageOut('chits', m.chits, pg), { counts: m.counts }));
+      const members = await views.members(e, vf, { archived: arch, state: req.query.state });
+      const shown = await withEntity(e, (db) => costView.viewFolderRows(db, e, members.chits, blind)); /* RAIL-146j: a blind reader's cost-side members lose their money */
+      const page = PL.pageOut('chits', shown, pg);
+      /* S34: the pager keys named (capped and cap_note only when it cut the list); a chit stays the row lib/folder-views members answers (lib/select plus its bill), open; cost_params_ignored (RAIL-146j) only when a blind reader sent a money filter */
+      // prettier-ignore
+      return res.json({ chits: page.chits, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note, counts: { open: members.counts.open, closed: members.counts.closed, total: members.counts.total }, cost_params_ignored: costView.ignoredField(ignored) });
     }
-    /* ⭐ W2-RAIL R2: THE CAP SAYS SO. This list always cut at 100 and answered `total` = the rows it kept, so a folder's 101st chit
-       was invisible and unsaid. Now the whole count rides in the same statement (COUNT(*) OVER(), no extra trip), the page is the
-       pager's when asked (LIMIT/OFFSET) and the ceiling when not — and pageOut answers `capped` + `cap_note` whenever rows were cut. */
-    const limit = pg.asked ? pg.limit : FOLDER_LIST_MAX,
-      offset = pg.asked ? pg.offset : 0;
-    const r = await withEntity(e, (db) =>
-      db.query(
-        `SELECT ch.chit_id, ch.sender_entity_display_name, ch.auto_subject, ch.manual_subject, ch.purpose, ch.created_at,
-              ch.business_json, ch.created_by_actor_id,
-              (SELECT display_name FROM identities WHERE identity_id = ch.created_by_actor_id) AS raiser_name,
-              cs.direction, cs.current_status, COUNT(*) OVER() AS _total
-         FROM chit_status cs
-         JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
-        WHERE cs.entity_id = $1 AND cs.folder_id = $2 AND cs.deleted_at IS NULL AND cs.archived_at IS ${arch ? 'NOT NULL' : 'NULL'}
-        ORDER BY ch.created_at DESC LIMIT $3 OFFSET $4`,
-        [e, req.params.id, limit, offset]
-      )
-    );
-    const total = r.rows.length ? Number(r.rows[0]._total) || 0 : 0;
-    r.rows.forEach((row) => {
-      delete row._total;
-    });
-    res.json(PL.pageOut('chits', r.rows, pg, total));
+    const filed = await filedChits(e, req.params.id, arch, pg, blind);
+    const answer = PL.pageOut('chits', costView.folderChitRows(filed.rows, { blind, shopId: e, roles: filed.roles }), pg, filed.total); /* RAIL-146j: a blind reader's cost-side rows lose their money */
+    /* S34: the pager keys named (capped and cap_note only when it cut the list); a chit stays the row the statement above selects, since business_json is the chit body the screen reads; cost_params_ignored (RAIL-146j) as above */
+    // prettier-ignore
+    res.json({ chits: answer.chits, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     problem(req, res, failed(err, req, 'List failed'));
   }
 });
+
+/** filedSet(shopId, folderId, archived) → { head: { scope }, rows }: a FILED folder's copies for its metrics, on the folder's own side (a Task folder's arithmetic is over Task copies); a failed scope read measures both sides */
+async function filedSet(shopId, folderId, archived) {
+  let fscope = null;
+  try {
+    const f = await withEntity(shopId, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [folderId, shopId]));
+    fscope = (f.rows[0] || {}).scope || null;
+  } catch (e) {
+    log.fellBack('folders GET /:id/metrics: the read failed — carried on without it', e);
+  }
+  const rows = await select.rows(shopId, { folder_id: folderId, archived, direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined });
+  return { head: { scope: fscope }, rows };
+}
 
 /**
  * GET /:id/metrics — WHAT IS IN THIS FOLDER, as numbers.
@@ -468,29 +542,18 @@ router.get('/:id/metrics', auth, ...checked('GET /:id/metrics'), async (req, res
   try {
     const me = ent(req);
     const flags = await policy.get(me); //  is a POLICY, not a constant hidden inside a report
+    const blind = await costView.blindOf(req, me),
+      ignored = costView.moneyParams(req, blind); /* RAIL-146j: ONE cost read per request (RAIL-146k: memoised, the measurer below shares it) */
     /* a VIEW folder measures its rule's matches — the same measure, a different set */
     const vf = await viewFolder(me, req.params.id);
     if (vf === false) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'That folder is switched off.') });
-    if (vf) {
-      const vrows = await views.rowsFor(me, await views.whensOf(me, vf), { archived: req.query.archived === '1' });
-      return res.json(
-        Object.assign({ folder_id: req.params.id, scope: null, code: vf.code || null }, measure.measure(vrows, { overdue_days: flags.overdue_days }))
-      );
-    }
-    /* The folder's own side scopes what it measures — a Task folder's arithmetic is over Task copies. */
-    let fscope = null;
-    try {
-      const f = await withEntity(me, (db) => db.query('SELECT scope FROM folder WHERE folder_id = $1 AND entity_id = $2', [req.params.id, me]));
-      fscope = (f.rows[0] || {}).scope || null;
-    } catch (e) {
-      log.fellBack('folders GET /:id/metrics: the read failed — carried on without it', e);
-    }
-    const rows = await select.rows(me, {
-      folder_id: req.params.id,
-      archived: req.query.archived === '1',
-      direction: fscope === 'order' ? 'sent' : fscope === 'task' ? 'received' : undefined
-    });
-    res.json(Object.assign({ folder_id: req.params.id, scope: fscope }, measure.measure(rows, { overdue_days: flags.overdue_days })));
+    if (vf === NOT_HERE) return problem(req, res, notHere());
+    const archived = req.query.archived === '1';
+    const { head, rows } = vf ? { head: { scope: null, code: vf.code || null }, rows: await views.rowsFor(me, await views.whensOf(me, vf), { archived }) } : await filedSet(me, req.params.id, archived);
+    const measured = await costView.measureFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: a blind reader's money stands only over the shop own sales */
+    /* S34: the folder (code only for a view folder), then every key lib/measure measure answers, in its order; the nested counts and sums stay the measure own, open; cost_hidden and cost_params_ignored (RAIL-146j) only for a blind reader */
+    // prettier-ignore
+    res.json({ folder_id: req.params.id, scope: head.scope, code: head.code, count: measured.count, by_status: measured.by_status, by_direction: measured.by_direction, open: measured.open, closed: measured.closed, unread: measured.unread, overdue: measured.overdue, overdue_days: measured.overdue_days, clock: measured.clock, disputes: measured.disputes, money: measured.money, cost_hidden: measured.cost_hidden, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (err) {
     console.error('folder metrics:', err.message);
     problem(req, res, failed(err, req, 'Metrics failed'));
@@ -511,7 +574,11 @@ router.get('/:id/rules', auth, ...checked('GET /:id/rules'), async (req, res) =>
         migrated: true,
         system: true
       });
-    res.json(await rules.list(ent(req), req.params.id));
+    const found = await rules.list(ent(req), req.params.id, true);
+    if (!found) return problem(req, res, notHere()); /* S35: lib/folder-rules list asks folderOwned first */
+    /* S34: a rule is the columns lib/folder-rules list selects, in its order; note only when b132 is not run */
+    // prettier-ignore
+    res.json({ rules: found.rules.map((x) => ({ rule_id: x.rule_id, folder_id: x.folder_id, name: x.name, when: x.when, enabled: x.enabled, sort: x.sort, stop_processing: x.stop_processing, last_matched_at: x.last_matched_at, match_count: x.match_count, created_at: x.created_at })), migrated: found.migrated, note: found.note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
@@ -522,21 +589,28 @@ router.post('/:id/rules', auth, ...checked('POST /:id/rules'), async (req, res) 
       return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Fixed rule', "A system folder's rule is part of the folder inventory and cannot be changed here.") });
     const made = await rules.create(ent(req), req.params.id, req.body || {});
     if (!made) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found') }); /* SEC-100: an unknown folder and another shop's folder are one answer */
-    res.json(made);
+    /* S34: the rule is the columns the INSERT of lib/folder-rules create RETURNs, in its order */
+    // prettier-ignore
+    res.json({ rule_id: made.rule_id, folder_id: made.folder_id, name: made.name, when: made.when, enabled: made.enabled, sort: made.sort, stop_processing: made.stop_processing, match_count: made.match_count, created_at: made.created_at });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rule create failed'));
   }
 });
 router.patch('/rules/:rule_id', auth, ...checked('PATCH /rules/:rule_id'), async (req, res) => {
   try {
-    res.json(await rules.update(ent(req), req.params.rule_id, req.body || {}));
+    const saved = await rules.update(ent(req), req.params.rule_id, req.body || {});
+    /* S34: the rule is the columns the UPDATE of lib/folder-rules update RETURNs, in its order */
+    // prettier-ignore
+    res.json({ rule_id: saved.rule_id, folder_id: saved.folder_id, name: saved.name, when: saved.when, enabled: saved.enabled, sort: saved.sort, stop_processing: saved.stop_processing, match_count: saved.match_count });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rule update failed'));
   }
 });
 router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), async (req, res) => {
   try {
-    res.json(await rules.remove(ent(req), req.params.rule_id));
+    const gone = await rules.remove(ent(req), req.params.rule_id);
+    if (!gone.deleted) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Rule delete failed', 'Rule not found') }); /* S35: the words PATCH /rules/:rule_id answers for a rule this shop does not hold */
+    res.json({ deleted: gone.deleted }); /* S34: the count lib/folder-rules remove answers */
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rule delete failed'));
   }
@@ -547,7 +621,10 @@ router.delete('/rules/:rule_id', auth, ...checked('DELETE /rules/:rule_id'), asy
    into a list you can read first. Needs no rules table, so it works before b132 is run. */
 router.post('/rules/preview', auth, ...checked('POST /rules/preview'), async (req, res) => {
   try {
-    res.json(await rules.preview(ent(req), (req.body || {}).when, req.body || {}));
+    const seen = await rules.preview(ent(req), (req.body || {}).when, req.body || {});
+    /* S34: every key lib/folder-rules preview answers; a sample chit is the six keys it names */
+    // prettier-ignore
+    res.json({ scanned: seen.scanned, matched: seen.matched, sample: seen.sample.map((x) => ({ chit_id: x.chit_id, subject: x.subject, counterparty: x.counterparty, direction: x.direction, status: x.status, created_at: x.created_at })) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Preview failed'));
   }
@@ -578,7 +655,10 @@ router.get('/rules/vocabulary', auth, (req, res) => {
 router.get('/rules', auth, ...checked('GET /rules'), async (req, res) => {
   try {
     const found = await rules.list(ent(req), null);
-    res.json(Object.assign({}, found, PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    const answer = PL.pageOut('rules', found.rules, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a rule is the columns lib/folder-rules list selects (folder_rule: migrations/000_baseline_2026-10-21.sql), then what the list adds (note only when b132 is not run; capped and cap_note only when the pager cut the list) */
+    // prettier-ignore
+    res.json({ rules: answer.rules.map((x) => ({ rule_id: x.rule_id, folder_id: x.folder_id, name: x.name, when: x.when, enabled: x.enabled, sort: x.sort, stop_processing: x.stop_processing, last_matched_at: x.last_matched_at, match_count: x.match_count, created_at: x.created_at })), migrated: found.migrated, note: found.note, total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Rules list failed'));
   }
@@ -646,14 +726,11 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
                                WHERE s.entity_id = a.entity_id AND s.chit_id = a.chit_id AND s.line_id = a.line_id))`)
       : '';
     /**
-     * ⭐ ?count=1 — the badge, without the payload. Called on every app boot, so it must not drag 200 rows and
-     * two joins along to answer a question that is one integer. Unread only: a KEPT message is not news, and a
-     * badge that counted it would never fall to zero while anything was pinned.
+     * ⭐ ?count=1 — the badge, without the payload (called on every app boot: one integer, not 200 rows and two joins).
+     * Unread only: a KEPT message is not news, and a badge that counted it would never fall to zero while anything was pinned.
      */
     if (req.query.count === '1' || req.query.count === 'true') {
-      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST. A badge counting conversations the actor cannot open would send
-         them to a screen that says "nothing new" — and worse, it would leak HOW MANY customer conversations the
-         business is having, which is the thing the scope exists to withhold. */
+      /* ⚠️ THE SAME ACTOR SCOPE AS THE LIST: a badge counting what the actor cannot open would leak HOW MANY customer conversations the business has. */
       const c = await withEntity(ent(req), (db) =>
         db.query(
           `SELECT count(*)::int AS n FROM chit_messages m
@@ -749,7 +826,10 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
       );
       return q.rows;
     });
-    res.json(Object.assign({ count: rows.length }, PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
+    const answer = PL.pageOut('messages', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
+    /* S34: a message is the columns the statement above selects (chit_messages: migrations/000_baseline_2026-10-21.sql, read_at and kept through to_jsonb), then the pager's keys (capped and cap_note only when it cut the list) */
+    // prettier-ignore
+    res.json({ count: rows.length, messages: answer.messages.map((x) => ({ message_id: x.message_id, chit_id: x.chit_id, line_id: x.line_id, sender_display_name: x.sender_display_name, sender_entity_id: x.sender_entity_id, message_text: x.message_text, created_at: x.created_at, msg_type: x.msg_type, read_at: x.read_at, kept: x.kept, manual_subject: x.manual_subject, auto_subject: x.auto_subject, track: x.track, particulars: x.particulars, chit_status: x.chit_status })), total: answer.total, page: answer.page, limit: answer.limit, capped: answer.capped, cap_note: answer.cap_note });
   } catch (err) {
     console.error('messages inbox:', err);
     problem(req, res, failed(err, req, 'Failed'));
@@ -766,12 +846,12 @@ router.get('/messages', auth, ...checked('GET /messages'), async (req, res) => {
  */
 router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:message_id/mark'), async (req, res) => {
   const id = String(req.params.message_id || '');
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
+  if (!UUID.test(id)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'message_id must be a uuid') });
   const read = 'read' in req.body ? !!req.body.read : null;
   const kept = 'kept' in req.body ? !!req.body.kept : null;
   try {
-    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS n', [id, read, kept]));
-    const touched = (n.rows[0] && Number(n.rows[0].n)) || 0;
+    const n = await withEntity(ent(req), (db) => db.query('SELECT chit_message_mark($1::uuid,$2::boolean,$3::boolean) AS marked_count', [id, read, kept]));
+    const touched = (n.rows[0] && Number(n.rows[0].marked_count)) || 0;
     /* 404 rather than a silent 200: a message id that matched nothing of MINE is either not mine or not real,
        and both deserve to be said rather than reported as a successful no-op. */
     if (!touched) return problem(req, res, { status: 404, ...said('NOT_FOUND', 'Not found', 'No such message in your copies.') });
@@ -788,7 +868,7 @@ router.post('/messages/:message_id/mark', auth, ...checked('POST /messages/:mess
 router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
   try {
     const due = String(req.query.due_on || '').trim();
-    if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
+    if (due && !isCalendarDay(due)) return problem(req, res, { status: 400, ...said('FOLDER_BAD_REQUEST', 'Bad request', 'due_on must be YYYY-MM-DD') });
     /**
      * ── ⚠️ AN ACTOR SEES ONLY THEIR OWN WORK, AND IT IS NOT THEIR CHOICE ────────────────────────────────────────
      *
@@ -802,14 +882,15 @@ router.get('/worklist', auth, ...checked('GET /worklist'), async (req, res) => {
      */
     const isActor = req.identity.identity_type === 'actor';
     const aid = isActor ? String(req.identity.identity_id) : String(req.query.actor_id || '').trim();
-    res.json(
-      await assign.byPerson(ent(req), {
-        due_on: due || undefined,
-        actor_id: /^[0-9a-f-]{36}$/i.test(aid) ? aid : undefined,
-        /* So the screen can say "your work" honestly rather than guessing from the row count. */
-        _scoped_to_self: isActor
-      })
-    );
+    const answer = await assign.byPerson(ent(req), {
+      due_on: due || undefined,
+      actor_id: UUID.test(aid) ? aid : undefined,
+      /* So the screen can say "your work" honestly rather than guessing from the row count. */
+      _scoped_to_self: isActor
+    });
+    /* S34: every key lib/assign byPerson answers (scoped_to_self is absent when b153 is not run); the people and their lines are the library's own literals, left open and listed */
+    // prettier-ignore
+    res.json({ people: answer.people, lines: answer.lines, migrated: answer.migrated, scoped_to_self: answer.scoped_to_self });
   } catch (err) {
     console.error('worklist:', err.message);
     problem(req, res, failed(err, req, 'Worklist failed'));
@@ -829,17 +910,19 @@ router.get('/groupsum', auth, ...checked('GET /groupsum'), async (req, res) => {
     const ids = String(req.query.chit_ids || '')
       .split(',')
       .map((item) => item.trim())
-      .filter((item) => /^[0-9a-f-]{36}$/i.test(item))
+      .filter((item) => UUID.test(item))
       .slice(0, 500);
-    res.json(
-      await groupsum.requirement(me, {
-        scope: req.query.scope === 'order' ? 'order' : 'task',
-        folder_id: /^[0-9a-f-]{36}$/i.test(fid) ? fid : null,
-        archived: req.query.archived === '1',
-        chit_ids: ids.length ? ids : undefined,
-        overdue_days: flags.overdue_days
-      })
-    );
+    const sum = await groupsum.requirement(me, {
+      scope: req.query.scope === 'order' ? 'order' : 'task',
+      folder_id: UUID.test(fid) ? fid : null,
+      archived: req.query.archived === '1',
+      chit_ids: ids.length ? ids : undefined,
+      overdue_days: flags.overdue_days,
+      blind: await cost.isCostBlind(req, me) /* RAIL-146g: ONE cost read; a blind actor's sum counts the shop's sales only */
+    });
+    /* S34: every key lib/groupsum requirement answers (selected and selection_requested only for a ticked selection) */
+    // prettier-ignore
+    res.json({ scope: sum.scope, folder_id: sum.folder_id, selected: sum.selected, selection_requested: sum.selection_requested, chits: sum.chits, chits_with_lines: sum.chits_with_lines, chits_without_lines: sum.chits_without_lines, has_catalogue: sum.has_catalogue, requirement: sum.requirement, flags: sum.flags, money: sum.money, cost_hidden: sum.cost_hidden });
   } catch (err) {
     console.error('groupsum:', err.message);
     problem(req, res, failed(err, req, 'Group sum failed'));
@@ -876,6 +959,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
     // ONE read of every copy on this track — filed and unfiled alike. Counting the pieces separately is how two
     // numbers come to disagree; here they are literally partitions of the same array.
     const rows = await select.rows(me, { direction, limit: 5000 });
+    const measureSeg = await costView.measurerFor(req, me, rows, { overdue_days: flags.overdue_days }); /* RAIL-146k: ONE side read for overall and every segment */
     const folders = (await withEntity(me, (db) => db.query(`SELECT folder_id, parent_id, name FROM folder WHERE entity_id = $1 ORDER BY sort, name`, [me])))
       .rows;
 
@@ -893,10 +977,15 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
     folders.forEach((item) => {
       (kids[item.parent_id || 'root'] = kids[item.parent_id || 'root'] || []).push(item);
     });
-    const treeRows = (fid) => (byFolder.get(fid) || []).concat((kids[fid] || []).flatMap((item) => treeRows(item.folder_id)));
+    /* a folder that is its own ancestor (a parent_id loop) is counted once, not followed round again: the loop used to overflow the stack and answer 500 */
+    const treeRows = (fid, walked = new Set()) => {
+      if (walked.has(fid)) return [];
+      walked.add(fid);
+      return (byFolder.get(fid) || []).concat((kids[fid] || []).flatMap((item) => treeRows(item.folder_id, walked)));
+    };
 
     const seg = (list) =>
-      Object.assign(measure.measure(list, { overdue_days: flags.overdue_days }), {
+      Object.assign(measureSeg(list), {
         /* ⚠️ ASSIGNED vs UNASSIGNED is a SEGREGATION, not a status. A chit can be open and unassigned, or open and
          assigned — conflating them hides the pile nobody has picked up, which is the one worth seeing. */
         assigned: list.filter((x) => x.assigned_to_actor_id).length,
@@ -931,7 +1020,8 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
       // ⚠️ The assertion, returned rather than described: `filed` counted from the chits must equal the sum of the
       //    folders' own counts. If it does not, a chit is filed into a folder this entity cannot see.
       reconciles: filed === summed && inbox + inBills + filed === rows.length,
-      ...(filed === summed ? {} : { discrepancy: { filed, sum_of_folders: summed, missing: filed - summed } })
+      /* S34: named, not spread: present only when a chit is unaccounted for (undefined is left out of the answer) */
+      discrepancy: filed === summed ? undefined : { filed, sum_of_folders: summed, missing: filed - summed }
     });
   } catch (err) {
     problem(req, res, failed(err, req, 'Reconcile failed'));
@@ -961,7 +1051,7 @@ router.get('/reconcile', auth, ...checked('GET /reconcile'), async (req, res) =>
  * it is measure() over the whole array, so medians and rates are computed across the real population rather
  * than averaged from two halves, which is the classic way a "combined" figure becomes quietly wrong.
  */
-router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
+router.get('/mis', auth, queryDay('since'), ...checked('GET /mis'), async (req, res) => {
   try {
     const me = ent(req);
     const flags = await policy.get(me);
@@ -975,11 +1065,12 @@ router.get('/mis', auth, ...checked('GET /mis'), async (req, res) => {
     /* ⚠️ ONE read, then partitioned — counting the halves separately is how two numbers come to disagree.
        Same discipline as /reconcile above, and the same limit. */
     const rows = await select.rows(me, { limit: 5000, since });
+    const measured = await costView.measurerFor(req, me, rows, opts); /* RAIL-146k: the reader sides ride in opts.sides */
     const received = rows.filter((item) => item.direction === 'received');
     const sent = rows.filter((item) => item.direction === 'sent');
     /* T3-P4-ACCOUNT: `overdue` follows the rail's one rule (lib/home-facts railMeasure — the shop's own notes are never overdue), so CB Finance › Reports'
        overdue opens CB CRM's stuck list and counts the same chits as Home's rail. Every other figure is lib/measure's own, as before. */
-    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, opts);
+    const M = (xs) => require('../lib/home-facts').railMeasure(xs, me, measured.opts);
     res.json({
       overdue_days: flags.overdue_days,
       /* ⚠️ Echoed back so the caller can prove the window it asked for is the window it got — an ignored `since`

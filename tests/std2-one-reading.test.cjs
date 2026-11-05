@@ -62,8 +62,8 @@ const walk = (dir, re, out) => { for (const f of fs.readdirSync(dir, { withFileT
   ok('S1 splitsByState: IN true · AU false · AE false · none true (as the till always read it)', T.splitsByState('IN') && !T.splitsByState('AU') && !T.splitsByState('AE') && T.splitsByState(null));
   ok('S2 stateUnder: a GSTIN\'s state under IN; an ABN\'s first digits are not a state under AU', T.stateUnder('33AAPFU0939F1ZV', 'IN') === '33' && T.stateUnder('51824753556', 'AU') === null);
   const till = read(path.join(API, 'routes', 'till.js'));
-  ok('S3 routes/till.js: the supplier list asks stateUnder — no `=== \'IN\'` beside a GSTIN slice', !/toUpperCase\(\)\s*===\s*'IN'\)\)\s*o\.state/.test(till) && /stateUnder\(g, x\.country \|\| row\.country\)/.test(till));
-  ok('S4 the snapshot sends shop.tax_id_word from profile.taxIdWordOf and money_why from MONEY_UNSTATED', /tax_id_word: cbProfile\.taxIdWordOf\(cbCountry\)/.test(till) && /MONEY_UNSTATED/.test(till));
+  ok('S3 routes/till.js: the supplier list asks stateUnder — no `=== \'IN\'` beside a GSTIN slice', !/toUpperCase\(\)\s*===\s*'IN'\)\)\s*o\.state/.test(till) && /stateUnder\(taxId, x\.country \|\| shopCountry\)/.test(till));
+  ok('S4 the snapshot sends shop.tax_id_word from profile.taxIdWordOf and money_why from MONEY_UNSTATED', /tax_id_word: cbProfile\.taxIdWordOf\(country\)/.test(till) && /MONEY_UNSTATED/.test(till));
 
   /* M — money and year are stated, or asked for in ONE sentence */
   const S = require(path.join(API, 'lib', 'books-store'));

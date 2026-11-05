@@ -43,7 +43,7 @@ const KINDS = {
 /* public: no sign-in, so the only refusal is a fault of ours */
 router.get('/kinds', (req, res) => {
   try {
-    res.json(KINDS);
+    res.json({ engine: KINDS.engine, version: KINDS.version, order: KINDS.order, kinds: KINDS.kinds });
   } catch (e) {
     problem(req, res, internalSpec(req, e, { error: 'Failed', message: SAFE_SENTENCE }));
   }

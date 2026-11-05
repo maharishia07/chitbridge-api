@@ -37,6 +37,11 @@ const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this neve
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
 const SINGLE_LIMIT = 200;
 
+/** the asking business's own row as the two network reads need it (its bridge id, its name and where it sits), or undefined when the account cannot be read */
+const placeOf = async (identityId) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+/** K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as for any text that finds nothing. */
+const searchable = (text) => text.replace(/\u0000/g, '\uFFFD');
+
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
   try {
@@ -104,7 +109,7 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
     );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) {
-    problem(req, res, contract.failed(err, req, 'Save failed'));
+    problem(req, res, contract.savedText(err, req, 'Save failed')); /* K-1: a NUL byte in a name of the drawing is a 400, not a 500 */
   }
 });
 
@@ -283,6 +288,7 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     const me = req.identity.identity_id;
     const uid = String((req.body && req.body.user_id) || '').trim();
     if (!uid) return problem(req, res, { status: 400, ...contract.words.noStoreNamed() });
+    if (uid.includes('\u0000')) return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) }); /* K-1: a handle holding a NUL byte names no store of yours: answered as an unknown one, before the database */
 
     const r = await query(
       `SELECT identity_id, display_name, user_id FROM identities
@@ -399,7 +405,7 @@ async function visibleStores(meRow) {
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     const { visible, truncated } = await visibleStores(meRow);
@@ -424,7 +430,8 @@ router.get('/stores', auth, async (req, res) => {
       const bo = second.sort_order == null ? Number.MAX_SAFE_INTEGER : second.sort_order;
       return ao !== bo ? ao - bo : String(first.name).localeCompare(String(second.name));
     });
-    res.json({ stores, ...(truncated && { truncated }) });
+    // S34: every key named; truncated is null when the whole network was read, and undefined leaves the key out, as the spread did
+    res.json({ stores: stores.map((x) => ({ entity_id: x.entity_id, bridge_id: x.bridge_id, name: x.name, purpose: x.purpose, city: x.city, currency: x.currency, km: x.km, is_me: x.is_me, sort_order: x.sort_order })), truncated: truncated ? { asked: truncated.asked, of: truncated.of } : undefined });
   } catch (err) {
     const unread = contract.unreadWords(err);
     if (unread) return problem(req, res, { status: 503, ...unread });
@@ -440,7 +447,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
       return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
 
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
@@ -452,8 +459,25 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    const like = '%' + text.toLowerCase() + '%';
+    const like = '%' + searchable(text).toLowerCase() + '%';
     const rows = [];
+    /**
+     * The one place the availability answer is written, so its keys are named once (S34 output allow-list). A row is what the handler built from the store and the item, then what
+     * lib/availability answer() adds (known · freshness · km · eta), in the order Object.assign gave them. An undefined value leaves its key out of the JSON, as before.
+     */
+    const send = (out, oneQuery, truncation, degradation) =>
+      res.json({
+        q: text,
+        from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
+        rows: out.rows.map((x) => ({ store: x.store, bridge_id: x.bridge_id, city: x.city, entity_id: x.entity_id, price: x.price, price_currency: x.price_currency, lat: x.lat, lng: x.lng, service_km: x.service_km, dispatch_days: x.dispatch_days, ship_within_days: x.ship_within_days, ship_beyond_days: x.ship_beyond_days, item_id: x.item_id, name: x.name, code: x.code, currency: x.currency, qty: x.qty, source: x.source, as_of: x.as_of, is_me: x.is_me, known: x.known, freshness: { minutes: x.freshness.minutes, bucket: x.freshness.bucket, stale: x.freshness.stale, label: x.freshness.label }, km: x.km, eta: { days: x.eta.days, basis: x.eta.basis, declared: x.eta.declared } })),
+        summary: out.summary,
+        total: out.total,
+        stores_with_stock: out.stores_with_stock,
+        stores_unknown: out.stores_unknown,
+        one_query: oneQuery,
+        truncated: truncation && { shown: truncation.shown, note: truncation.note, asked: truncation.asked, of: truncation.of }, // the fast path says shown + note, the slow one asked + of
+        degraded: degradation
+      });
 
     /**
      * ── ONE QUERY FOR THE WHOLE NETWORK (b122), WITH THE PER-STORE PATH AS A FALLBACK ────────────────────────
@@ -475,7 +499,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, text, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searchable(text), SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.
@@ -538,19 +562,9 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
         });
       }
       const out1 = availability.answer(rows, { from });
-      return res.json({
-        q: text,
-        from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
-        rows: out1.rows,
-        summary: out1.summary,
-        total: out1.total,
-        stores_with_stock: out1.stores_with_stock,
-        stores_unknown: out1.stores_unknown,
-        one_query: true,
-        // The cap is SAID, not silently applied. A capped answer that looks complete is worse than a slow one —
-        // the same rule the per-store path below follows when it has to leave members unasked.
-        ...(single.rows.length >= SINGLE_LIMIT && { truncated: { shown: SINGLE_LIMIT, note: 'narrow the search' } })
-      });
+      // The cap is SAID, not silently applied. A capped answer that looks complete is worse than a slow one —
+      // the same rule the per-store path below follows when it has to leave members unasked.
+      return send(out1, true, single.rows.length >= SINGLE_LIMIT ? { shown: SINGLE_LIMIT, note: 'narrow the search' } : undefined);
     }
 
     /**
@@ -649,19 +663,8 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     }
 
     const out = availability.answer(rows, { from });
-    res.json({
-      q: text,
-      from: { city: meRow.display_name, lat: from.lat, lng: from.lng },
-      rows: out.rows,
-      summary: out.summary,
-      total: out.total,
-      stores_with_stock: out.stores_with_stock,
-      stores_unknown: out.stores_unknown,
-      // Said out loud rather than silently cut — a capped answer that looks complete is worse than a slow one.
-      ...(truncated && { truncated: { asked: use.length, of: members.length } }),
-      // The answer is correct either way; this only says it arrived the slow way because the fast path broke.
-      ...(degraded && { degraded })
-    });
+    // Said out loud rather than silently cut. And the answer is correct either way: `degraded` only says it arrived the slow way because the fast path broke.
+    send(out, undefined, truncated ? { asked: use.length, of: members.length } : undefined, degraded || undefined);
   } catch (err) {
     const unread = contract.unreadWords(err);
     if (unread) return problem(req, res, { status: 503, ...unread });

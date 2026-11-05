@@ -15,6 +15,11 @@ const SHOP = '11111111-1111-4111-8111-111111111111';
 const STRANGER_ID = '66666666-6666-4666-8666-666666666666';
 const OTHER = '88888888-8888-4888-8888-888888888888';
 const HANDLER = '99999999-9999-4999-8999-999999999999';
+const AT = '2026-10-01T10:00:00.000Z';
+/** an identities row as /me selects it (migrations/000_baseline_2026-10-21.sql + b176 timezone, b178/b237 supplies): every column filled, then the nullable ones null */
+const ME_COLUMNS = ['timezone', 'supplies', 'storefront_access', 'locale_prefs', 'ui_prefs', 'policy_flags', 'catalogue_visibility', 'plan', 'params_override'];
+const ME_FULL = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: 'a@example.com', user_id: 'shop-a', self_copy_pref: 'received', dispute_handler_actor_id: HANDLER, country: 'IN', currency_code: 'INR', created_at: AT, last_active_at: AT, gstn: '29ABCDE1234F1Z5', is_verified: true, logo_url: 'https://x/y.png', address: '1 Main Rd', business_status: 'open', purpose: 'Retail', sort_order: 1, city: 'Chennai', lat: '13.082700', lng: '80.270700', service_km: 5, actor_key: 'asha', phone: '9000000000', timezone: 'Asia/Kolkata', supplies: 'goods', storefront_access: 'browse', locale_prefs: { lang: 'ta' }, ui_prefs: { theme: 'dark' }, catalogue_visibility: 'public', plan: 'test', params_override: { a: 1 }, policy_flags: { books: true }, parent_user_id: 'chain' };
+const ME_BARE = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: null, user_id: null, self_copy_pref: 'received', dispute_handler_actor_id: null, country: null, currency_code: null, created_at: null, last_active_at: null, gstn: null, is_verified: false, logo_url: null, address: null, business_status: 'open', purpose: null, sort_order: null, city: null, lat: null, lng: null, service_km: null, actor_key: null, phone: null, timezone: null, supplies: 'unknown', storefront_access: 'browse', locale_prefs: null, ui_prefs: null, catalogue_visibility: 'private', plan: 'test', params_override: {}, policy_flags: null, parent_user_id: null };
 
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
@@ -27,6 +32,8 @@ function extras(tools) {
   const failing = { db: 'fail' };
   /** SEC-100: the folder lookup finds the folder (it is this shop's own) */
   const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND entity_id = \$2/, [{ '?column?': 1 }]);
+  /* SEC-103: the assignee is looked up under the shop before it is stored; this stand-in says the person is the shop's own */
+  const OWN_ACTOR = answering(/FROM identities WHERE identity_id = \$1 AND identity_type = 'actor' AND parent_entity_id = \$2/, [{ '?column?': 1 }]);
   const at = (tail) => ENT + tail;
   const sqlState = (code, message, hint) => (sql) => { throw Object.assign(new Error(message || 'pg ' + code), { code }, hint ? { hint } : {}); };
   const when = (pattern, run) => (sql, params) => (pattern.test(sql) ? run(sql, params) : null);
@@ -55,12 +62,18 @@ function extras(tools) {
   const reads = [
     X('constitutions-listed', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: answering(/FROM constitution/, [{ key: 'general', version: 1, label: 'General', vertical: 'general', capabilities: [], is_default: true }]) } }),
     X('constitutions-with-a-zone', 'GET ' + at('/constitutions'), 200, { url: at('/constitutions?tz=Asia/Kolkata') }),
+    N('constitutions-zone-twice', 'GET ' + at('/constitutions'), 400, { url: at('/constitutions?tz=Asia/Kolkata&tz=Asia/Dubai') }),
     X('constitutions-catalogue-unread', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: raising(/FROM constitution/, '42P01') } }),
     X('search-too-short', 'GET ' + at('/search'), 400, { url: at('/search?q=a') }),
     X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),
     X('search-found', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b', created_at: '2026-10-01T00:00:00.000Z' }]) } }),
+    N('search-asked-twice', 'GET ' + at('/search'), 400, { url: at('/search?q=shop&q=store') }),
+    N('search-place-unknown', 'GET ' + at('/search'), 404, { url: at('/search?q=shop&where=sit-nowhere') }),
+    N('search-places-listed', 'GET ' + at('/search/places'), 200, {}),
+    N('search-places-fails', 'GET ' + at('/search/places'), 500, { patch: { search: { places: async () => { throw new Error(SECRET_SQL); } } } }),
     X('search-db-fails', 'GET ' + at('/search'), 500, { url: at('/search?q=shop'), setup: failing }),
-    X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => ({ business: { name: 'Shop A' }, licences: [], trade_ready: false }) } } }),
+    /* the header as lib/entity-header.js build() makes it from a shop row and one gathered licence the country's rules do not know (the same keys, a licence of each kind) */
+    X('header-read', 'GET ' + at('/header'), 200, { patch: { header: { read: async () => require('../../lib/entity-header').build({ me: { display_name: 'Shop A', country: 'IN', currency_code: 'INR', phone: '9000000000', address: '1 Main Rd', gstn: '29ABCDE1234F1Z5', policy_flags: {} }, profile: {}, vault: null, compliance: [{ standard_key: 'unknown_scheme', doc_key: 'some_doc', valid_until: '2027-01-01', verification: { number_masked: 'XXXX1234' } }], docs: {} }) } } }),
     X('header-fails', 'GET ' + at('/header'), 500, { patch: { header: { read: async () => { throw new Error(SECRET_SQL); } } } }),
     X('sides-read', 'GET ' + at('/sides'), 200, { patch: { sides: { read: async () => ({ lean: [], use: [], impact: null }) } } }),
     X('sides-fails', 'GET ' + at('/sides'), 500, { patch: { sides: { read: async () => { throw new Error(SECRET_SQL); } } } }),
@@ -70,6 +83,7 @@ function extras(tools) {
     /* SEC-94: the capability read fails with a sentence that names the database: the 200 must not carry it */
     X('me-capabilities-fail-leaks-nothing', 'GET ' + at('/me'), 200, { setup: { who: STAFF, sqlRows: (sql) => { if (/SELECT capabilities FROM identities/.test(sql)) throw new Error(SECRET_SQL); return meRow(sql); } } }),
     X('me-unknown', 'GET ' + at('/me'), 404, {}),
+    N('me-include-twice', 'GET ' + at('/me'), 400, { url: at('/me?include=readiness&include=vault'), setup: { sqlRows: meRow } }),
     X('me-db-fails', 'GET ' + at('/me'), 500, { setup: failing }),
     X('can-see-costs-owner', 'GET ' + at('/me/can-see-costs'), 200, {}),
     X('can-see-costs-staff', 'GET ' + at('/me/can-see-costs'), 200, { setup: { who: STAFF, sqlRows: row(/SELECT can_see_costs/, { can_see_costs: true }) } }),
@@ -80,6 +94,7 @@ function extras(tools) {
     X('lookup-asked-twice', 'GET ' + at('/lookup'), 404, { url: at('/lookup?user_id=a&user_id=b') }),
     X('lookup-db-fails', 'GET ' + at('/lookup'), 500, { url: at('/lookup?user_id=shop-b'), setup: failing }),
     X('usage-read', 'GET ' + at('/usage'), 200, {}),
+    N('usage-days-twice', 'GET ' + at('/usage'), 400, { url: at('/usage?days=7&days=30') }),
     X('usage-window', 'GET ' + at('/usage'), 200, { url: at('/usage?days=7') }),
     X('usage-not-enabled', 'GET ' + at('/usage'), 200, { setup: { sqlRows: sqlState('42P01', 'relation "usage_ledger" does not exist') } }),
     X('usage-db-fails', 'GET ' + at('/usage'), 500, { setup: failing }),
@@ -173,6 +188,9 @@ function extras(tools) {
     X('desk-not-for-this-population-no-hint', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: when(/UPDATE ops\.population/, sqlState('23514', 'the live desk must be a business, not a person')) } }),
     X('desk-plain-check-violation', 'PUT ' + at('/populations/:code/desk'), 500, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: { sqlRows: when(/UPDATE ops\.population/, sqlState('23514', SECRET_SQL)) } }),
     X('desk-db-fails', 'PUT ' + at('/populations/:code/desk'), 500, { url: at('/populations/live/desk'), body: { desk_entity_id: OTHER }, setup: failing }),
+    /* a desk id that is not a uuid is answered as an unknown uuid is (the trigger's "no such entity"): 409 on a population that exists, 404 on one that does not; the cast error is Postgres's own words */
+    N('desk-junk-id-as-unknown', 'PUT ' + at('/populations/:code/desk'), 409, { url: at('/populations/live/desk'), body: { desk_entity_id: 'abc' }, setup: { sqlRows: (sql, params) => (/UPDATE ops.population/.test(sql) && (params || []).includes('abc') ? sqlState('22P02', 'invalid input syntax for type uuid: "abc"')(sql) : /FROM ops.population WHERE code/.test(sql) ? { rows: [{ '?column?': 1 }], rowCount: 1 } : null) } }),
+    N('desk-junk-id-no-such-population', 'PUT ' + at('/populations/:code/desk'), 404, { url: at('/populations/Ghost/desk'), body: { desk_entity_id: 'abc' }, setup: { sqlRows: (sql, params) => (/UPDATE ops.population/.test(sql) && (params || []).includes('abc') ? sqlState('22P02', 'invalid input syntax for type uuid: "abc"')(sql) : null) } }),
     N('desk-body-a-list', 'PUT ' + at('/populations/:code/desk'), 400, { url: at('/populations/live/desk'), body: [] }),
     X('population-not-root', 'POST ' + at('/populations'), 403, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { who: STRANGER } }),
     X('population-no-root', 'POST ' + at('/populations'), 404, { body: { code: 'lab', label: 'Lab', note: 'n' }, patch: noRoot }),
@@ -184,6 +202,7 @@ function extras(tools) {
     X('population-registry-missing', 'POST ' + at('/populations'), 409, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, '42P01') } }),
     X('population-db-fails', 'POST ' + at('/populations'), 500, { body: { code: 'lab', label: 'Lab', note: 'n' }, setup: { sqlRows: raising(/INSERT INTO ops\.population/, 'XX000') } }),
     N('population-body-a-list', 'POST ' + at('/populations'), 400, { body: [] }),
+    N('mis-population-twice', 'GET ' + at('/mis'), 400, { url: at('/mis?population=live&population=test') }),
     X('mis-no-root', 'GET ' + at('/mis'), 404, { patch: noRoot }),
     X('mis-not-root', 'GET ' + at('/mis'), 403, { setup: { who: STRANGER } }),
     X('mis-read', 'GET ' + at('/mis'), 200, { setup: { sqlRows: () => ({ rows: [{ n: 1 }], rowCount: 1 }) } }),
@@ -195,6 +214,7 @@ function extras(tools) {
 
   const routing = [
     X('routing-preview', 'GET ' + at('/routing/preview'), 200, {}),
+    N('routing-preview-kind-twice', 'GET ' + at('/routing/preview'), 400, { url: at('/routing/preview?kind=spec&kind=incident') }),
     X('routing-preview-of-a-kind', 'GET ' + at('/routing/preview'), 200, { url: at('/routing/preview?kind=spec&audience=customer') }),
     X('routing-preview-fails', 'GET ' + at('/routing/preview'), 200, { setup: failing }),
     X('routing-read', 'GET ' + at('/routing'), 200, {}),
@@ -203,7 +223,7 @@ function extras(tools) {
     X('routing-read-fails', 'GET ' + at('/routing'), 500, { setup: failing }),
     X('routing-bad-kind', 'PUT ' + at('/routing'), 400, { body: { kind: 'nope' } }),
     X('routing-no-kind', 'PUT ' + at('/routing'), 400, { body: {} }),
-    X('routing-saved', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: '', assignee_actor_id: HANDLER, route_to_entity_id: null } }),
+    X('routing-saved', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: '', assignee_actor_id: HANDLER, route_to_entity_id: null }, setup: { sqlRows: OWN_ACTOR } }),
     X('routing-table-not-there', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident' }, setup: { sqlRows: raising(/INSERT INTO entity_work_routing/, '42P01') } }),
     X('routing-team-outside-network', 'PUT ' + at('/routing'), 409, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: sqlState('23514', 'work can only be routed inside your own network', 'Pick a team of your own network.') } }),
     X('routing-plain-check-violation', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident', route_to_entity_id: OTHER }, setup: { sqlRows: when(/INSERT INTO entity_work_routing/, sqlState('23514', SECRET_SQL)) } }),
@@ -212,10 +232,42 @@ function extras(tools) {
     N('routing-folder-not-found', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', folder_id: OTHER } }),
     N('routing-folder-not-an-id', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', folder_id: 'nope' } }),
     N('routing-saved-with-an-own-folder', 'PUT ' + at('/routing'), 200, { body: { kind: 'incident', folder_id: OTHER }, setup: { sqlRows: OWN_FOLDER } }),
+    N('routing-person-not-found', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', assignee_actor_id: HANDLER } }),
+    N('routing-person-not-an-id', 'PUT ' + at('/routing'), 404, { body: { kind: 'incident', assignee_actor_id: 'nope' } }),
     X('routing-save-fails', 'PUT ' + at('/routing'), 500, { body: { kind: 'incident' }, setup: failing }),
     N('routing-body-a-list', 'PUT ' + at('/routing'), 400, { body: [] })
   ];
-  return signin.concat(reads, policy, prefs, profile, platform, routing);
+  return signin.concat(reads, policy, prefs, profile, platform, routing, readyBranch(tools));
+}
+
+/**
+ * The READY branch of the shop's reads: the database holds rows with every column their statement selects (each named from the table's DDL), a nullable column null in a second row,
+ * so the shape tools/api-allowlist.cjs derives (docs/contracts/api-output-shapes.json) is the whole of what these routes can answer, and the output filter drops nothing real.
+ */
+function readyBranch(tools) {
+  const { STAFF, answering, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const at = (tail) => ENT + tail;
+  const probed = answering(/FROM information_schema.columns/, ME_COLUMNS.map((column_name) => ({ column_name })));
+  const meWorld = (one, who) => Object.assign(who ? { who } : {}, { sqlRows: firstOf(probed, answering(/SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref/, [one])) });
+  const withDesk = { code: 'trial', label: 'Trial', is_live: false, note: null, desk_entity_id: OTHER, desk_name: 'Desk', desk_bridge_id: 'DDDD4444', entities: 1 };
+  const plain = { code: 'live', label: 'Live', is_live: true, note: 'n', desk_entity_id: null, desk_name: null, desk_bridge_id: null, entities: 3 };
+  const candidate = { identity_id: OTHER, display_name: 'Shop B', bridge_id: 'BBBB3333', population: 'live' };
+  const day = { day: AT, events: 2, cost: '0.0100' };
+  const meter = { meter: 'sms', events: 2, quantity: '3', cost: '0.0100' };
+  const recent = { meter: 'sms', detail: 'd', quantity: 1, cost_usd: '0.0050', meta: { k: 1 }, created_at: AT };
+  const recentBare = { meter: 'sms', detail: null, quantity: 1, cost_usd: '0.0050', meta: null, created_at: AT };
+  return [
+    /* the governance read fails: `governance` is null in the answer, and `envelope` of /entitlements too */
+    X('me-governance-unresolved', 'GET ' + at('/me'), 200, { setup: meWorld(ME_FULL), patch: { govresolve: { resolveEntityGovernance: async () => { throw new Error('governance unreadable'); } } } }),
+    X('entitlements-governance-unresolved', 'GET ' + at('/entitlements'), 200, { patch: { govresolve: { resolveEntityGovernance: async () => { throw new Error('governance unreadable'); } } } }),
+    X('me-every-column', 'GET ' + at('/me'), 200, { setup: meWorld(ME_FULL) }),
+    X('me-nullable-columns-null', 'GET ' + at('/me'), 200, { setup: meWorld(ME_BARE, STAFF) }),
+    X('search-found-bare-row', 'GET ' + at('/search'), 200, { url: at('/search?q=shop'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: null, created_at: null }]) } }),
+    X('populations-with-a-desk', 'GET ' + at('/populations'), 200, { setup: { sqlRows: firstOf(answering(/AS population/, [candidate]), answering(/FROM ops.population/, [plain, withDesk])) } }),
+    X('usage-with-rows', 'GET ' + at('/usage'), 200, { setup: { sqlRows: firstOf(answering(/GROUP BY 1 ORDER BY 1 DESC/, [day]), answering(/GROUP BY 1 ORDER BY cost/, [meter]), answering(/LIMIT 100/, [recent, recentBare])) } }),
+    X('routing-with-folders-people-teams', 'GET ' + at('/routing'), 200, { setup: { sqlRows: firstOf(answering(/FROM folder/, [{ folder_id: OTHER, name: 'Inbox' }]), answering(/entity_kind = 'actor'/, [{ identity_id: HANDLER, display_name: 'Asha' }]), answering(/FROM cb_entity|JOIN cb_entity/, [{ identity_id: OTHER, display_name: 'Branch', path: 'a.b' }])) } })
+  ];
 }
 
 module.exports = { extras, ENT, SHOP, STRANGER_ID, OTHER };

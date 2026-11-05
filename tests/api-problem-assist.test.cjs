@@ -85,8 +85,15 @@ function checkWords() {
   check('assistSignIn: assist_unavailable with the code the client may key on', signIn.legacy.error === 'assist_unavailable' && signIn.legacy.code === 'ASSIST_SIGN_IN' && signIn.code === 'ASSIST_SIGN_IN', signIn);
   const off = contract.words.assistOff();
   check('assistOff: assist_unavailable with no code key of its own', off.legacy.error === 'assist_unavailable' && !('code' in off.legacy), off);
-  const fixed = contract.words.ownedByAnother('This product container is owned by another brand.');
-  check('ownedByAnother: the library\'s own sentence rides in the old key error', fixed.legacy.ok === false && fixed.legacy.error === 'This product container is owned by another brand.', fixed);
+  const none = contract.words.noSuchContainer('library text that must never ride');
+  check('noSuchContainer: one fixed sentence, whatever the library said', none.legacy.error === 'Unknown container.' && none.detail === 'Unknown container.' && !JSON.stringify(none).includes('library text'), none);
+}
+
+/** S6: a foreign or unknown container id writes nothing (the stand-in logged every INSERT/UPDATE the handler asked for); the two controls show the log sees a real write */
+function checkNoWrites() {
+  console.log('\n-- a foreign or unknown container id writes nothing --');
+  ['container-of-another-brand', 'region-of-another-brand', 'region-unknown-container'].forEach((id) => check(id + ': no INSERT or UPDATE was asked of the store', (scenes.WRITES[id] || []).length === 0, scenes.WRITES[id]));
+  ['container-authored', 'region-stored'].forEach((id) => check(id + ' (control): the log does see a write', (scenes.WRITES[id] || []).length > 0, scenes.WRITES[id]));
 }
 
 /** every code the words answer under is a row of docs/ERROR-CODES.md with its sentence written */
@@ -127,6 +134,48 @@ function checkFrozenFiveHundreds(recording, legacy) {
   return frozen.length;
 }
 
+/* the routes this file's API-8 sweep closed (2026-10-29); the other assist shapes predate the sweep and are judged in their own pass */
+const SWEPT = ['GET /catalogue-mine', 'GET /penetration', 'GET /regions'].map((key) => key.replace(' /', ' ' + MOUNT + '/'));
+/**
+ * output_allowlist in the shop's own world (API-8, S34), as tests/api-problem-entities.test.cjs: the generator's stand-in database cannot reach catalogue-mine's rows (it answers 503), so here every
+ * swept route whose 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and the allow-list filter drops
+ * nothing from it: a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
+ */
+function checkAllowList(recording) {
+  console.log('\n-- the closed success schemas hold every recorded 200 --');
+  const proved = {};
+  const operations = contractModule().OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  SWEPT.forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    if (!schema || schema.additionalProperties !== false) return;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = engine.compile(schema);
+    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the swept routes the evidence file says output_allowlist for */
+function allowListEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => SWEPT.includes(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write the swept routes' output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeAllowList(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  SWEPT.filter((route) => routes[route]).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 /* ── the foreign-id world (API-STANDARD S35): shop B asks for shop A's record by its id ── */
 const BRAND_ROW = { source_key: 'brand-x@v1', version: 'v1', for_vertical: null, title: 'T', collection: 'C', schema: {}, items: [{ name: 'Tussar', combinations: [] }], commercials_fields: [], owner_entity_id: scenes.OTHER, experience: {}, formatting: {}, pending: null };
 const CONTAINER_ROW = { container_id: 'a/b', owner_entity_id: scenes.OTHER, source_key: 's', name: 'N', current_version: 1 };
@@ -134,6 +183,7 @@ const VERSION_ROW = { container_id: 'a/b', version: 1, content: {}, schema: {}, 
 /** the routes of this file that name a record by an id in the path: a container and a catalogue source */
 const FOREIGN_ROUTES = () => [
   { route: 'GET ' + MOUNT + '/container/:id', url: MOUNT + '/container/a%2Fb', method: 'GET', rows: firstOf(answering(/FROM product_container/, [CONTAINER_ROW]), answering(/FROM product_version/, [VERSION_ROW])) },
+  { route: 'PUT ' + MOUNT + '/region-override', url: MOUNT + '/region-override', method: 'PUT', body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, rows: answering(/FROM product_container/, [Object.assign({}, CONTAINER_ROW, { owner_entity_id: SHOP })]) }, // owned by shop A (the owner); shop B asks
   { route: 'GET ' + MOUNT + '/catalogue-source/:key', url: MOUNT + '/catalogue-source/brand-x@v1', method: 'GET', rows: answering(/FROM catalogue_source s LEFT JOIN identities/, [BRAND_ROW]) }
 ];
 
@@ -182,6 +232,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkWords();
   checkCodesRegistered(contractModule());
   checkContractShape(routes);
+  checkNoWrites();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 50, frozen);
@@ -199,14 +250,20 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   const judged = coverage;
+  const allowed200 = checkAllowList(recording);
   if (lab.argv.includes('--write')) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, judged);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    writeAllowList(allowed200);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/assist.js', sameValue(mine, judged), { onDisk: Object.keys(mine).length, covered: Object.keys(judged).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
+    /* the area test writes this file (--write) and the register reads it: it is committed with the sweep, and checked exactly (laptop1, 29 Oct) */
+    const claimed = Object.keys(allowListEvidenceOnDisk()).sort();
+    const held = Object.keys(allowed200).filter((route) => allowed200[route]).sort();
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the swept routes whose 200 held closed here', sameValue(claimed, held), { claimed, held });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);

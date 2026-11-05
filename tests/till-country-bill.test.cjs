@@ -1,5 +1,6 @@
 /* CX1 (2026-10-13) — the counter's bill follows the SHOP's pack: reg-au / reg-ae taxInvoice (T1), counts in the shop's grouping (T2), the
-   languages it hears (T4). India's pack has no taxInvoice member, so an Indian bill is untouched (tests/tax-truth proves the bill byte for byte).
+   languages it hears (T4). India's pack has a taxInvoice member since reg-in v1.73.0: a registered buyer's GSTIN is printed on the tax
+   invoice (CGST Rules r.46(d)); the figures are untouched (tests/tax-truth proves the bill byte for byte).
    Extracts the page's own functions from till.html; the packs are the real ones (lib/regulation); no browser. */
 'use strict';
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
@@ -38,11 +39,18 @@ function page(country, currency, o) {
 const t = (a, b) => a + '=' + b + ';';
 let n = 0; const ok = (what, fn) => { fn(); n++; console.log('  ok  ' + what); };
 
-ok('India: no taxInvoice member → no rule, no buyer warning, no buyer row on the slip', () => {
+ok('India: a registered buyer → a tax invoice that names their GSTIN on the slip (r.46(d)); no buyer warning', () => {
   const p = page('IN', 'INR', { cust: { gstin: '29BBBBB0000B1Z5' } });
-  assert.strictEqual(p.invoiceRule(500000, 'X'), null);
+  const rule = p.invoiceRule(500000, '29BBBBB0000B1Z5');
+  assert.strictEqual(rule.kind, 'tax');
+  assert.strictEqual(rule.buyer_tax_id, true);
   assert.strictEqual(p.buyerWarnWords({ net: 500000, tax: 100 }), '');
-  assert.strictEqual(p.slipBuyerHTML({ kind: 'tax', total: 500000, customer: { gstin: '29BBBBB0000B1Z5' } }, t), '');
+  assert.strictEqual(p.slipBuyerHTML({ kind: 'tax', total: 500000, customer: { gstin: '29BBBBB0000B1Z5' } }, t), 'Buyer GSTIN=29BBBBB0000B1Z5;');
+});
+ok('India: an unregistered buyer or a cash bill → no buyer row on the slip', () => {
+  assert.strictEqual(page('IN', 'INR').invoiceRule(500000, null).buyer_tax_id, false);
+  assert.strictEqual(page('IN', 'INR').slipBuyerHTML({ kind: 'tax', total: 500, customer: { name: 'Walk-in' } }, t), '');
+  assert.strictEqual(page('IN', 'INR', { cust: { gstin: '29BBBBB0000B1Z5' } }).slipBuyerHTML({ kind: 'cash', total: 500, customer: { gstin: '29BBBBB0000B1Z5' } }, t), '');
 });
 ok('Australia: A$1,000 or more with nobody named → the line on the bill (s.29-70(1)(c)(ii)); below it, nothing', () => {
   const p = page('AU', 'AUD');
