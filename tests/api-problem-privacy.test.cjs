@@ -84,7 +84,7 @@ const asWorld = (options, patch) => {
 const stop = () => Object.assign(lab.world, { sqlRows: null, realAuth: false });
 const ask = async (port, method, url, body, header, options) => {
   asWorld(options, header ? { realAuth: true } : {});
-  const answer = await lab.send(port, method, MOUNT + url, body, header ? { authorization: header } : undefined);
+  const answer = await lab.send(port, method, MOUNT + url, body, undefined, header ? { authorization: header } : undefined);
   stop();
   return answer;
 };
