@@ -636,9 +636,9 @@ for (const text of files) {
     continue;
   }
   if (SKIP_WEB && NEEDS_WEB.indexOf(text) >= 0) {
-    const why = 'needs the web checkout - none at ' + WEB_DIR + ' (clone chitbridge-web beside this tree, or set CB_WEB_DIR=<path to it>)';
-    console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   - ' + why);
-    report.push({ name: KEY(text), status: 'skipped', message: why });
+    const reason = 'needs the web checkout - none at ' + WEB_DIR + ' (clone chitbridge-web beside this tree, or set CB_WEB_DIR=<path to it>)';
+    console.log('  skip  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + '   - ' + reason);
+    report.push({ name: KEY(text), status: 'skipped', message: reason });
     continue;
   }
   const t0 = Date.now();
