@@ -565,12 +565,12 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | no | no | no | no | no | yes | yes | yes | partial |
 | POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | no | no | no | no | yes | yes | yes | yes | partial |
-| POST | /api/signin/ask | signin | routes/signin.js:980 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/signin/ask | signin | routes/signin.js:979 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/signin/logout | signin | routes/signin.js:100 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
-| POST | /api/signin/pin | signin | routes/signin.js:982 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial |
+| POST | /api/signin/pin | signin | routes/signin.js:981 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/signin/renew | signin | routes/signin.js:76 | yes | yes | no | yes | yes | no | yes | no | no | yes | yes | yes | no | partial |
 | POST | /api/signin/sessions/revoke | signin | routes/signin.js:159 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
-| POST | /api/signin/verify | signin | routes/signin.js:981 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | no | partial |
+| POST | /api/signin/verify | signin | routes/signin.js:980 | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | no | partial |
 | POST | /api/simulator/feedback | simulator | routes/simulator.js:107 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/simulator/lead | simulator | routes/simulator.js:82 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial |
 | POST | /api/supplies | supplies | routes/supplies.js:57 | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | yes | yes | partial |
