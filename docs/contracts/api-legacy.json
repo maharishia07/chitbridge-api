@@ -50549,14 +50549,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      }
     },
     {
@@ -50711,14 +50709,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      }
     },
     {
@@ -50971,6 +50967,24 @@
       "code": "DUPLICATE_PARTY",
       "error": "Another party already has this tax id.",
       "message": "Another party already has this tax id."
+     }
+    },
+    {
+     "scenario": "supplier-patch-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
+     },
+     "fixture": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
      }
     }
    ]

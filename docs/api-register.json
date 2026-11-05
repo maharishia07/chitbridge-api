@@ -2055,7 +2055,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 464,
+   "line": 497,
    "hash": "683aa6ccd46c28b5",
    "does": "",
    "errors": {
@@ -20784,7 +20784,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 707,
+   "line": 740,
    "hash": "dd816c613da54877",
    "does": "",
    "errors": {
@@ -20875,7 +20875,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 768,
+   "line": 801,
    "hash": "283ad24d6c24e087",
    "does": "",
    "errors": {
@@ -20963,7 +20963,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 700,
+   "line": 733,
    "hash": "d18c205627345524",
    "does": "",
    "errors": {
@@ -21049,7 +21049,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1030,
+   "line": 1058,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -21131,7 +21131,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1042,
+   "line": 1070,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -21215,8 +21215,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 290,
-   "hash": "cb3dde74a6d48c45",
+   "line": 319,
+   "hash": "16eb52f958eb6809",
    "does": "",
    "errors": {
     "count": 0,
@@ -21313,7 +21313,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 640,
+   "line": 673,
    "hash": "dd765b9a6933027e",
    "does": "",
    "errors": {
@@ -21406,7 +21406,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 510,
+   "line": 543,
    "hash": "87639ef2aa0887f7",
    "does": "",
    "errors": {
@@ -27683,20 +27683,18 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 951,
-   "hash": "05dd04b81445505f",
+   "line": 984,
+   "hash": "da05890011b9b66e",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      404,
      500
     ],
-    "codes": [
-     "UNKNOWN_FIELD"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [
@@ -27779,8 +27777,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 357,
-   "hash": "991e34211939bebf",
+   "line": 389,
+   "hash": "2caa3b56787ffed4",
    "does": "",
    "errors": {
     "count": 0,
@@ -48335,7 +48333,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 820,
+   "line": 853,
    "hash": "c6699df6864b635a",
    "does": "",
    "errors": {
@@ -48434,7 +48432,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 929,
+   "line": 962,
    "hash": "e982cebe9da706c1",
    "does": "",
    "errors": {
@@ -48528,7 +48526,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 129,
+   "line": 149,
    "hash": "b625a915557f7e09",
    "does": "",
    "errors": {

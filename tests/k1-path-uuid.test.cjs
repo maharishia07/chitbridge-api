@@ -79,6 +79,12 @@ const ROUTES = [
   // ── routes/integrations.js
   // ── routes/products.js
   // ── routes/relationships.js
+  ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'POST', '/api/relationships/customers/abc/groups', { groups: ['dealers'] }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/suppliers/abc', { nickname: 'x' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/customers/abc', { segment_override: 'new' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/scorecard/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/suppliers/abc/catalogue', undefined, 'Not found', 'REL_NOT_ON_YOUR_LIST'],
   // ── routes/schemas.js
 ];
 
