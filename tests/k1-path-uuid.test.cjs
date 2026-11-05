@@ -20,6 +20,7 @@ const express = require('express');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
+process.env.CB_ADMIN_KEY = 'k1-admin-key'; /* the platform doors judge the id after their key gate */
 
 const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';
@@ -57,6 +58,13 @@ const ROUTES = [
   // ── routes/catalogue.js
   ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/enquiry/abc', { message_text: 'Is this in stock?' }, 'Not found'],
   // ── routes/channels.js
+  ['/api/channels', 'routes/channels.js', 'DELETE', '/api/channels/abc', {}, 'Unbind failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/provider-ref', { provider_ref: '123' }, 'Update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/auto-raise', { on: true }, 'Auto-raise update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template', { name: 'x', state: 'pending' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template-approve', { entity_id: ME, name: 'x' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/approve', {}, 'Approve failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/revoke', {}, 'Revoke failed'],
   // ── routes/chits.js
   // ── routes/combo-templates.js
   ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
@@ -65,6 +73,8 @@ const ROUTES = [
   // ── routes/connections.js
   ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
+  ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
+  ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
   // ── routes/forms.js
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
@@ -110,7 +120,7 @@ const check = (ok, label) => {
 const ask = (server, method, url, body, headers) =>
   new Promise((resolve) => {
     const data = JSON.stringify(body || {});
-    const req = http.request({ port: server.address().port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), ...headers } }, (res) => {
+    const req = http.request({ port: server.address().port, method, path: url, headers: { 'x-cb-admin-key': process.env.CB_ADMIN_KEY, 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), ...headers } }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
       res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'] || '', text, body: (() => { try { return JSON.parse(text); } catch (e) { return {}; } })() }));

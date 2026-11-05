@@ -348,7 +348,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 136,
+   "line": 140,
    "hash": "173f30d993cc4781",
    "does": "A channel id of yours -> we remove that binding -> a confirmation that it is gone.",
    "errors": {
@@ -1208,7 +1208,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 476,
+   "line": 481,
    "hash": "2f1f2eb1c5052ee7",
    "does": "",
    "errors": {
@@ -2152,7 +2152,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 188,
+   "line": 191,
    "hash": "680c9ed819105397",
    "does": "",
    "errors": {
@@ -8087,7 +8087,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 24,
+   "line": 29,
    "hash": "6abebaef86c0a788",
    "does": "Nothing in -> we read your channels, whether each provider is set up and your bound numbers in one go -> the list for the Channels panel.",
    "errors": {
@@ -8173,7 +8173,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 34,
+   "line": 39,
    "hash": "63a4d9d7af15d68d",
    "does": "Optional purpose and page in -> we read the messages we tried to send for you and what became of each -> a page of sent-message receipts.",
    "errors": {
@@ -12247,7 +12247,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 76,
+   "line": 81,
    "hash": "9f1facaf7a219650",
    "does": "",
    "errors": {
@@ -12344,7 +12344,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 217,
+   "line": 222,
    "hash": "bce30c09234b6736",
    "does": "",
    "errors": {
@@ -21682,7 +21682,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 90,
+   "line": 93,
    "hash": "6323a87fc0aa5778",
    "does": "",
    "errors": {
@@ -21773,7 +21773,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 29,
+   "line": 32,
    "hash": "677bfce89941aa2e",
    "does": "",
    "errors": {
@@ -27899,7 +27899,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 305,
+   "line": 308,
    "hash": "a5de8807e0b9826d",
    "does": "",
    "errors": {
@@ -27995,7 +27995,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 246,
+   "line": 249,
    "hash": "9389f29f5f100aba",
    "does": "",
    "errors": {
@@ -28089,7 +28089,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 406,
+   "line": 409,
    "hash": "6a6e1ccd21d59062",
    "does": "",
    "errors": {
@@ -35602,7 +35602,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 80,
+   "line": 84,
    "hash": "e42bbcbc9f41b572",
    "does": "A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.",
    "errors": {
@@ -35690,8 +35690,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 109,
-   "hash": "e78f662943d6bd69",
+   "line": 113,
+   "hash": "daa1e2e3f204410f",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -35704,7 +35704,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -35775,7 +35777,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 60,
+   "line": 62,
    "hash": "21dd980fccb62059",
    "does": "On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.",
    "errors": {
@@ -35867,7 +35869,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 44,
+   "line": 49,
    "hash": "0e6cd0eb4a0af590",
    "does": "The provider's line id for one of your channels -> we save it so sends can be addressed -> the updated channel.",
    "errors": {
@@ -35955,8 +35957,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 127,
-   "hash": "5fc7f68307a8aede",
+   "line": 131,
+   "hash": "4fec3ffef1fe9308",
    "does": "A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -35969,7 +35971,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -36040,7 +36044,7 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 69,
+   "line": 73,
    "hash": "57f7e760fa596da2",
    "does": "A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.",
    "errors": {
@@ -36132,8 +36136,8 @@
    "owner_area": "channels",
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
-   "line": 118,
-   "hash": "ada7221cca259f40",
+   "line": 122,
+   "hash": "addfba275c3956e0",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -36146,7 +36150,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding"
+   ],
    "writes": [
     "channel_binding"
    ],
@@ -41706,7 +41712,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 297,
+   "line": 302,
    "hash": "850355bceb894a99",
    "does": "",
    "errors": {
@@ -41811,7 +41817,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 537,
+   "line": 542,
    "hash": "839f910941610693",
    "does": "",
    "errors": {
@@ -49691,7 +49697,7 @@
    "owner_area": "schemas",
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
-   "line": 48,
+   "line": 51,
    "hash": "3ff0b50aa54cfba7",
    "does": "",
    "errors": {
@@ -56641,7 +56647,7 @@
    "owner_area": "definitions",
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
-   "line": 365,
+   "line": 370,
    "hash": "47c980784df872d2",
    "does": "",
    "errors": {
