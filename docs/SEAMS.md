@@ -33,7 +33,7 @@ of file each thing is; this says what already does the job.
 | 58 | `entry` | `books-store.js` |  |
 | 58 | `items` | `books-store.js` | PERF1: |
 | 58 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 60 | `register` | `regulation.js` | register(pack) → the pack — |
+| 61 | `register` | `regulation.js` | register(pack) → the pack — |
 | 54 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 53 | `record` | `access-events.js` |  |
 | 53 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |

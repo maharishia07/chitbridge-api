@@ -70,13 +70,13 @@ let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 
 const counterBill = { bill_no: 'C1/26-27/0041', till: { id: 'C1' }, billed_at: '2026-10-01T05:00:00.000Z', customer: { name: 'Chola Auto Care', entity_id: CUST } };
-const hdr = (o) => Object.assign({ chit_id: 'cb1', sender_entity_id: SHOP, purpose: 'order', business_json: counterBill, all_recipients: [] }, o || {});
+const hdr = (o) => Object.assign({ chit_id: '11111111-1111-4111-8111-111111111111', sender_entity_id: SHOP, purpose: 'order', business_json: counterBill, all_recipients: [] }, o || {});
 
 const srv = app.listen(0, '127.0.0.1', async () => {
   const base = `http://127.0.0.1:${srv.address().port}/api/chits`;
   const deliver = async () => {
     UPDATES = []; HEARD = [];
-    const r = await fetch(base + '/cb1/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const r = await fetch(base + '/11111111-1111-4111-8111-111111111111/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 2, unit: 'piece', reference: 'GRN-7' }, { line_id: 'l2', quantity: 1, unit: 'piece', reference: 'GRN-7' }] }) });
     await new Promise((res) => setTimeout(res, 30));
     return { status: r.status, body: await r.json().catch(() => ({})) };
@@ -118,38 +118,38 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ME = CUST; SENDER = SHOP; STATUS = 'pending'; HDR = hdr({ purpose: 'invoice', business_json: Object.assign({ counter_bill: true }, counterBill),
       line_items: [{ line_id: 'l1', particulars: 'Brake pad' }, { line_id: 'l2', particulars: 'Shop broom' }] });
     SQLS = [];
-    const gu = await (async () => { UPDATES = []; const r = await fetch(base + '/cb1/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const gu = await (async () => { UPDATES = []; const r = await fetch(base + '/11111111-1111-4111-8111-111111111111/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 1 }], use: 'use', use_lines: { l1: 'resale' } }) }); await new Promise((res) => setTimeout(res, 30)); return r.json(); })();
     const wi = SQLS.findIndex((x) => /UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) \|\| jsonb_build_object\('use'/.test(x));
     const ai = SQLS.findIndex((x) => /UPDATE chit_status SET current_status/.test(x));
     ok('goods-in with { use, use_lines } records what the goods are for on MY copy — before the bill is accepted',
       wi >= 0 && ai > wi && gu.use && gu.use.bill === 'use' && gu.use.lines.l1 === 'resale' && gu.accepted === true, JSON.stringify([wi, ai, gu.use, gu.accepted]));
     STATUS = 'accepted';
-    const gu2 = await (await fetch(base + '/cb1/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 1 }], use: 'asset' }) })).json();
+    const gu2 = await (await fetch(base + '/11111111-1111-4111-8111-111111111111/deliver-lines', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: [{ line_id: 'l1', quantity: 1 }], use: 'asset' }) })).json();
     ok('…once accepted the answer is settled: refused, said, and the delivery itself still records', gu2.ok === true && gu2.use && /already accepted/.test(gu2.use.refused || ''), JSON.stringify(gu2.use));
 
     /* Intake's door is unchanged */
     ME = CUST; STATUS = 'pending'; UPDATES = []; HEARD = [];
-    const put = await fetch(base + '/cb1/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'accepted' }) });
+    const put = await fetch(base + '/11111111-1111-4111-8111-111111111111/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'accepted' }) });
     const pb = await put.json(); await new Promise((res) => setTimeout(res, 30));
     ok('PUT /status accepted (Intake) answers as before: 200, previous pending → accepted', put.status === 200 && pb.previous_status === 'pending' && pb.new_status === 'accepted', JSON.stringify(pb));
     ok('…one update, and the ledger hears it', UPDATES.length === 1 && HEARD.indexOf(CUST) >= 0, JSON.stringify([UPDATES, HEARD]));
-    const put2 = await fetch(base + '/cb1/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'accepted' }) });
+    const put2 = await fetch(base + '/11111111-1111-4111-8111-111111111111/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'accepted' }) });
     const pb2 = await put2.json();
     ok('…again: the idempotent no-op it always was', put2.status === 200 && pb2.noop === true, JSON.stringify(pb2));
     STATUS = 'completed';
-    const put3 = await fetch(base + '/cb1/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'rejected' }) });
+    const put3 = await fetch(base + '/11111111-1111-4111-8111-111111111111/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'rejected' }) });
     const pb3 = await put3.json();
     ok('…and an invalid move is still a 400 that names what is allowed', put3.status === 400 && Array.isArray(pb3.allowed_transitions), put3.status + ' ' + JSON.stringify(pb3));
 
     /* the counter's goods-in list: the supplier's bill is goods to count in; my own counter sale is not */
     ME = CUST;
     const line = [{ line_id: 'l1', particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59 }];
-    HEADS = [{ chit_id: 'cb1', direction: 'received', purpose: 'invoice', sender_entity_id: SHOP, created_at: '2026-10-01T05:00:01Z', manual_subject: 'Bill C1/26-27/0041 from Mayur Traders', counterparty_name: 'Mayur Traders' },
+    HEADS = [{ chit_id: '11111111-1111-4111-8111-111111111111', direction: 'received', purpose: 'invoice', sender_entity_id: SHOP, created_at: '2026-10-01T05:00:01Z', manual_subject: 'Bill C1/26-27/0041 from Mayur Traders', counterparty_name: 'Mayur Traders' },
              { chit_id: 'mine', direction: 'received', purpose: 'order', sender_entity_id: CUST, created_at: '2026-10-01T06:00:00Z', manual_subject: 'Counter sale C1/26-27/0007' }];
-    TASK_ROWS = [{ chit_id: 'cb1', line_items: line, business_json: Object.assign({ counter_bill: true }, counterBill) }, { chit_id: 'mine', line_items: line, business_json: { bill_no: 'C1/26-27/0007', till: { id: 'C1' }, customer: { name: 'Walk-in' } } }];
+    TASK_ROWS = [{ chit_id: '11111111-1111-4111-8111-111111111111', line_items: line, business_json: Object.assign({ counter_bill: true }, counterBill) }, { chit_id: 'mine', line_items: line, business_json: { bill_no: 'C1/26-27/0007', till: { id: 'C1' }, customer: { name: 'Walk-in' } } }];
     const rcv = await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/tasks?kind=receive`)).json();
-    ok('goods-in (receive) lists the supplier\'s counter bill sent to me, with what is left to count', rcv.count === 1 && rcv.tasks[0].chit_id === 'cb1' && rcv.tasks[0].lines[0].remaining === 2, JSON.stringify(rcv));
+    ok('goods-in (receive) lists the supplier\'s counter bill sent to me, with what is left to count', rcv.count === 1 && rcv.tasks[0].chit_id === '11111111-1111-4111-8111-111111111111' && rcv.tasks[0].lines[0].remaining === 2, JSON.stringify(rcv));
     const dsp = await (await fetch(`http://127.0.0.1:${srv.address().port}/api/till/tasks?kind=despatch`)).json();
     ok('…and neither it nor my own counter sale is a despatch task', dsp.count === 0, JSON.stringify(dsp));
     SQLS = [];

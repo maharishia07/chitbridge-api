@@ -50,7 +50,7 @@ let STATUS, DISPUTES, LOG, MSGS, RAIDA, SQL, BELL;
 function reset() {
   STATUS = [A, B, C, D].map((e) => ({ chit_id: CH, entity_id: e, current_status: 'pending', deleted_at: null }));
   DISPUTES = []; LOG = []; MSGS = []; SQL = []; BELL = [];
-  RAIDA = [A, B, C].map((e) => ({ entity_id: e, raida_id: 'r-' + e.slice(0, 1), kind: 'issue', chit_id: CH, dispute_id: null }));
+  RAIDA = [A, B, C].map((e) => ({ entity_id: e, raida_id: e.slice(0, 1).repeat(8) + '-1111-4111-8111-111111111111', kind: 'issue', chit_id: CH, dispute_id: null }));
 }
 const rlsErr = (t) => new Error('new row violates row-level security policy for table "' + t + '"');
 const raise = (m) => { const e = new Error(m); e.code = 'P0001'; return e; };
@@ -348,11 +348,11 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const sch = require(path.join(API, 'lib', 'schema'));
     const _ht = sch.hasTable; sch.hasTable = async (t) => t === 'chit_line_raida';
     const _hc = sch.hasColumn; sch.hasColumn = async () => false;
-    const lk = await as(A, 'POST', U + '/raida/r-a/dispute', { dispute_id: D4 });
+    const lk = await as(A, 'POST', U + '/raida/aaaaaaaa-1111-4111-8111-111111111111/dispute', { dispute_id: D4 });
     ok('RAIDA door: A links its issue to the dispute it raised', lk.status === 200 && RAIDA.find((x) => x.entity_id === A).dispute_id === D4, JSON.stringify(lk));
     ok('…the link stamps A\'s own register row only — B\'s and C\'s are untouched', RAIDA.filter((x) => x.entity_id !== A).every((x) => x.dispute_id === null));
     ok('…and the link raises nothing: still exactly the two copies (A, B), no copy for C', DISPUTES.length === 2 && disputesOf(C).length === 0);
-    const lc = await as(C, 'POST', U + '/raida/r-c/dispute', { dispute_id: D4 });
+    const lc = await as(C, 'POST', U + '/raida/cccccccc-1111-4111-8111-111111111111/dispute', { dispute_id: D4 });
     const gc2 = await as(C, 'GET', U + '/disputes');
     ok('…C linking that id to its own issue does not make the dispute visible to C', gc2.body.disputes.length === 0 && disputesOf(C).length === 0 && logOf(C).length === 0, 'link ' + lc.status + ' ' + JSON.stringify(gc2.body));
     sch.hasTable = _ht; sch.hasColumn = _hc;
