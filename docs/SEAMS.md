@@ -19,7 +19,7 @@ of file each thing is; this says what already does the job.
 | 85 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 73 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 72 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 73 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 69 | `next` | `dayopen.js` | the next thing to do — |
 | 66 | `list` | `cap-settings.js` |  |
