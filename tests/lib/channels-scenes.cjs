@@ -37,7 +37,6 @@ function rowsOf(tools) {
     noTable: raising(/channel_binding/, '42P01'),
     noColumn: raising(/auto_raise/, '42703'),
     noFunction: raising(/channel_set_status/, '42883'),
-    malformedId: raising(/channel_binding|channel_set_status/, '22P02'),
     noOutboundTable: raising(/channel_outbound/, '42P01')
   };
 }
@@ -81,7 +80,7 @@ function extras(tools) {
     make('ref-ok', 'POST ' + C + '/:id/provider-ref', 200, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1234567890' }, setup: withRows(rows.providerRef) }),
     make('ref-no-such-binding', 'POST ' + C + '/:id/provider-ref', 404, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' } }),
     make('ref-not-migrated', 'POST ' + C + '/:id/provider-ref', 503, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' }, setup: withRows(rows.noTable) }),
-    make('ref-malformed-id', 'POST ' + C + '/:id/provider-ref', 500, { url: C + '/nope/provider-ref', body: { provider_ref: '1' }, setup: withRows(rows.malformedId) }),
+    make('ref-malformed-id', 'POST ' + C + '/:id/provider-ref', 404, { url: C + '/nope/provider-ref', body: { provider_ref: '1' } }) /* K-1: an id that is not a uuid is a 404 before the database (was a 500) */,
     make('ref-fails', 'POST ' + C + '/:id/provider-ref', 500, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' }, setup: failing }),
     make('ref-body-a-list', 'POST ' + C + '/:id/provider-ref', 200, { url: asId(C + '/:id/provider-ref'), body: [], setup: withRows(rows.providerRef) }),
     /* POST /:id/auto-raise */

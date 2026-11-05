@@ -18980,7 +18980,7 @@
       "observed": 5,
       "open": [],
       "example": {
-        "url": "/api/relationships/scorecard/nope"
+        "url": "/api/relationships/scorecard/dddddddd-dddd-4ddd-8ddd-dddddddddddd?since=2026-01-01"
       }
     },
     "GET /api/relationships/suppliers": {
@@ -19227,7 +19227,7 @@
       "observed": 7,
       "open": [],
       "example": {
-        "url": "/api/relationships/suppliers/nope/catalogue"
+        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/relationships/suppliers/availability": {

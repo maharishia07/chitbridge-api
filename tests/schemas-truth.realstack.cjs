@@ -70,5 +70,13 @@ const columns = async (shop) => ok(await j('/api/schemas/fields', { token: shop.
     const extra = await j('/api/schemas/create-default', { method: 'POST', token: A.token, body: { zz_unknown: 1 } });
     expect(again.message === 'Schema already exists' && extra.status === 422, JSON.stringify({ again: again.message, extra: extra.status }));
   });
+  /* K-1 Q2 (laptop1, 4 Nov): field_key is bound as TEXT; Postgres refuses a NUL in text (22021). Red on main = 500; with lib/problem textParam = the file's own 404 (no such column), before any query */
+  await kase('SC-K1-NUL', 'DELETE and PATCH /fields/:field_key with a NUL in the key answer 404 no such column, never a 500 with the database words', async () => {
+    const drop = await j('/api/schemas/fields/a%00b', { method: 'DELETE', token: A.token });
+    const patch = await j('/api/schemas/fields/a%00b', { method: 'PATCH', token: A.token, body: { field_name: 'x' } });
+    for (const [what, r] of [['delete', drop], ['patch', patch]]) {
+      expect(r.status === 404 && !/22021|invalid byte sequence/i.test(JSON.stringify(r.b)), what + ' answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+    }
+  });
   finish('schemas-truth', process.env.SCHEMAS_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('schemas truth could not run:', e && e.message); process.exit(2); });

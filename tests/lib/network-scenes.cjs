@@ -47,6 +47,7 @@ function extras(tools) {
     X('claim-already', 'POST ' + at('/entities/:id/claim'), 409, { url: nodeUrl(NODE.a, 'claim'), body: {}, setup: world() }),
     X('claim-not-yours', 'POST ' + at('/entities/:id/claim'), 403, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world() }),
     X('claim-made', 'POST ' + at('/entities/:id/claim'), 200, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world({}, { who: CHILD }) }),
+    N('place-asked-twice', 'GET ' + at('/place'), 400, { url: at('/place?bridgeId=a&bridgeId=b'), setup: world({ tree: true }) }),
     X('place-found', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true }) }),
     X('place-a-root', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=AAAA2222'), setup: world({ tree: true }) }),
     X('place-suspended-member', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true, edge: { state: 'suspended' } }, { who: CHILD }) }),
@@ -186,6 +187,7 @@ function extras(tools) {
     N('handshake-body-a-list', 'POST ' + CON + '/request', 400, { body: [], setup: world() }),
     X('pending-one', 'GET ' + CON + '/pending', 200, { setup: world(asked) }),
     X('pending-a-page', 'GET ' + CON + '/pending', 200, { url: CON + '/pending?page=1&limit=1', setup: world(asked) }),
+    N('pending-limit-asked-twice', 'GET ' + CON + '/pending', 400, { url: CON + '/pending?limit=1&limit=2', setup: world(asked) }), /* B2: a handler-made refusal for the error tests */
     X('respond-needs-an-action', 'PUT ' + CON + '/:id/respond', 400, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'maybe' } }),
     X('respond-unknown', 'PUT ' + CON + '/:id/respond', 404, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world() }),
     X('respond-accepted', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world(asked) }),
@@ -193,7 +195,8 @@ function extras(tools) {
     X('respond-spaced-word', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: ' accept ' }, setup: world(asked) }),
     X('respond-db-fails', 'PUT ' + CON + '/:id/respond', 500, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: failing }),
     X('list-one', 'GET ' + CON + '/list', 200, { setup: world({ request: 'accepted' }) }),
-    X('list-a-page', 'GET ' + CON + '/list', 200, { url: CON + '/list?limit=1', setup: world({ request: 'accepted' }) })
+    X('list-a-page', 'GET ' + CON + '/list', 200, { url: CON + '/list?limit=1', setup: world({ request: 'accepted' }) }),
+    N('list-limit-asked-twice', 'GET ' + CON + '/list', 400, { url: CON + '/list?limit=1&limit=2', setup: world({ request: 'accepted' }) }) /* B2: a handler-made refusal for the error tests */
   ];
   return tree.concat(designed, handshake);
 }
