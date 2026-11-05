@@ -229,7 +229,7 @@ const COUNTRY = {
     X.store.unreversedForChit = wasUnrev; X.store.entryBySource = wasBySrc; X.store.insertEntry = wasInsert;
     ok('T6 · neither side threw (a lost race cannot roll the cancel back)', !threw, String(threw && threw.stack));
     eq('T6 · exactly ONE reversal of the sale', reversalsOf(shop, sale).length, 1);
-    ok('T6 · the winner reversed, the loser answered duplicate (not an error)', [door, hook, twin].filter((x) => x && x.ok === true && x.reverses).length === 1 && [door, hook, twin].some((x) => x && (x.duplicate === true || x.none === true)), JSON.stringify([door, hook, twin]));
+    ok('T6 · the winner reversed, the loser answered duplicate (not an error)', [door, hook, twin].filter((x) => x && x.ok === true && x.reverses && !x.already).length === 1 && [door, hook, twin].some((x) => x && (x.duplicate === true || x.none === true)), JSON.stringify([door, hook, twin]));
     const direct = await Promise.all([K.reverseIfPosted(shop, 'race', 'again', 'u1'), K.reverseIfPosted(shop, 'race', 'again', 'u1')]);
     eq('T6 · and a second pair of calls reverse nothing more', [direct, reversalsOf(shop, sale).length], [[0, 0], 1]);
     /* the 23505 catch itself: a reversal that throws it is a duplicate, said on the object */
@@ -244,6 +244,20 @@ const COUNTRY = {
     let other = null; try { await K.reverseIfPosted(shop, 'race', 'x', 'u1', {}); } catch (e) { other = e; }
     X.B.reverseEntry = wasRev; X.store.unreversedForChit = wasUnrev;
     ok('T6 · any OTHER database error still surfaces (only the unique-index loss is a duplicate)', !!other && other.code === 'XX000');
+
+    /* ── F1 (SIT 6 Nov): the status door's books call lost to the afterChit hook, which reversed first → its 200 `books` must still SAY that reversal, not a bare duplicate ── */
+    const mf = (st) => Object.assign(mk(st), { chit_id: 'f1' });
+    use(mf('delivered'), sellEntry); await K.postChit(shop, 'f1', {});
+    const sale1 = entriesOf(shop, 'f1')[0];
+    use(mf('cancelled'), sellEntry);
+    await K.postChit(shop, 'f1', {});                                  /* the hook: reverses first */
+    X.store.unreversedForChit = async () => [sale1.entry_id];          /* the door had read "not reversed yet" a moment before */
+    const first = await K.takeBackCancelled(shop, 'f1', 'u1');
+    const second = await K.takeBackCancelled(shop, 'f1', 'u1');
+    X.store.unreversedForChit = wasUnrev;
+    const rev1 = reversalsOf(shop, sale1);
+    eq('F1 · the first status cancel answers the hook\'s reversal: ok, already, entry_no, posting_date, reverses, moved, words', [rev1.length, first.ok, first.already, first.duplicate, first.entry_no === rev1[0].entry_no, String(first.posting_date), first.reverses === sale1.entry_no, first.moved, typeof first.words], [1, true, true, true, true, DAY, true, false, 'string']);
+    eq('F1 · a second cancel answers duplicate with the same entry_no; still 1 reversal', [second.duplicate, second.entry_no === rev1[0].entry_no, reversalsOf(shop, sale1).length], [true, true, 1]);
   }
 
   /* ── T7 · a LOCKED month: the reversal takes the engine's date (original month if open, else the first open date), said; every later month locked → refused in words, cancel stands ── */
