@@ -99,6 +99,7 @@ function writes(tools) {
   const put = (id, scheme, expectStatus, body, setup, extra) => scene(id, P, '/documents/' + scheme, expectStatus, Object.assign({ body, setup }, extra || {}));
   const ok = (who, o) => asks(who || OWNER, o);
   return [
+    put('put-unknown-key-refused', 'PHONE', 422, { value: VALUES.PHONE, colour: 'red' }, ok()),
     put('put-phone', 'PHONE', 200, { value: VALUES.PHONE }, ok()),
     put('put-phone-plus-spaces', 'phone', 200, { value: ' +00 0000-0000 ' }, ok()),
     put('put-phone-as-number', 'PHONE', 200, { value: 10000000000 }, ok()),
@@ -147,6 +148,7 @@ function codes(tools) {
   const delivered = { notify: { sendOtpSms: async () => ({ delivered: true }), sendOtpEmail: async () => ({ delivered: true }) } };
   const sealed = { NODE_ENV: 'production' };
   return [
+    code('code-unknown-key-refused', 'PHONE', 422, { body: { colour: 'red' } }),
     code('code-phone-not-sent', 'PHONE', 200),
     code('code-phone-sent', 'PHONE', 200, {}, { patch: delivered }),
     code('code-email-sent', 'EMAIL', 200, {}, { patch: delivered }),
@@ -183,6 +185,7 @@ function confirms(tools) {
     return scene(id, V, '/documents/' + scheme + '/verify', expectStatus, Object.assign({ body: options.body === undefined ? { code: FIXED_CODE } : options.body, setup: asks(options.who || OWNER, Object.assign({ record }, options.db || {})) }, extra || {}));
   };
   return [
+    verifyScene('verify-unknown-key-refused', 'PHONE', 422, { body: { code: FIXED_CODE, colour: 'red' } }),
     verifyScene('verify-phone', 'PHONE', 200),
     verifyScene('verify-email', 'EMAIL', 200),
     verifyScene('verify-code-as-number', 'PHONE', 200, { body: { code: Number(FIXED_CODE) } }),
