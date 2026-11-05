@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { PROBLEM_SCHEMA } = require('../lib/problem');
 
+/** the one OpenAPI document: the openapi part of six route files joined, served from PUBLIC_API_BASE or the request host */
 function assemble(req) {
   const base = process.env.PUBLIC_API_BASE || req.protocol + '://' + req.get('host');
   const parts = [require('./offers'), require('./pricing'), require('./tax'), require('./invoice'), require('./keys'), require('./integrations')].map(

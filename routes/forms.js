@@ -14,8 +14,8 @@ const { contract, faultOf } = require('../lib/forms-contract'); // the contract 
 const forms = require('../lib/forms');
 const access = require('../lib/access'); /* TRADE-SRV1 G8: issue · sign · attach are the owner's or an editor's; the reads say so (may/why) */
 const mayOf = (req) => {
-  const m = access.mayWrite(req);
-  return { issue: m, sign: m, attach: m };
+  const verdict = access.mayWrite(req);
+  return { issue: verdict, sign: verdict, attach: verdict };
 };
 const entityId = (req) => auth.entityOf(req);
 

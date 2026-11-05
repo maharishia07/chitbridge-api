@@ -527,6 +527,30 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     ok('M174: GET /daybook: the reversed entry carries reversed_by (no. + id); the mirror and a plain entry carry null', !!dOrig && dOrig.reversed_by === rev.body.entry_no && dOrig.reversed_by_id === rev.body.entry_id && dMirror.reversed_by === null, JSON.stringify(dOrig && [dOrig.reversed_by, dOrig.reversed_by_id]));
   });
 
+  /* ═══ 6b · FIN-64 (engines 1.75.2): reversing a PART-PAID bill releases the payment allocated to it, as money on account ═══
+     Hand-computed: VS-0030 = ₹1,000 + 12% GST = ₹1,120 (112000 minor). ₹400 paid (40000) and allocated to it. Reverse the BILL:
+     the bill owes 0 · the ₹400 is no longer tied to a dead bill: it stands on account (magnitude 40000), never deleted, never moved to
+     another bill. Old code (receivables 1.65.0): the allocation stayed on the reversed bill, so the payment read 0 on account. */
+  await section('6b · FIN-64 reverse a part-paid bill: its payment is released on account', async () => {
+    const SUPP3 = '55555555-5555-4555-8555-555555555555';
+    X.T.parties.push({ owner: SHOP, party_id: SUPP3, party_no: 'P-00004', name: 'Kaveri Traders', supplier: true, credit_days: 30 });
+    const bill = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-10', currency: 'INR', party: SUPP3, source_chit_id: BILL('r'), source_ref: 'chit:r', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL('r'), bill_no: 'VS-0030', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'VS-0030' } });
+    stamp(X, AGO_2D());
+    const pay = await q('POST', '/payments', { party_id: SUPP3, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-07', amount_minor: 40000, allocate: 'oldest_first', client_ref: 'kt-1' });
+    ok('₹400 settles part of VS-0030', pay.status === 200 && pay.body.allocation.settled.length === 1 && pay.body.outcome.on_account_minor === 0, JSON.stringify(pay.body));
+    const payId = pay.body.payment.payment_id;
+    const R = X.E.receivables();
+    const o0 = R.outstanding(await X.B.partyItems(X.db, SHOP, SUPP3, null));
+    eq('before: the bill owes ₹720, the payment is fully applied', [Math.abs(o0.by_ref[BILL('r')].outstanding_minor), o0.by_ref['pay:' + payId].outstanding_minor], [72000, 0]);
+    const rev = await q('POST', '/entries/' + bill.entry_id + '/reverse', { reason: 'Wrong supplier' });
+    ok('200: the bill is reversed', rev.status === 200 && rev.body.ok === true, JSON.stringify(rev.body));
+    const o1 = R.outstanding(await X.B.partyItems(X.db, SHOP, SUPP3, null));
+    eq('after: the bill owes 0 · the ₹400 stands on account (released, not deleted)', [o1.by_ref[BILL('r')].outstanding_minor, Math.abs(o1.by_ref['pay:' + payId].outstanding_minor)], [0, 40000]);
+    ok('no allocation is released twice: one release pair per allocation half', X.T.items.filter((i) => i.ref_kind === 'reversal' && i.reverses_kind === 'allocation' && i.ref === BILL('r')).length <= 2,
+      JSON.stringify(X.T.items.filter((i) => i.ref_kind === 'reversal' && i.ref === BILL('r'))));
+  });
+
   /* ═══ 7 · M30 advice OUT ═══ */
   await section('7 · M30 advice OUT: on_rail, the ready body + may, PATCH first-wins, the statement state, To-do advices_to_send, the refusals, b285 not run', async () => {
     const TT = '66666666-6666-4666-8666-666666666666', CH1 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', CH2 = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2';
