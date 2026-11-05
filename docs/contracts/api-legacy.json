@@ -49362,6 +49362,54 @@
       "error": "Add credential failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "credential-junk-title",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     },
+     "fixture": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     }
+    },
+    {
+     "scenario": "credential-junk-standard-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     },
+     "fixture": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     }
+    },
+    {
+     "scenario": "credential-junk-doc-key",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     },
+     "fixture": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     }
+    },
+    {
+     "scenario": "credential-junk-evidence-ref",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     },
+     "fixture": {
+      "error": "Cannot save this text",
+      "message": "Cannot save this text. Type it again."
+     }
     }
    ]
   },
