@@ -22,6 +22,9 @@
   "PATCH /api/entities/policy": {
    "output_allowlist": true
   },
+  "GET /api/entities/header": {
+   "output_allowlist": true
+  },
   "GET /api/entities/sides": {
    "output_allowlist": true
   },
@@ -40,7 +43,11 @@
   "GET /api/entities/entitlements": {
    "output_allowlist": true
   },
+  "POST /api/connections/request": {
+   "strict_input": true
+  },
   "PUT /api/connections/:id/respond": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -234,6 +241,9 @@
   "GET /api/pricing/kinds": {
    "output_allowlist": true
   },
+  "POST /api/pricing/price": {
+   "output_allowlist": true
+  },
   "GET /api/invoice/:chit_id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -362,21 +372,45 @@
    "output_allowlist": true
   },
   "POST /api/counters": {
+   "strict_input": true,
    "output_allowlist": true
   },
+  "PATCH /api/counters/:id": {
+   "strict_input": true
+  },
+  "POST /api/counters/:id/assign": {
+   "strict_input": true
+  },
+  "POST /api/counters/:id/open": {
+   "strict_input": true
+  },
+  "POST /api/counters/:id/release": {
+   "strict_input": true
+  },
+  "POST /api/quick-keys/groups": {
+   "strict_input": true
+  },
   "PATCH /api/quick-keys/groups/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
    "strict_input": true,
    "foreign_id_404": true
   },
+  "POST /api/quick-keys/groups/:id/items": {
+   "strict_input": true
+  },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "strict_input": true
   },
   "POST /api/network-offers/:id/release": {
    "foreign_id_404": true
@@ -487,11 +521,19 @@
   "GET /api/identity/documents": {
    "output_allowlist": true
   },
+  "PUT /api/identity/documents/:scheme": {
+   "strict_input": true
+  },
   "POST /api/identity/documents/:scheme/code": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/identity/documents/:scheme/verify": {
+   "strict_input": true,
    "foreign_id_404": true
+  },
+  "GET /api/people": {
+   "output_allowlist": true
   },
   "GET /api/folders": {
    "output_allowlist": true
@@ -791,8 +833,18 @@
   "GET /api/network-design": {
    "output_allowlist": true
   },
+  "PUT /api/network-design": {
+   "strict_input": true
+  },
   "POST /api/network-design/validate": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/network-design/build": {
+   "strict_input": true
+  },
+  "POST /api/network-design/reissue": {
+   "strict_input": true
   },
   "GET /api/network-design/stores": {
    "output_allowlist": true
@@ -803,15 +855,48 @@
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
+  "PUT /api/catalogue-face": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
+  "POST /api/combo-templates": {
+   "strict_input": true
+  },
   "PATCH /api/combo-templates/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/combo-templates/:id/push": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/combo-templates/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/network/entities": {
+   "strict_input": true
+  },
+  "POST /api/network/entities/:id/claim": {
+   "strict_input": true
+  },
+  "POST /api/network/connections": {
+   "strict_input": true
+  },
+  "POST /api/network/connections/:id/approve": {
+   "strict_input": true
+  },
+  "POST /api/network/connections/:id/decline": {
+   "strict_input": true
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "strict_input": true
+  },
+  "POST /api/network/connections/:id/resume": {
+   "strict_input": true
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "strict_input": true
   },
   "POST /api/simulator/lead": {
    "output_allowlist": true
@@ -820,9 +905,11 @@
    "output_allowlist": true
   },
   "POST /api/notifications/seen": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/notifications/dismiss": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/assist/conform": {
@@ -838,6 +925,9 @@
    "output_allowlist": true
   },
   "POST /api/assist/catalogue-adopt": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/catalogue-mine": {
    "output_allowlist": true
   },
   "PUT /api/assist/catalogue-source": {
@@ -981,16 +1071,23 @@
   "GET /api/testing/releases": {
    "output_allowlist": true
   },
+  "POST /api/capture/simulate": {
+   "strict_input": true
+  },
   "POST /api/capture/:id/structure": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/raise": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/convert": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/dismiss": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/capture/webhook/whatsapp": {
@@ -1002,11 +1099,25 @@
   "GET /api/capture/consolidate": {
    "output_allowlist": true
   },
+  "POST /api/capture/stores": {
+   "strict_input": true
+  },
+  "GET /api/channels": {
+   "output_allowlist": true
+  },
   "POST /api/channels/:id/provider-ref": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/channels/:id/auto-raise": {
+   "strict_input": true,
    "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template": {
+   "strict_input": true
+  },
+  "POST /api/channels": {
+   "strict_input": true
   },
   "DELETE /api/channels/:id": {
    "output_allowlist": true,
@@ -1016,6 +1127,7 @@
    "output_allowlist": true
   },
   "POST /api/kyb/credential": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/kyb/position": {
@@ -1025,6 +1137,7 @@
    "output_allowlist": true
   },
   "POST /api/kyb/field": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/forms": {
@@ -1056,14 +1169,26 @@
    "foreign_id_404": true
   },
   "PUT /api/service/:chit_id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/service/:chit_id/respond": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/service/:chit_id/resolve": {
+   "strict_input": true
+  },
+  "POST /api/service/:chit_id/pause": {
+   "strict_input": true
+  },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "strict_input": true,
    "foreign_id_404": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "strict_input": true
   },
   "GET /api/definitions/:id": {
    "foreign_id_404": true
@@ -1227,6 +1352,9 @@
   "POST /api/books/money-check/resolve": {
    "strict_input": true
   },
+  "GET /api/facts/rail/chits": {
+   "output_allowlist": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },
@@ -1369,22 +1497,37 @@
   "GET /api/privacy/facts": {
    "output_allowlist": true
   },
+  "POST /api/privacy/me/consent": {
+   "strict_input": true
+  },
+  "POST /api/privacy/me/requests": {
+   "strict_input": true
+  },
   "GET /api/supplies": {
    "output_allowlist": true
   },
   "POST /api/supplies": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/supplies/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/supplies/purchase": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/supplies/:id/issue": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/adopt/:chit_id": {
+   "output_allowlist": true,
+   "foreign_id_404": true
+  },
+  "POST /api/adopt/:chit_id": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },

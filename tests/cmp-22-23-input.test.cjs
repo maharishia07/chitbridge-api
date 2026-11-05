@@ -99,7 +99,7 @@ const LEAK = /invalid input syntax|22P02|22007|22008|out of range|type uuid|type
     for (const [url, how] of [['/api/identity/documents/PHONE/code', 'body'], ['/api/identity/documents/PHONE/verify', 'body'], ['/api/identity/documents/EMAIL/code', 'query'], ['/api/identity/documents/EMAIL/verify', 'query']]) {
       if (how === 'query' && typeof bad !== 'string') continue;
       queries.length = 0;
-      const a = how === 'body' ? await ask(server, 'POST', url, { identity_id: bad, code: '123456' }) : await ask(server, 'POST', url + '?identity_id=' + encodeURIComponent(bad), {});
+      const a = how === 'body' ? await ask(server, 'POST', url, /verify$/.test(url) ? { identity_id: bad, code: '123456' } : { identity_id: bad }) : await ask(server, 'POST', url + '?identity_id=' + encodeURIComponent(bad), {});
       const label = 'POST ' + url.replace('/api/identity', '') + ' ' + how + ' identity_id=' + JSON.stringify(bad);
       check(a.status === 403, label + ' → 403 (got ' + a.status + ')');
       check(a.body.code === 'IDOC_SUBJECT_FORBIDDEN', label + ' → code IDOC_SUBJECT_FORBIDDEN (got ' + a.body.code + ')');

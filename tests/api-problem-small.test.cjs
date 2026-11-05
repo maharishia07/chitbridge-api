@@ -50,14 +50,32 @@ const WORLDS = [
   { id: 'nothing-found', setup: {} }
 ];
 const X = (id, route, status, extra) => Object.assign({ id, route, expect: status, setup: {} }, extra);
+const PERSON = (n, more) => Object.assign({ identity_id: '66666666-6666-4666-8666-' + String(n).padStart(12, '0'), display_name: 'Person ' + n, actor_key: 'p' + n, user_id: null, actor_role: 'Counter', phone: '98765', hat: null, break_status: null, can_see_costs: false, current_task_count: 2, last_active_at: '2026-11-01T10:00:00.000Z', delegate_actor_id: null, access_level: 'editor', whole_entity: false, email: 'p' + n + '@example.com', has_email: true, entity_handle: 'shop', entity_country: 'IN', code_at: '2026-10-30T10:00:00.000Z', code_by: 'Owner', code_channel: 'email' }, more);
+/** the shop's people as the one read answers them: one on, one away with a cover, one switched off, one with no e-mail (the success shapes of GET /api/people, recorded for its answer allow-list) */
+const PEOPLE_ROWS = (sql) => (/FROM identities e/.test(sql) ? { rows: [PERSON(1), PERSON(2, { break_status: 'leave', delegate_actor_id: '66666666-6666-4666-8666-000000000001', email: null, has_email: false, code_at: null }), PERSON(3, { break_status: 'deactivated' })], rowCount: 3 } : null);
+/** more people than one page holds (the pager's cap is 200), so the answer says it was cut */
+const MANY_PEOPLE = (sql) => (/FROM identities e/.test(sql) ? { rows: Array.from({ length: 205 }, (one, at) => PERSON(at + 1)), rowCount: 205 } : null);
+/** a delivery this shop holds: two lines of a medicine trade (so one is offered, one has no name of its own to give) */
+const DELIVERY = (sql) =>
+  /FROM chit_header h/.test(sql)
+    ? { rows: [{ chit_id: CHIT, purpose: 'delivery', business_json: { source: { name: 'Acme Pharma', sectors: ['pharma'] }, party: { name: 'Acme Pharma' } }, created_at: '2026-11-01T10:00:00.000Z', sender_entity_id: null, line_items: [{ particulars: 'Paracetamol 500 strip', unit: 'strip', qty: 10, rate: 12 }, { particulars: 'Tea 250g', unit: 'pack', qty: 3, rate: 90 }] }], rowCount: 1 }
+    : /^s*INSERT INTO catalogue_items/.test(sql)
+      ? { rows: [{ item_id: '77777777-7777-4777-8777-777777777777' }], rowCount: 1 }
+      : null;
 const ACCEPT = { accept: [{ line: 0, name: 'Tea 250g', sku: 'TEA-250' }] };
 /** the extras: a refusal inside a handler the generic worlds cannot reach (they send an empty body, which is itself the handler's 400) */
 const EXTRAS = [
   X('delivery-unknown', 'POST /api/adopt/:chit_id', 404, { url: '/api/adopt/' + CHIT, body: ACCEPT }),
   X('db-fails-with-lines', 'POST /api/adopt/:chit_id', 500, { url: '/api/adopt/' + CHIT, body: ACCEPT, setup: { db: 'fail' } }),
   X('no-lines-given-as-a-list', 'POST /api/adopt/:chit_id', 400, { url: '/api/adopt/' + CHIT, body: [] }),
+  X('delivery-offered', 'GET /api/adopt/:chit_id', 200, { url: '/api/adopt/' + CHIT, setup: { sqlRows: DELIVERY } }),
+  X('delivery-accepted', 'POST /api/adopt/:chit_id', 200, { url: '/api/adopt/' + CHIT, body: { accept: [{ line: 0, name: 'Paracetamol', sku: 'PARA-500' }, { line: 1, name: 'Tea', sku: '' }, { line: 7, name: 'Nothing', sku: 'X' }] }, setup: { sqlRows: DELIVERY } }),
   X('page-given-twice', 'GET /api/people', 422, { url: '/api/people?page=1&page=2' }),
   X('for-given-twice', 'GET /api/people', 422, { url: '/api/people?for=add&for=add' }),
+  X('people-owner-reads', 'GET /api/people', 200, { setup: { sqlRows: PEOPLE_ROWS } }),
+  X('people-colleague-reads', 'GET /api/people', 200, { setup: { who: STAFF, sqlRows: PEOPLE_ROWS } }),
+  X('people-page-too-big', 'GET /api/people', 200, { url: '/api/people?page=1&limit=300', setup: { sqlRows: MANY_PEOPLE } }),
+  X('people-add-form', 'GET /api/people', 200, { url: '/api/people?for=add' }),
   X('db-fails-for-people', 'GET /api/people', 500, { setup: { db: 'fail' } })
 ];
 const contractOf = (one) => require(path.join(HERE, one.contract)).contract;

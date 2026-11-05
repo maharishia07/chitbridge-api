@@ -119,5 +119,16 @@ t('shapeEntry: a route( wrapper route closes from its recordings and says closed
 })());
 t('register: a passing output_allowlist whose evidence says basis recordings is marked on its row; nothing else is', (() => { const reg = require(path.join(API, 'tools', 'api-register.cjs')); return same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true, output_allowlist_basis: 'recordings' }), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, { output_allowlist: true }), {}) && same(reg.basisOf({ output_allowlist: false }, { output_allowlist_basis: 'recordings' }), {}); })());
 
+t('deriveShape: identifiers a passed-through value happens to name (a shorthand key, a call argument) are NOT keys; only keys a recorded answer held are', (() => {
+  const source = literal('Object.assign(view, pageOut(rows, { owner: isOwner(req), PAGE_DEFAULT }))');
+  const shape = tool.deriveShape({ samples: [{ people: [{ id: 1 }], total: 1 }], source });
+  const names = Object.keys(shape.schema.properties);
+  return same(names, ['people', 'total']) && !names.includes('owner') && !names.includes('PAGE_DEFAULT') && shape.schema['x-closed-by'] === 'recordings';
+})());
+t('deriveShape: a passed-through value whose answers held no key stays open instead of taking its names as keys', (() => {
+  const shape = tool.deriveShape({ samples: [{}], source: literal('rows.map((r) => ({ a: 1 }))') });
+  return shape.open.length === 1 && shape.schema.additionalProperties === undefined;
+})());
+
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

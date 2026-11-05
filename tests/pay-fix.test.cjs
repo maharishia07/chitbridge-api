@@ -3,6 +3,8 @@
  *
  *   C3  two payments recorded at once settle the same bill once: writeAllocation (and every path that reads party rows before
  *       it writes them) takes pg_advisory_xact_lock(hashtext(entity|party|account)) BEFORE the read — two clients, one wins.
+ *   C3b FIN-63 step 2: two confirms at once with the same pairs post ONCE (the second answers duplicate: true, read after the lock); different pairs both post or
+ *       the second is refused by confirmItems; a confirm that waits on the lock answers duplicate although it started first (the order is the lock's: item_id).
  *   H2  a second "Mark paid" on a chit reaches the books when the press carries a client_ref (chitpay:<chit>:<ref>); without
  *       one the old key stands and the replay is answered as the FIRST payment (duplicate: true), never a silent second record.
  *   M1  closing a tax period soft-locks the months it covers in the same transaction; a typed date in them is refused
@@ -99,6 +101,69 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
     ok('books-store.lockParty keys the shop + party|account through the ONE helper; reward-store.lockOn too (no second copy of the statement)',
       /lockParty\(db, e, party_id, account_id\)[\s\S]{0,120}lockKeys\(db, e, \[party_id \+ '\|' \+ account_id\]\)/.test(storeSrc)
       && !/pg_advisory_xact_lock/.test(fs.readFileSync(path.join(H.API, 'lib', 'reward-store.js'), 'utf8')) && /xact-lock/.test(fs.readFileSync(path.join(H.API, 'lib', 'reward-store.js'), 'utf8')));
+  });
+
+  /* ═══ C3 · FIN-63 step 2: the replay rule under the lock ═══ */
+  await section('C3 · FIN-63 step 2: two confirms at once — the same allocation is posted ONCE (the second answers duplicate); different ones both post or the second is refused', async () => {
+    const CLOCK = require(path.join(H.API, 'lib', 'shop-clock'));
+    const X = H.load(); twoClients(X);
+    CLOCK.set('2026-09-29T10:01:00Z');   /* the stand-in's own clock starts at 10:00:00 and ticks a second per write: the rows are seconds old */
+    try {
+      const AB = { A: BILL('a'), B: BILL('b') };
+      X.T.parties.push({ owner: SHOP, party_id: MALA, party_no: 'P-00001', name: 'Mala', customer: true, credit_days: 10 });
+      await X.B.enable(X.db, SHOP, {});
+      for (const [k, taxable] of [['A', 500], ['B', 300]])
+        await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-09-25', currency: 'INR', party: MALA, source_chit_id: AB[k], source_ref: 'chit:' + k,
+          by_rate: [{ rate: 0, taxable, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
+      const pay = await X.dbStub.withEntity(SHOP, (db) => X.B.recordPayment(db, SHOP, { party_id: MALA, direction: 'in', amount_minor: 100000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', client_ref: 'fin63', by: SHOP }));
+      const pid = pay.payment.payment_id, mine = () => X.T.items.filter((i) => i.ref_kind === 'allocation' && i.ref === 'pay:' + pid);
+      const confirm = (list) => X.dbStub.withEntity(SHOP, (db) => X.B.postEntry(db, SHOP, { type: 'allocation', party: MALA, side: 'customer', credit_ref: 'pay:' + pid, payment_id: pid,
+        allocations: list.map(([k, minor]) => ({ against_ref: AB[k], amount_minor: minor })), replay: true, currency: 'INR', by: SHOP }));
+      const open = async (k) => X.E.receivables().outstanding(await X.B.partyItems(X.db, SHOP, MALA, null)).by_ref[AB[k]].outstanding_minor;
+
+      /* (o) the same pairs at once */
+      const [o1, o2] = (await Promise.allSettled([confirm([['A', 40000], ['B', 20000]]), confirm([['B', 20000], ['A', 40000]])])).map((r) => r.value || { threw: String(r.reason) });
+      const dups = [o1, o2].filter((r) => r.duplicate === true), plain = [o1, o2].filter((r) => r.ok && r.duplicate === undefined);
+      ok('(o) the same pairs at once → one posts (items 4, allocated 60000), the other answers duplicate with the same figures', dups.length === 1 && plain.length === 1
+        && dups[0].items === 4 && dups[0].allocated_minor === 60000 && plain[0].items === 4 && plain[0].allocated_minor === 60000, JSON.stringify([o1, o2]));
+      ok('(o) …one batch of 4 rows, A owes 10000 and B 10000 (not −30000)', mine().length === 4 && await open('A') === 10000 && await open('B') === 10000, mine().length + ' rows ' + await open('A') + ' ' + await open('B'));
+
+      /* (p) different pairs at once: [{A,10000}] and [{B,10000}] both post; [{A,6000}] and [{A,5000}] on the 10000 left of A → one posts, one is refused (never capped) */
+      const [p1, p2] = await Promise.allSettled([confirm([['A', 1000]]), confirm([['B', 2000]])]);
+      ok('(p) [A 1000] and [B 2000] at once → both post (4 more rows: 8 in all), A owes 9000, B owes 8000', p1.status === 'fulfilled' && p2.status === 'fulfilled' && !p1.value.duplicate && !p2.value.duplicate
+        && mine().length === 8 && await open('A') === 9000 && await open('B') === 8000, JSON.stringify([p1, p2]) + ' ' + mine().length);
+      const [r1, r2] = await Promise.allSettled([confirm([['A', 6000]]), confirm([['A', 5000]])]);
+      const won = [r1, r2].filter((r) => r.status === 'fulfilled'), lost = [r1, r2].filter((r) => r.status === 'rejected');
+      ok('(p) [A 6000] and [A 5000] at once on the 9000 left → one posts, the other is REFUSED in words (never capped, never −2000)', won.length === 1 && lost.length === 1
+        && /owes|more|left|already/i.test(String(lost[0].reason && lost[0].reason.message)) && await open('A') === 9000 - (won[0].value.allocated_minor), JSON.stringify([r1, r2]));
+    } finally { CLOCK.reset(); }
+  });
+
+  await section('C3 · FIN-63 step 2: T2 starts first and waits on the lock; T1 posts and commits; T2 (the same pairs) answers duplicate — the order is the lock\'s (item_id), not the clock', async () => {
+    const CLOCK = require(path.join(H.API, 'lib', 'shop-clock'));
+    const X = H.load(); twoClients(X);
+    CLOCK.set('2026-09-29T10:01:00Z');
+    try {
+      await shopWithBill(X, 'q');
+      const pay = await X.dbStub.withEntity(SHOP, (db) => X.B.recordPayment(db, SHOP, { party_id: MALA, direction: 'in', amount_minor: 100000, currency: 'INR', mode: 'cash', received_at: '2026-10-05', client_ref: 'fin63q', by: SHOP }));
+      const pid = pay.payment.payment_id;
+      const confirm = () => X.dbStub.withEntity(SHOP, (db) => X.B.postEntry(db, SHOP, { type: 'allocation', party: MALA, side: 'customer', credit_ref: 'pay:' + pid, payment_id: pid,
+        allocations: [{ against_ref: BILL('q'), amount_minor: 10000 }], replay: true, currency: 'INR', by: SHOP }));
+      /* T1 holds the lock inside its write until the gate opens; T2 is started after T1 holds it, so it waits */
+      const realInsert = X.store.insertItems; let release; const gate = new Promise((r) => { release = r; }); let held = false;
+      X.store.insertItems = async function () { if (!held) { held = true; await gate; } return realInsert.apply(this, arguments); };
+      let t2Done = false;
+      const t1 = confirm();
+      await sleep(30);
+      const t2 = confirm().then((r) => { t2Done = true; return r; });
+      await sleep(30);
+      ok('T2 is still waiting on the lock while T1 holds it (no batch yet)', !t2Done && X.T.items.filter((i) => i.ref_kind === 'allocation' && i.ref === 'pay:' + pid).length === 0);
+      release();
+      const [r1, r2] = await Promise.all([t1, t2]);
+      X.store.insertItems = realInsert;
+      ok('(q) T1 posts [A 10000] (items 2); T2 with the same pairs answers duplicate with the same figures; one batch of 2 rows', r1.ok && r1.duplicate === undefined && r1.items === 2 && r2.duplicate === true && r2.items === 2 && r2.allocated_minor === 10000
+        && X.T.items.filter((i) => i.ref_kind === 'allocation' && i.ref === 'pay:' + pid).length === 2, JSON.stringify([r1, r2]));
+    } finally { CLOCK.reset(); }
   });
 
   /* ═══ H2 ═══ */

@@ -68,6 +68,7 @@ function extras(tools) {
     make('outbound-fails', 'GET ' + C + '/outbound', 500, { setup: failing }),
     added('outbound-doubled-value', 'GET ' + C + '/outbound', 400, { url: C + '/outbound?status=sent&status=failed', setup: withRows(rows.outbound) }),
     /* POST / */
+    make('bind-unknown-key-refused', 'POST ' + C, 400, { body: { colour: 'red', channel: 'whatsapp', address: '+91 98765 43210', label: 'Shop' }, setup: withRows(rows.inserted) }),
     make('bind-ok', 'POST ' + C, 201, { body: { channel: 'whatsapp', address: '+91 98765 43210', label: 'Shop' }, setup: withRows(rows.inserted) }),
     make('bind-unknown-channel', 'POST ' + C, 400, { body: { channel: 'fax', address: '123' } }),
     make('bind-no-channel', 'POST ' + C, 400, { body: {} }),
@@ -77,6 +78,7 @@ function extras(tools) {
     make('bind-fails', 'POST ' + C, 500, { body: { channel: 'whatsapp', address: NUMBER }, setup: failing }),
     make('bind-body-a-list', 'POST ' + C, 400, { body: [] }),
     /* POST /:id/provider-ref */
+    make('ref-unknown-key-refused', 'POST ' + C + '/:id/provider-ref', 400, { url: asId(C + '/:id/provider-ref'), body: { colour: 'red', provider_ref: '1234567890' }, setup: withRows(rows.providerRef) }),
     make('ref-ok', 'POST ' + C + '/:id/provider-ref', 200, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1234567890' }, setup: withRows(rows.providerRef) }),
     make('ref-no-such-binding', 'POST ' + C + '/:id/provider-ref', 404, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' } }),
     make('ref-not-migrated', 'POST ' + C + '/:id/provider-ref', 503, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' }, setup: withRows(rows.noTable) }),
@@ -84,6 +86,7 @@ function extras(tools) {
     make('ref-fails', 'POST ' + C + '/:id/provider-ref', 500, { url: asId(C + '/:id/provider-ref'), body: { provider_ref: '1' }, setup: failing }),
     make('ref-body-a-list', 'POST ' + C + '/:id/provider-ref', 200, { url: asId(C + '/:id/provider-ref'), body: [], setup: withRows(rows.providerRef) }),
     /* POST /:id/auto-raise */
+    make('auto-unknown-key-refused', 'POST ' + C + '/:id/auto-raise', 400, { url: asId(C + '/:id/auto-raise'), body: { colour: 'red', on: true }, setup: withRows(rows.autoRaise) }),
     make('auto-ok', 'POST ' + C + '/:id/auto-raise', 200, { url: asId(C + '/:id/auto-raise'), body: { on: true }, setup: withRows(rows.autoRaise) }),
     make('auto-no-such-binding', 'POST ' + C + '/:id/auto-raise', 404, { url: asId(C + '/:id/auto-raise'), body: { on: true } }),
     make('auto-column-not-migrated', 'POST ' + C + '/:id/auto-raise', 503, { url: asId(C + '/:id/auto-raise'), body: { on: true }, setup: withRows(rows.noColumn) }),
@@ -91,6 +94,7 @@ function extras(tools) {
     make('auto-fails', 'POST ' + C + '/:id/auto-raise', 500, { url: asId(C + '/:id/auto-raise'), body: { on: true }, setup: failing }),
     make('auto-body-a-list', 'POST ' + C + '/:id/auto-raise', 200, { url: asId(C + '/:id/auto-raise'), body: [], setup: withRows(rows.autoRaise) }),
     /* POST /:id/template */
+    make('template-unknown-key-refused', 'POST ' + C + '/:id/template', 400, { url: asId(C + '/:id/template'), body: { colour: 'red', name: 'order_status_update', state: 'pending' }, setup: withRows(rows.template) }),
     make('template-pending', 'POST ' + C + '/:id/template', 200, { url: asId(C + '/:id/template'), body: { name: 'order_status_update', state: 'pending' }, setup: withRows(rows.template) }),
     make('template-unknown', 'POST ' + C + '/:id/template', 400, { url: asId(C + '/:id/template'), body: { name: 'nope', state: 'pending' } }),
     make('template-bad-state', 'POST ' + C + '/:id/template', 400, { url: asId(C + '/:id/template'), body: { name: 'order_status_update', state: 'maybe' } }),
