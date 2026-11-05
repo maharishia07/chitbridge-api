@@ -27989,7 +27989,7 @@ async function orderBilledDone(bo, bill){
  * "Make live: on the very next bill" was not true: the counter kept the offers it read at 08:12 until F4. The shop now rings the bell when a
  * definition is saved (routes/definitions.js PUT), and the bell asks for a re-read. ⚠️ NEVER UNDER AN OPEN BILL: a "Reading your shop…"
  * overlay and prices that move under a customer who was already quoted are worse than a late offer. So with a bill in hand the re-read is HELD:
- * offersPeek() looks at the offers only (a small delta read, stored nowhere), the bar says "1 new offer, re-read", and the real read lands the
+ * offersPeek() looks at the offers only (a small delta read, stored nowhere), the bar says "1 new offer, re-read"; pressing it ASKS (this bill before → after, this bill only: Use new prices / Keep as quoted), and the real read lands the
  * moment the bill is cleared (clearBill) or the 30 s tick finds the counter idle — the same funnel stylePendFlush() uses.
  * ⚠️ OFFLINE: nothing is asked and nothing is said; the last list stays and a bill still prices with it. The bell cannot arrive offline anyway.
  * ⚠️ THE EVENT CARRIES NO DATA (see THE BELL): the count comes from reading, never from the event.
@@ -27999,7 +27999,7 @@ var SHOP_HELD = false, OFFERS_NEW = { count: 0, changed: false };
 function billInHand(){ return typeof CART !== 'undefined' && CART.length > 0; }
 /** offers the shop now runs against the ones this bill started with: how many are new, and whether anything differs (by id, then by content) */
 function offersDiff(haveOffers, nowOffers){
-  if (!Array.isArray(nowOffers)) return { count: 0, changed: false };
+  if (!Array.isArray(nowOffers)) return { count: 0, changed: false };   /* offers: kept in memory only, for the "before → after" question; nothing stored */
   var knownJson = {}, count = 0, changed = nowOffers.length !== haveOffers.length;
   haveOffers.forEach(function(offer){ knownJson[String(offer.id)] = JSON.stringify(offer); });
   nowOffers.forEach(function(offer){
@@ -28007,7 +28007,7 @@ function offersDiff(haveOffers, nowOffers){
     if (before === undefined) count++;
     if (before !== JSON.stringify(offer)) changed = true;
   });
-  return { count: count, changed: changed };
+  return { count: count, changed: changed, offers: nowOffers };
 }
 /** can the counter look at the shop right now: a copy to compare with, the line up, and a signed-in cloud counter */
 function canPeekOffers(){
@@ -28032,7 +28032,7 @@ function offersHeldPaint(){
   if (pill.hidden) return;
   var count = OFFERS_NEW.count;
   pill.textContent = '🏷 ' + (count ? count + (count === 1 ? ' new offer' : ' new offers') + ', re-read' : 'Offers changed, re-read');
-  pill.title = 'This bill keeps the offers it started with. Press to read them now, or they apply from the next bill.';
+  pill.title = 'This bill keeps the offers it started with. Press to see its total with the new ones; they apply from the next bill either way.';
 }
 /** the bell said the shop moved: read now between bills, hold it while a bill is in hand */
 function shopHeard(){
@@ -28043,11 +28043,38 @@ function shopHeard(){
 /** a held read lands once the bill is gone and the line is up; the pill goes with the read (refresh clears it) */
 function shopHeldFlush(){
   if (!SHOP_HELD || billInHand() || !lineUp()) return;
-  SHOP_HELD = false;   /* one try: a read that fails says so on the bar, it is not retried every tick */
+  SHOP_HELD = false;   /* one try: a read that fails is not retried every tick; the next bell asks again */
   refresh().catch(function(e){ cbQuiet('shopHeldFlush:1', e); });
 }
-/** the cashier pressed the pill: read now, and price the open bill again with what came in */
+/** this bill's total if these offers were the live ones: the ONE price() run on them, then put back as it was (all in one tick, nothing paints between) */
+function totalWithOffers(offers){
+  var live = S.offers;
+  try { S.offers = offers; price(); return billMoney().net; }
+  finally { S.offers = live; price(); }
+}
+/**
+ * The cashier pressed the pill. ⚠️ MONEY PROMISE: a price changing under a quoted customer is a deliberate confirm that names its reach
+ * ("this bill only"), never a silent re-price (Athi, 5 Nov). The new offers serve the NEXT bill whichever button is pressed.
+ * "Keep" touches nothing: S.offers stays as the bill started with it and SHOP_HELD stays up, so clearBill's flush reads the new ones.
+ */
 async function offersReread(){
+  var coming = OFFERS_NEW.offers;
+  if (!billInHand()) { SHOP_HELD = false; return refresh(); }
+  if (!coming) { toastLine('The new offers could not be read just now. The next bill uses them.'); return; }
+  var before = billMoney().net, after = totalWithOffers(coming);
+  if (before === after) {
+    OFFERS_NEW = { count: 0, changed: false }; offersHeldPaint();   /* SHOP_HELD stays: the next bill reads them */
+    toastLine('New offers loaded. This bill\'s total is unchanged; the next bill uses them.');
+    return;
+  }
+  var use = await sure('This bill: ' + money(before) + ' → ' + money(after) + '\n\nUse the new prices on this bill only, or keep it as quoted? The next bill uses the new offers either way.',
+                       'Use new prices', 'New offers came in', 'Keep as quoted');
+  if (!use) {
+    OFFERS_NEW = { count: 0, changed: false }; offersHeldPaint();
+    toastLine('Kept as quoted. The next bill uses the new offers.');
+    return;
+  }
+  SHOP_HELD = false;
   await refresh();
   try { price(); } catch (e) { cbQuiet('offersReread:1', e); }
 }
