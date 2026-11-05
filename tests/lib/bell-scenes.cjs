@@ -59,7 +59,7 @@ function extras(tools) {
     X('ticket-for-staff', 'POST ' + EV + '/ticket', 200, Object.assign({ setup: { who: STAFF } }, events('ticketFor', ticketed))),
     X('ticket-for-a-screen-key', 'POST ' + EV + '/ticket', 200, Object.assign({ headers: { 'x-test-screen': '1' } }, events('ticketFor', ticketed))),
     X('ticket-body-a-list', 'POST ' + EV + '/ticket', 200, Object.assign({ body: [] }, events('ticketFor', ticketed))),
-    X('ticket-body-is-never-read', 'POST ' + EV + '/ticket', 200, Object.assign({ body: { screen: true, entity_id: STRANGER_ID } }, events('ticketFor', ticketed))),
+    X('ticket-body-names-others-refused', 'POST ' + EV + '/ticket', 422, Object.assign({ body: { screen: true, entity_id: STRANGER_ID } }, events('ticketFor', ticketed))),
     X('ticket-login-names-no-shop', 'POST ' + EV + '/ticket', 401, { setup: { who: NOBODY } }),
     X('ticket-throws-leaks-nothing', 'POST ' + EV + '/ticket', 500, events('ticketFor', sink))
   ];
@@ -112,7 +112,7 @@ function extras(tools) {
     X('seen-marked', 'POST ' + NO + '/seen', 200, { setup: { sqlRows: marked } }),
     X('seen-marked-by-staff', 'POST ' + NO + '/seen', 200, { setup: { who: STAFF, sqlRows: marked } }),
     X('seen-body-a-list', 'POST ' + NO + '/seen', 200, { body: [1, 2], setup: { sqlRows: marked } }),
-    X('seen-body-is-never-read', 'POST ' + NO + '/seen', 200, { body: { entity_id: STRANGER_ID, seen_at: '2020-01-01' }, setup: { sqlRows: marked } }),
+    X('seen-body-names-others-refused', 'POST ' + NO + '/seen', 422, { body: { entity_id: STRANGER_ID, seen_at: '2020-01-01' }, setup: { sqlRows: marked } }),
     X('seen-nothing-answered', 'POST ' + NO + '/seen', 200, {}),
     X('seen-not-migrated', 'POST ' + NO + '/seen', 503, { setup: { sqlRows: raising(/notif_mark_seen/, '42883') } }),
     X('seen-fails', 'POST ' + NO + '/seen', 500, { setup: { sqlRows: raising(/notif_mark_seen/, '23505') } }),
@@ -134,7 +134,7 @@ function extras(tools) {
     X('dismiss-all-wins-over-ids', 'POST ' + NO + '/dismiss', 200, { body: { all: true, log_ids: [JUNK_LOG] }, setup: { sqlRows: dismiss(3) } }),
     X('dismiss-all-nothing-visible', 'POST ' + NO + '/dismiss', 200, { body: { all: true }, setup: { sqlRows: dismiss(0) } }),
     X('dismiss-by-staff', 'POST ' + NO + '/dismiss', 200, { body: { log_ids: [LOG_A] }, setup: { who: STAFF, sqlRows: dismiss(3) } }),
-    X('dismiss-entity-in-the-body-is-never-read', 'POST ' + NO + '/dismiss', 200, { body: { log_ids: [LOG_A], entity_id: STRANGER_ID }, setup: { sqlRows: dismiss(3) } }),
+    X('dismiss-entity-in-the-body-refused', 'POST ' + NO + '/dismiss', 422, { body: { log_ids: [LOG_A], entity_id: STRANGER_ID }, setup: { sqlRows: dismiss(3) } }),
     X('dismiss-not-a-uuid-clears-nothing', 'POST ' + NO + '/dismiss', 200, { body: { log_ids: ['nope'] }, setup: { sqlRows: dismiss(3) } }),
     X('dismiss-a-number-clears-nothing', 'POST ' + NO + '/dismiss', 200, { body: { log_ids: [7] }, setup: { sqlRows: dismiss(3) } }),
     X('dismiss-one-good-one-junk', 'POST ' + NO + '/dismiss', 200, { body: { log_ids: ['nope', LOG_A] }, setup: { sqlRows: dismiss(3) } }),

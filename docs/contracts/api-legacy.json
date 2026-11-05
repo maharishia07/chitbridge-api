@@ -46168,6 +46168,54 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "ticket-body-names-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "screen",
+      "errors": [
+       {
+        "field": "screen",
+        "code": "UNKNOWN_FIELD",
+        "detail": "screen is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "screen",
+      "errors": [
+       {
+        "field": "screen",
+        "code": "UNKNOWN_FIELD",
+        "detail": "screen is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46356,6 +46404,44 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "dismiss-entity-in-the-body-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "entity_id is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "entity_id is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46407,6 +46493,54 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "seen-body-names-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "seen_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "seen_at is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "seen_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "seen_at is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -46540,6 +46674,44 @@
       "error": "Could not save the supply",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "edit-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46663,6 +46835,54 @@
      "fixture": {
       "error": "Could not add the supply",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "add-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       },
+       {
+        "field": "visible",
+        "code": "UNKNOWN_FIELD",
+        "detail": "visible is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       },
+       {
+        "field": "visible",
+        "code": "UNKNOWN_FIELD",
+        "detail": "visible is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -47642,6 +47862,124 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "consent-asked-to-name-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "shop",
+      "errors": [
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "shop_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop_entity_id is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "identity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "identity_id is not accepted here."
+       },
+       {
+        "field": "noted_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "noted_by is not accepted here."
+       },
+       {
+        "field": "basis",
+        "code": "UNKNOWN_FIELD",
+        "detail": "basis is not accepted here."
+       },
+       {
+        "field": "source",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source is not accepted here."
+       },
+       {
+        "field": "source_ref",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source_ref is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "shop",
+      "errors": [
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "shop_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop_entity_id is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "identity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "identity_id is not accepted here."
+       },
+       {
+        "field": "noted_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "noted_by is not accepted here."
+       },
+       {
+        "field": "basis",
+        "code": "UNKNOWN_FIELD",
+        "detail": "basis is not accepted here."
+       },
+       {
+        "field": "source",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source is not accepted here."
+       },
+       {
+        "field": "source_ref",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source_ref is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -48003,6 +48341,114 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-asked-to-name-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "who",
+      "errors": [
+       {
+        "field": "who",
+        "code": "UNKNOWN_FIELD",
+        "detail": "who is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "country",
+        "code": "UNKNOWN_FIELD",
+        "detail": "country is not accepted here."
+       },
+       {
+        "field": "received_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "received_at is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "created_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "created_by is not accepted here."
+       },
+       {
+        "field": "answer",
+        "code": "UNKNOWN_FIELD",
+        "detail": "answer is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "who",
+      "errors": [
+       {
+        "field": "who",
+        "code": "UNKNOWN_FIELD",
+        "detail": "who is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "country",
+        "code": "UNKNOWN_FIELD",
+        "detail": "country is not accepted here."
+       },
+       {
+        "field": "received_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "received_at is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "created_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "created_by is not accepted here."
+       },
+       {
+        "field": "answer",
+        "code": "UNKNOWN_FIELD",
+        "detail": "answer is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49355,6 +49801,64 @@
      "fixture": {
       "error": "Cannot save this text",
       "message": "Cannot save this text. Type it again."
+     }
+    },
+    {
+     "scenario": "credential-extra-keys-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "rung",
+      "errors": [
+       {
+        "field": "rung",
+        "code": "UNKNOWN_FIELD",
+        "detail": "rung is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "verification",
+        "code": "UNKNOWN_FIELD",
+        "detail": "verification is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "rung",
+      "errors": [
+       {
+        "field": "rung",
+        "code": "UNKNOWN_FIELD",
+        "detail": "rung is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "verification",
+        "code": "UNKNOWN_FIELD",
+        "detail": "verification is not accepted here."
+       }
+      ]
      }
     }
    ]

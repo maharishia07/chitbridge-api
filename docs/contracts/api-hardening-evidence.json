@@ -226,6 +226,7 @@
    "foreign_id_404": true
   },
   "POST /api/events/ticket": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/offers/kinds": {
@@ -370,19 +371,30 @@
   "POST /api/counters": {
    "output_allowlist": true
   },
+  "POST /api/quick-keys/groups": {
+   "strict_input": true
+  },
   "PATCH /api/quick-keys/groups/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
    "strict_input": true,
    "foreign_id_404": true
   },
+  "POST /api/quick-keys/groups/:id/items": {
+   "strict_input": true
+  },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "strict_input": true
   },
   "POST /api/network-offers/:id/release": {
    "foreign_id_404": true
@@ -833,9 +845,11 @@
    "output_allowlist": true
   },
   "POST /api/notifications/seen": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/notifications/dismiss": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/assist/conform": {
@@ -1035,6 +1049,7 @@
    "output_allowlist": true
   },
   "POST /api/kyb/credential": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/kyb/position": {
@@ -1044,6 +1059,7 @@
    "output_allowlist": true
   },
   "POST /api/kyb/field": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/forms": {
@@ -1390,19 +1406,29 @@
   "GET /api/privacy/facts": {
    "output_allowlist": true
   },
+  "POST /api/privacy/me/consent": {
+   "strict_input": true
+  },
+  "POST /api/privacy/me/requests": {
+   "strict_input": true
+  },
   "GET /api/supplies": {
    "output_allowlist": true
   },
   "POST /api/supplies": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/supplies/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/supplies/purchase": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/supplies/:id/issue": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/adopt/:chit_id": {
@@ -1411,7 +1437,8 @@
   },
   "POST /api/adopt/:chit_id": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /health": {
    "output_allowlist": true

@@ -105,7 +105,7 @@ function extras(tools) {
     X('credential-evidence-unknown', CREDENTIAL, 200, { body: { standard_key: 'iec', evidence_ref: OTHER_CHIT } }),
     X('credential-title-long', CREDENTIAL, 200, { body: { title: 'Municipal Licence To Trade In Dry Goods And Groceries Within The Ward Number Seven Area' } }),
     X('credential-title-an-object', CREDENTIAL, 400, { body: { title: { a: 1 } } }),
-    X('credential-extra-keys', CREDENTIAL, 200, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
+    X('credential-extra-keys-refused', CREDENTIAL, 422, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
     X('credential-nothing-named', CREDENTIAL, 400, { body: {} }),
     X('credential-body-a-list', CREDENTIAL, 400, { body: [] }),
     X('credential-title-blank', CREDENTIAL, 400, { body: { title: '', standard_key: '' } }),
