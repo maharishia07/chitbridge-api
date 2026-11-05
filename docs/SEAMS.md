@@ -29,7 +29,7 @@ of file each thing is; this says what already does the job.
 | 62 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 62 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 58 | `entry` | `books-store.js` |  |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 58 | `failed` | `service.js` | what every catch answers: |
@@ -76,7 +76,7 @@ of file each thing is; this says what already does the job.
 | 32 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 32 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
-| 33 | `gate` | `country-setup.js` | gate(h, entity): |
+| 34 | `gate` | `country-setup.js` | gate(h, entity): |
 | 32 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 31 | `changes` | `books-store.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
