@@ -57,7 +57,7 @@ t('⚠️⚠️ no route takes the actor from the body any more', () => {
   for (const op of ['approve', 'decline', 'suspend', 'resume', 'disconnect', 'requestConnect']) {
     assert.ok(new RegExp('net\\.' + op + '\\([^;]{0,400}?actorOf\\(req\\)\\s*\\)').test(code), op + ' is not given the signed-in business');
   }
-  assert.ok(/claim\(req\.params\.id, auth_\.entityOf\(req\)\)/.test(src), 'claim is not proven against the signed-in business');
+  assert.ok(/claim\(req\.params\.id, auth_?\.entityOf\(req\)\)/.test(src), 'claim is not proven against the signed-in business');
 });
 
 console.log('\nnetwork membership · two ways in, nothing else');

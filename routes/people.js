@@ -1,5 +1,6 @@
 'use strict';
 /**
+ * OWNS      GET /api/people: the shop's people for the Employees app, with what this login may do to each.
  * routes/people.js — P1: GET /api/people, the shop's people for the Employees app. ONE read, ONE trip.
  *
  * The five actions (add · what they can do · reset code · switch off/on · cover) are NOT wrapped: routes/actors.js already
@@ -8,7 +9,7 @@
  * A person can read the list (colleagues); every action is then refused with the owner-only sentence. The actions still
  * refuse on their own — this is never the check, only the early word.
  * R112: each person also carries code_given (who gave their last first code, and when), one join on the code_issued trail row.
- * FLOW   auth → readBatch (one trip, the shop's scope) → lib/people.view → JSON
+ * FLOW   auth → schema check (lib/people-contract.js) → readBatch (one trip, the shop's scope) → lib/people.view → JSON
  * CARD 17-people-employees-hr-and-payroll/people-list
  * CALLED BY server.js (mounted at /api/people)
  */
@@ -21,9 +22,10 @@ const auth = require('../middleware/auth');
 const { readBatch } = require('../db'); /* R112: access_events is under RLS, so the list is read in the shop's own scope — still ONE trip */
 const { isOwner } = require('../lib/owner');
 const people = require('../lib/people');
-const { safeErr } = require('../lib/respond');
+const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; its old body is frozen in docs/contracts/api-legacy.json
+const { failed, contract } = require('../lib/people-contract'); // the contract (the route's operation) and the words of a fault
 
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
   try {
     /* ?for=add — the Add-a-person form only needs may/why + the picker: no list is read (no query past auth) */
     if (req.query.for === 'add') return res.json(people.addView({ owner: isOwner(req) }));
@@ -59,9 +61,9 @@ router.get('/', auth, async (req, res) => {
     );
     res.json(Object.assign(view, PL.pageOut('people', view.people, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
-    console.error('List people error:', err.message);
-    res.status(500).json({ error: 'Failed to list people', message: safeErr(err) });
+    problem(req, res, failed(err, req)); /* the real error is logged with the request id (safeErr, inside failed) */
   }
 });
 
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the route (lib/people-contract.js)
 module.exports = router;

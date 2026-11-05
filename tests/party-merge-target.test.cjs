@@ -13,14 +13,14 @@ const u = (n) => '00000000-0000-4000-8000-' + String(n).padStart(12, '0');
 const SHOP = u(1), PRIYA = u(2), BOB = u(3), CAROL = u(4), DAN = u(5), SUPP = u(6), STRANGER = u(99);
 const seen = [];
 const customers = {
-  'CL-1': { customer_list_id: 'CL-1', owner_entity_id: SHOP, customer_identity_id: PRIYA, merged_into: null },
-  'CL-2': { customer_list_id: 'CL-2', owner_entity_id: SHOP, customer_identity_id: BOB, merged_into: null },
-  'CL-3': { customer_list_id: 'CL-3', owner_entity_id: SHOP, customer_identity_id: CAROL, merged_into: BOB },
-  'CL-4': { customer_list_id: 'CL-4', owner_entity_id: SHOP, customer_identity_id: DAN, merged_into: null },
-  'CL-6': { customer_list_id: 'CL-6', owner_entity_id: SHOP, customer_identity_id: u(8), merged_into: null, hidden_at: '2026-10-01' },
-  'CL-5': { customer_list_id: 'CL-5', owner_entity_id: SHOP, customer_identity_id: u(7), merged_into: DAN }
+  'cccccccc-cccc-4ccc-8ccc-000000000001': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000001', owner_entity_id: SHOP, customer_identity_id: PRIYA, merged_into: null },
+  'cccccccc-cccc-4ccc-8ccc-000000000002': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000002', owner_entity_id: SHOP, customer_identity_id: BOB, merged_into: null },
+  'cccccccc-cccc-4ccc-8ccc-000000000003': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000003', owner_entity_id: SHOP, customer_identity_id: CAROL, merged_into: BOB },
+  'cccccccc-cccc-4ccc-8ccc-000000000004': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000004', owner_entity_id: SHOP, customer_identity_id: DAN, merged_into: null },
+  'cccccccc-cccc-4ccc-8ccc-000000000006': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000006', owner_entity_id: SHOP, customer_identity_id: u(8), merged_into: null, hidden_at: '2026-10-01' },
+  'cccccccc-cccc-4ccc-8ccc-000000000005': { customer_list_id: 'cccccccc-cccc-4ccc-8ccc-000000000005', owner_entity_id: SHOP, customer_identity_id: u(7), merged_into: DAN }
 };
-const suppliers = { 'SL-1': { supplier_list_id: 'SL-1', owner_entity_id: SHOP, supplier_entity_id: SUPP, merged_into: null } };
+const suppliers = { '5555cccc-cccc-4ccc-8ccc-000000000001': { supplier_list_id: '5555cccc-cccc-4ccc-8ccc-000000000001', owner_entity_id: SHOP, supplier_entity_id: SUPP, merged_into: null } };
 const tx = {
   query: async (sql, args) => {
     const s = String(sql);
@@ -68,32 +68,32 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   };
   const J = (x) => JSON.stringify(x);
 
-  const stranger = await patch('/customers/CL-1', { merged_into: STRANGER });
-  ok('a party not on this shop list: 404, nothing written', stranger.status === 404 && customers['CL-1'].merged_into === null, J(stranger));
+  const stranger = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: STRANGER });
+  ok('a party not on this shop list: 404, nothing written', stranger.status === 404 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(stranger));
   ok('the 404 does not echo or confirm the id', !J(stranger.body).includes(STRANGER), J(stranger));
-  const shop = await patch('/customers/CL-1', { merged_into: SHOP });
-  ok("the shop's OWN entity: 400, nothing written", shop.status === 400 && customers['CL-1'].merged_into === null, J(shop));
-  const self = await patch('/customers/CL-1', { merged_into: PRIYA });
-  ok('the party itself: 400', self.status === 400 && customers['CL-1'].merged_into === null, J(self));
-  const chain = await patch('/customers/CL-1', { merged_into: CAROL });
-  ok('a party already merged into another: 409, no chain', chain.status === 409 && customers['CL-1'].merged_into === null, J(chain));
-  const loop = await patch('/customers/CL-2', { merged_into: CAROL });
-  ok('merging the survivor into its own folded party: 409, no loop', loop.status === 409 && customers['CL-2'].merged_into === null, J(loop));
-  const parent = await patch('/customers/CL-4', { merged_into: BOB });
-  ok('a party others are merged into cannot be merged away: 409', parent.status === 409 && customers['CL-4'].merged_into === null, J(parent));
-  const hidden = await patch('/customers/CL-1', { merged_into: u(8) });
-  ok('a hidden party as survivor: 409 in words', hidden.status === 409 && /hidden/.test(hidden.body.message) && customers['CL-1'].merged_into === null, J(hidden));
-  const dashes = await patch('/customers/CL-1', { merged_into: '-'.repeat(36) });
+  const shop = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: SHOP });
+  ok("the shop's OWN entity: 400, nothing written", shop.status === 400 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(shop));
+  const self = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: PRIYA });
+  ok('the party itself: 400', self.status === 400 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(self));
+  const chain = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: CAROL });
+  ok('a party already merged into another: 409, no chain', chain.status === 409 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(chain));
+  const loop = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000002', { merged_into: CAROL });
+  ok('merging the survivor into its own folded party: 409, no loop', loop.status === 409 && customers['cccccccc-cccc-4ccc-8ccc-000000000002'].merged_into === null, J(loop));
+  const parent = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000004', { merged_into: BOB });
+  ok('a party others are merged into cannot be merged away: 409', parent.status === 409 && customers['cccccccc-cccc-4ccc-8ccc-000000000004'].merged_into === null, J(parent));
+  const hidden = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: u(8) });
+  ok('a hidden party as survivor: 409 in words', hidden.status === 409 && /hidden/.test(hidden.body.message) && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(hidden));
+  const dashes = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: '-'.repeat(36) });
   ok('36 dashes is not a party id: 400, not a 500', dashes.status === 400, J(dashes));
   seen.length = 0;
-  const good = await patch('/customers/CL-1', { merged_into: BOB });
-  ok('a real party of this shop: 200 and written', good.status === 200 && customers['CL-1'].merged_into === BOB, J(good));
+  const good = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: BOB });
+  ok('a real party of this shop: 200 and written', good.status === 200 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === BOB, J(good));
   const lockAt = seen.findIndex((q) => /pg_advisory_xact_lock/.test(q)), readAt = seen.findIndex((q) => /^SELECT to_jsonb/.test(q)), writeAt = seen.findIndex((q) => /^UPDATE customer_list/.test(q));
   ok('the shop merge lock runs before the target check and the UPDATE', lockAt >= 0 && lockAt < readAt && readAt < writeAt, J(seen.map((q) => q.slice(0, 40))));
-  const supp = await patch('/suppliers/SL-1', { merged_into: BOB });
+  const supp = await patch('/suppliers/5555cccc-cccc-4ccc-8ccc-000000000001', { merged_into: BOB });
   ok('a supplier may merge into a party on the shop list: 200', supp.status === 200, J(supp));
-  const clear = await patch('/customers/CL-1', { merged_into: null });
-  ok('null un-merges (no target to check)', clear.status === 200 && customers['CL-1'].merged_into === null, J(clear));
+  const clear = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { merged_into: null });
+  ok('null un-merges (no target to check)', clear.status === 200 && customers['cccccccc-cccc-4ccc-8ccc-000000000001'].merged_into === null, J(clear));
 
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');

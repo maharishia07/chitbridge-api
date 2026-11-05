@@ -97,6 +97,7 @@ function extras(tools) {
   const sUrl = at('/suppliers/' + LIST_S);
   const patchSupplier = [
     X('supplier-patch-chain-refused', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: { supply_kind: 'bad', preferred: 'maybe' } }),
+    X('supplier-patch-unknown-key', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: { nickname: 'Tea man', zz_unknown: 'x' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }), /* CRM-44: an unknown key beside a valid one was a 200 that dropped it */
     X('supplier-patch-nothing', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: {} }),
     X('supplier-patch-unknown', 'PATCH ' + at('/suppliers/:id'), 404, { url: sUrl, body: { nickname: 'Tea man' } }),
     X('supplier-patch-saved', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { nickname: 'Tea man', category: 'tea', notes: 'cash', preferred: true, supply_kind: 'own_use' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),

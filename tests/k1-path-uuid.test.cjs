@@ -20,16 +20,19 @@ const express = require('express');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
+process.env.CB_ADMIN_KEY = 'k1-admin-key'; /* the platform doors judge the id after their key gate */
 
 const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';
 const GOOD = '33333333-3333-4333-8333-333333333333';
 const DRIVER_TEXT = 'invalid input syntax for type uuid: "abc"';
+const NUL_TEXT = 'invalid byte sequence for encoding "UTF8": 0x00';
 const queries = [];
 
 /* the stand-in db: like Postgres, a non-uuid value where a uuid goes gets the driver's words; nothing is ever found */
 const run = async (sql, params) => {
   queries.push(sql);
+  if ((params || []).some((p) => typeof p === 'string' && p.includes('\u0000'))) throw Object.assign(new Error(NUL_TEXT), { code: '22021' });
   if ((params || []).some((p) => p === 'abc')) throw Object.assign(new Error(DRIVER_TEXT), { code: '22P02' });
   return { rows: [], rowCount: 0 };
 };
@@ -45,15 +48,36 @@ const stubAuth = (req, res, next) => {
   next();
 };
 stubAuth.entityOf = (req) => req.identity.identity_id;
+stubAuth.requireScope = () => (req, res, next) => next();
 stub(path.join('middleware', 'auth'), stubAuth);
 
-/** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error] — one row per route closed by uuidParam */
+/** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error, its 404 code (default NOT_FOUND)] — one row per route closed by uuidParam; the code is the one an unknown uuid answers on that route (S41) */
 const ROUTES = [
   /* one anchor per route file still to adopt uuidParam (K-1): a file's PR adds its rows UNDER its own anchor, so parallel PRs never touch the same line */
+  // ── routes/adopt.js
+  ['/api/adopt', 'routes/adopt.js', 'GET', '/api/adopt/abc', undefined, 'Not found'],
+  ['/api/adopt', 'routes/adopt.js', 'POST', '/api/adopt/abc', { accept: [{ line: 0, name: 'Tea', sku: 'T1' }] }, 'Not found'],
   // ── src/routes/network.js
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/approve', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/decline', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/disconnect', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/resume', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/suspend', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/entities/abc/claim', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/subtree', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/connections', {}, 'not found'],
   // ── routes/actors.js
+  ['/api/actors', 'routes/actors.js', 'PUT', '/api/actors/assign/abc', { action: 'pull' }, 'Chit not found'],
   // ── routes/catalogue.js
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/enquiry/abc', { message_text: 'Is this in stock?' }, 'Not found'],
   // ── routes/channels.js
+  ['/api/channels', 'routes/channels.js', 'DELETE', '/api/channels/abc', {}, 'Unbind failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/provider-ref', { provider_ref: '123' }, 'Update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/auto-raise', { on: true }, 'Auto-raise update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template', { name: 'x', state: 'pending' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/template-approve', { entity_id: ME, name: 'x' }, 'Template update failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/approve', {}, 'Approve failed'],
+  ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/revoke', {}, 'Revoke failed'],
   // ── routes/chits.js
   /* the other chits routes (a 403 or 400 for an unknown id; the register ones) are proved in tests/k1-chits-guard.test.cjs, which compares each with an unknown uuid */
   ['/api/chits', 'routes/chits.js', 'DELETE', '/api/chits/abc', {}, 'Not found'],
@@ -80,14 +104,44 @@ const ROUTES = [
   ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/use', {}, 'Not saved'],
   ['/api/chits', 'routes/chits.js', 'PUT', '/api/chits/abc/void', { reason: 'wrong chit' }, 'Not found'],
   // ── routes/combo-templates.js
+  ['/api/combo-templates', 'routes/combo-templates.js', 'DELETE', '/api/combo-templates/abc', {}, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'PATCH', '/api/combo-templates/abc', { name: 'x' }, 'Not found'],
+  ['/api/combo-templates', 'routes/combo-templates.js', 'POST', '/api/combo-templates/abc/push', {}, 'Not found'],
   // ── routes/connections.js
+  ['/api/connections', 'routes/connections.js', 'PUT', '/api/connections/abc/respond', { action: 'accept' }, 'Not found'],
   // ── routes/definitions.js
+  ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
+  ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
   // ── routes/forms.js
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
+  ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
   // ── routes/identity-docs.js
   // ── routes/integrations.js
+  ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/abc/approve', {}, 'Not found'],
+  ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/ask/%00/stock', {}, 'Not found'],
   // ── routes/products.js
   // ── routes/relationships.js
+  ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'POST', '/api/relationships/customers/abc/groups', { groups: ['dealers'] }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/suppliers/abc', { nickname: 'x' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'PATCH', '/api/relationships/customers/abc', { segment_override: 'new' }, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/scorecard/abc', undefined, 'Not found'],
+  ['/api/relationships', 'routes/relationships.js', 'GET', '/api/relationships/suppliers/abc/catalogue', undefined, 'Not found', 'REL_NOT_ON_YOUR_LIST'],
   // ── routes/schemas.js
+];
+
+/** TEXT rows (textParam): [mount, router file, method, url with a NUL where the handle goes, a body the route's schema accepts, headers?] — answered exactly as the same request with an unknown handle (NOSUCHSHOP), the database never asked */
+const TEXT_ROUTES = [
+  // ── text: routes/catalogue.js
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/login/verify', {identifier:'9876543210',otp:'123456'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/support', {identifier:'9876543210',otp:'123456',observed:'it broke'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/support/start', {identifier:'9876543210'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/order/start', {identifier:'9876543210'}, { 'idempotency-key': 'k1-text-key-0001' }],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/order/confirm', { identifier: '9876543210', otp: '654321', line_items: [{ name: 'Rice', qty: 1 }] }, { 'idempotency-key': 'k1-text-key-0001' }],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00/capture-fields', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00/support/preview', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/network/%00', {}],
 ];
 
 const app = express();
@@ -96,7 +150,7 @@ app.use((req, res, next) => {
   req.id = 'req-test';
   next();
 });
-new Set(ROUTES.map((r) => r[0] + '\u0000' + r[1])).forEach((key) => {
+new Set(ROUTES.concat(TEXT_ROUTES).map((r) => r[0] + '\u0000' + r[1])).forEach((key) => {
   const [mount, file] = key.split('\u0000');
   app.use(mount, require(path.join(ROOT, file)));
 });
@@ -108,10 +162,10 @@ const check = (ok, label) => {
   if (!ok) failed++;
   console.log((ok ? 'ok   ' : 'FAIL ') + label);
 };
-const ask = (server, method, url, body) =>
+const ask = (server, method, url, body, headers) =>
   new Promise((resolve) => {
     const data = JSON.stringify(body || {});
-    const req = http.request({ port: server.address().port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
+    const req = http.request({ port: server.address().port, method, path: url, headers: { 'x-cb-admin-key': process.env.CB_ADMIN_KEY, 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), ...headers } }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
       res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'] || '', text, body: (() => { try { return JSON.parse(text); } catch (e) { return {}; } })() }));
@@ -149,16 +203,28 @@ const ask = (server, method, url, body) =>
   }
 
   const server = app.listen(0);
-  for (const [, , method, url, body, legacyError] of ROUTES) {
+  for (const [, , method, url, body, legacyError, code = 'NOT_FOUND'] of ROUTES) {
     queries.length = 0;
     const a = await ask(server, method, url, body);
     const label = method + ' ' + url.replace('/api/', '');
     check(a.status === 404, label + ' → 404 (got ' + a.status + ')');
-    check(a.body.code === 'NOT_FOUND', label + ' → code NOT_FOUND (got ' + a.body.code + ')');
+    check(a.body.code === code, label + ' → code ' + code + ' (got ' + a.body.code + ')');
     check(/problem\+json/.test(a.type), label + ' → application/problem+json');
     check(!/invalid input syntax|22P02/i.test(a.text), label + ' → no driver text');
     check(queries.length === 0, label + ' → the database was never asked (' + queries.length + ')');
     if (legacyError) check(a.body.error === legacyError, label + ' → legacy error "' + legacyError + '" (got ' + a.body.error + ')');
+  }
+  /* a NUL in a text handle: the same answer as an unknown one (S41: status, code, legacy keys, words), and Postgres is never asked */
+  const shape = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.ok, a.body.why, a.body.detail, a.type]);
+  for (const [, , method, url, body, headers] of TEXT_ROUTES) {
+    const label = method + ' ' + url.replace('/api/', '').replace(/%00/g, '<NUL>');
+    queries.length = 0;
+    const junk = await ask(server, method, url, body, headers);
+    const asked = queries.length;
+    const unknown = await ask(server, method, url.replace(/%00/g, 'NOSUCHSHOP'), body, headers);
+    check(junk.status < 500 && !/0x00|22021/.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(asked === 0, label + ' → the database was never asked (' + asked + ')');
+    check(shape(junk) === shape(unknown), label + ' → answered exactly as an unknown handle (' + shape(junk) + ' vs ' + shape(unknown) + ')');
   }
   server.close();
   console.log('\n' + checks + ' checks');

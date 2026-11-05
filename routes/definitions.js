@@ -40,7 +40,7 @@ const logger = require('../lib/logger');
 const router = express.Router();
 const { query, withEntity, withTransaction, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, definitionFault, schemaOptionsFor } = require('../lib/definitions-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
@@ -61,6 +61,11 @@ const ctx = (req) => auth.entityOf(req);
 function checked(route) {
   return [schemaValidate(contract.operationFor(route), schemaOptionsFor(route))];
 }
+
+/* K-1: the :id is a uuid column (definition.definition_id); a non-uuid id names no row and is answered as an unknown one, not a 500. A GOVERNED slab id (IN-GST-18) is not a uuid by design:
+   it passes on, and the PUT and DELETE handlers refuse it in words (403 governed). */
+const ownId = uuidParam(() => words.notFound());
+router.param('id', (req, res, next, id) => (taxGov.isGovernedId(id) ? next() : ownId(req, res, next, id)));
 
 const MAX_NAME = 120,
   MAX_NOTE = 500;
