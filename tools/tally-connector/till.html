@@ -28067,9 +28067,9 @@ async function offersReread(){
     toastLine('New offers loaded. This bill\'s total is unchanged; the next bill uses them.');
     return;
   }
-  var use = await sure('This bill: ' + money(before) + ' → ' + money(after) + '\n\nUse the new prices on this bill only, or keep it as quoted? The next bill uses the new offers either way.',
+  var useNewPrices = await sure('This bill: ' + money(before) + ' → ' + money(after) + '\n\nUse the new prices on this bill only, or keep it as quoted? The next bill uses the new offers either way.',
                        'Use new prices', 'New offers came in', 'Keep as quoted');
-  if (!use) {
+  if (!useNewPrices) {
     OFFERS_NEW = { count: 0, changed: false }; offersHeldPaint();
     toastLine('Kept as quoted. The next bill uses the new offers.');
     return;
