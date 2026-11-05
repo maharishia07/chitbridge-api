@@ -20954,6 +20954,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -21551,6 +21554,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -21662,7 +21668,10 @@
               "type": "object"
             }
           },
-          "why": {}
+          "why": {},
+          "cost_hidden": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
@@ -21734,6 +21743,9 @@
           },
           "words": {
             "type": "string"
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

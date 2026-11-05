@@ -88,6 +88,9 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
   if (!H.enginesSrc().dir) { console.log('\n   SKIP: ' + H.enginesSrc().why + '\n\n  ✓ 0 passed · 0 checks\n'); process.exit(1); }
 
   const X = H.load({ auth: authStub }); transactional(X);
+  /* the co-assists here test the LEVEL ladder, so they see costs; a cost-blind payer is RAIL-146m's own test (tests/rail146m-payment-cost-blind.test.cjs) */
+  const realQuery = X.db.query;
+  X.db.query = async (text, v) => (/SELECT can_see_costs FROM identities/.test(String(text)) ? { rows: [{ can_see_costs: true }] } : realQuery(text, v));
   X.T.parties.push({ owner: SHOP, party_id: MALA, party_no: 'P-00001', name: 'Mala', customer: true, credit_days: 10 },
     { owner: SHOP, party_id: SUPP, party_no: 'P-00002', name: 'Kumar Traders', supplier: true, credit_days: 30 });
   const { srv, q } = serve(X);
