@@ -10,7 +10,7 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 150 | `list` | `amend.js` |  |
-| 120 | `rows` | `crm.js` | still in them: |
+| 121 | `rows` | `crm.js` | still in them: |
 | 113 | `words` | `variant.browser.js` |  |
 | 110 | `withEntity` | `books-hooks.js` |  |
 | 110 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 58 | `failed` | `service.js` | what every catch answers: |
 | 56 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 54 | `record` | `access-events.js` |  |
-| 54 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 51 | `pack` | `books-store.js` |  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -77,7 +77,7 @@ of file each thing is; this says what already does the job.
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 32 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 31 | `changes` | `books-store.js` |  |
