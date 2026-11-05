@@ -65397,6 +65397,41 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/fin71-step-ticket.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "A BILL'S R-1400 STEP THAT FAILS RAISES ONE SUPPORT TICKET, NEVER SILENT.",
+   "claim": "A BILL'S R-1400 STEP THAT FAILS RAISES ONE SUPPORT TICKET, NEVER SILENT.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 228 lines. Run: node chitbridge-api/tests/fin71-step-ticket.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/books.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-01T18:22:38+05:30",
+   "needs": [
+    "a database",
+    "the API running"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/board-kinds.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",

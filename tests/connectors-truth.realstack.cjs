@@ -30,7 +30,7 @@ const { DB, API, kase, expect, freshShop, finish } = H;
 const door = H.j;
 const mustOk = H.ok;
 
-const RUN_ID = 'cn' + (Date.now() % 1e8).toString(36); /* a User ID is 8 to 20 characters */
+const RUN_ID = 'cn' + (Date.now() % 1e8).toString(36).padStart(6, '0'); /* a User ID is 8 to 20 characters */
 const SOURCE_XERO = 'xero';
 const COUNTRY_INDIA = 'IN';
 const COUNTRY_AUSTRALIA = 'AU';
