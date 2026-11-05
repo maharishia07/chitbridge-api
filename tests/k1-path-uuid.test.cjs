@@ -37,6 +37,7 @@ const run = async (sql, params) => {
   return { rows: [], rowCount: 0 };
 };
 const stubDb = { query: run, connect: async () => ({ query: run, release() {} }) };
+process.env.PLATFORM_ROOT_ENTITY = ME; /* the signed-in stand-in is the deployment's root, so the platform doors of routes/entities.js let it through to the id */
 const stub = (rel, exports) => {
   const file = require.resolve(path.join(ROOT, rel));
   require.cache[file] = { id: file, filename: file, loaded: true, exports };
@@ -123,6 +124,9 @@ const ROUTES = [
   // ── routes/definitions.js
   ['/api/definitions', 'routes/definitions.js', 'PUT', '/api/definitions/abc', { name: 'x' }, 'Not found'],
   ['/api/definitions', 'routes/definitions.js', 'DELETE', '/api/definitions/abc', {}, 'Not found'],
+  // ── routes/entities.js
+  ['/api/entities', 'routes/entities.js', 'PATCH', '/api/entities/abc/erase', {}, 'Not found'],
+  ['/api/entities', 'routes/entities.js', 'PUT', '/api/entities/populations/%00/desk', {}, 'No such population'],
   // ── routes/forms.js
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/sign', { name: 'R Kumar' }, 'Sign form failed', 'FORMS_NOT_FOUND'],
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
