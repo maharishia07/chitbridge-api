@@ -50,6 +50,17 @@ const stubAuth = (req, res, next) => {
 stubAuth.entityOf = (req) => req.identity.identity_id;
 stubAuth.requireScope = () => (req, res, next) => next();
 stub(path.join('middleware', 'auth'), stubAuth);
+stub(path.join('lib', 'storage-object'), { available: async () => true, get: async () => Buffer.from(''), put: async () => undefined, del: async () => undefined, objectKey: () => 'k', NOT_OWNER: 'NOT_OWNER' }); // products: the picture store is on, so the route reaches its id
+const realSchema = require(path.join(ROOT, 'lib', 'schema'));
+realSchema.hasTable = async () => true; // products: parked changes are on (b203 applied), so the schedule routes reach their ids
+
+/** [mount, router file, method, url with a junk id, url with a uuid that names nothing, body]: a junk id answers EXACTLY as the unknown uuid does (S41) where that answer is not a 404 (a list that is empty, a cancel that cancelled nothing); the database is never asked */
+const SAME_ROUTES = [
+  // ── same: routes/products.js
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/abc/schedule', '/api/products/' + GOOD + '/schedule', {}],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/' + GOOD + '/schedule/abc', '/api/products/' + GOOD + '/schedule/' + GOOD, {}],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc/schedule/abc', '/api/products/' + GOOD + '/schedule/' + GOOD, {}]
+];
 
 /** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error, its 404 code (default NOT_FOUND)] — one row per route closed by uuidParam; the code is the one an unknown uuid answers on that route (S41) */
 const ROUTES = [
@@ -96,6 +107,15 @@ const ROUTES = [
   ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/abc/approve', {}, 'Not found'],
   ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/ask/%00/stock', {}, 'Not found'],
   // ── routes/products.js
+  ['/api/products', 'routes/products.js', 'PATCH', '/api/products/abc', { item_data: { name: 'Tea' } }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'POST', '/api/products/abc/schedule', { item_data: { name: 'Tea' }, effective_at: '2026-12-01T00:00:00Z' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'PUT', '/api/products/abc/availability', { qty: 5 }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'PUT', '/api/products/abc/status', { status: 'unavailable' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'POST', '/api/products/abc/media', { url: 'https://youtu.be/dQw4w9WgXcQ' }, 'Not found'],
+  ['/api/products', 'routes/products.js', 'DELETE', '/api/products/abc/media/m1', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/abc/versions', {}, 'Not found'],
+  ['/api/products', 'routes/products.js', 'GET', '/api/products/media/abc/m1', {}],
   // ── routes/relationships.js
   ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],
   ['/api/relationships', 'routes/relationships.js', 'POST', '/api/relationships/customers/abc/groups', { groups: ['dealers'] }, 'Not found'],
@@ -203,6 +223,18 @@ const ask = (server, method, url, body, headers) =>
     check(shape(junk) === shape(unknown), label + ' → answered exactly as an unknown handle (' + shape(junk) + ' vs ' + shape(unknown) + ')');
   }
   server.close();
+  /* a junk id answers EXACTLY as an unknown uuid (SAME_ROUTES), on its own server below the shared loops so sibling PRs never touch these lines */
+  const sameServer = app.listen(0);
+  const same = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.cancelled, a.body.enabled, a.body.pending, a.type]);
+  for (const [, , method, url, goodUrl, body] of SAME_ROUTES) {
+    const label = method + ' ' + url.replace('/api/', '');
+    queries.length = 0;
+    const junk = await ask(sameServer, method, url, body);
+    const unknown = await ask(sameServer, method, goodUrl, body);
+    check(junk.status < 500 && !/invalid input syntax|22P02/i.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(same(junk) === same(unknown), label + ' → answered exactly as an unknown uuid (' + same(junk) + ' vs ' + same(unknown) + ')');
+  }
+  sameServer.close();
   console.log('\n' + checks + ' checks');
   console.log(failed ? failed + ' FAILED' : 'all passed');
   process.exit(failed ? 1 : 0);
