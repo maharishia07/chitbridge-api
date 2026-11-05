@@ -1375,6 +1375,25 @@ router.post(
   }
 );
 
+// STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
+// Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
+// SEC-75c: source_penetration is RLS-closed (b831) — the distributor writes its own rows, so bind it.
+async function recordSourcePenetration(entity, line_items, custLocality) {
+  try {
+    const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
+    await withEntity(entity.identity_id, async (db) => {
+      for (const sk of srcs)
+        await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
+          sk,
+          entity.identity_id,
+          custLocality
+        ]);
+    });
+  } catch (e) {
+    logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
+  }
+}
+
 // ── CJ-05b + CJ-06: verify OTP → place guaranteed chit (customer → shop) + auto-add to CRM ──
 router.post(
   '/:bridge_id/order/confirm',
@@ -1781,24 +1800,8 @@ router.post(
         console.log('customer auto-add skipped:', e.message);
       }
 
-      // STONE 4: penetration capture — AGGREGATE-ONLY (source + distributor + coarse locality; NO customer identity).
-      // Best-effort, post-commit, never breaks the order; self-heals if b79 isn't applied. Feeds the brand's heatmap.
-      if (custLocality) {
-        try {
-          const srcs = Array.from(new Set(line_items.filter((item) => item.source).map((item) => item.source)));
-          /* SEC-75c: source_penetration is RLS-closed (b831) — the distributor writes its own rows, so bind it */
-          await withEntity(entity.identity_id, async (db) => {
-            for (const sk of srcs)
-              await db.query('INSERT INTO source_penetration (source_key, distributor_entity_id, locality) VALUES ($1,$2,$3)', [
-                sk,
-                entity.identity_id,
-                custLocality
-              ]);
-          });
-        } catch (e) {
-          logger.fellBack('catalogue: the write failed — carried on without it', e); /* b79 not applied → skip (self-healing) */
-        }
-      }
+      // STONE 4: penetration capture (aggregate-only; see recordSourcePenetration above).
+      if (custLocality) await recordSourcePenetration(entity, line_items, custLocality);
 
       // 6b: ERP HANDOFF (receipt-only, process-then-forget). Hand the order + its governance (source@v, frozen
       // container, routing, locality) to the ERP; keep a RECEIPT (refs + hash), NOT the raw payload. CB does NOT
