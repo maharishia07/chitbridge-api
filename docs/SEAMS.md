@@ -102,7 +102,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `money` | `cart.js` |  |
-| 30 | `hold` | `orders.js` |  |
+| 29 | `hold` | `orders.js` |  |
 | 24 | `load` | `cap-assist.js` |  |
 | 24 | `view` | `country-ready.js` |  |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
@@ -130,7 +130,7 @@ of file each thing is; this says what already does the job.
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `chip` | `screen-id.js` | var S = { app: |
 | 19 | `entries` | `books-store.js` |  |
-| 19 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
+| 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 19 | `match` | `itemmatch.js` | actually state. |
 | 20 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 18 | `next` | `cap-stock.js` | the next level: |
@@ -183,7 +183,7 @@ of file each thing is; this says what already does the job.
 | 14 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 14 | `refuse_` | `bookpack.js` | function M_() { return MONEY_ ·· (MONEY_ = req_('CBMoney', 'decimals', './money')); } |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
-| 13 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
+| 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
 | 14 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
