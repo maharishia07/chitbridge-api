@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 466,
-  "meets": 161,
+  "partial": 459,
+  "meets": 168,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -12773,11 +12773,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "40a973d6ac8196e4"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "avatar.js",
@@ -12975,11 +12974,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ca8c0be09551b5a0"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -13423,11 +13421,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "92a7ca7003f7abd3"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm.js"
@@ -13677,11 +13674,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c8f3bac19aea5610"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
@@ -14491,11 +14487,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9070c62e570c1c83"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-folders.js"
    ],
@@ -15099,11 +15094,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9b7793fe6cd2601a"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-messages.js",
@@ -42603,11 +42597,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bc9ca085c0569993"
+    "signed_off_by_date": "cb-api 2026-11-05 independent re-sign, batch k4 (PR#723)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-messages.js"
    ],
