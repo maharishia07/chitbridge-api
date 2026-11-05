@@ -385,8 +385,7 @@
       "POST /deliver"
     ],
     "routes/definitions.js": [
-      "GET /",
-      "PUT /:id"
+      "GET /"
     ],
     "routes/entities.js": [
       "GET /me",
