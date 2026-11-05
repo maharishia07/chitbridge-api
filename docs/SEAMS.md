@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 66 | `register` | `regulation.js` | register(pack) → the pack — |
 | 54 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 53 | `record` | `access-events.js` |  |
-| 55 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 56 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 51 | `pack` | `books-store.js` |  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |

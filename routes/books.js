@@ -1101,10 +1101,22 @@ const levelOf = (req) => require('../lib/access').levelOf(req.identity);
 async function meName(req, h, e) {
   return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We';
 }
+/** RAIL-146m: a payment answer for THIS reader — a supplier payment (out) asks can_see_costs ONCE (lib/cost.isCostBlind, fail-closed) and a blind
+ *  co-assist gets the same shape with the purchase money null (lib/dues-view R7); a customer payment and the owner never read the flag — their bytes are untouched */
+async function forPayer(req, e, kind, direction, answer) {
+  const blind = direction === 'out' && (await require('../lib/cost').isCostBlind(req, e));
+  return blind ? require('../lib/dues-view').blindPayment(kind, answer, direction) : answer;
+}
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 function alreadyPaid(res, err) {
   /* FIN-53: the title follows the list — "Already paid?" for the same money twice, "More than is owed" for W1/W2 alone (books.warningTitle) */
-  return problem(res.req, res, { status: 409, code: 'ALREADY_PAID', detail: err.message, legacy: { error: err.title || 'Already paid?', message: err.message, warnings: err.warnings || [] } });
+  const title = err.title || 'Already paid?',
+    req = res.req,
+    said = (seen) => problem(req, res, { status: 409, code: 'ALREADY_PAID', detail: seen.message, legacy: Object.assign({ error: title, message: seen.message, warnings: seen.warnings }, seen.cost_hidden ? { cost_hidden: true } : {}) });
+  const plain = { message: err.message, warnings: err.warnings || [] };
+  if ((req.body || {}).direction !== 'out') return said(plain); /* a customer's payment and a chit's Mark-paid (routes/chits payFailure): as before, synchronously */
+  /* RAIL-146m R7: the sentence names what is open, so a blind payer to a supplier reads the title alone and the warnings without their figures */
+  return forPayer(req, ctx(req), 'refusal', 'out', plain).then((seen) => said(seen.cost_hidden ? Object.assign(seen, { message: title }) : seen));
 }
 
 /**
@@ -1144,7 +1156,7 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         words: B.previewWords(prop, name, q.direction)
       };
     });
-    res.json({ currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words });
+    res.json(await forPayer(req, e, 'preview', q.direction, { currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1253,7 +1265,7 @@ router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), 
         console.error('bill money steps:', e2.message);
       }
     }
-    res.json({ ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice }); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
+    res.json(await forPayer(req, e, 'record', direction, { ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice })); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
   } catch (err) {
     if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err);
     problem(req, res, refusalOf(err, req));
@@ -1274,10 +1286,11 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
-      return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
+      const advice = await B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
+      return Object.assign(advice, { direction: p.direction }); /* RAIL-146m: the side decides who may read the figures */
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
-    res.json({ currency: curOf(req), payment_id: out.payment_id, party: out.party, advice: out.advice, may: out.may, words: out.words, body: out.body, share: out.share });
+    res.json(await forPayer(req, e, 'advice', out.direction, { currency: curOf(req), payment_id: out.payment_id, party: out.party, advice: out.advice, may: out.may, words: out.words, body: out.body, share: out.share }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1416,11 +1429,12 @@ router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /
         apply_minor: prop.apply_minor,
         on_account_minor: prop.items.length ? prop.on_account_minor : 0,
         skipped: prop.skipped,
-        why: prop.why
+        why: prop.why,
+        direction: p.direction
       };
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json({ payment_id: id, proposal: out.proposal, open_minor: out.open_minor, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why });
+    res.json(await forPayer(req, e, 'propose', out.direction, { payment_id: id, proposal: out.proposal, open_minor: out.open_minor, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
