@@ -1057,6 +1057,9 @@
   "PUT /api/actors/settings": {
    "output_allowlist": true
   },
+  "PUT /api/assist/region-override": {
+   "foreign_id_404": true
+  },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "output_allowlist": true
   },
