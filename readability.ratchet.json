@@ -34,7 +34,7 @@
   "lib/books-store.js": {"score":134,"long40":0,"long80":0,"complex10":5,"complex15":1,"deep3":0,"deep4":0,"cryptic":121,"noWhatLine":7,"emptyCatch":0,"noHeader":0},
   "lib/books-tally.js": {"score":22,"long40":2,"long80":1,"complex10":2,"complex15":2,"deep3":0,"deep4":0,"cryptic":15,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/books-todo.js": {"score":34,"long40":2,"long80":1,"complex10":2,"complex15":1,"deep3":0,"deep4":0,"cryptic":28,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "lib/books.js": {"score":315,"long40":17,"long80":2,"complex10":21,"complex15":12,"deep3":1,"deep4":0,"cryptic":258,"noWhatLine":4,"emptyCatch":0,"noHeader":0},
+  "lib/books.js": {"score":314,"long40":17,"long80":1,"complex10":21,"complex15":12,"deep3":1,"deep4":0,"cryptic":258,"noWhatLine":4,"emptyCatch":0,"noHeader":0},
   "lib/bridgeid.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
   "lib/canon.js": {"score":1,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":1,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/capture-contract.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
