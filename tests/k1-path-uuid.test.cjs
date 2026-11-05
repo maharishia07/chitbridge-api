@@ -55,6 +55,14 @@ const ROUTES = [
   ['/api/adopt', 'routes/adopt.js', 'GET', '/api/adopt/abc', undefined, 'Not found'],
   ['/api/adopt', 'routes/adopt.js', 'POST', '/api/adopt/abc', { accept: [{ line: 0, name: 'Tea', sku: 'T1' }] }, 'Not found'],
   // ── src/routes/network.js
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/approve', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/decline', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/disconnect', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/resume', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/connections/abc/suspend', {}, 'edge not found', 'EDGE_NOT_FOUND'],
+  ['/api/network', 'src/routes/network.js', 'POST', '/api/network/entities/abc/claim', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/subtree', {}, 'not found'],
+  ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/connections', {}, 'not found'],
   // ── routes/actors.js
   // ── routes/catalogue.js
   // ── routes/channels.js
