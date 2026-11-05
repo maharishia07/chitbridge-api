@@ -590,7 +590,9 @@ const EXTRAS = [
   X('register-walk-a-value-asked-twice', 'GET ' + C + '/register/walk/:from', 422, { url: C + '/register/walk/' + PARTY + '?depth=1&depth=2' }),
   X('catalogue-overlay-a-value-asked-twice', 'GET ' + C + '/:chit_id/catalogue-overlay', 422, { url: C + '/' + PARTY + '/catalogue-overlay?q=a&q=b' }),
   X('messages-read-a-value-asked-twice', 'GET ' + C + '/:chit_id/messages', 422, { url: C + '/' + PARTY + '/messages?page=1&page=2' }),
-  X('raida-read-a-value-asked-twice', 'GET ' + C + '/:chit_id/raida', 422, { url: C + '/' + PARTY + '/raida?line_id=a&line_id=b' })
+  X('raida-read-a-value-asked-twice', 'GET ' + C + '/:chit_id/raida', 422, { url: C + '/' + PARTY + '/raida?line_id=a&line_id=b' }),
+  X('batches-a-value-asked-twice', 'GET ' + C + '/trace/batches', 422, { url: C + '/trace/batches?limit=1&limit=2' }),
+  X('trace-a-value-asked-twice', 'GET ' + C + '/:id/trace', 422, { url: C + '/' + PARTY + '/trace?dir=a&dir=b' })
 ];
 
 function send(port, method, urlPath, body) {

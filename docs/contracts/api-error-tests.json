@@ -531,6 +531,7 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "GET /api/chits/disputes/queue": [
@@ -586,6 +587,7 @@
  ],
  "GET /api/chits/trace/batches": [
   401,
+  422,
   500
  ],
  "GET /api/chits/trace/by-batch": [
