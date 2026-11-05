@@ -109,6 +109,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/simulate ── */
   const simulate = [
+    X('sim-unknown-key-refused', R('POST', '/simulate'), 400, { body: { colour: 'red', sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-ok', R('POST', '/simulate'), 200, { body: { sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-channel-is-always-web', R('POST', '/simulate'), 200, { body: { channel: 'whatsapp', sender_ref: '919840012345', raw_text: 'hello' }, setup: world({}) }),
     X('sim-no-text', R('POST', '/simulate'), 400, { body: { sender_ref: '919840012345' }, setup: world({}) }),
@@ -128,6 +129,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/structure ── */
   const structure = [
+    X('structure-unknown-key-refused', R('POST', '/:id/structure'), 400, { url: at('/' + CAP + '/structure'), body: { colour: 'red' }, setup: world({}) }),
     X('structure-ok', R('POST', '/:id/structure'), 200, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: STRUCTURED, note: 'read by the co-assist', usage: { input_tokens: 10, output_tokens: 20 } }) }),
     X('structure-unknown', R('POST', '/:id/structure'), 404, { url: at('/' + CAP + '/structure'), setup: world({ capture: null }) }),
     X('structure-nothing-usable', R('POST', '/:id/structure'), 422, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: null }) }),
@@ -143,6 +145,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/raise ── */
   const raise = [
+    X('raise-unknown-key-refused', R('POST', '/:id/raise'), 400, { url: at('/' + CAP + '/raise'), body: { colour: 'red' }, setup: world(withStructured()) }),
     X('raise-ok', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), setup: world(withStructured()) }),
     X('raise-without-catalogue', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), body: { use_catalogue: false }, setup: world(withStructured()) }),
     X('raise-not-read-yet', R('POST', '/:id/raise'), 409, { url: at('/' + CAP + '/raise'), setup: world({}) }),
@@ -155,12 +158,14 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/convert and /dismiss ── */
   const handled = [
+    X('convert-unknown-key-refused', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: { colour: 'red', chit_id: CHIT }, setup: world({}) }),
     X('convert-ok', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({}) }),
     X('convert-without-chit', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), setup: world({}) }),
     X('convert-unknown', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: null }) }),
     X('convert-already-handled', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'converted' }) }) }),
     X('convert-fails', R('POST', '/:id/convert'), 500, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world(failing(/UPDATE capture SET status = 'converted'/)) }),
     X('convert-body-is-a-list', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: [1], setup: world({}), after: true }),
+    X('dismiss-unknown-key-refused', R('POST', '/:id/dismiss'), 400, { url: at('/' + CAP + '/dismiss'), body: { colour: 'red' }, setup: world({}) }),
     X('dismiss-ok', R('POST', '/:id/dismiss'), 200, { url: at('/' + CAP + '/dismiss'), setup: world({}) }),
     X('dismiss-unknown', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: null }) }),
     X('dismiss-already-handled', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'dismissed' }) }) }),
@@ -182,6 +187,7 @@ function extras(tools) {
     X('stores-ok', R('GET', '/stores'), 200, { setup: world({}) }),
     X('stores-not-migrated', R('GET', '/stores'), 200, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/, '42P01')) }),
     X('stores-read-fails', R('GET', '/stores'), 500, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/)) }),
+    X('stores-save-unknown-key-refused', R('POST', '/stores'), 400, { body: { colour: 'red', phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-ok', R('POST', '/stores'), 200, { body: { phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-no-phone', R('POST', '/stores'), 400, { body: { display_name: 'Chola Stores' }, setup: world({}) }),
     X('stores-save-not-migrated', R('POST', '/stores'), 503, { body: { phone: '9840012345' }, setup: world(failing(/INSERT INTO wholesaler_store/, '42703')) }),

@@ -14416,6 +14416,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "counter-rename-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -14611,6 +14653,48 @@
      "fixture": {
       "error": "Forbidden",
       "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "counter-make-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -14815,6 +14899,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "counter-assign-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -15090,6 +15216,48 @@
       "error": "Failed",
       "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
      }
+    },
+    {
+     "scenario": "counter-open-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -15279,6 +15447,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "counter-release-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -26464,6 +26674,58 @@
       "error": "Request failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "handshake-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26628,6 +26890,48 @@
       "error": "Build failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "build-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26716,6 +27020,48 @@
       "error": "Re-issue failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "reissue-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26755,6 +27101,48 @@
      "fixture": {
       "error": "Too large",
       "message": "design exceeds 2000000 bytes"
+     }
+    },
+    {
+     "scenario": "validate-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -26894,6 +27282,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "request-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27024,6 +27452,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "approve-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27129,6 +27597,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "decline-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27248,6 +27756,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "disconnect-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27341,6 +27889,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "resume-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27448,6 +28036,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "suspend-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27537,6 +28165,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "register-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27639,6 +28307,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "claim-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27768,6 +28476,58 @@
       "error": "Response failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "respond-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27843,6 +28603,48 @@
      "fixture": {
       "error": "Save failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -36304,6 +37106,58 @@
       "error": "Bind failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "bind-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -36570,6 +37424,58 @@
       "error": "Auto-raise update failed",
       "message": "Because: library words."
      }
+    },
+    {
+     "scenario": "auto-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -36681,6 +37587,58 @@
      "fixture": {
       "error": "Update failed",
       "message": "Because: library words."
+     }
+    },
+    {
+     "scenario": "ref-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -36963,6 +37921,58 @@
      "fixture": {
       "error": "Template update failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49068,6 +50078,44 @@
       "error": "Server error",
       "message": "A relayed sentence."
      }
+    },
+    {
+     "scenario": "code-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -49335,6 +50383,44 @@
      "fixture": {
       "error": "Server error",
       "message": "A relayed sentence."
+     }
+    },
+    {
+     "scenario": "verify-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49663,6 +50749,44 @@
       "error": "Not configured",
       "code": "VAULT_ENC_UNCONFIGURED",
       "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     }
+    },
+    {
+     "scenario": "put-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -50360,6 +51484,58 @@
       "error": "Convert failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "convert-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -50435,6 +51611,58 @@
      "fixture": {
       "error": "Dismiss failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -50559,6 +51787,58 @@
      "fixture": {
       "error": "Raise failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "raise-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -50732,6 +52012,58 @@
       "error": "Structure failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "structure-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -50832,6 +52164,58 @@
       "error": "Capture failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "sim-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -50919,6 +52303,58 @@
      "fixture": {
       "error": "Store save failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stores-save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -56230,6 +57666,58 @@
      "fixture": {
       "error": "Not found"
      }
+    },
+    {
+     "scenario": "combo-edit-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -56396,6 +57884,58 @@
       "error": "Could not save this combo",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "combo-save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -56501,6 +58041,58 @@
      "fixture": {
       "error": "Invalid combo",
       "message": "A combo needs at least one group to be worth saving."
+     }
+    },
+    {
+     "scenario": "combo-push-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]

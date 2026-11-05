@@ -1482,6 +1482,7 @@
   500
  ],
  "PATCH /api/combo-templates/:id": [
+  400,
   401,
   404,
   500
@@ -2135,12 +2136,14 @@
   503
  ],
  "POST /api/channels/:id/auto-raise": [
+  400,
   401,
   404,
   500,
   503
  ],
  "POST /api/channels/:id/provider-ref": [
+  400,
   401,
   404,
   500,
@@ -2737,6 +2740,7 @@
   403,
   404,
   409,
+  422,
   500,
   503
  ],
@@ -2745,6 +2749,7 @@
   401,
   403,
   404,
+  422,
   429,
   500,
   503
@@ -2879,6 +2884,7 @@
   503
  ],
  "POST /api/network/connections/:id/approve": [
+  400,
   401,
   403,
   404,
@@ -2887,6 +2893,7 @@
   503
  ],
  "POST /api/network/connections/:id/decline": [
+  400,
   401,
   403,
   404,
@@ -2895,6 +2902,7 @@
   503
  ],
  "POST /api/network/connections/:id/disconnect": [
+  400,
   401,
   403,
   404,
@@ -2903,6 +2911,7 @@
   503
  ],
  "POST /api/network/connections/:id/resume": [
+  400,
   401,
   403,
   404,
@@ -2911,6 +2920,7 @@
   503
  ],
  "POST /api/network/connections/:id/suspend": [
+  400,
   401,
   403,
   404,
@@ -2925,6 +2935,7 @@
   503
  ],
  "POST /api/network/entities/:id/claim": [
+  400,
   401,
   403,
   404,
@@ -3180,29 +3191,34 @@
   400,
   401,
   404,
-  409
+  409,
+  422
  ],
  "POST /api/service/:chit_id/pause/:pause_id/answer": [
   400,
   401,
   404,
-  409
+  409,
+  422
  ],
  "POST /api/service/:chit_id/pause/:pause_id/end": [
   400,
   401,
   404,
   409,
+  422,
   500
  ],
  "POST /api/service/:chit_id/resolve": [
   400,
   401,
-  404
+  404,
+  422
  ],
  "POST /api/service/:chit_id/respond": [
   401,
   404,
+  422,
   500
  ],
  "POST /api/signin/ask": [
@@ -3718,6 +3734,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -3762,6 +3779,7 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "PUT /api/testing/cmdb/:ci": [

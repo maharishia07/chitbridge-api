@@ -54,8 +54,9 @@ async function cases(A, B) {
   await kase('ID-03', "another shop's record answers as no record: a code and a verify both say 404, the same bytes as an unknown scheme", async () => {
     if (!vaultOn) return 'skipped: no VAULT_ENC_KEY on this api';
     for (const last of ['code', 'verify']) {
-      const foreign = await post(B, 'PHONE', last, { code: '000000' });
-      const unknown = await post(B, 'PASSPORT', last, { code: '000000' });
+      const body = last === 'verify' ? { code: '000000' } : {}; /* the code route takes no body key but identity_id: an extra one is refused by name */
+      const foreign = await post(B, 'PHONE', last, body);
+      const unknown = await post(B, 'PASSPORT', last, body);
       expect(foreign.status === 404 && unknown.status === 404 && foreign.b.code === 'IDOC_NOT_FOUND' && unknown.b.code === 'IDOC_NOT_FOUND', last + ' answers ' + foreign.status + '/' + unknown.status + ' ' + JSON.stringify(foreign.b));
       expect(JSON.stringify(Object.assign({}, foreign.b, { request_id: null })) === JSON.stringify(Object.assign({}, unknown.b, { request_id: null })), last + ': the bodies differ');
     }

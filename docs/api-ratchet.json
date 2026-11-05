@@ -9,7 +9,7 @@
  "raw_error_writes": 3,
  "routes_without_does": 627,
  "columns_failing": {
-  "strict_input": 210,
+  "strict_input": 169,
   "output_allowlist": 221,
   "foreign_id_404": 86,
   "idempotent_money_write": 12,
