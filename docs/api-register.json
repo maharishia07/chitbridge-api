@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 428,
-  "meets": 199,
+  "partial": 427,
+  "meets": 200,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -11970,11 +11970,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ae395fe8be4696d"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#744 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
