@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 149 | `list` | `amend.js` |  |
+| 150 | `list` | `amend.js` |  |
 | 120 | `rows` | `crm.js` | still in them: |
 | 110 | `withEntity` | `books-hooks.js` |  |
 | 113 | `words` | `variant.browser.js` |  |
@@ -31,7 +31,7 @@ of file each thing is; this says what already does the job.
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 58 | `entry` | `books-store.js` |  |
-| 58 | `items` | `books-store.js` | PERF1: |
+| 59 | `items` | `books-store.js` | PERF1: |
 | 58 | `failed` | `service.js` | what every catch answers: |
 | 60 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 66 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -205,7 +205,7 @@ of file each thing is; this says what already does the job.
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
-| 12 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 13 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 11 | `fail` | `books.js` | lib/books-contract.js refusalOf maps every typed refusal of the ledger to its status, code and the old {error, |
 | 11 | `close` | `avatar.js` |  |
 | 11 | `when` | `cap-settings.js` |  |
