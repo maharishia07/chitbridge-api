@@ -257,6 +257,17 @@ const COUNTRY = {
     X.store.unreversedForChit = wasUnrev;
     const rev1 = reversalsOf(shop, sale1);
     eq('F1 · the first status cancel answers the hook\'s reversal: ok, already, entry_no, posting_date, reverses, moved, words', [rev1.length, first.ok, first.already, first.duplicate, first.entry_no === rev1[0].entry_no, String(first.posting_date), first.reverses === sale1.entry_no, first.moved, typeof first.words], [1, true, true, true, true, DAY, true, false, 'string']);
+    /* …and the real order, no stubbed read: the hook fully done BEFORE the door reads → the door finds nothing unreversed, yet says the reversal, never "none" */
+    const mg = (st) => Object.assign(mk(st), { chit_id: 'f2' });
+    use(mg('delivered'), sellEntry); await K.postChit(shop, 'f2', {});
+    const sale2 = entriesOf(shop, 'f2')[0];
+    use(mg('cancelled'), sellEntry);
+    await K.postChit(shop, 'f2', {});
+    const late = await K.takeBackCancelled(shop, 'f2', 'u1');
+    const rev2 = reversalsOf(shop, sale2);
+    eq('F1 · hook first, door second (real order): answers the reversal, already, not none', [rev2.length, late.none, late.ok, late.already, late.entry_no === rev2[0].entry_no, late.reverses === sale2.entry_no, String(late.posting_date)], [1, undefined, true, true, true, true, DAY]);
+    const never = await K.takeBackCancelled(shop, 'never-posted', 'u1');
+    eq('F1 · a chit that never posted still answers none', [never.none, never.already], [true, undefined]);
     eq('F1 · a second cancel answers duplicate with the same entry_no; still 1 reversal', [second.duplicate, second.entry_no === rev1[0].entry_no, reversalsOf(shop, sale1).length], [true, true, 1]);
   }
 
