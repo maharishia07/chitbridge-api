@@ -15,6 +15,8 @@
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
+/* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
+const NOT_REGISTERED = { tax: { registered: false } };
 const { DB, j, ok, pause, kase, expect, bill, freshShop, finish } = H;
 const RUN = 'cr' + (Date.now() % 1e10).toString(36);
 let pg = null;
@@ -33,7 +35,7 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
   ok(await j('/health'), 'health');
   pg = new Client({ connectionString: DB }); await pg.connect();
   try {
-    const A = await freshShop(RUN + 'a', 'Crm truth');
+    const A = await freshShop(RUN + 'a', 'Crm truth', NOT_REGISTERED);
     ok(await j('/api/books/enable', { method: 'POST', token: A.token }), 'books on');   /* the Ledger is what says "dues" — a precondition, through its own route */
     const r = ok(await j('/api/products', { method: 'POST', token: A.token, body: { item_data: { name: 'Rice', unit: 'piece', price: 60 } } }), 'product').b;
     const P = { id: r.item.item_id, name: 'Rice', unit: 'piece', price: 60 };
@@ -108,7 +110,7 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
       expect(rec.may_trade && rec.may_trade.ok === false && rec.may_trade.why === 'local' && rec.on_chitbridge === false && row && row.may_trade.why === 'local', 'record ' + JSON.stringify(rec.may_trade) + ' · list ' + JSON.stringify(row && row.may_trade));
       expect(/not on ChitBridge/.test(added.message || '') && added.customer.on_rail === false && /not on ChitBridge/.test((added.customer.one_sided || {}).why || ''), 'add answer ' + JSON.stringify(added).slice(0, 200));
     });
-    const B = await freshShop(RUN + 'b', 'Crm truth trader');
+    const B = await freshShop(RUN + 'b', 'Crm truth trader', NOT_REGISTERED);
     await kase('CR-07b', 'a business on the rail in the same sandbox MAY trade: added by User ID, on_rail true, no one-sided note, may_trade ok', async () => {
       const added = ok(await j('/api/relationships/customers', { method: 'POST', token: A.token, body: { handle: RUN + 'b' } }), 'add by user id').b;
       const rec = ok(await j('/api/crm/parties/' + added.customer.customer_identity_id, { token: A.token }), 'record').b;
