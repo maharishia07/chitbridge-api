@@ -75,6 +75,13 @@ const identityAuth = require('../lib/identity-auth');
  */
 const signin = require('./signin');
 
+/** the User ID asked for, judged, and the one to suggest instead. K-1: a NUL byte in the id or the name is no User ID: answered as an empty one is (no suggestion), before any lookup or insert. */
+function userIdVerdict(wanted, display_name) {
+  if (signin.holdsNul(display_name) || signin.holdsNul(wanted)) return { verdict: handleLib.checkRoot(''), suggestion: null };
+  const suggestion = handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null;
+  return { verdict: handleLib.checkRoot(wanted), suggestion };
+}
+
 /**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
@@ -91,9 +98,8 @@ async function registerNew(req, res) {
     const bridge_id = generateBridgeId();
     const identity_id = uuidv4();
     const wanted = String(req.body.user_id || '').trim() || handleLib.slug(display_name);
-    const verdict = handleLib.checkRoot(wanted);
+    const { verdict, suggestion } = userIdVerdict(wanted, display_name);
     if (!verdict.ok) {
-      const suggestion = handleLib.checkRoot(handleLib.slug(display_name)).ok ? handleLib.slug(display_name) : null;
       return problem(req, res, { status: 400, ...contract.words.userIdInvalid(verdict.reason, { suggestion }) });
     }
     /* ⚠️ UNIQUE PLATFORM-WIDE, refused HERE — the unique index on lower(user_id) would raise a 500 that says nothing usable */

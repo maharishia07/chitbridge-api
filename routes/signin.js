@@ -1,6 +1,9 @@
 'use strict';
 /**
  * /api/signin — A PERSON'S SESSIONS: renew · logout · list · revoke (M05, SPEC-iam-build §4.2, D3, D14).
+ * OWNS      every route under /api/signin (8): renew · logout · sessions · devices · sessions/revoke · ask · verify · pin, and the handler functions the old paths (/api/entities/register, /verify, /api/actors/login, /check-login, /set-pin) mount as aliases.
+ * FLOW      door(name) → [session routes: auth → personOnly (a key is refused) → schemaValidate (lib/signin-contract.js)] · [ask · verify: schemaValidate → chains → validate → handler → lib/identity-auth.js] → the one answer an unknown account and a wrong secret share (SEC-81)
+ *           ⚠️ a typed value with a NUL byte names no account: it is answered as an unknown one before any lookup (K-1).
  * CARD 18-identity-sign-in-and-access/sign-in
  *
  *   POST /api/signin/renew              (person)  → { token, jti, exp, device_id } — new jti, same device, old jti gone
@@ -26,7 +29,7 @@
  * 200 (nothing listed to remove — the page clears itself), and renew turns it into a listed session when the request
  * names its device (X-Device-Id) — so a phone can move onto a revocable session without anybody signing in again.
  
- * CALLED BY routes/actors.js, routes/entities.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * CALLED BY server.js (app.use('/api/signin') and the /api/signin/{ask,verify,pin} rate-limit list) · routes/actors.js and routes/entities.js (the alias mounts) · the web's sign-in (signin-ui.js) · tests/api-problem-signin.test.cjs · tests/signin-routes.test.cjs
  */
 const express = require('express');
 const log = require('../lib/logger');
@@ -40,6 +43,7 @@ const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
 
@@ -69,7 +73,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
-router.post('/renew', auth, personOnly, async (req, res) => {
+router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), async (req, res) => {
   try {
     const shop = shopOf(req);
     let s;
@@ -152,7 +156,7 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
   }
 });
 
-router.post('/sessions/revoke', auth, personOnly, async (req, res) => {
+router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke'), async (req, res) => {
   try {
     const b = req.body || {},
       shop = shopOf(req);
@@ -253,6 +257,16 @@ const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
   return refused(req, res, 'NO_ACCOUNT');
 };
+/** K-1: a typed value with a NUL byte names no account and no database can hold it (Postgres refuses it, 22021): it is answered as an unknown value is, before any lookup */
+const holdsNul = (value) => String(value == null ? '' : value).includes('\u0000');
+/** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
+const shopNamed = (req) => (holdsNul(req.body.shop) ? '' : req.body.shop);
+/** what the ask door looks up: the first of e-mail, user id, id that was typed */
+const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.body.id || '').trim();
+/** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
+const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
+/** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
+const junkAsUnknown = (handler, typedBy) => (req, res, next) => (holdsNul(typedBy(req)) ? unknownAccount(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
 const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED)$/.test(String(reason || ''));
 
@@ -332,7 +346,7 @@ async function firstCodeFor(actor, toMail) {
 
 async function ask(req, res, next) {
   try {
-    const input = String(req.body.email || req.body.user_id || req.body.id || '').trim();
+    const input = typedByAsk(req);
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
@@ -345,7 +359,7 @@ async function ask(req, res, next) {
      * REGISTER a new entity under it. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead.
      * ⚠️ AMBIGUOUS is refused, never guessed.
      */
-    const found = await identityAuth.findLoginIdentity(query, input, { shop: req.body.shop });
+    const found = await identityAuth.findLoginIdentity(query, input, { shop: shopNamed(req) });
     if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
     if (found.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
@@ -552,7 +566,7 @@ async function verify(req, res) {
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
-      const f = await identityAuth.findLoginIdentity(query, id, { shop: req.body.shop });
+      const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
@@ -961,10 +975,13 @@ async function pin(req, res) {
   }
 }
 
-router.post('/ask', door('signin'), askChecks, validate, ask);
-router.post('/verify', door('signin'), verifyChecks, validate, verify);
-router.post('/pin', auth, pinChecks, validate, pin);
+const askDoor = junkAsUnknown(ask, typedByAsk);
+const verifyDoor = junkAsUnknown(verify, typedByVerify);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
+router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
+router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
-router.handlers = { ask, verify, pin, checkLogin };
-Object.assign(router, { door, askChecks, verifyChecks, pinChecks, sendCode, events });
+router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
+Object.assign(router, { holdsNul, door, askChecks, verifyChecks, pinChecks, sendCode, events });
 module.exports = router;
