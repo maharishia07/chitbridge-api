@@ -42102,6 +42102,26 @@
      }
     },
     {
+     "scenario": "feedback-rating-decimal",
+     "status": 400,
+     "body_keys": {
+      "error": "A rating is a whole number of stars."
+     },
+     "fixture": {
+      "error": "A rating is a whole number of stars."
+     }
+    },
+    {
+     "scenario": "feedback-rating-too-big-for-the-column",
+     "status": 400,
+     "body_keys": {
+      "error": "A rating is a whole number of stars."
+     },
+     "fixture": {
+      "error": "A rating is a whole number of stars."
+     }
+    },
+    {
      "scenario": "feedback-message-zero",
      "status": 400,
      "body_keys": {

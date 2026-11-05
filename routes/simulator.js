@@ -43,10 +43,12 @@ const PG_UUID = /^(?:[0-9a-f]{4}-?){7}[0-9a-f]{4}$/i;
 const INT4_MAX = 2147483647;
 /** the lead id the gate gave, or null for anything that is not one (a short text, a list, 36 characters that are no uuid: it was a 500) */
 const leadIdOf = (given) => (typeof given === 'string' && given.length === 36 && PG_UUID.test(given) ? given : null);
-/** the rating as the integer column holds it, or null: 'abc' is none, and so is 3.5 or 5000000000 (they were a 500, 22P02 / 22003) */
+/** the rating as the integer column holds it: null when none was given or it is not a number ('abc', as before);
+ *  undefined when it IS a number the column cannot hold (3.5, 5000000000: they were a 500, 22P02 / 22003), so the route refuses it in words */
 const ratingOf = (given) => {
   const asked = +given;
-  return Number.isSafeInteger(asked) && Math.abs(asked) <= INT4_MAX ? asked : null;
+  if (!Number.isFinite(asked)) return null; /* as main: "abc" and a missing rating are none; "" and null are +value 0 */
+  return Number.isSafeInteger(asked) && Math.abs(asked) <= INT4_MAX ? asked : undefined;
 };
 
 const esc = (s) => String(s == null ? '' : s).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c]);
@@ -108,6 +110,7 @@ router.post('/feedback', ...contract.checked('POST /feedback'), async (req, res)
     if (!message) return problem(req, res, { status: 400, ...words.messageMissing() });
     const section = String(req.body.section || '').trim() || null;
     const rating = ratingOf(req.body.rating);
+    if (rating === undefined) return problem(req, res, { status: 400, ...words.ratingNotWhole() });
     // leadId is a uuid from the gate; ignore anything that isn't one.
     const leadId = leadIdOf(req.body.leadId);
     await query('INSERT INTO sim_feedback (lead_id, section, rating, message) VALUES ($1, $2, $3, $4)', [leadId, section, rating, message]);
