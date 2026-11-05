@@ -638,4 +638,13 @@ it('⭐ a despatch note is not a bill: 3 bills + 1 despatch → count 3', () => 
   assert.strictEqual(t.count, 3); assert.strictEqual(t.gross, 60);
 });
 
+/** ⭐ ACC-255 — GET /api/till/bills now gives a credit note its negative total: the day nets by a plain sum AND the engine still counts it as a return */
+it('⭐ a credit note row with its negative total (ACC-255): sale 1000 + note -300 → total 700, 1 bill, 1 return, refund 300 off Cash', () => {
+  const sale = { no: 'S1', kind: 'cash', total: 1000, payments: [{ how: 'Cash', amount: 1000 }] };
+  const note = { no: 'N1', kind: 'credit_note', total: -300, taxable: -254.24, tax: -45.76, refunds: [{ how: 'Cash', amount: 300 }] };
+  const t = R.totals([sale, note]);
+  assert.strictEqual(t.total, 700); assert.strictEqual(t.count, 1); assert.strictEqual(t.returns, 1);
+  assert.strictEqual(t.refunds, 300); assert.strictEqual(t.by.Cash, 700);
+});
+
 console.log('\n' + pass + ' checks passed\n');
