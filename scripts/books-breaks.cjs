@@ -91,6 +91,27 @@ const BREAKS = [
     'the off switch is ignored by the hook'
   ],
   [
+    'acc-223-238-cancel',
+    'lib/books-hooks.js',
+    '  return refusedOwnCopy(input, copy) ? refusedNone(input, copy) : moneyHold(copy, business, base);',
+    '  return moneyHold(copy, business, base);',
+    'ACC-223: a cancelled own copy posts again (the classify gate is gone)'
+  ],
+  [
+    'acc-223-238-cancel',
+    'lib/books-hooks.js',
+    "    if (!(failure && failure.code === '23505')) throw failure;",
+    '    throw failure;',
+    'ACC-238: a lost reversal race rolls the cancel back (23505 is no duplicate)'
+  ],
+  [
+    'acc-223-238-cancel',
+    'lib/chit-move.js',
+    "  return require('./books-hooks').takeBackCancelled(entity_id, chit_id, by.id);",
+    '  return null;',
+    'ACC-238: the status door never calls the books (only the sender, through the sent copy, did)'
+  ],
+  [
     'books-routes',
     'routes/books.js',
     "router.get('/dues', auth, noKey, on, async",
