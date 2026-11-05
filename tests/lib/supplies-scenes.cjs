@@ -58,7 +58,7 @@ function extras(tools) {
     X('add-made', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', unit: 'bottle', note: 'for the shop floor' }, setup: { sqlRows: byName(KEPT) } }),
     X('add-made-and-counted', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', unit: 'bottle', sku: 'FC-1', keep_stock: true }, setup: { sqlRows: byName(KEPT) } }),
     X('add-keep-stock-not-true', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', keep_stock: 'yes' }, setup: { sqlRows: byName(EXPENSED) } }),
-    X('add-unknown-key', 'POST ' + at(), 200, { body: { name: 'Floor cleaner', price: 99, visible: true }, setup: { sqlRows: byName(EXPENSED) } }),
+    X('add-unknown-key-refused', 'POST ' + at(), 422, { body: { name: 'Floor cleaner', price: 99, visible: true }, setup: { sqlRows: byName(EXPENSED) } }),
     X('add-not-ready', 'POST ' + at(), 503, { body: { name: 'Floor cleaner' }, setup: { sqlRows: raising(/INSERT INTO supply_item/, '42P01') } }),
     X('add-fails', 'POST ' + at(), 500, { body: { name: 'Floor cleaner' }, setup: { sqlRows: raising(/INSERT INTO supply_item/, '23505') } }),
     X('add-fails-leaks-nothing', 'POST ' + at(), 500, { body: { name: 'Floor cleaner' }, setup: { sqlRows: () => { throw new Error(SECRET_SQL); } } })
@@ -68,7 +68,7 @@ function extras(tools) {
     X('edit-saved', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: { name: 'Floor cleaner 5L' }, setup: { sqlRows: edited } }),
     X('edit-retired', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: { retired: true }, setup: { sqlRows: edited } }),
     X('edit-nothing-sent', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: {}, setup: { sqlRows: edited } }),
-    X('edit-unknown-key', 'PATCH ' + at('/:id'), 200, { url: at('/' + ITEM), body: { price: 99 }, setup: { sqlRows: edited } }),
+    X('edit-unknown-key-refused', 'PATCH ' + at('/:id'), 422, { url: at('/' + ITEM), body: { price: 99 }, setup: { sqlRows: edited } }),
     X('edit-not-found', 'PATCH ' + at('/:id'), 404, { url: at('/' + UNKNOWN_ITEM), body: { name: 'x' } }),
     X('edit-fails', 'PATCH ' + at('/:id'), 500, { url: at('/' + ITEM), body: { name: 'x' }, setup: { sqlRows: raising(/UPDATE supply_item/, '23505') } }),
     X('edit-table-missing-is-a-500', 'PATCH ' + at('/:id'), 500, { url: at('/' + ITEM), body: { name: 'x' }, setup: { sqlRows: raising(/UPDATE supply_item/, '42P01') } }),
@@ -83,6 +83,7 @@ function extras(tools) {
     X('buy-no-reference', 'POST ' + at('/purchase'), 400, { body: { lines: [{ name: 'Floor cleaner', qty: 1 }] } }),
     X('buy-reference-is-spaces', 'POST ' + at('/purchase'), 400, { body: { ref: '   ', lines: [{ name: 'Floor cleaner', qty: 1 }] } }),
     X('buy-body-a-list', 'POST ' + at('/purchase'), 400, { body: [] }),
+    X('buy-unknown-key-refused', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL-1', lines: [{ name: 'Floor cleaner', qty: 1 }], price: 99 } }),
     X('buy-expensed-one', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }), setup: { sqlRows: expensed } }),
     X('buy-expensed-many', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }, { name: 'Dusters', qty: 6, cost: 12 }), setup: { sqlRows: expensed } }),
     X('buy-counted-one', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }), setup: { sqlRows: kept } }),
@@ -105,7 +106,8 @@ function extras(tools) {
     X('buy-line-name-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: lines({ name: 'Floor\u0000cleaner', qty: 1 }), after: true }),
     X('buy-supplier-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL-1', from: 'Corner\u0000Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
     X('buy-reference-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL\u00001', from: 'Corner Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
-    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true })
+    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true }),
+    X('issue-unknown-key-refused', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 1, price: 99 } }),
   ];
 
   const issues = [

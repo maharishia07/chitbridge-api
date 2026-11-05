@@ -66,8 +66,11 @@ async function cases(A, B, a, b) {
     expect(rows.length === 2 && first.party_id === a.id && days === 30 && first.answered_at === null, 'rows ' + rows.length + ' days ' + days);
   });
   await kase('PV-05', "a body that names another shop's shopper writes for the token's shopper only", async () => {
-    ok(await post(a, '/me/consent', { channel: 'email', purpose: 'marketing', allowed: true, party_id: b.id, shop: B.entity, noted_by: b.id }), 'consent');
-    ok(await post(a, '/me/requests', { kind: 'erase', party_id: b.id, who: 'Somebody Else', country: 'AU' }), 'request');
+    const named = await post(a, '/me/consent', { channel: 'email', purpose: 'marketing', allowed: true, party_id: b.id, shop: B.entity, noted_by: b.id });
+    const namedRequest = await post(a, '/me/requests', { kind: 'erase', party_id: b.id, who: 'Somebody Else', country: 'AU' });
+    expect(named.status === 422 && namedRequest.status === 422, 'a body naming another shopper is refused by name (contract bulk pass batch 1), got HTTP ' + named.status + ' and ' + namedRequest.status);
+    ok(await post(a, '/me/consent', { channel: 'email', purpose: 'marketing', allowed: true }), 'consent');
+    ok(await post(a, '/me/requests', { kind: 'erase' }), 'request');
     expect((await held('party_contact_pref', B.entity, b.id)).length === 0 && (await held('privacy_request', B.entity, b.id)).length === 0, 'rows were written against the other shop\'s shopper');
     const asked = await held('privacy_request', a.shop, a.id);
     expect(asked.every((r) => r.who !== 'Somebody Else' && r.country === 'IN'), 'a request took the name or country of the body');

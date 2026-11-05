@@ -179,7 +179,9 @@ const productId = async (shop, item_data) => ok(await j('/api/products', { metho
     expect(now === OWN_USE_QTY + BILL_LINE_QTY, 'stock moved ' + now + ' (expected ' + (OWN_USE_QTY + BILL_LINE_QTY) + '): the bill line names no supply of mine');
   }, 'CATALOGUE-BACKLOG CAT-1 (5b) · ST-19: a received bill line carries no supply_item_id, so goods-in cannot raise an own-use item');
   await kase('CA-09', 'a supply item cannot be sold as a product: no price on it, not editable through the products route', async () => {
-    const made = ok(await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece', price: SMUGGLED_PRICE } }), 'supply').b.supply;
+    const smuggled = await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece', price: SMUGGLED_PRICE } });
+    expect(smuggled.status === 422, 'a price in the supply body is refused by name (contract bulk pass batch 1), got HTTP ' + smuggled.status);
+    const made = ok(await j('/api/supplies', { method: 'POST', token: A.token, body: { name: 'Mop ' + RUN, unit: 'piece' } }), 'supply').b.supply;
     expect(!('price' in made) && !('selling_price' in made), 'the supply carries a price: ' + JSON.stringify(made));
     const edit = await j('/api/products/' + (made.supply_item_id || made.item_id), { method: 'PATCH', token: A.token, body: { merge: true, item_data: { price: SMUGGLED_PRICE } } });
     expect(edit.status === 404, 'PATCH /api/products on a supply answered HTTP ' + edit.status);

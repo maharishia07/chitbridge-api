@@ -1620,6 +1620,7 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "PATCH /api/testing/incidents/:id": [
@@ -2804,10 +2805,12 @@
  "POST /api/kyb/credential": [
   400,
   401,
+  422,
   500
  ],
  "POST /api/kyb/field": [
   401,
+  422,
   500
  ],
  "POST /api/network-design/build": [
@@ -2936,11 +2939,13 @@
  "POST /api/notifications/dismiss": [
   400,
   401,
+  422,
   500,
   503
  ],
  "POST /api/notifications/seen": [
   401,
+  422,
   500,
   503
  ],
@@ -2966,6 +2971,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -2973,6 +2979,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -3246,6 +3253,7 @@
  "POST /api/supplies": [
   400,
   401,
+  422,
   500,
   503
  ],
@@ -3253,11 +3261,13 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "POST /api/supplies/purchase": [
   400,
   401,
+  422,
   500,
   503
  ],

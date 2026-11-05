@@ -114,7 +114,7 @@ function checkContractShape(routes, router) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = Object.values(contract.OPERATIONS).filter((one) => one.requestBody).map((one) => one.requestBody.content['application/json'].schema);
   check('a body is declared as an object or a list and requires nothing: the handlers answered a list and a missing field in their own words', bodies.length === 2 && bodies.every((schema) => sameValue(schema.type, ['object', 'array']) && !(schema.required || []).length), bodies);
-  check('no body schema refuses an unknown key: the handlers dropped it without a word, and refusing it is an owner\'s decision', bodies.every((schema) => schema.additionalProperties !== false));
+  check('both body schemas refuse an unknown key by name (contract bulk pass batch 1): the web page sends { title } and nothing else, the handlers never read another', bodies.every((schema) => schema.additionalProperties === false));
   const queries = (contract.OPERATIONS['GET /api/kyb/position'].parameters || []).filter((item) => item.in === 'query');
   check('GET /position\'s query values are declared as anything (a repeated value was read as it came)', queries.length === 2 && queries.every((item) => sameValue(item.schema, {})), queries);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
@@ -243,10 +243,12 @@ async function checkRungIsThePlatforms(port) {
     return null;
   };
   Object.assign(lab.world, { realAuth: false, db: 'ok', jsonThrows: false, who: OWNER, sqlRows: rows });
-  await lab.send(port, 'POST', MOUNT + '/credential', { title: 'Village NOC', rung: 'verified', verification: { method: 'registry' }, status: 'expired', entity_id: SHOP_B });
+  const spoofed = await lab.send(port, 'POST', MOUNT + '/credential', { title: 'Village NOC', rung: 'verified', verification: { method: 'registry' }, status: 'expired', entity_id: SHOP_B });
+  check('a client\'s rung, verification, status and entity are refused by name (422) and nothing is written', spoofed.status === 422 && written.length === 0, [spoofed.status, written.length]);
+  await lab.send(port, 'POST', MOUNT + '/credential', { title: 'Village NOC' });
   Object.assign(lab.world, { sqlRows: null });
   const row = written[0] || [];
-  check('a client\'s rung, verification, status and entity are ignored: the row is gathered, for the caller\'s shop, with an empty verification', row[3] === 'gathered' && row[0] !== SHOP_B && row[6] === '{}', row);
+  check('a title alone: the row is gathered, for the caller\'s shop, with an empty verification', row[3] === 'gathered' && row[0] !== SHOP_B && row[6] === '{}', row);
   check('the standard is made from the title: custom-village-noc', row[1] === 'custom-village-noc' && row[2] === 'certificate', row);
 }
 
