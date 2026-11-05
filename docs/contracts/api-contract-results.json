@@ -186,8 +186,24 @@
     422
    ]
   },
+  "GET /api/actors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/actors/access-events": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4076,22 +4092,6 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "cases": 4,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "GET /api/actors": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    400
-   ]
-  },
-  "GET /api/actors/access-events": {
-   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
