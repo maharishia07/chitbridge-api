@@ -229,10 +229,12 @@ const GUARDS = [
      matter: ONE query for five copies (it costs nothing while nothing is remote), and a remote copy refused
      BEFORE any write rather than half a chit delivered. */
   'ctp-address.test.cjs',
-  'money-origin.test.cjs', // ACC-192
+  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
+  'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
+  'money-no-arithmetic.test.cjs', // ACC-206: no sum, difference, reduce or rounding on money between the engine and the chit (send-money, money-check, chit-proposal, the send steps); named exceptions carry a backlog id
+  'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals
   'rollup-currency.test.cjs', // REP-50
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
-  'money-origin.test.cjs', // ACC-192: money computed once at the origin, carried, never recomputed by a copy
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
      own machine. open(sign(build(copy))) must deep-equal copy, or the two transports write different rows and
      lifting a world silently changes behaviour. Also holds the population boundary, which across a wire is a
@@ -280,6 +282,7 @@ const GUARDS = [
   'books-hooks.test.cjs', // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-country.test.cjs', // ⭐ CX2: the books speak the shop's country — IN · AU · AE (core ≥ v1.42, money, zone, year label, depreciation basis)
   'books-routes.test.cjs', // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
+  'books-minor-exponent.test.cjs', // ACC-179: write-off · payment · opening · entries in the currency's own decimals (INR 2 · JPY 0 · KWD 3), INR unchanged
   'books-pages.test.cjs', // ⭐ PERF1: Day book + Ledger pages (keyset, server max, server totals) add up to the whole; lib/page-limit
   'testing-pages.test.cjs', // ⭐ T2-PAGING: the test board's five lists page (total · page · limit, lib/page-limit max); an old High is never cut
   'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number (W1-PLAT: 0); every allowance has its reason
@@ -298,6 +301,7 @@ const GUARDS = [
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
+  'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-200-cash-rounding.test.cjs', // ⭐ ACC-200: a counter bill's payment gap posts as round-off only inside the books pack's cash step (AU 5c on cash); none = exact, so an IN bill 50p short waits, named
   'books-recurring.test.cjs', // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once
   'books-todo.test.cjs', // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
@@ -312,6 +316,7 @@ const GUARDS = [
   'neutral-core.test.cjs', // ⭐ N0-N4 (NEUTRAL-CORE, 17 Oct): no country or money → no document (NO_COUNTRY/NO_MONEY); the readers say null + a reason, never INR / Asia/Kolkata; ratchet on new India literals; an India shop unchanged
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
+  'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
@@ -351,6 +356,7 @@ const GUARDS = [
   'api-4b-auth-problem.test.cjs', // API-4b: the sign-in 401 and the requireScope 403 of middleware/auth.js are a Problem (problem+json, registered code) with error/message/code/pending frozen and the same status; a good token still passes
   'api-problem-till.test.cjs', // API-4 sweep, till: every refusal of routes/till.js (the counter's 41 routes) is a Problem with its old keys frozen; the till's offline answers keep every key; no 5xx says its cause
   'api-problem-books.test.cjs', // API-4 sweep, accounts and finance: every refusal of routes/books.js, routes/tax.js and routes/invoice.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-network-offers.test.cjs', // API-4 sweep, the network-offers doors (Lane B2, 4 Nov): every refusal of the 8 routes of routes/network-offers.js is a Problem with its old keys frozen; a key is refused 403; no 5xx says its cause; a failed member read keeps its 503
   'api-problem-marketing.test.cjs', // API-4 sweep, marketing: every refusal of routes/marketing.js, offers.js and combo-templates.js is a Problem with its old keys frozen; no 5xx says its cause
   'offers-published-contract.test.cjs', // api #350 hold: the offer service's published OpenAPI is typed (body, required, 429) while the enforced schema stays loose
   'api-problem-governance.test.cjs', // API-4 sweep, governance: every refusal of routes/governance.js is a Problem with its old keys frozen; the foreign id of GET /entities/:id is the unknown id's 404; no 5xx says its cause
@@ -374,8 +380,12 @@ const GUARDS = [
   'ppl-26-actors-input.test.cjs', // PPL-26/BH-12: settings, person edits, check-key, suggest-key and delegate refuse a list or an object in words (400 INVALID_INPUT, field named), a non-uuid person id is a 404, the database never asked, nothing written; valid calls still 200
   'ppl-28-actors-create.test.cjs', // PPL-28: POST /api/actors (add a person) refuses a list, an object, or a string where a number or flag belongs (400 INVALID_INPUT, field named), 0 writes; a valid add still succeeds
   'api-problem-entities.test.cjs', // API-4 sweep, the entities: every refusal of the 25 routes of routes/entities.js (sign-in apart, which is recorded byte for byte, never judged) is a Problem with its old keys frozen; no success answer moved; no 5xx says its cause; the platform doors answer in the Problem body; another shop's id is asked as an unknown one (S35, findings printed, evidence pinned)
+  'api-problem-signin.test.cjs', // API-4 sweep, Lane B2 (4 Nov): the 8 routes of routes/signin.js answer only the statuses their contract declares, no 5xx says its cause, and a NUL byte in a typed id, e-mail, handle, shop or username is answered as an unknown one (K-1, S41); the doors' own words stay byte for byte (signin-routes golden)
+  'api-problem-service.test.cjs', // API-4 sweep, Lane B2 (4 Nov): the 7 routes of routes/service.js answer only the statuses their contract declares, no 5xx says its cause, and a value no column can hold (a NUL byte in text, a time Postgres cannot read) is a 400 in words, never a 500; no success answer moved
   'api-problem-assist.test.cjs', // API-4 sweep, the assistant: every refusal of the 22 routes of routes/assist.js is a Problem with its old keys frozen; the assistant's 503 and 502 (the answers the web client falls through on) are replayed word for word; no success answer moved; no answer of any status says a failure's cause; the two public reference reads are listed as findings by the foreign-id world
   'api-problem-catalogue.test.cjs', // API-4 sweep, the rest of the catalogue: the shopper's orders and documents, the product enquiries, the photo read and the catalogue face — every refusal a Problem with its old keys frozen, no success answer moved
+  'api-problem-small.test.cjs', // API-4 sweep, Lane B2 (4 Nov): every refusal of routes/adopt.js (2 routes) and routes/people.js is a Problem with its old keys frozen; a non-uuid chit_id is a 404 (K-1); no 5xx says its cause
+  'api-problem-csp-report.test.cjs', // API-4 sweep, the public CSP report door (routes/csp-report.js): a junk body 400, an 8 KB+ body 413, a flood 429, a fault 500 are Problems; a report is still 204; no sign-in is asked
   'api-problem-chit-proposals.test.cjs', // API-4 sweep, the proposal doors (RAIL-106): every refusal of the 5 routes of routes/chit-proposals.js is a Problem with its keys frozen at the first contract; every body closed (S33); no answer says a failure's cause; another shop's chit id answers as an unknown one (S35)
   'ctp-return-path.test.cjs', // RAIL-106: the return path — a status another installation decided is mirrored on the shadow row through the one status write; sequence, repeat, late message (db and transport stubbed)
   'ctp-return-disputes.test.cjs', // RAIL-106 part 2: a dispute raised or resolved elsewhere is recorded here through recordRaise / recordResolve; confidential scoping kept
@@ -423,6 +433,7 @@ const GUARDS = [
   'rail146c-till-cost-blind.test.cjs', // RAIL-146c: the till reads (GET /api/till/tasks · /match) carry no purchase money to a cost-blind co-assist; a sales order stays priced; the owner and the paired till key read as before; whole-body scan, fail closed
   'rail146e-crm-unbilled-cost.test.cjs', // RAIL-146e: the Parties list's per-party unbilled money is partial for a cost-blind co-assist (RAIL-146b rule per party); owner byte-identical; whole-body scan
   'rail146i-dues-cost-blind.test.cjs', // RAIL-146i: a party's supplier-side balance (what the shop owes) and supplier credit limit never reach a cost-blind co-assist on GET /api/crm/parties, /parties/:id or GET /api/books/dues; a customer's balance stays; owner byte-identical; whole-body scan
+  'rail146m-payment-cost-blind.test.cjs', // RAIL-146m: a payment to a supplier (preview · record + 409 · propose · advice) never tells a cost-blind co-assist the bills' figures, the advance or the balance; a customer's payment and the owner byte-identical; whole-body scan
   'm3-invoice-one-builder.test.cjs', // M3: the invoice answer of a copy is built once (lib/tax-copy invoiceFrom); a connector key reaches /api/invoice/:id (200) and not /api/tax/invoice/:id (403)
   'rail146g-doors-cost-blind.test.cjs', // RAIL-146g: the rail's chit list (GET /api/facts/rail/chits), the bell, GET /api/folders/groupsum and the tax invoice (GET /api/invoice/:id · /api/tax/invoice/:id) carry no purchase money to a cost-blind actor (a viewer without can_see_costs included); a sale stays priced; whole-body scan, fail closed
   'rail146j-folder-cost.test.cjs', // RAIL-146j: GET /api/folders/:id/chits (filed and view folder) and /:id/metrics hide the purchase money from a cost-blind co-assist
@@ -444,6 +455,8 @@ const GUARDS = [
   'housekeeping-guards.test.cjs', // ⭐⭐ W2-RAIL R2: delete/archive/purge fail CLOSED (co_held_record · dispute_open · disputes_unknown), reprice asks the rail, ONE status table (no second spelling), a cap says so
   'claim-series.test.cjs', // M11: ONE series allocator for a counter PC (key) and a phone (device); label by PHONE number (D9); no prefix ever on two holders; a pre-M11 key claims the prefix it has today; a phone's till.by/device_id = the session
   'signin-routes.test.cjs', // M06: every old sign-in path answers as before the move (golden) and IS the new door's handler; one signin_events row per attempt; b282 missing never blocks
+  'signin-sessions-routes.test.cjs', // 1 Nov walk: devices/sessions/renew/logout/revoke DO their job through the real auth: SEC-131 a logged-out token is 401 and cannot renew; one person cannot end another's session (403); devices owner-only
+  'signin-ask-pin-register.test.cjs', // 1 Nov walk: ask/pin and entities register/verify behaviour: code or PIN asked, unknown id refused alike, wrong/6x-wrong code no token, new e-mail = one INSERT, PIN stored hashed
   'measure.test.cjs', // INT7b: lib/measure's own unit test — median to one decimal (never NaN), OPEN/CLOSED = the rail's one status table, an empty set measures to zeros
   'home-facts.test.cjs', // N18: GET /api/facts/:card — each Home card's shape, <= 2 trips, a figure the server cannot compute is omitted (never 0), cost never travels, unknown card 404
   'till-trend.test.cjs', // RPT2: GET /api/till/summary?compare=1 — Reports › Trend is rollup.series over the summaries, the shop's own year (never April), 422 NO_COUNTRY/NO_MONEY, one trip
@@ -468,6 +481,8 @@ const GUARDS = [
   'limiter-paths.test.cjs', // M07: every public door (walked from the real app) has a limiter of its own; pair/claim, check-login, storefront sign-in on the strict auth budget; existing limits unchanged
   'con-100-101-capture-input.test.cjs', // CON-100/101 (BH-8, BH-15): capture convert and stores answer a plain 4xx (a non-uuid id 404 NOT_FOUND; a chit_id or a phone that is not text 400 VALIDATION_FAILED), the db never asked, no driver text; a valid call still 200
   'limiter-answer.test.cjs', // API-16 (BH-5): every limiter (the 240/min service one through the real app, the rest at max 1) answers 429 problem+json RATE_LIMITED with Retry-After and the same seconds in params; first request passes
+  'k1-path-uuid.test.cjs', // K-1 (API-10): an address id that is not a uuid -> 404 NOT_FOUND problem+json through lib/problem.js uuidParam, the database never asked; one row per closed route
+  'rail146l-suppliers-cost-blind.test.cjs', // RAIL-146l: GET /api/relationships/suppliers puts balance_minor on a row only for a reader who may see costs (null + cost_hidden for a cost-blind login)
   'net-48-connection-input.test.cjs', // NET-48 (BH-9): POST /api/network/connections and /api/connections/request name someone who cannot exist (bad uuid, wrong type, bad handle or bridge id) -> 404 problem+json before the database; a valid call still reaches the service
   'rail-161-service-catches.test.cjs', // RAIL-161: GET, resolve, pause and answer on /api/service answer a fault as problem+json 500 INTERNAL (no driver text), a known Postgres refusal as its mapped 4xx, a success unchanged
   'employee-first-signin.test.cjs', // 2026-10-08 Athi: employee's first code (unsealed, DEV_OTP) signs in AND answers requires_pin_setup on every door; PIN then works; sealed never takes the fixed code
@@ -477,6 +492,7 @@ const GUARDS = [
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
   'request-log.test.cjs', // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
+  'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
   'move-in-added-via.test.cjs', // QM-1: the move-in writes only an added_via the migrations' CHECKs allow (read from the .sql); a 23514 is a 422 sentence

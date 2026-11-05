@@ -22,7 +22,7 @@
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
-const { problem, fromError } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 /* the contract (each route's OpenAPI operation) and the answers these routes gave before the standard — lib/integrations-contract.js */
 const { filterFor, KIT_OPERATION, KIT_FILE_OPERATION, DOCS_OPERATION, CATALOGUE_OPERATION, DOWNLOAD_OPERATION, HEARTBEAT_OPERATION, APPROVE_OPERATION, BOOKS_OPERATION, STATUS_OPERATION, STREAMS_OPERATION, STREAMS_SET_OPERATION, SKIP_OPERATION, RECONCILE_OPERATION, ASK_OPERATION, STOCK_OPERATION, PROFILE_MAP_OPERATION, PROFILE_OPERATION, FAILED_LEGACY, NOT_FOUND_SAID, KIT_REFUSAL, CHIT_SAID, PROFILE_FIELDS_SAID, SAID } = require('../lib/integrations-contract');
@@ -255,7 +255,7 @@ router.get('/kit', auth, ...filterFor('/kit'), (req, res) => {
     fromError(req, res, e); /* no old keys: before slice 1c this 500 was an HTML page */
   }
 });
-router.get('/kit/*', auth, (req, res) => {
+router.get('/kit/*', auth, schemaValidate(KIT_FILE_OPERATION), (req, res) => {
   try {
     /* ⚠️ the whitelist IS the path check: a name not on the list is not a file, whatever it looks like */
     const name = String(req.params[0] || '');
@@ -628,6 +628,8 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
+/* K-1 (API-10): a connector id that is not a uuid names no connector — the unknown-connector 404, before the database answers in a 500 */
+router.param('actor_id', uuidParam({ detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } }));
 /** the owner approves a PC (session only): the key behind that connector row may now do its work; a later heartbeat from the same host stays approved */
 router.post('/:actor_id/approve', auth, schemaValidate(APPROVE_OPERATION), async (req, res) => {
   try {
@@ -932,6 +934,8 @@ async function publicEntityOfHandle(h) {
   const vis = await require('../lib/catalogue-view').catalogueVisibility({ entity_id, query, visibilityCap: require('../lib/visibility-cap'), viewer: null });
   return vis === 'private' ? null : entity_id;
 }
+/* K-1 (API-10): a handle holding a character text cannot store (a NUL) names no shop — the unknown-handle 404 (S41), before the database turns it into a 500 */
+router.param('handle', textParam({ status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } }));
 router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);

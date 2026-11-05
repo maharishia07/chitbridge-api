@@ -62,7 +62,11 @@ function rowsFor(sql, p) {
   /* the network: the brand by its handle, its roster from the edges, the members' public items */
   if (/FROM identities/.test(s) && /bridge_id = \$1/.test(s) && /identity_type = 'entity'/.test(s)) return p[0] === 'brand-s' ? [{ identity_id: S, bridge_id: 'brand-s', display_name: 'Brand S' }] : [];
   if (/'built' AS via/.test(s)) return p[0] === S ? [{ id: R, via: 'joined', state: 'active', edge_id: 'e1' }] : [];
-  if (/FROM catalogue_items ci WHERE ci\.entity_id = ANY\(\$1/.test(s)) return [{ item_id: R_ITEM, entity_id: R, item_data: { name: 'Dal 1kg', price: 90, category: 'Pulses' } }];
+  /* SEC-126: the lens reads each shop through the one public view — R is a live, public shop with one item */
+  if (/FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND identity_type = 'entity'/.test(s)) return p[0].includes(R) ? [{ identity_id: R, bridge_id: 'store-r', display_name: 'Store R' }] : [];
+  if (/SELECT catalogue_visibility, plan, params_override, bridge_id, business_status FROM identities/.test(s)) return [{ catalogue_visibility: 'public', plan: 'free', params_override: {}, bridge_id: p[0] === R ? 'store-r' : 'brand-s', business_status: 'open' }];
+  if (/FROM entity_schemas/.test(s)) return p[0] === R ? [{ schema_id: 'sch-r', schema_name: 'Default' }] : [];
+  if (/SELECT item_id, item_data, created_at FROM catalogue_items WHERE entity_id = \$1/.test(s)) return p[0] === R ? [{ item_id: R_ITEM, item_data: { name: 'Dal 1kg', price: 90, category: 'Pulses' }, created_at: '2026-10-01' }] : [];
   if (/SELECT item_id, entity_id, item_data FROM catalogue_items WHERE item_id = ANY\(\$1::uuid\[\]\) AND entity_id = ANY/.test(s)) return p[0].includes(R_ITEM) ? [{ item_id: R_ITEM, entity_id: R, item_data: { name: 'Dal 1kg', price: 90, category: 'Pulses' } }] : [];
   if (/SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY/.test(s)) return [{ identity_id: S, bridge_id: 'brand-s', display_name: 'Brand S' }, { identity_id: R, bridge_id: 'store-r', display_name: 'Store R' }];
   return [];

@@ -30,6 +30,7 @@ process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-li
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
+const ANSWERS_FILE = path.join(HERE, 'docs', 'contracts', 'books-answers.json'); /* the period-end routes' 2xx answers, produced by tests/support/books-capture.cjs --build */
 const MOUNT = '/api/books';
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
@@ -61,7 +62,9 @@ const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
 
 /** the rows a statement gets: the ledger's switch, then a scenario's own rows, then nothing (or the secret failure when the db is down) */
-function rowsFor(sql) {
+function rowsFor(sql, params) {
+  /* K-1: a db that answers as Postgres does to a value that is no uuid (22P02), so a route that lets one through shows as a 500 */
+  if (world.db === 'uuid' && (params || []).some((value) => typeof value === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))) throw Object.assign(new Error('invalid input syntax for type uuid: "' + params[0] + '"'), { code: '22P02' });
   if (/FROM books_setting/.test(sql)) return world.ledgerOn ? { rows: [SETTING_ROW], rowCount: 1 } : { rows: [], rowCount: 0 };
   if (world.sqlRows) {
     const given = world.sqlRows(String(sql));
@@ -84,8 +87,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
-  const client = { query: async (sql) => rowsFor(sql) };
-  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rowsFor(sql, params) };
+  const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
@@ -190,6 +193,11 @@ const PAID = { party_id: PARTY, amount_minor: 1000, mode: 'cash' };
 const PAYMENT_PATCH = (recorded) => ({ books: { recordPayment: async () => recorded, paymentOutcome: async () => OUTCOME, adviceFor: async () => ADVICE(true) }, store: { adviceReady: async () => true, payment: async () => PAY_ROW } });
 const ADVICE_PATCH_READY = (sendOk, set) => ({ store: { payment: async () => PAY_ROW, adviceReady: async () => true, setAdvice: async () => set, adviceStates: async () => ({ [CHIT]: 'sent' }) }, books: { adviceFor: async () => ADVICE(sendOk) } });
 const WRITES_READY = [
+  /* ACC-206 B: closing an overridden sale's open item (routes/books-money.js) — one insert in the change log */
+  X('money-resolved', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'Customer checked the bill' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: false }), logChange: async () => undefined } } }),
+  X('money-resolve-already', 'POST /api/books/money-check/resolve', 200, { body: { chit_id: CHIT, how: 'confirmed', note: 'again' }, patch: { store: { moneyOverrideState: async () => ({ held: true, resolved: true }) } } }),
+  X('money-resolve-unknown', 'POST /api/books/money-check/resolve', 404, { body: { chit_id: CHIT, how: 'confirmed', note: 'x' }, patch: { store: { moneyOverrideState: async () => ({ held: false, resolved: false }) } } }),
+  X('money-resolve-no-reason', 'POST /api/books/money-check/resolve', 400, { body: { chit_id: CHIT, how: 'confirmed' } }),
   X('setting-grain-shift', 'POST /api/books/setting', 200, { body: { walkin_grain: 'shift' } }),
   X('setting-switched-off', 'POST /api/books/setting', 200, { body: { enabled: false } }),
   X('terms-shop-saved', 'POST /api/books/terms', 200, { body: { credit_days: 30 }, patch: { terms: { migrated: async () => true, saveShop: async () => SHOP_TERMS } } }),
@@ -311,6 +319,9 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('quantity-not-above-zero', 'POST /api/tax/compute', 400, { body: { lines: [{ name: 'tea', qty: 0, price: 10 }] } }),
   X('flag-not-true-or-false', 'POST /api/tax/compute', 400, { body: { priceIncludesTax: 'maybe', lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('no-country-no-tax', 'POST /api/tax/compute', 422, { body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
+  /* B2 (4 Nov): the chit id in the address is no uuid → the unknown id's 404, never the driver's 500 (K-1) */
+  X('chit-id-not-a-uuid', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/abc' }),
+  X('chit-id-holds-nul', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/a%00b' }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
@@ -484,6 +495,8 @@ function checkRefusals() {
  */
 function checkAllowList(recording) {
   const proved = {};
+  const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
+  const recorded = Object.assign({}, Object.fromEntries(Object.entries(fixture).filter(([, one]) => closedByRecordings(one.route))), recording); /* only for the routes whose shape is closed from them */
   const words = require(path.join(HERE, 'lib', 'books-contract.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
@@ -491,20 +504,22 @@ function checkAllowList(recording) {
     const status = Number(Object.keys(words.OPERATIONS[route].responses).find((code) => /^2\d\d$/.test(code)) || 200);
     const schema = (((words.OPERATIONS[route].responses[status] || {}).content || {})['application/json'] || {}).schema;
     if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === status && one.body);
+    const answers = Object.values(recorded).filter((one) => one.route === route && one.status === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
     check(route + ': every recorded ' + status + ' (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
-    if (held) proved[route] = { output_allowlist: true };
+    if (held) proved[route] = Object.assign({ output_allowlist: true }, closedByRecordings(route) ? { output_allowlist_basis: 'recordings' } : {});
   });
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
   return proved;
 }
+/** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
+const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
@@ -552,6 +567,8 @@ function checkAnswers(recording) {
   const gated = answers.filter((one) => one.route.includes('/api/tax/rate') || one.route.includes('/api/invoice/build'));
   const outs = Object.keys(recording);
   check('a caller who is not signed in is refused with 401, and a key without the scope with 403', outs.filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401) && gated.filter((one) => one.status === 403).length >= 2);
+  const junkChit = ['chit-id-not-a-uuid', 'chit-id-holds-nul'].map((id) => recording['GET /api/invoice/:chit_id|' + id]);
+  check('K-1: a chit id that is no uuid (or holds a NUL) answers the unknown id 404 NOT_FOUND, never the driver 500', junkChit.every((one) => one && one.status === 404 && one.body.code === 'NOT_FOUND' && one.body.error === 'Not found'), junkChit.map((one) => one && one.status));
   const nothing = answers.filter((one) => one.route === 'POST /api/tax/compute');
   check('a malformed tax request is refused with 400 in words (validation), never a crash', nothing.some((one) => one.status === 400 && one.body && one.body.code === 'NO_LINES'));
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
@@ -565,6 +582,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();
   app.use((req, res, next) => {

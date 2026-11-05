@@ -23,6 +23,8 @@ const IOT_KEY = 'device-key-iot';
 const OFF_KEY = 'device-key-off';
 const ASLEEP_KEY = 'device-key-asleep';
 const STAMP = '2026-10-01T10:00:00.000Z';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const HYPHENS = '-'.repeat(36); /* 36 characters of hex-or-hyphen that are no id */
 const hashKey = (key) => crypto.createHash('sha256').update(key).digest('hex');
 
 const ERP_ACTOR = { identity_id: ACTOR, display_name: 'Tally Mayur', connector_type: 'erp', site: 'Office', connector_config: { base_url: 'https://erp.example.com', auth_type: 'key', auth_ref: 'erp-key-ref', counterparty_entity_id: PARTY }, last_seen: STAMP };
@@ -58,6 +60,9 @@ function stubRows(spec) {
       const found = key && KEYS[key];
       return answer(found ? [{ identity_id: ACTOR, parent_entity_id: SHOP, display_name: 'Pi', connector_type: found.type, status: found.status, connector_config: found.type === 'erp' ? { counterparty_entity_id: PARTY } : {}, shop_capabilities: found.caps }] : []);
     }
+    /* Postgres reads a uuid column's value as 8-4-4-4-12 hex digits and refuses anything else (22P02); a bigint column's as a number it can hold (22003) */
+    if (/AS party/.test(text) && !UUID.test(String(params[1]))) throw pgError('22P02', 'invalid input syntax for type uuid');
+    if (/UPDATE connector_connection SET enabled/.test(text) && BigInt(params[1]) > 9223372036854775807n) throw pgError('22003', 'bigint out of range');
     if (/AS party/.test(text)) return answer([{ display_name: 'Chola', party: s.parties.includes(params[1]), may: s.parties.includes(params[1]) }]);
     if (/SELECT bridge_id, display_name, currency_code, country FROM identities/.test(text)) return answer(s.noEntity ? [] : [{ bridge_id: 'CBSHOP', display_name: 'Mayur', currency_code: 'INR', country: 'IN' }]);
     if (/SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = \$1 AND status = 'active'/.test(text)) return answer([{ identity_id: params[0], bridge_id: 'CBX', display_name: 'X' }]);
@@ -120,6 +125,8 @@ function extras(tools) {
     dev('ingest-bad-key', 401, { key: 'not-a-key' }),
     dev('ingest-key-inactive', 401, ingest({}, ASLEEP_KEY)),
     dev('ingest-capability-off', 403, ingest({}, OFF_KEY)),
+    /* K-1 (B2): a recipient that is 36 hex-or-hyphen characters but no id is refused like any other non-id (it reached the uuid column: 500) */
+    dev('ingest-recipient-all-hyphens', 403, ingest({ to: HYPHENS })),
     dev('ingest-signal-too-long', 400, ingest({ signal: 'x'.repeat(65) })),
     dev('ingest-unit-too-long', 400, ingest({ unit: 'x'.repeat(17) })),
     dev('ingest-body-is-a-list', 401, [1, 2]),
@@ -148,6 +155,7 @@ function extras(tools) {
     erp('erp-ingest-no-key', 401, { payload: {} }),
     erp('erp-ingest-bad-key', 401, { key: 'not-a-key', payload: {} }),
     erp('erp-ingest-capability-off', 403, erpDoc({ key: OFF_KEY })),
+    erp('erp-ingest-recipient-all-hyphens', 403, erpDoc({ to: HYPHENS })),
     erp('erp-ingest-no-payload', 400, { key: GOOD_KEY, doc_ref: 'X' }),
     erp('erp-ingest-payload-not-an-object', 400, { key: GOOD_KEY, payload: 'text' }),
     erp('erp-ingest-doc-type-too-long', 400, erpDoc({ doc_type: 'x'.repeat(65) })),
@@ -179,6 +187,8 @@ function extras(tools) {
   const reads = [
     X('list-listed', R('GET', ''), 200, { setup: world({}) }),
     X('list-paged', R('GET', ''), 200, { url: at('?page=1&limit=1'), setup: world({}) }),
+    X('list-page-given-twice', R('GET', ''), 400, { url: at('?page=1&page=2'), setup: world({}) }),
+    X('list-limit-given-twice', R('GET', ''), 400, { url: at('?limit=1&limit=2'), setup: world({}) }),
     X('list-read-fails', R('GET', ''), 500, { setup: world(failing(/SELECT identity_id, display_name, connector_type, site, connector_config, last_seen, status/)) }),
     X('provisioning-iot', R('GET', '/:actorId/provisioning'), 200, { url: owned('/provisioning'), setup: world({ actor: IOT_ACTOR }) }),
     X('provisioning-iot-own-endpoint', R('GET', '/:actorId/provisioning'), 200, { url: owned('/provisioning'), setup: world({ actor: Object.assign({}, IOT_ACTOR, { connector_config: { mode: 'pull', endpoint: 'mqtt://broker' } }) }) }),
@@ -237,6 +247,7 @@ function extras(tools) {
     X('connection-switched', R('PATCH', '/:actorId/connections/:connId'), 200, { url: owned('/connections/' + CONNECTION), body: { enabled: false }, setup: world({}) }),
     X('connection-switch-unknown', R('PATCH', '/:actorId/connections/:connId'), 404, { url: owned('/connections/99'), body: { enabled: true }, setup: world({ connections: [] }) }),
     X('connection-switch-not-a-boolean', R('PATCH', '/:actorId/connections/:connId'), 400, { url: owned('/connections/' + CONNECTION), body: { enabled: 'maybe' }, setup: world({}) }),
+    X('connection-switch-beyond-a-bigint', R('PATCH', '/:actorId/connections/:connId'), 404, { url: owned('/connections/99999999999999999999'), body: { enabled: true }, setup: world({}) }),
     X('connection-switch-not-a-number', R('PATCH', '/:actorId/connections/:connId'), 400, { url: owned('/connections/abc'), body: { enabled: true }, setup: world({}) }),
     X('connection-switch-fails', R('PATCH', '/:actorId/connections/:connId'), 500, { url: owned('/connections/' + CONNECTION), body: { enabled: true }, setup: world(failing(/UPDATE connector_connection SET enabled/)) }),
     X('connection-switch-body-is-a-list', R('PATCH', '/:actorId/connections/:connId'), 400, { url: owned('/connections/' + CONNECTION), body: [true], setup: world({}) })

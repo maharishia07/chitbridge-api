@@ -3060,7 +3060,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/catalogue-overlay"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue-overlay"
       }
     },
     "GET /api/chits/:chit_id/costs": {
@@ -3139,7 +3139,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/costs"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/costs"
       }
     },
     "GET /api/chits/:chit_id/diagnosis": {
@@ -3334,7 +3334,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/raida"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/raida"
       }
     },
     "GET /api/chits/:chit_id/use": {
@@ -12722,6 +12722,1003 @@
         }
       }
     },
+    "POST /api/books/accruals": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ref",
+          "kind",
+          "reverses_on",
+          "ok"
+        ],
+        "properties": {
+          "ref": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "reverses_on": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 5,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/accruals/:ref/reverse": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/assets": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "asset": {
+            "type": "object",
+            "required": [
+              "entity",
+              "asset_id",
+              "name",
+              "asset_class",
+              "cost_minor",
+              "currency",
+              "put_to_use",
+              "source_entry_id",
+              "source_chit_id",
+              "accumulated_minor",
+              "last_dep_fy",
+              "disposed_on",
+              "disposal_entry_id",
+              "proceeds_minor",
+              "created_by",
+              "wdv_minor"
+            ],
+            "properties": {
+              "entity": {
+                "type": "string"
+              },
+              "asset_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "asset_class": {
+                "type": "string"
+              },
+              "cost_minor": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "put_to_use": {
+                "type": "string"
+              },
+              "source_entry_id": {
+                "type": "string"
+              },
+              "source_chit_id": {},
+              "accumulated_minor": {
+                "type": "number"
+              },
+              "last_dep_fy": {},
+              "disposed_on": {},
+              "disposal_entry_id": {},
+              "proceeds_minor": {},
+              "created_by": {
+                "type": "string"
+              },
+              "wdv_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 5,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/assets/:id/dispose": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "asset": {
+            "type": "object",
+            "required": [
+              "entity",
+              "asset_id",
+              "name",
+              "asset_class",
+              "cost_minor",
+              "currency",
+              "put_to_use",
+              "source_entry_id",
+              "source_chit_id",
+              "accumulated_minor",
+              "last_dep_fy",
+              "disposed_on",
+              "disposal_entry_id",
+              "proceeds_minor",
+              "created_by"
+            ],
+            "properties": {
+              "entity": {
+                "type": "string"
+              },
+              "asset_id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "asset_class": {
+                "type": "string"
+              },
+              "cost_minor": {
+                "type": "number"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "put_to_use": {
+                "type": "string"
+              },
+              "source_entry_id": {
+                "type": "string"
+              },
+              "source_chit_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "accumulated_minor": {
+                "type": "number"
+              },
+              "last_dep_fy": {
+                "type": "string"
+              },
+              "disposed_on": {
+                "type": "string"
+              },
+              "disposal_entry_id": {
+                "type": "string"
+              },
+              "proceeds_minor": {
+                "type": "number"
+              },
+              "created_by": {
+                "type": "string"
+              },
+              "wdv_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/closing-stock": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "book_minor",
+          "ok"
+        ],
+        "properties": {
+          "book_minor": {
+            "type": "number"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "from_ledger": {
+            "type": "object",
+            "required": [
+              "value_minor",
+              "lines",
+              "movements"
+            ],
+            "properties": {
+              "value_minor": {
+                "type": "number"
+              },
+              "lines": {
+                "type": "number"
+              },
+              "movements": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/contra": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/depreciation/run": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "fy": {
+            "type": "string"
+          },
+          "entity_basis": {
+            "type": "string"
+          },
+          "basis_assumed": {
+            "type": "boolean"
+          },
+          "entity_note": {
+            "type": "string"
+          },
+          "basis_rule": {
+            "type": "string"
+          },
+          "by_class": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "class",
+                "rate",
+                "amount"
+              ],
+              "properties": {
+                "class": {
+                  "type": "string"
+                },
+                "rate": {
+                  "type": "number"
+                },
+                "amount": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "by_asset": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "class",
+                "amount"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "class": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "nothing_to_post": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": "string"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 5,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/gst/close": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "period",
+          "date",
+          "utilised",
+          "payable_minor",
+          "carried_minor",
+          "pay_total_minor",
+          "ok"
+        ],
+        "properties": {
+          "period": {},
+          "date": {
+            "type": "string"
+          },
+          "utilised": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "from",
+                "against",
+                "amount_minor"
+              ],
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "against": {
+                  "type": "string"
+                },
+                "amount_minor": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "payable_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "carried_minor": {
+            "type": "object",
+            "properties": {
+              "gst_minor": {
+                "type": "number"
+              },
+              "vat_minor": {
+                "type": "number"
+              },
+              "cgst_minor": {
+                "type": "number"
+              },
+              "sgst_minor": {
+                "type": "number"
+              },
+              "igst_minor": {
+                "type": "number"
+              },
+              "cess_minor": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "pay_total_minor": {
+            "type": "number"
+          },
+          "form": {
+            "type": "string"
+          },
+          "heads": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "return_period": {
+            "type": "object",
+            "required": [
+              "period",
+              "label",
+              "frequency",
+              "start",
+              "end",
+              "due"
+            ],
+            "properties": {
+              "period": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "frequency": {
+                "type": "string"
+              },
+              "start": {
+                "type": "string"
+              },
+              "end": {
+                "type": "string"
+              },
+              "due": {
+                "type": "string"
+              },
+              "stagger": {
+                "type": "number"
+              },
+              "due_rule": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "ref_label": {
+            "type": "string"
+          },
+          "ref_hint": {
+            "type": "string"
+          },
+          "carried_word": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "locked": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "fiscal_year",
+                "period"
+              ],
+              "properties": {
+                "fiscal_year": {
+                  "type": "string"
+                },
+                "period": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "duplicate": {
+            "type": "boolean"
+          },
+          "rcm_minor": {
+            "type": "object",
+            "required": [
+              "vat"
+            ],
+            "properties": {
+              "vat": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "cash_minor": {
+            "type": "object",
+            "required": [
+              "vat"
+            ],
+            "properties": {
+              "vat": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "fy": {
+            "type": "string"
+          },
+          "off": {
+            "type": "boolean"
+          },
+          "nothing_to_set_off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 10,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/gst/pay": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "payment_ref",
+          "paid_minor",
+          "ok"
+        ],
+        "properties": {
+          "payment_ref": {
+            "type": "string"
+          },
+          "paid_minor": {
+            "type": "object",
+            "properties": {
+              "gst": {
+                "type": "number"
+              },
+              "vat": {
+                "type": "number"
+              },
+              "cgst": {
+                "type": "number"
+              },
+              "sgst": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "rcm_paid_minor": {
+            "type": "object",
+            "required": [
+              "vat"
+            ],
+            "properties": {
+              "vat": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "challan_no": {
+            "type": "string"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/loans": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings"
+    },
+    "POST /api/books/loans/:ref/emi": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {
+            "type": "boolean"
+          },
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings"
+    },
     "POST /api/chits/:chit_id/books-request": {
       "status": "200",
       "schema": {
@@ -17983,7 +18980,7 @@
       "observed": 5,
       "open": [],
       "example": {
-        "url": "/api/relationships/scorecard/nope"
+        "url": "/api/relationships/scorecard/dddddddd-dddd-4ddd-8ddd-dddddddddddd?since=2026-01-01"
       }
     },
     "GET /api/relationships/suppliers": {
@@ -18230,7 +19227,7 @@
       "observed": 7,
       "open": [],
       "example": {
-        "url": "/api/relationships/suppliers/nope/catalogue"
+        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/relationships/suppliers/availability": {
@@ -19957,6 +20954,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -20554,6 +21554,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -20665,7 +21668,10 @@
               "type": "object"
             }
           },
-          "why": {}
+          "why": {},
+          "cost_hidden": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
@@ -20737,6 +21743,9 @@
           },
           "words": {
             "type": "string"
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

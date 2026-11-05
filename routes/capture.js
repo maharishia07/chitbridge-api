@@ -234,6 +234,8 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
   }
 });
 
+/** the bare address of a header value: "Anna <anna@example.com>" gives "anna@example.com" */
+const addressOf = (value) => String(value || '').replace(/.*</, '').replace(/>.*/, '').trim();
 // Inbound email (SendGrid Inbound Parse / Mailgun route). Inert until a signing secret AND an address→entity map exist.
 router.post('/webhook/email', express.raw({ type: () => true }), async (req, res) => {
   try {
@@ -252,21 +254,14 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
     } catch (_) {
       body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8')));
     }
-    const to = String(body.to || body.To || body.recipient || '')
-      .replace(/.*</, '')
-      .replace(/>.*/, '')
-      .trim();
+    const to = addressOf(body.to || body.To || body.recipient);
     const entity = await channels.ownerOf('email', to);
     if (!entity) return res.status(200).json({ ok: true, note: 'no binding for that address' });
     const text = String(body.text || body['body-plain'] || body.stripped_text || '').trim();
     if (!text) return res.status(200).json({ ok: true, note: 'nothing to capture' });
     await capture.createCapture(entity, {
       channel: 'email',
-      sender_ref:
-        String(body.from || body.From || body.sender || '')
-          .replace(/.*</, '')
-          .replace(/>.*/, '')
-          .trim() || null,
+      sender_ref: addressOf(body.from || body.From || body.sender) || null,
       subject: String(body.subject || body.Subject || '').slice(0, 200) || null,
       raw_text: text
     });

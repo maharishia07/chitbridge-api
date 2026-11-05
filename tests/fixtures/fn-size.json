@@ -51,8 +51,7 @@
       "todo"
     ],
     "lib/books.js": [
-      "enable",
-      "writeReversal"
+      "enable"
     ],
     "lib/capture.js": [
       "(anonymous)",

@@ -166,6 +166,8 @@ function rowsFor(sql, params) {
     if (world.itemsFail) throw new Error(SECRET_SQL);
     return world.items;
   }
+  /* SEC-126: the network store's live members, by id (routes/catalogue liveShopsOf) */
+  if (/FROM identities WHERE identity_id = ANY\(\$1::uuid\[\]\) AND identity_type = 'entity'/.test(s)) return (params[0] || []).map((id) => ({ identity_id: id, bridge_id: id === SHOP_ID ? 'shop-s' : 'member-' + id.slice(0, 4), display_name: 'Member' }));
   if (/SELECT identity_id, bridge_id, display_name FROM identities WHERE identity_id = ANY/.test(s)) {
     return world.operator ? [{ identity_id: SHOP_ID, bridge_id: 'shop-s', display_name: 'Shop S' }] : [];
   }
@@ -217,7 +219,11 @@ function installStubs() {
   mock(
     'lib/catalogue-view',
     Object.assign({}, view, {
-      buildPublicView: async () => world.view,
+      /* the real view throws when its items read fails, and lists only the shop's own items (SEC-126: the network store reads through it) */
+      buildPublicView: async ({ entity }) => {
+        if (world.itemsFail) throw new Error(SECRET_SQL);
+        return Object.assign({}, world.view, { items: (world.items || []).filter((item) => String(item.entity_id) === String(entity && entity.identity_id)) });
+      },
       getOrderInput: async () => {
         if (world.orderInput instanceof Error) throw world.orderInput;
         return world.orderInput;

@@ -87,7 +87,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   const lim = (m) => ({ query: async () => { touched++; return { rows: [{ credit_days: null, credit_limit_minor: m == null ? null : String(m) }] }; } });
   let LIMIT = 100000;
   D.withEntity = async (e, fn) => fn(lim(LIMIT));
-  hooks.isOn = async () => true; B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
+  hooks.isOn = async () => ({ enabled: true, country: 'IN', functional_currency: 'INR' }); B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
   const bill = (how, amount, cust) => ({ currency: 'INR', customer: cust === null ? undefined : { entity_id: 'C1' }, payment: { parts: [{ how, amount }] } });
   let k = await T.creditSaleCheck('E1', bill('On credit', 1500));
   ok('credit ₹1500 against a ₹1000 limit → over, with the figures', k.over === true && k.party_id === 'C1' && k.limit_minor === 100000 && k.after_minor === 150000, JSON.stringify(k));

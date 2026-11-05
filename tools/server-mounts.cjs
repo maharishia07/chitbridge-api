@@ -50,19 +50,19 @@ function inheritMounts(mounts, routesDir, copyOf) {
 }
 
 /** the text of server.js (and the routes folder, for the parts) → { 'actors.js': '/api/actors', … }, the first mount of each route file */
-function serverMounts(src, routesDir) {
+function serverMounts(serverText, routesDir) {
   const mounts = {};
   /* a commented-out mount is not a mount (server.js:438 keeps one for src/routes/catalogue under /api/network; reading it as live put 18 catalogue routes at the wrong path in the trace) */
-  const s = String(src || '').replace(/^\s*\/\/.*$/gm, '');
+  const stripped = String(serverText || '').replace(/^\s*\/\/.*$/gm, '');
   /* shape 1 — the require sits in the mount. ⚠️ [^;] not [\s\S]: a single app.use() statement never contains a ';', so a routerless mount
      (`app.use('/api/governance', governanceRouter);`) must not run past its ';' and pair its path with the NEXT line's require. */
-  for (const m of s.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
+  for (const m of stripped.matchAll(/app\.use\(\s*['"]([^'"]+)['"][^;]{0,120}?require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) {
     if (!mounts[m[2] + '.js']) mounts[m[2] + '.js'] = m[1];
   }
   /* shape 2 — the require is a variable: `const xRouter = require('./routes/x')` … `app.use('/api/x', [middleware,] xRouter)` */
   const vars = {};
-  for (const m of s.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
-  for (const m of s.matchAll(/app\.use\(\s*['"]([^'"]+)['"]\s*,([^;]{0,160}?)\)\s*;/g)) {
+  for (const m of stripped.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(['"][^'"]*routes\/([A-Za-z0-9_-]+)['"]\)/g)) vars[m[1]] = m[2] + '.js';
+  for (const m of stripped.matchAll(/app\.use\(\s*['"]([^'"]+)['"]\s*,([^;]{0,160}?)\)\s*;/g)) {
     const args = m[2]
       .split(',')
       .map((x) => x.trim())

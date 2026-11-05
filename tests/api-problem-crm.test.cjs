@@ -75,7 +75,7 @@ function prepare(scenario) {
   if (scenario.world) scenario.world(W);
   if (asked.world && asked.world.migrated === false) D.migrated = false;
   require(path.join(HERE, 'lib', 'privacy')).forget();
-  D.pre = asked.db === 'fail' ? async () => { throw new Error(S.SECRET_SQL); } : S.preOf(D, W, row);
+  D.pre = asked.db === 'fail' ? async () => { throw new Error(S.SECRET_SQL); } : asked.junk ? S.junkOf(S.preOf(D, W, row)) : S.preOf(D, W, row);
   const login = S.LOGINS[asked.who || 'owner'];
   stub.as(login.entity, { identity: login.identity, key: !!asked.key, signedOut: !!asked.signedOut });
 }
@@ -131,6 +131,23 @@ function checkContractShape(routes) {
   check('a malformed party id is still the handler\'s 400 BAD_ID: the path argument is plain text', record.parameters[0].schema.type === 'string' && !record.parameters[0].schema.pattern, record.parameters);
   check('a body keeps its named fields and requires none (the handlers answer a missing one in their own words)', Object.values(contract.OPERATIONS).filter((one) => one.requestBody).every((one) => !(one.requestBody.content['application/json'].schema.required || []).length));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
+}
+
+/** K-1 (B2): a value no column can hold is a 400 in words, never a 500; an id in a body that is no uuid answers EXACTLY as an unknown uuid does on that route (S41) */
+function checkJunk(recording) {
+  console.log('\n-- a junk value is refused like an unknown one, never a 500 --');
+  const answers = Object.entries(recording).filter(([key]) => /\|junk-/.test(key));
+  check('every junk scene answers, and none answers a 5xx (' + answers.length + ' scenes)', answers.length >= 18 && answers.every(([, one]) => one.status < 500), answers.filter(([, one]) => one.status >= 500).map(([key]) => key));
+  const stored = answers.filter(([key]) => /-nul$/.test(key) && !/-(group|group-drop|stage|segment-key|send-text)-nul$/.test(key));
+  check('a NUL byte in text a column keeps is the one "Cannot save this text" 400, with no word of the database (' + stored.length + ' routes)', stored.length >= 8 && stored.every(([, one]) => one.status === 400 && one.body.code === 'CRM_BAD_REQUEST' && one.body.error === 'Cannot save this text' && !/invalid|byte sequence|pg 2/.test(JSON.stringify(one.body))));
+  const pair = (junk, unknown) => {
+    const [a, b] = [junk, unknown].map((id) => Object.entries(recording).find(([key]) => key.endsWith('|' + id)));
+    const same = (one) => JSON.stringify({ status: one.status, code: one.body.code, error: one.body.error, message: one.body.message });
+    check(junk + ' answers exactly as ' + unknown, !!a && !!b && same(a[1]) === same(b[1]), [a && a[1].status, b && b[1].status]);
+  };
+  pair('junk-followup-assignee-not-an-id', 'junk-followup-assignee-unknown-id');
+  pair('junk-followup-hand-on-not-an-id', 'junk-followup-hand-on-unknown-id');
+  pair('junk-outcome-followup-not-an-id', 'junk-outcome-followup-unknown-id');
 }
 
 /**
@@ -270,6 +287,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkCodesRegistered();
   checkContractShape(routes);
   checkFrozen503(recording);
+  checkJunk(recording);
   await checkStrictInput(port);
   const proved = await foreignWorld(port);
   const allowed200 = checkAllowList(recording);

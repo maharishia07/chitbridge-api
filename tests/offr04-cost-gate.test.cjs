@@ -58,7 +58,7 @@ async function productsCases() {
   let WRITTEN = null;               // CAT-234: the params of the last UPDATE — what the route actually stored
   /* CAT-236: cost also hides deeper — an importer's option cost and a cost_* key — the strip is one rule at any depth */
   const FAKE_ITEM = {
-    item_id: 'i1',
+    item_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
     item_data: { name: 'Masala Dosa', price: 70, cost: 30, cost_x: 9, status: 'available', modifiers: [{ name: 'Size', options: [{ name: 'Large', price: 90, cost: 40 }] }] }
   };
   /** CAT-234: does any key named cost or cost_* sit anywhere in this answer? (item, item_data, nested) */
@@ -148,31 +148,31 @@ async function productsCases() {
   t('…failing to the SAFE side — cost hidden, same as if the column had read false',
     'cost' in (staffDuringFailure.body.items[0].item_data || {}), false);
 
-  const staffPatchDuringFailure = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 1 } });
+  const staffPatchDuringFailure = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { price: 1 } });
   t('a write during the same failure also fails closed — refused, not silently allowed', staffPatchDuringFailure.status, 403);
   FLAGS_QUERY_THROWS = false;
 
   /* ── PATCH /:id — availability only for cost-blind staff ── */
   WHO = OWNER; CAN_SEE_COSTS = {};
   WRITTEN = null;
-  const ownerPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
+  const ownerPrice = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { price: 80 } });
   t('the owner may change price', ownerPrice.status, 200);
   /* CAT-237 (c): the owner's replace without merge:true is the old contract, untouched — the body IS the record written */
   t('…and without merge:true the owner REPLACES the record, as before (the written item_data carries no name)', /"name"/.test(String(WRITTEN && WRITTEN[1])), false);
 
   WHO = STAFF_BLIND;
-  const blindPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
+  const blindPrice = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { price: 80 } });
   t('cost-blind staff CANNOT change price — 403, not a silent 200', blindPrice.status, 403);
   t('…and the refusal points at Co-assists, the real place this is granted',
     /Co-assists/.test(blindPrice.body.message), true);
 
-  const blindCost = await call(port, 'PATCH', '/api/products/i1', { item_data: { cost: 20 } });
+  const blindCost = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { cost: 20 } });
   t('cost-blind staff cannot set cost either — the field this whole feature protects', blindCost.status, 403);
 
   /* CAT-237 (a): the same flip WITHOUT merge:true would replace the whole record with {status} — the price, cost and name erased by
      a caller who may touch none of them. Refused in words; nothing is written. */
   WRITTEN = null;
-  const blindStatus = await call(port, 'PATCH', '/api/products/i1', { item_data: { status: 'unavailable' } });
+  const blindStatus = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { status: 'unavailable' } });
   t('cost-blind staff flipping availability WITHOUT merge:true is refused — 403, not a silent wipe', blindStatus.status, 403);
   t('…under the one cost code the client already branches on', blindStatus.body.code, 'COST_BLIND');
   t('…naming every stored key the replace would have erased', (blindStatus.body.blocked || []).slice().sort().join(','), 'cost,cost_x,modifiers,name,price');
@@ -182,7 +182,7 @@ async function productsCases() {
 
   /* CAT-234: the answer to that flip is the stored row — it must come back WITHOUT the cost, as GET / already does */
   WRITTEN = null;
-  const blindMerge = await call(port, 'PATCH', '/api/products/i1', { merge: true, item_data: { status: 'unavailable' } });
+  const blindMerge = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { merge: true, item_data: { status: 'unavailable' } });
   t('a cost-blind status flip with merge:true still answers 200', blindMerge.status, 200);
   t('…and no cost / cost_* key sits anywhere in the answered item', hasCostKey(blindMerge.body.item), false);
   t('…the other fields of the row still come back', ((blindMerge.body.item || {}).item_data || {}).price, 70);
@@ -194,30 +194,30 @@ async function productsCases() {
   t('…and the stored stand-in row was not touched either', FAKE_ITEM.item_data.cost, 30);
   t('the owner’s own PATCH answer (above) still carries the cost', ownerPrice.body.item.item_data.cost, 30);
 
-  const blindBoth = await call(port, 'PATCH', '/api/products/i1', { item_data: { status: 'unavailable', price: 1 } });
+  const blindBoth = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { status: 'unavailable', price: 1 } });
   t('status bundled WITH a blocked field still refuses the whole write, not a partial one', blindBoth.status, 403);
 
   WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
-  const grantedPrice = await call(port, 'PATCH', '/api/products/i1', { item_data: { price: 80 } });
+  const grantedPrice = await call(port, 'PATCH', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc', { item_data: { price: 80 } });
   t('once granted (on their OWN row), staff can change price like the owner can', grantedPrice.status, 200);
 
   /* ── POST /bulk-update — the SAME gate over the lot (CAT-235): this door replaces each record, so a status-only edit erases the rest ── */
   WHO = STAFF_BLIND; CAN_SEE_COSTS = {};
   WRITTEN = null;
-  const blindBulkStatus = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: { status: 'unavailable' } }] });
+  const blindBulkStatus = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', item_data: { status: 'unavailable' } }] });
   t('cost-blind staff: a status-only BULK edit replaces the record, so it is refused — 403, not a wipe', blindBulkStatus.status, 403);
   t('…under the one cost code', blindBulkStatus.body.code, 'COST_BLIND');
   t('…naming every stored key the replace would have erased', (blindBulkStatus.body.blocked || []).slice().sort().join(','), 'cost,cost_x,modifiers,name,price');
   t('…nothing was written: no UPDATE ran', WRITTEN, null);
   /* an item's own merge:true is not a merge at this door (it always replaces), so it cannot slip the erase past the gate */
   WRITTEN = null;
-  const blindBulkMerge = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', merge: true, item_data: { status: 'unavailable' } }] });
+  const blindBulkMerge = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', merge: true, item_data: { status: 'unavailable' } }] });
   t('…and the same edit with merge:true on the item is refused the same way', blindBulkMerge.status + ' ' + blindBulkMerge.body.code + ' ' + (blindBulkMerge.body.blocked || []).includes('cost'), '403 COST_BLIND true');
   t('…nothing was written', WRITTEN, null);
   /* what the workshop's categorise sends for such a caller: the record GET / handed it, which carries no cost — until now that click erased the stored cost */
   WRITTEN = null;
   const RECORD_WITHOUT_COST = { name: 'Masala Dosa', price: 70, status: 'available', category_ids: ['c1'] };
-  const blindBulkRecord = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  const blindBulkRecord = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', item_data: RECORD_WITHOUT_COST }] });
   const blindBulkBlocked = blindBulkRecord.body.blocked || [];
   t('…a whole record sent back without the cost it never saw is refused too', blindBulkRecord.status + ' ' + blindBulkRecord.body.code, '403 COST_BLIND');
   t('…with the erased cost named beside the keys it sent', blindBulkBlocked.includes('cost') + ' ' + blindBulkBlocked.includes('price') + ' ' + blindBulkBlocked.includes('category_ids'), 'true true true');
@@ -226,28 +226,28 @@ async function productsCases() {
 
   WHO = OWNER; CAN_SEE_COSTS = {};
   WRITTEN = null;
-  const ownerBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  const ownerBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', item_data: RECORD_WITHOUT_COST }] });
   t('the owner’s same bulk edit succeeds as today', ownerBulk.status + ' ' + ownerBulk.body.updated, '200 1');
   t('…and still REPLACES the record (the owner chose what it carries; no cost in what was written)', /"cost"/.test(String(WRITTEN && WRITTEN[1])), false);
 
   WHO = STAFF_GRANTED; CAN_SEE_COSTS = { a2: true };
   WRITTEN = null;
-  const grantedBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'i1', item_data: RECORD_WITHOUT_COST }] });
+  const grantedBulk = await call(port, 'POST', '/api/products/bulk-update', { items: [{ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', item_data: RECORD_WITHOUT_COST }] });
   t('once granted, staff bulk-edit like the owner', grantedBulk.status + ' ' + (WRITTEN !== null), '200 true');
 
   /* T3-FIXES (CAT-FIX1): a parked change is the same write, so the same gate — refused before anything is read */
   WHO = STAFF_BLIND; CAN_SEE_COSTS = {};
-  const blindSched = await call(port, 'POST', '/api/products/i1/schedule', { effective_at: '2030-01-01T00:00:00Z', item_data: { price: 80 } });
+  const blindSched = await call(port, 'POST', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc/schedule', { effective_at: '2030-01-01T00:00:00Z', item_data: { price: 80 } });
   t('cost-blind staff cannot SCHEDULE a price either — 403', blindSched.status, 403);
   t('…and the refusal carries its code, not only a sentence', blindSched.body.code, 'COST_BLIND');
 
   /* CAT-234: the parked list hands back each patch — the owner's parked cost never reaches a cost-blind reader */
-  SCHED.pending = async () => [{ schedule_id: 's1', item_id: 'i1', effective_at: '2030-01-01T00:00:00Z', patch: { status: 'unavailable', cost: 30 } }];
-  const blindList = await call(port, 'GET', '/api/products/i1/schedule');
+  SCHED.pending = async () => [{ schedule_id: 's1', item_id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', effective_at: '2030-01-01T00:00:00Z', patch: { status: 'unavailable', cost: 30 } }];
+  const blindList = await call(port, 'GET', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc/schedule');
   t('cost-blind staff read the parked list', blindList.status, 200);
   t('…without the owner’s parked cost, the rest of the patch kept', hasCostKey(blindList.body.pending) + ' ' + ((blindList.body.pending || [{}])[0].patch || {}).status, 'false unavailable');
   WHO = OWNER;
-  const ownerList = await call(port, 'GET', '/api/products/i1/schedule');
+  const ownerList = await call(port, 'GET', '/api/products/cccccccc-cccc-4ccc-8ccc-cccccccccccc/schedule');
   t('the owner reads the parked cost', ((ownerList.body.pending || [{}])[0].patch || {}).cost, 30);
   WHO = STAFF_BLIND;
   /* ⚠️ left as the case above left it: lib/cost holds THIS stub's withEntity (cached), so the next block reads these grants */

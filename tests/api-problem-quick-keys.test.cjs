@@ -80,6 +80,8 @@ function checkWords() {
   check('quickKeyFault: anything else is a 500 that says nothing of its cause', fault.status === 500 && fault.code === 'INTERNAL' && sameValue(fault.legacy, { error: 'Failed', message: 'Something went wrong — please try again.' }) && !JSON.stringify(fault).includes('vault'), fault);
   const coded = words.quickKeyFault(Object.assign(new Error(SECRET_SQL), { code: '23505' }), req);
   check('quickKeyFault: a database error with its SQLSTATE is the same 500, its text never carried', coded.status === 500 && !JSON.stringify(coded).includes('vault'), coded);
+  const stored = words.quickKeyFault(Object.assign(new Error(SECRET_SQL), { code: '22021' }), req);
+  check('quickKeyFault: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 in plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.quickKeyFault(Object.assign(new Error(SECRET_SQL), { code }), req); return one.status === 400 && one.code === 'QUICK_KEY_INVALID' && sameValue(one.legacy, { error: 'validation', message: 'Cannot save this text. Type it again.' }) && !JSON.stringify(one).includes('vault'); }), stored);
   const product = words.words.productRequired();
   check('productRequired: 400 in the old words', product.code === 'QUICK_KEY_INVALID' && sameValue(product.legacy, { error: 'validation', message: 'product_id required' }), product);
   const schema = words.schemaOptions.legacy([{ detail: '(body) must be a object.' }]);
@@ -116,6 +118,17 @@ function checkConflictBody(recording) {
   [['PATCH ' + MOUNT + '/groups/:id|group-change-stale', 'PATCH'], ['DELETE ' + MOUNT + '/groups/:id|group-drop-stale', 'DELETE']].forEach(([key, method]) => {
     const body = (recording[key] || {}).body || {};
     check(method + ': 409 with error, message and current, in that order, `current` equal to the stored row', (recording[key] || {}).status === 409 && sameValue(Object.keys(body).slice(0, 3), ['error', 'message', 'current']) && body.error === 'conflict' && body.message === 'changed since you last read it' && sameValue(body.current, planted), body);
+  });
+}
+
+/** S41 (K-1, B2): a product id that is no uuid, or has a NUL byte, answers exactly as a well-formed id no catalogue holds: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const route = 'POST ' + MOUNT + '/groups/:id/items|';
+  const bodyOf = (scene) => JSON.stringify(Object.assign({}, (recording[route + scene] || {}).body, { request_id: null }));
+  const unknown = recording[route + 'key-add-product-no-shop-holds'] || {};
+  ['key-add-product-is-not-a-uuid', 'key-add-product-with-a-nul-byte'].forEach((scene) => {
+    check(scene + ': answers exactly as a product no catalogue holds (404, same body)', unknown.status === 404 && (recording[route + scene] || {}).status === unknown.status && bodyOf(scene) === bodyOf('key-add-product-no-shop-holds'), { junk: (recording[route + scene] || {}).status, unknown: unknown.status });
   });
 }
 
@@ -204,6 +217,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkContractShape(routes);
   checkConflictBody(recording);
   checkNoDatabaseText(recording);
+  checkJunkAnswersAsUnknown(recording);
   const drop = (scene) => recording['DELETE /api/quick-keys/groups/:id|' + scene] || {};
   check('DELETE /groups/:id: a body with a key it does not read is refused 400 naming that key (closed body, stage 2), and the version alone is accepted', drop('group-drop-unknown-key').status === 400 && /colour/.test(JSON.stringify(drop('group-drop-unknown-key').body)) && drop('group-drop').status === 200, { unknown: drop('group-drop-unknown-key').body, known: drop('group-drop').status });
   const proved = await foreignWorld(port);

@@ -64541,6 +64541,31 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-signin.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: THE 8 SIGN-IN ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A NUL BYTE IN A TYPED VALUE IS ANSWERED AS AN UNKNOWN ONE.",
+   "claim": "API-4 SWEEP: THE 8 SIGN-IN ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A NUL BYTE IN A TYPED VALUE IS ANSWERED AS AN UNKNOWN ONE.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 100 lines. Run: node chitbridge-api/tests/api-problem-signin.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 100,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/api-problem-assist.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -96491,6 +96516,56 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-small.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE ADOPT AND PEOPLE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; A NON-UUID CHIT ID IS A 404.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE ADOPT AND PEOPLE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; A NON-UUID CHIT ID IS A 404.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 124 lines. Run: node chitbridge-api/tests/api-problem-small.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 124,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-csp-report.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "POST /API/CSP-REPORT ON THE REAL APP: A REPORT IS 204, JUNK IS 400, TOO BIG 413, A FLOOD 429, A FAILED LOG LINE 500, NO AUTH ASKED.",
+   "claim": "POST /API/CSP-REPORT ON THE REAL APP: A REPORT IS 204, JUNK IS 400, TOO BIG 413, A FLOOD 429, A FAILED LOG LINE 500, NO AUTH ASKED.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 144 lines. Run: node chitbridge-api/tests/api-problem-csp-report.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 144,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -98615,6 +98690,56 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-10-31T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-network-offers.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE NETWORK OFFER ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; EVERY BODY ROUTE HAS A HANDLER-MADE 4XX.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE NETWORK OFFER ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; EVERY BODY ROUTE HAS A HANDLER-MADE 4XX.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 137 lines. Run: node chitbridge-api/tests/api-problem-network-offers.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 137,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-service.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: THE 7 SERVICE CLOCK ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A VALUE NO COLUMN CAN HOLD IS A 400.",
+   "claim": "API-4 SWEEP: THE 7 SERVICE CLOCK ROUTES ANSWER ONLY THE STATUSES THEIR CONTRACT DECLARES, NO 5XX SAYS ITS CAUSE, AND A VALUE NO COLUMN CAN HOLD IS A 400.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 107 lines. Run: node chitbridge-api/tests/api-problem-service.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 100,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
   }
  ]
 }
