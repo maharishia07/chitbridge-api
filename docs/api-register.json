@@ -260,7 +260,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1979,
+   "line": 1985,
    "hash": "596e2ebefe22fd4f",
    "does": "",
    "errors": {
@@ -2869,7 +2869,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 613,
+   "line": 614,
    "hash": "3b739df1cfe5c008",
    "does": "",
    "errors": {
@@ -3200,7 +3200,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 735,
+   "line": 736,
    "hash": "d8cba703bbee9a55",
    "does": "",
    "errors": {
@@ -3280,7 +3280,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 581,
-   "hash": "081cd5e34de055c2",
+   "hash": "eb2cb4eb1a353c68",
    "does": "",
    "errors": {
     "count": 0,
@@ -3339,7 +3339,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#752 SEC-75c",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -3347,7 +3347,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": 1,
+    "wire": 4,
     "screens": []
    },
    "measured": {
@@ -3364,7 +3364,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 627,
+   "line": 628,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3697,7 +3697,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 748,
+   "line": 749,
    "hash": "330f509bff08f482",
    "does": "",
    "errors": {
@@ -7489,7 +7489,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1958,
+   "line": 1964,
    "hash": "f8822ac8bc7414af",
    "does": "",
    "errors": {
@@ -7574,7 +7574,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1932,
+   "line": 1938,
    "hash": "32bc5eb8888ad730",
    "does": "",
    "errors": {
@@ -7832,7 +7832,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2069,
+   "line": 2075,
    "hash": "313368b61b12e0dc",
    "does": "",
    "errors": {
@@ -29489,7 +29489,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 663,
+   "line": 664,
    "hash": "86ff97ac61ac9146",
    "does": "",
    "errors": {
@@ -29569,7 +29569,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 680,
+   "line": 681,
    "hash": "b2df6dc4cadf72b1",
    "does": "",
    "errors": {
@@ -29668,7 +29668,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 742,
+   "line": 743,
    "hash": "9f02935797a24cbc",
    "does": "",
    "errors": {
@@ -34913,7 +34913,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1882,
+   "line": 1888,
    "hash": "9d34219e5166cb7b",
    "does": "",
    "errors": {
@@ -35008,8 +35008,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1379,
-   "hash": "060fac9633f19490",
+   "line": 1398,
+   "hash": "f640389f83a89f58",
    "does": "",
    "errors": {
     "count": 6,
@@ -35097,8 +35097,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f640389f83a89f58"
    },
    "status": "partial",
    "callers": [],
@@ -35401,7 +35402,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2094,
+   "line": 2100,
    "hash": "8c67d9df0fb2f2fd",
    "does": "",
    "errors": {
@@ -35593,7 +35594,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2001,
+   "line": 2007,
    "hash": "c64265079935b335",
    "does": "",
    "errors": {
