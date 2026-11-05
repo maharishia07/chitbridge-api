@@ -695,6 +695,12 @@
   "GET /api/products/lists": {
    "output_allowlist": true
   },
+  "POST /api/governance/entities": {
+   "strict_input": true
+  },
+  "POST /api/governance/entities/:id/reattest": {
+   "strict_input": true
+  },
   "POST /api/governance/conformance": {
    "output_allowlist": true
   },
@@ -702,7 +708,11 @@
    "output_allowlist": true
   },
   "POST /api/governance/boilerplate/:key/adopt": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/governance/source": {
+   "strict_input": true
   },
   "GET /api/governance/source/:key": {
    "output_allowlist": true
@@ -726,10 +736,14 @@
    "output_allowlist": true
   },
   "PUT /api/governance/profile": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/governance/vault-schema": {
    "output_allowlist": true
+  },
+  "PUT /api/governance/profile/vault": {
+   "strict_input": true
   },
   "GET /api/governance/profile/readiness": {
    "output_allowlist": true
@@ -739,6 +753,12 @@
   },
   "GET /api/governance/country-setup": {
    "output_allowlist": true
+  },
+  "PUT /api/governance/country-setup": {
+   "strict_input": true
+  },
+  "POST /api/governance/ai-draft": {
+   "strict_input": true
   },
   "GET /api/governance/ai-usage": {
    "output_allowlist": true
@@ -750,12 +770,15 @@
    "output_allowlist": true
   },
   "POST /api/governance/compliance": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/governance/verify": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/governance/supplier-acceptance": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/governance/supplier-acceptance/:handle": {

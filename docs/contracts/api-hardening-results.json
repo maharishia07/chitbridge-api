@@ -2996,8 +2996,7 @@
   },
   "POST /api/governance/entities": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3006,16 +3005,11 @@
   },
   "POST /api/governance/entities/:id/reattest": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
    }
   },
   "POST /api/governance/conformance": {
@@ -3034,8 +3028,7 @@
   },
   "POST /api/governance/boilerplate/:key/adopt": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3043,8 +3036,7 @@
   },
   "POST /api/governance/source": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3094,8 +3086,7 @@
   },
   "PUT /api/governance/profile": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3108,8 +3099,7 @@
   },
   "PUT /api/governance/profile/vault": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3133,8 +3123,7 @@
   },
   "PUT /api/governance/country-setup": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3143,8 +3132,7 @@
   },
   "POST /api/governance/ai-draft": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3168,8 +3156,7 @@
   },
   "POST /api/governance/compliance": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3177,8 +3164,7 @@
   },
   "POST /api/governance/verify": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3186,8 +3172,7 @@
   },
   "POST /api/governance/supplier-acceptance": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
