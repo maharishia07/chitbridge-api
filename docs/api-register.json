@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 460,
-  "meets": 167,
+  "partial": 459,
+  "meets": 168,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -5951,7 +5951,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1279,
-   "hash": "bed7b121cd5d22d9",
+   "hash": "e3ab88fab430d12a",
    "does": "",
    "errors": {
     "count": 2,
@@ -6024,9 +6024,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bed7b121cd5d22d9"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#732 stage2",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -32968,7 +32967,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1177,
-   "hash": "1b3a1bb96c5455ff",
+   "hash": "5184d1b1103c2a73",
    "does": "",
    "errors": {
     "count": 2,
@@ -33041,9 +33040,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b3a1bb96c5455ff"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#732 stage2",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -33167,7 +33165,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1409,
-   "hash": "3223829aaf86d4c9",
+   "hash": "b43593e9d78f2915",
    "does": "",
    "errors": {
     "count": 2,
@@ -33235,9 +33233,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3223829aaf86d4c9"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#732 stage2",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -33262,7 +33259,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1127,
-   "hash": "4a4551edd9311cae",
+   "hash": "955da4c294c0b894",
    "does": "",
    "errors": {
     "count": 2,
@@ -33331,11 +33328,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a4551edd9311cae"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#732 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js"
