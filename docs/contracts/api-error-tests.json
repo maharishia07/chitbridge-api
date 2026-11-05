@@ -3523,14 +3523,13 @@
  ],
  "PUT /api/assist/container": [
   401,
-  403,
+  404,
   422,
   500,
   503
  ],
  "PUT /api/assist/region-override": [
   401,
-  403,
   404,
   422,
   500,

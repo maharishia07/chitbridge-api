@@ -93,7 +93,7 @@ async function ent(name) {
   // owner-gating: another brand cannot enhance this container
   const rogue = await ent('rogue-' + ts);
   const steal = await api('PUT', '/api/assist/container', { token: rogue.token, body: { container_id: cid, content: { story: 'hijack' } } });
-  chk('another brand CANNOT enhance the container (403)', steal.status === 403);
+  chk('another brand CANNOT enhance the container (404, as an unknown id: S6)', steal.status === 404);
 
   console.log('\n== RESULT ==  PASS ' + P + '  ·  FAIL ' + F);
   process.exit(F ? 1 : 0);
