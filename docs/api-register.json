@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 423,
-  "meets": 204,
+  "partial": 422,
+  "meets": 205,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -4931,11 +4931,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "17d02ebb850fc623"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#754 FIN-72",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js",
