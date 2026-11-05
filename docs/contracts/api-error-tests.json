@@ -168,6 +168,11 @@
   401,
   500
  ],
+ "GET /api/adopt/:chit_id": [
+  401,
+  404,
+  500
+ ],
  "GET /api/assist/catalogue-mine": [
   401,
   500,
@@ -1001,6 +1006,7 @@
  "GET /api/marketing/came-back": [
   401,
   403,
+  422,
   500
  ],
  "GET /api/network-design": [
@@ -1049,6 +1055,11 @@
   500
  ],
  "GET /api/offers/openapi.json": [
+  500
+ ],
+ "GET /api/people": [
+  401,
+  422,
   500
  ],
  "GET /api/pricing/kinds": [
@@ -1576,6 +1587,12 @@
  "POST /api/actors/suggest-key": [
   400,
   401,
+  500
+ ],
+ "POST /api/adopt/:chit_id": [
+  400,
+  401,
+  404,
   500
  ],
  "POST /api/assist": [
@@ -2468,6 +2485,12 @@
   400,
   401,
   403,
+  500
+ ],
+ "POST /api/csp-report": [
+  400,
+  413,
+  429,
   500
  ],
  "POST /api/ctp/deliver": [

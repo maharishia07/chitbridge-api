@@ -194,6 +194,14 @@
     400
    ]
   },
+  "GET /api/adopt/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/assist/catalogue-mine": {
    "cases": 2,
    "failed": 0,
@@ -1074,6 +1082,14 @@
     422
    ]
   },
+  "GET /api/people": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/products": {
    "cases": 2,
    "failed": 0,
@@ -1656,6 +1672,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/adopt/:chit_id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/assist": {
@@ -2696,6 +2720,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/csp-report": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/ctp/deliver": {

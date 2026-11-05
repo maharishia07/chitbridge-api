@@ -121,6 +121,7 @@ const EXTRAS = [
   X('document-breaks', 'GET /api/offers/openapi.json', 500, { patch: [['routes/openapi.js', 'assemble', THROWS]] }),
   X('list-limit-asked-twice', 'GET /api/combo-templates', 400, { url: '/api/combo-templates?limit=1&limit=2' }) /* B2: a handler-made refusal for the error tests */,
   X('db-fails-with-combo', 'POST /api/combo-templates', 500, { setup: DB_FAILS, body: GOOD_COMBO }),
+  X('page-given-twice', 'GET /api/marketing/came-back', 422, { url: '/api/marketing/came-back?page=1&page=2' }),
   X('saved-combo-has-no-groups', 'POST /api/combo-templates/:id/push', 400, { setup: { sqlRows: COMBO_ROW } })
 ];
 

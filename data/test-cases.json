@@ -96491,6 +96491,56 @@
    "changed_at": "2026-10-23T00:00:00Z"
   },
   {
+   "case_key": "chitbridge-api/tests/api-problem-small.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "API-4 SWEEP: EVERY REFUSAL OF THE ADOPT AND PEOPLE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; A NON-UUID CHIT ID IS A 404.",
+   "claim": "API-4 SWEEP: EVERY REFUSAL OF THE ADOPT AND PEOPLE ROUTES IS A PROBLEM BODY, ITS OLD KEYS FROZEN, NO 5XX SAYS ITS CAUSE; A NON-UUID CHIT ID IS A 404.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 124 lines. Run: node chitbridge-api/tests/api-problem-small.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 124,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-csp-report.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "POST /API/CSP-REPORT ON THE REAL APP: A REPORT IS 204, JUNK IS 400, TOO BIG 413, A FLOOD 429, A FAILED LOG LINE 500, NO AUTH ASKED.",
+   "claim": "POST /API/CSP-REPORT ON THE REAL APP: A REPORT IS 204, JUNK IS 400, TOO BIG 413, A FLOOD 429, A FAILED LOG LINE 500, NO AUTH ASKED.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 144 lines. Run: node chitbridge-api/tests/api-problem-csp-report.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 144,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/offers-published-contract.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
