@@ -74,6 +74,11 @@ function extras() {
   const ORDER = 'PATCH ' + S + '/fields/order';
   const PATCH_ONE = 'PATCH ' + S + '/fields/:field_key';
   const VIS = 'PATCH ' + S + '/visibility';
+  /** Postgres refuses a NUL byte in text (22021): a handler that lets one reach a query answers 500 */
+  const nulRefused = (sql, params) => {
+    if ((params || []).some((one) => String(one).includes('\0'))) throw Object.assign(new Error('pg 22021'), { code: '22021' });
+    return null;
+  };
   const at = (key) => S + '/fields/' + key;
   const long = (count) => 'x'.repeat(count);
   return [
@@ -113,6 +118,8 @@ function extras() {
     X('drop-delete-fails', DROP_ONE, 500, { url: at('grade'), setup: withRows(firstOf(raising(DROP), holding(column(), 0))) }),
     X('drop-answer-fails', DROP_ONE, 500, { url: at('grade'), setup: { jsonThrows: true, sqlRows: holding(column(), 0) } }),
     X('drop-with-a-body', DROP_ONE, 200, { url: at('grade'), body: { zz_unknown: 1 }, setup: withRows(holding(column(), 0)) }),
+    X('drop-key-with-a-nul', DROP_ONE, 404, { url: at('a%00b'), setup: withRows(nulRefused) }),
+    X('patch-key-with-a-nul', PATCH_ONE, 404, { url: at('a%00b'), body: { field_name: 'Renamed' }, setup: withRows(nulRefused) }),
     /* PATCH /fields/order */
     X('order-all', ORDER, 200, { body: { order: ['grade', 'price', 'unit', 'name'] }, setup: withRows(firstOf(when(DEFAULT_SCHEMA, [{ schema_id: SCHEMA }]), when(OWN_KEYS, declared()))) }),
     X('order-partial', ORDER, 200, { body: { order: ['price'] }, setup: withRows(firstOf(when(DEFAULT_SCHEMA, [{ schema_id: SCHEMA }]), when(OWN_KEYS, declared()))) }),
