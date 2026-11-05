@@ -247,7 +247,8 @@ function extras(tools) {
     X('list-switched-off', 'GET ' + at(''), 200, { url: at('?status=inactive') }),
     X('list-removed', 'GET ' + at(''), 200, { url: at('?status=removed') }),
     X('list-one-page', 'GET ' + at(''), 200, { url: at('?page=2&limit=1'), setup: { sqlRows: rowsOf(/SELECT\s+identity_id, bridge_id/, [LIST_ROW, CONNECTOR_ROW, LIST_BARE]) } }),
-    X('list-db-fails', 'GET ' + at(''), 500, { setup: failing })
+    X('list-db-fails', 'GET ' + at(''), 500, { setup: failing }),
+    N('list-status-asked-twice', 'GET ' + at(''), 400, { url: at('?status=active&status=leave') })
   ];
 
   /* ── PUT /api/actors/:id/status: switch off · remove · switch on (a mode switch: flagged, not split) ── */
@@ -376,15 +377,18 @@ function extras(tools) {
     N('tasks-page-asked-twice', 'GET ' + at('/:id/tasks'), 400, { url: at('/' + PERSON + '/tasks?page=1&page=2'), setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW) } }),
     X('route-needs-both', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT } }),
     X('route-task-not-found', 'PUT ' + at('/:id/tasks/route'), 404, { body: { chit_id: CHIT, action: 'pool' } }),
-    X('route-to-the-pool', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'pool' }, setup: { sqlRows: row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW) } }),
-    X('route-to-a-colleague', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW)) } }),
-    X('route-colleague-not-active', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW) } }),
-    X('route-push-without-a-colleague', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push' }, setup: { sqlRows: row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW) } }),
-    X('route-unknown-action', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'bury' }, setup: { sqlRows: row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW) } }),
+    X('route-to-the-pool', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'pool' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    X('route-to-a-colleague', 'PUT ' + at('/:id/tasks/route'), 200, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    X('route-colleague-not-active', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push', to_actor_id: OTHER }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    X('route-push-without-a-colleague', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'push' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    X('route-unknown-action', 'PUT ' + at('/:id/tasks/route'), 400, { body: { chit_id: CHIT, action: 'bury' }, setup: { sqlRows: firstOf(row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW), row(/SELECT identity_id, display_name, actor_key,\s+break_status, current_task_count, max_tasks/, PERSON_ROW)) } }),
+    /* S41: another shop's person (or no one) answers as GET /:id/tasks does; no count moves */
+    X('route-another-shops-person', 'PUT ' + at('/:id/tasks/route'), 404, { body: { chit_id: CHIT, action: 'pool' }, setup: { sqlRows: row(/SELECT chit_id, assigned_to_actor_id\s+FROM chit_status/, PERSON_ROW) } }),
     X('route-fails', 'PUT ' + at('/:id/tasks/route'), 500, { body: { chit_id: CHIT, action: 'pool' }, setup: failing }),
     X('route-staff-is-refused', 'PUT ' + at('/:id/tasks/route'), 403, { body: { chit_id: CHIT, action: 'pool' }, setup: { who: STAFF } }),
     N('route-body-is-a-list', 'PUT ' + at('/:id/tasks/route'), 400, { body: [] }),
     X('events-listed', 'GET ' + at('/access-events'), 200, { setup: { sqlRows: rowsOf(/FROM access_events e/, [EVENT_ROW, EVENT_BARE].concat(EVENT_VOCABULARY)) } }),    X('events-of-one-person', 'GET ' + at('/access-events'), 200, { url: at('/access-events?subject=' + PERSON + '&page=1&limit=5') }),
+    N('events-subject-asked-twice', 'GET ' + at('/access-events'), 400, { url: at('/access-events?subject=' + PERSON + '&subject=' + OTHER) }),
     X('events-table-not-there-yet', 'GET ' + at('/access-events'), 200, { setup: { sqlRows: failOn(/FROM access_events e/, '42P01', 'relation "access_events" does not exist') } }),
     X('events-fail', 'GET ' + at('/access-events'), 500, { setup: failing })
   ];

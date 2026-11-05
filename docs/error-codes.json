@@ -4223,6 +4223,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "SIM_FEEDBACK_RATING_NOT_WHOLE",
+   "status": "400",
+   "title": "Rating not whole",
+   "shopkeeper": "The rating is not a whole number of stars.",
+   "hint": "Pick the stars again, then send.",
+   "owner_area": "simulator",
+   "since": "2026-11-05"
+  },
+  {
    "code": "SIM_LEAD_FIELDS_MISSING",
    "status": "400",
    "title": "Name or e-mail missing",

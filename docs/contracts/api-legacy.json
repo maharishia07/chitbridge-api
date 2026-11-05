@@ -26873,14 +26873,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -26999,14 +27003,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27101,14 +27109,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27215,14 +27227,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27305,14 +27321,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27621,24 +27641,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be accept or reject"
-       }
-      ]
+      "error": "Not found",
+      "message": "Connection request not found or already responded"
      }
     },
     {
@@ -36587,14 +36597,14 @@
     },
     {
      "scenario": "ref-malformed-id",
-     "status": 500,
+     "status": 404,
      "body_keys": {
       "error": "Update failed",
-      "message": "Something went wrong — please try again."
+      "message": "Binding not found"
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Something went wrong — please try again."
+      "message": "Binding not found"
      }
     },
     {
@@ -36797,14 +36807,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Template update failed",
-      "message": "Unknown template"
+      "message": "Binding not found"
      },
      "fixture": {
       "error": "Template update failed",
-      "message": "Unknown template"
+      "message": "Binding not found"
      }
     },
     {
@@ -38800,6 +38810,18 @@
      }
     },
     {
+     "scenario": "route-another-shops-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
      "scenario": "route-colleague-not-active",
      "status": 400,
      "body_keys": {
@@ -38919,24 +38941,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      }
     },
     {
@@ -42398,6 +42408,18 @@
      }
     },
     {
+     "scenario": "drop-key-with-a-nul",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
      "scenario": "drop-blank-key",
      "status": 400,
      "body_keys": {
@@ -42667,6 +42689,18 @@
     },
     {
      "scenario": "patch-unknown-column",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "Your catalogue has no such column."
+     }
+    },
+    {
+     "scenario": "patch-key-with-a-nul",
      "status": 404,
      "body_keys": {
       "error": "Not found",
@@ -44383,14 +44417,14 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      },
      "fixture": {
       "error": "Attach form failed",
-      "message": "chit_id is required"
+      "message": "Form instance not found"
      }
     },
     {
@@ -50481,14 +50515,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide segment_override or a party field (legal_name, nickname, phone, email, credit_days, credit_limit, state_code, tax_ids)"
+      "error": "Not found"
      }
     },
     {
@@ -50643,14 +50675,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Nothing to update",
-      "message": "Provide nickname, category, notes, supply_kind, or preferred"
+      "error": "Not found"
      }
     },
     {
@@ -50903,6 +50933,24 @@
       "code": "DUPLICATE_PARTY",
       "error": "Another party already has this tax id.",
       "message": "Another party already has this tax id."
+     }
+    },
+    {
+     "scenario": "supplier-patch-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
+     },
+     "fixture": {
+      "error": "validation",
+      "fields": [
+       "zz_unknown"
+      ],
+      "message": "Not saved: zz_unknown cannot be changed here. You can change legal_name, nickname, credit_days, credit_limit, credit_limit_minor, state_code, merged_into, tax_ids, phone, email, category, notes, supply_kind, display_name, preferred."
      }
     }
    ]
@@ -54065,14 +54113,12 @@
     },
     {
      "scenario": "retire-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {
@@ -54201,14 +54247,12 @@
     },
     {
      "scenario": "read-one-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {
@@ -55037,14 +55081,12 @@
     },
     {
      "scenario": "save-id-is-not-a-uuid",
-     "status": 500,
+     "status": 404,
      "body_keys": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      },
      "fixture": {
-      "error": "Failed",
-      "message": "Something went wrong — please try again."
+      "error": "Not found"
      }
     },
     {
@@ -55152,6 +55194,28 @@
       "error": "Could not read your saved combos",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "list-limit-asked-twice",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "limit",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "limit",
+        "message": "Invalid value"
+       }
+      ]
+     }
     }
    ]
   },
@@ -55181,6 +55245,44 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "page-given-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "page must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "page",
+      "errors": [
+       {
+        "field": "page",
+        "code": "WRONG_VALUE",
+        "detail": "page must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "page must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "page",
+      "errors": [
+       {
+        "field": "page",
+        "code": "WRONG_VALUE",
+        "detail": "page must be a string."
+       }
+      ]
      }
     }
    ]
@@ -57338,6 +57440,422 @@
       "code": "CHIT_NOT_PERMITTED",
       "detail": "Your access is view-only. You can read this chit but not change it.",
       "hint": "Ask the owner for the right access, or open the chit from the side that holds it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/adopt/:chit_id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not read the delivery",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Could not read the delivery",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/people": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list people",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to list people",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "page-given-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "page must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "page",
+      "errors": [
+       {
+        "field": "page",
+        "code": "WRONG_VALUE",
+        "detail": "page must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "page must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "page",
+      "errors": [
+       {
+        "field": "page",
+        "code": "WRONG_VALUE",
+        "detail": "page must be a string."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "for-given-twice",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "for must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "for",
+      "errors": [
+       {
+        "field": "for",
+        "code": "WRONG_VALUE",
+        "detail": "for must be a string."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "for must be a string.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "for",
+      "errors": [
+       {
+        "field": "for",
+        "code": "WRONG_VALUE",
+        "detail": "for must be a string."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "db-fails-for-people",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed to list people",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed to list people",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/adopt/:chit_id": {
+   "answers": [
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "delivery-unknown",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "That delivery was not found.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails-with-lines",
+     "status": 500,
+     "body_keys": {
+      "error": "Could not adopt",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Could not adopt",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "no-lines-given-as-a-list",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "name the lines to accept — there is no \"accept everything\"",
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "name the lines to accept — there is no \"accept everything\"",
+      "hint": "Fix the fields listed and send it again.",
       "request_id": "req-test"
      }
     }
