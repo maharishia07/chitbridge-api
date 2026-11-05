@@ -238,7 +238,6 @@
    "output_allowlist": true
   },
   "POST /api/pricing/price": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {

@@ -33186,11 +33186,10 @@
                     },
                     "channel": {
                       "type": "string"
-                    },
-                    "owner": {},
-                    "PAGE_DEFAULT": {}
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "state": {
                   "type": "string"
@@ -33221,11 +33220,10 @@
                     },
                     "can_see_costs": {
                       "type": "boolean"
-                    },
-                    "owner": {},
-                    "PAGE_DEFAULT": {}
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "last_at": {
                   "type": "string"
@@ -33248,11 +33246,10 @@
                     },
                     "name": {
                       "type": "string"
-                    },
-                    "owner": {},
-                    "PAGE_DEFAULT": {}
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "cover_options": {
                   "type": "array",
@@ -33268,11 +33265,10 @@
                       },
                       "name": {
                         "type": "string"
-                      },
-                      "owner": {},
-                      "PAGE_DEFAULT": {}
+                      }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
                   }
                 },
                 "may": {
@@ -33302,11 +33298,10 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "email": {
                       "type": "object",
@@ -33323,11 +33318,10 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "reset_pin": {
                       "type": "object",
@@ -33344,11 +33338,10 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "switch": {
                       "type": "object",
@@ -33369,11 +33362,10 @@
                         },
                         "to": {
                           "type": "string"
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "cover": {
                       "type": "object",
@@ -33390,11 +33382,10 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "away": {
                       "type": "object",
@@ -33418,11 +33409,10 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
                     },
                     "remove": {
                       "type": "object",
@@ -33439,21 +33429,18 @@
                             "string",
                             "null"
                           ]
-                        },
-                        "owner": {},
-                        "PAGE_DEFAULT": {}
+                        }
                       },
-                      "additionalProperties": false
-                    },
-                    "owner": {},
-                    "PAGE_DEFAULT": {}
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
                   },
-                  "additionalProperties": false
-                },
-                "owner": {},
-                "PAGE_DEFAULT": {}
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "may": {
@@ -33477,16 +33464,14 @@
                       "string",
                       "null"
                     ]
-                  },
-                  "owner": {},
-                  "PAGE_DEFAULT": {}
+                  }
                 },
-                "additionalProperties": false
-              },
-              "owner": {},
-              "PAGE_DEFAULT": {}
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
           "counts": {
             "type": "object",
@@ -33504,11 +33489,10 @@
               },
               "away": {
                 "type": "number"
-              },
-              "owner": {},
-              "PAGE_DEFAULT": {}
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
           "access_choices": {
             "type": "array",
@@ -33540,11 +33524,10 @@
                 },
                 "why": {
                   "type": "string"
-                },
-                "owner": {},
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "payroll": {
@@ -33559,11 +33542,10 @@
               },
               "said": {
                 "type": "string"
-              },
-              "owner": {},
-              "PAGE_DEFAULT": {}
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
           "total": {
             "type": "number"
@@ -33581,10 +33563,12 @@
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 6,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/people"
       }
@@ -34079,8 +34063,8 @@
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/pricing/price": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/adopt/:chit_id": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/adopt/:chit_id": "open at added[] — a value passed through (an expression: its keys are not written in the handler); refused[] — a value passed through (a name: its keys are not written in the handler)"
+    "POST /api/adopt/:chit_id": "open at added[] — a value passed through (an expression: its keys are not written in the handler); refused[] — a value passed through (a name: its keys are not written in the handler)",
+    "POST /api/pricing/price": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

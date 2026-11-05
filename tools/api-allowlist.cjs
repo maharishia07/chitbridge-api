@@ -232,7 +232,8 @@ function keysOf(stats, source, where, open) {
     if (source.spread || source.computed) return open(where, source.spread ? 'a spread (...x) adds keys the text does not name' : 'a computed key'), null;
     return [...new Set(seen.concat([...source.keys.keys()]))];
   }
-  if (namesTokens(source)) return [...new Set(seen.concat([...source.tokens]))];
+  /* a value passed through names tokens (shorthand identifiers, call arguments, keys of unrelated literals): none of them is a key of THIS answer, so only a key some recorded answer held counts */
+  if (namesTokens(source) && seen.length) return seen;
   return open(where, whyOpen(source)), null;
 }
 
@@ -290,7 +291,7 @@ function closeObject(stats, source, where, open) {
   if (keyedByData(names)) return open(where || '(answer)', 'a map keyed by data (' + names.length + ' keys)'), { type: 'object' };
   const properties = propertiesOf(names, { stats, source, where, open });
   const required = requiredOf(stats, names, source);
-  const byRecordings = recordedOnly(stats, source, open) ? { [CLOSED_BY]: 'recordings' } : {};
+  const byRecordings = recordedOnly(stats, source, open) || namesTokens(source) ? { [CLOSED_BY]: 'recordings' } : {};
   return Object.assign({ type: 'object' }, required.length ? { required } : {}, { properties, additionalProperties: false }, byRecordings);
 }
 

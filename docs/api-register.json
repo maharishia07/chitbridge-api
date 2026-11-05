@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 224
+    "failing": 225
    },
    "output_allowlist": {
     "applies": 637,
@@ -19520,7 +19520,7 @@
    "owner_agent": "cb-people",
    "file": "routes/people.js",
    "line": 28,
-   "hash": "b2c546cbe8598fc7",
+   "hash": "fab2df1560045606",
    "does": "",
    "errors": {
     "count": 0,
@@ -47038,7 +47038,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 52,
-   "hash": "8f9496e5fc024ebe",
+   "hash": "d3b57ed9daecd0aa",
    "does": "",
    "errors": {
     "count": 0,
@@ -47070,7 +47070,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47102,7 +47102,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "8f9496e5fc024ebe"
+    "stale_since": "d3b57ed9daecd0aa"
    },
    "status": "partial",
    "callers": [],
