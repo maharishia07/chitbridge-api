@@ -476,7 +476,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/entities/populations | entities | routes/entities.js:1658 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/register | entities | routes/entities.js:344 | no | no | yes | yes | no | no | no | no | no | yes | yes | yes | yes | partial |
 | POST | /api/entities/verify | entities | routes/entities.js:345 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
-| POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/folders | folders | routes/folders.js:196 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/:id/rules | folders | routes/folders.js:586 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:847 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |

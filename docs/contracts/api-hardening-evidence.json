@@ -226,7 +226,6 @@
    "foreign_id_404": true
   },
   "POST /api/events/ticket": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/offers/kinds": {

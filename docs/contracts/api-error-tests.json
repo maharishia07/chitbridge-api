@@ -2603,7 +2603,6 @@
  ],
  "POST /api/events/ticket": [
   401,
-  422,
   500
  ],
  "POST /api/folders": [
@@ -2807,6 +2806,7 @@
  ],
  "POST /api/kyb/field": [
   401,
+  422,
   500
  ],
  "POST /api/network-design/build": [
@@ -3257,11 +3257,13 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "POST /api/supplies/purchase": [
   400,
   401,
+  422,
   500,
   503
  ],

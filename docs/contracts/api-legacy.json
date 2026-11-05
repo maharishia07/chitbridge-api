@@ -45138,6 +45138,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "group-change-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -45197,6 +45239,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "keys-reorder-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -45273,6 +45357,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "group-make-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -45358,6 +45484,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-add-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -45397,6 +45565,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "screen-write-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -46167,54 +46377,6 @@
       "detail": "Something went wrong on our side.",
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
-     }
-    },
-    {
-     "scenario": "ticket-body-names-others-refused",
-     "status": 422,
-     "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "screen",
-      "errors": [
-       {
-        "field": "screen",
-        "code": "UNKNOWN_FIELD",
-        "detail": "screen is not accepted here."
-       },
-       {
-        "field": "entity_id",
-        "code": "UNKNOWN_FIELD",
-        "detail": "entity_id is not accepted here."
-       }
-      ]
-     },
-     "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "screen",
-      "errors": [
-       {
-        "field": "screen",
-        "code": "UNKNOWN_FIELD",
-        "detail": "screen is not accepted here."
-       },
-       {
-        "field": "entity_id",
-        "code": "UNKNOWN_FIELD",
-        "detail": "entity_id is not accepted here."
-       }
-      ]
      }
     }
    ]
@@ -47042,6 +47204,44 @@
       "error": "Could not record it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "issue-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -47189,6 +47389,44 @@
      "fixture": {
       "error": "Could not record the purchase",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "buy-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49923,6 +50161,44 @@
      "fixture": {
       "error": "Field failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-extra-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "vertical is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "vertical",
+      "errors": [
+       {
+        "field": "vertical",
+        "code": "UNKNOWN_FIELD",
+        "detail": "vertical is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "vertical is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "vertical",
+      "errors": [
+       {
+        "field": "vertical",
+        "code": "UNKNOWN_FIELD",
+        "detail": "vertical is not accepted here."
+       }
+      ]
      }
     }
    ]

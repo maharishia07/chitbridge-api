@@ -144,6 +144,7 @@ function extras(tools) {
     S('risk-library-throws-503', RISK, 503, { patch: { kyb: { risk: thrown(SECRET_SQL, 503) } } }),
     /* POST /field */
     X('field-not-connected', FIELD, 200, {}),
+    X('field-extra-key-refused', FIELD, 422, { body: { vertical: 'food' } }),
     X('field-provider-named', FIELD, 200, { env: { KYB_FIELD_PROVIDER: 'x', KYB_FIELD_KEY: 'y' } }),
     X('field-served-from-cache', FIELD, 200, { setup: withRows(when(/FROM kyb_field_cache/, [{ result: cachedResult, created_at: '2026-10-01T00:00:00Z' }])) }),
     X('field-reads-fail', FIELD, 200, { setup: { db: 'fail' } }),

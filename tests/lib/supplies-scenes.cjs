@@ -83,6 +83,7 @@ function extras(tools) {
     X('buy-no-reference', 'POST ' + at('/purchase'), 400, { body: { lines: [{ name: 'Floor cleaner', qty: 1 }] } }),
     X('buy-reference-is-spaces', 'POST ' + at('/purchase'), 400, { body: { ref: '   ', lines: [{ name: 'Floor cleaner', qty: 1 }] } }),
     X('buy-body-a-list', 'POST ' + at('/purchase'), 400, { body: [] }),
+    X('buy-unknown-key-refused', 'POST ' + at('/purchase'), 422, { body: { ref: 'BILL-1', lines: [{ name: 'Floor cleaner', qty: 1 }], price: 99 } }),
     X('buy-expensed-one', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }), setup: { sqlRows: expensed } }),
     X('buy-expensed-many', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }, { name: 'Dusters', qty: 6, cost: 12 }), setup: { sqlRows: expensed } }),
     X('buy-counted-one', 'POST ' + at('/purchase'), 200, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }), setup: { sqlRows: kept } }),
@@ -105,7 +106,8 @@ function extras(tools) {
     X('buy-line-name-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: lines({ name: 'Floor\u0000cleaner', qty: 1 }), after: true }),
     X('buy-supplier-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL-1', from: 'Corner\u0000Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
     X('buy-reference-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL\u00001', from: 'Corner Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
-    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true })
+    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true }),
+    X('issue-unknown-key-refused', 'POST ' + at('/:id/issue'), 422, { url: at('/' + ITEM + '/issue'), body: { qty: 1, price: 99 } }),
   ];
 
   const issues = [

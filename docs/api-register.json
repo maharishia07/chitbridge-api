@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 209
+    "failing": 210
    },
    "output_allowlist": {
     "applies": 637,
@@ -42255,7 +42255,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/events.js",
    "line": 25,
-   "hash": "a48994b130fc5faa",
+   "hash": "3214cd54f41afe2d",
    "does": "",
    "errors": {
     "count": 0,
@@ -42283,7 +42283,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,

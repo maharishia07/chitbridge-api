@@ -950,7 +950,8 @@
   },
   "POST /api/events/ticket": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true

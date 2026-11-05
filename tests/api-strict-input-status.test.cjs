@@ -25,7 +25,7 @@ const PINS = [
   ['PUT /api/catalogue-face keeps its old 400', 'PUT', '/api/catalogue-face', { face: {}, zz_unknown_field: 1 }, 400, true],
   ['POST /api/pricing/price (S13 outward list, keyed) still ignores an extra key', 'POST', '/api/pricing/price', { lines: [PRICED_LINE], currency: 'INR' }, 200, false],
   /* contract bulk pass, batch 1: each body is the valid one the callers send plus zz_unknown_field */
-  ['POST /api/events/ticket answers the standard 422', 'POST', '/api/events/ticket', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/events/ticket (keyed, KEY_ROUTES: till, screen and connector scopes) still ignores an extra key', 'POST', '/api/events/ticket', { zz_unknown_field: 1 }, 200, false],
   ['POST /api/notifications/seen answers the standard 422', 'POST', '/api/notifications/seen', { zz_unknown_field: 1 }, 422, true],
   ['POST /api/notifications/dismiss answers the standard 422 (its 400 is the handler own)', 'POST', '/api/notifications/dismiss', { all: true, zz_unknown_field: 1 }, 422, true],
   ['POST /api/kyb/credential answers the standard 422', 'POST', '/api/kyb/credential', { title: 'Village NOC', zz_unknown_field: 1 }, 422, true],

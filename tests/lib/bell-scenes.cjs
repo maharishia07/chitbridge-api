@@ -59,7 +59,7 @@ function extras(tools) {
     X('ticket-for-staff', 'POST ' + EV + '/ticket', 200, Object.assign({ setup: { who: STAFF } }, events('ticketFor', ticketed))),
     X('ticket-for-a-screen-key', 'POST ' + EV + '/ticket', 200, Object.assign({ headers: { 'x-test-screen': '1' } }, events('ticketFor', ticketed))),
     X('ticket-body-a-list', 'POST ' + EV + '/ticket', 200, Object.assign({ body: [] }, events('ticketFor', ticketed))),
-    X('ticket-body-names-others-refused', 'POST ' + EV + '/ticket', 422, Object.assign({ body: { screen: true, entity_id: STRANGER_ID } }, events('ticketFor', ticketed))),
+    X('ticket-body-is-never-read', 'POST ' + EV + '/ticket', 200, Object.assign({ body: { screen: true, entity_id: STRANGER_ID } }, events('ticketFor', ticketed))),
     X('ticket-login-names-no-shop', 'POST ' + EV + '/ticket', 401, { setup: { who: NOBODY } }),
     X('ticket-throws-leaks-nothing', 'POST ' + EV + '/ticket', 500, events('ticketFor', sink))
   ];
