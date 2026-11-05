@@ -97,6 +97,7 @@ function extras(tools) {
   const sUrl = at('/suppliers/' + LIST_S);
   const patchSupplier = [
     X('supplier-patch-chain-refused', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: { supply_kind: 'bad', preferred: 'maybe' } }),
+    X('supplier-patch-unknown-key', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: { nickname: 'Tea man', zz_unknown: 'x' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }), /* CRM-44: an unknown key beside a valid one was a 200 that dropped it */
     X('supplier-patch-nothing', 'PATCH ' + at('/suppliers/:id'), 400, { url: sUrl, body: {} }),
     X('supplier-patch-unknown', 'PATCH ' + at('/suppliers/:id'), 404, { url: sUrl, body: { nickname: 'Tea man' } }),
     X('supplier-patch-saved', 'PATCH ' + at('/suppliers/:id'), 200, { url: sUrl, body: { nickname: 'Tea man', category: 'tea', notes: 'cash', preferred: true, supply_kind: 'own_use' }, setup: { sqlRows: heldBy(SHOP, LIST_S) } }),
@@ -161,12 +162,15 @@ function extras(tools) {
   /* ── GET /suppliers/:supplier_entity_id/catalogue ── */
   const cUrl = at('/suppliers/' + SUPP + '/catalogue');
   const identityRow = row(/FROM identities WHERE identity_id = \$1 AND identity_type = 'entity'/, { identity_id: SUPP, display_name: 'Corner Hardware', bridge_id: 'BBBB3333', currency_code: 'INR', business_status: 'open' });
+  const onMyList = row(/FROM supplier_list WHERE owner_entity_id = [$]1 AND supplier_entity_id = [$]2/, { '?column?': 1 });
   const catalogue = [
-    X('catalogue-unknown-supplier', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl }),
-    X('catalogue-not-showing', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: identityRow }, patch: view({ available: false }) }),
-    X('catalogue-read', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: identityRow }, patch: view({ available: true, schema: { fields: [] }, fields: [], items: [{ item_id: 'i1' }], groups: [], finishes: [], offers: [], categories: [] }) }),
+    N('catalogue-unknown-supplier', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 404, { url: cUrl }),
+    /* SEC-91: a business that is not on this shop's supplier list is refused like an unknown id; the supplier list is asked before identities, so no name is read */
+    N('catalogue-stranger-refused', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 404, { url: cUrl, setup: { sqlRows: firstOf(identityRow) } }),
+    X('catalogue-not-showing', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: view({ available: false }) }),
+    X('catalogue-read', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: view({ available: true, schema: { fields: [] }, fields: [], items: [{ item_id: 'i1' }], groups: [], finishes: [], offers: [], categories: [] }) }),
     X('catalogue-own', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 200, { url: at('/suppliers/' + SHOP + '/catalogue'), setup: { sqlRows: row(/FROM identities WHERE identity_id = \$1 AND identity_type = 'entity'/, { identity_id: SHOP, display_name: 'Shop A', bridge_id: 'AAAA2222', currency_code: 'INR', business_status: 'open' }) }, patch: view({ available: true, items: [] }) }),
-    X('catalogue-view-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: { sqlRows: identityRow }, patch: { catalogueView: { buildPublicView: async () => boom() } } }),
+    X('catalogue-view-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: { sqlRows: firstOf(onMyList, identityRow) }, patch: { catalogueView: { buildPublicView: async () => boom() } } }),
     X('catalogue-lookup-fails', 'GET ' + at('/suppliers/:supplier_entity_id/catalogue'), 500, { url: cUrl, setup: failing })
   ];
 
@@ -260,7 +264,10 @@ function extras(tools) {
     X('scorecard-list-fails', 'GET ' + at('/scorecard'), 500, { patch: { select: { counterparties: async () => boom() } } }),
     X('scorecard-db-fails', 'GET ' + at('/scorecard'), 500, { setup: failing }),
     N('scorecard-since-twice', 'GET ' + at('/scorecard'), 400, { url: at('/scorecard?since=2026-01-01&since=2026-02-01') }),
-    X('scorecard-one-unknown', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    /* S35: an id this shop shares no chit with is the unknown id's 404 (before: 200 with an empty card), in the window or out of it; a real counterparty with nothing in the window keeps its empty card */
+    N('scorecard-one-unknown', 'GET ' + at('/scorecard/:entity_id'), 404, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    N('scorecard-one-unknown-in-a-window', 'GET ' + at('/scorecard/:entity_id'), 404, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [] } } }),
+    X('scorecard-one-empty-window', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async (owner, sel) => (sel.since ? [] : [{ counterparty_name: 'Corner Hardware', status: 'paid', total: 100 }]) } } }),
     X('scorecard-one', 'GET ' + at('/scorecard/:entity_id'), 200, { url: at('/scorecard/' + SUPP + '?since=2026-01-01'), patch: { policy: { get: async () => ({ overdue_days: 30 }) }, select: { rows: async () => [{ counterparty_name: 'Corner Hardware', status: 'paid', total: 100 }] } } }),
     X('scorecard-one-fails', 'GET ' + at('/scorecard/:entity_id'), 500, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => boom() } } }),
     X('scorecard-one-rows-fail', 'GET ' + at('/scorecard/:entity_id'), 500, { url: at('/scorecard/' + SUPP), patch: { policy: { get: async () => ({}) }, select: { rows: async () => boom() } } })

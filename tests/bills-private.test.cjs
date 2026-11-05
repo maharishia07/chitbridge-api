@@ -51,7 +51,7 @@ function rowsFor(sql, p) {
   if (/FROM chit_header h/.test(s) && /WHERE h.chit_id = \$1 AND h.entity_id = \$2/.test(s)) return COPY ? [Object.assign({ current_status: CUR }, COPY)] : [];
   /* moveStatus */
   if (/SELECT current_status/.test(s) && /FROM chit_status/.test(s) && /direction = 'received'/.test(s)) return [{ current_status: CUR }];
-  if (/SELECT sender_entity_id, purpose, business_json FROM chit_header/.test(s)) return HDR ? [HDR] : [];
+  if (/SELECT sender_entity_id, purpose, business_json(, all_recipients)? FROM chit_header/.test(s)) /* sit/run6: the move header also reads all_recipients (RAIL-106 bell), same row */ return HDR ? [HDR] : [];
   /* the chit read */
   if (/^SELECT \* FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return HDR ? [HDR] : [];
   if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(s)) return [{ detail_type: 'invoice', line_items: [{ line_id: 'l1', particulars: 'Rice', quantity: 10, unit: 'kg', price: 48.165 }] }];
@@ -164,7 +164,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     await BP.moneySteps(SHOP, { direction: 'in', currency: 'INR' }, [{ against_ref: ORDER, amount_minor: 100 }], { id: OWNER_P });
     ok('a payment against something that is not a bill writes no bill step', wrote(/state_log/).length === 0);
     const booksSrc = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8');
-    ok('the books confirm route writes the money steps after the posting', /router\.post\('\/payments\/:id\/confirm'[\s\S]*?moneySteps\(e, pay, list,[\s\S]*?\n\}\);/.test(booksSrc));
+    /* FIN-63 step 2: confirmSteps (defined above the route) is the one place moneySteps runs for the confirm; the route calls it after the posting and after the replay answer */
+    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, pay, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
 
     console.log('\n══ D · THE SELLER\'S LIFECYCLE — never a buyer step; the dispute and the shared payment ══\n');
     reset(); ROWS = [sellerRow()];

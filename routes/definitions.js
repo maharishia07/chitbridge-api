@@ -40,7 +40,7 @@ const logger = require('../lib/logger');
 const router = express.Router();
 const { query, withEntity, withTransaction, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, definitionFault, schemaOptionsFor } = require('../lib/definitions-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const { shopChanged } = require('../lib/shopchanged'); /* ⭐ an offer is what a counter and a TV are SHOWING; they hear at once */
@@ -61,6 +61,11 @@ const ctx = (req) => auth.entityOf(req);
 function checked(route) {
   return [schemaValidate(contract.operationFor(route), schemaOptionsFor(route))];
 }
+
+/* K-1: the :id is a uuid column (definition.definition_id); a non-uuid id names no row and is answered as an unknown one, not a 500. A GOVERNED slab id (IN-GST-18) is not a uuid by design:
+   it passes on, and the PUT and DELETE handlers refuse it in words (403 governed). */
+const ownId = uuidParam(() => words.notFound());
+router.param('id', (req, res, next, id) => (taxGov.isGovernedId(id) ? next() : ownId(req, res, next, id)));
 
 const MAX_NAME = 120,
   MAX_NOTE = 500;
@@ -267,6 +272,7 @@ const currentRulesOf = async (db, definition) =>
 const editorChangesRate = async (req, db, definition, rules) => !rateDoor.setsRate(req) && !!rules && rateDoor.defaultSlabChanged(rules, await currentRulesOf(db, definition));
 /** the refusals an edit meets before anything is written: a rate the caller may not set, or a rule left without its value (null = go on) */
 async function editRefusal(req, db, definition, rules) {
+  if (liveNeedsYes(req, definition.kind, definition.status)) return { unconfirmed: true };
   if (await editorChangesRate(req, db, definition, rules)) return { rateRefused: true };
   const bad = rules && require('../lib/definition-check').missingValue(definition.kind, definition.sub_kind, rules);
   return bad ? { bad } : null;
@@ -274,9 +280,10 @@ async function editRefusal(req, db, definition, rules) {
 
 /** answers what editRefusal found (a rate the caller may not set: 403; a rule without its value: 422); true when it answered */
 function answerEditRefusal(req, res, out) {
-  if (out.rateRefused) rateRefused(req, res);
+  if (out.unconfirmed) problem(req, res, { status: 428, ...words.liveUnconfirmed() });
+  else if (out.rateRefused) rateRefused(req, res);
   else if (out.bad) problem(req, res, { status: 422, ...words.incomplete(out.bad) });
-  return !!(out.rateRefused || out.bad);
+  return !!(out.unconfirmed || out.rateRefused || out.bad);
 }
 
 /** CAT-211: a category born with a rate is refused for a caller who may not set one (a gate between the checks and the handler) */
@@ -285,8 +292,14 @@ const bornWithoutRate = (req, res, next) => {
   return !rateDoor.setsRate(req) && rateDoor.defaultSlabChanged(rules, {}) ? rateRefused(req, res) : next();
 };
 
+/** UX-110: an offer becomes live only with the shop's explicit yes — the page asks first (CBLabKit.confirm) and then sends `confirmed: true`. A draft, a pause, a retire, any other kind, and an offer already live are never asked. */
+const liveNeedsYes = (req, kind, wasStatus) => kind === 'offer' && req.body && req.body.status === 'live' && wasStatus !== 'live' && req.body.confirmed !== true;
+
+/** UX-110: an offer born live without the yes is refused before anything is read or written (a gate, like bornWithoutRate) */
+const bornLiveWithoutYes = (req, res, next) => (liveNeedsYes(req, String((req.body && req.body.kind) || '').trim(), 'draft') ? problem(req, res, { status: 428, ...words.liveUnconfirmed() }) : next());
+
 /** POST / — author one. Creates the definition AND version 1 in ONE transaction. */
-router.post('/', auth, ...checked('POST /'), bornWithoutRate, async (req, res) => {
+router.post('/', auth, ...checked('POST /'), bornWithoutRate, bornLiveWithoutYes, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const { kind, sub_kind, name, note } = req.body || {};
@@ -346,6 +359,16 @@ router.post('/', auth, ...checked('POST /'), bornWithoutRate, async (req, res) =
     problem(req, res, definitionFault(e, req, { nameTaken: true }));
   }
 });
+
+/** one definition_status_log row per REAL transition (see the b268 note in PUT /:id): a no-op re-send of the same status writes nothing */
+async function logStatusChange(db, req, entity_id, wasStatus, status) {
+  if (!status || status === wasStatus) return;
+  await db.query(
+    `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
+     VALUES ($1,$2,$3,$4)`,
+    [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
+  );
+}
 
 /**
  * ⭐⭐ PUT /:id — an edit is a NEW VERSION, never an overwrite.
@@ -418,19 +441,15 @@ router.put('/:id', auth, ...checked('PUT /:id'), async (req, res) => {
        * question it exists for and never one nobody asked ("approved" appearing twice because a screen
        * re-sent the same status is noise, not history).
        */
-      if (status && status !== d.status) {
-        await db.query(
-          `INSERT INTO definition_status_log (definition_id, entity_id, status, changed_by)
-           VALUES ($1,$2,$3,$4)`,
-          [req.params.id, entity_id, String(status), req.identity && req.identity.identity_id]
-        );
-      }
+      await logStatusChange(db, req, entity_id, d.status, status);
       return { row: upd.rows[0], version, versioned: !!rules };
     });
 
     if (out.missing) return problem(req, res, { status: 404, ...words.notFound() });
     if (answerEditRefusal(req, res, out)) return;
     if (out.clash) return problem(req, res, { status: 409, ...words.clash(out.clash.body) });
+    /* CTR-157: an offer made live, paused or changed is what every open counter prices with, so they hear it now, as for a create or a retire */
+    shopChanged(entity_id, 'definition saved');
     res.json({ message: out.versioned ? 'Saved as version ' + out.version : 'Saved', definition: out.row, version: out.version, new_version: out.versioned });
   } catch (e) {
     problem(req, res, definitionFault(e, req, { nameTaken: true }));

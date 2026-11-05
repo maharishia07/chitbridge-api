@@ -16,6 +16,7 @@
  * Run: node tests/page-name.test.cjs   · no DB, no network.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';
@@ -64,6 +65,7 @@ function rowsFor(sql, p) {
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
   if (/SELECT role, business_json->>'page' AS page FROM chit_header/.test(s)) return DRAFT ? [DRAFT] : [];
   if (/SELECT self_copy_pref/.test(s)) return [{ self_copy_pref: null }];
+  if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean); /* ACC-206: the engine reads seller and buyer at send */
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p && p[0]]; return r ? [r] : []; }
   return [];
 }
@@ -155,9 +157,12 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     console.log('\n── never changed after send ──');
     const W = laterWrites();
     ok('there are later business_json writes to check (' + W.length + ' found)', W.length >= 5, JSON.stringify(W));
-    const bad = W.filter((w) => w.assign || /'page'|\{page\}/.test(w.rhs) || !/^(\(\s*)?COALESCE\(\s*business_json/i.test(w.rhs.trim()));
+    /* sit/run6 (RAIL-106 lib/chit-proposal): jsonb_set(COALESCE(business_json…), '{its key}', …) is a merge-patch of its own key too, and so is a CASE whose every arm patches COALESCE(business_json…) */
+    const patchOf = (rhs) => /^(\(\s*)?COALESCE\(\s*business_json/i.test(rhs) || /^jsonb_set\(\s*COALESCE\(\s*business_json\s*,\s*'\{\}'::jsonb\s*\)\s*,\s*'\{\w+\}'/i.test(rhs)
+      || (/^CASE WHEN /i.test(rhs) && rhs.split(/\b(?:THEN|ELSE)\b/i).slice(1).every((arm) => patchOf(arm.replace(/\bEND\b[\s\S]*$/i, '').trim())));
+    const bad = W.filter((w) => w.assign || /'page'|\{page\}/.test(w.rhs) || !patchOf(w.rhs.trim()));
     ok('…every one is a merge-patch of its own key onto COALESCE(business_json…) — none names page, none replaces it whole', bad.length === 0, JSON.stringify(bad));
-    const route = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+    const route = CF.read(API);
     ok('no route offers a PATCH on a chit (the header is written once, at send)', !/router\.patch\(/.test(route));
     const stamps = (route.match(/page:\s*pageStamp\.page/g) || []).length;
     ok('the send stamps the page in ONE place', stamps === 1, 'found ' + stamps);

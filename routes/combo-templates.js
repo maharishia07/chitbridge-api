@@ -14,7 +14,7 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a pa
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { said, validationOptions, faultOf, contract } = require('../lib/combo-templates-contract'); // the contract (each route's operation) and the words of a refusal
 const { withEntity } = require('../db');
@@ -27,6 +27,7 @@ function checked(route) {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, validationOptions)] : [];
 }
 const ctx = (req) => auth.entityOf(req);
+router.param('id', uuidParam({ detail: 'Not found', legacy: { error: 'Not found' } })); // K-1: every :id here is combo_templates.id (uuid); a junk id is a 404, not a database cast error
 
 /** ⚠️ a name is the whole point of "save as" — an unnamed row is a row nobody can find again to reopen */
 function badName(name) {
@@ -54,6 +55,8 @@ function badPrice(price) {
   if (!Number.isFinite(n) || n < 0) return 'Price must be a number, and cannot be negative.';
   return null;
 }
+/** the price a request carries as a stored value: absent, null or '' is none yet (null), else the number */
+const priceOrNull = (price) => (price === undefined || price === null || price === '' ? null : Number(price));
 const COLS = 'id, name, definition, price, product_item_id, created_at, updated_at';
 
 // GET /api/combo-templates — the library, newest first
@@ -83,7 +86,7 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
     if (defErr) return problem(req, res, said(400, 'COMBO_INVALID', 'Invalid combo', defErr));
     const priceErr = badPrice(req.body.price);
     if (priceErr) return problem(req, res, said(400, 'COMBO_PRICE_INVALID', 'Invalid price', priceErr));
-    const price = req.body.price === undefined || req.body.price === null || req.body.price === '' ? null : Number(req.body.price);
+    const price = priceOrNull(req.body.price);
     const r = await withEntity(entity_id, (db) =>
       db.query(
         `INSERT INTO combo_templates (entity_id, name, definition, price) VALUES ($1,$2,$3,$4)
@@ -121,7 +124,7 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const name = 'name' in req.body ? String(req.body.name).trim() : cur.rows[0].name;
     const definition = 'definition' in req.body ? req.body.definition : cur.rows[0].definition;
-    const price = 'price' in req.body ? (req.body.price === null || req.body.price === '' ? null : Number(req.body.price)) : cur.rows[0].price;
+    const price = 'price' in req.body ? priceOrNull(req.body.price) : cur.rows[0].price;
     /* ⚠️ NOT VALIDATED AGAINST catalogue_items HERE — same "not a foreign key" tolerance as the column
      * itself (b267): a bogus or cross-entity id simply never resolves at push time and that push falls back
      * to a clean create, exactly like a dangling link left by a deleted product. */
@@ -214,9 +217,13 @@ router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) =>
     /* [OFFR-04] a push writes the product's name, modifiers and price — the same gate as PATCH /products (lib/cost.writeRefusal) */
     const refused = await require('../lib/cost').writeRefusal(req, entity_id, ['name', 'modifiers', 'price']);
     if (refused) return problem(req, res, { status: 403, code: 'COST_BLIND', detail: refused.message, legacy: refused });
-    const cur = await withEntity(entity_id, (db) =>
-      db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id])
-    );
+    /* SPD-32: the template and the product it is linked to are read in ONE transaction (was two); both reads stay under this shop's RLS scope. */
+    const { cur, linked } = await withEntity(entity_id, async (db) => {
+      const template = await db.query(`SELECT name, definition, price, product_item_id FROM combo_templates WHERE id=$1 AND entity_id=$2`, [req.params.id, entity_id]);
+      const link = template.rows[0] && template.rows[0].product_item_id;
+      const prod = link ? await db.query(`SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true`, [link, entity_id]) : null;
+      return { cur: template, linked: prod };
+    });
     if (!cur.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
     const t = cur.rows[0];
     const defErr = badDefinition(t.definition);
@@ -225,13 +232,7 @@ router.post('/:id/push', auth, ...checked('POST /:id/push'), async (req, res) =>
     const wantedFields = { name: t.name, modifiers: t.definition };
     if (t.price != null) wantedFields.price = Number(t.price);
 
-    let existing = null;
-    if (t.product_item_id) {
-      const p = await withEntity(entity_id, (db) =>
-        db.query(`SELECT item_id, item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 AND is_active=true`, [t.product_item_id, entity_id])
-      );
-      existing = p.rows[0] || null; // absent → the link is stale; fall through to create
-    }
+    const existing = (linked && linked.rows[0]) || null; // absent → the link is stale; fall through to create
 
     const outcome = existing ? await updateLinkedProduct(entity_id, existing, wantedFields) : await createPushedProduct(entity_id, t, wantedFields, req.id);
     if (outcome.refusal) {

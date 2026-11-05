@@ -1,5 +1,5 @@
 /*
- * OWNS      supplier list, customer list and promotions.
+ * OWNS      supplier list, customer list, promotions and the counterparty scorecard.
  * CALLED BY web Suppliers · Customers.
  * FLOW      handle lookup (businesses only) → list row → numbered party
  * CARD      11-crm-and-marketing/relationships
@@ -22,8 +22,8 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
 const { query, withEntity } = require('../db');
-const { validateAsProblem, sanitise, schemaValidate } = require('../middleware/validate');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { validateAsProblem, sanitise, schemaValidate, queryDay } = require('../middleware/validate');
+const { problem, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { words, partyRefusal, mintRefusal, removeFault, failed, contract, schemaOptions, PARTY_KEYS } = require('../lib/relationships-contract'); // the contract (each route's operation), the words of a refusal and the party fields a PATCH may carry
 const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner');
@@ -33,6 +33,18 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
+/** R14 / CRM-44: a body key a PATCH does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) → the refusal spec, or null */
+function unknownKeyRefusal(body, allowed) {
+  const unknown = Object.keys(body || {}).filter((item) => allowed.indexOf(item) < 0);
+  if (!unknown.length) return null;
+  const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + allowed.join(', ') + '.';
+  return { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } };
+}
+/** the gate of a PATCH: a body key the route does not know ends the request before any handler work */
+const refuseUnknownKeys = (allowed) => (req, res, next) => {
+  const refused = unknownKeyRefusal(req.body, allowed);
+  return refused ? problem(req, res, refused) : next();
+};
 const hasParty = (b, side) => PARTY_KEYS.some((item) => item in (b || {}) && !(side === 'supplier' && item === 'nickname'));
 /** the party half of a PATCH: its own answer (404 / 409 / 400 in words) or null when the body carries none */
 async function partyPatch(req, res, side) {
@@ -64,6 +76,14 @@ async function numberParty(owner, party_id) {
 
 // actors act in their parent entity's context
 const ctx = (req) => auth.entityOf(req);
+
+/* K-1 (API-10) — an id that is not a uuid names no row: 404 in this file's own words before the database answers with its own in a 500.
+   :id is a list-row uuid (supplier_list_id · customer_list_id) EXCEPT on /customers/:id/rewards, where it is a text holder value (reward_ledger.holder_value): that one takes the text guard. */
+const idGuard = uuidParam(words.notFound());
+const holderGuard = textParam(); // K-1 Q2: the rewards holder value is text; a NUL would reach Postgres as text (22021 → 500): 400 INVALID_INPUT, naming it
+router.param('id', (req, res, next, id, name) => (req.path.endsWith('/rewards') ? holderGuard(req, res, next, id, name) : idGuard(req, res, next, id)));
+router.param('supplier_entity_id', uuidParam(words.notOnYourList())); // identities.identity_id / supplier_list.supplier_entity_id are uuid; the catalogue refuses a stranger with these words
+router.param('entity_id', uuidParam(words.notFound())); // the scorecard's counterparty: compared as ::uuid in lib/select
 /** the schema check of one route (its own operation in lib/relationships-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);
@@ -71,6 +91,28 @@ function checked(route) {
 }
 
 // ── SUPPLIERS (no consent — D-056) ──────────────────────────
+
+/**
+ * RAIL-101 (NS-3), a step BEFORE the add: the address a person typed, pasted or scanned, when it names a business on ANOTHER installation.
+ * lib/remote-party asks that installation (ctpaddress + ctpquery, the existing seams) and makes the local party row linked to it, then the ordinary add
+ * carries on with that row's bridge id (req.body.supplier_bridge_id is rewritten to it; req.remoteShown adds the address to the answer).
+ * A bare id or an e-mail passes through untouched; nothing is written unless the far end confirmed the business.
+ */
+async function remoteAddress(req, res, next) {
+  const typed = String((req.body && req.body.supplier_bridge_id) || '').trim();
+  if (!(/^https?:\/\//i.test(typed) || typed.includes('@'))) return next();
+  try {
+    const adopted = await require('../lib/remote-party').adopt(ctx(req), typed);
+    if (adopted.error) return problem(req, res, words.remoteRefused(adopted.error));
+    req.body.supplier_bridge_id = adopted.party ? adopted.party.bridge_id : adopted.bridge;
+    if (adopted.party) req.remoteShown = { address: adopted.party.address, installation_key: adopted.party.installation_key };
+    return next();
+  } catch (failure) {
+    console.error('Add supplier by address error:', failure.message);
+    return problem(req, res, failed(failure, req, 'Add supplier failed'));
+  }
+}
+remoteAddress.addsStatuses = words.ADDRESS_GATE_STATUSES; /* tools/api-register.cjs reads the statuses a gate answers from here */
 
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
@@ -118,6 +160,7 @@ router.post(
   auth,
   validateAsProblem,
   ...checked('POST /suppliers'),
+  remoteAddress, /* RAIL-101 / NET-39: `bridge_id@domain` or a URL names a business on another installation — adopted as a stub here, then added like any other */
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -212,7 +255,7 @@ router.post(
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         supplier: {
-          bridge_id: bridge,
+          supplier_entity_id: sup.rows[0].identity_id, bridge_id: bridge, ...req.remoteShown, /* API-6 (25 Oct): the id the list and the catalogue read are addressed by, on every add · RAIL-101: the address, when the supplier was adopted from one */
           display_name: sup.rows[0].display_name,
           on_rail: !!trade.ok,
           party_no: supNo,
@@ -230,12 +273,9 @@ router.post(
   }
 );
 
-// List my suppliers — has_catalogue reflects an active default schema only
-router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
-  try {
-    const owner = ctx(req);
-    const r = await withEntity(owner, (db) =>
-      db.query(
+/** GET /suppliers: my supplier list with the facts the screen reads, on the connection withEntity hands out (RLS). One statement; the notes say why each column is there. */
+function listSuppliers(db, owner) {
+  return db.query(
         /* ⭐ `on_rail` COMES FROM THE HANDLE — a `~` handle was minted by a business, never registered by a person
          (lib/handle.js). The row is an ordinary entity in every other respect, so the join and every downstream
          lookup stay exactly as they were; that was the point of minting a real id rather than writing a null. */
@@ -245,16 +285,41 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail,
               i.bridge_id, i.user_id, i.display_name, i.identity_id AS supplier_entity_id,
               i.gstn, i.country, i.policy_flags, i.currency_code AS supplier_money,
-              EXISTS (SELECT 1 FROM entity_schemas es
+              /* NET-39 (walk W6, 2026-10-25): a supplier on ANOTHER installation keeps its catalogue there, so no local schema
+                 row exists; it counts as "has a catalogue — ask them", and GET /suppliers/:id/catalogue asks the far side
+                 (lib/remote-catalogue), which answers what is published and whether it is shown outside (trade_mode export). */
+              (EXISTS (SELECT 1 FROM entity_schemas es
                       WHERE es.entity_id = i.identity_id
-                        AND es.status = 'active' AND es.is_default = true) AS has_catalogue
+                        AND es.status = 'active' AND es.is_default = true)
+               OR ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)) AS has_catalogue,
+              /* API-6 (network owner, 25 Oct): WHERE the supplier lives, named only when it is another installation (null here), with that installation's label.
+                 The web's money-promise confirm before a cross-installation send (supCrossParty → CBQuotes.askCross) decides "far" from it: a stub made from an
+                 address carries no country or currency, so without this the confirm never fired (browser R16 on SIT). */
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1) THEN ops.f_installation_of(i.identity_id) END AS installation_key,
+              CASE WHEN ops.f_installation_of(i.identity_id) IS DISTINCT FROM ops.f_installation_of($1)
+                   THEN (SELECT inst.label FROM installation inst WHERE inst.installation_key = ops.f_installation_of(i.identity_id)) END AS installation_label
        FROM supplier_list sl
        JOIN identities i ON i.identity_id = sl.supplier_entity_id
        WHERE sl.owner_entity_id = $1
        ORDER BY sl.preferred DESC, sl.created_at DESC`,
-        [owner]
-      )
-    );
+    [owner]
+  );
+}
+
+/** one supplier row for a cost-blind reader, through lib/dues-view's own rules: the balance (R2, blindDues) and the supplier's credit limit (R5, blindTerms, RAIL-146l
+    follow-up); a key the row does not carry (ledger off: no balance_minor) stays absent */
+function hideOwed(row) {
+  const view = require('../lib/dues-view');
+  if (row.balance_minor !== undefined) Object.assign(row, view.blindDues({ side: 'supplier', balance_minor: row.balance_minor }));
+  if (row.credit_limit_minor !== undefined) Object.assign(row, view.blindTerms({ supplier: { credit_limit_minor: row.credit_limit_minor } }).supplier);
+  return row;
+}
+
+// List my suppliers — has_catalogue reflects an active default schema only
+router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) => {
+  try {
+    const owner = ctx(req);
+    const r = await withEntity(owner, (db) => listSuppliers(db, owner));
     /* ⭐ the public facts with their rung (lib/public-facts.js) — the row's raw flags never leave the server */
     const { factsOf } = require('../lib/public-facts');
     const rows = r.rows.map((x) => {
@@ -310,12 +375,15 @@ router.get('/suppliers', auth, ...checked('GET /suppliers'), async (req, res) =>
     }
     for (const row of rows) delete row.supplier_money; /* read above for the supplier's own offer wording; not part of the answer */
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
+    /* RAIL-146l: what the shop owes a supplier is purchase money - a login without can_see_costs gets null + cost_hidden (lib/dues-view R2), as on GET /dues and the CRM list; ONE can_see_costs read, the owner pays none */
+    if (await require('../lib/cost').isCostBlind(req, owner)) rows.forEach(hideOwed);
     res.json(Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     problem(req, res, failed(err, req, 'Get suppliers failed'));
   }
 });
 
+const SUPPLIER_PATCH_KEYS = PARTY_KEYS.concat(['category', 'notes', 'supply_kind', 'display_name', 'preferred']);
 // Update owner-side fields on a supplier relationship — your naming / preferred / notes / category.
 // Does NOT touch the supplier's own entity (that's theirs). Only the fields the owner controls.
 router.patch(
@@ -331,6 +399,7 @@ router.patch(
   auth,
   validateAsProblem,
   ...checked('PATCH /suppliers/:id'),
+  refuseUnknownKeys(SUPPLIER_PATCH_KEYS), // CRM-44: the keys the Suppliers screens send are all in the list
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -516,10 +585,8 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
       viewer
     };
 
-    const matches = (p) => {
-      const d = (p && p.item_data) || p || {};
-      return ((d.name || d.product || '') + ' ' + (d.code || d.hsn || d.sku || '')).toLowerCase().indexOf(text) >= 0;
-    };
+    /* NET-39: ONE product matcher, shared with the cross-installation search (lib/business-search) */
+    const matches = (p) => require('../lib/business-search').productMatches(p, text);
 
     const one = async (s) => {
       const base = {
@@ -606,13 +673,19 @@ router.get('/suppliers/availability', auth, ...checked('GET /suppliers/availabil
 router.get('/suppliers/:supplier_entity_id/catalogue', auth, ...checked('GET /suppliers/:supplier_entity_id/catalogue'), async (req, res) => {
   try {
     const sid = req.params.supplier_entity_id;
+    /* SEC-91: a shop reads a supplier's catalogue only from ITS OWN supplier list (or its own); a stranger and an unknown id get the same refusal, so no name or id of anyone else comes back */
+    const linked = String(sid) === String(ctx(req)) || (await withEntity(ctx(req), (db) => db.query(`SELECT 1 FROM supplier_list WHERE owner_entity_id = $1 AND supplier_entity_id = $2`, [ctx(req), sid]))).rows.length > 0;
+    if (!linked) return problem(req, res, { status: 404, ...words.notOnYourList() });
     const sup = await query(
       `SELECT identity_id, display_name, bridge_id, currency_code, business_status
        FROM identities WHERE identity_id = $1 AND identity_type = 'entity' AND COALESCE(sealed, false) = false`,
       [sid]
     );
     const supplier = sup.rows[0] || null;
-    if (!supplier) return res.json({ supplier: null, schema: null, fields: [], items: [], finishes: [] });
+    if (!supplier) return problem(req, res, { status: 404, ...words.notOnYourList() });
+    /* NET-39: a supplier on ANOTHER installation is a stub row here; its catalogue is the seller's own public view, asked for over the signed door */
+    const remote = await require('../lib/remote-catalogue').forSupplier(supplier);
+    if (remote) return res.json(remote);
     // ── ONE CATALOGUE READ (SPEC-one-path-many-principals) ────────────────────────────────────────────────────
     // This used to be a second, older implementation of "read a catalogue": it returned only the supplier's OWN
     // catalogue_items and knew nothing of `finishes` (where published/adopted TEMPLATES live) or `order_input` (the
@@ -914,15 +987,10 @@ router.patch(
   auth,
   validateAsProblem,
   ...checked('PATCH /customers/:id'),
+  refuseUnknownKeys(CUSTOMER_PATCH_KEYS),
   async (req, res) => {
     try {
       const owner = ctx(req);
-      /* R14: a key this route does not know is refused in words, naming it - never a 200 with nothing changed (silence is the bug) */
-      const unknown = Object.keys(req.body || {}).filter((item) => CUSTOMER_PATCH_KEYS.indexOf(item) < 0);
-      if (unknown.length) {
-        const message = 'Not saved: ' + unknown.join(', ') + ' cannot be changed here. You can change ' + CUSTOMER_PATCH_KEYS.join(', ') + '.';
-        return problem(req, res, { status: 400, code: 'UNKNOWN_FIELD', detail: message, legacy: { error: 'validation', code: 'UNKNOWN_FIELD', fields: unknown, message } });
-      }
       const party = await partyPatch(req, res, 'customer');
       if (party === false) return;
       if (!('segment_override' in (req.body || {}))) {
@@ -963,7 +1031,7 @@ router.patch(
  * GET /api/relationships/scorecard/:entity_id — one counterparty, in depth
  */
 const select = require('../lib/select');
-const measure = require('../lib/measure');
+const costView = require('../lib/cost-view'); /* RAIL-146k: the ONE way a route measures (a cost-blind reader's money stands only over the shop own sales) */
 const policy = require('../lib/policy');
 
 /** N1: an offer's amount in the SUPPLIER's own money (its stated currency; none stated → the bare amount); only a rupee supplier reads ₹ */
@@ -975,7 +1043,19 @@ function offerMoney(amount, currency) {
   return stated ? stated + ' ' + figure : figure;
 }
 
-router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) => {
+/**
+ * S35: has this shop a chit with the counterparty at all? A scorecard is drawn only from the chits both sides hold, so an id this shop
+ * never traded with (an unknown id, another shop's stranger, a real business it has not met) is one answer, the unknown id's 404, and says
+ * nothing of whether that business exists. The window's own rows answer it; only an empty window (since=) asks once more, without the window,
+ * so a real counterparty with nothing in the window keeps its empty card.
+ * (Kept above GET /scorecard: tests/list-paging-guard reads a route's body up to the next route, so a helper between the two would count as the list's.)
+ */
+async function tradedWith(shop, counterparty_id, since, windowRows) {
+  if (windowRows.length || !since) return windowRows.length > 0;
+  return (await select.rows(shop, { counterparty_id, limit: 1 })).length > 0;
+}
+
+router.get('/scorecard', auth, queryDay('since'), ...checked('GET /scorecard'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     // Derived from the CHITS, not from a saved supplier list: a supplier you have never traded with has nothing
@@ -987,12 +1067,13 @@ router.get('/scorecard', auth, ...checked('GET /scorecard'), async (req, res) =>
   }
 });
 
-router.get('/scorecard/:entity_id', auth, ...checked('GET /scorecard/:entity_id'), async (req, res) => {
+router.get('/scorecard/:entity_id', auth, queryDay('since'), ...checked('GET /scorecard/:entity_id'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const flags = await policy.get(me); // overdue is a POLICY, never a constant baked into a report
     const rows = await select.rows(me, { counterparty_id: req.params.entity_id, since: req.query.since, limit: 5000 });
-    const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
+    if (!(await tradedWith(me, req.params.entity_id, req.query.since, rows))) return problem(req, res, { status: 404, ...words.notFound() });
+    const card = await costView.measureFor(req, me, rows, { overdue_days: flags.overdue_days, card: true });
     res.json(Object.assign({ counterparty_id: req.params.entity_id, name: (rows[0] || {}).counterparty_name || null }, card));
   } catch (err) {
     problem(req, res, failed(err, req, 'Scorecard failed'));

@@ -69,7 +69,7 @@ const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(Stri
 async function loginIdFor(actor_key, req) {
   let handle = null;
   try {
-    const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    const r = await db('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
   } catch (e) {
     logger.fellBack(
@@ -88,13 +88,21 @@ const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
 const signin = require('./signin');
 
 /** the schema check of one route, to spread after its chain (lib/actors-contract.js): a body that is not an object, or a page asked twice, is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
+/* PPL-26 (BH-12, the api #649 pattern): a person id in the address that is not a uuid names nobody in this shop. Answered 404 in words here, before the database puts its own words into a 500 */
+router.param('id', uuidParam(words.coAssistGone)); /* K-1: the one shared guard, the same words */
+router.param('chit_id', uuidParam(words.chitNotFound)); /* K-1: chit_status.chit_id is a uuid column; a bad id names no chit */
+
+/* PPL-26: a chain's trim() turns a list or an object into the text "[object Object]" BEFORE the schema looks, so a field that is trimmed is checked for being one plain value first (the message is the chain's way, the body its old "Validation failed") */
+const plainValue = (value) => value === null || typeof value !== 'object';
+const PLAIN = 'Send one value, not a list or an object';
+
 const checked = (route) => {
   const operation = contract.actors.operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
@@ -118,7 +126,7 @@ async function entityTaskCap(entity_id) {
 async function taskCapGuard(req, res, next) {
   try {
     const sent = req.body && req.body.max_tasks;
-    if (sent === undefined || sent === null || sent === '') return next();
+    if (sent === undefined || sent === null || sent === '' || typeof sent === 'object') return next(); /* PPL-26: a list or an object is the validators' to refuse, before any read */
     const ceiling = await entityTaskCap(auth.entityOf(req));
     if (ceiling && parseInt(sent, 10) > ceiling) return problem(req, res, { status: 400, ...words.overTaskCap(ceiling) });
     next();
@@ -127,7 +135,7 @@ async function taskCapGuard(req, res, next) {
   }
 }
 const personSession = require('../lib/person-session'); // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
-const keysRoute = require('./keys'); // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
+const keysRoute = require('../lib/api-keys'); // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -181,7 +189,7 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
-router.post('/suggest-key', auth, [body('display_name').trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
+router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withMessage(PLAIN).trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
     const name = req.body.display_name;
@@ -251,19 +259,21 @@ router.post(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
-    body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
+    body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
        at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
        an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
     body('actor_key')
+      .custom(plainValue)
+      .withMessage(PLAIN)
       .trim()
       .isLength({ min: 4, max: 12 })
       .matches(/^[a-z0-9]+$/)
       .withMessage('Lowercase and numbers only — 4 to 12 characters'),
-    body('actor_role').optional().trim().isLength({ max: 100 }),
-    body('phone').optional().trim().isLength({ max: 20 }),
+    body('actor_role').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
@@ -509,9 +519,9 @@ router.patch(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
-    body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
-    body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
+    body('display_name').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }),
+    body('actor_role').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
@@ -519,7 +529,7 @@ router.patch(
     body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
     body('whole_entity').optional().isBoolean(),
     body('can_see_costs').optional().isBoolean(),
-    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
+    body('email').optional({ nullable: true, checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
   ],
   validateAsProblem,
   ...checked('PATCH /:id'),
@@ -798,7 +808,7 @@ router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate,
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
     const entity_id = auth.entityOf(req);
@@ -1703,6 +1713,28 @@ router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) =>
   }
 });
 
+/** PUT /:id/tasks/route: the chit must be this shop's, and the person whose task count moves one of this shop's people
+ *  (S41: another shop's person, or no one, answers as GET /:id/tasks does, before a count is touched). Returns the words key of the 404, or null. */
+async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
+  const chit = await handle(
+    `SELECT chit_id, assigned_to_actor_id
+     FROM chit_status
+     WHERE chit_id = $1 AND entity_id = $2`,
+    [chit_id, entity_id]
+  );
+  if (chit.rows.length === 0) return 'taskNotFound';
+  const actor = await handle(
+    `SELECT identity_id, display_name, actor_key,
+            break_status, current_task_count, max_tasks
+     FROM identities
+     WHERE identity_id = $1
+     AND parent_entity_id = $2
+     AND identity_type = 'actor'`,
+    [from_actor_id, entity_id]
+  );
+  return actor.rows.length === 0 ? 'tasksActorGone' : null;
+}
+
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
@@ -1720,17 +1752,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
     // the tx client so the existing calls flow through the context (and become atomic).
     await withEntity(entity_id, async (client) => {
       const handle = (t, p) => client.query(t, p);
-      // Verify chit belongs to this entity and is assigned to actor
-      const chit = await handle(
-        `SELECT chit_id, assigned_to_actor_id
-         FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-
-      if (chit.rows.length === 0) {
-        return problem(req, res, { status: 404, ...words.taskNotFound() });
-      }
+      const missing = await routeTargetMissing(handle, chit_id, from_actor_id, entity_id);
+      if (missing) return problem(req, res, { status: 404, ...words[missing]() });
 
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
@@ -1806,7 +1829,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
-router.get('/access-events', auth, async (req, res) => {
+router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const subject = String(req.query.subject || '').trim();

@@ -9,7 +9,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
-const { contract, faultOf, credentialFault } = require('../lib/kyb-contract'); // the contract (each route's operation) and the one way a fault is worded
+const { contract, faultOf, credentialFault, credentialInputFault } = require('../lib/kyb-contract'); // the contract (each route's operation) and the one way a fault is worded
 const kyb = require('../lib/kyb');
 const entityId = (req) => auth.entityOf(req);
 
@@ -23,6 +23,8 @@ router.get('/yourself', auth, ...contract.checked('GET /yourself'), async (req, 
 });
 // open registry — add a credential CB doesn't know (village NOC etc.) → declared, rises to documented with an owned chit
 router.post('/credential', auth, ...contract.checked('POST /credential'), async (req, res) => {
+  const refused = credentialInputFault(req.body); // CMP-23: a field that is not text, or a valid_until that is not a real day, is refused before the database
+  if (refused) return problem(req, res, refused);
   try {
     res.json(await kyb.addCredential(entityId(req), req.body || {}));
   } catch (err) {

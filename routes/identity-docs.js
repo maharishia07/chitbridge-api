@@ -15,7 +15,8 @@
  *
  * ⭐ WHAT THE EMPLOYER SEES IS THE VERDICT, NOT THE DOCUMENT — verified, when, by whom. That is
  * [[reference-cb-core-principle]] applied to a person: the fact travels, the source does not.
- 
+ *
+ * OWNS      the four /api/identity routes: a person's own document list (mask and verdict, never the number), filing one document, and the code that confirms a phone or e-mail (send · verify).
  * FLOW      PUT /documents/:scheme -> normalise -> docHash (keyed for Aadhaar, plain for the rest) -> upsert · identity-auth / keys.js recompute the PHONE and EMAIL hash
  *           auth (any signed-in login; the person is the token, or a co-assist the owner names) -> schema check (lib/identity-docs-contract.js) -> the handler -> lib/iddoc-verify.js for the code flow
  *           a refusal -> problem(req, res, ...) with the old { error, code, message } kept beside the Problem fields (docs/contracts/api-legacy.json)
@@ -35,6 +36,8 @@ const vault = require('../lib/vaultcrypto');
 const { query, withEntity } = require('../db');
 const crypto = require('crypto');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { UUID_RE } = require('../lib/trace'); // CMP-22: the one uuid test
+const { hasNul } = require('../lib/input-hygiene'); // K-1: a NUL byte in a value names nothing a column holds
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
 
 /**
@@ -200,6 +203,14 @@ async function resolveSubject(req, wanted) {
   const raw = String(wanted || '').trim();
   if (!raw || raw === req.identity.identity_id) return { id: req.identity.identity_id, onBehalf: false };
 
+  /* CMP-22 (BH-10): an id that is not a uuid names nobody this shop holds, the same one answer as a stranger's id — said here, before the database puts its own words (22P02) into a 500 */
+  if (!UUID_RE.test(raw)) {
+    const e = new Error('That person is not one of your co-assists.');
+    e.status = 403;
+    e.code = 'IDOC_SUBJECT_FORBIDDEN';
+    throw e;
+  }
+
   if (req.identity.identity_type === 'actor') {
     const e = new Error('Only the account owner can record a document for someone else.');
     e.status = 403;
@@ -339,9 +350,12 @@ router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:sche
 async function loadDoc(req, scheme) {
   const subject = await resolveSubject(req, req.body.identity_id || req.query.identity_id);
   const entity_id = auth.entityOf(req);
-  const r = await withEntity(entity_id, (db) =>
-    db.query(`SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme])
-  );
+  /* K-1 (B2): a scheme with a NUL byte in it names no document, so no row — the answer an unknown scheme gets, said before the database turns it into a 500 */
+  const r = hasNul(scheme)
+    ? { rows: [] }
+    : await withEntity(entity_id, (db) =>
+        db.query(`SELECT value_enc, status, verification_ref FROM identity_documents WHERE identity_id = $1 AND scheme = $2`, [subject.id, scheme])
+      );
   const row = r.rows[0];
   let value = null;
   if (row && row.value_enc) {

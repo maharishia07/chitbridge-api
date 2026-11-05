@@ -12,6 +12,7 @@ const log = require('../lib/logger');
 // parameterized SQL only (closes TD-006 for this surface), default-deny, read view leaks no PII.
 const express = require('express');
 const router = express.Router();
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no entity (K-1)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, faultOf, thrownAs, vaultFault, countrySetupFault, conformanceRefusal, contract } = require('../lib/governance-contract'); // each route's operation (S9) and the words of its refusals
 const { query, withTransaction, withEntity } = require('../db');
@@ -88,6 +89,7 @@ router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, r
   /* ⚠️ SEC (23 Oct, found by the generated foreign_id_404 case): a shop's plan, overrides and exceptions are ITS data. A shop reads
      its own; the platform reads any; another shop's id gets the unknown id's 404. Before, any signed-in shop could read any shop's. */
   if (String(req.params.id) !== String(auth.entityOf(req)) && !platformroot.isPlatform(req)) return problem(req, res, notGoverned());
+  if (!UUID.test(String(req.params.id))) return problem(req, res, notGoverned()); /* K-1: a junk id answers as an unknown one, not a 500 with the driver's words (the platform may read any id) */
   try {
     const { rows } = await query(
       `SELECT constitution_version, params_override, plan
@@ -113,6 +115,18 @@ router.get('/entities/:id', auth, ...checked('GET /entities/:id'), async (req, r
     problem(req, res, faultOf(err, req, 'governance view failed'));
   }
 });
+
+/**
+ * Write the Class-C exceptions a governed create stamped, under the NEW shop's own binding. governance_exceptions is RLS-scoped to one shop (b778),
+ * and this request makes the shop it writes for, so the new id is bound for the rest of the transaction (the step routes/catalogue.js:1632 takes);
+ * until b778 runs the binding changes nothing.
+ */
+async function writeMintExceptions(client, newId, exceptions) {
+  await client.query(`SELECT set_config('app.current_entity', $1, true)`, [String(newId)]);
+  for (const ex of exceptions) {
+    await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
+  }
+}
 
 // ── POST /api/governance/entities — governed create (the platform role only: lib/platformroot.refuseUnlessPlatform) ──
 // Transactional: the identity row + its Class-C exceptions commit together.
@@ -150,9 +164,7 @@ router.post('/entities', auth, platformGate, ...checked('POST /entities'), async
         [genBridge(), display_name, email, stamp.governed_by, stamp.constitution_version, JSON.stringify(stamp.params_override), plan]
       );
       const newId = ins.rows[0].identity_id;
-      for (const ex of stamp.exceptions) {
-        await client.query(`INSERT INTO governance_exceptions (entity_id, klass, key, detail) VALUES ($1,$2,$3,$4)`, [newId, ex.klass, ex.key, ex.detail]);
-      }
+      await writeMintExceptions(client, newId, stamp.exceptions);
       return { id: newId };
     });
 
@@ -167,6 +179,7 @@ router.post('/entities', auth, platformGate, ...checked('POST /entities'), async
 // Forward-only: an entity's NEW chits then resolve under the active constitution;
 // chits already sent stay frozen at their original version (handled at send/freeze time).
 router.post('/entities/:id/reattest', auth, platformGate, ...checked('POST /entities/:id/reattest'), async (req, res) => {
+  if (!UUID.test(String(req.params.id))) return problem(req, res, notGoverned()); /* K-1: as an unknown id (after the platform gate, so a shop still hears 403) */
   try {
     const { rows } = await query(`SELECT params_override FROM identities WHERE governed_by IS NOT NULL AND identity_id = $1`, [req.params.id]);
     if (!rows.length) return problem(req, res, notGoverned());

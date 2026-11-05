@@ -36,7 +36,7 @@ ok('handed the AE pack, the day posts AED 1.01 VAT on its one head', AE && row(a
 /* books-hooks hands the books' pack to BOTH daySummary calls (the late bill and the day) — as the third argument */
 const src = fs.readFileSync(path.join(__dirname, '../lib/books-hooks.js'), 'utf8');
 const calls = src.match(/daySummary\([^\n]*\)/g) || [];
-ok('books-hooks: every daySummary call hands in the books\' pack as the third argument (' + calls.length + ' calls)', calls.length >= 2 && calls.every((c) => /\}, \{ pack: booksPack\(s\) \}\)/.test(c)), calls.join(' | '));
+ok('books-hooks: every daySummary call hands in the books\' pack as the third argument (' + calls.length + ' calls)', calls.length >= 2 && calls.every((c) => /\}, \{ pack: booksPack\(\w+\) \}\)/.test(c)), calls.join(' | '));
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
 assert.strictEqual(fail, 0);

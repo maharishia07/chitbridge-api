@@ -99,6 +99,7 @@ function writes(tools) {
   const put = (id, scheme, expectStatus, body, setup, extra) => scene(id, P, '/documents/' + scheme, expectStatus, Object.assign({ body, setup }, extra || {}));
   const ok = (who, o) => asks(who || OWNER, o);
   return [
+    put('put-unknown-key-refused', 'PHONE', 422, { value: VALUES.PHONE, colour: 'red' }, ok()),
     put('put-phone', 'PHONE', 200, { value: VALUES.PHONE }, ok()),
     put('put-phone-plus-spaces', 'phone', 200, { value: ' +00 0000-0000 ' }, ok()),
     put('put-phone-as-number', 'PHONE', 200, { value: 10000000000 }, ok()),
@@ -107,6 +108,7 @@ function writes(tools) {
     put('put-voter', 'VOTER_ID', 200, { value: VALUES.VOTER_ID }, ok()),
     put('put-licence', 'DL', 200, { value: VALUES.DL }, ok()),
     put('put-aadhaar-own', 'AADHAAR', 200, { value: VALUES.AADHAAR }, ok()),
+    put('put-email-with-a-nul-byte', 'EMAIL', 400, { value: 'nobody@exa\u0000mple.test' }, ok(), { after: true }),
     put('put-staff-phone', 'PHONE', 200, { value: VALUES.PHONE }, ok(STAFF)),
     put('put-staff-pan', 'PAN', 403, { value: VALUES.PAN }, ok(STAFF)),
     put('put-for-co-assist', 'PAN', 200, { value: VALUES.PAN, identity_id: ACTOR }, ok()),
@@ -146,6 +148,7 @@ function codes(tools) {
   const delivered = { notify: { sendOtpSms: async () => ({ delivered: true }), sendOtpEmail: async () => ({ delivered: true }) } };
   const sealed = { NODE_ENV: 'production' };
   return [
+    code('code-unknown-key-refused', 'PHONE', 422, { body: { colour: 'red' } }),
     code('code-phone-not-sent', 'PHONE', 200),
     code('code-phone-sent', 'PHONE', 200, {}, { patch: delivered }),
     code('code-email-sent', 'EMAIL', 200, {}, { patch: delivered }),
@@ -157,6 +160,7 @@ function codes(tools) {
     code('code-aadhaar-not-by-code', 'AADHAAR', 400),
     code('code-unknown-scheme-no-row', 'PASSPORT', 404, { record: null }),
     code('code-no-row', 'PHONE', 404, { record: null }),
+    code('code-scheme-with-a-nul-byte', 'PH%00ONE', 404, { record: null }, { after: true }),
     code('code-value-unreadable', 'PHONE', 409, { record: { owner: SHOP, scheme: 'PHONE', value: null } }),
     code('code-phone-sealed', 'PHONE', 503, {}, { env: sealed }),
     code('code-email-sealed', 'EMAIL', 503, {}, { env: sealed }),
@@ -181,6 +185,7 @@ function confirms(tools) {
     return scene(id, V, '/documents/' + scheme + '/verify', expectStatus, Object.assign({ body: options.body === undefined ? { code: FIXED_CODE } : options.body, setup: asks(options.who || OWNER, Object.assign({ record }, options.db || {})) }, extra || {}));
   };
   return [
+    verifyScene('verify-unknown-key-refused', 'PHONE', 422, { body: { code: FIXED_CODE, colour: 'red' } }),
     verifyScene('verify-phone', 'PHONE', 200),
     verifyScene('verify-email', 'EMAIL', 200),
     verifyScene('verify-code-as-number', 'PHONE', 200, { body: { code: Number(FIXED_CODE) } }),
@@ -195,6 +200,7 @@ function confirms(tools) {
     verifyScene('verify-no-code-asked', 'PHONE', 400, { ref: null }),
     verifyScene('verify-pan-no-code-asked', 'PAN', 400, { ref: null }),
     verifyScene('verify-no-row', 'PHONE', 404, { record: null }),
+    verifyScene('verify-scheme-with-a-nul-byte', 'PH%00ONE', 404, { record: null }, { after: true }),
     verifyScene('verify-not-migrated', 'PHONE', 503, { db: { noTable: true } }),
     verifyScene('verify-stranger-named', 'PHONE', 403, { body: { code: FIXED_CODE, identity_id: STRANGER_ACTOR } }),
     verifyScene('verify-staff-names-colleague', 'PHONE', 403, { who: STAFF, body: { code: FIXED_CODE, identity_id: ACTOR } }),

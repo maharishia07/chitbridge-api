@@ -19,7 +19,7 @@ const API = path.join(__dirname, '..');
 const WEB = path.join(API, '..', 'chitbridge-web', 'public');
 const PROG = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
-const KEYS = fs.readFileSync(path.join(API, 'routes', 'keys.js'), 'utf8').replace(/\r\n/g, '\n');
+const KEYS = fs.readFileSync(path.join(API, 'lib', 'api-keys.js'), 'utf8').replace(/\r\n/g, '\n');
 const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 
 let pass = 0;
@@ -27,7 +27,7 @@ const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); } c
 /* a top-level function's text: to its closing `}` — or `});` for a router.x = async (…) => withTransaction(…) */
 const body = (src, sig) => {
   const a = src.indexOf(sig); assert.ok(a >= 0, sig + ' is gone');
-  const ends = ['\n}\n', '\n});\n'].map((e) => src.indexOf(e, a)).filter((i) => i > a);
+  const ends = ['\n}\n', '\n});\n', '\n  });\n'].map((e) => src.indexOf(e, a)).filter((i) => i > a);
   assert.ok(ends.length, sig + ' has no end this test can find');
   return src.slice(a, Math.min.apply(null, ends) + 4);
 };
@@ -67,10 +67,11 @@ it('vendor-till writes versions.json from the engines\' own lines, and the servi
 
 it('the server keeps them on THAT counter\'s key, shape-checked, in the till record it already writes', () => {
   assert.ok(/engines: req\.query\.eng/.test(TILL), 'the snapshot route does not pass eng= to claimSeries');
-  const c = body(KEYS, 'router.claimSeries = async');   /* M11: claimTill widened into claimSeries — the key path is its body */
-  assert.ok(/const engines = cleanEngines\(ask && ask\.engines\);/.test(c), 'claimTill does not read the versions');
-  assert.strictEqual((c.match(/if \(engines\) me\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
-  const ce = body(KEYS, 'function cleanEngines(raw)');
+  /* M11: claimTill widened into claimSeries — the key path is now its named steps (S7): the transaction, the named counter, the free prefix */
+  const c = ['async function claimInTransaction(', 'async function claimNamedCounter(', 'async function claimFreePrefix('].map((sig) => body(KEYS, sig)).join('\n');
+  assert.ok(/engines: cleanEngines\(askedFor && askedFor\.engines\)/.test(c), 'claimTill does not read the versions');
+  assert.strictEqual((c.match(/if \(engines\) ownRecord\.till\.engines = engines;/g) || []).length, 2, 'one of the two till writes drops the versions');
+  const ce = body(KEYS, 'function cleanEngines(rawEngines)');
   assert.ok(/slice\(0, 60\)/.test(ce) && /\{1,32\}/.test(ce) && /\{1,20\}/.test(ce), 'the versions are no longer capped and shape-checked');
 });
 

@@ -78,6 +78,11 @@ function extras(tools) {
     if (pattern.test(String(sql))) throw sqlError(code);
     return null;
   };
+  /** the one rule of Postgres a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021 */
+  const nulRefusing = (sql, params) => {
+    if ((params || []).some((one) => typeof one === 'string' && one.includes('\u0000'))) throw sqlError('22021');
+    return null;
+  };
   const YOURSELF = 'GET ' + K + '/yourself';
   const CREDENTIAL = 'POST ' + K + '/credential';
   const POSITION = 'GET ' + K + '/position';
@@ -99,13 +104,18 @@ function extras(tools) {
     X('credential-by-standard', CREDENTIAL, 200, { body: { standard_key: 'iec', doc_key: 'certificate', evidence_ref: CHIT, valid_until: '2027-01-31' }, setup: withRows(when(/FROM chit_status/, [{ '?column?': 1 }])) }),
     X('credential-evidence-unknown', CREDENTIAL, 200, { body: { standard_key: 'iec', evidence_ref: OTHER_CHIT } }),
     X('credential-title-long', CREDENTIAL, 200, { body: { title: 'Municipal Licence To Trade In Dry Goods And Groceries Within The Ward Number Seven Area' } }),
-    X('credential-title-an-object', CREDENTIAL, 200, { body: { title: { a: 1 } } }),
-    X('credential-extra-keys', CREDENTIAL, 200, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
+    X('credential-title-an-object', CREDENTIAL, 400, { body: { title: { a: 1 } } }),
+    X('credential-extra-keys-refused', CREDENTIAL, 422, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
     X('credential-nothing-named', CREDENTIAL, 400, { body: {} }),
     X('credential-body-a-list', CREDENTIAL, 400, { body: [] }),
     X('credential-title-blank', CREDENTIAL, 400, { body: { title: '', standard_key: '' } }),
+    /* K-1 (B2): a text no column can hold is a 400 in words, never a 500 */
+    X('credential-junk-title', CREDENTIAL, 400, { body: { title: 'Village\u0000 NOC' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-standard-key', CREDENTIAL, 400, { body: { standard_key: 'iec\u0000' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-doc-key', CREDENTIAL, 400, { body: { title: 'Village NOC', doc_key: '\u0000' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-evidence-ref', CREDENTIAL, 400, { body: { title: 'Village NOC', evidence_ref: 'ref\u0000' }, setup: withRows(nulRefusing) }),
     X('credential-db-fails', CREDENTIAL, 500, { body: { title: 'Village NOC' }, setup: { db: 'fail' } }),
-    X('credential-bad-date', CREDENTIAL, 500, { body: { title: 'Village NOC', valid_until: 'next spring' }, setup: withRows(noWrite(/INSERT INTO entity_compliance/, '22007')) }),
+    X('credential-bad-date', CREDENTIAL, 400, { body: { title: 'Village NOC', valid_until: 'next spring' }, setup: withRows(noWrite(/INSERT INTO entity_compliance/, '22007')) }),
     X('credential-library-throws', CREDENTIAL, 500, { body: { title: 'x' }, patch: { kyb: { addCredential: thrown(SECRET_SQL) } } }),
     X('credential-answer-fails', CREDENTIAL, 500, { body: { title: 'Village NOC' }, setup: { jsonThrows: true } }),
     S('credential-library-says-403', CREDENTIAL, 403, { says: 'Not for you.', body: { title: 'x' }, patch: { kyb: { addCredential: thrown('Not for you.', 403) } } }),
@@ -134,6 +144,7 @@ function extras(tools) {
     S('risk-library-throws-503', RISK, 503, { patch: { kyb: { risk: thrown(SECRET_SQL, 503) } } }),
     /* POST /field */
     X('field-not-connected', FIELD, 200, {}),
+    X('field-extra-key-refused', FIELD, 422, { body: { vertical: 'food' } }),
     X('field-provider-named', FIELD, 200, { env: { KYB_FIELD_PROVIDER: 'x', KYB_FIELD_KEY: 'y' } }),
     X('field-served-from-cache', FIELD, 200, { setup: withRows(when(/FROM kyb_field_cache/, [{ result: cachedResult, created_at: '2026-10-01T00:00:00Z' }])) }),
     X('field-reads-fail', FIELD, 200, { setup: { db: 'fail' } }),

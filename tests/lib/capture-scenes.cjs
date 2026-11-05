@@ -68,6 +68,23 @@ const mailBody = (more) => JSON.stringify(Object.assign({ to: 'Orders <orders@sh
 /** what the stood-in side effects were asked, in order (read by the test after the run) */
 const calls = [];
 
+const NUL = '\u0000';
+/**
+ * K-1 (B2): the stand-in keeps the one rule of Postgres a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021, and inside the jsonb of media_refs
+ * (JSON.stringify writes it as the six characters \\u0000) 22P05. Its words are the database's, which no answer may carry.
+ */
+function nulRefusing(spec) {
+  const next = stubRows(spec);
+  const holds = (v) => (typeof v === 'string' ? v.includes(NUL) : false);
+  return (sql, params) => {
+    (params || []).forEach((v) => {
+      if (holds(v)) throw pgError('22021', 'invalid byte sequence for encoding "UTF8": 0x00');
+      if (typeof v === 'string' && v.includes('\\u0000')) throw pgError('22P05', 'unsupported Unicode escape sequence');
+    });
+    return next(sql, params);
+  };
+}
+
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
   const { OWNER, STAFF } = tools;
@@ -92,6 +109,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/simulate ── */
   const simulate = [
+    X('sim-unknown-key-refused', R('POST', '/simulate'), 400, { body: { colour: 'red', sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-ok', R('POST', '/simulate'), 200, { body: { sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-channel-is-always-web', R('POST', '/simulate'), 200, { body: { channel: 'whatsapp', sender_ref: '919840012345', raw_text: 'hello' }, setup: world({}) }),
     X('sim-no-text', R('POST', '/simulate'), 400, { body: { sender_ref: '919840012345' }, setup: world({}) }),
@@ -111,6 +129,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/structure ── */
   const structure = [
+    X('structure-unknown-key-refused', R('POST', '/:id/structure'), 400, { url: at('/' + CAP + '/structure'), body: { colour: 'red' }, setup: world({}) }),
     X('structure-ok', R('POST', '/:id/structure'), 200, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: STRUCTURED, note: 'read by the co-assist', usage: { input_tokens: 10, output_tokens: 20 } }) }),
     X('structure-unknown', R('POST', '/:id/structure'), 404, { url: at('/' + CAP + '/structure'), setup: world({ capture: null }) }),
     X('structure-nothing-usable', R('POST', '/:id/structure'), 422, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: null }) }),
@@ -126,6 +145,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/raise ── */
   const raise = [
+    X('raise-unknown-key-refused', R('POST', '/:id/raise'), 400, { url: at('/' + CAP + '/raise'), body: { colour: 'red' }, setup: world(withStructured()) }),
     X('raise-ok', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), setup: world(withStructured()) }),
     X('raise-without-catalogue', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), body: { use_catalogue: false }, setup: world(withStructured()) }),
     X('raise-not-read-yet', R('POST', '/:id/raise'), 409, { url: at('/' + CAP + '/raise'), setup: world({}) }),
@@ -138,12 +158,14 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/convert and /dismiss ── */
   const handled = [
+    X('convert-unknown-key-refused', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: { colour: 'red', chit_id: CHIT }, setup: world({}) }),
     X('convert-ok', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({}) }),
     X('convert-without-chit', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), setup: world({}) }),
     X('convert-unknown', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: null }) }),
     X('convert-already-handled', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'converted' }) }) }),
     X('convert-fails', R('POST', '/:id/convert'), 500, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world(failing(/UPDATE capture SET status = 'converted'/)) }),
     X('convert-body-is-a-list', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: [1], setup: world({}), after: true }),
+    X('dismiss-unknown-key-refused', R('POST', '/:id/dismiss'), 400, { url: at('/' + CAP + '/dismiss'), body: { colour: 'red' }, setup: world({}) }),
     X('dismiss-ok', R('POST', '/:id/dismiss'), 200, { url: at('/' + CAP + '/dismiss'), setup: world({}) }),
     X('dismiss-unknown', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: null }) }),
     X('dismiss-already-handled', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'dismissed' }) }) }),
@@ -165,6 +187,7 @@ function extras(tools) {
     X('stores-ok', R('GET', '/stores'), 200, { setup: world({}) }),
     X('stores-not-migrated', R('GET', '/stores'), 200, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/, '42P01')) }),
     X('stores-read-fails', R('GET', '/stores'), 500, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/)) }),
+    X('stores-save-unknown-key-refused', R('POST', '/stores'), 400, { body: { colour: 'red', phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-ok', R('POST', '/stores'), 200, { body: { phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-no-phone', R('POST', '/stores'), 400, { body: { display_name: 'Chola Stores' }, setup: world({}) }),
     X('stores-save-not-migrated', R('POST', '/stores'), 503, { body: { phone: '9840012345' }, setup: world(failing(/INSERT INTO wholesaler_store/, '42703')) }),
@@ -219,10 +242,28 @@ function extras(tools) {
     mail('email-capture-fails', 200, mailBody(), { setup: world(failing(/INSERT INTO capture/)) })
   ];
 
+  /* ── K-1 (B2): a value no column can hold is a 400 in words, never a 500 (the harness has no door; the real server's door answers INVALID_CHARACTER first). Not frozen: new answers ── */
+  const junkWorld = { sqlRows: nulRefusing({}) };
+  const junk = [
+    X('junk-simulate-text-nul', R('POST', '/simulate'), 400, { body: { raw_text: 'tomato' + NUL + '5 kg' }, setup: junkWorld, after: true }),
+    X('junk-simulate-sender-nul', R('POST', '/simulate'), 400, { body: { sender_ref: '9840' + NUL, raw_text: 'hello' }, setup: junkWorld, after: true }),
+    X('junk-simulate-name-nul', R('POST', '/simulate'), 400, { body: { sender_name: 'Anna' + NUL, raw_text: 'hello' }, setup: junkWorld, after: true }),
+    X('junk-simulate-subject-nul', R('POST', '/simulate'), 400, { body: { subject: 'Order' + NUL, raw_text: 'hello' }, setup: junkWorld, after: true }),
+    X('junk-simulate-media-nul', R('POST', '/simulate'), 400, { body: { raw_text: 'hello', media_refs: [{ name: 'a' + NUL + '.jpg', id: 'm1' }] }, setup: junkWorld, after: true }),
+    X('junk-stores-name-nul', R('POST', '/stores'), 400, { body: { phone: '9840012345', display_name: 'Chola' + NUL }, setup: junkWorld, after: true }),
+    X('junk-stores-address-nul', R('POST', '/stores'), 400, { body: { phone: '9840012345', address: 'Anna' + NUL + 'Nagar' }, setup: junkWorld, after: true }),
+    X('junk-stores-notes-nul', R('POST', '/stores'), 400, { body: { phone: '9840012345', notes: 'gate' + NUL }, setup: junkWorld, after: true }),
+    X('junk-stores-phone-nul', R('POST', '/stores'), 400, { body: { phone: '98400' + NUL + '12345' }, setup: junkWorld, after: true }),
+    X('junk-convert-chit-nul', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT + NUL }, setup: junkWorld, after: true }),
+    wa('junk-whatsapp-text-nul', 200, whatsappBody([whatsappMessage('wamid.NUL', 'five kg' + NUL)]), { setup: junkWorld, after: true }),
+    mail('junk-email-text-nul', 200, mailBody({ text: 'five kg' + NUL }), { setup: junkWorld, after: true }),
+    X('junk-consolidate-since-nul', R('GET', '/consolidate'), 400, { url: at('/consolidate?since=2026-10-01%00'), setup: junkWorld, after: true })
+  ];
+
   /* ── who is asking: a staff member reads the same inbox as the owner ── */
   const staff = [X('pending-staff', R('GET', '/pending'), 200, { setup: Object.assign({ who: STAFF }, world({})) }), X('sim-staff', R('POST', '/simulate'), 200, { body: { raw_text: 'hello' }, setup: Object.assign({ who: STAFF }, world({})) })];
   void OWNER;
-  return [].concat(simulate, pending, structure, raise, handled, consolidation, stores, handshake, whatsapp, email, staff);
+  return [].concat(simulate, pending, structure, raise, handled, consolidation, stores, handshake, whatsapp, email, junk, staff);
 }
 
 module.exports = { SHOP, CAP, CHIT, STRANGER_ID, SECRETS, CAPTURE_ROW, STRUCTURED, SECRET_TEXT, stubRows, extras, calls, whatsappBody, whatsappMessage, metaPost, mailPost, mailBody };

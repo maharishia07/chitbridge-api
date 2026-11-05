@@ -1,7 +1,7 @@
 // @stage built
 // OWNS  /api/books: the ledger's reads and the period-end writes, every refusal a code + a sentence (fail), never a 500 of prose.
 // CALLED BY server.js (mounted at /api/books), CB Accounts and CB Finance.
-// FLOW  auth → noKey → owner → lib/books-* → the answer; a refusal → fail(res, e)
+// FLOW  auth → noKey → owner → (the money doors: onceOnly, FIN-63) → on → lib/books-* → the answer; a refusal → fail(res, e)
 // CARD 16-finance/books-routes
 // @stage-note [BOOKS v2] /api/books — the ledger's reads (day book, ledgers, statement, dues, trial balance, P&L, balance
 // @stage-note sheet) and its few writes (payments, manual entries, reversals, month locks, opening, packs). 404 while off.
@@ -53,8 +53,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
    a supplier chip saying you owe lakhs. One day, from one helper, everywhere this file says today. */
 const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf of a moment is never null */
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
-/* minor units in; an amount in rupees is rounded by money.round (the one rounder) first, never by a copy of the rule */
-const minorOf = (b) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : Math.round(require('../lib/money').round(Number(b.amount)) * 100));
+/* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
+   currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
+const cashflow = () => require('../lib/books-cashflow');
+const minorOf = (b, currency) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : cashflow().toMinor(b.amount, currency));
 const WORD = {
   walkin_day: 'Walk-in sales',
   sale_bill: 'Sale',
@@ -144,6 +146,14 @@ async function on(req, res, next) {
     problem(req, res, refusalOf(err, req));
   }
 }
+/**
+ * ⭐ FIN-63 (5 Nov): A MONEY DOOR TAKES ONE KEY PER ATTEMPT. `client_ref` stops a second tap on POST /payments, but confirm had no replay
+ * guard at all: a retry after a lost answer settled the bills twice from the same receipt. The four writes the web keys (web #447
+ * idem:'attempt') now REQUIRE an Idempotency-Key — POST /payments · PATCH /payments/:id · POST /payments/:id/confirm · POST /gst/pay —
+ * through the ONE gate (middleware/idempotency requireKey, the bearer form): no key → 422 IDEMPOTENCY_KEY_REQUIRED in words, BEFORE
+ * the ledger's own gates; the same key again → the first answer, marked X-Idempotent-Replay. propose is a read and is not keyed.
+ */
+const onceOnly = require('../middleware/idempotency').requireKey();
 const curOf = (req) => B.curOf(req.books); /* CX2 (A3): the setting's money, else its pack's — never 'INR' typed */
 
 /* ── the switch ─────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -765,6 +775,10 @@ function termsFigures(docs, asOf, currency, eff) {
     early: earlyOfferRow(docs, asOf, currency, eff && eff.early.value)
   };
 }
+/** RAIL-146i: the /dues answer for THIS reader — ONE can_see_costs read (lib/cost.isCostBlind, fail-closed); an actor without it sees no supplier-side money (lib/dues-view R1-R6); the owner's bytes are untouched */
+async function forReader(req, e, answer) {
+  return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindDuesAnswer(answer) : answer;
+}
 /*
  * ⭐ THE ONE DUE FIGURE (R73/R76): a party's open documents below are the NETTED bills (E.dues → books-engines.netOpen — net of its receipts on
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
@@ -915,10 +929,9 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       return Array.from(rows.values()).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
     res.json(
-      Object.assign(
-        { currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0) },
-        payables ? { payables } : {}
-      )
+      await forReader(req, e, {
+        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...(payables ? { payables } : {})
+      })
     );
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1076,7 +1089,7 @@ function paymentQuestion(req, needMode) {
   const party = String(b.party_id || b.party || '');
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   if (b.currency && String(b.currency).toUpperCase() !== cur) return { refuse: { status: 422, words: 'This ledger is kept in ' + cur + '.' } };
-  const amount_minor = minorOf(b);
+  const amount_minor = minorOf(b, cur);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
   const mode = MODES.indexOf(String(b.mode || '').toLowerCase()) >= 0 ? String(b.mode).toLowerCase() : null;
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — cash, bank, UPI, card or cheque?' } };
@@ -1096,10 +1109,22 @@ const levelOf = (req) => require('../lib/access').levelOf(req.identity);
 async function meName(req, h, e) {
   return req.identity && req.identity.identity_type === 'entity' && req.identity.display_name ? req.identity.display_name : (await S.shopName(h, e)) || 'We';
 }
+/** RAIL-146m: a payment answer for THIS reader — a supplier payment (out) asks can_see_costs ONCE (lib/cost.isCostBlind, fail-closed) and a blind
+ *  co-assist gets the same shape with the purchase money null (lib/dues-view R7); a customer payment and the owner never read the flag — their bytes are untouched */
+async function forPayer(req, e, kind, direction, answer) {
+  const blind = direction === 'out' && (await require('../lib/cost').isCostBlind(req, e));
+  return blind ? require('../lib/dues-view').blindPayment(kind, answer, direction) : answer;
+}
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
 function alreadyPaid(res, err) {
   /* FIN-53: the title follows the list — "Already paid?" for the same money twice, "More than is owed" for W1/W2 alone (books.warningTitle) */
-  return problem(res.req, res, { status: 409, code: 'ALREADY_PAID', detail: err.message, legacy: { error: err.title || 'Already paid?', message: err.message, warnings: err.warnings || [] } });
+  const title = err.title || 'Already paid?',
+    req = res.req,
+    said = (seen) => problem(req, res, { status: 409, code: 'ALREADY_PAID', detail: seen.message, legacy: Object.assign({ error: title, message: seen.message, warnings: seen.warnings }, seen.cost_hidden ? { cost_hidden: true } : {}) });
+  const plain = { message: err.message, warnings: err.warnings || [] };
+  if ((req.body || {}).direction !== 'out') return said(plain); /* a customer's payment and a chit's Mark-paid (routes/chits payFailure): as before, synchronously */
+  /* RAIL-146m R7: the sentence names what is open, so a blind payer to a supplier reads the title alone and the warnings without their figures */
+  return forPayer(req, ctx(req), 'refusal', 'out', plain).then((seen) => said(seen.cost_hidden ? Object.assign(seen, { message: title }) : seen));
 }
 
 /**
@@ -1139,7 +1164,7 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
         words: B.previewWords(prop, name, q.direction)
       };
     });
-    res.json({ currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words });
+    res.json(await forPayer(req, e, 'preview', q.direction, { currency: out.currency, party: out.party, open_minor: out.open_minor, proposal: out.proposal, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why, warnings: out.warnings, words: out.words }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1159,7 +1184,7 @@ router.post('/payments/preview', auth, noKey, on, ...checked('POST /payments/pre
  * ⚠️ Refused in words (422): a party on neither of the shop's lists; a date before the ledger began or in the future.
  * A cheque posts only when it CLEARS (C3) — until then it is a status row, and there is nothing to propose.
  */
-router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), async (req, res) => {
+router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /payments'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
@@ -1248,7 +1273,7 @@ router.post('/payments', auth, noKey, editor, on, ...checked('POST /payments'), 
         console.error('bill money steps:', e2.message);
       }
     }
-    res.json({ ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice }); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
+    res.json(await forPayer(req, e, 'record', direction, { ok: true, payment: out.payment, posted: out.posted, allocation: out.allocation, outcome: out.outcome, advice: out.advice })); /* a replay has no allocation or outcome: undefined leaves the JSON as before */
   } catch (err) {
     if (err && err.code === 'ALREADY_PAID') return alreadyPaid(res, err);
     problem(req, res, refusalOf(err, req));
@@ -1269,10 +1294,11 @@ router.get('/payments/:id/advice', auth, noKey, on, ...checked('GET /payments/:i
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
-      return B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
+      const advice = await B.adviceFor(h, e, p, { level: levelOf(req), me: await meName(req, h, e), names: await partyNames(h, e), ready: await S.adviceReady(h, e) });
+      return Object.assign(advice, { direction: p.direction }); /* RAIL-146m: the side decides who may read the figures */
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such payment.');
-    res.json({ currency: curOf(req), payment_id: out.payment_id, party: out.party, advice: out.advice, may: out.may, words: out.words, body: out.body, share: out.share });
+    res.json(await forPayer(req, e, 'advice', out.direction, { currency: curOf(req), payment_id: out.payment_id, party: out.party, advice: out.advice, may: out.may, words: out.words, body: out.body, share: out.share }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1334,7 +1360,7 @@ router.get('/bank/rail', auth, noKey, on, ...checked('GET /bank/rail'), async (r
  * ⭐ THE SAME RULE THE READ PAINTS (B.adviceMay): a viewer / commenter → 403 with the rail engine's sentence; reversed · a held cheque · not posted · off rail (send) /
  *   on rail (share) → 409 with the words. Before b285 runs → 503 BOOKS_NOT_MIGRATED "Advice not available yet…". Co-assist allowed (as record is).
  */
-router.patch('/payments/:id', auth, noKey, on, ...checked('PATCH /payments/:id'), async (req, res) => {
+router.patch('/payments/:id', auth, noKey, onceOnly, on, ...checked('PATCH /payments/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id),
@@ -1411,22 +1437,58 @@ router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /
         apply_minor: prop.apply_minor,
         on_account_minor: prop.items.length ? prop.on_account_minor : 0,
         skipped: prop.skipped,
-        why: prop.why
+        why: prop.why,
+        direction: p.direction
       };
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json({ payment_id: id, proposal: out.proposal, open_minor: out.open_minor, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why });
+    res.json(await forPayer(req, e, 'propose', out.direction, { payment_id: id, proposal: out.proposal, open_minor: out.open_minor, apply_minor: out.apply_minor, on_account_minor: out.on_account_minor, skipped: out.skipped, why: out.why }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
-router.post('/payments/:id/confirm', auth, noKey, editor, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
+/**
+ * FIN-63 step 2: the confirm's list read RAW, before it becomes money (never inside the shared writeAllocation: settleBills and Mark-paid use that,
+ * and a throw there rolls a payment back). → { words } for a 422, or { pairs }: against_ref TRIMMED (the hash and the engine take this one value),
+ * amount_minor a whole non-negative number read BEFORE any Math.round (a fraction is refused, never rounded), one line per bill.
+ */
+function confirmPairs(list) {
+  const seen = new Set(),
+    pairs = [];
+  for (const item of list) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return { words: 'Each line names a bill and an amount.' };
+    const against_ref = String(item.against_ref == null ? '' : item.against_ref).trim(),
+      amount = Number(item.amount_minor);
+    if (!against_ref) return { words: 'Each line names the bill it settles.' };
+    if (!Number.isInteger(amount)) return { words: 'Each amount is a whole number in paise/cents.' };
+    if (amount < 0) return { words: 'An amount cannot be negative.' };
+    if (seen.has(against_ref)) return { words: 'Bill ' + against_ref + ' is listed twice; give it one amount.' };
+    seen.add(against_ref);
+    pairs.push({ against_ref, amount_minor: amount });
+  }
+  return { pairs };
+}
+/** a payment's own money steps (R-1400), after the posting committed; never able to undo it */
+async function confirmSteps(req, e, id, pairs) {
+  try {
+    const pay = await withEntity(e, (h) => S.payment(h, e, id));
+    await require('../lib/bill-privacy').moneySteps(e, pay, pairs, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
+  } catch (e2) {
+    logger.error('books confirm: the R-1400 money steps failed after the posting committed — the books are right, the history step is missing', { id: req.id, payment_id: id, err: e2.message });
+  }
+}
+/**
+ * POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open).
+ * ⭐ FIN-63 step 2: the SAME allocation pressed again (the payment's latest live batch, within books-replay.ALLOC_REPLAY_WINDOW_MS) answers
+ * 200 { ok, duplicate: true, items, allocated_minor } from the stored rows and posts nothing; a first posting carries no `duplicate` key.
+ */
+router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
     if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const list = Array.isArray((req.body || {}).allocations) ? req.body.allocations : [];
+    const read = confirmPairs(Array.isArray((req.body || {}).allocations) ? req.body.allocations : []);
+    if (read.words) return refuse(req, res, 422, 'BOOKS_REFUSED', read.words);
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
@@ -1436,20 +1498,18 @@ router.post('/payments/:id/confirm', auth, noKey, editor, on, ...checked('POST /
         side: p.direction === 'in' ? 'customer' : 'supplier',
         credit_ref: 'pay:' + id,
         payment_id: id,
-        allocations: list.map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: Math.round(Number(item.amount_minor)) })),
+        allocations: read.pairs,
+        replay: true,
         currency: p.currency,
         by: byOf(req)
       });
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    /* a replay skips the money steps ON PURPOSE: moneySteps has no replay key, so a re-run would write each R-1400 step twice (lib/books-replay.js) */
+    if (out.duplicate) return res.json({ ok: out.ok, duplicate: true, items: out.items, allocated_minor: out.allocated_minor });
     /* ⭐ a payment against a BILL is a step of R-1400 — written at its messaging level (lib/bill-privacy): my history, and the
        other party's too while R-1400 is external (a remittance advice). After the posting committed; never able to undo it. */
-    try {
-      const pay = await withEntity(e, (h) => S.payment(h, e, id));
-      await require('../lib/bill-privacy').moneySteps(e, pay, list, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
-    } catch (e2) {
-      console.error('bill money steps:', e2.message);
-    }
+    await confirmSteps(req, e, id, read.pairs);
     res.json({ ok: out.ok, off: out.off, items: out.items, allocated_minor: out.allocated_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1651,7 +1711,7 @@ router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async
 });
 
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
-const givenLines = (list) => require('../lib/books-manual').givenLines(list); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
+const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -1664,7 +1724,7 @@ router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req
       date: dateQ(b.date, today(req)),
       currency: curOf(req),
       strict_date: true,
-      lines: givenLines(b.lines),
+      lines: givenLines(b.lines, curOf(req)),
       ref: b.ref || null,
       source_ref: b.client_ref ? 'manual:' + String(b.client_ref).slice(0, 80) : null,
       by: byOf(req),
@@ -1704,7 +1764,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       type: 'write_off',
       owner: true,
       party,
-      amount: minorOf(b) / 100,
+      amount: cashflow().fromMinor(minorOf(b, curOf(req)), curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
       reason: b.reason,
       currency: curOf(req),
       strict_date: true,
@@ -2087,8 +2147,11 @@ router.post('/year/:fy/close', auth, owner, on, ...checked('POST /year/:fy/close
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await B.closeYear(null, ctx(req), req.params.fy, byOf(req));
     if (r.ok) return res.json({ ok: r.ok, duplicate: r.duplicate, fiscal_year: r.fiscal_year, next: r.next, locked: r.locked, opening: r.opening });
-    const message = r.refusals.map((x) => x.why).join(' ');
-    problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy: { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals } });
+    const message = r.refusals.map((x) => x.why).join(' '),
+      legacy = { ok: false, fiscal_year: r.fiscal_year, error: message, message, refusals: r.refusals };
+    /* ACC-204: a tax period of the year not closed yet names the answer (the screen opens Tax close on the code); every other refusal stays YEAR_CLOSE_REFUSED */
+    if (r.refusals.some((x) => x.name === 'return_open')) return problem(req, res, { status: 422, code: 'PERIOD_RETURN_OPEN', detail: message, legacy });
+    problem(req, res, { status: 422, code: 'YEAR_CLOSE_REFUSED', detail: message, legacy });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2115,16 +2178,18 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, setting } = await withEntity(e, async (h) => ({
-      rows: await S.periods(h, e, null),
-      figures: await S.periodFigures(h, e, fy),
-      setting: await B.settingOf(h, e)
-    }));
+    const { rows, figures, setting, taxStates } = await withEntity(e, async (h) => {
+      const all = await S.periods(h, e, null),
+        books = await B.settingOf(h, e);
+      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all) };
+    });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
+    /* ACC-204: the tax periods of every year the rows hold, each with its form, so a month's lock advice names the period it ends in */
+    const taxPeriods = [].concat(...Array.from(taxStates.values()).map((state) => state.periods.map((item) => Object.assign({ form: state.form }, item))));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
     res.json({
-      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting)).filter((item) => !fy || item.fiscal_year === fy)
+      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods).filter((item) => !fy || item.fiscal_year === fy)
     });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -2335,8 +2400,8 @@ module.exports = router;
    Owner-only, switch on, idempotent (client_ref, or the entry's natural key), refused in a locked month (PERIOD_LOCKED, 409).
    The asset ones answer 503 BOOKS_NOT_MIGRATED until b280 (DRAFT) is run. */
 const P = () => require('../lib/books-period');
-const route = (method, p, fn) =>
-  router[method](p, auth, owner, on, ...checked(method.toUpperCase() + ' ' + p), async (req, res) => {
+const route = (method, p, fn, gates) =>
+  router[method](p, auth, owner, ...(gates || []), on, ...checked(method.toUpperCase() + ' ' + p), async (req, res) => {
     try {
       res.json(await fn(req, ctx(req), req.books, req.body || {}, byOf(req)));
     } catch (err) {
@@ -2369,7 +2434,7 @@ route('post', '/depreciation/run', (req, e, s, b, by) => P().runDepreciation(e, 
 route('post', '/closing-stock', (req, e, s, b, by) => P().closingStock(e, s, b, by));
 /** POST /gst/close { fy, period } → { utilised, payable_minor, carried_minor, pay_total_minor, entry_no } · POST /gst/pay { fy, period, amounts, bank, challan_no } */
 route('post', '/gst/close', (req, e, s, b, by) => P().gstClose(e, s, b, by));
-route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by));
+route('post', '/gst/pay', (req, e, s, b, by) => P().gstPay(e, s, b, by), [onceOnly]); /* FIN-63: a tax payment is a money write — one key per attempt */
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner only. Prepared, never lodged.
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
@@ -2504,4 +2569,6 @@ module.exports = router;
 module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
+/* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
+module.exports.gates = { noKey, editor, on };
 module.exports.alreadyPaid = alreadyPaid;

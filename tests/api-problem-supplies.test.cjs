@@ -74,6 +74,7 @@ function checkWords() {
   check('notReady: the 503 sentence is the old one (Not ready, run b217 first)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'run b217 first' }), later);
   const lost = words.faultOf(new Error(SECRET_SQL), req, 'Could not record the purchase');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && lost.legacy.error === 'Could not record the purchase' && !THROWN.test(JSON.stringify(lost)), lost);
+  check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 in the old validation keys and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(Object.assign(new Error(SECRET_SQL), { code }), req, 'Could not add the supply'); return one.status === 400 && one.code === 'SUPPLY_INVALID' && sameValue(one.legacy, { error: 'validation', message: 'Cannot save this text. Type it again.' }) && !THROWN.test(JSON.stringify(one)); }));
   check('notMigrated: a missing table is a 42P01 and nothing else', words.notMigrated({ code: '42P01' }) === true && words.notMigrated({ code: '23505' }) === false && words.notMigrated(null) === false);
 }
 
@@ -94,7 +95,7 @@ function checkContractShape(routes) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that may be an object or a list: the handlers read a list as an empty body and answer their own 400', bodies.every((key) => sameValue(contract.OPERATIONS[key].requestBody.content['application/json'].schema.type, ['object', 'array'])), bodies);
-  check('no body names a key as required and none is closed (an unknown key was dropped before, and still is)', bodies.every((key) => { const one = contract.OPERATIONS[key].requestBody.content['application/json'].schema; return !one.required && one.additionalProperties === undefined; }));
+  check('no body names a key as required and every one is closed (contract bulk pass batch 1: an unknown key is refused by name, 422)', bodies.every((key) => { const one = contract.OPERATIONS[key].requestBody.content['application/json'].schema; return !one.required && one.additionalProperties === false; }));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
   check('a malformed path argument is still the route\'s own answer, never a 400 of the schema: the id is plain text', operations.filter((key) => key.includes(':')).every((key) => contract.OPERATIONS[key].parameters.every((one) => one.schema.type === 'string' && !one.schema.pattern)));
 }

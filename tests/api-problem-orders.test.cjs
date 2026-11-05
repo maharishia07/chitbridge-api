@@ -146,6 +146,7 @@ function freshRepeat() {
   const { memory } = require('./support/repeat-supply-memory.cjs');
   const R = require(path.join(HERE, 'lib', 'repeat-supply'));
   repeatMemory = memory();
+  repeatMemory.postgres = true; /* K-1 (B2): the store keeps the rules of Postgres a junk value breaks (a chit id is a uuid, a NUL byte is no text) */
   repeatMemory.migrated = world.repeatMigrated;
   R.use(repeatMemory.store);
   R.useSender(repeatMemory.sendAs);
@@ -311,6 +312,16 @@ const EXTRAS = [
   X('sweep-catches-up', 'POST ' + RS + '/sweep', 200, dueTwice),
   X('create-from-a-bare-bill', 'POST ' + RS, 200, { body: Object.assign({ chit_id: BILL_CHIT, anchor_day: 10, until: { on: '2099-12-31' }, mode: 'send' }, SCHEDULE, { until: { on: '2099-12-31' }, unit: 'monthly' }), prep: () => seedBill({ summary_json: {} }) }),
   N('body-not-an-object', 'POST ' + RS, 400, { body: [] }),
+  /* K-1 (B2): a chit id that is no uuid answers as one no shop holds (404, as an unknown bill or a chit the caller does not hold); text the database cannot store is a 400 in plain words */
+  N('create-bill-is-not-an-id', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'nope' }, SCHEDULE) }),
+  N('create-bill-with-a-nul-byte', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'a\u0000b' }, SCHEDULE) }),
+  N('one-chit-is-not-an-id', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=nope' }, agreed, { setup: { who: STRANGER } })),
+  N('one-chit-with-a-nul-byte', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a%00b' }, agreed, { setup: { who: STRANGER } })),
+  N('pause-reason-with-a-nul-byte', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('end-reason-with-a-nul-byte', 'POST ' + RS + '/:id/end', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('refuse-reason-with-a-nul-byte', 'POST ' + RS + '/:id/refuse', 400, Object.assign({ body: { reason: 'a\u0000b' } }, countered)),
+  N('skip-reason-with-a-nul-byte', 'POST ' + RS + '/:id/skip', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('counter-note-with-a-nul-byte', 'POST ' + RS + '/:id/counter', 400, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'a\u0000b' } }, proposed, { setup: asCustomer })),
   N('chit-given-twice', 'GET ' + RS + '/:id', 400, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a&chit=b' }, agreed)),
   /* work */
   X('list-orders-in', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in' }),
@@ -342,11 +353,16 @@ const EXTRAS = [
   onSheet(['order-with-no-lines', 3]),
   onSheet(['bare-copy', 3], { prep: changeCopy(3, BARE_COPY) }),
   X('sheet-bare-copy-no-tables', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(3), prep: changeCopy(3, BARE_COPY) }),
+  /* RAIL-146b: a co-assist WITHOUT can_see_costs — the cost-side rows lose their money (cost_hidden), the sheet and the unbilled figure too; no party is on a list here, so every row is unknown and hides */
+  X('list-orders-in-cost-blind', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('sheet-cost-blind', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(1), setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('facts-unbilled-cost-blind', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { who: STAFF }, prep: (S) => { S.D.canSeeCosts = false; } }),
   /* counters */
   X('counters-listed', 'GET ' + CT, 200, { setup: { flags: FREE } }),
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),
   X('counters-listed-as-staff', 'GET ' + CT, 200, { setup: { flags: FREE, who: STAFF } }),
   X('counters-key-refused', 'GET ' + CT, 403, { setup: { asKey: true } }),
+  X('counter-make-unknown-key-refused', 'POST ' + CT, 400, { body: { colour: 'red', name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made', 'POST ' + CT, 201, { body: { name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made-unnamed', 'POST ' + CT, 201, { body: {}, setup: { flags: FREE } }),
   X('counter-none-left', 'POST ' + CT, 400, { body: {}, setup: { flags: FREE, bookedAll: true } }),
@@ -354,17 +370,20 @@ const EXTRAS = [
   X('counter-make-not-migrated', 'POST ' + CT, 503, { body: {}, setup: { flags: FREE, policyMissing: true } }),
   X('counter-make-as-staff', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, who: STAFF } }),
   X('counter-make-by-key', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, asKey: true } }),
+  X('counter-rename-unknown-key-refused', 'PATCH ' + CT + '/:id', 400, { body: { colour: 'red', name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-renamed', 'PATCH ' + CT + '/:id', 200, { body: { name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-rename-unnamed', 'PATCH ' + CT + '/:id', 400, { body: {}, setup: { flags: FREE } }),
   X('counter-rename-unknown', 'PATCH ' + CT + '/:id', 404, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/C9' }),
   X('counter-rename-lowercase-id', 'PATCH ' + CT + '/:id', 200, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/c1' }),
   X('counter-rename-fails', 'PATCH ' + CT + '/:id', 500, { body: { name: 'x' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-assign-unknown-key-refused', 'POST ' + CT + '/:id/assign', 400, { body: { colour: 'red', phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-assigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-unassigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '' }, setup: { flags: FREE } }),
   X('counter-assign-bad-phone', 'POST ' + CT + '/:id/assign', 400, { body: { phone: '12' }, setup: { flags: FREE } }),
   X('counter-assign-unknown', 'POST ' + CT + '/:id/assign', 404, { body: { phone: '' }, setup: { flags: FREE }, url: CT + '/C9/assign' }),
   X('counter-assign-as-staff', 'POST ' + CT + '/:id/assign', 403, { body: { phone: '' }, setup: { flags: FREE, who: STAFF } }),
   X('counter-assign-fails', 'POST ' + CT + '/:id/assign', 500, { body: { phone: '' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-open-unknown-key-refused', 'POST ' + CT + '/:id/open', 400, { body: { colour: 'red' }, setup: { flags: FREE, patchKeys: true } }),
   X('counter-opened', 'POST ' + CT + '/:id/open', 200, { body: {}, setup: { flags: FREE, patchKeys: true } }),
   X('counter-open-held', 'POST ' + CT + '/:id/open', 409, { body: {}, setup: { flags: HELD } }),
   X('counter-open-unknown', 'POST ' + CT + '/:id/open', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/open' }),
@@ -372,6 +391,7 @@ const EXTRAS = [
   X('counter-open-mint-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: new Error(SECRET_SQL) } }),
   X('counter-open-mint-refuses', 'POST ' + CT + '/:id/open', 400, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: Object.assign(new Error('Too many keys.'), { status: 400 }) } }),
   X('counter-open-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-release-unknown-key-refused', 'POST ' + CT + '/:id/release', 400, { body: { colour: 'red' }, setup: { flags: HELD } }),
   X('counter-released', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: HELD } }),
   X('counter-released-free', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: FREE } }),
   X('counter-release-unknown', 'POST ' + CT + '/:id/release', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/release' }),
@@ -431,7 +451,7 @@ function applyPatch(setup) {
     undo.push([owner, name, owner[name]]);
     owner[name] = given;
   };
-  const keys = require(path.join(HERE, 'routes', 'keys'));
+  const keys = require(path.join(HERE, 'lib', 'api-keys'));
   if (setup.patchKeys || setup.mintFails) {
     swap(keys, 'mint', async () => {
       if (setup.mintFails) throw setup.mintFails;
@@ -598,6 +618,7 @@ function checkOrdersWords() {
   const req = { id: 'r1' };
   const refused = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, code: 'REPEAT_ENDED', status: 422 }), req);
   check('repeatFault: a refusal keeps its own code and sentence, 422', refused.status === 422 && refused.code === 'REPEAT_ENDED' && sameValue(refused.legacy, { code: 'REPEAT_ENDED', error: 'Because.', message: 'Because.' }), refused);
+  check('repeatFault: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 REPEAT_BAD_REQUEST in plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.repeatFault(sqlError(code), req); return one.status === 400 && one.code === 'REPEAT_BAD_REQUEST' && sameValue(one.legacy, { error: 'Bad request', message: 'Cannot save this text. Type it again.' }); }));
   const bare = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, status: 422 }), req);
   check('repeatFault: a refusal with no code is REPEAT_REFUSED', bare.code === 'REPEAT_REFUSED' && bare.legacy.code === 'REPEAT_REFUSED', bare);
   const odd = words.repeatFault(Object.assign(new Error('Closed.'), { status: 409, body: { why: 'wrong_step' } }), req);
@@ -626,6 +647,21 @@ function checkContractShape() {
  * and whose recorded 200s all fit it (types and nullable columns included) is proved here; the generator's proxy world holds no Tasks & Orders rows, so it answers the sheet 404.
  * → { route: { output_allowlist: true } } for the routes that held
  */
+/** S41 (K-1, B2): a chit id that is no uuid (or holds a NUL byte) answers exactly as one no shop holds: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (key) => JSON.stringify(Object.assign({}, (recording[key] || {}).body, { request_id: null }));
+  const pairs = [
+    ['GET /api/repeat/:id|', 'one-chit-is-not-an-id', 'one-as-a-stranger'],
+    ['GET /api/repeat/:id|', 'one-chit-with-a-nul-byte', 'one-as-a-stranger'],
+    ['POST /api/repeat|', 'create-bill-is-not-an-id', 'create-bill-unknown'],
+    ['POST /api/repeat|', 'create-bill-with-a-nul-byte', 'create-bill-unknown']
+  ];
+  pairs.forEach(([route, junk, unknown]) => {
+    check(junk + ': answers exactly as ' + unknown + ' (404, same body)', (recording[route + junk] || {}).status === 404 && (recording[route + unknown] || {}).status === 404 && bodyOf(route + junk) === bodyOf(route + unknown), { junk: (recording[route + junk] || {}).status, unknown: (recording[route + unknown] || {}).status });
+  });
+}
+
 function checkAllowList(recording, routes) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
@@ -694,6 +730,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
+  checkJunkAnswersAsUnknown(recording);
   const allowed = checkAllowList(recording, routes);
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);

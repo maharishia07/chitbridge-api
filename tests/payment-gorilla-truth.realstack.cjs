@@ -49,6 +49,8 @@
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
+/* ACC-198: tax registration is never assumed - an unknown shop's sales wait with the question; these shops sell untaxed, so they SAY not registered */
+const NOT_REGISTERED = { tax: { registered: false } };
 const G = require('./lib/gorilla.cjs');
 const R = require('./lib/rail-buyer.cjs');
 const { DB, j, ok, kase, freshShop, finish } = H;
@@ -302,8 +304,8 @@ const CHECKS = [
   let report = null;
   await pg.connect();
   try {
-    const shop = await freshShop(RUN, 'Gorilla Pay');
-    const other = await freshShop(RUN + 'o', 'Gorilla Other');
+    const shop = await freshShop(RUN, 'Gorilla Pay', NOT_REGISTERED);
+    const other = await freshShop(RUN + 'o', 'Gorilla Other', NOT_REGISTERED);
     ok(await j('/api/books/enable', { method: 'POST', token: shop.token }), 'books on');
     const products = [];
     for (const [name, price] of [['Rice', 60], ['Dal', 40], ['Oil', 135.5], ['Salt', 20], ['Tea', 49.99], ['Soap', 25.5]]) {

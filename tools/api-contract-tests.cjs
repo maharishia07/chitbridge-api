@@ -206,13 +206,21 @@ function rowOf(fields, owner) {
   const keys = Object.keys(fields).concat(CANARY);
   const valueOf = (name) => (name === CANARY ? 'this column is not in the answer schema' : columnValue(name, fields[name], owner));
   const plain = (name) => typeof name === 'symbol' || name in Object.prototype || name === 'then' || name === 'toJSON';
+  /* a written column reads back what was written, as a real row does (lib/catalogue-view resolves item_data in place; SEC-126) —
+     without it the proxy broke its own invariant and the read answered 500 */
+  const written = (target, name) => Object.prototype.hasOwnProperty.call(target, name);
   return new Proxy(
     {},
     {
-      get: (target, name) => (plain(name) ? Object.prototype[name] : valueOf(name)),
+      get: (target, name) => (written(target, name) ? target[name] : plain(name) ? Object.prototype[name] : valueOf(name)),
+      set: (target, name, value) => {
+        target[name] = value;
+        return true;
+      },
       has: (target, name) => typeof name === 'string',
-      ownKeys: () => keys,
-      getOwnPropertyDescriptor: (target, name) => ({ value: valueOf(name), enumerable: true, configurable: true, writable: true })
+      ownKeys: (target) => [...new Set(keys.concat(Reflect.ownKeys(target)))],
+      getOwnPropertyDescriptor: (target, name) =>
+        written(target, name) ? Reflect.getOwnPropertyDescriptor(target, name) : { value: valueOf(name), enumerable: true, configurable: true, writable: true }
     }
   );
 }

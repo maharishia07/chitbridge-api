@@ -31,9 +31,11 @@ const authStub = Object.assign((req, res, next) => { req.identity = OWNER; next(
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
-const call = (port, method, p, body) => new Promise((done) => {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
     (res) => { const bufs = []; res.on('data', (c) => bufs.push(c)); res.on('end', () => { const raw = Buffer.concat(bufs); let j = {}; try { j = JSON.parse(raw.toString('utf8') || '{}'); } catch (_) {} done({ status: res.statusCode, body: j, raw, headers: res.headers }); }); });
   r.end(b);
 });

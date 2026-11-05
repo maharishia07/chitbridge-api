@@ -64,7 +64,7 @@ const PHOTOS = { 'Masala Dosa': [222, 160, 60], 'Veg Meals': [90, 160, 70], 'Fil
 const step = (s) => console.log('  · ' + s);
 /** one call to the api; an unsigned write is a public door, each call its own attempt with its own Idempotency-Key (API-3 S36) */
 async function j(path, { method = 'GET', token, body } = {}) {
-  const once = !token && method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {};
+  const once = method !== 'GET' ? { 'idempotency-key': crypto.randomUUID() } : {}; /* FIN-63: every write is one attempt with its own key (the books money doors require it) */
   const reply = await fetch(API + path, {
     method,
     headers: Object.assign({ 'content-type': 'application/json' }, token ? { authorization: 'Bearer ' + token } : {}, once),

@@ -72,6 +72,7 @@ D.extra = async (sql, p) => {
     const per = new Map(); last.forEach((r) => per.set(r.party_id, (per.get(r.party_id) || false) || r.allowed));
     const v = Array.from(per.values()); return { rows: [{ agreed: v.filter(Boolean).length, said_no: v.filter((x) => !x).length }] };
   }
+  if (/^SELECT 1 FROM privacy_request WHERE owner_entity_id = \$1 AND request_id = \$2/.test(sql)) return { rows: T.reqs.filter((x) => x.owner === p[0] && x.request_id === p[1]).map(() => ({ held: 1 })) }; /* lib/privacy unanswerable: is it this shop's */
   if (/^UPDATE privacy_request SET answered_at = now\(\)/.test(sql)) {
     const r = T.reqs.find((x) => x.owner === p[0] && x.request_id === p[1] && !x.answered_at); if (!r) return { rows: [] };
     Object.assign(r, { answered_at: new Date().toISOString(), answered_by: p[2], outcome: p[3], answer: p[4] }); return { rows: [r] };
@@ -170,6 +171,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     const o = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'done', answer: 'Sent their record and timeline by e-mail' });
     assert.strictEqual(o.status, 200, JSON.stringify(o.body)); assert.ok(o.body.request.answered_at); assert.strictEqual(o.body.request.outcome, 'done');
     const again = await t.post('/privacy-requests/' + rid + '/answer', { outcome: 'refused', answer: 'x' }); assert.strictEqual(again.status, 409);
+    const unknown = await t.post('/privacy-requests/' + P(99) + '/answer', { outcome: 'done', answer: 'x' }); assert.strictEqual(unknown.status, 404, JSON.stringify(unknown.body)); /* S35: one this shop does not hold */
     assert.strictEqual((await t.get('/privacy-requests?open=1')).body.requests.length, 2);
   });
   await ita('G4 paging: total · page · limit top-level; ?limit=1 pages the register; open/late count the whole register, not the page', async () => {

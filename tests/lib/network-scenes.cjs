@@ -17,6 +17,7 @@ const AT = '2026-10-01T00:00:00.000Z';
 const ROOT_NODE = { key: 'r', name: 'Shop A', root: true, owned: true, parent_key: null, holds: [] };
 const CHILD_NODE = { key: 'a', name: 'Clothing', owned: true, parent_key: 'r', holds: ['catalogue'] };
 const DESIGN = { nodes: [ROOT_NODE, CHILD_NODE] };
+const NUL = '\u0000'; /* written as the escape, never the raw byte */
 
 /** the tools a scene is built from: the harness's own stand-ins and the rows of the network world */
 function extras(tools) {
@@ -37,6 +38,7 @@ function extras(tools) {
   /* ── /api/network: the tree, the edges between businesses ── */
   const tree = [
     X('register-no-name', 'POST ' + at('/entities'), 400, { body: {} }),
+    X('register-unknown-key-refused', 'POST ' + at('/entities'), 400, { body: { colour: 'red', name: 'Acme' }, setup: world() }),
     X('register-made', 'POST ' + at('/entities'), 200, { body: { name: 'Acme' }, setup: world() }),
     X('register-mint-collides', 'POST ' + at('/entities'), 500, { body: { name: 'Acme' }, setup: { sqlRows: raising(/insert into cb_entity/i, '23505') } }),
     X('register-db-fails', 'POST ' + at('/entities'), 500, { body: { name: 'Acme' }, setup: failing }),
@@ -46,7 +48,9 @@ function extras(tools) {
     X('claim-unknown', 'POST ' + at('/entities/:id/claim'), 404, { url: nodeUrl(NODE.b.replace(/b$/, 'd'), 'claim'), body: {}, setup: world() }),
     X('claim-already', 'POST ' + at('/entities/:id/claim'), 409, { url: nodeUrl(NODE.a, 'claim'), body: {}, setup: world() }),
     X('claim-not-yours', 'POST ' + at('/entities/:id/claim'), 403, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world() }),
+    X('claim-unknown-key-refused', 'POST ' + at('/entities/:id/claim'), 400, { url: nodeUrl(NODE.c, 'claim'), body: { colour: 'red' }, setup: world({}, { who: CHILD }) }),
     X('claim-made', 'POST ' + at('/entities/:id/claim'), 200, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world({}, { who: CHILD }) }),
+    N('place-asked-twice', 'GET ' + at('/place'), 400, { url: at('/place?bridgeId=a&bridgeId=b'), setup: world({ tree: true }) }),
     X('place-found', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true }) }),
     X('place-a-root', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=AAAA2222'), setup: world({ tree: true }) }),
     X('place-suspended-member', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true, edge: { state: 'suspended' } }, { who: CHILD }) }),
@@ -63,6 +67,7 @@ function extras(tools) {
     X('request-not-your-edge', 'POST ' + at('/connections'), 403, { body: { parentId: NODE.b, childId: NODE.c }, setup: world() }),
     X('request-child-has-a-parent', 'POST ' + at('/connections'), 409, { body: { childId: NODE.c }, setup: world(LIVE) }),
     X('request-already-asked', 'POST ' + at('/connections'), 409, { body: { childId: NODE.c, type: 'commercial' }, setup: world({ edge: { state: 'requested', type: 'commercial' } }) }),
+    X('request-unknown-key-refused', 'POST ' + at('/connections'), 400, { body: { colour: 'red', childId: NODE.c }, setup: world() }),
     X('request-made', 'POST ' + at('/connections'), 200, { body: { childId: NODE.c }, setup: world() }),
     X('request-by-handle', 'POST ' + at('/connections'), 200, { body: { childHandle: 'shop-a.c' }, setup: world() }),
     N('request-body-a-list', 'POST ' + at('/connections'), 400, { body: [], setup: world() }),
@@ -71,23 +76,28 @@ function extras(tools) {
     X('approve-by-the-asker', 'POST ' + at('/connections/:id/approve'), 403, { url: edgeUrl('approve'), body: {}, setup: world(ASKED) }),
     X('approve-already-active', 'POST ' + at('/connections/:id/approve'), 409, { url: edgeUrl('approve'), body: {}, setup: world(LIVE, { who: CHILD }) }),
     X('approve-unclaimed-child', 'POST ' + at('/connections/:id/approve'), 409, { url: edgeUrl('approve'), body: {}, setup: world(ASKED, { who: CHILD }) }),
+    X('approve-unknown-key-refused', 'POST ' + at('/connections/:id/approve'), 400, { url: edgeUrl('approve'), body: { colour: 'red' }, setup: world(Object.assign({ childClaimed: true }, ASKED), { who: CHILD }) }),
     X('approve-made', 'POST ' + at('/connections/:id/approve'), 200, { url: edgeUrl('approve'), body: {}, setup: world(Object.assign({ childClaimed: true }, ASKED), { who: CHILD }) }),
     X('decline-unknown', 'POST ' + at('/connections/:id/decline'), 404, { url: edgeUrl('decline'), body: {}, setup: world() }),
     X('decline-stranger', 'POST ' + at('/connections/:id/decline'), 403, { url: edgeUrl('decline'), body: {}, setup: world(ASKED, { who: STRANGER }) }),
     X('decline-not-pending', 'POST ' + at('/connections/:id/decline'), 409, { url: edgeUrl('decline'), body: {}, setup: world(LIVE, { who: CHILD }) }),
+    X('decline-unknown-key-refused', 'POST ' + at('/connections/:id/decline'), 400, { url: edgeUrl('decline'), body: { colour: 'red' }, setup: world(ASKED, { who: CHILD }) }),
     X('decline-made', 'POST ' + at('/connections/:id/decline'), 200, { url: edgeUrl('decline'), body: {}, setup: world(ASKED, { who: CHILD }) }),
     X('suspend-unknown', 'POST ' + at('/connections/:id/suspend'), 404, { url: edgeUrl('suspend'), body: {}, setup: world() }),
     X('suspend-by-the-member', 'POST ' + at('/connections/:id/suspend'), 403, { url: edgeUrl('suspend'), body: {}, setup: world(LIVE, { who: CHILD }) }),
     X('suspend-not-active', 'POST ' + at('/connections/:id/suspend'), 409, { url: edgeUrl('suspend'), body: {}, setup: world(ASKED) }),
+    X('suspend-unknown-key-refused', 'POST ' + at('/connections/:id/suspend'), 400, { url: edgeUrl('suspend'), body: { colour: 'red' }, setup: world(LIVE) }),
     X('suspend-made', 'POST ' + at('/connections/:id/suspend'), 200, { url: edgeUrl('suspend'), body: {}, setup: world(LIVE) }),
     X('resume-unknown', 'POST ' + at('/connections/:id/resume'), 404, { url: edgeUrl('resume'), body: {}, setup: world() }),
     X('resume-not-held', 'POST ' + at('/connections/:id/resume'), 409, { url: edgeUrl('resume'), body: {}, setup: world(LIVE) }),
+    X('resume-unknown-key-refused', 'POST ' + at('/connections/:id/resume'), 400, { url: edgeUrl('resume'), body: { colour: 'red' }, setup: world({ edge: { state: 'suspended' } }) }),
     X('resume-made', 'POST ' + at('/connections/:id/resume'), 200, { url: edgeUrl('resume'), body: {}, setup: world({ edge: { state: 'suspended' } }) }),
     X('disconnect-unknown', 'POST ' + at('/connections/:id/disconnect'), 404, { url: edgeUrl('disconnect'), body: {}, setup: world() }),
     X('disconnect-stranger', 'POST ' + at('/connections/:id/disconnect'), 403, { url: edgeUrl('disconnect'), body: {}, setup: world(LIVE, { who: STRANGER }) }),
     X('disconnect-not-live', 'POST ' + at('/connections/:id/disconnect'), 409, { url: edgeUrl('disconnect'), body: {}, setup: world(ASKED) }),
     X('disconnect-open-chit', 'POST ' + at('/connections/:id/disconnect'), 409, { url: edgeUrl('disconnect'), body: {}, setup: world({ edge: { state: 'active', in_flight: true } }) }),
     X('disconnect-made', 'POST ' + at('/connections/:id/disconnect'), 200, { url: edgeUrl('disconnect'), body: {}, setup: world(LIVE) }),
+    X('disconnect-unknown-key-refused', 'POST ' + at('/connections/:id/disconnect'), 400, { url: edgeUrl('disconnect'), body: { colour: 'red', settle: true }, setup: world({ edge: { state: 'active', in_flight: true } }) }),
     X('disconnect-settling', 'POST ' + at('/connections/:id/disconnect'), 200, { url: edgeUrl('disconnect'), body: { settle: true }, setup: world({ edge: { state: 'active', in_flight: true } }) })
   ];
 
@@ -114,16 +124,27 @@ function extras(tools) {
   const missingSearch = (sql) => { if (/network_search/.test(sql)) throw new Error('function network_search(text, text, integer) does not exist'); return null; };
   const items = answering(/FROM catalogue_items/, [{ item_id: 'i1', item_data: { name: 'Tea', price: 10, avail: { qty: 4, source: 'count' } } }]);
   const buildRows = (more) => firstOf(meRow(more), design);
+  /* K-1: the stand-in db keeps Postgres's rule: a NUL byte in any bound text is refused 22021 (22P05 inside a jsonb value). A scene lays this over its rows. */
+  const holdsJunk = (sql, params) => {
+    (params || []).forEach((one) => {
+      if (typeof one === 'string' && one.includes(NUL)) throw Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { code: '22021' });
+      if (one && typeof one === 'object' && JSON.stringify(one).includes('\\u0000')) throw Object.assign(new Error('unsupported Unicode escape sequence'), { code: '22P05' }); /* a jsonb value (pg sends an object as JSON) holding the escape of a NUL byte */
+    });
+    return null;
+  };
+  const junky = (...rows) => ({ sqlRows: firstOf(holdsJunk, ...rows) });
   const designed = [
     X('design-saved', 'GET ' + DES, 200, { setup: { sqlRows: design } }),
     X('save-draft-not-an-object', 'PUT ' + DES, 400, { body: { draft: [] } }),
     X('save-too-large', 'PUT ' + DES, 413, { body: { draft: tooBig } }),
+    X('save-unknown-key-refused', 'PUT ' + DES, 400, { body: { colour: 'red', draft: DESIGN }, setup: { sqlRows: answering(/INSERT INTO network_design/, [{ updated_at: AT }]) } }),
     X('save-made', 'PUT ' + DES, 200, { body: { draft: DESIGN }, setup: { sqlRows: answering(/INSERT INTO network_design/, [{ updated_at: AT }]) } }),
     X('save-keeps-the-receipt', 'PUT ' + DES, 200, { body: { draft: { nodes: [{ key: 'a', name: 'Clothing' }] } }, setup: { sqlRows: firstOf(answering(/SELECT draft FROM network_design/, [{ draft: { nodes: [{ key: 'a', built: { bridge_id: 'X1' } }] } }]), answering(/INSERT INTO network_design/, [{ updated_at: AT }])) } }),
     X('save-db-fails', 'PUT ' + DES, 500, { body: { draft: DESIGN }, setup: failing }),
     N('save-body-a-list', 'PUT ' + DES, 400, { body: [] }),
     X('validate-draft-not-an-object', 'POST ' + DES + '/validate', 400, { body: { draft: 'text' } }),
     X('validate-too-large', 'POST ' + DES + '/validate', 413, { body: { draft: tooBig } }),
+    X('validate-unknown-key-refused', 'POST ' + DES + '/validate', 400, { body: { colour: 'red', sample: true, draft: DESIGN } }),
     X('validate-a-sketch', 'POST ' + DES + '/validate', 200, { body: { sample: true, draft: DESIGN } }),
     X('validate-the-saved-design', 'POST ' + DES + '/validate', 200, { body: {}, setup: { sqlRows: firstOf(answering(/SELECT user_id FROM identities/, [{ user_id: 'shop-a' }]), design) } }),
     X('validate-a-draft-and-root', 'POST ' + DES + '/validate', 200, { body: { draft: DESIGN, root_handle: 'Shop-A', ceiling: 'network' }, setup: { sqlRows: answering(/LIKE \$1/, [{ h: 'shop-a.shoes' }]) } }),
@@ -134,6 +155,7 @@ function extras(tools) {
     X('build-root-name-unusable', 'POST ' + DES + '/build', 400, { body: { root_handle: 'a b' }, setup: { sqlRows: buildRows({ user_id: null }) } }),
     X('build-root-name-taken', 'POST ' + DES + '/build', 409, { body: { root_handle: 'taken' }, setup: { sqlRows: firstOf(answering(/SELECT 1 FROM identities WHERE LOWER\(user_id\)/, [{ '?column?': 1 }]), buildRows({ user_id: null })) } }),
     X('build-nothing-designed', 'POST ' + DES + '/build', 400, { body: {}, setup: { sqlRows: meRow() } }),
+    X('build-unknown-key-refused', 'POST ' + DES + '/build', 400, { body: { colour: 'red', dry_run: true }, setup: { sqlRows: buildRows() } }),
     X('build-a-preview', 'POST ' + DES + '/build', 200, { body: { dry_run: true }, setup: { sqlRows: buildRows() } }),
     X('build-already-matches', 'POST ' + DES + '/build', 200, { body: {}, setup: { sqlRows: firstOf(meRow(), answering(/FROM network_design/, [{ draft: { nodes: [{ key: 'bad', name: 'Bad', owned: true, parent_key: 'r' }] } }])) } }),
     X('build-made', 'POST ' + DES + '/build', 200, { body: {}, setup: { sqlRows: buildRows() }, patch: executes(built) }),
@@ -144,6 +166,7 @@ function extras(tools) {
     X('reissue-by-staff', 'POST ' + DES + '/reissue', 403, { body: { user_id: 'shop-a.c' }, setup: { who: STAFF } }),
     X('reissue-no-store-named', 'POST ' + DES + '/reissue', 400, { body: {} }),
     X('reissue-not-yours', 'POST ' + DES + '/reissue', 404, { body: { user_id: 'shop-a.c' } }),
+    X('reissue-unknown-key-refused', 'POST ' + DES + '/reissue', 400, { body: { colour: 'red', user_id: 'Shop-A.C' }, setup: { sqlRows: answering(/FROM identities\s+WHERE LOWER\(user_id\) = LOWER\(\$1\)/, [{ identity_id: C, display_name: 'Shop C', user_id: 'shop-a.c' }]) }, patch: { otp: { generateOTP: () => '123456' } } }),
     X('reissue-made', 'POST ' + DES + '/reissue', 200, { body: { user_id: 'Shop-A.C' }, setup: { sqlRows: answering(/FROM identities\s+WHERE LOWER\(user_id\) = LOWER\(\$1\)/, [{ identity_id: C, display_name: 'Shop C', user_id: 'shop-a.c' }]) }, patch: { otp: { generateOTP: () => '123456' } } }),
     X('reissue-db-fails', 'POST ' + DES + '/reissue', 500, { body: { user_id: 'shop-a.c' }, setup: failing }),
     N('reissue-body-a-list', 'POST ' + DES + '/reissue', 400, { body: [] }),
@@ -169,7 +192,14 @@ function extras(tools) {
     X('availability-one-query-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, [foundBare, foundBare2]), ownAt) }, patch: members(['AAAA2222', 'CCCC4444']) }),
     X('availability-one-query-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, Array.from({ length: 200 }, () => foundBare2)), own) }, patch: members(['AAAA2222']) }),
     X('availability-fallback-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(missingSearch, answering(/FROM identities\s+WHERE bridge_id = ANY/, [store({ city: null, currency_code: null, lat: '18.520000', lng: '73.850000', service_km: 50, dispatch_days: 2, ship_within_days: 1, ship_beyond_days: 5 })]), answering(/FROM catalogue_items/, [{ item_id: 'i2', item_data: { code: 'T-1' } }, { item_id: 'i3', item_data: {} }]), ownAt) }, patch: members(['AAAA2222']) }),
-    X('availability-fallback-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(raising(/network_search/, '42883'), stores, items, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) })
+    X('availability-fallback-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(raising(/network_search/, '42883'), stores, items, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) }),
+    /* K-1: a NUL byte in text no column can hold. A name in the drawing is stored text: 400 "Cannot save this text. Type it again."; a store name or a search is a lookup that finds nothing, answered as an unknown one is */
+    N('save-name-with-a-nul-byte', 'PUT ' + DES, 400, { body: { draft: { nodes: [{ key: 'a', name: 'Cloth' + NUL + 'ing' }] } }, setup: junky(answering(/INSERT INTO network_design/, [{ updated_at: AT }])) }),
+    N('save-key-with-a-nul-byte', 'PUT ' + DES, 400, { body: { draft: { nodes: [{ key: 'a' + NUL, name: 'Clothing' }] } }, setup: junky(answering(/INSERT INTO network_design/, [{ updated_at: AT }])) }),
+    N('validate-root-name-with-a-nul-byte', 'POST ' + DES + '/validate', 200, { body: { draft: DESIGN, root_handle: 'shop' + NUL + 'a' }, setup: junky() }),
+    N('build-root-name-with-a-nul-byte', 'POST ' + DES + '/build', 400, { body: { root_handle: 'shop' + NUL + 'a' }, setup: junky(buildRows({ user_id: null })) }),
+    N('reissue-store-with-a-nul-byte', 'POST ' + DES + '/reissue', 404, { body: { user_id: 'shop' + NUL + 'a.c' }, setup: junky() }),
+    N('availability-text-with-a-nul-byte', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=te%00a', setup: junky(found, own), patch: members(['AAAA2222', 'CCCC4444']) })
   ];
 
   /* ── /api/connections: the handshake between two businesses ── */
@@ -181,19 +211,23 @@ function extras(tools) {
     X('handshake-to-self', 'POST ' + CON + '/request', 400, { body: { to_entity_id: A }, setup: world() }),
     X('handshake-receiver-unknown', 'POST ' + CON + '/request', 404, { body: { to_entity_id: C } }),
     X('handshake-already-there', 'POST ' + CON + '/request', 400, { body: { to_entity_id: C }, setup: world(asked) }),
+    X('handshake-unknown-key-refused', 'POST ' + CON + '/request', 400, { body: { colour: 'red', to_entity_id: C, note: 'hi' }, setup: world() }),
     X('handshake-made', 'POST ' + CON + '/request', 200, { body: { to_entity_id: C, note: 'hi' }, setup: world() }),
     X('handshake-db-fails', 'POST ' + CON + '/request', 500, { body: { to_entity_id: C }, setup: failing }),
     N('handshake-body-a-list', 'POST ' + CON + '/request', 400, { body: [], setup: world() }),
     X('pending-one', 'GET ' + CON + '/pending', 200, { setup: world(asked) }),
     X('pending-a-page', 'GET ' + CON + '/pending', 200, { url: CON + '/pending?page=1&limit=1', setup: world(asked) }),
+    N('pending-limit-asked-twice', 'GET ' + CON + '/pending', 400, { url: CON + '/pending?limit=1&limit=2', setup: world(asked) }), /* B2: a handler-made refusal for the error tests */
     X('respond-needs-an-action', 'PUT ' + CON + '/:id/respond', 400, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'maybe' } }),
     X('respond-unknown', 'PUT ' + CON + '/:id/respond', 404, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world() }),
+    X('respond-unknown-key-refused', 'PUT ' + CON + '/:id/respond', 400, { url: CON + '/' + CONNECTION + '/respond', body: { colour: 'red', action: 'accept' }, setup: world(asked) }),
     X('respond-accepted', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: world(asked) }),
     X('respond-rejected', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'reject' }, setup: world(asked) }),
     X('respond-spaced-word', 'PUT ' + CON + '/:id/respond', 200, { url: CON + '/' + CONNECTION + '/respond', body: { action: ' accept ' }, setup: world(asked) }),
     X('respond-db-fails', 'PUT ' + CON + '/:id/respond', 500, { url: CON + '/' + CONNECTION + '/respond', body: { action: 'accept' }, setup: failing }),
     X('list-one', 'GET ' + CON + '/list', 200, { setup: world({ request: 'accepted' }) }),
-    X('list-a-page', 'GET ' + CON + '/list', 200, { url: CON + '/list?limit=1', setup: world({ request: 'accepted' }) })
+    X('list-a-page', 'GET ' + CON + '/list', 200, { url: CON + '/list?limit=1', setup: world({ request: 'accepted' }) }),
+    N('list-limit-asked-twice', 'GET ' + CON + '/list', 400, { url: CON + '/list?limit=1&limit=2', setup: world({ request: 'accepted' }) }) /* B2: a handler-made refusal for the error tests */
   ];
   return tree.concat(designed, handshake);
 }

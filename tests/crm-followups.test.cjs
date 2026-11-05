@@ -8,6 +8,7 @@ const assert = require('assert');
 const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('../lib/books-hooks');
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
+const UA1 = 'a1000000-0000-4000-8000-000000000001', UA2 = 'a2000000-0000-4000-8000-000000000002';   /* team members: real uuids — the assignee guard refuses anything else */
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
 D.cust = [Object.assign(row({ party_id: P(2), display_name: 'Chola' }), { customer_type: 'entity', added_via: 'manual', txn_count: 1, segment: 'new' })];
@@ -33,14 +34,14 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     assert.strictEqual(f.what, 'Call back about the quote'); assert.strictEqual(f.source, 'manual'); assert.strictEqual(f.assignee_user_id, 'E1'); assert.strictEqual(f.due_day, day(-1));
     assert.strictEqual(f.late, true); assert.strictEqual(f.today, false); assert.strictEqual(f.party_no.startsWith('P-'), true);
     b = (await t.post('/followups', { party_id: P(1), what: 'Collect payment', due_at: day(0), source: 'dues' })).body.followup; assert.strictEqual(b.today, true); assert.strictEqual(b.late, false);
-    c = (await t.post('/followups', { party_id: P(1), what: 'Next month', due_at: day(30), assignee_user_id: 'A1' })).body.followup; assert.strictEqual(c.late, false); assert.strictEqual(c.today, false); assert.strictEqual(c.assignee_user_id, 'A1');
+    c = (await t.post('/followups', { party_id: P(1), what: 'Next month', due_at: day(30), assignee_user_id: UA1 })).body.followup; assert.strictEqual(c.late, false); assert.strictEqual(c.today, false); assert.strictEqual(c.assignee_user_id, UA1);
     a = a.body.followup;
   });
   await ita('list: everyone / mine, with the late and today counts from the server', async () => {
     const all = (await t.get('/followups?scope=all')).body; assert.strictEqual(all.followups.length, 3); assert.strictEqual(all.late, 1); assert.strictEqual(all.today, 1);
     assert.deepStrictEqual(all.followups.map((x) => x.what), ['Call back about the quote', 'Collect payment', 'Next month'], 'soonest first');
     const mine = (await t.get('/followups?scope=mine')).body; assert.strictEqual(mine.followups.length, 2);
-    asCo('A1'); assert.strictEqual((await t.get('/followups?scope=mine')).body.followups.length, 1); t.as('E1');
+    asCo(UA1); assert.strictEqual((await t.get('/followups?scope=mine')).body.followups.length, 1); t.as('E1');
   });
   await ita('refused in words with a code: no what, a bad date, a bad source, no party, a stranger as assignee, a party that is not mine', async () => {
     const n = D.followups.length;
@@ -51,9 +52,9 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     assert.strictEqual(D.followups.length, n);
   });
   await ita('done: leaves the open list, stamps who and when, shows under done=1; reopen puts it back', async () => {
-    asCo('A2'); const r = await t.patch('/followups/' + a.followup_id, { done: true }); t.as('E1');
+    asCo(UA2); const r = await t.patch('/followups/' + a.followup_id, { done: true }); t.as('E1');
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.ok(r.body.followup.done_at); assert.strictEqual(r.body.followup.late, false, 'a done one is never late');
-    assert.strictEqual(D.followups.find((x) => x.followup_id === a.followup_id).done_by, 'A2');
+    assert.strictEqual(D.followups.find((x) => x.followup_id === a.followup_id).done_by, UA2);
     assert.strictEqual((await t.get('/followups')).body.followups.length, 2); assert.strictEqual((await t.get('/followups?done=1')).body.followups.length, 1);
     const tl = (await t.get('/parties/' + P(2) + '/timeline')).body.entries; assert.ok(tl.some((e) => e.kind === 'followup_done'), 'the timeline says "Follow-up done"');
     const re = await t.patch('/followups/' + a.followup_id, { done: false }); assert.strictEqual(re.body.followup.done_at, null); assert.strictEqual(re.body.followup.late, true);
@@ -82,13 +83,13 @@ const asCo = (id) => t.as('E1', { identity: { identity_id: id, parent_entity_id:
     assert.ok(all.may && all.may.write && all.may.write.may === true, 'the owner may write (may rides the list)');
   });
   await ita('reassign: the owner may; the current assignee may; anyone else is refused 403 NOT_ASSIGNEE; a stranger is 400', async () => {
-    let r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'A1' }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.assignee_user_id, 'A1');
-    asCo('A2'); r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'A2' }); assert.strictEqual(r.status, 403); assert.strictEqual(r.body.code, 'NOT_ASSIGNEE');
-    asCo('A1'); r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'A2' }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.assignee_user_id, 'A2'); t.as('E1');
+    let r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: UA1 }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.assignee_user_id, UA1);
+    asCo(UA2); r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: UA2 }); assert.strictEqual(r.status, 403); assert.strictEqual(r.body.code, 'NOT_ASSIGNEE');
+    asCo(UA1); r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: UA2 }); assert.strictEqual(r.status, 200); assert.strictEqual(r.body.followup.assignee_user_id, UA2); t.as('E1');
     r = await t.patch('/followups/' + a.followup_id, { assignee_user_id: 'STRANGER' }); assert.strictEqual(r.status, 400); assert.strictEqual(r.body.code, 'BAD_ASSIGNEE');
   });
   await ita('anyone may add, finish or snooze (a co-assist is not the owner) and edit the line', async () => {
-    asCo('A2'); let r = await t.patch('/followups/' + c.followup_id, { what: 'Next month, ring Ravi', due_at: day(7) }); t.as('E1');
+    asCo(UA2); let r = await t.patch('/followups/' + c.followup_id, { what: 'Next month, ring Ravi', due_at: day(7) }); t.as('E1');
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.followup.what, 'Next month, ring Ravi');
   });
   await ita('nothing to change → 400; an unknown id → 404; junk → 400', async () => {

@@ -128,6 +128,7 @@ const leadsWith = (entries, columns) =>
 /** a PRIMARY KEY / UNIQUE constraint or unique index of the table that includes the column */
 const uniqueIncludes = (table, column) => keysAndIndexes(table).some((entry) => entry.unique && entry.columns.includes(column));
 
+/** the facts of a table nobody has described yet: no columns, keys or indexes */
 const emptyFacts = () => ({
   columns: [],
   created: [],

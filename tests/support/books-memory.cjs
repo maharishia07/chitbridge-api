@@ -175,12 +175,14 @@ function create() {
         r.dr_minor += b.dr_minor; r.cr_minor += b.cr_minor; r.line_count += b.line_count; T.balances.set(k, r);
       }
     },
+    /* FIN-63: ONE moment per list, as Postgres stamps one transaction (now() is the transaction start); item_id is a string, as pg returns a bigint */
     async insertItems(db, e, items) {
+      const at = now();
       for (const it of items) {
         if (['bill', 'advance', 'on_account', 'allocation', 'reversal', 'status'].indexOf(it.ref_kind) < 0) throw new Error('party_item_kind_chk');
         if (['receivable', 'payable'].indexOf(it.side) < 0) throw new Error('party_item_side_chk');
         if (!it.ref || !it.against_ref || !it.party_id || !it.account_id || !it.currency) throw new Error('party_item not null: ' + JSON.stringify(it));
-        T.items.push(Object.assign({ item_id: ++itemSeq, entity_id: e, created_at: now() }, clone(it)));
+        T.items.push(Object.assign({ item_id: String(++itemSeq), entity_id: e, created_at: at }, clone(it)));
       }
     },
     /* CS2: a never-posted ledger is RE-CHARTED in place (no DELETE on the setup tables): parked, the new pack laid over the codes that exist, the year's periods re-labelled by number */
@@ -192,6 +194,28 @@ function create() {
     },
     async relabelPeriods(db, e, fromFy, rows) {
       (rows || []).forEach((r) => { const p = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fromFy && Number(x.period) === Number(r.period)); if (p) Object.assign(p, { fiscal_year: r.fiscal_year, start_date: r.start_date, end_date: r.end_date }); });
+    },
+    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
+    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
+    async soldByDay(db, e) {
+      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
+        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
+        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+      });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
+    },
+    /* REP-48: the real soldByDay over the in-memory journal — SOLD roles of the day kinds, reversed entries and reversals left out, per posting day */
+    DAY_KINDS: ['walkin_day', 'sale_bill', 'credit_given', 'return'], TENDER_ROLES: ['cash', 'upi', 'card', 'bank'], SOLD_ROLES: ['cash', 'upi', 'card', 'bank', 'debtors'],
+    async soldByDay(db, e) {
+      const days = new Map(), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+      T.entries.filter((h) => h.entity_id === e && S.DAY_KINDS.indexOf(h.event_type) >= 0 && !h.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === h.entry_id)).forEach((h) => {
+        const sold = T.lines.filter((l) => l.entry_id === h.entry_id && S.SOLD_ROLES.indexOf(role(l)) >= 0).reduce((t, l) => t + (l.dr_minor || 0) - (l.cr_minor || 0), 0);
+        const d = days.get(ymd(h.posting_date)) || { day: ymd(h.posting_date), sold: 0, bills: 0 };
+        d.sold += sold; d.bills += Array.isArray(h.source_chit_ids) ? h.source_chit_ids.length : h.event_type === 'return' ? 0 : 1; days.set(d.day, d);
+      });
+      return [...days.values()].sort((p, q) => p.day.localeCompare(q.day));
     },
     async periodSums() { return []; }, async lineSums() { return []; }, async firstYear() { return null; },
     async balanceDrift() { return []; }, async unbalancedEntries() { return []; },
@@ -245,6 +269,8 @@ function create() {
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
+    /* RAIL-146: partyOn for many ids at once, as lib/books-store partiesOn answers it (Map id → { customer, supplier }; an unknown id → both false) */
+    async partiesOn(db, e, ids) { const out = new Map(); for (const id of ids || []) out.set(String(id), await this.partyOn(db, e, id)); return out; },
     async partyNoOf(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return p ? p.party_no || null : null; },
     async setPartyNo(db, e, party, no) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); if (p && !p.party_no) p.party_no = no; },
     async billNos(db, e, ids) { const o = {}; (ids || []).forEach((i) => { const c = T.chits.find((x) => x.chit_id === i); if (c) o[i] = c.bill_no; }); return o; },
@@ -296,6 +322,13 @@ function create() {
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
     async taxRegistration(db, e) { const i = T.identities.find((x) => x.identity_id === e) || {}; const flags = i.policy_flags || {};
       return { gstin: i.gstn || null, country: i.country || null, reg_type: flags.gst_registration || null }; },
+    /* ACC-206 B · the sales let through unbalanced and not yet resolved (a filter on the stored chits and the change log), and the state of one */
+    async moneyOverrides(db, e) { return clone(T.chits.filter((c) => c.entity_id === e && c.business_json && c.business_json.money_override
+      && !T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(c.chit_id)))
+      .map((c) => ({ chit_id: c.chit_id, ref: c.business_json.bill_no || null, by: c.business_json.money_override.by, at: c.business_json.money_override.at, why: c.business_json.money_override.why,
+        step: c.business_json.money_override.step, unexplained_minor: c.business_json.money_override.unexplained_minor, words: null }))); },
+    async moneyOverrideState(db, e, chit_id) { return { held: T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(chit_id) && c.business_json && c.business_json.money_override),
+      resolved: T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(chit_id)) }; },
     /* F5 A1 · the sale bills the books hold (an unreversed sale_bill or walk-in day entry) whose chit has a line with no rate — read only, newest first */
     async unratedSaleBills(db, e, from, to, limit) {
       const noRate = (l) => (l.gst_rate === undefined || l.gst_rate === null) && (l.rate === undefined || l.rate === null);

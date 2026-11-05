@@ -94,9 +94,10 @@ function mountsOf(src) {
 function writeRoutes() {
   const auth = require(path.join(API, 'middleware', 'auth')), access = require(path.join(API, 'lib', 'access'));
   const mounts = mountsOf(fs.readFileSync(path.join(API, 'server.js'), 'utf8'));
-  const rows = [], unmounted = [];
+  const rows = [], unmounted = [], parts = require(path.join(API, 'tools', 'server-mounts.cjs')).partParents(path.join(API, 'routes'));
   for (const f of fs.readdirSync(path.join(API, 'routes')).filter((x) => x.endsWith('.js'))) {
     const base = f.replace(/\.js$/, ''), router = require(path.join(API, 'routes', f));
+    if (!mounts[base] && parts[f]) continue; /* a part of a split router (chits-trace of chits): its parent mounts it, and walk() below goes into the parent's sub-router */
     if (!mounts[base]) { unmounted.push(f); continue; }
     const walk = (r) => (r && r.stack ? r.stack : []).forEach((l) => {
       if (l.handle && l.handle.stack && !l.route) return walk(l.handle);
@@ -133,6 +134,10 @@ function verdict(r, selfScoped) {
   const { rows, unmounted } = writeRoutes();
   ok('every routes/*.js file is mounted in server.js (a new router must be mounted to be swept)', unmounted.length === 0, unmounted.join(', '));
   ok('the sweep sees the write routes (> 300)', rows.length > 300, rows.length);
+  /* F2 (critic 25 Oct): routes/chit-proposals.js is mounted inside the chits router — its four write doors must be IN the swept rows, not exempted from them */
+  const seen = new Set(rows.map((r) => r.method + ' ' + r.full));
+  const proposalDoors = ['POST /api/chits/:chit_id/proposals', 'POST /api/chits/:chit_id/proposals/:proposal_id/accept', 'POST /api/chits/:chit_id/proposals/:proposal_id/reject', 'POST /api/chits/:chit_id/proposals/:proposal_id/counter'];
+  ok('the proposal doors (a router mounted inside the chits router) are swept', proposalDoors.every((d) => seen.has(d)), proposalDoors.filter((d) => !seen.has(d)).join(', '));
 
   /* 1 · the GUARD: no write route is uncovered */
   const bad = rows.map((r) => [r, verdict(r, selfScoped)]).filter(([, v]) => !['gated', 'default', 'allowed'].includes(v));

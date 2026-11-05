@@ -34,6 +34,7 @@ function extras(tools) {
   const own = answering(/SELECT item_data FROM catalogue_items WHERE item_id/, [{ item_data: ITEM().item_data }]);
   const shelf = firstOf(money, written, own);
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more)); // an answer born after the sweep froze the old ones (B2, K-1): no frozen legacy to match
   const withRows = (answer) => ({ sqlRows: answer });
   const failing = { db: 'fail' };
   const requiredName = firstOf(
@@ -125,6 +126,7 @@ function extras(tools) {
     X('import-decisions-not-a-list', 'POST ' + P + '/import', 400, { body: importBody({ decisions: 'all' }) }),
     /* starter columns */
     X('starter-list', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=gold' }),
+    N('starter-vertical-given-twice', 'GET ' + P + '/starter-columns', 400, { url: P + '/starter-columns?vertical=gold&vertical=tea' }),
     X('starter-list-bare', 'GET ' + P + '/starter-columns', 200, {}),
     X('starter-list-unknown-trade', 'GET ' + P + '/starter-columns', 200, { url: P + '/starter-columns?vertical=nope' }),
     X('starter-list-fails', 'GET ' + P + '/starter-columns', 500, { patch: { starter: { list: crash } } }),

@@ -85,10 +85,10 @@ const lotfields = require('../lib/lotfields');
 const booksHooks = require('../lib/books-hooks');
 const booksYmd = require('../lib/books-engines').ymd;
 const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
-const keys = require('./keys');
+const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
 /**
  * ⚠️⚠️ STARTING A SHOP IS A ONCE-PER-SHOP ACT ([TILL-112]). The route already refuses a shop that has
  * products, so the honest limit is low: a handful of attempts covers choosing the wrong trade and saying so.
@@ -239,6 +239,9 @@ async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
   snap.row = (await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
+  /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
+     books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
+  snap.registration = 'gstn' in snap.row && !snap.row.gstn ? await countrySetup.registrationOfShop(entity_id) : null;
   snap.till = await claimedSeries(snap.asked);
   snap.ownRead = await ownReader(entity_id, since);
 }
@@ -1153,7 +1156,8 @@ async function resolveSources(entity_id, adoptedRows) {
   const sources = [];
   adoptedRows.forEach((item, index) => {
     const found = resolved[index];
-    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: found.items || [] });
+    /* CTR-171: a SOURCE shop's cost never travels (DECISIONS) — items go through the ONE strip CAT-241 gave the public catalogue (cost.dropCostKeys on a clone), for every role */
+    if (found) sources.push({ source_key: item.source_key, title: found.title, owner_entity_id: found.owner_entity_id || null, items: require('../lib/catalogue-view').publicItemsOf(found.items || []) });
   });
   return sources;
 }
@@ -1209,7 +1213,7 @@ async function withNetworkOffers(entity_id, items, offers) {
  * (see DELTA_CAP). Never a fresh "now" taken after the read.
  */
 function snapshotBody(snap) {
-  const { asked, row, flags, till, sectors, shelf, liveCount, offers, reward, customers, suppliers, staff, particulars, catList, paged, network, holdsStock } =
+  const { asked, row, flags, registration, till, sectors, shelf, liveCount, offers, reward, customers, suppliers, staff, particulars, catList, paged, network, holdsStock } =
     snap;
   const body = {
     at: paged.cursor || asked.readAt,
@@ -1226,7 +1230,7 @@ function snapshotBody(snap) {
     /* ⭐ which counter this key is, so the bill series is prefixed by something nobody types. A SUGGESTION:
        a counter that has already issued numbers keeps its own — see the note above claimedSeries. */
     till,
-    shop: shopBlock(row, flags, particulars, holdsStock),
+    shop: shopBlock(row, flags, particulars, holdsStock, registration),
     items: paged.items,
     removed: paged.removed,
     delta: !!asked.since,
@@ -1280,13 +1284,13 @@ function taxBlock(shelf) {
   };
 }
 
-/** the `shop` block of the snapshot: who the shop is, how it is registered, and how it is paid — in three runs of fields */
-function shopBlock(row, flags, particulars, holdsStock) {
+/** the `shop` block of the snapshot: who the shop is, how it is registered (`registration` = country-setup.registrationOfShop's answer), and how it is paid — in three runs of fields */
+function shopBlock(row, flags, particulars, holdsStock, registration) {
   const { party, gstin, country, stateSplit, shopMoney } = particulars;
   return {
     ...shopIdentity(party, row),
     ...shopAddressParts(party),
-    ...shopRegistration(row, flags, gstin, stateSplit),
+    ...shopRegistration(row, flags, gstin, stateSplit, registration),
     /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
     country,
     /* M127: does this shop hold stock? From its own data (holdsStockOf); null = unknown, shown as usual. The counter may override (till option stock). */
@@ -1342,12 +1346,13 @@ function shopAddressParts(party) {
  * ⚠️ The counter BUILDS the link rather than being sent one, because the web host is something the
  * page already resolves (cbHome()) and the API does not know which front end asked.
  */
-function shopRegistration(row, flags, gstin, stateSplit) {
+function shopRegistration(row, flags, gstin, stateSplit, registration) {
   return {
     gstin: gstin,
     handle: row.user_id || null,
     state_code: String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null /* CX0: only under a state-split pack (stateSplit above) */,
-    reg_type: String(flags.gst_registration || 'regular')
+    /* ⭐ CTR-170 (R13, Athi 29 Oct): the registration as the ONE reader answers it — 'unknown' when nobody said, so the counter ASKS; never 'regular' by default */
+    reg_type: countrySetup.registrationWord(registration, flags.gst_registration)
   };
 }
 
@@ -1551,7 +1556,7 @@ router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /di
     const entity_id = auth.entityOf(req);
     const keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can report itself.');
-    const diag = await require('./keys').setDiag(entity_id, keyId, diagnosticPatch(req));
+    const diag = await require('../lib/api-keys').setDiag(entity_id, keyId, diagnosticPatch(req));
     if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
     res.json({ ok: true, code: diag.code, at: diag.at });
   } catch (e) {
@@ -1656,7 +1661,7 @@ async function letCounterGo(entity_id, counterId, keyId, till, body) {
   await require('../db').withTransaction(async (db) => {
     const counter = await lockedCounter(db, entity_id, counterId);
     if (!counter) return;
-    await require('./counters').patchCounter(db, entity_id, counterId, counterReleasePatch(counter, keyId, till, body));
+    await require('../lib/counters-store').patchCounter(db, entity_id, counterId, counterReleasePatch(counter, keyId, till, body));
   });
 }
 
@@ -1703,7 +1708,7 @@ async function recordCounterState(entity_id, counterId, keyId, state, body) {
     const counter = await lockedCounter(db, entity_id, counterId);
     /* ⚠️ only the PC that holds the counter may say what it is doing */
     if (!counter || String(counter.held_by || '') !== String(keyId)) return;
-    await require('./counters').patchCounter(db, entity_id, counterId, {
+    await require('../lib/counters-store').patchCounter(db, entity_id, counterId, {
       status: state,
       status_since: state === 'break' ? (body.since ? String(body.since).slice(0, 40) : new Date().toISOString()) : null,
       status_by: state === 'break' ? (body.by ? String(body.by).slice(0, 80) : null) : null
@@ -2241,11 +2246,15 @@ function slabPatchOf(item_data, slab) {
   for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
   return patch;
 }
-/** the shop's tax facts in ONE read → { word, charges }: the pack's word for its tax, and whether a sale of this shop carries it (tax-shelf.chargesTax) */
-async function shopTaxFacts(db, entity_id) {
+/**
+ * the shop's tax facts in ONE read → { word, charges, ask }: the pack's word for its tax, and whether a sale of this shop carries it (tax-shelf.chargesTax:
+ * true · false · null = nobody said the registration, with `ask` the question, CTR-170). `registration` = country-setup.registrationOfShop's answer, read before the transaction.
+ */
+async function shopTaxFacts(db, entity_id, registration) {
   const shop = (await db.query('SELECT gstn, country, policy_flags FROM identities WHERE identity_id = $1', [entity_id])).rows[0] || {};
   const flags = shop.policy_flags || {};
-  return { word: taxShelf.taxWordOf(shop.country), charges: taxShelf.chargesTax({ gstin: shop.gstn, reg_type: flags.gst_registration }, taxPacks.packFor(shop.country)) };
+  const charges = taxShelf.chargesTax({ gstin: shop.gstn, reg_type: countrySetup.registrationWord(registration, flags.gst_registration) }, taxPacks.packFor(shop.country));
+  return { word: taxShelf.taxWordOf(shop.country), charges, ask: charges === null ? countrySetup.registrationAsk(shop.country) : null };
 }
 /** the slab the owner picked, if the shop's shelf (own + governed) holds it */
 const slabOnShelf = (shelf, slab_id) => (shelf && shelf.slabs instanceof Map && shelf.slabs.get(slab_id)) || null;
@@ -2256,9 +2265,10 @@ function rateBodyOf(req) {
     slab_id = String(body.slab_id || '');
   return { item_id, slab_id, missing: !item_id ? 'item_id required' : !slab_id ? 'slab_id required' : null };
 }
-/** the door's one transaction: the shop's tax facts, the slab, the product, the write — or WHICH refusal the handler answers ('no_tax' · 'no_slab' · 'no_item'; the statuses stay in the handler, S15) */
-async function setRateOnce(db, entity_id, shelf, item_id, slab_id) {
-  const facts = await shopTaxFacts(db, entity_id);
+/** the door's one transaction: the shop's tax facts, the slab, the product, the write — or WHICH refusal the handler answers ('unknown' · 'no_tax' · 'no_slab' · 'no_item'; the statuses stay in the handler, S15) */
+async function setRateOnce(db, entity_id, shelf, item_id, slab_id, registration) {
+  const facts = await shopTaxFacts(db, entity_id, registration);
+  if (facts.charges === null) return { refused: 'unknown', word: facts.word, ask: facts.ask };
   if (!facts.charges) return { refused: 'no_tax', word: facts.word };
   const slab = slabOnShelf(shelf, slab_id);
   if (!slab) return { refused: 'no_slab', word: facts.word };
@@ -2284,8 +2294,10 @@ router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
     const { item_id, slab_id, missing } = rateBodyOf(req);
     if (missing) return refuseBad(req, res, missing);
     const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false });
-    const out = await withEntity(entity_id, (db) => setRateOnce(db, entity_id, shelf, item_id, slab_id));
+    const registration = await countrySetup.registrationOfShop(entity_id); /* CTR-170: the ONE reader, before the transaction (its own RLS read) */
+    const out = await withEntity(entity_id, (db) => setRateOnce(db, entity_id, shelf, item_id, slab_id, registration));
     /* the refusals, in the pack's word for its tax (never "GST" in code), the caller's values never echoed (Q19) */
+    if (out.refused === 'unknown') return problem(req, res, { status: 409, ...said('TAX_REGISTRATION_UNKNOWN', 'refused', out.ask.question + ' Answer it in Settings → Country setup.') });
     if (out.refused === 'no_tax') return problem(req, res, { status: 409, ...said('TILL_NO_TAX_SCHEME', 'refused', 'This shop charges no ' + out.word + ', so no rate is needed.') });
     if (out.refused) return problem(req, res, { status: 404, ...notFound(out.refused === 'no_slab' ? 'That rate is not one of this shop’s ' + out.word + ' slabs.' : 'That product is not in this shop’s catalogue.') });
     if (out.changed) shopChanged(entity_id, 'rate set');
@@ -2585,7 +2597,7 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
     const owner = shop.rows[0] || {};
-    const claimed = await require('./counters').claim(enrolClaim(entity_id, owner, req.body));
+    const claimed = await require('../lib/counters-store').claim(enrolClaim(entity_id, owner, req.body));
     if (claimed.status !== 200) return problem(req, res, { status: claimed.status, ...relayed(claimed.body) });
     res.json({
       key: claimed.key,
@@ -3369,7 +3381,7 @@ function blueprintCard(blueprints, name) {
 const SUMMARY_BILLS = 60,
   SUMMARY_BILLS_MAX = 400; /* how many bills one period summary rolls up */
 /*
- * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots } —
+ * ⭐ RPT2 (2026-10-17) · ?compare=1&period=week|month|quarter|year&n= → Reports › Trend: { period, n, currency, fy_start_month, slots, sales_from, sales_note } —
  * rollup.series (the ONE comparison calculation) over the same summaries, each slot beside the same slot last year. ONE trip (readBatch:
  * the shop's year + the summaries). 422 NO_COUNTRY / NO_MONEY with the one sentence when the shop's country, money or year is unstated.
  * Who may call: the shop's own session or key (auth, own entity, RLS through readBatch). Without compare=1 the answer is unchanged.
@@ -3385,7 +3397,7 @@ router.get('/summary', auth, ...checked('GET /summary'), async (req, res) => {
       });
       if (trend.status !== 200) return problem(req, res, { status: trend.status, ...relayed(trend.body) }); // the trend's refusals (400 BAD_PERIOD, 422 NO_COUNTRY / NO_MONEY) keep its own codes and words
       /* S34: the trend's answer, every key lib/till-summary trend() returns (JSON leaves an undefined one out) */
-      return res.status(200).json({ period: trend.body.period, n: trend.body.n, currency: trend.body.currency, fy_start_month: trend.body.fy_start_month, slots: trend.body.slots });
+      return res.status(200).json({ period: trend.body.period, n: trend.body.n, currency: trend.body.currency, fy_start_month: trend.body.fy_start_month, slots: trend.body.slots, sales_from: trend.body.sales_from, sales_note: trend.body.sales_note });
     }
     res.json(await periodSummary(entity_id, req.query));
   } catch (e) {
@@ -3548,6 +3560,8 @@ function billLine(item) {
  * either party, is already reflected here. Nothing about "how much is left" is computed twice.
  * ⚠️ A chit whose lines are all complete is not a task. The screen must never show work that is done.
  */
+const cost = require('../lib/cost'); /* RAIL-146c: can_see_costs, read ONCE per request (isCostBlind) */
+const costView = require('../lib/cost-view'); /* RAIL-146c: what a cost-blind reader may read of the tasks and the match */
 const deliverline = require('../lib/deliverline');
 const select = require('../lib/select'); /* ⭐ the shared selector: one definition of "my chits", counterparty included */
 
@@ -3559,8 +3573,9 @@ router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
     const entity_id = auth.entityOf(req);
     const kind = String(req.query.kind || 'despatch') === 'receive' ? 'receive' : 'despatch';
     const limit = pageLimit.limitOf(req.query.limit, TASKS_PAGE, TASKS_MAX); /* the one clamp */
-    const out = await require('../lib/open-orders').tasks(entity_id, kind, limit);
-    res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit });
+    const blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146c: ONE can_see_costs read; a blind reader's tasks lose the purchase money (lib/cost-view) */
+    const out = await require('../lib/open-orders').tasks(entity_id, kind, limit, blind);
+    res.json({ kind, count: out.length, tasks: out, total: out.length, page: 1, limit, cost_params_ignored: costView.ignoredField(ignored) });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3586,6 +3601,7 @@ router.get('/tasks', auth, ...checked('GET /tasks'), async (req, res) => {
 router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
+    const blind = await cost.isCostBlind(req, entity_id), ignored = costView.moneyParams(req, blind); /* RAIL-146c: ONE can_see_costs read (the landed strip folded in) */
     const days = Math.min(Math.max(parseInt(req.query.days || '90', 10) || 90, 1), 365);
     const since = new Date(Date.now() - days * 24 * 3600 * 1000).toISOString();
     /* both directions: a purchase order for an off-platform supplier is a SELF chit and lands as 'received' */
@@ -3596,23 +3612,20 @@ router.get('/match', auth, ...checked('GET /match'), async (req, res) => {
     if (!heads.length) return res.json({ days, count: 0, orders: [], total: 0, page: 1, limit: 0 });
 
     const { withEntity: nestedWithEntity } = require('../db');
-    const orders = await nestedWithEntity(entity_id, (db) => matchOrders(db, entity_id, heads, days, tolerance));
-    /* [OFFR-04] landed = goods + freight etc. as the shop paid it: cost, so owner / can_see_costs only */
-    if (!(await require('../lib/cost').canReadSafe(req, entity_id))) hideLanded(orders);
+    /* [OFFR-04] landed = goods + freight etc. as the shop paid it, and RAIL-146c every rate and total: cost, so owner / can_see_costs / the paired key only; a blind reader's order goes through lib/cost-view MATCH_KEEP, its side from costSideOf */
+    const orders = await nestedWithEntity(entity_id, async (db) => matchSeen(db, entity_id, heads, blind, await matchOrders(db, entity_id, heads, days, tolerance)));
     const paged = pageLimit.pageOut('orders', orders, pageLimit.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
-    res.json({ days, count: orders.length, orders: paged.orders, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
+    res.json({ days, count: orders.length, orders: paged.orders, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note, cost_params_ignored: costView.ignoredField(ignored) }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
 });
 
-/** the landed cost of each receipt is the shop's buying price: removed from the answer */
-function hideLanded(orders) {
-  orders.forEach((order) =>
-    (order.receipts || []).forEach((entry) => {
-      delete entry.landed;
-    })
-  );
+/** the match orders for their reader: as built for the owner, a cost-allowed actor and the paired key; a cost-blind reader's through lib/cost-view (the old hideLanded folded in), ONE side read for the page */
+async function matchSeen(db, entity_id, heads, blind, orders) {
+  if (!blind || !orders.length) return orders;
+  const shown = new Set(orders.map((order) => String(order.chit_id)));
+  return costView.tillRows(db, entity_id, heads.filter((head) => shown.has(String(head.chit_id))), orders, costView.hideMatchCosts, 'buy'); /* the match is about what we BUY: cost-side whatever the party list says (no side read) */
 }
 
 /** every purchase order beside what was received and what was invoiced, read on one transaction handle */

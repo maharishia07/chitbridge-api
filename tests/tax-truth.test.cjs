@@ -359,8 +359,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     /* a bill with no invoice — an older bill, or another host */
     const O = await sixWays(port, { no: 'C2/26-27/0005', cart: CART_0007, cust: { name: 'Chola Auto Care' }, mutate: (c) => {
       delete c.business_json.invoice; return c; } });
-    ok('a bill with NO invoice keeps the old path: provisional, recomputed, total = the line nets (1118.15), no check',
-      O.sEntry && !O.sEntry.issued && O.sEntry.provisional && O.sEntry.tax_check === null && O.shopCopy.total_value === 1118.15, J([O.sEntry && O.sEntry.issued, O.shopCopy && O.shopCopy.total_value]));
+    ok('a bill with NO invoice keeps the old path for the books (provisional, recomputed, no check) and the header says NO total — unknown, never the line sum (ACC-206: the route adds nothing up)',
+      O.sEntry && !O.sEntry.issued && O.sEntry.provisional && O.sEntry.tax_check === null && (O.shopCopy.total_value === null || O.shopCopy.total_value === undefined), J([O.sEntry && O.sEntry.issued, O.shopCopy && O.shopCopy.total_value]));
     ok('…its place of supply is still the SHOP\'s state (33 → CGST + SGST), not the buyer\'s (29): both copies',
       O.sEntry.invoice.BuyerDtls.Pos === '33' && O.sEntry.invoice._cb.supply === 'intra' && O.cEntry.invoice.BuyerDtls.Pos === '33' && O.cEntry.invoice._cb.supply === 'intra',
       J([O.sEntry.invoice.BuyerDtls, O.sEntry.invoice._cb.supply, O.cEntry.invoice.BuyerDtls, O.cEntry.invoice._cb.supply]));

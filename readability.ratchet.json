@@ -1,5 +1,5 @@
 {
-  "_about": "readability ratchet (DISCIPLINES §6): one row per own-code file, score = long40 + long80 + complex10 + complex15 + deep3 + deep4 + cryptic + noWhatLine + emptyCatch + noHeader. A file may score LESS than its row, never more. Lower it with `node tools/readability.cjs --write` (web) / `--repo api --write`; it never raises.",
+  "_about": "readability ratchet (DISCIPLINES §6): one row per own-code file, score = long40 + long80 + complex10 + complex15 + deep3 + deep4 + cryptic + noWhatLine + emptyCatch + noHeader. A file may score LESS than its row, never more. Lower it with `node tools/readability.cjs --write` (web) / `--repo api --write` / `--repo engines --write`; it never raises.",
   "lib/access-events.js": {
     "score": 5,
     "long40": 0,
@@ -14,17 +14,43 @@
     "noHeader": 1
   },
   "lib/access.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/actors-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/adopt-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/adopt.js": {
     "score": 19,
@@ -53,15 +79,28 @@
     "noHeader": 0
   },
   "lib/amend.js": {
-    "score": 31,
+    "score": 27,
     "long40": 4,
-    "long80": 2,
+    "long80": 0,
     "complex10": 4,
-    "complex15": 3,
+    "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 17,
-    "noWhatLine": 1,
+    "cryptic": 15,
+    "noWhatLine": 2,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/api-keys.js": {
+    "score": 6,
+    "long40": 1,
+    "long80": 0,
+    "complex10": 5,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
@@ -91,6 +130,19 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/assist-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/assist-kb.js": {
     "score": 1,
     "long40": 0,
@@ -104,8 +156,21 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/attachments-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/autoraise.js": {
-    "score": 10,
+    "score": 9,
     "long40": 1,
     "long80": 0,
     "complex10": 1,
@@ -115,7 +180,7 @@
     "cryptic": 5,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/availability.js": {
     "score": 29,
@@ -131,8 +196,8 @@
     "noHeader": 1
   },
   "lib/beckn-map.js": {
-    "score": 15,
-    "long40": 1,
+    "score": 13,
+    "long40": 0,
     "long80": 0,
     "complex10": 2,
     "complex15": 2,
@@ -141,7 +206,20 @@
     "cryptic": 9,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/bell-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/bill-privacy.js": {
     "score": 34,
@@ -209,53 +287,66 @@
     "noHeader": 1
   },
   "lib/books-cashflow.js": {
-    "score": 72,
+    "score": 69,
     "long40": 2,
     "long80": 2,
     "complex10": 4,
     "complex15": 1,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 63,
+    "cryptic": 60,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/books-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/books-engines.js": {
-    "score": 46,
+    "score": 44,
     "long40": 0,
     "long80": 0,
-    "complex10": 2,
+    "complex10": 3,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 42,
+    "cryptic": 39,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/books-hooks.js": {
-    "score": 195,
-    "long40": 5,
+    "score": 191,
+    "long40": 4,
     "long80": 2,
     "complex10": 11,
-    "complex15": 8,
+    "complex15": 7,
     "deep3": 3,
     "deep4": 1,
-    "cryptic": 160,
-    "noWhatLine": 5,
+    "cryptic": 157,
+    "noWhatLine": 6,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/books-manual.js": {
-    "score": 67,
+    "score": 66,
     "long40": 1,
     "long80": 0,
     "complex10": 5,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 59,
+    "cryptic": 58,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -287,27 +378,27 @@
     "noHeader": 0
   },
   "lib/books-payables.js": {
-    "score": 30,
+    "score": 28,
     "long40": 2,
     "long80": 1,
     "complex10": 1,
-    "complex15": 1,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 25,
+    "cryptic": 24,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/books-period.js": {
-    "score": 178,
+    "score": 176,
     "long40": 10,
     "long80": 2,
     "complex10": 6,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 158,
+    "cryptic": 156,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -352,11 +443,11 @@
     "noHeader": 0
   },
   "lib/books-todo.js": {
-    "score": 35,
+    "score": 34,
     "long40": 2,
     "long80": 1,
     "complex10": 2,
-    "complex15": 2,
+    "complex15": 1,
     "deep3": 0,
     "deep4": 0,
     "cryptic": 28,
@@ -365,20 +456,20 @@
     "noHeader": 0
   },
   "lib/books.js": {
-    "score": 316,
+    "score": 314,
     "long40": 17,
-    "long80": 2,
+    "long80": 1,
     "complex10": 21,
     "complex15": 12,
     "deep3": 1,
     "deep4": 0,
-    "cryptic": 259,
+    "cryptic": 258,
     "noWhatLine": 4,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/bridgeid.js": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -388,20 +479,20 @@
     "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/canon.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/capture-contract.js": {
     "score": 0,
@@ -468,6 +559,19 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/catalogue-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/catalogue-read.js": {
     "score": 11,
     "long40": 1,
@@ -520,15 +624,28 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/channels-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/channels.js": {
-    "score": 31,
+    "score": 29,
     "long40": 1,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 1,
     "deep4": 0,
-    "cryptic": 26,
+    "cryptic": 24,
     "noWhatLine": 3,
     "emptyCatch": 0,
     "noHeader": 0
@@ -585,6 +702,19 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/combo-templates-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/compliance.js": {
     "score": 10,
     "long40": 0,
@@ -599,17 +729,17 @@
     "noHeader": 1
   },
   "lib/confcache.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/conformance.js": {
     "score": 10,
@@ -625,6 +755,19 @@
     "noHeader": 1
   },
   "lib/connector-rows.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/connectors-contract.js": {
     "score": 0,
     "long40": 0,
     "long80": 0,
@@ -676,8 +819,34 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/cost-view.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/cost-write.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/cost.js": {
-    "score": 16,
+    "score": 15,
     "long40": 2,
     "long80": 0,
     "complex10": 2,
@@ -687,13 +856,26 @@
     "cryptic": 9,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/counter-bill.js": {
     "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/counters-store.js": {
+    "score": 3,
+    "long40": 1,
+    "long80": 0,
+    "complex10": 2,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
@@ -728,6 +910,19 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/crm-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/crm-followups.js": {
     "score": 70,
     "long40": 2,
@@ -742,14 +937,14 @@
     "noHeader": 0
   },
   "lib/crm-groups.js": {
-    "score": 43,
+    "score": 36,
     "long40": 2,
-    "long80": 1,
+    "long80": 0,
     "complex10": 2,
-    "complex15": 1,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 36,
+    "cryptic": 31,
     "noWhatLine": 1,
     "emptyCatch": 0,
     "noHeader": 0
@@ -806,55 +1001,68 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
-  "lib/ctpaddress.js": {
-    "score": 14,
-    "long40": 1,
-    "long80": 1,
-    "complex10": 1,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 10,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 1
-  },
-  "lib/ctpdirectory.js": {
-    "score": 9,
-    "long40": 1,
-    "long80": 0,
-    "complex10": 1,
-    "complex15": 1,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 5,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 1
-  },
-  "lib/ctpenvelope.js": {
-    "score": 5,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 2,
-    "complex15": 1,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 1,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 1
-  },
-  "lib/ctpkeys.js": {
-    "score": 3,
+  "lib/ctp-contract.js": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
-    "noWhatLine": 1,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/ctpaddress.js": {
+    "score": 10,
+    "long40": 1,
+    "long80": 0,
+    "complex10": 1,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 8,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/ctpdirectory.js": {
+    "score": 6,
+    "long40": 1,
+    "long80": 0,
+    "complex10": 1,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 4,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/ctpenvelope.js": {
+    "score": 2,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 2,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/ctpkeys.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
@@ -872,17 +1080,17 @@
     "noHeader": 0
   },
   "lib/ctptransport.js": {
-    "score": 5,
-    "long40": 1,
+    "score": 0,
+    "long40": 0,
     "long80": 0,
-    "complex10": 1,
+    "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/customer-groups.js": {
     "score": 14,
@@ -949,6 +1157,19 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/definitions-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/deliverline.js": {
     "score": 25,
     "long40": 1,
@@ -963,43 +1184,43 @@
     "noHeader": 0
   },
   "lib/dev-otp.js": {
-    "score": 12,
+    "score": 11,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 11,
+    "cryptic": 10,
     "noWhatLine": 1,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/dispute-may.js": {
-    "score": 3,
+    "score": 1,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
+    "cryptic": 1,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/employee-code.js": {
-    "score": 5,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 4,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/entities-contract.js": {
     "score": 0,
@@ -1054,17 +1275,17 @@
     "noHeader": 1
   },
   "lib/exposure.js": {
-    "score": 5,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 4,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/facts-contract.js": {
     "score": 0,
@@ -1093,14 +1314,14 @@
     "noHeader": 1
   },
   "lib/finance-terms.js": {
-    "score": 56,
+    "score": 54,
     "long40": 1,
     "long80": 0,
     "complex10": 2,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 50,
+    "cryptic": 48,
     "noWhatLine": 0,
     "emptyCatch": 1,
     "noHeader": 0
@@ -1119,7 +1340,7 @@
     "noHeader": 0
   },
   "lib/folder-rules.js": {
-    "score": 17,
+    "score": 16,
     "long40": 1,
     "long80": 0,
     "complex10": 1,
@@ -1127,12 +1348,12 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 11,
-    "noWhatLine": 3,
+    "noWhatLine": 2,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/folder-views.js": {
-    "score": 15,
+    "score": 14,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -1142,7 +1363,7 @@
     "cryptic": 14,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/folders-contract.js": {
     "score": 0,
@@ -1222,6 +1443,19 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/governance-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/govresolve.js": {
     "score": 14,
     "long40": 1,
@@ -1236,7 +1470,7 @@
     "noHeader": 0
   },
   "lib/groupsum.js": {
-    "score": 15,
+    "score": 14,
     "long40": 1,
     "long80": 1,
     "complex10": 2,
@@ -1246,7 +1480,7 @@
     "cryptic": 10,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/handle.js": {
     "score": 22,
@@ -1275,14 +1509,14 @@
     "noHeader": 0
   },
   "lib/home-facts.js": {
-    "score": 99,
-    "long40": 4,
+    "score": 93,
+    "long40": 3,
     "long80": 0,
-    "complex10": 8,
-    "complex15": 5,
+    "complex10": 9,
+    "complex15": 4,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 79,
+    "cryptic": 74,
     "noWhatLine": 3,
     "emptyCatch": 0,
     "noHeader": 0
@@ -1353,17 +1587,30 @@
     "noHeader": 1
   },
   "lib/instruments.js": {
-    "score": 4,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
-    "emptyCatch": 1,
-    "noHeader": 1
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/integrations-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/inventory.js": {
     "score": 33,
@@ -1405,17 +1652,17 @@
     "noHeader": 1
   },
   "lib/item-cost.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/itemmatch.js": {
     "score": 37,
@@ -1444,7 +1691,7 @@
     "noHeader": 1
   },
   "lib/junitresults.js": {
-    "score": 19,
+    "score": 18,
     "long40": 1,
     "long80": 0,
     "complex10": 1,
@@ -1454,26 +1701,26 @@
     "cryptic": 13,
     "noWhatLine": 2,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/jwt-verify.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/knownerr.js": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
-    "complex10": 1,
+    "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
@@ -1509,30 +1756,43 @@
     "noHeader": 1
   },
   "lib/licence-rules.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/limiter-key.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/limits.js": {
-    "score": 4,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/local-identity.js": {
     "score": 29,
@@ -1548,17 +1808,43 @@
     "noHeader": 0
   },
   "lib/logger.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
-    "noWhatLine": 1,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/marketing-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/marketing-results.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/match.js": {
     "score": 11,
@@ -1600,17 +1886,17 @@
     "noHeader": 1
   },
   "lib/meter.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/mint-product.js": {
     "score": 5,
@@ -1626,14 +1912,14 @@
     "noHeader": 0
   },
   "lib/mint.js": {
-    "score": 27,
+    "score": 26,
     "long40": 2,
     "long80": 1,
     "complex10": 4,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 16,
+    "cryptic": 15,
     "noWhatLine": 2,
     "emptyCatch": 0,
     "noHeader": 0
@@ -1678,30 +1964,30 @@
     "noHeader": 0
   },
   "lib/move-in.js": {
-    "score": 140,
+    "score": 139,
     "long40": 8,
     "long80": 2,
     "complex10": 12,
     "complex15": 6,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 107,
+    "cryptic": 106,
     "noWhatLine": 5,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/namedentity.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/network-build-run.js": {
     "score": 32,
@@ -1756,7 +2042,7 @@
     "noHeader": 0
   },
   "lib/network-membership.js": {
-    "score": 18,
+    "score": 17,
     "long40": 0,
     "long80": 0,
     "complex10": 2,
@@ -1766,17 +2052,30 @@
     "cryptic": 13,
     "noWhatLine": 2,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/network-offers-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/network-offers.js": {
-    "score": 40,
+    "score": 39,
     "long40": 3,
     "long80": 2,
     "complex10": 4,
     "complex15": 1,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 30,
+    "cryptic": 29,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -1820,8 +2119,21 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/offers-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/offers-live.js": {
-    "score": 31,
+    "score": 30,
     "long40": 3,
     "long80": 2,
     "complex10": 4,
@@ -1831,7 +2143,7 @@
     "cryptic": 18,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/open-orders.js": {
     "score": 10,
@@ -1842,6 +2154,19 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 5,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/optout.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -1885,8 +2210,21 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/output-allowlist.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/owner.js": {
-    "score": 4,
+    "score": 3,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -1896,7 +2234,7 @@
     "cryptic": 3,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/pack-words.js": {
     "score": 0,
@@ -1938,8 +2276,8 @@
     "noHeader": 0
   },
   "lib/party-fields.js": {
-    "score": 46,
-    "long40": 3,
+    "score": 44,
+    "long40": 2,
     "long80": 0,
     "complex10": 3,
     "complex15": 3,
@@ -1948,10 +2286,10 @@
     "cryptic": 35,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/people.js": {
-    "score": 15,
+    "score": 14,
     "long40": 2,
     "long80": 0,
     "complex10": 1,
@@ -1961,10 +2299,10 @@
     "cryptic": 10,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/person-session.js": {
-    "score": 39,
+    "score": 38,
     "long40": 0,
     "long80": 0,
     "complex10": 1,
@@ -1974,7 +2312,7 @@
     "cryptic": 37,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/plans.js": {
     "score": 9,
@@ -2041,16 +2379,55 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
-  "lib/privacy.js": {
-    "score": 62,
+  "lib/privacy-contract.js": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
-    "complex10": 3,
-    "complex15": 2,
+    "complex10": 0,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 50,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/privacy.js": {
+    "score": 60,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 4,
+    "complex15": 1,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 48,
     "noWhatLine": 7,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/problem.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/products-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
@@ -2093,6 +2470,19 @@
     "emptyCatch": 0,
     "noHeader": 1
   },
+  "lib/quick-keys-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/quick-keys.js": {
     "score": 21,
     "long40": 0,
@@ -2133,20 +2523,20 @@
     "noHeader": 0
   },
   "lib/rail-status.js": {
-    "score": 5,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
-    "noWhatLine": 2,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/raiseticket.js": {
-    "score": 37,
+    "score": 35,
     "long40": 3,
     "long80": 1,
     "complex10": 3,
@@ -2155,8 +2545,21 @@
     "deep4": 0,
     "cryptic": 23,
     "noWhatLine": 1,
-    "emptyCatch": 2,
-    "noHeader": 1
+    "emptyCatch": 1,
+    "noHeader": 0
+  },
+  "lib/rate-door.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/rates.js": {
     "score": 3,
@@ -2210,8 +2613,21 @@
     "emptyCatch": 6,
     "noHeader": 0
   },
+  "lib/relationships-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/repeat-supply.js": {
-    "score": 131,
+    "score": 130,
     "long40": 1,
     "long80": 0,
     "complex10": 9,
@@ -2221,7 +2637,7 @@
     "cryptic": 113,
     "noWhatLine": 3,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/reporting.js": {
     "score": 7,
@@ -2250,17 +2666,17 @@
     "noHeader": 1
   },
   "lib/reqctx.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/resolveuserid.js": {
     "score": 15,
@@ -2276,7 +2692,7 @@
     "noHeader": 1
   },
   "lib/respond.js": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -2286,10 +2702,10 @@
     "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/retention.js": {
-    "score": 6,
+    "score": 5,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -2299,7 +2715,7 @@
     "cryptic": 5,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/reward-store.js": {
     "score": 14,
@@ -2326,6 +2742,19 @@
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 1
+  },
+  "lib/safe-url.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/schedule.js": {
     "score": 11,
@@ -2354,7 +2783,7 @@
     "noHeader": 1
   },
   "lib/schema.js": {
-    "score": 6,
+    "score": 5,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -2364,7 +2793,7 @@
     "cryptic": 3,
     "noWhatLine": 2,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/schemas-contract.js": {
     "score": 0,
@@ -2418,21 +2847,8 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
-  "lib/shop-clock.js": {
-    "score": 3,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 3,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/shopchanged.js": {
-    "score": 1,
+  "lib/shop-actors.js": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -2442,7 +2858,33 @@
     "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/shop-clock.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/shopchanged.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/sides.js": {
     "score": 46,
@@ -2510,17 +2952,17 @@
     "noHeader": 1
   },
   "lib/source.js": {
-    "score": 4,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/speech.js": {
     "score": 13,
@@ -2536,43 +2978,56 @@
     "noHeader": 1
   },
   "lib/starter-fields.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/stock-from-chit.js": {
-    "score": 39,
+    "score": 35,
     "long40": 3,
     "long80": 1,
-    "complex10": 6,
+    "complex10": 5,
     "complex15": 3,
-    "deep3": 1,
+    "deep3": 0,
     "deep4": 0,
-    "cryptic": 24,
+    "cryptic": 22,
     "noWhatLine": 1,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "lib/stock-store.js": {
-    "score": 39,
-    "long40": 3,
+    "score": 36,
+    "long40": 2,
     "long80": 2,
     "complex10": 3,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 28,
+    "cryptic": 27,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/stocked.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/storage-object.js": {
     "score": 20,
@@ -2588,28 +3043,54 @@
     "noHeader": 0
   },
   "lib/storage.js": {
-    "score": 13,
-    "long40": 1,
+    "score": 12,
+    "long40": 0,
     "long80": 0,
-    "complex10": 0,
+    "complex10": 1,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 9,
+    "cryptic": 8,
     "noWhatLine": 3,
     "emptyCatch": 0,
     "noHeader": 0
   },
-  "lib/stores.js": {
-    "score": 4,
+  "lib/storefront-contract.js": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
-    "noWhatLine": 1,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/stores.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "lib/supplies-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
@@ -2627,17 +3108,30 @@
     "noHeader": 0
   },
   "lib/supportcopy.js": {
-    "score": 3,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "lib/tax-contract.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "lib/tax-copy.js": {
     "score": 49,
@@ -2692,14 +3186,14 @@
     "noHeader": 0
   },
   "lib/testboard.js": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -2835,7 +3329,7 @@
     "noHeader": 0
   },
   "lib/vaultcrypto.js": {
-    "score": 7,
+    "score": 6,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -2845,7 +3339,7 @@
     "cryptic": 5,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/verify.js": {
     "score": 22,
@@ -2900,30 +3394,30 @@
     "noHeader": 1
   },
   "lib/whatsapp-out.js": {
-    "score": 26,
-    "long40": 1,
-    "long80": 1,
+    "score": 19,
+    "long40": 0,
+    "long80": 0,
     "complex10": 1,
-    "complex15": 1,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 21,
+    "cryptic": 17,
     "noWhatLine": 0,
     "emptyCatch": 1,
     "noHeader": 0
   },
   "lib/whatsapp-templates.js": {
-    "score": 4,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "lib/work-rows.js": {
     "score": 46,
@@ -3017,20 +3511,20 @@
     "noHeader": 1
   },
   "middleware/auth-first.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "middleware/auth.js": {
-    "score": 25,
+    "score": 24,
     "long40": 1,
     "long80": 1,
     "complex10": 1,
@@ -3040,10 +3534,10 @@
     "cryptic": 15,
     "noWhatLine": 1,
     "emptyCatch": 4,
-    "noHeader": 1
+    "noHeader": 0
   },
   "middleware/customer-auth.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3051,9 +3545,9 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 0,
-    "noWhatLine": 1,
+    "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "middleware/hat-gate.js": {
     "score": 5,
@@ -3095,11 +3589,11 @@
     "noHeader": 0
   },
   "routes/actors.js": {
-    "score": 72,
-    "long40": 14,
-    "long80": 7,
-    "complex10": 7,
-    "complex15": 5,
+    "score": 66,
+    "long40": 12,
+    "long80": 5,
+    "complex10": 6,
+    "complex15": 4,
     "deep3": 1,
     "deep4": 0,
     "cryptic": 38,
@@ -3134,7 +3628,7 @@
     "noHeader": 0
   },
   "routes/attachments.js": {
-    "score": 7,
+    "score": 6,
     "long40": 1,
     "long80": 0,
     "complex10": 1,
@@ -3144,7 +3638,7 @@
     "cryptic": 3,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/books.js": {
     "score": 313,
@@ -3173,24 +3667,24 @@
     "noHeader": 0
   },
   "routes/catalogue-face.js": {
-    "score": 7,
-    "long40": 1,
+    "score": 3,
+    "long40": 0,
     "long80": 0,
-    "complex10": 1,
-    "complex15": 1,
+    "complex10": 0,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
     "cryptic": 3,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/catalogue.js": {
-    "score": 140,
+    "score": 139,
     "long40": 11,
     "long80": 4,
     "complex10": 12,
-    "complex15": 6,
+    "complex15": 5,
     "deep3": 2,
     "deep4": 2,
     "cryptic": 100,
@@ -3211,16 +3705,29 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "routes/chits-trace.js": {
+    "score": 42,
+    "long40": 2,
+    "long80": 0,
+    "complex10": 2,
+    "complex15": 0,
+    "deep3": 2,
+    "deep4": 0,
+    "cryptic": 35,
+    "noWhatLine": 1,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "routes/chits.js": {
-    "score": 422,
-    "long40": 59,
-    "long80": 17,
-    "complex10": 39,
-    "complex15": 15,
-    "deep3": 10,
+    "score": 358,
+    "long40": 56,
+    "long80": 16,
+    "complex10": 33,
+    "complex15": 13,
+    "deep3": 7,
     "deep4": 1,
-    "cryptic": 268,
-    "noWhatLine": 11,
+    "cryptic": 223,
+    "noWhatLine": 7,
     "emptyCatch": 2,
     "noHeader": 0
   },
@@ -3251,36 +3758,36 @@
     "noHeader": 0
   },
   "routes/connectors.js": {
-    "score": 67,
+    "score": 65,
     "long40": 4,
     "long80": 2,
     "complex10": 3,
     "complex15": 2,
     "deep3": 1,
     "deep4": 1,
-    "cryptic": 53,
+    "cryptic": 52,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/counters.js": {
-    "score": 33,
-    "long40": 3,
+    "score": 9,
+    "long40": 1,
     "long80": 0,
-    "complex10": 3,
-    "complex15": 3,
+    "complex10": 0,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 24,
+    "cryptic": 8,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "routes/crm.js": {
-    "score": 77,
+    "score": 76,
     "long40": 4,
     "long80": 1,
-    "complex10": 5,
+    "complex10": 4,
     "complex15": 1,
     "deep3": 2,
     "deep4": 1,
@@ -3289,25 +3796,38 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "routes/csp-report.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "routes/ctp.js": {
-    "score": 32,
+    "score": 30,
     "long40": 3,
     "long80": 1,
     "complex10": 3,
     "complex15": 2,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 22,
+    "cryptic": 21,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/definitions.js": {
-    "score": 34,
-    "long40": 6,
+    "score": 33,
+    "long40": 7,
     "long80": 2,
-    "complex10": 4,
-    "complex15": 3,
+    "complex10": 3,
+    "complex15": 2,
     "deep3": 1,
     "deep4": 0,
     "cryptic": 18,
@@ -3329,7 +3849,7 @@
     "noHeader": 0
   },
   "routes/events.js": {
-    "score": 2,
+    "score": 1,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3339,7 +3859,7 @@
     "cryptic": 1,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/facts.js": {
     "score": 0,
@@ -3355,53 +3875,53 @@
     "noHeader": 0
   },
   "routes/folders.js": {
-    "score": 64,
+    "score": 63,
     "long40": 9,
     "long80": 2,
     "complex10": 4,
     "complex15": 2,
     "deep3": 2,
     "deep4": 0,
-    "cryptic": 43,
+    "cryptic": 42,
     "noWhatLine": 2,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "routes/forms.js": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 1,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "routes/governance.js": {
-    "score": 35,
+    "score": 34,
     "long40": 1,
     "long80": 0,
     "complex10": 1,
     "complex15": 1,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 32,
+    "cryptic": 31,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "routes/identity-docs.js": {
-    "score": 25,
+    "score": 24,
     "long40": 2,
     "long80": 1,
     "complex10": 1,
     "complex15": 1,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 19,
+    "cryptic": 18,
     "noWhatLine": 1,
     "emptyCatch": 0,
     "noHeader": 0
@@ -3433,14 +3953,14 @@
     "noHeader": 0
   },
   "routes/keys.js": {
-    "score": 68,
-    "long40": 4,
-    "long80": 3,
-    "complex10": 4,
-    "complex15": 2,
+    "score": 4,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 55,
+    "cryptic": 4,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -3454,6 +3974,19 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 1,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "routes/marketing.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -3485,7 +4018,7 @@
     "noHeader": 0
   },
   "routes/notifications.js": {
-    "score": 14,
+    "score": 13,
     "long40": 1,
     "long80": 1,
     "complex10": 0,
@@ -3495,7 +4028,7 @@
     "cryptic": 11,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/offers.js": {
     "score": 7,
@@ -3511,7 +4044,7 @@
     "noHeader": 0
   },
   "routes/openapi.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3519,12 +4052,12 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 0,
-    "noWhatLine": 1,
+    "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/people.js": {
-    "score": 3,
+    "score": 2,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3534,7 +4067,7 @@
     "cryptic": 2,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/pricing.js": {
     "score": 2,
@@ -3563,9 +4096,9 @@
     "noHeader": 0
   },
   "routes/products.js": {
-    "score": 124,
+    "score": 123,
     "long40": 15,
-    "long80": 6,
+    "long80": 5,
     "complex10": 10,
     "complex15": 5,
     "deep3": 4,
@@ -3576,7 +4109,7 @@
     "noHeader": 0
   },
   "routes/quick-keys.js": {
-    "score": 4,
+    "score": 3,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3586,17 +4119,17 @@
     "cryptic": 3,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "routes/relationships.js": {
-    "score": 68,
+    "score": 65,
     "long40": 9,
-    "long80": 5,
-    "complex10": 7,
+    "long80": 4,
+    "complex10": 6,
     "complex15": 3,
     "deep3": 2,
     "deep4": 0,
-    "cryptic": 40,
+    "cryptic": 39,
     "noWhatLine": 2,
     "emptyCatch": 0,
     "noHeader": 0
@@ -3693,9 +4226,9 @@
     "noHeader": 0
   },
   "routes/testing.js": {
-    "score": 220,
+    "score": 219,
     "long40": 34,
-    "long80": 14,
+    "long80": 13,
     "complex10": 26,
     "complex15": 12,
     "deep3": 1,
@@ -3823,7 +4356,7 @@
     "noHeader": 1
   },
   "scripts/books-breaks.cjs": {
-    "score": 5,
+    "score": 4,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -3833,7 +4366,7 @@
     "cryptic": 4,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "scripts/cancel-request.js": {
     "score": 16,
@@ -3888,14 +4421,14 @@
     "noHeader": 1
   },
   "scripts/check-db-role.js": {
-    "score": 2,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
@@ -5461,7 +5994,7 @@
     "noHeader": 1
   },
   "scripts/vendor-till.cjs": {
-    "score": 9,
+    "score": 8,
     "long40": 1,
     "long80": 1,
     "complex10": 0,
@@ -5471,11 +6004,11 @@
     "cryptic": 5,
     "noWhatLine": 1,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
   },
   "server.js": {
-    "score": 8,
-    "long40": 1,
+    "score": 7,
+    "long40": 0,
     "long80": 0,
     "complex10": 1,
     "complex15": 0,
@@ -5539,7 +6072,7 @@
     "noHeader": 1
   },
   "src/routes/network.js": {
-    "score": 12,
+    "score": 11,
     "long40": 0,
     "long80": 0,
     "complex10": 1,
@@ -5548,7 +6081,7 @@
     "deep4": 0,
     "cryptic": 7,
     "noWhatLine": 0,
-    "emptyCatch": 2,
+    "emptyCatch": 1,
     "noHeader": 0
   },
   "src/services/catalogue.js": {
@@ -5590,6 +6123,45 @@
     "emptyCatch": 1,
     "noHeader": 1
   },
+  "tools/api-allowlist.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/api-card.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/api-contract-tests.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "tools/api-ratchet.cjs": {
     "score": 0,
     "long40": 0,
@@ -5603,21 +6175,8 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
-  "tools/endpoint-usage.cjs": {
-    "score": 6,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 4,
-    "noWhatLine": 0,
-    "emptyCatch": 1,
-    "noHeader": 1
-  },
-  "tools/fresh-db-check.cjs": {
-    "score": 1,
+  "tools/api-register.cjs": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -5625,12 +6184,142 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 0,
-    "noWhatLine": 1,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/baseline-from-snapshot.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-callers.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-md.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-page.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-report.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-run.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage-twins.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/endpoint-usage.cjs": {
+    "score": 4,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 3,
+    "noWhatLine": 0,
+    "emptyCatch": 1,
+    "noHeader": 0
+  },
+  "tools/error-codes.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/fresh-db-check.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "tools/lint-ratchet.cjs": {
-    "score": 1,
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -5638,17 +6327,30 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 0,
-    "noWhatLine": 1,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
+  "tools/load-app.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
   "tools/migrate.cjs": {
-    "score": 25,
+    "score": 23,
     "long40": 1,
     "long80": 0,
     "complex10": 2,
-    "complex15": 1,
-    "deep3": 1,
+    "complex15": 0,
+    "deep3": 0,
     "deep4": 0,
     "cryptic": 18,
     "noWhatLine": 2,
@@ -5668,8 +6370,8 @@
     "emptyCatch": 1,
     "noHeader": 1
   },
-  "tools/schema-replay.cjs": {
-    "score": 1,
+  "tools/schema-fingerprint.cjs": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -5677,25 +6379,38 @@
     "deep3": 0,
     "deep4": 0,
     "cryptic": 0,
-    "noWhatLine": 1,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
-  "tools/server-mounts.cjs": {
-    "score": 3,
+  "tools/schema-replay.cjs": {
+    "score": 0,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 2,
+    "cryptic": 0,
     "noWhatLine": 0,
     "emptyCatch": 0,
-    "noHeader": 1
+    "noHeader": 0
+  },
+  "tools/server-mounts.cjs": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "tools/sim-load.cjs": {
-    "score": 98,
+    "score": 96,
     "long40": 1,
     "long80": 1,
     "complex10": 1,
@@ -5704,8 +6419,8 @@
     "deep4": 0,
     "cryptic": 83,
     "noWhatLine": 5,
-    "emptyCatch": 6,
-    "noHeader": 1
+    "emptyCatch": 5,
+    "noHeader": 0
   },
   "tools/sim-plan.cjs": {
     "score": 16,
@@ -5734,7 +6449,7 @@
     "noHeader": 1
   },
   "tools/simulate-years.cjs": {
-    "score": 77,
+    "score": 75,
     "long40": 1,
     "long80": 0,
     "complex10": 0,
@@ -5743,8 +6458,8 @@
     "deep4": 0,
     "cryptic": 68,
     "noWhatLine": 6,
-    "emptyCatch": 1,
-    "noHeader": 1
+    "emptyCatch": 0,
+    "noHeader": 0
   },
   "tools/sql-inventory.cjs": {
     "score": 9,
@@ -6046,14 +6761,14 @@
     "noHeader": 0
   },
   "tools/tally-connector/till.html": {
-    "score": 3601,
+    "score": 3598,
     "long40": 98,
     "long80": 34,
     "complex10": 233,
-    "complex15": 121,
+    "complex15": 120,
     "deep3": 8,
     "deep4": 1,
-    "cryptic": 2768,
+    "cryptic": 2766,
     "noWhatLine": 193,
     "emptyCatch": 145,
     "noHeader": 0
@@ -6083,109 +6798,5 @@
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 1
-  },
-  "lib/books-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/combo-templates-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/crm-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/network-offers-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/offers-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/problem.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "lib/tax-contract.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
-  },
-  "routes/marketing.js": {
-    "score": 0,
-    "long40": 0,
-    "long80": 0,
-    "complex10": 0,
-    "complex15": 0,
-    "deep3": 0,
-    "deep4": 0,
-    "cryptic": 0,
-    "noWhatLine": 0,
-    "emptyCatch": 0,
-    "noHeader": 0
   }
 }
