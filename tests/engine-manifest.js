@@ -308,6 +308,8 @@ const INFRA_LIBS = [
   'csp-report-contract.js',
   /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
   'network-offers-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
+  'signin-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
