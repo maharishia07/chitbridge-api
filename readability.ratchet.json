@@ -1,5 +1,5 @@
 {
-  "_about": "readability ratchet (DISCIPLINES §6): one row per own-code file, score = long40 + long80 + complex10 + complex15 + deep3 + deep4 + cryptic + noWhatLine + emptyCatch + noHeader. A file may score LESS than its row, never more. Lower it with `node tools/readability.cjs --write` (web) / `--repo api --write`; it never raises.",
+  "_about": "readability ratchet (DISCIPLINES §6): one row per own-code file, score = long40 + long80 + complex10 + complex15 + deep3 + deep4 + cryptic + noWhatLine + emptyCatch + noHeader. A file may score LESS than its row, never more. Lower it with `node tools/readability.cjs --write` (web) / `--repo api --write` / `--repo engines --write`; it never raises.",
   "lib/access-events.js": {"score":5,"long40":0,"long80":0,"complex10":1,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":1,"emptyCatch":0,"noHeader":1},
   "lib/access.js": {"score":2,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":2,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "lib/actors-contract.js": {"score":0,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":0,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
@@ -316,7 +316,7 @@
   "routes/privacy.js": {"score":13,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":13,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/products.js": {"score":123,"long40":15,"long80":5,"complex10":10,"complex15":5,"deep3":4,"deep4":0,"cryptic":83,"noWhatLine":1,"emptyCatch":0,"noHeader":0},
   "routes/quick-keys.js": {"score":3,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":3,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
-  "routes/relationships.js": {"score":67,"long40":9,"long80":5,"complex10":6,"complex15":3,"deep3":2,"deep4":0,"cryptic":40,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
+  "routes/relationships.js": {"score":65,"long40":9,"long80":4,"complex10":6,"complex15":3,"deep3":2,"deep4":0,"cryptic":39,"noWhatLine":2,"emptyCatch":0,"noHeader":0},
   "routes/repeat-supply.js": {"score":6,"long40":0,"long80":0,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":6,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/schemas.js": {"score":26,"long40":3,"long80":2,"complex10":2,"complex15":1,"deep3":1,"deep4":0,"cryptic":17,"noWhatLine":0,"emptyCatch":0,"noHeader":0},
   "routes/service.js": {"score":15,"long40":2,"long80":1,"complex10":0,"complex15":0,"deep3":0,"deep4":0,"cryptic":11,"noWhatLine":0,"emptyCatch":0,"noHeader":1},
