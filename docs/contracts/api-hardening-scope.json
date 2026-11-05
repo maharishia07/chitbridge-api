@@ -6,7 +6,6 @@
   "POST /api/books/gst/pay",
   "POST /api/books/payments",
   "POST /api/books/payments/:id/confirm",
-  "POST /api/books/payments/:id/propose",
   "POST /api/chits/:chit_id/payment",
   "POST /api/supplies/purchase",
   "POST /api/till/reward",
@@ -15,6 +14,7 @@
   "POST /api/connectors/erp-ingest"
  ],
  "money_reviewed_not": [
+  "POST /api/books/payments/:id/propose",
   "POST /api/books/payments/preview",
   "POST /api/invoice/build"
  ],

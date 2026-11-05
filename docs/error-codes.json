@@ -2081,6 +2081,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "GSTR_REFUSED",
+   "status": "422",
+   "title": "Return cannot be built",
+   "shopkeeper": "The GST return could not be built from this shop's facts, and the sentence says why.",
+   "hint": "Check the shop's GSTIN in Country setup, then try again.",
+   "owner_area": "tax",
+   "since": "2026-11-05"
+  },
+  {
    "code": "HANDOFF_STORE_MISSING",
    "status": "503",
    "title": "ERP handoffs not ready",
@@ -4437,6 +4446,15 @@
    "hint": "Check the number and try again.",
    "owner_area": "profile",
    "since": "2026-10-22"
+  },
+  {
+   "code": "TAX_REGISTRATION_UNKNOWN",
+   "status": "409",
+   "title": "Registration not said yet",
+   "shopkeeper": "Nobody has said whether this business is registered for its tax, so this waits.",
+   "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+   "owner_area": "till",
+   "since": "2026-11-05"
   },
   {
    "code": "TERMS_NOT_MIGRATED",

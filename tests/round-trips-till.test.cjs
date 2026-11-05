@@ -87,8 +87,12 @@ const t = (name, cond, extra) => {
  * dues transaction (4 trips once b273 exists) no longer runs for a shop whose ledger is off — for those this is a saving.
  * ⚠️ F11 (2026-10-14): the shop's supplier NAMES ride the snapshot (the Receive form suggests them) — one statement in the same shared
  * transaction, after the adoption read so the five above stay back to back: 42 → 43, AT the ceiling (not raised). The next read needs a cut first.
+ * ⚠️ RAISED 43 → 44 ON 2026-11-05, AND WHY (CTR-170, R13): the snapshot's shop.reg_type is the ONE reader's answer (country-setup.registrationOfShop,
+ * the read the books make, ACC-198), so a shop nobody said is registered reads 'unknown' and the counter asks, never 'regular'. Here that is the
+ * schema check alone (b299 absent in this world: 1 trip, then cached); live it is that check once plus one RLS read (3 + 2) per shop per MINUTE
+ * (regCache), zero on every snapshot in between. The budget is counter's: the cut it names is still due (an onEntity pass-through).
  */
-const BUDGET = Number(process.env.TILL_SNAPSHOT_BUDGET || 43);
+const BUDGET = Number(process.env.TILL_SNAPSHOT_BUDGET || 44);
 
 let srv;
 async function measure(label, qs) {

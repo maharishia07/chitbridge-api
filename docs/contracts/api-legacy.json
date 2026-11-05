@@ -3090,6 +3090,136 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -3333,6 +3463,18 @@
       "error": "Advice not available yet — the books need an update (b285).",
       "message": "Advice not available yet — the books need an update (b285).",
       "code": "BOOKS_NOT_MIGRATED"
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]
@@ -5068,6 +5210,18 @@
       "error": "Which financial year? e.g. 2026-27.",
       "message": "Which financial year? e.g. 2026-27."
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -6228,6 +6382,18 @@
       "error": "This ledger is kept in INR.",
       "message": "This ledger is kept in INR."
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -6311,6 +6477,18 @@
      },
      "fixture": {
       "error": "Not found"
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]
@@ -43064,6 +43242,32 @@
       "code": "INTERNAL",
       "detail": "Something went wrong on our side.",
       "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-shop-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
       "request_id": "req-test"
      }
     }
