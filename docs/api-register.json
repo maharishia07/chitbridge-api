@@ -260,8 +260,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1966,
-   "hash": "cb4788656770100d",
+   "line": 1979,
+   "hash": "596e2ebefe22fd4f",
    "does": "",
    "errors": {
     "count": 0,
@@ -322,8 +322,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "596e2ebefe22fd4f"
    },
    "status": "partial",
    "callers": [],
@@ -7318,12 +7319,13 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1137,
-   "hash": "baa5a1ee9cdc5a82",
+   "line": 1150,
+   "hash": "57086e1ed0d15b39",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      404,
      500
     ],
@@ -7366,6 +7368,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500
    ],
@@ -7376,7 +7379,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#706 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7401,12 +7404,13 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1155,
-   "hash": "d607d6f62eb7d0de",
+   "line": 1168,
+   "hash": "9ff18aab5c5a8c64",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      404,
      500
     ],
@@ -7449,6 +7453,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500
    ],
@@ -7459,8 +7464,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9ff18aab5c5a8c64"
    },
    "status": "partial",
    "callers": [],
@@ -7484,7 +7490,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1945,
+   "line": 1958,
    "hash": "f8822ac8bc7414af",
    "does": "",
    "errors": {
@@ -7569,7 +7575,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1919,
+   "line": 1932,
    "hash": "32bc5eb8888ad730",
    "does": "",
    "errors": {
@@ -7656,12 +7662,13 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1230,
-   "hash": "e92723610f98cd45",
+   "line": 1243,
+   "hash": "de2a306c4f9ddd23",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      404,
      500
     ],
@@ -7704,6 +7711,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500
    ],
@@ -7714,8 +7722,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "de2a306c4f9ddd23"
    },
    "status": "partial",
    "callers": [],
@@ -7739,7 +7748,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1092,
+   "line": 1105,
    "hash": "b199ff993db515f6",
    "does": "",
    "errors": {
@@ -7824,8 +7833,8 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2055,
-   "hash": "94028d2eee2e5db1",
+   "line": 2069,
+   "hash": "313368b61b12e0dc",
    "does": "",
    "errors": {
     "count": 0,
@@ -7914,12 +7923,13 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 664,
-   "hash": "7da497c2aa168f2a",
+   "line": 677,
+   "hash": "f7ae322fc1cc3543",
    "does": "",
    "errors": {
     "count": 2,
     "statuses": [
+     400,
      404,
      500,
      503
@@ -7964,6 +7974,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500,
     503
@@ -7977,7 +7988,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7da497c2aa168f2a"
+    "stale_since": "f7ae322fc1cc3543"
    },
    "status": "partial",
    "callers": [],
@@ -8001,12 +8012,13 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 931,
-   "hash": "7e516fd50beb91fc",
+   "line": 944,
+   "hash": "8f390660936e440b",
    "does": "",
    "errors": {
     "count": 2,
     "statuses": [
+     400,
      404,
      500,
      503
@@ -8052,6 +8064,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     404,
     500,
     503
@@ -8063,8 +8076,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8f390660936e440b"
    },
    "status": "partial",
    "callers": [],
@@ -34864,7 +34878,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1869,
+   "line": 1882,
    "hash": "9d34219e5166cb7b",
    "does": "",
    "errors": {
@@ -34959,7 +34973,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1366,
+   "line": 1379,
    "hash": "060fac9633f19490",
    "does": "",
    "errors": {
@@ -35073,7 +35087,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1167,
+   "line": 1180,
    "hash": "622c83d3ce290ba1",
    "does": "",
    "errors": {
@@ -35168,7 +35182,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1307,
+   "line": 1320,
    "hash": "81696fd76afddafd",
    "does": "",
    "errors": {
@@ -35262,7 +35276,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1268,
+   "line": 1281,
    "hash": "7d9d4681880be122",
    "does": "",
    "errors": {
@@ -35352,7 +35366,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 2078,
+   "line": 2094,
    "hash": "8c67d9df0fb2f2fd",
    "does": "",
    "errors": {
@@ -35445,7 +35459,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 800,
+   "line": 813,
    "hash": "1f2b998c43f174b9",
    "does": "",
    "errors": {
@@ -35544,7 +35558,7 @@
    "owner_area": "catalogue",
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
-   "line": 1987,
+   "line": 2001,
    "hash": "c64265079935b335",
    "does": "",
    "errors": {

@@ -430,10 +430,12 @@
   500
  ],
  "GET /api/catalogue/:bridge_id/my-documents": [
+  400,
   401,
   500
  ],
  "GET /api/catalogue/:bridge_id/my-orders": [
+  400,
   401,
   500
  ],
@@ -442,10 +444,12 @@
   500
  ],
  "GET /api/catalogue/enquiry": [
+  400,
   401,
   500
  ],
  "GET /api/catalogue/enquiry/:item_id": [
+  400,
   401,
   500
  ],

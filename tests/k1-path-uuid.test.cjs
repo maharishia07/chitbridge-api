@@ -69,6 +69,7 @@ const ROUTES = [
   // ── routes/actors.js
   ['/api/actors', 'routes/actors.js', 'PUT', '/api/actors/assign/abc', { action: 'pull' }, 'Chit not found'],
   // ── routes/catalogue.js
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/enquiry/abc', { message_text: 'Is this in stock?' }, 'Not found'],
   // ── routes/channels.js
   ['/api/channels', 'routes/channels.js', 'DELETE', '/api/channels/abc', {}, 'Unbind failed'],
   ['/api/channels', 'routes/channels.js', 'POST', '/api/channels/abc/provider-ref', { provider_ref: '123' }, 'Update failed'],
@@ -105,13 +106,27 @@ const ROUTES = [
   // ── routes/schemas.js
 ];
 
+/** TEXT rows (textParam): [mount, router file, method, url with a NUL where the handle goes, a body the route's schema accepts, headers?] — answered exactly as the same request with an unknown handle (NOSUCHSHOP), the database never asked */
+const TEXT_ROUTES = [
+  // ── text: routes/catalogue.js
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/login/verify', {identifier:'9876543210',otp:'123456'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/support', {identifier:'9876543210',otp:'123456',observed:'it broke'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/support/start', {identifier:'9876543210'}],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/order/start', {identifier:'9876543210'}, { 'idempotency-key': 'k1-text-key-0001' }],
+  ['/api/catalogue', 'routes/catalogue.js', 'POST', '/api/catalogue/%00/order/confirm', { identifier: '9876543210', otp: '654321', line_items: [{ name: 'Rice', qty: 1 }] }, { 'idempotency-key': 'k1-text-key-0001' }],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00/capture-fields', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/%00/support/preview', {}],
+  ['/api/catalogue', 'routes/catalogue.js', 'GET', '/api/catalogue/network/%00', {}],
+];
+
 const app = express();
 app.use(express.json());
 app.use((req, res, next) => {
   req.id = 'req-test';
   next();
 });
-new Set(ROUTES.map((r) => r[0] + '\u0000' + r[1])).forEach((key) => {
+new Set(ROUTES.concat(TEXT_ROUTES).map((r) => r[0] + '\u0000' + r[1])).forEach((key) => {
   const [mount, file] = key.split('\u0000');
   app.use(mount, require(path.join(ROOT, file)));
 });
@@ -123,10 +138,10 @@ const check = (ok, label) => {
   if (!ok) failed++;
   console.log((ok ? 'ok   ' : 'FAIL ') + label);
 };
-const ask = (server, method, url, body) =>
+const ask = (server, method, url, body, headers) =>
   new Promise((resolve) => {
     const data = JSON.stringify(body || {});
-    const req = http.request({ port: server.address().port, method, path: url, headers: { 'x-cb-admin-key': process.env.CB_ADMIN_KEY, 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
+    const req = http.request({ port: server.address().port, method, path: url, headers: { 'x-cb-admin-key': process.env.CB_ADMIN_KEY, 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), ...headers } }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
       res.on('end', () => resolve({ status: res.statusCode, type: res.headers['content-type'] || '', text, body: (() => { try { return JSON.parse(text); } catch (e) { return {}; } })() }));
@@ -174,6 +189,18 @@ const ask = (server, method, url, body) =>
     check(!/invalid input syntax|22P02/i.test(a.text), label + ' → no driver text');
     check(queries.length === 0, label + ' → the database was never asked (' + queries.length + ')');
     if (legacyError) check(a.body.error === legacyError, label + ' → legacy error "' + legacyError + '" (got ' + a.body.error + ')');
+  }
+  /* a NUL in a text handle: the same answer as an unknown one (S41: status, code, legacy keys, words), and Postgres is never asked */
+  const shape = (a) => JSON.stringify([a.status, a.body.code, a.body.error, a.body.message, a.body.ok, a.body.why, a.body.detail, a.type]);
+  for (const [, , method, url, body, headers] of TEXT_ROUTES) {
+    const label = method + ' ' + url.replace('/api/', '').replace(/%00/g, '<NUL>');
+    queries.length = 0;
+    const junk = await ask(server, method, url, body, headers);
+    const asked = queries.length;
+    const unknown = await ask(server, method, url.replace(/%00/g, 'NOSUCHSHOP'), body, headers);
+    check(junk.status < 500 && !/0x00|22021/.test(junk.text), label + ' → no 5xx, no driver text (got ' + junk.status + ')');
+    check(asked === 0, label + ' → the database was never asked (' + asked + ')');
+    check(shape(junk) === shape(unknown), label + ' → answered exactly as an unknown handle (' + shape(junk) + ' vs ' + shape(unknown) + ')');
   }
   server.close();
   console.log('\n' + checks + ' checks');

@@ -21,7 +21,7 @@ of file each thing is; this says what already does the job.
 | 73 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 70 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 68 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 67 | `next` | `dayopen.js` | the next thing to do — |
+| 68 | `next` | `dayopen.js` | the next thing to do — |
 | 66 | `list` | `cap-settings.js` |  |
 | 66 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 65 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
