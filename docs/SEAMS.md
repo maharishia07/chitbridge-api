@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 150 | `list` | `amend.js` |  |
+| 149 | `list` | `amend.js` |  |
 | 121 | `rows` | `crm.js` | still in them: |
 | 113 | `words` | `variant.browser.js` |  |
 | 110 | `withEntity` | `books-hooks.js` |  |
@@ -25,12 +25,12 @@ of file each thing is; this says what already does the job.
 | 66 | `list` | `cap-settings.js` |  |
 | 66 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 66 | `register` | `regulation.js` | register(pack) → the pack — |
-| 65 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 62 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 58 | `entry` | `books-store.js` |  |
@@ -70,7 +70,7 @@ of file each thing is; this says what already does the job.
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 33 | `gate` | `country-setup.js` | gate(h, entity): |
+| 34 | `gate` | `country-setup.js` | gate(h, entity): |
 | 33 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `live` | `receivables.js` | the allocations that still count: |
@@ -88,7 +88,7 @@ of file each thing is; this says what already does the job.
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `hold` | `orders.js` |  |
-| 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
+| 28 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
@@ -113,7 +113,7 @@ of file each thing is; this says what already does the job.
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 23 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 23 | `note` | `dbwatch.js` |  |
+| 22 | `note` | `dbwatch.js` |  |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |

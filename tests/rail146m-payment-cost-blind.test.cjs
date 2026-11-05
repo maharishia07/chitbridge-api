@@ -64,10 +64,11 @@ async function asReader(reader) {
   app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0),
     port = srv.address().port;
+  let attempts = 0;
   const q = (method, p, body) =>
     new Promise((done) => {
       const raw = body ? JSON.stringify(body) : '';
-      const r = http.request({ host: '127.0.0.1', port, path: '/api/books' + p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(raw) } }, (res) => {
+      const r = http.request({ host: '127.0.0.1', port, path: '/api/books' + p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(raw), 'Idempotency-Key': 'attempt-' + ++attempts /* FIN-63: each call its own attempt */ } }, (res) => {
         let got = '';
         res.on('data', (c) => (got += c));
         res.on('end', () => done({ status: res.statusCode, body: JSON.parse(got || '{}') }));

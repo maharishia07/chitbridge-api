@@ -1085,9 +1085,6 @@
   "GET /api/tax/ledger": {
    "output_allowlist": true
   },
-  "GET /api/tax/gstr": {
-   "output_allowlist": true
-  },
   "GET /api/books/status": {
    "output_allowlist": true
   },
@@ -1113,16 +1110,19 @@
    "strict_input": true
   },
   "POST /api/books/payments": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "PATCH /api/books/payments/:id": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "POST /api/books/payments/:id/propose": {
    "strict_input": true
   },
   "POST /api/books/payments/:id/confirm": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "POST /api/books/cheques/:id/status": {
    "strict_input": true
@@ -1197,7 +1197,8 @@
    "strict_input": true
   },
   "POST /api/books/gst/pay": {
-   "strict_input": true
+   "strict_input": true,
+   "idempotent_money_write": true
   },
   "POST /api/books/loans": {
    "strict_input": true

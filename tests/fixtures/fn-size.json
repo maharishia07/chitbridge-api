@@ -1,7 +1,7 @@
 {
   "limit": 80,
-  "long_functions": 215,
-  "worst_complexity": 179,
+  "long_functions": 214,
+  "worst_complexity": 176,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
     "lib/accounts-packs.js": [
@@ -298,9 +298,6 @@
       "moneyOf_",
       "resolveBelow",
       "tallyXml"
-    ],
-    "lib/tax-lines.js": [
-      "gstr1"
     ],
     "lib/tax-packs.js": [
       "(anonymous)"

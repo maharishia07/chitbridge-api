@@ -1163,7 +1163,8 @@ it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own 
   const uom = require(path.join(API, 'lib', 'units.js'));
   const src = fs.readFileSync(path.join(API, 'lib', 'tax-lines.js'), 'utf8');
   assert.ok(src.indexOf("uqc: it.Unit || 'OTH'") < 0, 'the seller word is filed as a UQC again');
-  assert.ok(/uqc: uqcFor\(\w+\.Unit\)/.test(src), 'the unit is not mapped through lib/units');
+  /* ACC-225: the file is the adopted engine's; tax-lines maps each line's Unit to its UQC before handing the invoice over (withUqc), the same uqcFor */
+  assert.ok(/(uqc|Unit): uqcFor\(\w+\.Unit\)/.test(src), 'the unit is not mapped through lib/units');
   assert.ok(src.indexOf("require('./units')") > 0, 'tax-lines does not use the one unit map');
   /* the words a counter actually uses must reach real codes */
   for (const [word, code] of [['packet', 'PAC'], ['piece', 'PCS'], ['kg', 'KGS'], ['litre', 'LTR'], ['bag', 'BAG']])

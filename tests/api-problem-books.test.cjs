@@ -57,15 +57,20 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "books_entry" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null };
 const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
+const OTHER = '77777777-7777-4777-8777-777777777777'; /* another shop: the owner of the row in the foreign-id world */
+/** another shop's row that answers ANY column (the generator's proxy row, tools/api-contract-tests.cjs rowOf): a handler that read it unscoped would answer with it, not 404 */
+const foreignRow = () => new Proxy({}, { get: (target, name) => (typeof name !== 'string' || name === 'then' || name === 'toJSON' ? undefined : /entity_id$|^owner$/.test(name) ? OTHER : /_id$/.test(name) ? PARTY : /_at$|date/.test(name) ? '2026-10-01' : 1), has: () => true });
 
 /** the rows a statement gets: the ledger's switch, then a scenario's own rows, then nothing (or the secret failure when the db is down) */
 function rowsFor(sql, params) {
   /* K-1: a db that answers as Postgres does to a value that is no uuid (22P02), so a route that lets one through shows as a 500 */
   if (world.db === 'uuid' && (params || []).some((value) => typeof value === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))) throw Object.assign(new Error('invalid input syntax for type uuid: "' + params[0] + '"'), { code: '22P02' });
   if (/FROM books_setting/.test(sql)) return world.ledgerOn ? { rows: [SETTING_ROW], rowCount: 1 } : { rows: [], rowCount: 0 };
+  /* S35 (Wave M · M3): the path id names ANOTHER shop's row — visible only to a statement that names its owner (the caller's scoped reads name the caller, so it is hidden, as RLS hides it); a read by the id alone surfaces it */
+  if (world.rowOwner && (params || []).includes(PARTY)) return params.includes(world.rowOwner) ? { rows: [foreignRow()], rowCount: 1 } : { rows: [], rowCount: 0 };
   if (world.sqlRows) {
     const given = world.sqlRows(String(sql));
     if (given) return given;
@@ -297,6 +302,11 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('fx-revalue-reads', 'GET /api/books/fx-revalue', 200, { url: MOUNT + '/fx-revalue?fiscal_year=2026-27&period=6' }),
   X('currency-not-the-ledgers', 'POST /api/books/payments/preview', 422, { body: BAD_MONEY }),
   X('currency-not-the-ledgers', 'POST /api/books/payments', 422, { body: BAD_MONEY }),
+  /* FIN-63: the four money doors refuse a call with no Idempotency-Key in words, before the ledger's own gates (the same 422 on every path) */
+  X('key-required', 'POST /api/books/payments', 422, { body: PAID, noKey: true }),
+  X('key-required', 'PATCH /api/books/payments/:id', 422, { body: { advice_shared_at: true }, noKey: true }),
+  X('key-required', 'POST /api/books/payments/:id/confirm', 422, { body: { allocations: [] }, noKey: true }),
+  X('key-required', 'POST /api/books/gst/pay', 422, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank', challan_no: 'CPIN1' }, noKey: true }),
   X('window-too-long', 'GET /api/books/bank/rail', 400, { url: MOUNT + '/bank/rail?from=2020-01-01&to=2026-01-01' }),
   X('nothing-to-change', 'PATCH /api/books/payments/:id', 400, { body: {} }),
   X('which-advice-chit', 'PATCH /api/books/payments/:id', 400, { body: { advice_chit_id: 'not-an-id' } }),
@@ -331,10 +341,13 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('advice-not-ready', 'PATCH /api/books/payments/:id', 503, { body: { advice_chit_id: PARTY }, patch: ADVICE_PATCH(false) })
 ]);
 
-function send(port, method, urlPath, body) {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key: the money doors require one); `noKey` leaves it off to see the refusal */
+let attempts = 0;
+function send(port, method, urlPath, body, noKey) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const once = noKey ? {} : { 'idempotency-key': 'attempt-' + ++attempts };
+    const options = { port, path: urlPath, method, headers: Object.assign(once, data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));
@@ -389,7 +402,7 @@ async function runScenario(port, scenario) {
   if (scenario.who === 'auditor') world.who = OWNER;
   const restore = applyPatch(scenario.patch);
   const method = scenario.route.split(' ')[0];
-  const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body);
+  const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body, scenario.noKey);
   restore();
   return answer;
 }
@@ -516,6 +529,34 @@ function checkAllowList(recording) {
 }
 /** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
 const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');
+/**
+ * S35 foreign_id_404 (Wave M · M3), the generator's own rule (tools/api-contract-tests.cjs foreignIdCase) over this file's worlds, because its proxy world never
+ * reaches a books route (the country gate stops it): a route addressed by a uuid in its path is proved when (1) some recorded scenario found the caller's own
+ * id (a 2xx), (2) the unknown id (the nothing-found world) is a 404, and (3) another shop's id (the foreign-id world: the row exists, owned by OTHER) answers
+ * byte for byte as the unknown id. → { route: { foreign_id_404: true } } for the routes that held; a route whose path value is not a row's uuid (a year, an
+ * account code, a ref) is not addressed by a shop's id and is left to docs/contracts/api-hardening-scope.json public_ids (cb-api).
+ */
+async function checkForeignIds(port, routes, recording) {
+  const proved = {};
+  const idRoutes = Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && /:(id|chit_id)\b/.test(route));
+  for (const route of idRoutes) {
+    /* the request that found the caller's own id (a recorded 2xx: its body passes the route's own input checks), sent again at an unknown id and at another shop's */
+    const found = Object.values(recording).find((one) => one.route === route && one.status >= 200 && one.status < 300);
+    const ask = (id, setup) => runScenario(port, { id, route, url: urlOf(routes[route], false), body: found && found.request.body, setup });
+    const unknown = found ? await ask('unknown-id', {}) : null;
+    const foreign = found ? await ask('foreign-id', { rowOwner: OTHER }) : null;
+    const held = !!found && unknown.status === 404 && foreign.status === 404 && shaOf(foreign) === shaOf(unknown);
+    if (held) proved[route] = { foreign_id_404: true };
+    else console.log('  note  ' + route + ': foreign_id_404 not held here (' + (found ? 'unknown id ' + unknown.status + ', foreign id ' + foreign.status : 'no scenario finds the own id') + ') — the register keeps it open');
+  }
+  check("S35: on every books route addressed by a uuid whose own id a scenario finds, another shop's id answers the unknown id's 404 byte for byte — or the route is named above (" + Object.keys(proved).length + ' of ' + idRoutes.length + ' held)', Object.keys(proved).length > 0);
+  return proved;
+}
+/** the books routes the evidence file says foreign_id_404 for */
+function foreignIdEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].foreign_id_404).sort().map((route) => [route, { foreign_id_404: true }]));
+}
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
@@ -527,6 +568,7 @@ function writeAllowList(proved) {
   const routes = onDisk.routes || {};
   Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
     delete routes[route].output_allowlist;
+    delete routes[route].foreign_id_404;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
@@ -607,6 +649,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkKit();
   checkAnswers(recording);
   const proved = checkAllowList(recording);
+  const server2 = app.listen(0);
+  const foreignProved = await checkForeignIds(server2.address().port, routes, recording);
+  server2.close();
+  Object.keys(foreignProved).forEach((route) => (proved[route] = Object.assign(proved[route] || {}, foreignProved[route])));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -617,7 +663,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     writeAllowList(proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/books.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books routes whose success answers held closed here', sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(proved).length });
+    const allowProved = Object.fromEntries(Object.keys(proved).filter((route) => proved[route].output_allowlist).map((route) => [route, Object.fromEntries(Object.entries(proved[route]).filter(([key]) => key.startsWith('output_allowlist')))]));
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books routes whose success answers held closed here', sameValue(allowListEvidenceOnDisk(), allowProved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowProved).length });
+    const foreignOnDisk = foreignIdEvidenceOnDisk();
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the books routes that held it here', sameValue(foreignOnDisk, Object.fromEntries(Object.keys(foreignProved).sort().map((route) => [route, foreignProved[route]]))), { onDisk: Object.keys(foreignOnDisk).length, held: Object.keys(foreignProved).length });
   }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);

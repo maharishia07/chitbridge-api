@@ -215,6 +215,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | GOV_CONFLICT | 409 | Clashes with what is recorded | That clashes with what is already recorded. | Reload the page and try again. | governance | 2026-10-23 |
 | GOV_NOT_AVAILABLE | 503 | Not available yet | That is not available on this installation yet. | Try again after the next update. | governance | 2026-10-23 |
 | GOV_REFUSED | 422 | Could not be done as sent | That could not be done as it was sent. | Check what was sent and try again. | governance | 2026-10-23 |
+| GSTR_REFUSED | 422 | Return cannot be built | The GST return could not be built from this shop's facts, and the sentence says why. | Check the shop's GSTIN in Country setup, then try again. | tax | 2026-11-05 |
 | HANDOFF_STORE_MISSING | 503 | ERP handoffs not ready | ERP handoffs are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
 | HAS_PARENT | 409 | Already in a network | That business is already in a network, and a business can be in one at a time. | Remove it from that network first. | network | 2026-10-23 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
@@ -418,6 +419,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TASKS_TO_ROUTE | 400 | Tasks to route | This person still has open tasks. | Send them to the pool or to a colleague first. | actors | 2026-10-22 |
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
+| TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
 | TESTING_BAD_REQUEST | 400 | The test board needs something else | The test board could not take that, and the sentence says why. | Read the sentence shown, fix it and try again. | testing | 2026-10-23 |
 | TESTING_NOT_DEPLOYED | 500 | Test data missing on this server | The test cases or records are not on this server yet. | Tell us: the server needs to be deployed again. | testing | 2026-10-23 |
