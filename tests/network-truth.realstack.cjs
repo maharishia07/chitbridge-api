@@ -159,7 +159,9 @@ const orderTo = (from, to, ref) => ({ recipients: [{ display_name: to.name, brid
       ok(await j('/api/products', { method: 'POST', token: S2.token, body: { item_data: { name: word + ' closed item', unit: 'piece', price: 5 } } }), 'S2 item');
       const found = async () => (await pg.query('SELECT entity_id, bridge_id FROM network_search($1, $2, 50)', [S1.bridge, word])).rows.map((r) => r.bridge_id);
       const before = await found();
-      expect(before.includes(S1.bridge) && before.includes(S2.bridge), 'premise: while open, both shops are found by the sibling, got ' + JSON.stringify(before));
+      /* when the premise fails, say why: each store's identity row, its catalogue row count and whether it sits under the caller's root */
+      const why = async () => JSON.stringify((await pg.query("SELECT i.bridge_id, i.status, i.catalogue_visibility, i.business_status, e.path::text AS path, (SELECT count(*) FROM catalogue_items ci WHERE ci.entity_id = i.identity_id AND ci.is_active) AS items FROM identities i LEFT JOIN cb_entity e ON e.bridge_id = i.bridge_id WHERE i.bridge_id = ANY($1) AND i.identity_type = 'entity'", [[S1.bridge, S2.bridge]])).rows);
+      expect(before.includes(S1.bridge) && before.includes(S2.bridge), 'premise: while open, both shops are found by the sibling (S1 ' + S1.bridge + ', S2 ' + S2.bridge + '), got ' + JSON.stringify(before) + (before.length === 2 ? '' : ' · rows ' + await why()));
       ok(await j('/api/entities/profile', { method: 'PATCH', token: S2.token, body: { business_status: 'closed' } }), 'close S2');
       const closed = await found();
       expect(!closed.includes(S2.bridge) && closed.includes(S1.bridge), 'closed: S2 must be absent and S1 still found, got ' + JSON.stringify(closed));
