@@ -62,6 +62,7 @@
   500
  ],
  "DELETE /api/crm/groups/:name": [
+  400,
   401,
   403,
   404,
