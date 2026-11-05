@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 427,
-  "meets": 200,
+  "partial": 424,
+  "meets": 203,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -2747,13 +2747,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-adopt.js"
    ],
@@ -19576,13 +19576,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -47100,9 +47100,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d3b57ed9daecd0aa"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -56050,11 +56049,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "756da2bc804a1d58"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catsetup.js"
