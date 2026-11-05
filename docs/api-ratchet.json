@@ -11,7 +11,7 @@
  "columns_failing": {
   "strict_input": 227,
   "output_allowlist": 226,
-  "foreign_id_404": 86,
+  "foreign_id_404": 87,
   "idempotent_money_write": 12,
   "inbound_validated": 2,
   "trips_budgeted": 144

@@ -17,8 +17,8 @@
     "failing": 226
    },
    "foreign_id_404": {
-    "applies": 229,
-    "failing": 86
+    "applies": 230,
+    "failing": 87
    },
    "idempotent_money_write": {
     "applies": 12,
@@ -43656,7 +43656,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -43664,7 +43664,7 @@
    "applies": {
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
