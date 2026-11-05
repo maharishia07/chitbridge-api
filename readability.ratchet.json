@@ -443,9 +443,9 @@
     "noHeader": 0
   },
   "lib/books.js": {
-    "score": 315,
+    "score": 314,
     "long40": 17,
-    "long80": 2,
+    "long80": 1,
     "complex10": 21,
     "complex15": 12,
     "deep3": 1,
