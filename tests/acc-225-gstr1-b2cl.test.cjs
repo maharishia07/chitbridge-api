@@ -94,6 +94,10 @@ const itm = (x) => x.itms[0].itm_det;
 
   /* ── 4 · refusals in words, never a half file ── */
   eq('no 15-character GSTIN on me → { ok: false, why } (GET /api/tax/gstr answers 422 GSTR_REFUSED; the book pack lists it as pending)', [T.gstr1(led, { Gstin: null }, '102026').ok, typeof T.gstr1(led, { Gstin: '33S' }, '102026').why], [false, 'string']);
+  /* ACC-254 (hand-computed): GSTR is India's; a stated non-India country is refused in words naming it, an India shop with no GSTIN keeps the engine's sentence */
+  eq('IN shop, no GSTIN → the old India sentence, unchanged', [T.gstr1(led, { Gstin: null, Country: 'IN' }, '102026').why, T.gstr1(led, { Gstin: null }, '102026').why], ['A return needs the shop GSTIN (15 characters).', 'A return needs the shop GSTIN (15 characters).']);
+  eq('AU shop → India-only, names Australia', T.gstr1(led, { Gstin: '12345678901', Country: 'AU' }, '102026'), { ok: false, why: 'GSTR returns are for shops registered for GST in India. This shop is in Australia.' });
+  eq('AE shop (even with a 15-digit TRN) → India-only, names the country in full', T.gstr1(led, { Gstin: '100123456700003', Country: 'AE' }, '102026'), { ok: false, why: 'GSTR returns are for shops registered for GST in India. This shop is in United Arab Emirates.' });
   eq('an empty month is an empty file, not a refusal', [T.gstr1(month([]), ME, '102026').ok, T.gstr1(month([]), ME, '102026').b2cs], [undefined, []]);
 
   /* ── 5 · one builder: tax-lines holds no second GSTR-1 arithmetic, and both readers call it ── */
