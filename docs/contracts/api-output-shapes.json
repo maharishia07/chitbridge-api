@@ -16927,6 +16927,198 @@
         "url": "/api/events/stats"
       }
     },
+    "GET /api/facts/rail/chits": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "overdue_days",
+          "truncated",
+          "items"
+        ],
+        "properties": {
+          "overdue_days": {
+            "type": "number"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "direction",
+                "tab",
+                "stuck",
+                "status",
+                "created_at",
+                "age_days",
+                "subject",
+                "who",
+                "kind",
+                "value",
+                "currency",
+                "self",
+                "own",
+                "why"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "direction": {
+                  "type": "string"
+                },
+                "tab": {
+                  "type": "string"
+                },
+                "stuck": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "age_days": {
+                  "type": "number"
+                },
+                "subject": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "who": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "self": {
+                  "type": "boolean"
+                },
+                "own": {
+                  "type": "boolean"
+                },
+                "why": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "open_order": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/facts/rail/chits"
+      }
+    },
+    "GET /api/facts/:card": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "lines",
+          "state"
+        ],
+        "properties": {
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "text"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "money": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "tone": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "figures": {
+            "type": "object"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "needs_you",
+              "in_use",
+              "not_started"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "figures",
+          "reason": "a card names its own figures (twenty-one cards, each its own keys): left open, as lib/home-facts builds them"
+        }
+      ],
+      "example": {
+        "url": "/api/facts/till"
+      },
+      "closed_by": "recordings"
+    },
     "GET /api/notifications": {
       "status": "200",
       "schema": {

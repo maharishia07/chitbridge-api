@@ -48,6 +48,8 @@ const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4): this file writes the folders routes' output_allowlist rows */
 const FOLDERS_MINE = (route) => route.includes(' /api/folders/') || route.endsWith(' /api/folders');
+const FACTS_MINE = (route) => route.includes(' /api/facts/'); /* the Home facts (2 routes): their output_allowlist rows are written beside the folders' */
+const ALLOW_MINE = (route) => FOLDERS_MINE(route) || FACTS_MINE(route);
 const MOUNTS = ['/api/folders', '/api/facts', '/api/pricing'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/folders': 'routes/folders.js', '/api/facts': 'routes/facts.js', '/api/pricing': 'routes/pricing.js' };
@@ -419,7 +421,10 @@ const EXTRAS = [
   X('key-sees-no-rail', 'GET /api/facts/rail/chits', 403, { setup: { asKey: true } }),
   X('card-builder-fails', 'GET /api/facts/:card', 500, { patch: { home: { BUILD: { till: async () => { throw new Error(SECRET_SQL); } } } } }),
   X('rail-builder-fails', 'GET /api/facts/rail/chits', 500, { patch: { home: { railChits: async () => { throw new Error(SECRET_SQL); } } } }),
-  X('card-answers', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [] }) } } } }),
+  X('card-answers', 'GET /api/facts/:card', 200, { patch: { home: { BUILD: { till: async () => ({ lines: [], state: 'in_use' }) } } } }),
+  /* S34: the answers as lib/home-facts builds them (a line carries text, value, tone, money and at; a card names its own figures; the rail names every key of an item) */
+  X('card-answers-lines-figures-state', 'GET /api/facts/:card', 200, { url: '/api/facts/till', patch: { home: { BUILD: { till: async () => ({ lines: [{ text: 'Sold ₹1,200.00 · 3 bills', value: 120000, money: 120000, tone: 'dn', at: '2027-01-15' }, { text: 'No counter open', value: 0 }], figures: { day: '2027-01-15', bills: 3, sales: 120000, currency: 'INR', counters_open: 0 }, state: 'needs_you' }) } } } }),
+  X('rail-answers-items', 'GET /api/facts/rail/chits', 200, { patch: { home: { railChits: async () => ({ overdue_days: 7, truncated: false, items: [{ chit_id: PARTY, direction: 'received', tab: 'in', stuck: true, status: 'sent', created_at: '2027-01-01T08:00:00.000Z', age_days: 14.2, subject: 'Order 12', who: 'Annam Stores', kind: 'order', value: 5000, currency: 'INR', self: false, own: false, why: 'They sent it 14 days ago and you have not answered.', open_order: true }] }) } } }),
   /* pricing */
   X('no-lines', 'POST /api/pricing/price', 400, { setup: { who: OWNER }, body: {} }),
   X('lines-not-a-list', 'POST /api/pricing/price', 400, { body: { lines: 'tea' } }),
@@ -691,17 +696,38 @@ function checkFoldersAllowList(recording) {
   });
   return proved;
 }
+/**
+ * S34: the two Home-facts reads. Each recorded 200 (a card with lines, figures and state; the rail's chit list with every key of an item) passes the route's closed shape unchanged,
+ * and the shape holds the keys the libraries build. The nested nodes are closed from the recordings (basis recordings: a key outside them is reported and kept, never dropped);
+ * a card's figures stay OPEN on purpose, every one of the twenty-one cards names its own.
+ */
+function checkFactsAllowList(recording) {
+  console.log('\n-- the closed success shapes of the Home-facts reads hold every recorded 200 --');
+  const proved = {};
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  ['GET /api/facts/:card', 'GET /api/facts/rail/chits'].forEach((route) => {
+    const shape = allowlist.shapeOf(route);
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body && Array.isArray((one.body.lines || one.body.items)));
+    const fits = shape && engine.compile(shape.schema);
+    const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body) && allowlist.prune(shape.schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 that carries its list (' + answers.length + ') holds only the keys its closed shape lists', held, { answers: answers.length, errors: fits && fits.errors });
+    check(route + ': a key no answer has seen is refused at the root (additionalProperties false) and the answer keeps its own', !!shape && allowlist.prune(shape.schema, Object.assign({}, answers[0] && answers[0].body, { canary_column: 1 })).dropped.length === 1, shape && shape.closed_by);
+    if (held) proved[route] = { output_allowlist: true, output_allowlist_basis: 'recordings' };
+  });
+  return proved;
+}
 /** the folders routes the evidence file says output_allowlist for */
 function foldersEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => FOLDERS_MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => ALLOW_MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write the folders output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeFoldersEvidence(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter(FOLDERS_MINE).forEach((route) => {
+  Object.keys(routes).filter(ALLOW_MINE).forEach((route) => {
     delete routes[route].output_allowlist;
+    delete routes[route].output_allowlist_basis;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
@@ -819,9 +845,10 @@ async function checkJunkPairs(port) {
   checkOtherContracts();
   checkKitWidening();
   checkPricingAllowList(recording);
-  const foldersHeld = checkFoldersAllowList(recording);
+  const heldRows = Object.assign(checkFoldersAllowList(recording), checkFactsAllowList(recording));
+  const foldersHeld = Object.fromEntries(Object.keys(heldRows).sort().map((route) => [route, heldRows[route]]));
   if (argv.includes('--write')) writeFoldersEvidence(foldersHeld);
-  else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the folders routes whose 200 held closed here', sameValue(foldersEvidenceOnDisk(), foldersHeld), { onDisk: Object.keys(foldersEvidenceOnDisk()).length, held: Object.keys(foldersHeld).length });
+  else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the folders and Home-facts routes whose 200 held closed here', sameValue(foldersEvidenceOnDisk(), foldersHeld), { onDisk: Object.keys(foldersEvidenceOnDisk()).length, held: Object.keys(foldersHeld).length });
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);

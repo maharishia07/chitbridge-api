@@ -14,11 +14,11 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 221
+    "failing": 219
    },
    "foreign_id_404": {
-    "applies": 230,
-    "failing": 74
+    "applies": 229,
+    "failing": 73
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -33,7 +33,7 @@
     "failing": 144
    }
   },
-  "output_allowlist_from_recordings": 11
+  "output_allowlist_from_recordings": 13
  },
  "machine_columns": [
   "schema_in",
@@ -13890,7 +13890,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 45,
-   "hash": "bbabdc627fec2b0f",
+   "hash": "4e1f92e31ffa0411",
    "does": "",
    "errors": {
     "count": 0,
@@ -13921,8 +13921,8 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
-    "foreign_id_404": false,
+    "output_allowlist": true,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -13930,7 +13930,7 @@
    "applies": {
     "strict_input": false,
     "output_allowlist": true,
-    "foreign_id_404": true,
+    "foreign_id_404": false,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true
@@ -13946,12 +13946,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4e1f92e31ffa0411"
    },
    "status": "partial",
    "callers": [],
@@ -13976,7 +13978,7 @@
    "owner_agent": "cb-reports",
    "file": "routes/facts.js",
    "line": 36,
-   "hash": "05d5f33a3f03c039",
+   "hash": "e11f5c94bbe60231",
    "does": "",
    "errors": {
     "count": 0,
@@ -14005,7 +14007,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -14028,12 +14030,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e11f5c94bbe60231"
    },
    "status": "partial",
    "callers": [

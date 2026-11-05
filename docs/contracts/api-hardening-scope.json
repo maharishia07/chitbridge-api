@@ -40,6 +40,7 @@
   "GET /api/assist/container/:id": "platform reference: a container is shared catalogue reference that chits pin by version",
   "POST /api/integrations/ask/:handle/stock": "public door: a shop's published handle answers stock to an asking peer",
   "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer",
-  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy"
+  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy",
+  "GET /api/facts/:card": "platform reference: the :card is the name of one of the platform's Home cards (till, orders, crm ...), a fixed list every shop sees; it is not a record of any shop, and an unknown name answers 404 for everyone"
  }
 }
