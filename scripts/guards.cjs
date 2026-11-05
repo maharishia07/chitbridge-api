@@ -85,6 +85,7 @@ const GUARDS = [
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
+  'mnt16-tooling.test.cjs', // MNT-16: the readability guard honours CB_WEB_DIR; the sweep kit replays a frozen 5xx body
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
