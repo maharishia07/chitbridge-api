@@ -1152,21 +1152,49 @@
         "balance_minor": 100000,
         "carried_minor": 8325000
        }
-      ]
+      ],
+      "interest_minor": null,
+      "interest_state": "not_set",
+      "early": null,
+      "follow_up": {
+       "not_due": 0,
+       "d0_30": 0,
+       "d31_60": 0,
+       "d61_90": 0,
+       "d90_plus": 118000,
+       "worst": "d90_plus",
+       "no_terms_minor": 0,
+       "terms": "ok"
+      }
      }
     ],
     "total_minor": 59000,
     "payables": {
      "total_minor": 59000
+    },
+    "follow_up_total": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok"
     }
    },
    "optional": [
+    "follow_up_total",
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
     "parties[].credit_limit_from",
     "parties[].credit_limit_minor",
+    "parties[].early",
+    "parties[].follow_up",
     "parties[].foreign",
+    "parties[].interest_minor",
+    "parties[].interest_state",
     "parties[].last_remind",
     "parties[].over_limit",
     "parties[].payable",
