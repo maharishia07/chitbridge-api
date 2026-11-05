@@ -26,11 +26,13 @@ const ROOT = path.join(__dirname, '..');
 const ME = '11111111-1111-4111-8111-111111111111';
 const GOOD = '33333333-3333-4333-8333-333333333333';
 const DRIVER_TEXT = 'invalid input syntax for type uuid: "abc"';
+const NUL_TEXT = 'invalid byte sequence for encoding "UTF8": 0x00';
 const queries = [];
 
 /* the stand-in db: like Postgres, a non-uuid value where a uuid goes gets the driver's words; nothing is ever found */
 const run = async (sql, params) => {
   queries.push(sql);
+  if ((params || []).some((p) => typeof p === 'string' && p.includes('\u0000'))) throw Object.assign(new Error(NUL_TEXT), { code: '22021' });
   if ((params || []).some((p) => p === 'abc')) throw Object.assign(new Error(DRIVER_TEXT), { code: '22P02' });
   return { rows: [], rowCount: 0 };
 };
@@ -46,6 +48,7 @@ const stubAuth = (req, res, next) => {
   next();
 };
 stubAuth.entityOf = (req) => req.identity.identity_id;
+stubAuth.requireScope = () => (req, res, next) => next();
 stub(path.join('middleware', 'auth'), stubAuth);
 
 /** [mount, router file, method, path, a body the route's schema accepts (so only the id is wrong), the route file's legacy error, its 404 code (default NOT_FOUND)] — one row per route closed by uuidParam; the code is the one an unknown uuid answers on that route (S41) */
@@ -88,6 +91,8 @@ const ROUTES = [
   ['/api/forms', 'routes/forms.js', 'POST', '/api/forms/instances/abc/attach', { chit_id: GOOD }, 'Attach form failed', 'FORMS_NOT_FOUND'],
   // ── routes/identity-docs.js
   // ── routes/integrations.js
+  ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/abc/approve', {}, 'Not found'],
+  ['/api/integrations', 'routes/integrations.js', 'POST', '/api/integrations/ask/%00/stock', {}, 'Not found'],
   // ── routes/products.js
   // ── routes/relationships.js
   ['/api/relationships', 'routes/relationships.js', 'DELETE', '/api/relationships/suppliers/abc', undefined, 'Not found'],

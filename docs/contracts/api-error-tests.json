@@ -966,10 +966,12 @@
  ],
  "GET /api/integrations/reconcile": [
   401,
+  422,
   500
  ],
  "GET /api/integrations/status": [
   401,
+  422,
   500
  ],
  "GET /api/integrations/stock/:handle": [

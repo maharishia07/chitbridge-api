@@ -986,6 +986,14 @@
     422
    ]
   },
+  "GET /api/integrations/kit/*": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/integrations/reconcile": {
    "cases": 2,
    "failed": 0,
