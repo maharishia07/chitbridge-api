@@ -80,13 +80,15 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   }
 });
 
-/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON. Validate before filing. */
+/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
     const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
+    /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
+    if (out.ok === false) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', out.why));
     res.setHeader('Content-Disposition', `attachment; filename="${form}-${bounds.period}.json"`);
     res.json(out);
   } catch (err) {

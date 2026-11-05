@@ -1253,6 +1253,7 @@
  ],
  "GET /api/tax/gstr": [
   401,
+  422,
   500
  ],
  "GET /api/tax/invoice/:chit_id": [
