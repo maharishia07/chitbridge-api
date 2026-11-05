@@ -19449,7 +19449,7 @@
    "owner_area": "openapi",
    "owner_agent": "cb-api",
    "file": "routes/openapi.js",
-   "line": 34,
+   "line": 35,
    "hash": "1d85b1e5731b06d5",
    "does": "",
    "errors": {

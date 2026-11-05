@@ -18,7 +18,7 @@ of file each thing is; this says what already does the job.
 | 91 | `answer` | `availability.js` | from March; then nearest. |
 | 85 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 73 | `catalogue` | `books-manual.js` | GET /events → the grid. |
+| 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 73 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 69 | `next` | `dayopen.js` | the next thing to do — |
@@ -50,7 +50,7 @@ of file each thing is; this says what already does the job.
 | 46 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 44 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 45 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 42 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 40 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 40 | `rules` | `docnumber.js` | the rule set for a country — |
@@ -62,15 +62,15 @@ of file each thing is; this says what already does the job.
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 36 | `host` | `chit-sheet.js` |  |
 | 42 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
-| 36 | `missing` | `variant.browser.js` | refusing with no reason. |
+| 37 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 35 | `modal` | `app.html` |  |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 33 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
-| 33 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 34 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 33 | `live` | `receivables.js` | the allocations that still count: |
-| 33 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 34 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 29 | `sentence` | `one-person.js` |  |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 28 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
@@ -152,7 +152,7 @@ of file each thing is; this says what already does the job.
 | 17 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `update` | `folder-rules.js` |  |
-| 17 | `governance` | `home-facts.js` |  |
+| 19 | `governance` | `home-facts.js` |  |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
