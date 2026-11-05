@@ -775,6 +775,22 @@ function termsFigures(docs, asOf, currency, eff) {
     early: earlyOfferRow(docs, asOf, currency, eff && eff.early.value)
   };
 }
+/**
+ * FIN-R1 + FIN-72: the two readers of a customer's terms (null terms = not the Collections read): effOf(party) → what applies (own, else the shop's, else not set; null for a party
+ * with no list row), and followOpt — the credit days a bill with NO due date is aged by in the follow-up view (the same resolver: own, else the shop's; a party with no list row has the shop's).
+ */
+function termsReaders(financeTerms, terms) {
+  const effOf = (pid) => {
+    const own = terms && terms.by_party.get(String(pid));
+    return own ? financeTerms.resolve(terms.shop, own) : null;
+  };
+  const creditDaysOf = (pid) => financeTerms.resolve(terms.shop, terms.by_party.get(String(pid)) || {}).credit_days.value;
+  return { effOf, followOpt: terms ? { creditDaysOf } : null };
+}
+/** what sits beside the parties on the page: the Payables total (F4) and, on a Collections read, the follow-up total (FIN-72) — nothing else is added */
+function pageExtras(collections, payables, rows) {
+  return Object.assign({}, payables ? { payables } : {}, collections ? { follow_up_total: E.followTotal(rows) } : {});
+}
 /** RAIL-146i: the /dues answer for THIS reader — ONE can_see_costs read (lib/cost.isCostBlind, fail-closed); an actor without it sees no supplier-side money (lib/dues-view R1-R6); the owner's bytes are untouched */
 async function forReader(req, e, answer) {
   return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindDuesAnswer(answer) : answer;
@@ -807,12 +823,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
       /* FIN-R1: interest and limit come from the customer's TERMS (finance-terms.resolve: own, else the shop default, else not set) — one grouped read */
       const T = require('../lib/finance-terms');
       const terms = fin && sides.includes('debtors') ? await T.customerTerms(h, e) : null;
-      const effOf = (pid) => {
-        const own = terms && terms.by_party.get(String(pid));
-        return own ? T.resolve(terms.shop, own) : null;
-      };
-      /* FIN-72: a bill with no due date is aged from its date + its party's credit days (own, else the shop's — the same resolver; a party with no list row has the shop's) */
-      const creditDaysOf = (pid) => T.resolve(terms.shop, terms.by_party.get(String(pid)) || {}).credit_days.value;
+      const { effOf, followOpt } = termsReaders(T, terms);
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role);
@@ -821,7 +832,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
-        const d = E.dues(items, asOf, side, fin && role === 'debtors' ? { creditDaysOf } : null);
+        const d = E.dues(items, asOf, side, followOpt);
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
@@ -932,7 +943,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     });
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...(payables ? { payables } : {}), ...(fin && sides.includes('debtors') ? { follow_up_total: E.followTotal(out) } : {})
+        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...pageExtras(fin && sides.includes('debtors'), payables, out)
       })
     );
   } catch (err) {
