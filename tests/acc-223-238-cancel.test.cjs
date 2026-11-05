@@ -140,7 +140,7 @@ const COUNTRY = {
     const sn2 = await K.takeBackCancelled(shop, 'n2', 'u1');
     eq(cc + ' T4 · cancelled after: reversed once, every account back to where it was', [sn2.ok, reversalsOf(shop, en2).length, nonZero(netByRole(shop))], [true, 1, netBeforeNote]);
 
-    /* ── T5 · an expense (the chit carries no GST split: the whole amount is the expense, paid in cash) ── */
+    /* ── T5 · an expense (the chit carries no GST split: the whole amount is the expense, paid in cash). KNOWN GAP ACC-230: this asserts today's gross posting and must change when the GST split lands ── */
     const expense = (id, status) => ({ chit_id: id, purpose: 'expense', created_at: AT, current_status: status, business_json: { till: { id: 'C1' }, expense: { what: 'repairs', mode: 'Cash', amount: C.expenseMajor, class: 'sundry_expense' } } });
     use(expense('x1', 'cancelled'), {});
     const x1 = await K.postChit(shop, 'x1', {});

@@ -67,7 +67,7 @@ of file each thing is; this says what already does the job.
 | 35 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 34 | `gate` | `country-setup.js` | gate(h, entity): |
 | 34 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 34 | `live` | `receivables.js` | the allocations that still count: |
+| 35 | `live` | `receivables.js` | the allocations that still count: |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
