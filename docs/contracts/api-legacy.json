@@ -3334,6 +3334,18 @@
       "message": "Advice not available yet — the books need an update (b285).",
       "code": "BOOKS_NOT_MIGRATED"
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -5068,6 +5080,18 @@
       "error": "Which financial year? e.g. 2026-27.",
       "message": "Which financial year? e.g. 2026-27."
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -6228,6 +6252,18 @@
       "error": "This ledger is kept in INR.",
       "message": "This ledger is kept in INR."
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -6311,6 +6347,18 @@
      },
      "fixture": {
       "error": "Not found"
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]

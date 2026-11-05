@@ -1228,6 +1228,12 @@
   401,
   500
  ],
+ "GET /api/service/:chit_id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/signin/devices": [
   401,
   403,
@@ -1466,6 +1472,7 @@
   403,
   404,
   409,
+  422,
   500,
   503
  ],
@@ -1841,6 +1848,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/books/loans": [
@@ -1932,6 +1940,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/books/payments/:id/propose": [
@@ -3163,6 +3172,35 @@
   401,
   500
  ],
+ "POST /api/service/:chit_id/pause": [
+  400,
+  401,
+  404,
+  409
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/answer": [
+  400,
+  401,
+  404,
+  409
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/end": [
+  400,
+  401,
+  404,
+  409,
+  500
+ ],
+ "POST /api/service/:chit_id/resolve": [
+  400,
+  401,
+  404
+ ],
+ "POST /api/service/:chit_id/respond": [
+  401,
+  404,
+  500
+ ],
  "POST /api/signin/ask": [
   400,
   409,
@@ -3713,51 +3751,16 @@
   403,
   500
  ],
- "PUT /api/testing/cmdb/:ci": [
-  400,
-  401,
-  403,
-  500
- ],
- "GET /api/service/:chit_id": [
-  401,
-  404,
-  500,
-  503
- ],
- "POST /api/service/:chit_id/pause": [
-  400,
-  401,
-  404,
-  409
- ],
- "POST /api/service/:chit_id/pause/:pause_id/answer": [
-  400,
-  401,
-  404,
-  409
- ],
- "POST /api/service/:chit_id/pause/:pause_id/end": [
-  400,
-  401,
-  404,
-  409,
-  500
- ],
- "POST /api/service/:chit_id/resolve": [
-  400,
-  401,
-  404
- ],
- "POST /api/service/:chit_id/respond": [
-  401,
-  404,
-  500
- ],
  "PUT /api/service/:chit_id": [
   400,
   401,
   404,
+  500
+ ],
+ "PUT /api/testing/cmdb/:ci": [
+  400,
+  401,
+  403,
   500
  ]
 }

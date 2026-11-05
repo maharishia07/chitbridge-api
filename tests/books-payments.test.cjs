@@ -41,10 +41,12 @@ const authStub = Object.assign((req, res, next) => { req.identity = WHO; next();
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
-const call = (port, method, p, body) => new Promise((done) => {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
-    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
+    (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j, headers: res.headers }); }); });
   r.end(b);
 });
 /** the routes on a port the OS chose, against a fresh in-memory shop */
@@ -52,7 +54,7 @@ function serve(X) {
   const express = require('express');
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-money')));
   const srv = app.listen(0); const port = srv.address().port;
-  return { srv, q: (m, p, b) => call(port, m, '/api/books' + p, b) };
+  return { srv, q: (m, p, b, h) => call(port, m, '/api/books' + p, b, h) };
 }
 /**
  * ⭐ a TRANSACTION over the in-memory tables: what fn wrote is kept on success and taken back on a throw — the only way a
@@ -673,6 +675,52 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     ok('…a payment still records; its advice block says not_available', nr.status === 200 && nr.body.advice && nr.body.advice.may.send_advice.why === 'not_available', JSON.stringify(nr.body.advice && nr.body.advice.may));
     ok('…and the To-do leaves the kind out rather than guess', !(await q('GET', '/todo')).body.some((x) => x.kind === 'advices_to_send'));
     X.T.adviceReady = true;
+  });
+
+  /* ═══ 8 · FIN-63 · ONE KEY PER ATTEMPT (api PR, Wave M · M2 + M3) ═══
+   * Hand-computed on a fresh supplier with ONE purchase bill of ₹1,120.00 (1,000 @ 12%):
+   *   (a) ₹1,000 oldest-first with key A → 200: applied 100000, on account 0, the bill 12000 open. The SAME key + body again → the SAME
+   *       answer byte for byte, X-Idempotent-Replay: true, and NOTHING written (payments · entries · items · numbers taken all unchanged).
+   *   (b) no key → 422 IDEMPOTENCY_KEY_REQUIRED, error "Missing Idempotency-Key", the one sentence; nothing written.
+   *   (c) key A with ₹120 → 422 IDEMPOTENCY_CONFLICT (another body under a used key: nothing written); key B with ₹120 → 200, a NEW
+   *       payment (another payment_id), applied 12000, the bill settled; payments +1.
+   *   (d) S6 / S35: another shop's payment id answers 404 with the SAME body as an unknown id on every payment door that takes an id
+   *       (GET advice · PATCH · propose · confirm) — the scoped read (books-store.payment: entity_id AND payment_id) is the one path.
+   * The in-memory db has no idempotency_key table, so the key is held in the middleware's own memory (X-Idempotency: unverified): the
+   * same contract tests/idempotency.test.cjs proves against the durable store. */
+  await section('8 · FIN-63: a money door takes one Idempotency-Key per attempt; a foreign id is an unknown id', async () => {
+    const F63 = '88888888-8888-4888-8888-888888888888', OTHER_SHOP = '99999999-9999-4999-8999-999999999999', FOREIGN_PAY = '99999999-9999-4999-8999-000000000001', UNKNOWN = '99999999-9999-4999-8999-000000000002', BILL63 = 'c0000000-0000-4000-8000-0000000000f6'; /* its own chit and source_ref: BILL('f') / chit:f are section 4's */
+    X.T.parties.push({ owner: SHOP, party_id: F63, party_no: 'P-00063', name: 'Fin63 Traders', supplier: true, credit_days: 30 });
+    await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-20', currency: 'INR', party: F63, source_chit_id: BILL63, source_ref: 'chit:fin63', by_rate: [{ rate: 12, taxable: 1000, cgst: 60, sgst: 60, igst: 0 }], paid: {}, round_off: 0 });
+    X.T.chits.push({ chit_id: BILL63, bill_no: 'KT-0063', entity_id: SHOP, purpose: 'order', business_json: { bill_no: 'KT-0063' } });
+    const body = { party_id: F63, direction: 'out', currency: 'INR', mode: 'cash', received_at: '2026-10-06', amount_minor: 100000, allocate: 'oldest_first' };
+    const A = { 'Idempotency-Key': 'fin63-attempt-a' }, B2 = { 'Idempotency-Key': 'fin63-attempt-b' };
+    /* (a) */
+    const first = await q('POST', '/payments', body, A);
+    eq('(a) ₹1,000 with key A → 200, applied 100000 on the ₹1,120 bill, nothing on account', [first.status, first.body.allocation && first.body.allocation.allocated_minor, first.body.outcome && first.body.outcome.on_account_minor], [200, 100000, 0]);
+    const was = counts(X);
+    const again = await q('POST', '/payments', body, A);
+    ok('…the same key and body again → the FIRST answer byte for byte, marked a replay', again.status === 200 && JSON.stringify(again.body) === JSON.stringify(first.body) && again.headers['x-idempotent-replay'] === 'true', JSON.stringify([again.status, again.headers['x-idempotent-replay']]));
+    eq('…and nothing was written: payments · entries · items · numbers taken unchanged', counts(X), was);
+    /* (b) */
+    const bare = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), { 'Idempotency-Key': '' });
+    eq('(b) no key → 422 IDEMPOTENCY_KEY_REQUIRED in words (the title and the sentence a caller reads)', [bare.status, bare.body.code, bare.body.error, bare.body.message],
+      [422, 'IDEMPOTENCY_KEY_REQUIRED', 'Missing Idempotency-Key', 'Send an Idempotency-Key header: one per attempt, the same one when you retry it.']);
+    eq('…nothing written', counts(X), was);
+    /* (c) */
+    const clash = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), A);
+    eq('(c) ₹120 under the USED key A → 422 IDEMPOTENCY_CONFLICT, nothing written', [clash.status, clash.body.code, counts(X).payments], [422, 'IDEMPOTENCY_CONFLICT', was.payments]);
+    const second = await q('POST', '/payments', Object.assign({}, body, { amount_minor: 12000 }), B2);
+    ok('…₹120 under a NEW key B → 200, a NEW payment that settles the bill (applied 12000)', second.status === 200 && second.body.payment.payment_id !== first.body.payment.payment_id && second.body.allocation.allocated_minor === 12000, JSON.stringify(second.body));
+    eq('…payments +1, and the bill is settled: nothing open for Fin63 Traders', [counts(X).payments - was.payments, (await q('POST', '/payments/preview', { party_id: F63, direction: 'out', amount_minor: 100, currency: 'INR' })).body.open_minor], [1, 0]);
+    /* (d) */
+    X.T.payments.push({ payment_id: FOREIGN_PAY, entity_id: OTHER_SHOP, party_id: F63, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', status: 'recorded', received_at: '2026-10-06', created_at: NOW() });
+    const doors = [['GET', (id) => '/payments/' + id + '/advice', undefined], ['PATCH', (id) => '/payments/' + id, { advice_shared_at: true }], ['POST', (id) => '/payments/' + id + '/propose', {}], ['POST', (id) => '/payments/' + id + '/confirm', { allocations: [] }]];
+    for (const [m, at, b] of doors) {
+      const foreign = await q(m, at(FOREIGN_PAY), b), unknown = await q(m, at(UNKNOWN), b);
+      ok('(d) ' + m + ' ' + at(':id') + ": another shop's payment id → 404, the same body as an unknown id", foreign.status === 404 && unknown.status === 404 && JSON.stringify(foreign.body) === JSON.stringify(unknown.body), JSON.stringify([foreign.status, foreign.body, unknown.status, unknown.body]));
+    }
+    ok("…the caller's own id is found on each (the 404 is about whose id it is)", (await q('GET', '/payments/' + first.body.payment.payment_id + '/advice')).status === 200 && (await q('POST', '/payments/' + first.body.payment.payment_id + '/propose', {})).status === 200);
   });
 
   srv.close();

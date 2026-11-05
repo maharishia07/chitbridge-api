@@ -4605,8 +4605,7 @@
     "why": "not reached: answered 422"
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "GET /api/books/payments/:id/advice": {
@@ -4638,8 +4637,7 @@
     "why": "an unknown id answered 422, not 404"
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/books/payments/:id/propose": {
@@ -4653,10 +4651,6 @@
    "foreign_id_404": {
     "pass": false,
     "why": "an unknown id answered 422, not 404"
-   },
-   "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
    }
   },
   "POST /api/books/payments/:id/confirm": {
@@ -4672,8 +4666,7 @@
     "why": "an unknown id answered 422, not 404"
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "GET /api/books/cheques": {
@@ -5075,8 +5068,7 @@
     "why": "not reached: answered 422"
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "GET /api/books/returns": {
