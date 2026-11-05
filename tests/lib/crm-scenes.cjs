@@ -110,6 +110,25 @@ function extraOf(D, W) {
   };
 }
 
+const NUL = '\u0000';
+const IS_UUID = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[EA][0-9])$/i; /* the stand-in's own sign-in ids (E1, A1) stand for uuids */
+/** an error the way pg raises one */
+const pgError = (code, message) => Object.assign(new Error(message || 'pg ' + code), { code });
+/**
+ * K-1 (B2): the stand-in keeps Postgres's two rules a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021 (a list of text too), and a value that is
+ * not a uuid, compared with a uuid column, is refused 22P02. The two statements of this file that compare a body value with a uuid column are named here.
+ */
+function junkOf(next) {
+  const holdsNul = (v) => (typeof v === 'string' ? v.includes(NUL) : Array.isArray(v) ? v.some(holdsNul) : !!v && typeof v === 'object' && Object.values(v).some(holdsNul));
+  return async (sql, p) => {
+    (p || []).forEach((v) => { if (holdsNul(v)) throw pgError('22021', 'invalid byte sequence for encoding "UTF8": 0x00'); });
+    if (/FROM identities WHERE identity_id = \$1 AND/.test(sql) && !IS_UUID.test(String(p[0]))) throw pgError('22P02', 'invalid input syntax for type uuid');
+    if (/followup_id = \$4 AND done_at IS NULL/.test(sql) && !IS_UUID.test(String(p[3]))) throw pgError('22P02', 'invalid input syntax for type uuid');
+    if (/followup_id = \$4 AND done_at IS NULL/.test(sql)) return { rows: [], rowCount: 0 }; /* a follow-up this shop does not hold: nothing closed */
+    return next ? next(sql, p) : null;
+  };
+}
+
 /** the import's set-based statements (lib/crm-leads.js), answered BEFORE crm-stub's per-row ones: they share prefixes */
 function preOf(D, W, row) {
   const digits = (text) => String(text || '').replace(/[^0-9]/g, '');
@@ -314,8 +333,28 @@ function extras() {
     X('segment-send-no-text', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { dry: true } }),
     X('segment-send-bad-channel', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', channel: 'sms', dry: true } }),
     X('segment-send-a-service-message', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', purpose: 'service', dry: true } }),
-    N('segment-send-body-not-an-object', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: [] })
+    N('segment-send-body-not-an-object', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: [] }),
+    /* K-1 (B2): a value no column can hold. A NUL byte in text Postgres keeps is a 400 in words (never a 500); a body id that is not a uuid answers as an unknown one (S41) */
+    N('junk-note-nul', 'POST ' + C + '/parties/:id/interactions', 400, { body: { kind: 'note', body: 'Spoke' + NUL + 'at the counter' }, setup: { junk: true } }),
+    N('junk-followup-nul', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring' + NUL + 'about it', due_at: day(2) }, setup: { junk: true } }),
+    N('junk-followup-edit-nul', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { what: 'Ring' + NUL }, setup: { junk: true } }),
+    N('junk-followup-assignee-not-an-id', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring', due_at: day(2), assignee_user_id: 'abc' }, setup: { junk: true } }),
+    N('junk-followup-assignee-unknown-id', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring', due_at: day(2), assignee_user_id: A.unknown }, setup: { junk: true } }),
+    N('junk-followup-hand-on-not-an-id', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { assignee_user_id: 'abc' }, setup: { junk: true } }),
+    N('junk-followup-hand-on-unknown-id', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { assignee_user_id: A.unknown }, setup: { junk: true } }),
+    N('junk-outcome-followup-not-an-id', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested', followup_id: 'abc' }, setup: { junk: true } }),
+    N('junk-outcome-followup-unknown-id', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested', followup_id: A.unknown }, setup: { junk: true } }),
+    N('junk-lead-nul', 'POST ' + C + '/leads', 400, { body: { name: 'Ravi' + NUL + 'Jewellers' }, setup: { junk: true } }),
+    N('junk-import-nul', 'POST ' + C + '/leads/import', 400, { body: { rows: [{ name: 'Kala' + NUL + 'Stores', phone: '+91 98400 11111' }] }, setup: { junk: true } }),
+    N('junk-walk-in-nul', 'POST ' + C + '/walk-ins/add', 400, { body: { phone: '+91 98400 55555', name: 'Corner' + NUL + 'shop' }, setup: { junk: true } }),
+    N('junk-request-nul', 'POST ' + C + '/privacy-requests', 400, { body: { kind: 'access', who: 'Lata' + NUL, party_id: A.chola }, setup: { junk: true } }),
+    N('junk-answer-nul', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'Sent' + NUL }, setup: { junk: true }, world: (W) => { W.requestRows.push(requestRow('30000000-0000-4000-8000-000000000001', SHOP, null)); } }),
+    N('junk-stage-nul', 'POST ' + C + '/parties/:id/stage', 400, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'tri' + NUL + 'al' }, setup: { junk: true } }),
+    N('junk-group-nul', 'POST ' + C + '/groups', 400, { body: { name: 'Deal' + NUL + 'ers', add: [A.plain] }, setup: { junk: true } }),
+    N('junk-group-drop-nul', 'DELETE ' + C + '/groups/:name', 400, { url: C + '/groups/Deal%00ers', setup: { junk: true } }),
+    N('junk-segment-key-nul', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/group:Deal%00ers/send', body: { text: 'x', dry: true }, setup: { junk: true } }),
+    N('junk-send-text-nul', 'POST ' + C + '/segments/:key/send', 200, { url: C + '/segments/regular/send', body: { text: 'A new' + NUL + 'offer', dry: true }, setup: { junk: true } })
   ];
 }
 
-module.exports = { preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day, requestRow, STRICT_WRITES };
+module.exports = { junkOf, preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day, requestRow, STRICT_WRITES };
