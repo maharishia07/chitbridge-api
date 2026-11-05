@@ -1265,10 +1265,8 @@ router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /pa
     if (out.allocation && out.allocation.settled && out.allocation.settled.length) {
       try {
         const pay = await withEntity(e, (h) => S.payment(h, e, out.payment.payment_id));
-        await require('../lib/bill-privacy').moneySteps(e, pay, out.allocation.settled, {
-          id: byOf(req),
-          name: (req.identity && req.identity.display_name) || null
-        });
+        const BP = require('../lib/bill-privacy');
+        await BP.moneySteps(e, pay, out.allocation.settled, { id: byOf(req), name: (req.identity && req.identity.display_name) || null }, (failure) => BP.raiseStepTicket(e, pay, failure)); /* FIN-71: a failed bill step raises ONE deduped ticket */
       } catch (e2) {
         console.error('bill money steps:', e2.message);
       }
@@ -1472,7 +1470,8 @@ function confirmPairs(list) {
 async function confirmSteps(req, e, id, pairs) {
   try {
     const pay = await withEntity(e, (h) => S.payment(h, e, id));
-    await require('../lib/bill-privacy').moneySteps(e, pay, pairs, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
+    const BP = require('../lib/bill-privacy');
+    await BP.moneySteps(e, pay, pairs, { id: byOf(req), name: (req.identity && req.identity.display_name) || null }, (failure) => BP.raiseStepTicket(e, pay, failure)); /* FIN-71 */
   } catch (e2) {
     logger.error('books confirm: the R-1400 money steps failed after the posting committed — the books are right, the history step is missing', { id: req.id, payment_id: id, err: e2.message });
   }

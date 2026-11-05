@@ -336,6 +336,7 @@ const GUARDS = [
   'marketing-outbound.test.cjs', // ⭐ MKT-2/17: Offers sent are receipts with the person, purpose, send and consent basis (b776 columns only once they exist); refusals in one INSERT; the list pages; select takes counterparty_ids/until
   'bills-folder.test.cjs', // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
   'bills-private.test.cjs', // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses
+  'fin71-step-ticket.test.cjs', // ⭐ FIN-71: a bill's R-1400 step that fails raises ONE deduped Sev-3 ticket (client_ref r1400:payment:bill), never silent; no payment id in the step
   /* ⭐⭐ THE SHOP'S NAME IS THE PROFILE'S NAME (2026-10-01) — broken once each by tests/shop-name-breaks.test.js */
   'shop-name.test.js', // the account's name wins invoiceParty/profileValues; a vault name only fills an empty one; a difference is reported, case-blind
   'shop-name-breaks.test.js', // each of those four rules, broken once, turns shop-name.test.js red
