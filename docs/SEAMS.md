@@ -120,7 +120,7 @@ of file each thing is; this says what already does the job.
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `keep` | `signin.js` | see. |
 | 21 | `chart` | `fx-rates.js` |  |
-| 21 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
+| 22 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 20 | `card` | `cap-shop.js` |  |
 | 20 | `note` | `device-id.js` | note(where, problem) — |
