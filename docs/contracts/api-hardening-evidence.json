@@ -1085,9 +1085,6 @@
   "GET /api/tax/ledger": {
    "output_allowlist": true
   },
-  "GET /api/tax/gstr": {
-   "output_allowlist": true
-  },
   "GET /api/books/status": {
    "output_allowlist": true
   },

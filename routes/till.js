@@ -239,7 +239,9 @@ async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
   snap.row = (await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
-  snap.registration = await countrySetup.registrationOfShop(entity_id); /* CTR-170: the ONE reader (ACC-198), a minute cached — 'unknown' when nobody said, never a guess */
+  /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
+     books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
+  snap.registration = 'gstn' in snap.row && !snap.row.gstn ? await countrySetup.registrationOfShop(entity_id) : null;
   snap.till = await claimedSeries(snap.asked);
   snap.ownRead = await ownReader(entity_id, since);
 }

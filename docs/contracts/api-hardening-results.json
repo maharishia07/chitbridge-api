@@ -4408,7 +4408,8 @@
   },
   "GET /api/tax/gstr": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    }
   },
   "POST /api/tax/rate": {
