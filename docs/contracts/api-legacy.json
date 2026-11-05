@@ -26873,14 +26873,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -26999,14 +27003,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27101,14 +27109,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27215,14 +27227,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {
@@ -27305,14 +27321,18 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      },
      "fixture": {
-      "error": "edge not found",
-      "code": "EDGE_NOT_FOUND"
+      "error": "Forbidden",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself."
      }
     },
     {

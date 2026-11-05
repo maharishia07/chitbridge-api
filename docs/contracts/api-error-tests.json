@@ -2798,6 +2798,7 @@
  ],
  "POST /api/network/connections/:id/resume": [
   401,
+  403,
   404,
   409,
   500,
