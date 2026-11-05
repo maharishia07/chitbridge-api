@@ -3488,6 +3488,7 @@ function billRow(row) {
     ...billWho(row, business),
     total: counterBill.paidOf(row.summary_json) /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */,
     ...billMoney(row),
+    ...creditNoteMoney(business),
     ...billSlip(business),
     lines: (Array.isArray(row.line_items) ? row.line_items : []).map(billLine)
   };
@@ -3528,6 +3529,32 @@ function billMoney(row) {
     saved: money.savings != null ? money.savings : null,
     taxable: money.taxable != null ? money.taxable : money.net != null ? money.net : null,
     tax: money.tax != null ? money.tax : null
+  };
+}
+
+/** a credit note's money as a SIGN: -abs of a finite number, 0 stays 0 (never -0), anything else null (never 0) */
+function negOf(figure) {
+  if (typeof figure !== 'number' || !Number.isFinite(figure)) return null;
+  return figure === 0 ? 0 : -Math.abs(figure);
+}
+
+/**
+ * ACC-255: a counter credit note has no invoice, so summary_json.money is null by design (lib/send-money scope 'none');
+ * its money sits in business_json.{taxable, tax, refund} as the counter stored it. The reader only PICKS those (negative,
+ * kind credit_note, so a day's net is a plain sum) — no by_rate arithmetic, a missing key answers null.
+ * Sale rows get {} so their bytes do not move. counter-bill.paidOf stays untouched (the reward reads it).
+ */
+function creditNoteMoney(business) {
+  if (business.slip !== 'credit_note') return {};
+  const refund = business.refund && typeof business.refund === 'object' ? business.refund : {};
+  return {
+    total: negOf(refund.total),
+    saved: null,
+    taxable: negOf(business.taxable),
+    tax: negOf(business.tax),
+    refunds: Array.isArray(refund.parts) ? refund.parts : [],
+    against: business.against && business.against.bill_no ? { bill_no: business.against.bill_no } : null,
+    reason_words: business.reason_words || null
   };
 }
 
