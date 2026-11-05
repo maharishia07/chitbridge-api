@@ -22022,7 +22022,7 @@ async function dayServerCheck(rows){
   var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
   var sum = function(l){ return l.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0); };
   /* ACC-255: a refund is counted APART from the sales — one signed sum of both would read as a bill total that no bill has */
-  var sales = function(l){ return l.filter(function(b){ return !isReturnRow(b); }); }, back = function(l){ return l.filter(isReturnRow); };
+  var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
   return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
            moreTotal: sum(sales(more)), fewerTotal: sum(sales(fewer)), moreBack: back(more).length, fewerBack: back(fewer).length,
            moreBackTotal: sum(back(more)), fewerBackTotal: sum(back(fewer)) };
@@ -26117,9 +26117,9 @@ async function paintEarlier(){
 }
 var EARLIER = [];
 /** ACC-255: the amount of an Earlier bills row — a sale is its money, a credit note reads "−₹300.00 Refund" (the minus sign, then the word) */
-function earlierAmount(b){
-  if (!isReturnRow(b)) return money(b.total);
-  return (refundMoney(b.total) + ' Refund').trim();
+function earlierAmount(bill){
+  if (!isReturnRow(bill)) return money(bill.total);
+  return (refundMoney(bill.total) + ' Refund').trim();
 }
 /** an old slip, printed again from what ChitBridge kept — the same layout, so a customer sees the same bill */
 function reprintOld(no){
