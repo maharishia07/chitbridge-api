@@ -1,5 +1,5 @@
 // routes/products.js — B3.7a Catalogue items (products) CRUD + search.   CARD storefront-and-catalogue/products-routes
-// OWNS the products door: list · search · create · bulk · update · retire · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter.
+// OWNS the products door: list · search · create · bulk · update · retire · import · export · schedule · media · versions · starter columns · ready-made lists · CALLED BY server.js (app.use('/api/products')) · the web catalogue and the counter. An id in the address is judged before the database: router.param (uuidParam for :id and :item_id; the two schedule routes judge theirs in the handler).
 // FLOW  auth → schema check (lib/products-contract.js) → withEntity → lib/catalogue-write / mint-product (the one writer) → { ok, data, error }, every list paged;
 //       a refusal → problem(req, res, { status, ...words.x() } | faultOf(...)), its old body frozen in docs/contracts/api-legacy.json
 const express = require('express');
@@ -8,7 +8,7 @@ const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { query, withEntity, readBatch } = require('../db');
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer · K-1: the one guard for an id in the address
 const { words, faultOf, failed, badStatus, schemaOptionsFor, operationFor, pathsOf } = require('../lib/products-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const money = require('../lib/money'); // a price is never a bare number — stamped on write
@@ -1385,6 +1385,7 @@ router.post(
 router.get('/starter-columns', auth, ...checked('GET /starter-columns'), async (req, res) => {
   try {
     const v = req.query.vertical;
+    if (Array.isArray(v)) return problem(req, res, { status: 400, ...words.queryGivenTwice('vertical') }); // B2 (K-1): a value given twice has no one meaning
     if (!v) return res.json({ verticals: starter.list() });
     res.json({ starter: starter.starterFor(v), verticals: starter.list() });
   } catch (e) {
@@ -1597,10 +1598,16 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
  * checking and writing.
  */
 /* ── PUBLISH ON A DATE — park a patch, list what is parked, cancel one. lib/schedule.js has the why. ── */
+/* ⭐ K-1 (API-10): an item id that is not a uuid names no item (catalogue_items.item_id is uuid) — answered as a uuid that names none, before the database puts its own words in a 500.
+   The two schedule routes below answer an unknown id with a 200 (an empty list · a cancel that cancelled nothing), so they judge it in their own handler. */
+const noSuchItem = uuidParam((req) => (req.method === 'PUT' ? words.noSuchItem() : words.notFound()));
+const answersUnknownIdItself = (req) => (req.method === 'GET' && /[/]schedule$/.test(req.path)) || (req.method === 'DELETE' && /[/]schedule[/]/.test(req.path));
+router.param('id', (req, res, next, value, name) => (answersUnknownIdItself(req) ? next() : noSuchItem(req, res, next, value, name)));
+router.param('item_id', uuidParam(() => words.noSuchPicture())); // the public picture read: an unknown item is "no such picture"
 router.get('/:id/schedule', auth, ...checked('GET /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    const pending = await schedule.pending(entity_id, req.params.id);
+    const pending = UUID.test(req.params.id) ? await schedule.pending(entity_id, req.params.id) : []; // K-1: not a uuid names no item: nothing parked
     /* CAT-234: a parked patch may carry the owner's cost — a cost-blind co-assist reads the list without it, the same strip as GET /.
        The wrapper { item_data: row.patch } shares the reference, so stripCosts deletes on row.patch itself (in place); nothing is copied. */
     if (!(await safeCanSeeCosts(req, entity_id))) stripCosts(pending.map((row) => ({ item_data: row.patch })));
@@ -1649,7 +1656,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
 });
 router.delete('/:id/schedule/:sid', auth, ...checked('DELETE /:id/schedule/:sid'), async (req, res) => {
   try {
-    res.json({ cancelled: await schedule.cancel(ctx(req), req.params.sid) });
+    res.json({ cancelled: UUID.test(req.params.sid) ? await schedule.cancel(ctx(req), req.params.sid) : false }); // K-1: not a uuid names no parked change
   } catch (e) {
     problem(req, res, faultOf(e, req, 'Could not cancel the change'));
   }

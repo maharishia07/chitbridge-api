@@ -97,6 +97,17 @@ function extras(tools) {
     X('buy-counted-line-fails-leaks-nothing', 'POST ' + at('/purchase'), 500, { body: lines({ name: 'Floor cleaner', qty: 2, cost: 40 }), setup: { sqlRows: firstOf(manyRows(KEPT), (sql) => { if (/stock_balance/.test(sql)) throw new Error(SECRET_SQL); return null; }) } })
   ];
 
+  /* K-1 (B2): text no column can hold. Every one of these answered 500 before: the database refuses a NUL byte (22021), the route's catch had no word for it */
+  const unstorable = [
+    X('add-name-with-a-nul-byte', 'POST ' + at(), 400, { body: { name: 'Floor\u0000cleaner' }, after: true }),
+    X('add-unit-with-a-nul-byte', 'POST ' + at(), 400, { body: { name: 'Floor cleaner', unit: 'bo\u0000ttle' }, after: true }),
+    X('edit-name-with-a-nul-byte', 'PATCH ' + at('/:id'), 400, { url: at('/' + ITEM), body: { name: 'Floor\u0000cleaner' }, after: true }),
+    X('buy-line-name-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: lines({ name: 'Floor\u0000cleaner', qty: 1 }), after: true }),
+    X('buy-supplier-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL-1', from: 'Corner\u0000Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
+    X('buy-reference-with-a-nul-byte', 'POST ' + at('/purchase'), 400, { body: { ref: 'BILL\u00001', from: 'Corner Hardware', lines: [{ name: 'Floor cleaner', qty: 2, cost: 40, unit: 'bottle' }] }, setup: { sqlRows: firstOf(manyRows(KEPT), stock()) }, after: true }),
+    X('issue-reference-with-a-nul-byte', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE\u00001' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) }, after: true })
+  ];
+
   const issues = [
     X('issue-recorded', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE-1' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
     X('issue-recorded-without-a-ref', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
@@ -111,7 +122,7 @@ function extras(tools) {
     X('issue-fails-leaks-nothing', 'POST ' + at('/:id/issue'), 500, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: () => { throw new Error(SECRET_SQL); } } })
   ];
 
-  return [].concat(reads, adds, edits, buys, issues);
+  return [].concat(reads, adds, edits, buys, unstorable, issues);
 }
 
 /**

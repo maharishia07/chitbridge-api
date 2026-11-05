@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 216,
+  "long_functions": 215,
   "worst_complexity": 179,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -51,8 +51,7 @@
       "todo"
     ],
     "lib/books.js": [
-      "enable",
-      "writeReversal"
+      "enable"
     ],
     "lib/capture.js": [
       "(anonymous)",

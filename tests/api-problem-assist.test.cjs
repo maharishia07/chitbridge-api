@@ -85,8 +85,15 @@ function checkWords() {
   check('assistSignIn: assist_unavailable with the code the client may key on', signIn.legacy.error === 'assist_unavailable' && signIn.legacy.code === 'ASSIST_SIGN_IN' && signIn.code === 'ASSIST_SIGN_IN', signIn);
   const off = contract.words.assistOff();
   check('assistOff: assist_unavailable with no code key of its own', off.legacy.error === 'assist_unavailable' && !('code' in off.legacy), off);
-  const fixed = contract.words.ownedByAnother('This product container is owned by another brand.');
-  check('ownedByAnother: the library\'s own sentence rides in the old key error', fixed.legacy.ok === false && fixed.legacy.error === 'This product container is owned by another brand.', fixed);
+  const none = contract.words.noSuchContainer('library text that must never ride');
+  check('noSuchContainer: one fixed sentence, whatever the library said', none.legacy.error === 'Unknown container.' && none.detail === 'Unknown container.' && !JSON.stringify(none).includes('library text'), none);
+}
+
+/** S6: a foreign or unknown container id writes nothing (the stand-in logged every INSERT/UPDATE the handler asked for); the two controls show the log sees a real write */
+function checkNoWrites() {
+  console.log('\n-- a foreign or unknown container id writes nothing --');
+  ['container-of-another-brand', 'region-of-another-brand', 'region-unknown-container'].forEach((id) => check(id + ': no INSERT or UPDATE was asked of the store', (scenes.WRITES[id] || []).length === 0, scenes.WRITES[id]));
+  ['container-authored', 'region-stored'].forEach((id) => check(id + ' (control): the log does see a write', (scenes.WRITES[id] || []).length > 0, scenes.WRITES[id]));
 }
 
 /** every code the words answer under is a row of docs/ERROR-CODES.md with its sentence written */
@@ -176,6 +183,7 @@ const VERSION_ROW = { container_id: 'a/b', version: 1, content: {}, schema: {}, 
 /** the routes of this file that name a record by an id in the path: a container and a catalogue source */
 const FOREIGN_ROUTES = () => [
   { route: 'GET ' + MOUNT + '/container/:id', url: MOUNT + '/container/a%2Fb', method: 'GET', rows: firstOf(answering(/FROM product_container/, [CONTAINER_ROW]), answering(/FROM product_version/, [VERSION_ROW])) },
+  { route: 'PUT ' + MOUNT + '/region-override', url: MOUNT + '/region-override', method: 'PUT', body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, rows: answering(/FROM product_container/, [Object.assign({}, CONTAINER_ROW, { owner_entity_id: SHOP })]) }, // owned by shop A (the owner); shop B asks
   { route: 'GET ' + MOUNT + '/catalogue-source/:key', url: MOUNT + '/catalogue-source/brand-x@v1', method: 'GET', rows: answering(/FROM catalogue_source s LEFT JOIN identities/, [BRAND_ROW]) }
 ];
 
@@ -224,6 +232,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkWords();
   checkCodesRegistered(contractModule());
   checkContractShape(routes);
+  checkNoWrites();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 50, frozen);

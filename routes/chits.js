@@ -4,7 +4,7 @@
  *       rail's `actions`), moveStatus (the ONE status writer, through lib/rail-status), amend · reprice · assign · deliver,
  *       disputes, and the housekeeping of MY copy (delete · restore · archive · unarchive · purge · star · unread).
  * called by: the web app (EP map in app.html · cap-chit2.js · chit-sheet.js), the till, lib/autoraise, CTP's deliver door.
- * FLOW  auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
+ * FLOW  (an id in the address that is no uuid is answered first, after sign-in: router.param → CHIT_GONE · RAIDA_GONE · SUBJECT_GONE, the route's own words) auth → entityId(req) → withEntity(me) → the rail's verdict (rail-actions / rail-status / canHousekeep) → the write → res
  * INIT  express → lib (logger · money · rail-actions · dispute-may · rail-status · assign-chit) → db → the routes in file order
  *       (every literal path — /sent · /folder · /raida/report — is mounted BEFORE /:chit_id, so a word is never read as an id)
  * // CARD 01-rail-core-the-chit/chits-routes
@@ -59,7 +59,7 @@ async function countryOfEntity(entity_id) {
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
 const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
@@ -100,6 +100,73 @@ const entityId = (req) => auth.entityOf(req);
 /* "Do I hold a copy of this chit?" — the one probe /amend, /reprice, /costs and /assign-lines ask before writing (RAIL-128) */
 const holdsCopy = async (entity_id, chit_id) =>
   (await withEntity(entity_id, (db) => db.query(`SELECT 1 FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]))).rows.length > 0;
+
+/**
+ * ⭐ K-1 (API-10) — AN ID IN THE ADDRESS THAT IS NOT A UUID NAMES NO ROW. chit_header.chit_id · register_entry.raida_id · register_subject.subject_id · chit_disputes.dispute_id
+ * are all uuid columns, so the cast failed in the database and came back a 500. Each route now answers it EXACTLY as it answers a uuid that names nothing (S41: same status,
+ * same code, same old body), before the body and before the database, through the ONE guard (lib/problem uuidParam). The words are the route's own, by "METHOD path";
+ * a route not listed here (it answers an unknown id 200, or never reads the id) is left as it was. Signed-out callers still get their 401 first: a junk id is judged after sign-in.
+ * tests/k1-chits-guard.test.cjs proves each entry equals the answer of an unknown uuid on the same route, so the two cannot drift.
+ */
+const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
+const notHere = (message) => said404({ error: 'Not found', message });
+const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
+const noParty = (legacy, detail) => () => ({ status: 403, ...said(legacy, 'CHIT_NOT_PERMITTED', detail) });
+const noCopy = noParty({ error: 'Forbidden' }, 'This login holds no copy of this chit.');
+const registerSays = (label, message) => (req) => faultOf(Object.assign(new Error(message), { status: 400 }), req, label, { words: true }); /* lib/raida's own refusal: 400, the sentence it always gave */
+const canAmend = (copy, caller) => railActions.can(copy, caller, 'amend');
+const CHIT_GONE = {
+  'GET /:chit_id': notHere('Chit not found or you do not have access'),
+  'GET /:chit_id/use': notHere('Chit not found'),
+  'GET /:chit_id/messages': noCopy,
+  'GET /:chit_id/disputes': noCopy,
+  'GET /:chit_id/diagnosis': noCopy,
+  'PUT /:chit_id/use': said404({ error: 'Not saved', message: 'Chit not found' }),
+  'PUT /:chit_id/status': said404({ error: 'Not found', message: 'Chit not found', why: 'not_received' }),
+  'PUT /:chit_id/void': notHere('Chit not found'),
+  'PUT /:chit_id/priority': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/priority-flag': notHere('Chit not found for this entity'),
+  'PUT /:chit_id/star': notHere('Chit not found'),
+  'PUT /:chit_id/disputes/:dispute_id/resolve': said404({ error: 'Dispute not found' }),
+  'POST /:chit_id/amend': ownCopyOf(canAmend),
+  'POST /:chit_id/reprice': ownCopyOf(canAmend),
+  'POST /:chit_id/assign-lines': ownCopyOf((copy, caller) => railActions.can(copy, caller, 'assign')),
+  'POST /:chit_id/deliver-lines': ownCopyOf(railActions.canDeliver),
+  'POST /:chit_id/costs': notHere('Chit not found or you do not have access'),
+  'POST /:chit_id/books-request': (req) => (req.api_key ? noParty({ error: 'Forbidden', message: 'Sign in to send a chit to the books.' }) : said404({ error: 'Not found' }))(req), /* a key is refused before the id is read */
+  'POST /:chit_id/messages': noParty({ error: 'Forbidden', message: 'Not a participant on this chit', why: 'not_participant' }),
+  'POST /:chit_id/disputes': noParty({ error: 'Not a participant' }),
+  'POST /:chit_id/raida': said404({ error: 'Failed to record it', message: 'Chit not found or you do not have access' }),
+  'POST /:chit_id/archive': notHere('Chit not found or already archived'),
+  'POST /:chit_id/unarchive': notHere('Chit not found or not archived'),
+  'POST /:chit_id/restore': notHere('Chit not found in Trash'),
+  'POST /:chit_id/unread': notHere('Chit not found'),
+  'DELETE /:chit_id': notHere('Chit not found or already deleted'),
+  'DELETE /:chit_id/payment': said404({ error: 'Not found' }),
+  'DELETE /:chit_id/purge': notHere('Draft not found')
+};
+const RAIDA_GONE = {
+  'POST /register/entries/:raida_id/accept': registerSays('Failed to record the acceptance', 'No such entry.'),
+  'POST /register/entries/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /register/entries/:raida_id/revise': registerSays('Failed to revise it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/close': registerSays('Failed to close it', 'No such entry.'),
+  'POST /:chit_id/raida/:raida_id/dispute': (req) => registerSays('Failed to link the dispute', req.body && req.body.dispute_id ? 'No issue with that id.' : 'A dispute id is required.')(req)
+};
+const SUBJECT_GONE = {
+  'POST /register/subjects/:subject_id/close': registerSays('Cannot close yet', 'No such register.')
+};
+const DISPUTE_GONE = { 'PUT /:chit_id/disputes/:dispute_id/resolve': CHIT_GONE['PUT /:chit_id/disputes/:dispute_id/resolve'] }; /* both its ids name the same dispute copy: one answer */
+const routeKey = (req) => req.method + ' ' + req.route.path;
+/** router.param callback: a uuid, or a route with no words here, goes on; anything else is answered by uuidParam with the route's words, after sign-in (the 401 stays first) */
+const junkIdGuard = (table) => {
+  const judge = uuidParam((req) => table[routeKey(req)](req));
+  return (req, res, next, id, name) =>
+    trace.UUID_RE.test(String(id)) || !table[routeKey(req)] ? next() : auth(req, res, (err) => (err ? next(err) : judge(req, res, next, id, name)));
+};
+router.param('chit_id', junkIdGuard(CHIT_GONE));
+router.param('raida_id', junkIdGuard(RAIDA_GONE));
+router.param('subject_id', junkIdGuard(SUBJECT_GONE));
+router.param('dispute_id', junkIdGuard(DISPUTE_GONE));
 
 
 /**
@@ -5275,11 +5342,26 @@ function askedPartyIds(checklist, targetId) {
   return checklist.length ? [...new Set(checklist)] : targetId ? [targetId] : [];
 }
 
+/** every entity that holds a copy of the chit (chit_participants, callable by a holder only) */
+async function holdersOf(callerEntity, chit_id) {
+  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
+  return participants.rows.map((row) => row.entity_id);
+}
+
+/**
+ * ⭐ RAIL-162 — the parties of a dispute. A TARGETED one names them (the checklist or the target); a CHIT-WIDE one is the whole chit, so every OTHER holder is a party.
+ * Since b68 each party reads only its own chit_disputes copy, so a chit-wide raise that named nobody wrote the raiser's copy alone: the other side saw an empty list, was refused its
+ * reply (403 "Not a party") and never saw the resolve. The roster this feeds also tells the other installations (lib/ctpreturn builds the remote copies from it).
+ */
+async function disputeParties(callerEntity, chit_id, scope, named) {
+  if (scope !== 'chit_wide') return holdersAmong(callerEntity, chit_id, named);
+  return (await holdersOf(callerEntity, chit_id)).filter((id) => String(id) !== String(callerEntity));
+}
+
 /** SEC-FIX3 S4 — which of these entity ids HOLD a copy of the chit (chit_participants, callable by a holder only); a stranger gets no copy, no reason text */
 async function holdersAmong(callerEntity, chit_id, ids) {
   if (!ids.length) return [];
-  const participants = await withEntity(callerEntity, (db) => db.query(`SELECT entity_id FROM chit_participants($1)`, [chit_id]));
-  const holding = new Set(participants.rows.map((row) => String(row.entity_id)));
+  const holding = new Set((await holdersOf(callerEntity, chit_id)).map(String));
   return ids.filter((id) => holding.has(String(id)));
 }
 
@@ -5482,7 +5564,7 @@ router.post(
 
       // 5b. D4 — resolve the involved parties (multi-select checklist). Falls back to the single
       //     target for back-compat. Raiser + parties form the roster; each party carries its own status.
-      const partyIds = await holdersAmong(entity_id, chit_id, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
+      const partyIds = await disputeParties(entity_id, chit_id, scope, askedPartyIds(selParties, scope === 'targeted' ? target_entity_id : null));
       const partyNames = {};
       if (partyIds.length) {
         const nm = await query(`SELECT identity_id, display_name FROM identities WHERE identity_id = ANY($1::uuid[])`, [partyIds]);

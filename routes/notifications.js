@@ -16,6 +16,7 @@ const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
+const { UUID } = require('../lib/namedentity'); // the one uuid shape
 const FEED_PAGE = 30,
   FEED_MAX = 100; /* the bell shows the newest thirty */
 
@@ -196,6 +197,28 @@ router.post('/seen', auth, ...contract.checked('POST /seen'), async (req, res) =
   }
 });
 
+/** the dismissals of one entity: every event it can see now (`all`), or the ids named; ON CONFLICT: a repeat counts once */
+function dismissRows(session, entity_id, all, ids) {
+  if (all) {
+    /* ⚠️ "ALL" MEANS EVERY EVENT THIS ENTITY CAN CURRENTLY SEE, resolved server-side rather than from a list
+       the client sends. A client-supplied list is a snapshot of what was on screen when the panel opened —
+       anything that arrived since would survive a "clear all" and look like the button failed. */
+    return session.query(
+      `INSERT INTO notif_dismissed (entity_id, log_id)
+         SELECT $1, sl.log_id FROM state_log sl
+          WHERE sl.entity_id = $1
+       ON CONFLICT DO NOTHING`,
+      [entity_id]
+    );
+  }
+  return session.query(
+    `INSERT INTO notif_dismissed (entity_id, log_id)
+       SELECT $1, x FROM unnest($2::uuid[]) AS x
+     ON CONFLICT DO NOTHING`,
+    [entity_id, ids]
+  );
+}
+
 /**
  * POST /api/notifications/dismiss — clear one Activity row, or several, or all of them.
  *
@@ -213,30 +236,13 @@ router.post('/dismiss', auth, ...contract.checked('POST /dismiss'), async (req, 
   try {
     const entity_id = auth.entityOf(req);
     const all = req.body && req.body.all === true;
-    const ids = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
-    if (!all && !ids.length) {
+    const asked = Array.isArray(req.body && req.body.log_ids) ? req.body.log_ids.filter(Boolean) : [];
+    /* K-1 (B2): a value that is no uuid names no event: it clears nothing, as an id nobody has does (it reached unnest($2::uuid[]): 22P02, a 500) */
+    const ids = asked.filter((logId) => UUID.test(String(logId)));
+    if (!all && !asked.length) {
       return problem(req, res, { status: 400, ...words.nothingToClear() });
     }
-    const out = await withEntity(entity_id, async (c) => {
-      if (all) {
-        /* ⚠️ "ALL" MEANS EVERY EVENT THIS ENTITY CAN CURRENTLY SEE, resolved server-side rather than from a list
-           the client sends. A client-supplied list is a snapshot of what was on screen when the panel opened —
-           anything that arrived since would survive a "clear all" and look like the button failed. */
-        return c.query(
-          `INSERT INTO notif_dismissed (entity_id, log_id)
-             SELECT $1, sl.log_id FROM state_log sl
-              WHERE sl.entity_id = $1
-           ON CONFLICT DO NOTHING`,
-          [entity_id]
-        );
-      }
-      return c.query(
-        `INSERT INTO notif_dismissed (entity_id, log_id)
-           SELECT $1, x FROM unnest($2::uuid[]) AS x
-         ON CONFLICT DO NOTHING`,
-        [entity_id, ids]
-      );
-    });
+    const out = await withEntity(entity_id, (session) => dismissRows(session, entity_id, all, ids));
     res.json({ ok: true, cleared: out.rowCount });
   } catch (err) {
     /* Pre-b164 the table does not exist. Say which migration, rather than 500 — the panel still works, only the

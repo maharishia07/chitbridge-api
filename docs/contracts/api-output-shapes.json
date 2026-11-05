@@ -3060,7 +3060,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/catalogue-overlay"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue-overlay"
       }
     },
     "GET /api/chits/:chit_id/costs": {
@@ -3139,7 +3139,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/costs"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/costs"
       }
     },
     "GET /api/chits/:chit_id/diagnosis": {
@@ -3334,7 +3334,7 @@
         }
       ],
       "example": {
-        "url": "/api/chits/nope/raida"
+        "url": "/api/chits/dddddddd-dddd-4ddd-8ddd-dddddddddddd/raida"
       }
     },
     "GET /api/chits/:chit_id/use": {
@@ -18980,7 +18980,7 @@
       "observed": 5,
       "open": [],
       "example": {
-        "url": "/api/relationships/scorecard/nope"
+        "url": "/api/relationships/scorecard/dddddddd-dddd-4ddd-8ddd-dddddddddddd?since=2026-01-01"
       }
     },
     "GET /api/relationships/suppliers": {
@@ -19227,7 +19227,7 @@
       "observed": 7,
       "open": [],
       "example": {
-        "url": "/api/relationships/suppliers/nope/catalogue"
+        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/relationships/suppliers/availability": {
@@ -20954,6 +20954,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -21551,6 +21554,9 @@
               "object",
               "null"
             ]
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -21662,7 +21668,10 @@
               "type": "object"
             }
           },
-          "why": {}
+          "why": {},
+          "cost_hidden": {
+            "type": "boolean"
+          }
         },
         "additionalProperties": false
       },
@@ -21734,6 +21743,9 @@
           },
           "words": {
             "type": "string"
+          },
+          "cost_hidden": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

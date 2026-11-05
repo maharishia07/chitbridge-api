@@ -17,6 +17,7 @@ const AT = '2026-10-01T00:00:00.000Z';
 const ROOT_NODE = { key: 'r', name: 'Shop A', root: true, owned: true, parent_key: null, holds: [] };
 const CHILD_NODE = { key: 'a', name: 'Clothing', owned: true, parent_key: 'r', holds: ['catalogue'] };
 const DESIGN = { nodes: [ROOT_NODE, CHILD_NODE] };
+const NUL = '\u0000'; /* written as the escape, never the raw byte */
 
 /** the tools a scene is built from: the harness's own stand-ins and the rows of the network world */
 function extras(tools) {
@@ -47,6 +48,7 @@ function extras(tools) {
     X('claim-already', 'POST ' + at('/entities/:id/claim'), 409, { url: nodeUrl(NODE.a, 'claim'), body: {}, setup: world() }),
     X('claim-not-yours', 'POST ' + at('/entities/:id/claim'), 403, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world() }),
     X('claim-made', 'POST ' + at('/entities/:id/claim'), 200, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world({}, { who: CHILD }) }),
+    N('place-asked-twice', 'GET ' + at('/place'), 400, { url: at('/place?bridgeId=a&bridgeId=b'), setup: world({ tree: true }) }),
     X('place-found', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true }) }),
     X('place-a-root', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=AAAA2222'), setup: world({ tree: true }) }),
     X('place-suspended-member', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true, edge: { state: 'suspended' } }, { who: CHILD }) }),
@@ -114,6 +116,15 @@ function extras(tools) {
   const missingSearch = (sql) => { if (/network_search/.test(sql)) throw new Error('function network_search(text, text, integer) does not exist'); return null; };
   const items = answering(/FROM catalogue_items/, [{ item_id: 'i1', item_data: { name: 'Tea', price: 10, avail: { qty: 4, source: 'count' } } }]);
   const buildRows = (more) => firstOf(meRow(more), design);
+  /* K-1: the stand-in db keeps Postgres's rule: a NUL byte in any bound text is refused 22021 (22P05 inside a jsonb value). A scene lays this over its rows. */
+  const holdsJunk = (sql, params) => {
+    (params || []).forEach((one) => {
+      if (typeof one === 'string' && one.includes(NUL)) throw Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { code: '22021' });
+      if (one && typeof one === 'object' && JSON.stringify(one).includes('\\u0000')) throw Object.assign(new Error('unsupported Unicode escape sequence'), { code: '22P05' }); /* a jsonb value (pg sends an object as JSON) holding the escape of a NUL byte */
+    });
+    return null;
+  };
+  const junky = (...rows) => ({ sqlRows: firstOf(holdsJunk, ...rows) });
   const designed = [
     X('design-saved', 'GET ' + DES, 200, { setup: { sqlRows: design } }),
     X('save-draft-not-an-object', 'PUT ' + DES, 400, { body: { draft: [] } }),
@@ -169,7 +180,14 @@ function extras(tools) {
     X('availability-one-query-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, [foundBare, foundBare2]), ownAt) }, patch: members(['AAAA2222', 'CCCC4444']) }),
     X('availability-one-query-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(answering(/FROM network_search/, Array.from({ length: 200 }, () => foundBare2)), own) }, patch: members(['AAAA2222']) }),
     X('availability-fallback-bare', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(missingSearch, answering(/FROM identities\s+WHERE bridge_id = ANY/, [store({ city: null, currency_code: null, lat: '18.520000', lng: '73.850000', service_km: 50, dispatch_days: 2, ship_within_days: 1, ship_beyond_days: 5 })]), answering(/FROM catalogue_items/, [{ item_id: 'i2', item_data: { code: 'T-1' } }, { item_id: 'i3', item_data: {} }]), ownAt) }, patch: members(['AAAA2222']) }),
-    X('availability-fallback-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(raising(/network_search/, '42883'), stores, items, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) })
+    X('availability-fallback-past-the-cap', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=tea', setup: { sqlRows: firstOf(raising(/network_search/, '42883'), stores, items, own) }, patch: members(Array.from({ length: 41 }, (unused, at2) => 'AAAA' + String(1000 + at2))) }),
+    /* K-1: a NUL byte in text no column can hold. A name in the drawing is stored text: 400 "Cannot save this text. Type it again."; a store name or a search is a lookup that finds nothing, answered as an unknown one is */
+    N('save-name-with-a-nul-byte', 'PUT ' + DES, 400, { body: { draft: { nodes: [{ key: 'a', name: 'Cloth' + NUL + 'ing' }] } }, setup: junky(answering(/INSERT INTO network_design/, [{ updated_at: AT }])) }),
+    N('save-key-with-a-nul-byte', 'PUT ' + DES, 400, { body: { draft: { nodes: [{ key: 'a' + NUL, name: 'Clothing' }] } }, setup: junky(answering(/INSERT INTO network_design/, [{ updated_at: AT }])) }),
+    N('validate-root-name-with-a-nul-byte', 'POST ' + DES + '/validate', 200, { body: { draft: DESIGN, root_handle: 'shop' + NUL + 'a' }, setup: junky() }),
+    N('build-root-name-with-a-nul-byte', 'POST ' + DES + '/build', 400, { body: { root_handle: 'shop' + NUL + 'a' }, setup: junky(buildRows({ user_id: null })) }),
+    N('reissue-store-with-a-nul-byte', 'POST ' + DES + '/reissue', 404, { body: { user_id: 'shop' + NUL + 'a.c' }, setup: junky() }),
+    N('availability-text-with-a-nul-byte', 'GET ' + DES + '/availability', 200, { url: DES + '/availability?q=te%00a', setup: junky(found, own), patch: members(['AAAA2222', 'CCCC4444']) })
   ];
 
   /* ── /api/connections: the handshake between two businesses ── */

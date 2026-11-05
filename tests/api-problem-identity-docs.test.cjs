@@ -90,6 +90,7 @@ function checkWords() {
   const req = { id: 'r1' };
   const refused = words.faultOf(Object.assign(new Error('That person is not one of your co-assists.'), { status: 403, code: 'IDOC_SUBJECT_FORBIDDEN' }), req);
   check('faultOf: a refusal the route meant (403) keeps its status, its code and its fixed sentence', refused.status === 403 && refused.code === 'IDOC_SUBJECT_FORBIDDEN' && sameValue(refused.legacy, { error: 'IDOC_SUBJECT_FORBIDDEN', message: 'That person is not one of your co-assists.' }) && refused.detail === 'That person is not one of your co-assists.', refused);
+  check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 IDOC_INVALID_VALUE in the validation keys and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(sqlError(code), req); return one.status === 400 && one.code === 'IDOC_INVALID_VALUE' && sameValue(one.legacy, { error: 'Validation failed', message: 'Cannot save this text. Type it again.' }) && !LEAK.test(JSON.stringify(one)); }));
   const plain = words.faultOf(new Error(SECRET_SQL), req);
   check('faultOf: an error with no status is a 500 INTERNAL, the generic sentence, nothing of its cause', plain.status === 500 && plain.code === 'INTERNAL' && sameValue(plain.legacy, { error: 'Server error', message: SAFE }) && !LEAK.test(JSON.stringify(plain)), plain);
   const coded = words.faultOf(sqlError('42501'), req);
@@ -176,6 +177,15 @@ function checkFrozen5xx(recording) {
 }
 
 /** a 2xx is never a Problem, and no answer of any status carries the text of a thrown error or a full document number */
+/** S41 (K-1, B2): a scheme with a NUL byte in the address answers exactly as a scheme no document is filed under: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (key) => JSON.stringify(Object.assign({}, (recording[key] || {}).body, { request_id: null }));
+  [['POST /api/identity/documents/:scheme/code|', 'code-scheme-with-a-nul-byte', 'code-unknown-scheme-no-row'], ['POST /api/identity/documents/:scheme/verify|', 'verify-scheme-with-a-nul-byte', 'verify-no-row']].forEach(([route, junk, unknown]) => {
+    check(junk + ': answers exactly as a document that is not on file (404, same body)', (recording[route + junk] || {}).status === 404 && (recording[route + unknown] || {}).status === 404 && bodyOf(route + junk) === bodyOf(route + unknown), { junk: (recording[route + junk] || {}).status, unknown: (recording[route + unknown] || {}).status });
+  });
+}
+
 function checkNoLeakAnywhere(recording) {
   console.log('\n-- the body scan: a 2xx is never a Problem, and no body carries a thrown text or a full number --');
   const keys = Object.keys(recording);
@@ -367,6 +377,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkCarriedStatus(port, all.filter((one) => one.synthetic));
   checkFrozen5xx(recording);
   checkNoLeakAnywhere(recording);
+  checkJunkAnswersAsUnknown(recording);
   checkSenderWords(recording);
   await checkMasking(port);
   await checkCodeFlow(port);

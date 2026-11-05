@@ -1,3 +1,5 @@
+// FLOW      request → who you are is checked → only then is the body parsed.
+// CARD      18-identity-sign-in-and-access/sessions-and-devices
 /**
  * middleware/auth-first.js — WHO YOU ARE is decided before WHAT YOU SENT is read (M04, IAM §35, 2026-10-07).
  *
@@ -48,7 +50,7 @@ const authThenParse = (req, res, next) => {
   if (!isAuthFirst(req)) return next();
   return auth(req, res, (err) => {
     if (err) return next(err);
-    json(req, res, (e1) => (e1 ? next(e1) : form(req, res, next)));
+    json(req, res, (bodyError) => (bodyError ? next(bodyError) : form(req, res, next)));
   });
 };
 

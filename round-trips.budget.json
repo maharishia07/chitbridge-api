@@ -163,6 +163,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/actors/:id/tasks": {
+      "file": "actors.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/actors/access-events": {
       "file": "actors.js",
       "trips": 1,
@@ -1114,6 +1122,14 @@
       "status": 200,
       "extra": true
     },
+    "GET /api/governance/boilerplate/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
     "GET /api/governance/commerce-standards": {
       "file": "governance.js",
       "trips": 1,
@@ -1128,6 +1144,14 @@
       "wire": 7,
       "fired": true,
       "status": 200,
+      "extra": true
+    },
+    "GET /api/governance/entities/:id": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 404,
       "extra": true
     },
     "GET /api/governance/instruments": {
@@ -1190,6 +1214,14 @@
       "wire": 1,
       "fired": true,
       "status": 404
+    },
+    "GET /api/governance/source/:key": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
     },
     "GET /api/governance/supplier-acceptance/:handle": {
       "file": "governance.js",
@@ -2050,6 +2082,14 @@
       "status": 404,
       "extra": true
     },
+    "POST /api/actors/check-key": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
+    },
     "POST /api/actors/login": {
       "file": "actors.js",
       "trips": 0,
@@ -2063,6 +2103,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/actors/suggest-key": {
+      "file": "actors.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400,
+      "extra": true
     },
     "POST /api/adopt/:chit_id": {
       "file": "adopt.js",
@@ -2864,6 +2912,30 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/governance/boilerplate/:key/adopt": {
+      "file": "governance.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 404,
+      "extra": true
+    },
+    "POST /api/governance/entities": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
+    },
+    "POST /api/governance/entities/:id/reattest": {
+      "file": "governance.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "extra": true
     },
     "PUT /api/folders/inventory/:code": {
       "file": "folders.js",
@@ -3671,13 +3743,6 @@
       "fired": true,
       "status": 200,
       "extra": true
-    },
-    "POST /api/books/parties/:id/dispute": {
-      "file": "books.js",
-      "trips": 1,
-      "wire": 3,
-      "fired": true,
-      "status": 422
     }
   }
 }
