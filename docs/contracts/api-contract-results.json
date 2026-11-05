@@ -3154,6 +3154,54 @@
     400
    ]
   },
+  "POST /api/network-offers/:id/choice": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/release": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/network/connections": {
    "cases": 2,
    "failed": 0,
@@ -4112,6 +4160,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PUT /api/network-offers/policy": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PUT /api/products/:id/availability": {
