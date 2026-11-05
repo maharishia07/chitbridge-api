@@ -1259,6 +1259,7 @@
   500
  ],
  "GET /api/testing/cases/gherkin": [
+  400,
   401,
   403,
   500
@@ -1269,6 +1270,7 @@
   500
  ],
  "GET /api/testing/cmdb": [
+  400,
   401,
   403,
   500
@@ -1297,6 +1299,7 @@
   500
  ],
  "GET /api/testing/releases": [
+  400,
   401,
   500
  ],
