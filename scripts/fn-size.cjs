@@ -7,6 +7,13 @@
  *   node scripts/fn-size.cjs --json     every function over the limit, by file and name (what tests/fixtures/fn-size.json holds)
  *   node scripts/fn-size.cjs --write    rewrite tests/fixtures/fn-size.json — ONLY after the count went DOWN
  *
+ * OWNS       the count of functions over 80 lines and the worst complexity in lib/ + routes/.
+ * CALLED BY  tests/fn-size.test.cjs (the ratchet), tests/fn-size-adopted.test.cjs; by hand with --json / --write.
+ * FLOW       walk lib/ + routes/ -> skip the long-count of ADOPTED files -> count -> compare with tests/fixtures/fn-size.json.
+ * CARD       28-platform-and-operations/api-standard
+ *
+ * Adopted engine files (line 1 = the ADOPTED header) are measured in chitbridge-engines, not here: they skip the long-function count only.
+ *
  * Reads with tests/support/js-scan.cjs (no parser dependency — the offline gate allows none).
  */
 'use strict';
@@ -18,6 +25,10 @@ const API = path.join(__dirname, '..');
 const LIMIT = 80;
 const DIRS = ['lib', 'routes'];
 const FIXTURE = path.join(API, 'tests', 'fixtures', 'fn-size.json');
+
+/* line 1 ONLY, the adopt header of lib/ledger.js: a file that mentions ADOPTED elsewhere still counts */
+const ADOPTED = /^\/\* ADOPTED from chitbridge-engines v\S+ · \S+ · sha256 /;
+const isAdopted = (text) => ADOPTED.test(String(text).split(String.fromCharCode(10), 1)[0]);
 
 function walk(dir) {
   const out = [];
@@ -36,9 +47,11 @@ function measure() {
   DIRS.flatMap(walk)
     .sort()
     .forEach((item) => {
-      functions(fs.readFileSync(path.join(API, item), 'utf8')).forEach((f) => all.push(Object.assign({ file: item }, f)));
+      const text = fs.readFileSync(path.join(API, item), 'utf8');
+      const adopted = isAdopted(text);
+      functions(text).forEach((f) => all.push(Object.assign({ file: item, adopted }, f)));
     });
-  const long = all.filter((item) => item.lines > LIMIT);
+  const long = all.filter((item) => item.lines > LIMIT && !item.adopted);
   const worst = all.reduce((total, item) => (!total || item.complexity > total.complexity ? item : total), null);
   const perFile = {};
   long.forEach((item) => {
@@ -77,4 +90,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { measure, LIMIT, FIXTURE };
+module.exports = { measure, isAdopted, LIMIT, FIXTURE };
