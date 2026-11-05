@@ -8,6 +8,11 @@ function memory() {
   const rows = [], chits = {}, sent = [], notes = []; let seq = 0;
   const m = { migrated: false, rows, chits, sent, notes, zone: { timezone: 'Asia/Kolkata', country: 'IN' } };
   const clone = (x) => JSON.parse(JSON.stringify(x));
+  /** K-1 (B2): the rules of Postgres a junk value breaks, kept when m.postgres is on: a chit id is a uuid column (22P02), a NUL byte is no text (22021) and none in a jsonb value (22P05) */
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const refuse = (code) => { throw Object.assign(new Error('pg ' + code), { code }); };
+  const holds = (x) => (typeof x === 'string' ? x.includes('\u0000') : x && typeof x === 'object' ? JSON.stringify(x).includes('\\u0000') : false);
+  const pg = (values) => { if (m.postgres) Object.values(values || {}).forEach((x) => { if (typeof x === 'string' && holds(x)) refuse('22021'); else if (x && typeof x === 'object' && holds(x)) refuse('22P05'); }); };
   const gone = () => { const e = new Error('relation "repeat_supply" does not exist'); e.code = '42P01'; throw e; };
   const join = (r) => { const h = chits[r.chit_id + '|' + r.entity_id] || {}; return Object.assign({}, r, { all_recipients: h.all_recipients || [], summary_json: h.summary_json || {}, manual_subject: h.manual_subject || null, auto_subject: h.auto_subject || null }); };
   const rowOf = (r) => require('../../lib/repeat-supply').rowOf(clone(join(r)));   /* the SQL store's own shaping — one shape */
@@ -17,11 +22,12 @@ function memory() {
     async get(h, e, id) { if (!m.migrated) gone(); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); return r ? rowOf(r) : null; },
     async insert(h, e, t) {
       if (!m.migrated) gone();
+      pg(t);
       rows.push(Object.assign({ entity_id: e, state: 'proposed', runs_done: 0, terms: {}, counter: null, skips: [], runs: {}, last_run_on: null, state_by: null, state_at: null, state_note: null, created_at: '2026-10-01T00:00:00Z', updated_at: null }, clone(t)));
       return m.store.get(h, e, t.agreement_id);
     },
-    async update(h, e, id, p) { if (!m.migrated) gone(); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); if (!r) return null; Object.assign(r, clone(p)); return rowOf(r); },
-    async chit(h, e, chit_id) { const c = chits[chit_id + '|' + e]; return c ? clone(c) : null; },
+    async update(h, e, id, p) { if (!m.migrated) gone(); pg(p); const r = rows.find((x) => x.entity_id === e && x.agreement_id === id); if (!r) return null; Object.assign(r, clone(p)); return rowOf(r); },
+    async chit(h, e, chit_id) { if (m.postgres && !UUID.test(String(chit_id))) refuse('22P02'); const c = chits[chit_id + '|' + e]; return c ? clone(c) : null; },
     async note(h, e, chit_id, who, action, detail) { notes.push({ entity: e, chit_id, action, detail }); },
     async zone() { return m.zone; },
     async dueShops() { if (!m.migrated) gone(); return [...new Set(rows.filter((r) => r.state === 'agreed').map((r) => r.entity_id))]; },
