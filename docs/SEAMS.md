@@ -16,7 +16,7 @@ of file each thing is; this says what already does the job.
 | 110 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 101 | `read` | `books-cashflow.js` | Trips: |
 | 91 | `answer` | `availability.js` | from March; then nearest. |
-| 85 | `money` | `bill-privacy.js` |  |
+| 87 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 73 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 73 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -197,6 +197,7 @@ of file each thing is; this says what already does the job.
 | 13 | `post` | `books-manual.js` | POST /events — |
 | 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
+| 12 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `migrated` | `country-setup.js` |  |

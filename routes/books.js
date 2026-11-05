@@ -55,8 +55,8 @@ const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf o
 const dateQ = (v, d) => (DATE.test(String(v || '').slice(0, 10)) ? String(v).slice(0, 10) : d);
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
-const CF = () => require('../lib/books-cashflow');
-const minorOf = (b, cur) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : CF().toMinor(b.amount, cur));
+const cashflow = () => require('../lib/books-cashflow');
+const minorOf = (b, currency) => (b.amount_minor != null ? Math.round(Number(b.amount_minor)) : cashflow().toMinor(b.amount, currency));
 const WORD = {
   walkin_day: 'Walk-in sales',
   sale_bill: 'Sale',
@@ -1656,7 +1656,7 @@ router.post('/events', auth, noKey, owner, on, ...checked('POST /events'), async
 });
 
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
-const givenLines = (list, cur) => require('../lib/books-manual').givenLines(list, cur); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
+const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 router.post('/entries', auth, owner, on, ...checked('POST /entries'), async (req, res) => {
   try {
     const b = req.body || {};
@@ -1709,7 +1709,7 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       type: 'write_off',
       owner: true,
       party,
-      amount: CF().fromMinor(minorOf(b, curOf(req)), curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
+      amount: cashflow().fromMinor(minorOf(b, curOf(req)), curOf(req)) /* ACC-179: was / 100 — a ¥500 write-off posted ¥5 */,
       reason: b.reason,
       currency: curOf(req),
       strict_date: true,
