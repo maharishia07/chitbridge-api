@@ -262,6 +262,15 @@ const writeExtras = [
 const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { patch: FAIL(mod, fn) }));
 const SOURCE_BODY = { source_key: 'k' };
 const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
+  /* B2 (4 Nov): a query value given twice, or a body that is a list, is refused 422 (new in B2, no old body) by the route's schema check */
+  X('readiness-destination-twice', 'GET /api/governance/readiness', 422, { after: true, url: MOUNT + '/readiness?destination=EU&destination=US' }),
+  X('lanes-vertical-twice', 'GET /api/governance/lanes', 422, { after: true, url: MOUNT + '/lanes?vertical=paint&vertical=tea' }),
+  X('instruments-incoterm-twice', 'GET /api/governance/instruments', 422, { after: true, url: MOUNT + '/instruments?incoterm=CIF&incoterm=FOB' }),
+  X('journey-incoterm-twice', 'GET /api/governance/journey', 422, { after: true, url: MOUNT + '/journey?incoterm=CIF&incoterm=FOB' }),
+  X('conformance-body-a-list', 'POST /api/governance/conformance', 422, { after: true, body: [] }),
+  /* K-1: the platform names an id that is not a uuid: the unknown id's 404, and the database is never asked (it would answer 22P02 and a 500) */
+  X('platform-reads-junk-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc', after: true }),
+  X('platform-reattests-junk-id', 'POST /api/governance/entities/:id/reattest', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc/reattest', after: true }),
   X('foreign-entity-id', 'GET /api/governance/entities/:id', 404, { url: MOUNT + '/entities/' + OTHER }),
   X('platform-reads-any-unknown-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM }, url: MOUNT + '/entities/' + OTHER }),
   X('entity-without-constitution', 'GET /api/governance/entities/:id', 503, { setup: { sqlRows: ANSWERS(ENTITY) } }),
@@ -358,7 +367,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (inherited(scenario, answer)) continue;
     kit.checkProblemBody(label, answer);
     if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/SELECT secret|relation "/.test(answer.text), answer.text);
-    else kit.checkLegacy(label, answer, kit.legacyOf(scenario.route, scenario.id));
+    else if (!scenario.after) kit.checkLegacy(label, answer, kit.legacyOf(scenario.route, scenario.id));
   }
   return tested;
 }
