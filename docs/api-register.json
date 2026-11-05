@@ -10,11 +10,11 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 227
+    "failing": 224
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 226
+    "failing": 221
    },
    "foreign_id_404": {
     "applies": 230,
@@ -2686,7 +2686,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
    "line": 156,
-   "hash": "59c0a217613d2a9f",
+   "hash": "f94b7cb156a834e9",
    "does": "",
    "errors": {
     "count": 0,
@@ -2722,7 +2722,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -19520,7 +19520,7 @@
    "owner_agent": "cb-people",
    "file": "routes/people.js",
    "line": 28,
-   "hash": "2f9990d0578e7fb9",
+   "hash": "b2c546cbe8598fc7",
    "does": "",
    "errors": {
     "count": 0,
@@ -19552,7 +19552,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29027,7 +29027,7 @@
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
    "line": 193,
-   "hash": "1c08a40c893e81d9",
+   "hash": "c268b4e98d692a14",
    "does": "",
    "errors": {
     "count": 0,
@@ -29065,8 +29065,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -47038,7 +47038,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 52,
-   "hash": "691ca321135fb824",
+   "hash": "8f9496e5fc024ebe",
    "does": "",
    "errors": {
     "count": 0,
@@ -47070,8 +47070,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -47100,8 +47100,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#351",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8f9496e5fc024ebe"
    },
    "status": "partial",
    "callers": [],
@@ -55981,7 +55982,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue-face.js",
    "line": 74,
-   "hash": "60556e63ece7748b",
+   "hash": "756da2bc804a1d58",
    "does": "",
    "errors": {
     "count": 0,
@@ -56018,8 +56019,8 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
-    "output_allowlist": false,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -56051,7 +56052,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "60556e63ece7748b"
+    "stale_since": "756da2bc804a1d58"
    },
    "status": "partial",
    "callers": [
