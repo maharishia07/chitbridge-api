@@ -811,6 +811,8 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         const own = terms && terms.by_party.get(String(pid));
         return own ? T.resolve(terms.shop, own) : null;
       };
+      /* FIN-72: a bill with no due date is aged from its date + its party's credit days (own, else the shop's — the same resolver; a party with no list row has the shop's) */
+      const creditDaysOf = (pid) => T.resolve(terms.shop, terms.by_party.get(String(pid)) || {}).credit_days.value;
       let payableItems = [];
       for (const role of sides) {
         const a = chart.find((x) => x.role === role);
@@ -819,7 +821,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
-        const d = E.dues(items, asOf, side);
+        const d = E.dues(items, asOf, side, fin && role === 'debtors' ? { creditDaysOf } : null);
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */
@@ -856,7 +858,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
               disputed_minor: sign * disputed,
               buckets
             };
-            if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)));
+            if (fin && role === 'debtors') Object.assign(row, termsFigures(docs, asOf, curOf(req), effOf(pid)), { follow_up: E.followRow(d.follow, pid) });
             lookup.set(pid + '|' + role, row);
           });
       }
@@ -930,7 +932,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
     });
     res.json(
       await forReader(req, e, {
-        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...(payables ? { payables } : {})
+        currency: curOf(req), asOf, parties: out, total_minor: out.reduce((total, item) => total + item.balance_minor, 0), ...(payables ? { payables } : {}), ...(fin && sides.includes('debtors') ? { follow_up_total: E.followTotal(out) } : {})
       })
     );
   } catch (err) {
