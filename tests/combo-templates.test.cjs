@@ -83,7 +83,7 @@ async function run() {
         }
         if (q.startsWith('INSERT INTO combo_templates')) {
           const [eid, name, def, price] = params;
-          const row = { id: 'ct' + (seq), seq: seq++, entity_id: eid, name, definition: JSON.parse(def), price: price == null ? null : Number(price), created_at: 'now', updated_at: 'now' };
+          const row = { id: '00000000-0000-4000-8000-' + String(seq).padStart(12, '0'), seq: seq++, entity_id: eid, name, definition: JSON.parse(def), price: price == null ? null : Number(price), created_at: 'now', updated_at: 'now' };
           ROWS.push(row);
           return { rows: [cols(row)] };
         }

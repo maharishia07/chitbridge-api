@@ -16,9 +16,20 @@ const PNG_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPh
 const JUNIT_OK = '<testsuites><testsuite name="s"><testcase name="[CTR-05] a single click chooses" classname="x"/></testsuite></testsuites>';
 const JUNIT_NO_KEY = '<testsuites><testsuite name="s"><testcase name="nothing here" classname="x"/></testsuite></testsuites>';
 const FEATURE = 'Feature: CTR-01 Clicks\n  Scenario: [CTR-05] a click\n    Given a screen\n    When I click\n    Then it opens\n';
+const FEATURE_OK = 'Feature: CTR-01 Clicks\n  Scenario: CTR-05 a click\n    Given a screen\n    When I click\n    Then it opens\n';
 const TOO_LONG = 'p'.repeat(81);
 const SHIPPED_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'cmdb', 'CAP-ADMIN.json'), 'utf8'));
 const cannotWrite = { board: { canWrite: () => false } };
+
+const RUN = '33333333-3333-4333-8333-333333333333';
+const AT = '2026-10-01T10:00:00.000Z';
+/** a test_result row as the table holds it (migrations/000_baseline_2026-10-21.sql + b292's project): the first with every column filled, the second with every nullable column null */
+const RESULT_FULL = { result_id: RUN, entity_id: SHOP, definition_id: RUN, case_version: 1, case_key: 'CTR-05', module_key: 'CTR', status: 'pass', run_kind: 't1', layer: 'web', tested_by: SHOP, tester_name: 'Asha', at: AT, run_id: RUN, run_label: 'Sprint 4', note: 'ok', evidence: 'ev', build: 'b1', project: 'Sprint 4' };
+const RESULT_BARE = { result_id: RUN, entity_id: SHOP, definition_id: null, case_version: null, case_key: 'CTR-06', module_key: null, status: 'fail', run_kind: 'manual', layer: null, tested_by: null, tester_name: null, at: AT, run_id: RUN, run_label: null, note: null, evidence: null, build: null, project: null };
+/** the rows of a page read, each carrying the count of the whole set (readPage's window count) */
+const paged = (rows) => rows.map((row) => Object.assign({}, row, { full_count: rows.length }));
+/** the rows of a statement that matches `pattern`, a stand-in answer */
+const rowsWhen = (pattern, rows) => (sql) => (pattern.test(sql) ? { rows, rowCount: rows.length } : null);
 
 /** the tools a scene is built from: the harness's own stand-ins */
 function extras(tools) {
@@ -38,6 +49,18 @@ function extras(tools) {
   const inserted = answering(/INSERT INTO definition /, [{ definition_id: PARTY }]);
   const change = { summary: 'Fix it', backout: 'Revert', cites: { ref: 'INC-1' } };
   return [
+    /* SEC-122: a read of the shared board by a caller who is not a board writer */
+    N('read-not-a-reader-cases', 'GET ' + T + '/cases', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cases-gherkin', 'GET ' + T + '/cases/gherkin', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-results', 'GET ' + T + '/results', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-runs', 'GET ' + T + '/runs', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-coverage', 'GET ' + T + '/coverage', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-report', 'GET ' + T + '/report', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-reliability', 'GET ' + T + '/reliability', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-stale', 'GET ' + T + '/stale', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-engine', 'GET ' + T + '/engine', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cmdb', 'GET ' + T + '/cmdb', 403, { patch: cannotWrite }),
+    N('read-not-a-reader-cmdb--ci', 'GET ' + T + '/cmdb/:ci', 403, { url: T + '/cmdb/CAP-SIGNIN', patch: cannotWrite }),
     /* POST /cases/close */
     X('close-no-case', 'POST ' + T + '/cases/close', 400, { body: {} }),
     X('close-unknown-case', 'POST ' + T + '/cases/close', 404, { body: { case_key: 'CTR-05' } }),
@@ -59,6 +82,8 @@ function extras(tools) {
     X('vocabulary', 'GET ' + T + '/vocabulary', 200, {}),
     X('vocabulary-fails', 'GET ' + T + '/vocabulary', 500, { setup: { jsonThrows: true } }),
     X('engine', 'GET ' + T + '/engine', 200, {}),
+    /* the manifest file is missing: the answer is { engine: null } */
+    X('engine-file-missing', 'GET ' + T + '/engine', 200, { patch: { fs: { existsSync: (file) => !/test-cases.json$/.test(String(file)) && require('fs').statSync(file, { throwIfNoEntry: false }) !== undefined } } }),
     X('engine-fails', 'GET ' + T + '/engine', 500, { setup: { jsonThrows: true } }),
     /* cases */
     X('cases-empty', 'GET ' + T + '/cases', 200, {}),
@@ -170,8 +195,262 @@ function extras(tools) {
     X('release-fails', 'POST ' + T + '/releases', 500, { body: { name: 'v1', changes: [PARTY] }, setup: failing }),
     N('release-body-a-list', 'POST ' + T + '/releases', 400, { body: [] }),
     X('releases-list', 'GET ' + T + '/releases', 200, {}),
-    X('releases-list-fails', 'GET ' + T + '/releases', 500, { setup: failing })
+    X('releases-list-fails', 'GET ' + T + '/releases', 500, { setup: failing }),
+    ...writeBranch(tools),
+    ...readyBranch(tools),
+    ...junkBranch(tools)
   ];
 }
 
-module.exports = { extras };
+/**
+ * The WRITE branch of the board: the database holds rows and answers the statements a write makes, so the real handler and the real libraries (importCases, upsertVersioned,
+ * recordResults, lib/cmdb, lib/gherkin) give the whole of what each write can answer. Every route here names the keys of its success answer in the handler (S34), and each
+ * key an answer can leave out (retired, retire_held, project_not_written, cite_held, cited) has a scene on each side, so the shape tools/api-allowlist.cjs derives
+ * (docs/contracts/api-output-shapes.json) is the whole of what the route can say and the output filter drops nothing real.
+ */
+function writeBranch(tools) {
+  const { PARTY, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const world = (...answers) => ({ sqlRows: firstOf(...answers) });
+  const projectColumn = rowsWhen(/information_schema\.columns/, [{ ok: 1 }]);
+  const named = (...keys) => keys.map((key) => ({ definition_id: PARTY, name: key }));
+  const created = (...keys) => rowsWhen(/INSERT INTO definition \(/, named(...keys));
+  const liveCases = (...keys) => rowsWhen(/AND status <> 'retired'/, named(...keys));
+  const haveCase = (rules) => rowsWhen(/d\.name = ANY\(\$2::text\[\]\)/, [{ definition_id: PARTY, name: 'CTR-05', current_version: 1, rules }]);
+  const cases = [{ case_key: 'CTR-05', module_key: 'CTR', title: 'Sign in', zzz: 1 }, { case_key: 'CTR-06', module_key: 'CTR', title: 'Sign out' }];
+  const shaped = require('../../lib/cmdb').shape(SHIPPED_RECORD).record;
+  const heldCmdb = (rules) => rowsWhen(/d\.kind = \$2 AND d\.name = \$3/, [{ definition_id: PARTY, current_version: 3, rules }]);
+  const savedRows = [{ result_id: RUN, case_key: 'CTR-05', status: 'pass', at: AT }, { result_id: RUN, case_key: 'CTR-06', status: 'fail', at: AT }];
+  const savedWorld = (rows, ...more) => world(...more, rowsWhen(/INSERT INTO test_result/, rows));
+  const result = { case_key: 'CTR-05', status: 'pass', run_kind: 't1' };
+  const change = { definition_id: PARTY, name: 'CHG-1', current_version: 1, rules: { risk: 'routine', proves: ['CTR-05'], cites: { kind: 'incident', ref: 'INC-1', definition_id: PARTY, entity_id: SHOP }, history: [] } };
+  const changeBare = { definition_id: PARTY, name: 'CHG-2', current_version: 2, rules: {} };
+  const releaseWorld = (...rows) => world(rowsWhen(/d\.kind = 'change' AND d\.definition_id = ANY/, rows), created('REL-1'));
+  return [
+    /* POST /cases/import and /cases/seed: a rebuild that retires what the document dropped, one held back for being too small, an edit, an addition */
+    X('import-rebuild', 'POST ' + T + '/cases/import', 200, { body: { cases }, setup: world(created('CTR-05', 'CTR-06'), liveCases('CTR-05', 'CTR-06', 'OLD-1')) }),
+    X('import-rebuild-held', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[1]] }, setup: world(created('CTR-06'), liveCases(...Array.from({ length: 10 }, (one, at) => 'OLD-' + at))) }),
+    X('import-edited', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[0]] }, setup: world(haveCase({}), liveCases('CTR-05')) }),
+    X('import-add', 'POST ' + T + '/cases/import', 200, { body: { cases: [cases[1]], mode: 'add' }, setup: world(created('CTR-06'), liveCases('CTR-06', 'CTR-05')) }),
+    X('seed-loaded', 'POST ' + T + '/cases/seed', 200, { setup: world(liveCases('OLD-1')) }),
+    X('seed-nothing-to-retire', 'POST ' + T + '/cases/seed', 200, {}),
+    /* POST /cases/gherkin */
+    X('gherkin-import-done', 'POST ' + T + '/cases/gherkin', 200, { body: { text: FEATURE_OK }, setup: world(created('CTR-05')) }),
+    X('gherkin-import-with-problems', 'POST ' + T + '/cases/gherkin', 200, { body: { text: FEATURE }, setup: world(created('CTR-05')) }),
+    X('gherkin-import-without-cases', 'POST ' + T + '/cases/gherkin', 200, { body: { text: 'Feature: CTR-01 Clicks\n' }, setup: world(created('CTR-01')) }),
+    /* PUT /cmdb/:ci and POST /cmdb/seed */
+    X('cmdb-put-new', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(created('CAP-ADMIN')) }),
+    X('cmdb-put-unchanged', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(heldCmdb(shaped)) }),
+    X('cmdb-put-edited', 'PUT ' + T + '/cmdb/:ci', 200, { url: T + '/cmdb/CAP-ADMIN', body: SHIPPED_RECORD, setup: world(heldCmdb({ title: 'older' })) }),
+    X('cmdb-seed-loaded', 'POST ' + T + '/cmdb/seed', 200, { setup: world(created('CAP-ADMIN')) }),
+    /* POST /results and /results/junit: the project column there or not, the rows the insert gave back */
+    X('result-recorded-rows', 'POST ' + T + '/results', 200, { body: { results: [result, { case_key: 'CTR-06', status: 'fail', run_kind: 't1' }] }, setup: savedWorld(savedRows) }),
+    X('result-recorded-project', 'POST ' + T + '/results', 200, { body: Object.assign({ project: 'Sprint 4', run_label: 'Sprint 4', build: 'b1' }, result), setup: savedWorld(savedRows.slice(0, 1), projectColumn) }),
+    X('result-project-not-written', 'POST ' + T + '/results', 200, { body: Object.assign({ project: 'Sprint 4' }, result), setup: savedWorld(savedRows.slice(0, 1)) }),
+    X('junit-recorded-rows', 'POST ' + T + '/results/junit', 200, { body: { xml: JUNIT_OK, project: 'Sprint 4', run_label: 'nightly' }, setup: savedWorld(savedRows.slice(0, 1), projectColumn) }),
+    /* POST /requirements: a case to cite */
+    X('requirement-raised-cited', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-05', clause: 'CLAUSE-9' }, setup: world(rowsWhen(/d\.kind = 'testcase' AND d\.name = \$2/, [{ definition_id: PARTY, current_version: 1, rules: { title: 'Sign in' } }]), created('CLAUSE-9')) }),
+    X('requirement-raised-case-on-shared-board', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-05' }, patch: { board: { entityFor: () => '99999999-9999-4999-8999-999999999999' } }, setup: world(rowsWhen(/SELECT 1 FROM definition/, [{ '?column?': 1 }]), created('CLAUSE-8')) }),
+    X('requirement-raised-no-such-case', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not', case_key: 'CTR-09' }, patch: { board: { entityFor: () => '99999999-9999-4999-8999-999999999999' } }, setup: world(created('CLAUSE-7')) }),
+    /* POST /releases: a change that proves a case and cites an incident, one that proves nothing and cites none */
+    X('release-cut', 'POST ' + T + '/releases', 201, { body: { name: 'v1', note: 'first', changes: [PARTY] }, setup: releaseWorld(change, changeBare) }),
+    X('release-cut-bare', 'POST ' + T + '/releases', 201, { body: { name: 'v2', changes: [PARTY] }, setup: releaseWorld(changeBare) })
+  ];
+}
+
+/**
+ * The READY branch of the board's reads: the database holds rows, the project column exists, so the real handlers and the real libraries (lib/page-limit, lib/teststatus, lib/cmdb) run over them.
+ * Every row below carries every column its statement selects (the table's DDL: test_result in migrations/000_baseline_2026-10-21.sql + b292's project), a nullable column null in the second row,
+ * so the shape tools/api-allowlist.cjs derives (docs/contracts/api-output-shapes.json) is the whole of what the board can answer, and the output filter drops nothing real.
+ */
+function readyBranch(tools) {
+  const { PARTY, firstOf } = tools;
+  const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const projectColumn = rowsWhen(/information_schema\.columns/, [{ ok: 1 }]);
+  const world = (...answers) => ({ sqlRows: firstOf(projectColumn, ...answers) });
+  const CASE_RULES = { title: 'Sign in', priority: 'High', pre: 'p', data: 'd', steps: ['a'], note: 'n', layer: 'web', module_name: 'Clicks', intro: 'i', test_type: 'system', group: 'g', automated: true, areas: ['a'], subjects: ['s'], claim: 'c', run_by: 'person', seq: 1, step: 's', cites: { spec: 'SPEC', clause: 'CLAUSE-1', definition_id: PARTY, version: 1 }, screen_purpose: 'sp', generic: false, changed_at: AT, needs: ['n'], held: null, menu: 'Rail', generated: false, observed: 'o', evidence_id: PARTY, screen_code: 'S1', control_code: 'C1', written_by: 'Asha', written_by_id: SHOP, written_at: AT, closed_note: null, closed_by: null, closed_at: null };
+  const history = [{ state: 'raised', at: AT, by: 'Asha', by_id: SHOP }];
+  const spec = { definition_id: PARTY, name: 'CLAUSE-1', sub_kind: 'SPEC', status: 'live', updated_at: AT, created_by: SHOP, rules: { text: 'It must work', observed: 'It did not', priority: 'High', screen_code: 'S1', popup_code: 'P1', state: 'raised', raised_from: 'screen', raised_by: 'Asha', raised_at: AT, raised_by_id: SHOP, why: 'w', history } };
+  const specBare = { definition_id: PARTY, name: 'CLAUSE-2', sub_kind: null, status: 'live', updated_at: AT, created_by: null, rules: {} };
+  const incident = { definition_id: PARTY, name: 'INC-1', sub_kind: null, status: 'live', updated_at: AT, created_by: SHOP, rules: { severity: 'Sev-1', observed: 'It broke', screen_code: 'S1', popup_code: 'P1', evidence_id: PARTY, affected: 'all', build: 'b1', found_by_case: 'CTR-05', state: 'resolved', happened_at: '2026-09-30T10:00:00.000Z', raised_at: AT, resolved_at: '2026-10-02T10:00:00.000Z', defects: ['D1'], changes: ['CHG-1'], raised_by: 'Asha', raised_by_id: SHOP, origin: 'shop', resolved_in: 'v1', why: 'w', history } };
+  const incidentBare = { definition_id: PARTY, name: 'INC-2', sub_kind: null, status: 'live', updated_at: AT, created_by: null, rules: {} };
+  const change = { definition_id: PARTY, name: 'CHG-1', sub_kind: 'routine', status: 'live', updated_at: AT, rules: { text: 'Fix it', backout: 'Revert', cites: { ref: 'INC-1', entity_id: SHOP }, repo: 'api', sha: 'abc', proves: ['CTR-05'], shipped_in: 'v1', state: 'reviewed', raised_by: 'Asha', history } };
+  const changeBare = { definition_id: PARTY, name: 'CHG-2', sub_kind: null, status: 'live', updated_at: AT, rules: {} };
+  const release = { definition_id: PARTY, name: 'v1', note: 'n', updated_at: AT, rules: { carried: [PARTY], proves: ['CTR-05'], cut_by: 'Asha' } };
+  const releaseBare = { definition_id: PARTY, name: 'v0', note: null, updated_at: AT, rules: {} };
+  const cover = [{ module_key: 'CTR', module_name: 'Clicks', total: '3', passed: '1', failed: '1', blocked: '0', skipped: '0', untested: '1', high_untested: '1', untested_swept: '0', untested_written: '1' }];
+  const bad = [
+    { case_key: 'CTR-05', module_key: 'CTR', status: 'fail', note: 'n', evidence: 'ev', tester_name: 'Asha', run_kind: 't1', layer: 'web', at: AT, case_version: 1 },
+    { case_key: 'CTR-06', module_key: null, status: 'blocked', note: null, evidence: null, tester_name: null, run_kind: 'manual', layer: null, at: AT, case_version: null }
+  ];
+  const found = [
+    { kind: 'incident', name: 'INC-1', status: 'live', rules: incident.rules },
+    { kind: 'spec', name: 'CLAUSE-1', status: 'live', rules: spec.rules },
+    { kind: 'testcase', name: 'CTR-H1', status: 'live', rules: { title: 't', state: '', written_by: 'Asha', written_at: AT, closed_note: 'done' } },
+    { kind: 'testcase', name: 'CTR-H2', status: 'retired', rules: {} }
+  ];
+  const people = [{ tested_by: SHOP, tester_name: 'Asha', recorded: 2, passed: 1, failed: 1, blocked: 0, skipped: 0, first_at: AT, last_at: AT }];
+  const sitting = [{ run_id: RUN, run_label: 'Sprint 4', build: 'b1', project: 'Sprint 4', started: AT, finished: AT, kinds: 't1', testers: 'Asha, Ravi', layers: 'web', total: '2' }];
+  const kinds = [
+    { test_type: 'unit', layer: 'engine', total: 2, run: 1, passed: 1, failed: 0 },
+    { test_type: 'system', layer: 'web', total: 1, run: 1, passed: 0, failed: 1 }
+  ];
+  const reportWorld = world(
+    rowsWhen(/untested_written/, cover),
+    rowsWhen(/SELECT DISTINCT ON \(case_key\) case_key, module_key, status, note, evidence/, bad),
+    rowsWhen(/GROUP BY tested_by/, people),
+    rowsWhen(/string_agg\(DISTINCT layer/, sitting),
+    rowsWhen(/SELECT count\(\*\)::int AS n FROM definition d/, [{ n: 1 }]),
+    rowsWhen(/GROUP BY c\.test_type, c\.layer/, kinds),
+    rowsWhen(/SELECT d\.kind, d\.name, d\.status, v\.rules/, found)
+  );
+  const sittings = [
+    { run_id: RUN, run_label: 'Sprint 4', build: 'b1', project: 'Sprint 4', started: AT, finished: AT, kinds: 't1, manual', testers: 'Asha', total: '2', passed: '1', failed: '1', blocked: '0', skipped: '0' },
+    { run_id: RUN, run_label: null, build: null, project: null, started: AT, finished: AT, kinds: 'manual', testers: null, total: '1', passed: '0', failed: '0', blocked: '0', skipped: '1' }
+  ];
+  const tracked = [
+    { case_key: 'CTR-05', module_key: 'CTR', runs: '3', passed: '1', failed: '2', blocked: '0', skipped: '0', flips: '2', first_seen: AT, last_seen: AT, kinds: 't1', layers: 'web', last_status: 'fail', tester_name: 'Asha', last_kind: 't1' },
+    { case_key: 'CTR-06', module_key: null, runs: '2', passed: '2', failed: '0', blocked: '0', skipped: '0', flips: '0', first_seen: AT, last_seen: AT, kinds: null, layers: null, last_status: 'pass', tester_name: null, last_kind: 'unit' }
+  ];
+  const area = { module_key: 'CTR', module_name: 'Clicks', total: '3', tested: '2', passed: '1', failed: '1', blocked: '0', untested: '1', high_untested: '1', tested_in_run: '0' };
+  const group = { key: 'web', total: '2', passed: '1', failed: '0', blocked: '0', untested: '1' };
+  const trend = { run_id: RUN, run_label: 'Sprint 4', at: AT, passed: '1', failed: '0', blocked: '0', total: '1' };
+  /** a row as the database answers before b292 added the project column */
+  const withoutProject = (row) => Object.fromEntries(Object.entries(row).filter(([name]) => name !== 'project'));
+  const staleBare = { case_key: 'CTR-06', module_key: null, rules: {}, clause: 'CLAUSE-2', spec: null, clause_now: 3 };
+  const staleCase = { case_key: 'CTR-05', module_key: 'CTR', rules: { title: 'Sign in', cites: { version: 1 } }, clause: 'CLAUSE-1', spec: 'SPEC', clause_now: 2 };
+  return [
+    X('cases-ready', 'GET ' + T + '/cases', 200, { setup: world(rowsWhen(/\$2::boolean IS TRUE/, paged([{ definition_id: PARTY, name: 'CTR-05', sub_kind: 'CTR', status: 'live', current_version: 1, rules: CASE_RULES }, { definition_id: PARTY, name: 'CTR-06', sub_kind: null, status: 'retired', current_version: 2, rules: {} }]))) }),
+    X('cmdb-list-ready', 'GET ' + T + '/cmdb', 200, { setup: world(rowsWhen(/d\.kind = 'cmdb'/, paged([{ name: 'CAP-SIGNIN', current_version: 1, updated_at: AT, rules: { title: 'Sign in', source: 'repo' } }, { name: 'CAP-ADMIN', current_version: 2, updated_at: AT, rules: {} }]))) }),
+    X('results-ready', 'GET ' + T + '/results', 200, { setup: world(rowsWhen(/FROM \(SELECT DISTINCT ON/, paged([RESULT_FULL, RESULT_BARE]))) }),
+    X('results-before-the-project-column', 'GET ' + T + '/results', 200, { setup: { sqlRows: rowsWhen(/FROM \(SELECT DISTINCT ON/, paged([withoutProject(RESULT_FULL), withoutProject(RESULT_BARE)])) } }),
+    X('runs-before-the-project-column', 'GET ' + T + '/runs', 200, { setup: { sqlRows: rowsWhen(/GROUP BY run_id/, paged(sittings.map(withoutProject))) } }),
+    X('results-ready-one-case', 'GET ' + T + '/results', 200, { url: T + '/results?case_key=CTR-05', setup: world(rowsWhen(/AND case_key = \$2/, paged([RESULT_FULL, RESULT_BARE]))) }),
+    X('runs-ready', 'GET ' + T + '/runs', 200, { setup: world(rowsWhen(/GROUP BY project/, [{ project: 'Sprint 4', runs: 2, last_at: AT }]), rowsWhen(/GROUP BY run_id/, paged(sittings))) }),
+    X('requirements-ready', 'GET ' + T + '/requirements', 200, { setup: world(rowsWhen(/AS state, count\(\*\)::int AS n/, [{ state: 'raised', n: 2 }]), rowsWhen(/d\.kind = 'spec'/, paged([spec, specBare]))) }),
+    X('incidents-ready', 'GET ' + T + '/incidents', 200, { setup: world(rowsWhen(/AS severity, count\(\*\)::int AS n/, [{ state: 'raised', severity: 'Sev-1', n: 1 }]), rowsWhen(/d\.kind = 'incident'/, paged([incident, incidentBare]))) }),
+    X('stale-ready', 'GET ' + T + '/stale', 200, { setup: world(rowsWhen(/IS NOT NULL/, [staleCase, staleBare])) }),
+    X('coverage-ready', 'GET ' + T + '/coverage', 200, { setup: world(rowsWhen(/tested_in_run/, [area]), rowsWhen(/SELECT c\.\w+ AS key/, [group]), rowsWhen(/max\(run_label\) AS run_label, max\(at\) AS at/, [trend])) }),
+    X('report-ready', 'GET ' + T + '/report', 200, { setup: reportWorld }),
+    X('report-ready-one-run', 'GET ' + T + '/report', 200, { url: T + '/report?run_id=' + RUN + '&project=Sprint%204', setup: reportWorld }),
+    X('reliability-ready', 'GET ' + T + '/reliability', 200, { setup: world(rowsWhen(/COUNT\(DISTINCT run_id\)::int AS n FROM test_result/i, [{ n: 3 }]), rowsWhen(/lag\(status\)/, tracked)) }),
+    X('changes-ready', 'GET ' + T + '/changes', 200, { url: T + '/changes?state=all', setup: world(rowsWhen(/d\.kind = 'change'/, [change, changeBare])) }),
+    X('changes-past-the-cap', 'GET ' + T + '/changes', 200, { url: T + '/changes?state=all&limit=9999&page=2', setup: world(rowsWhen(/d\.kind = 'change'/, [change])) }),
+    X('releases-ready', 'GET ' + T + '/releases', 200, { setup: world(rowsWhen(/d\.kind = 'release'/, [release, releaseBare])) }),
+    X('releases-past-the-cap', 'GET ' + T + '/releases', 200, { url: T + '/releases?limit=9999&page=2', setup: world(rowsWhen(/d\.kind = 'release'/, [release])) })
+  ];
+}
+
+/** an error the way pg raises one */
+const pgError = (code, message) => Object.assign(new Error(message || 'pg ' + code), { code });
+const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NUL = '\u0000';
+const holdsNul = (value) => (typeof value === 'string' ? value.includes(NUL) : Array.isArray(value) && value.some(holdsNul));
+/**
+ * K-1 (B2): the stand-in keeps the three rules of Postgres a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021 (a list of text too; 22P05 inside a jsonb value),
+ * and a value cast to uuid ($n::uuid, $n::uuid[]) that is not one is refused 22P02. Each of those answered 500 before the guards of this branch.
+ */
+const pgRules = (sql, params) => {
+  (params || []).forEach((one) => {
+    if (holdsNul(one)) throw pgError('22021', 'invalid byte sequence for encoding "UTF8": 0x00');
+    if (typeof one === 'string' && /^[[{]/.test(one) && one.includes('\\u0000')) throw pgError('22P05', 'unsupported Unicode escape sequence');
+  });
+  [...String(sql).matchAll(/\$(\d+)::uuid(\[\])?/g)].forEach((cast) => {
+    const given = (params || [])[Number(cast[1]) - 1];
+    const list = cast[2] ? given : [given];
+    if ((list || []).some((one) => one !== null && one !== undefined && !IS_UUID.test(String(one)))) throw pgError('22P02', 'invalid input syntax for type uuid');
+  });
+  return null;
+};
+
+/**
+ * K-1 (B2): the values no column can hold, and the ids that name no row. A NUL byte in stored text is a 400 in words; a NUL byte or a junk run id in a read's filter, and a junk id in the address
+ * or in a list, answer exactly as a value no row has (pairs() sets each beside its unknown value, and the test compares the two answers); a junk run id in a write is a 422 in the board's own words.
+ * The stand-in db is pgRules first: a request that reaches the database with such a value is the 500 these scenes were red on.
+ */
+function junkBranch(tools) {
+  const { PARTY, answering, firstOf } = tools;
+  const N = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {}, after: true }, more);
+  const held = (...laidOver) => ({ sqlRows: firstOf(pgRules, ...laidOver) });
+  const spec = answering(/d\.kind = 'spec' AND d\.definition_id/, [{ definition_id: PARTY, name: 'CLAUSE-1', created_by: SHOP, current_version: 1, rules: { priority: 'Medium', state: 'raised', history: [] } }]);
+  const incident = answering(/d\.kind = 'incident' AND d\.definition_id/, [{ definition_id: PARTY, name: 'INC-1', created_by: SHOP, current_version: 1, rules: { severity: 'Sev-3', state: 'raised', history: [] } }]);
+  const none = rowsWhen(/d\.kind = 'change' AND d\.definition_id = ANY/, []);
+  const made = rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'REL-1' }]);
+  const result = { case_key: 'CTR-05', status: 'pass', run_kind: 't1' };
+  const change = { summary: 'Fix it', backout: 'Revert', cites: { ref: 'INC-1' } };
+  const evidence = { data_base64: PNG_B64, mime: 'image/png', name: 'a.png' };
+  const NL = '%00';
+  return [
+    /* SEC-93: the copy to our support queue fails with a message that names an environment variable: the caller reads the safe sentence and the request id */
+    N('requirement-support-fails', 'POST ' + T + '/requirements', 200, { body: { requirement: 'It must work', observed: 'It did not' }, setup: held(rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'CLAUSE-1' }])), patch: { raiseticket: { raise: async () => { throw new Error('PLATFORM_ROOT_ENTITY is not set'); } } } }),
+    N('incident-support-fails', 'POST ' + T + '/incidents', 200, { body: { observed: 'It broke' }, setup: held(rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'INC-1' }])), patch: { raiseticket: { raise: async () => { throw new Error('PLATFORM_ROOT_ENTITY is not set'); } } } }),
+    /* a read's filter */
+    N('results-run-id-not-a-uuid', 'GET ' + T + '/results', 200, { url: T + '/results?run_id=abc', setup: held() }),
+    N('results-case-with-a-nul-byte', 'GET ' + T + '/results', 200, { url: T + '/results?case_key=a' + NL + 'b', setup: held() }),
+    N('results-project-with-a-nul-byte', 'GET ' + T + '/results', 200, { url: T + '/results?project=a' + NL + 'b', setup: held() }),
+    N('runs-project-with-a-nul-byte', 'GET ' + T + '/runs', 200, { url: T + '/runs?project=a' + NL + 'b', setup: held() }),
+    N('coverage-run-id-not-a-uuid', 'GET ' + T + '/coverage', 200, { url: T + '/coverage?run_id=abc', setup: held() }),
+    N('coverage-project-with-a-nul-byte', 'GET ' + T + '/coverage', 200, { url: T + '/coverage?project=a' + NL + 'b', setup: held() }),
+    N('report-run-id-not-a-uuid', 'GET ' + T + '/report', 200, { url: T + '/report?run_id=abc', setup: held() }),
+    N('report-project-with-a-nul-byte', 'GET ' + T + '/report', 200, { url: T + '/report?project=a' + NL + 'b', setup: held() }),
+    N('reliability-kind-with-a-nul-byte', 'GET ' + T + '/reliability', 200, { url: T + '/reliability?run_kind=a' + NL + 'b', setup: held() }),
+    N('gherkin-module-with-a-nul-byte', 'GET ' + T + '/cases/gherkin', 200, { url: T + '/cases/gherkin?module=a' + NL + 'b', setup: held() }),
+    N('requirements-state-with-a-nul-byte', 'GET ' + T + '/requirements', 200, { url: T + '/requirements?state=a' + NL + 'b', setup: held() }),
+    N('incidents-state-with-a-nul-byte', 'GET ' + T + '/incidents', 200, { url: T + '/incidents?state=a' + NL + 'b', setup: held() }),
+    N('changes-state-with-a-nul-byte', 'GET ' + T + '/changes', 200, { url: T + '/changes?state=a' + NL + 'b', setup: held() }),
+    /* B2: a query value given twice is the schema's own refusal on the reads that had no scene for it */
+    N('gherkin-module-twice', 'GET ' + T + '/cases/gherkin', 400, { url: T + '/cases/gherkin?module=a&module=b' }),
+    N('cmdb-page-twice', 'GET ' + T + '/cmdb', 400, { url: T + '/cmdb?page=1&page=2' }),
+    N('releases-page-twice', 'GET ' + T + '/releases', 400, { url: T + '/releases?page=1&page=2' }),
+    /* an id in the address that is no uuid answers as an unknown one (and the body is judged first, as for an unknown id) */
+    N('requirement-id-not-a-uuid', 'PATCH ' + T + '/requirements/:id', 404, { url: T + '/requirements/abc', body: { state: 'accepted' }, setup: held() }),
+    N('requirement-id-not-a-uuid-bad-state', 'PATCH ' + T + '/requirements/:id', 400, { url: T + '/requirements/abc', body: { state: 'nope' }, setup: held() }),
+    N('incident-id-not-a-uuid', 'PATCH ' + T + '/incidents/:id', 404, { url: T + '/incidents/abc', body: { state: 'investigating' }, setup: held() }),
+    N('incident-id-not-a-uuid-bad-state', 'PATCH ' + T + '/incidents/:id', 400, { url: T + '/incidents/abc', body: { state: 'nope' }, setup: held() }),
+    /* an id in a body: a change that is no uuid is carried as one nobody holds is; a run id that is no uuid is the board's 422 */
+    N('release-change-id-not-a-uuid', 'POST ' + T + '/releases', 201, { body: { name: 'v1', changes: ['abc'] }, setup: held(none, made) }),
+    N('result-run-id-not-a-uuid', 'POST ' + T + '/results', 422, { body: Object.assign({ run_id: 'abc' }, result), setup: held() }),
+    N('junit-run-id-not-a-uuid', 'POST ' + T + '/results/junit', 422, { body: { xml: JUNIT_OK, run_id: 'abc' }, setup: held() }),
+    /* stored text no column can hold: a 400 in plain words */
+    N('close-case-with-a-nul-byte', 'POST ' + T + '/cases/close', 400, { body: { case_key: 'CTR' + NUL + '05' }, setup: held() }),
+    N('close-why-with-a-nul-byte', 'POST ' + T + '/cases/close', 400, { body: { case_key: 'CTR-05', why: 'a' + NUL + 'b' }, setup: held(answering(/UPDATE definition d SET status/, [{ definition_id: PARTY, name: 'CTR-05', status: 'retired', current_version: 1 }])) }),
+    N('import-case-with-a-nul-byte', 'POST ' + T + '/cases/import', 400, { body: { cases: [{ case_key: 'A-1', module_key: 'A', title: 'a' + NUL + 'b' }] }, setup: held() }),
+    N('gherkin-import-with-a-nul-byte', 'POST ' + T + '/cases/gherkin', 400, { body: { text: FEATURE_OK.replace('a click', 'a' + NUL + 'click') }, setup: held(made) }),
+    N('cmdb-put-with-a-nul-byte', 'PUT ' + T + '/cmdb/:ci', 400, { url: T + '/cmdb/CAP-ADMIN', body: Object.assign({}, SHIPPED_RECORD, { title: 'a' + NUL + 'b' }), setup: held() }),
+    N('result-case-with-a-nul-byte', 'POST ' + T + '/results', 400, { body: { case_key: 'CTR' + NUL + '05', status: 'pass', run_kind: 't1' }, setup: held() }),
+    N('result-note-with-a-nul-byte', 'POST ' + T + '/results', 400, { body: Object.assign({ note: 'a' + NUL + 'b' }, result), setup: held() }),
+    N('junit-project-with-a-nul-byte', 'POST ' + T + '/results/junit', 400, { body: { xml: JUNIT_OK, project: 'a' + NUL + 'b' }, setup: held(rowsWhen(/information_schema\.columns/, [{ ok: 1 }])) }),
+    N('requirement-with-a-nul-byte', 'POST ' + T + '/requirements', 400, { body: { requirement: 'a' + NUL + 'b' }, setup: held() }),
+    N('requirement-patch-why-with-a-nul-byte', 'PATCH ' + T + '/requirements/:id', 400, { body: { state: 'rejected', why: 'a' + NUL + 'b' }, setup: held(spec) }),
+    N('incident-with-a-nul-byte', 'POST ' + T + '/incidents', 400, { body: { observed: 'a' + NUL + 'b' }, setup: held() }),
+    N('incident-patch-why-with-a-nul-byte', 'PATCH ' + T + '/incidents/:id', 400, { body: { state: 'closed', why: 'a' + NUL + 'b' }, setup: held(incident) }),
+    N('change-with-a-nul-byte', 'POST ' + T + '/changes', 400, { body: Object.assign({}, change, { summary: 'a' + NUL + 'b' }), setup: held() }),
+    N('release-name-with-a-nul-byte', 'POST ' + T + '/releases', 400, { body: { name: 'v' + NUL + '1', changes: [PARTY] }, setup: held(none, made) }),
+    N('evidence-name-with-a-nul-byte', 'POST ' + T + '/evidence', 400, { body: Object.assign({}, evidence, { name: 'a' + NUL + 'b.png' }), patch: { storage: { putForParticipants: async () => { throw pgError('22021', 'invalid byte sequence'); } } } })
+  ];
+}
+
+/**
+ * The pairs the test compares: a junk value and the unknown value it must answer as (S41) — same status, same body but for the request id.
+ * Both sides run in the same world (pgRules over the rows laid over).
+ */
+function pairs(tools) {
+  const { PARTY, firstOf } = tools;
+  const NONE = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+  const none = rowsWhen(/d\.kind = 'change' AND d\.definition_id = ANY/, []);
+  const made = rowsWhen(/INSERT INTO definition \(/, [{ definition_id: PARTY, name: 'REL-1' }]);
+  const world = (...laidOver) => ({ sqlRows: firstOf(pgRules, ...laidOver) });
+  const P = (id, method, junk, unknown, body, setup, unknownBody) => ({ id, method, junk, unknown, body, unknownBody: unknownBody || body, setup: setup || world() });
+  return [
+    P('requirement-id', 'PATCH', T + '/requirements/abc', T + '/requirements/' + NONE, { state: 'accepted' }),
+    P('incident-id', 'PATCH', T + '/incidents/abc', T + '/incidents/' + NONE, { state: 'investigating' }),
+    P('results-run-id', 'GET', T + '/results?run_id=abc', T + '/results?run_id=' + NONE),
+    P('coverage-run-id', 'GET', T + '/coverage?run_id=abc', T + '/coverage?run_id=' + NONE),
+    P('report-run-id', 'GET', T + '/report?run_id=abc', T + '/report?run_id=' + NONE),
+    P('release-change-id', 'POST', T + '/releases', T + '/releases', { name: 'v1', changes: ['abc'] }, world(none, made), { name: 'v1', changes: [NONE] }),
+    P('results-case', 'GET', T + '/results?case_key=a%00b', T + '/results?case_key=a%EF%BF%BDb'),
+    P('requirements-state', 'GET', T + '/requirements?state=a%00b', T + '/requirements?state=a%EF%BF%BDb')
+  ];
+}
+
+module.exports = { extras, pairs, pgRules };

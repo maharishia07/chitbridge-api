@@ -257,6 +257,23 @@ async function disputeCases(A, B, C, D) {
     const asB = ok(await j('/api/chits/' + id + '/disputes', { token: B.token }), 'B disputes').b;
     expect((asB.disputes || []).some((x) => x.dispute_id === dispute), 'B (on the roster) does not see its own dispute');
   }, 'RAIL-80/88: these three reads rely on RLS alone (no entity_id predicate of their own) and the local api connects as postgres, which bypasses it');
+  await kase('RL-04c', 'RAIL-162: a CHIT-WIDE dispute that names nobody is held by every holder of the chit: the sender sees it, answers inside it, and sees it resolved', async () => {
+    const wid = await sendLines(A, [B], RUN + '-dw'), wmark = 'RLWIDE' + RUN;
+    const wr = await j('/api/chits/' + wid + '/disputes', { method: 'POST', token: B.token, body: { category: 'payment', reason: wmark + ' ' + DISPUTE_REASON, chit_wide: true } });
+    const wd = wr.b.dispute_id;
+    expect(wr.status < 300 && wd, 'recipient raise HTTP ' + wr.status + ' ' + JSON.stringify(wr.b).slice(0, 160));
+    const held = JSON.stringify((await pg.query('SELECT entity_id FROM chit_disputes WHERE chit_id = $1 AND dispute_id = $2', [wid, wd])).rows.map((r) => r.entity_id).sort());
+    expect(held === JSON.stringify([A.entity, B.entity].sort()), 'copies held by ' + held);
+    const aList = ok(await j('/api/chits/' + wid + '/disputes', { token: A.token }), 'sender list').b;
+    expect((aList.disputes || []).some((x) => x.dispute_id === wd), 'the sender does not see the dispute');
+    const aSay = await j('/api/chits/' + wid + '/messages', { method: 'POST', token: A.token, body: { message_text: wmark + ' answer', thread_type: 'external', is_dispute: true, dispute_id: wd } });
+    expect(aSay.status < 300, 'the sender answered HTTP ' + aSay.status + ' ' + JSON.stringify(aSay.b).slice(0, 120));
+    const res = await j('/api/chits/' + wid + '/disputes/' + wd + '/resolve', { method: 'PUT', token: B.token, body: { resolution_note: 'rail truth: settled' } });
+    expect(res.status < 300, 'the raiser resolve HTTP ' + res.status);
+    const aAfter = ok(await j('/api/chits/' + wid + '/disputes', { token: A.token }), 'sender list after').b;
+    const seen = (aAfter.disputes || []).find((x) => x.dispute_id === wd);
+    expect(seen && seen.status === 'resolved', 'the sender reads the dispute as ' + (seen && seen.status));
+  });
 }
 
 /** RL-12 a bill's steps stay with the shop that took them */
@@ -276,6 +293,23 @@ async function billPrivacyCase(A, B) {
 }
 
 /** the shops the party cases share: B and C trade with A, D holds no copy of anything */
+/** RL-52: an id that is no uuid names no chit — the door answers the unknown chit's 404, never a 500 from the uuid cast */
+async function idCases(A) {
+  const door = async (method, url, body) => {
+    const seen = await j(url, { method, token: A.token, body });
+    expect(seen.status === 404 && seen.b && seen.b.code === 'NOT_FOUND', method + ' ' + url + ' answered HTTP ' + seen.status + ' ' + JSON.stringify(seen.b).slice(0, 120));
+  };
+  await kase('RL-52', 'Mark paid on a chit id that is not a uuid is a 404 NOT_FOUND, never a 500 (api #499)', async () => {
+    await door('POST', '/api/chits/not-a-bill-1/payment', { method: 'cash', amount: 10 });
+    return '404';
+  });
+  await kase('RL-52b', 'the other /:chit_id doors (read · archive) answer a non-uuid id with the 404, never a 500', async () => {
+    await door('GET', '/api/chits/not-a-bill-1');
+    await door('POST', '/api/chits/not-a-bill-1/archive');
+    return '404 each';
+  }, 'RAIL-144 · the id reaches the uuid cast (500) at GET /:chit_id, archive and the raida routes');
+}
+
 async function partyCases(A) {
   const B = await freshShop(RUN + 'p1', 'Party one'), C = await freshShop(RUN + 'p2', 'Party two'), D = await freshShop(RUN + 'p3', 'Party three');
   await freezeCases(A, B);
@@ -295,6 +329,7 @@ async function partyCases(A) {
     await crossWorldCase(A);
     await attachmentCases(A);
     await partyCases(A);
+    await idCases(A);
   } finally { await pg.end(); }
   finish('rail-truth', process.env.RAIL_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('rail truth could not run:', e && e.message); process.exit(2); });

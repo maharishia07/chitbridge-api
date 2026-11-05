@@ -206,13 +206,21 @@ function rowOf(fields, owner) {
   const keys = Object.keys(fields).concat(CANARY);
   const valueOf = (name) => (name === CANARY ? 'this column is not in the answer schema' : columnValue(name, fields[name], owner));
   const plain = (name) => typeof name === 'symbol' || name in Object.prototype || name === 'then' || name === 'toJSON';
+  /* a written column reads back what was written, as a real row does (lib/catalogue-view resolves item_data in place; SEC-126) —
+     without it the proxy broke its own invariant and the read answered 500 */
+  const written = (target, name) => Object.prototype.hasOwnProperty.call(target, name);
   return new Proxy(
     {},
     {
-      get: (target, name) => (plain(name) ? Object.prototype[name] : valueOf(name)),
+      get: (target, name) => (written(target, name) ? target[name] : plain(name) ? Object.prototype[name] : valueOf(name)),
+      set: (target, name, value) => {
+        target[name] = value;
+        return true;
+      },
       has: (target, name) => typeof name === 'string',
-      ownKeys: () => keys,
-      getOwnPropertyDescriptor: (target, name) => ({ value: valueOf(name), enumerable: true, configurable: true, writable: true })
+      ownKeys: (target) => [...new Set(keys.concat(Reflect.ownKeys(target)))],
+      getOwnPropertyDescriptor: (target, name) =>
+        written(target, name) ? Reflect.getOwnPropertyDescriptor(target, name) : { value: valueOf(name), enumerable: true, configurable: true, writable: true }
     }
   );
 }
@@ -270,7 +278,10 @@ function declaredFields(schema, into, depth) {
 /** the url of a route with its path ids filled from its url schema (an id-like name gets a uuid), and its required query values */
 function urlOf(leaf, operation) {
   const urlSchema = urlSchemaOf(operation) || { properties: {}, required: [] };
-  const valueFor = (name) => (urlSchema.properties[name] ? fittingValue(urlSchema.properties[name]) : /id$/i.test(name) ? PATH_ID : 'x');
+  /* an id-like name whose schema states no shape (contract-kit's default { type: 'string', minLength: 1 }) gets a uuid too: a route that
+     refuses a non-uuid id at its door (POST /chits/:chit_id/payment) is then reached, as it is by a real caller */
+  const stated = (schema) => schema && (schema.format || schema.pattern || schema.enum || schema.examples);
+  const valueFor = (name) => (stated(urlSchema.properties[name]) || (urlSchema.properties[name] && !/id$/i.test(name)) ? fittingValue(urlSchema.properties[name]) : /id$/i.test(name) ? PATH_ID : 'x');
   const named = [];
   const filled = leaf.path.replace(/:(\w+)/g, (match, name) => named.push(name) && encodeURIComponent(valueFor(name)));
   const query = (urlSchema.required || []).filter((name) => !named.includes(name)).map((name) => name + '=' + encodeURIComponent(valueFor(name)));

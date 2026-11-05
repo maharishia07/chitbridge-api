@@ -13,6 +13,13 @@ const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
+/** the break_status each ?status= of the people list keeps (the same four filters the list always had) */
+const STATUS_FILTER = new Map([
+  ['active', ` AND break_status = 'active'`],
+  ['leave', ` AND break_status IN ('short_break','leave')`],
+  ['inactive', ` AND break_status = 'deactivated'`],
+  ['removed', ` AND break_status = 'removed'`]
+]);
 const empCode = require('../lib/employee-code'); // M02: the one place an employee's first code is minted, e-mailed and shown
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
 const actorEmail = async (id) => {
@@ -62,7 +69,7 @@ const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(Stri
 async function loginIdFor(actor_key, req) {
   let handle = null;
   try {
-    const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    const r = await db('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
   } catch (e) {
     logger.fellBack(
@@ -81,13 +88,21 @@ const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
 const signin = require('./signin');
 
 /** the schema check of one route, to spread after its chain (lib/actors-contract.js): a body that is not an object, or a page asked twice, is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
+/* PPL-26 (BH-12, the api #649 pattern): a person id in the address that is not a uuid names nobody in this shop. Answered 404 in words here, before the database puts its own words into a 500 */
+router.param('id', uuidParam(words.coAssistGone)); /* K-1: the one shared guard, the same words */
+router.param('chit_id', uuidParam(words.chitNotFound)); /* K-1: chit_status.chit_id is a uuid column; a bad id names no chit */
+
+/* PPL-26: a chain's trim() turns a list or an object into the text "[object Object]" BEFORE the schema looks, so a field that is trimmed is checked for being one plain value first (the message is the chain's way, the body its old "Validation failed") */
+const plainValue = (value) => value === null || typeof value !== 'object';
+const PLAIN = 'Send one value, not a list or an object';
+
 const checked = (route) => {
   const operation = contract.actors.operationFor(route);
   return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
@@ -111,7 +126,7 @@ async function entityTaskCap(entity_id) {
 async function taskCapGuard(req, res, next) {
   try {
     const sent = req.body && req.body.max_tasks;
-    if (sent === undefined || sent === null || sent === '') return next();
+    if (sent === undefined || sent === null || sent === '' || typeof sent === 'object') return next(); /* PPL-26: a list or an object is the validators' to refuse, before any read */
     const ceiling = await entityTaskCap(auth.entityOf(req));
     if (ceiling && parseInt(sent, 10) > ceiling) return problem(req, res, { status: 400, ...words.overTaskCap(ceiling) });
     next();
@@ -120,7 +135,7 @@ async function taskCapGuard(req, res, next) {
   }
 }
 const personSession = require('../lib/person-session'); // PEOPLE-SRV1 (G4): the one session listing — closeBy ends a person's phones
-const keysRoute = require('./keys'); // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
+const keysRoute = require('../lib/api-keys'); // PEOPLE-SRV1 (G4): the one key list — endKeysBy ends the keys a person opened   // M06: the sign-in handlers live there; /login, /set-pin, /check-login are aliases
 
 // ── Helpers ─────────────────────────────────────────────────
 
@@ -174,7 +189,7 @@ const isKeyAvailable = async (actor_key, parent_entity_id) => {
 // ── POST /api/actors/suggest-key ────────────────────────────
 // Suggest actor_key from display_name
 // Used live as admin types name
-router.post('/suggest-key', auth, [body('display_name').trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
+router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withMessage(PLAIN).trim().notEmpty()], validateAsProblem, ...checked('POST /suggest-key'), async (req, res) => {
   try {
     const entity_id = req.identity.identity_id;
     const name = req.body.display_name;
@@ -244,19 +259,21 @@ router.post(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').trim().isLength({ min: 2 }).withMessage('Name required'),
+    body('display_name').custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2 }).withMessage('Name required'),
     /* PEOPLE-EMAIL (SEC2): stored, so the first code — and every reset / reactivate — has somewhere to go */
-    body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
+    body('email').optional({ checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 }),
     /* ⚠ 4–12. An employee's sign-in is `key@entity-user-id` — two names joined — and this half had no maximum
        at all, so a 40-character key would have produced a login nobody could type. The cap is on CREATE only:
        an actor_key is never re-validated on edit, so no existing co-assist is locked out by it. */
     body('actor_key')
+      .custom(plainValue)
+      .withMessage(PLAIN)
       .trim()
       .isLength({ min: 4, max: 12 })
       .matches(/^[a-z0-9]+$/)
       .withMessage('Lowercase and numbers only — 4 to 12 characters'),
-    body('actor_role').optional().trim().isLength({ max: 100 }),
-    body('phone').optional().trim().isLength({ max: 20 }),
+    body('actor_role').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
@@ -452,6 +469,47 @@ router.post(
   }
 );
 
+/**
+ * accessRowBefore(actor_id, entity_id) → the access fields a person held BEFORE a PATCH (hat · can_see_costs · break_status, and the level once b173 has run), or null — the audit trail's "what was it before". Moved out of PATCH /:id unchanged; a failed read is said in the log and never stops the change.
+ */
+async function accessRowBefore(actor_id, entity_id) {
+  /**
+   * ⭐⭐ READ THE BEFORE-ROW. IAM-SPEC §29 — until now nothing recorded that a hat changed, let alone what
+   * it changed FROM. "Ravi is now view_only" does not answer the question actually asked when something
+   * has gone wrong, which is what he was before and who moved him.
+   *
+   * ⚠️ ONE EXTRA READ ON A ROUTE THAT RUNS RARELY. Access changes are not a hot path — this is the
+   * cheapest place in the product to buy provenance, and the only place it can be bought at all: after
+   * the UPDATE the previous value is gone for good.
+   */
+  /**
+   * ⚠️⚠️ access_level AND whole_entity WERE MISSING FROM THIS SELECT, so the trail recorded
+   * `{"access_level":null} → {"access_level":"viewer"}` for a person who was a COMMENTER a moment earlier.
+   * Confirmed live 2026-08-20.
+   *
+   * ⭐ "WHAT WAS IT BEFORE" IS THE ONLY QUESTION THIS TABLE EXISTS TO ANSWER. A trail that records the new
+   * value correctly and the old one as null is not a partial record — it is a wrong one, and it reads as
+   * "they had no access until someone granted it", which is a different event from a demotion.
+   *
+   * Third correction to this trail today, after the RLS predicate and the invented break_changed. Every
+   * one was silent, because the writer swallows by design — which is exactly why each needed a live check
+   * rather than a reading of the code.
+   */
+  let beforeRow = null;
+  try {
+    const _pre = await schema.hasColumn('identities', 'access_level');
+    const _b = await db(
+      `SELECT hat, can_see_costs, break_status${_pre ? ', access_level, whole_entity' : ''} FROM identities
+        WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
+      [actor_id, entity_id]
+    );
+    beforeRow = _b.rows[0] || null;
+  } catch (e) {
+    logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */
+  }
+  return beforeRow;
+}
+
 // ── PATCH /api/actors/:id ────────────────────────────────────
 // Edit a co-assist's owner-controlled profile fields (name / role / max_tasks / phone).
 // Does NOT touch login key, type, status, or shift — those have dedicated routes. Entity-scoped.
@@ -461,9 +519,9 @@ router.patch(
   ownerWrite,
   taskCapGuard,
   [
-    body('display_name').optional().trim().isLength({ min: 2, max: 100 }),
-    body('actor_role').optional({ nullable: true }).trim().isLength({ max: 100 }),
-    body('phone').optional({ nullable: true }).trim().isLength({ max: 20 }),
+    body('display_name').optional().custom(plainValue).withMessage(PLAIN).trim().isLength({ min: 2, max: 100 }),
+    body('actor_role').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 100 }),
+    body('phone').optional({ nullable: true }).custom(plainValue).withMessage(PLAIN).trim().isLength({ max: 20 }),
     body('max_tasks').optional().isInt({ min: 1, max: 100 }),
     /* ⚠️ `hat` STAYS ACCEPTED until b173's column is retired — an older client may still send it, and
        refusing it would break a screen that has not been redeployed yet. lib/access.js maps it. */
@@ -471,7 +529,7 @@ router.patch(
     body('access_level').optional().isIn(['viewer', 'commenter', 'editor']),
     body('whole_entity').optional().isBoolean(),
     body('can_see_costs').optional().isBoolean(),
-    body('email').optional({ nullable: true, checkFalsy: true }).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
+    body('email').optional({ nullable: true, checkFalsy: true }).custom(plainValue).withMessage(PLAIN).trim().isEmail().withMessage('That e-mail does not look right').isLength({ max: 200 })
   ],
   validateAsProblem,
   ...checked('PATCH /:id'),
@@ -512,40 +570,7 @@ router.patch(
       if ('can_see_costs' in req.body && req.identity.identity_type === 'actor') {
         return problem(req, res, { status: 403, ...words.costsOwnerOnly() });
       }
-      /**
-       * ⭐⭐ READ THE BEFORE-ROW. IAM-SPEC §29 — until now nothing recorded that a hat changed, let alone what
-       * it changed FROM. "Ravi is now view_only" does not answer the question actually asked when something
-       * has gone wrong, which is what he was before and who moved him.
-       *
-       * ⚠️ ONE EXTRA READ ON A ROUTE THAT RUNS RARELY. Access changes are not a hot path — this is the
-       * cheapest place in the product to buy provenance, and the only place it can be bought at all: after
-       * the UPDATE the previous value is gone for good.
-       */
-      /**
-       * ⚠️⚠️ access_level AND whole_entity WERE MISSING FROM THIS SELECT, so the trail recorded
-       * `{"access_level":null} → {"access_level":"viewer"}` for a person who was a COMMENTER a moment earlier.
-       * Confirmed live 2026-08-20.
-       *
-       * ⭐ "WHAT WAS IT BEFORE" IS THE ONLY QUESTION THIS TABLE EXISTS TO ANSWER. A trail that records the new
-       * value correctly and the old one as null is not a partial record — it is a wrong one, and it reads as
-       * "they had no access until someone granted it", which is a different event from a demotion.
-       *
-       * Third correction to this trail today, after the RLS predicate and the invented break_changed. Every
-       * one was silent, because the writer swallows by design — which is exactly why each needed a live check
-       * rather than a reading of the code.
-       */
-      let beforeRow = null;
-      try {
-        const _pre = await schema.hasColumn('identities', 'access_level');
-        const _b = await db(
-          `SELECT hat, can_see_costs, break_status${_pre ? ', access_level, whole_entity' : ''} FROM identities
-            WHERE identity_id = $1 AND parent_entity_id = $2 AND identity_type = 'actor'`,
-          [actor_id, entity_id]
-        );
-        beforeRow = _b.rows[0] || null;
-      } catch (e) {
-        logger.fellBack('actors PATCH /:id: the read failed — carried on without it', e); /* the audit trail must never be the reason a change fails */
-      }
+      const beforeRow = await accessRowBefore(actor_id, entity_id); /* the before-row of the audit trail: see accessRowBefore */
 
       const sets = [],
         vals = [];
@@ -642,7 +667,24 @@ router.patch(
       );
       if (audit && audit.failed) console.error('[actors] access change saved but', audit.failed, 'audit row(s) lost', { actor_id });
 
-      res.json({ message: 'Co-assist updated', actor: r.rows[0], audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 } });
+      const saved = r.rows[0];
+      /* S34: the person is the columns the UPDATE above RETURNs, in that sequence (access_level and whole_entity only once b173 has run) */
+      res.json({
+        message: 'Co-assist updated',
+        actor: {
+          identity_id: saved.identity_id,
+          display_name: saved.display_name,
+          actor_role: saved.actor_role,
+          phone: saved.phone,
+          email: saved.email,
+          max_tasks: saved.max_tasks,
+          hat: saved.hat,
+          can_see_costs: saved.can_see_costs,
+          access_level: saved.access_level,
+          whole_entity: saved.whole_entity
+        },
+        audit: { recorded: (audit && audit.written) || 0, failed: (audit && audit.failed) || 0 }
+      });
     } catch (err) {
       if (emailTaken(err)) return problem(req, res, { status: 409, ...words.emailTaken() });
       console.error('Update actor error:', err.message);
@@ -766,7 +808,7 @@ router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate,
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
     const entity_id = auth.entityOf(req);
@@ -778,18 +820,7 @@ router.get('/', auth, async (req, res) => {
     const params = [entity_id];
     let p = 1;
 
-    // Filter by status
-    if (status === 'active') {
-      where += ` AND break_status = 'active'`;
-    } else if (status === 'leave') {
-      where += ` AND break_status IN ('short_break','leave')`;
-    } else if (status === 'inactive') {
-      where += ` AND break_status = 'deactivated'`;
-    } else if (status === 'removed') {
-      where += ` AND break_status = 'removed'`;
-    } else if (status === 'all') {
-      // No filter
-    }
+    where += STATUS_FILTER.get(status) || ''; // the ?status= filter: none for 'all' or an unknown word
 
     // Filter by type
     if (actor_type) {
@@ -843,17 +874,23 @@ router.get('/', auth, async (req, res) => {
       summary[item.break_status] = parseInt(item.count);
     });
 
-    res.json(
-      Object.assign(PL.pageOut('actors', result.rows, pg), {
-        summary: {
-          active: summary.active || 0,
-          on_break: (summary.short_break || 0) + (summary.leave || 0),
-          deactivated: summary.deactivated || 0,
-          removed: summary.removed || 0,
-          total: result.rows.length
-        }
-      })
-    );
+    const answer = PL.pageOut('actors', result.rows.map(contract.listedActor), pg);
+    /* S34: the pager's keys named (capped and cap_note only when it cut the list); each person stays the row the statement above selects, since connector_config is the connector's own object */
+    res.json({
+      actors: answer.actors,
+      total: answer.total,
+      page: answer.page,
+      limit: answer.limit,
+      capped: answer.capped,
+      cap_note: answer.cap_note,
+      summary: {
+        active: summary.active || 0,
+        on_break: (summary.short_break || 0) + (summary.leave || 0),
+        deactivated: summary.deactivated || 0,
+        removed: summary.removed || 0,
+        total: result.rows.length
+      }
+    });
   } catch (err) {
     console.error('List actors error:', err.message);
     problem(req, res, failed(err, req, 'Failed to list actors'));
@@ -1297,6 +1334,54 @@ router.put(
   }
 );
 
+
+// ── PUT /api/actors/assign/:chit_id ─────────────────────────
+// Pull push or return a chit assignment
+router.put(
+  '/assign/:chit_id',
+  auth,
+  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
+  validateAsProblem,
+  ...checked('PUT /assign/:chit_id'),
+  async (req, res) => {
+    try {
+      const chit_id = req.params.chit_id;
+      // entity_id   = participant entity context (parent for actors, self for entities)
+      // action_by_* = whoever is performing — entity admin or actor, never remapped
+      const entity_id = auth.entityOf(req);
+      const action_by_id = req.identity.identity_id;
+      const action_by_name = req.identity.display_name;
+      const { action, target_actor_id } = req.body;
+
+      // B1 RLS: the whole assignment (chit_status + state_log, all own-entity) runs in withEntity(me); `db` is
+      // shadowed to the tx client so the existing calls flow through the context (and the assign becomes atomic).
+      await withEntity(entity_id, async (client) => {
+        const handle = (t, p) => client.query(t, p);
+        // Verify chit belongs to this entity
+        const chit = await handle(
+          `SELECT cs.*, i.display_name as actor_name
+         FROM chit_status cs
+         LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
+         WHERE cs.chit_id = $1 AND cs.entity_id = $2`,
+          [chit_id, entity_id]
+        );
+
+        if (chit.rows.length === 0) {
+          return problem(req, res, { status: 404, ...words.chitNotFound() });
+        }
+
+        const cs = chit.rows[0];
+
+        const assignJob = ASSIGN_JOBS[action];
+        if (assignJob) return assignJob({ req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow: cs, target_actor_id });
+      });
+    } catch (err) {
+      console.error('Assign error:', err.message);
+      problem(req, res, failed(err, req, 'Assignment failed'));
+    }
+  }
+);
+
 /**
  * PUT /assign/:chit_id does three jobs on one field (a mode switch: flagged, not split — the next major version of the route). Each job is one function below; `work` is what the route read:
  * the request, the transaction client (every statement runs in withEntity(me)), the chit row and who is moving it.
@@ -1424,53 +1509,6 @@ async function returnChit(work) {
 }
 const ASSIGN_JOBS = { pull: pullChit, push: pushChit, return: returnChit };
 
-// ── PUT /api/actors/assign/:chit_id ─────────────────────────
-// Pull push or return a chit assignment
-router.put(
-  '/assign/:chit_id',
-  auth,
-  [body('action').isIn(['pull', 'push', 'return']).withMessage('Action must be pull push or return'), body('target_actor_id').optional().isUUID()],
-  validateAsProblem,
-  ...checked('PUT /assign/:chit_id'),
-  async (req, res) => {
-    try {
-      const chit_id = req.params.chit_id;
-      // entity_id   = participant entity context (parent for actors, self for entities)
-      // action_by_* = whoever is performing — entity admin or actor, never remapped
-      const entity_id = auth.entityOf(req);
-      const action_by_id = req.identity.identity_id;
-      const action_by_name = req.identity.display_name;
-      const { action, target_actor_id } = req.body;
-
-      // B1 RLS: the whole assignment (chit_status + state_log, all own-entity) runs in withEntity(me); `db` is
-      // shadowed to the tx client so the existing calls flow through the context (and the assign becomes atomic).
-      await withEntity(entity_id, async (client) => {
-        const handle = (t, p) => client.query(t, p);
-        // Verify chit belongs to this entity
-        const chit = await handle(
-          `SELECT cs.*, i.display_name as actor_name
-         FROM chit_status cs
-         LEFT JOIN identities i ON i.identity_id = cs.assigned_to_actor_id
-         WHERE cs.chit_id = $1 AND cs.entity_id = $2`,
-          [chit_id, entity_id]
-        );
-
-        if (chit.rows.length === 0) {
-          return problem(req, res, { status: 404, ...words.chitNotFound() });
-        }
-
-        const cs = chit.rows[0];
-
-        const assignJob = ASSIGN_JOBS[action];
-        if (assignJob) return assignJob({ req, res, client, handle, entity_id, chit_id, action_by_id, action_by_name, chitRow: cs, target_actor_id });
-      });
-    } catch (err) {
-      console.error('Assign error:', err.message);
-      problem(req, res, failed(err, req, 'Assignment failed'));
-    }
-  }
-);
-
 // ── GET /api/actors/settings ─────────────────────────────────
 router.get('/settings', auth, async (req, res) => {
   try {
@@ -1487,7 +1525,10 @@ router.get('/settings', auth, async (req, res) => {
       );
     }
 
-    res.json({ settings: result.rows[0] });
+    const x = result.rows[0];
+    /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
+    // prettier-ignore
+    res.json({ settings: x && { setting_id: x.setting_id, entity_id: x.entity_id, assignment_model: x.assignment_model, default_max_tasks: x.default_max_tasks, all_task_visible: x.all_task_visible, auto_return_on_short_break: x.auto_return_on_short_break, created_at: x.created_at, updated_at: x.updated_at, auto_assign_mode: x.auto_assign_mode, default_assignee_actor_id: x.default_assignee_actor_id } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Failed to get settings'));
   }
@@ -1549,7 +1590,10 @@ router.put(
       );
 
       const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-      res.json({ message: 'Settings updated', settings: updated.rows[0] });
+      const saved = updated.rows[0];
+      /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
+      // prettier-ignore
+      res.json({ message: 'Settings updated', settings: saved && { setting_id: saved.setting_id, entity_id: saved.entity_id, assignment_model: saved.assignment_model, default_max_tasks: saved.default_max_tasks, all_task_visible: saved.all_task_visible, auto_return_on_short_break: saved.auto_return_on_short_break, created_at: saved.created_at, updated_at: saved.updated_at, auto_assign_mode: saved.auto_assign_mode, default_assignee_actor_id: saved.default_assignee_actor_id } });
     } catch (err) {
       problem(req, res, failed(err, req, 'Settings update failed'));
     }
@@ -1585,7 +1629,9 @@ router.put('/:id/delegate', auth, ownerWrite, [body('delegate_actor_id').optiona
       [delegate, actorId, entity_id]
     );
     if (upd.rows.length === 0) return problem(req, res, { status: 404, ...words.delegatorGone() });
-    res.json({ message: delegate ? 'Delegate set' : 'Delegate cleared', actor: upd.rows[0] });
+    const saved = upd.rows[0];
+    /* S34: the person is the three columns the UPDATE above RETURNs, in its order */
+    res.json({ message: delegate ? 'Delegate set' : 'Delegate cleared', actor: { identity_id: saved.identity_id, display_name: saved.display_name, delegate_actor_id: saved.delegate_actor_id } });
   } catch (err) {
     problem(req, res, failed(err, req, 'Delegate update failed'));
   }
@@ -1641,24 +1687,53 @@ router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) =>
       )
     );
 
-    res.json(
-      Object.assign(PL.pageOut('tasks', tasks.rows, pg), {
-        actor: {
-          identity_id: a.identity_id,
-          display_name: a.display_name,
-          actor_key: a.actor_key,
-          break_status: a.break_status,
-          current_task_count: a.current_task_count,
-          max_tasks: a.max_tasks
-        },
-        count: tasks.rows.length
-      })
-    );
+    const answer = PL.pageOut('tasks', tasks.rows, pg);
+    /* S34: a task is the columns the statement above selects, in its order; the pager's capped and cap_note only when it cut the list */
+    // prettier-ignore
+    res.json({
+      tasks: answer.tasks.map((x) => ({ chit_id: x.chit_id, current_status: x.current_status, assigned_at: x.assigned_at, assignment_type: x.assignment_type, read_at: x.read_at, auto_subject: x.auto_subject, purpose: x.purpose, created_at: x.created_at, sender_entity_display_name: x.sender_entity_display_name })),
+      total: answer.total,
+      page: answer.page,
+      limit: answer.limit,
+      capped: answer.capped,
+      cap_note: answer.cap_note,
+      actor: {
+        identity_id: a.identity_id,
+        display_name: a.display_name,
+        actor_key: a.actor_key,
+        break_status: a.break_status,
+        current_task_count: a.current_task_count,
+        max_tasks: a.max_tasks
+      },
+      count: tasks.rows.length
+    });
   } catch (err) {
     console.error('Actor tasks error:', err.message);
     problem(req, res, failedBare(err, req, 'Failed to get actor tasks'));
   }
 });
+
+/** PUT /:id/tasks/route: the chit must be this shop's, and the person whose task count moves one of this shop's people
+ *  (S41: another shop's person, or no one, answers as GET /:id/tasks does, before a count is touched). Returns the words key of the 404, or null. */
+async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
+  const chit = await handle(
+    `SELECT chit_id, assigned_to_actor_id
+     FROM chit_status
+     WHERE chit_id = $1 AND entity_id = $2`,
+    [chit_id, entity_id]
+  );
+  if (chit.rows.length === 0) return 'taskNotFound';
+  const actor = await handle(
+    `SELECT identity_id, display_name, actor_key,
+            break_status, current_task_count, max_tasks
+     FROM identities
+     WHERE identity_id = $1
+     AND parent_entity_id = $2
+     AND identity_type = 'actor'`,
+    [from_actor_id, entity_id]
+  );
+  return actor.rows.length === 0 ? 'tasksActorGone' : null;
+}
 
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
@@ -1677,17 +1752,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
     // the tx client so the existing calls flow through the context (and become atomic).
     await withEntity(entity_id, async (client) => {
       const handle = (t, p) => client.query(t, p);
-      // Verify chit belongs to this entity and is assigned to actor
-      const chit = await handle(
-        `SELECT chit_id, assigned_to_actor_id
-         FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-
-      if (chit.rows.length === 0) {
-        return problem(req, res, { status: 404, ...words.taskNotFound() });
-      }
+      const missing = await routeTargetMissing(handle, chit_id, from_actor_id, entity_id);
+      if (missing) return problem(req, res, { status: 404, ...words[missing]() });
 
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
@@ -1763,7 +1829,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
-router.get('/access-events', auth, async (req, res) => {
+router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const subject = String(req.query.subject || '').trim();
@@ -1800,7 +1866,11 @@ router.get('/access-events', auth, async (req, res) => {
       )
     );
 
-    res.json(Object.assign(PL.pageOut('events', r.rows, pg), { applied: true }));
+    const answer = PL.pageOut('events', r.rows, pg);
+    /* S34: an event is the columns the statement above selects (access_events + the two identities it names: migrations/000_baseline_2026-10-21.sql), in its order; before_value and after_value
+       stay the objects the trail wrote; LIMIT 200 under a 200-row page max, so the pager never cuts this list (no capped, no cap_note) */
+    // prettier-ignore
+    res.json({ events: answer.events.map((x) => ({ event_id: x.event_id, subject_identity_id: x.subject_identity_id, subject_name: x.subject_name, actor_key: x.actor_key, action: x.action, before_value: x.before_value, after_value: x.after_value, reason: x.reason, at: x.at, changed_by: x.changed_by, changed_by_name: x.changed_by_name })), total: answer.total, page: answer.page, limit: answer.limit, applied: true });
   } catch (err) {
     if (/access_events/.test(err.message || '')) return res.json({ events: [], applied: false, total: 0, page: 1, limit: 0 });
     console.error('Access events error:', err.message);

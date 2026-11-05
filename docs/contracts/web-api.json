@@ -1622,7 +1622,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "periods[].return"
+   ],
+   "also_optional": [
+    "periods[].return"
+   ]
   },
   "GET /api/books/pl": {
    "status": 200,
@@ -1936,7 +1941,14 @@
     ],
     "next": "2027-28"
    },
-   "optional": []
+   "optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ],
+   "also_optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ]
   },
   "GET /api/channels/outbound": {
    "status": 200,
@@ -3343,7 +3355,9 @@
       },
       "change_pct": 10
      }
-    ]
+    ],
+    "sales_from": "summaries",
+    "sales_note": "The books are not switched on for this shop, so these sales are the counters' day summaries only."
    },
    "optional": []
   },
@@ -4808,11 +4822,13 @@
    "status": 409,
    "note": "M26 (api #57) - a duplicate-rule warning not named in acknowledge[]; nothing is written.",
    "example": {
-    "error": "Already paid?",
-    "message": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "error": "More than is owed",
+    "message": "More than is owed by ₹3,820. ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Keep ₹3,820 as an advance?",
     "warnings": [
      {
       "code": "excess",
+      "over_minor": 382000,
+      "over_words": "₹3,820",
       "words": "₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores."
      }
     ],
@@ -4820,7 +4836,7 @@
     "title": "Already paid",
     "status": 409,
     "code": "ALREADY_PAID",
-    "detail": "Already paid? ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Receive ₹5,000 again as an advance?",
+    "detail": "More than is owed by ₹3,820. ₹5,000 is more than the ₹1,180 open — ₹3,820 would be kept as an advance from Ravi Stores. Keep ₹3,820 as an advance?",
     "hint": "Check the list, then confirm if it is really a new one.",
     "request_id": null
    },
@@ -5049,7 +5065,14 @@
     "hint": "Read the reasons shown and fix each one.",
     "request_id": null
    },
-   "optional": []
+   "optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ],
+   "also_optional": [
+    "refusals[].code",
+    "refusals[].periods"
+   ]
   },
   "POST /api/books/year/:fy/close #200": {
    "status": 200,
@@ -6541,7 +6564,29 @@
        "tax": 36,
        "total": 236
       }
-     ]
+     ],
+     "offers": [],
+     "bridge": {
+      "ok": true,
+      "decimals": 2,
+      "steps": [
+       {
+        "name": "gross",
+        "amount": 266,
+        "amount_minor": 26600
+       }
+      ],
+      "lines": [
+       {
+        "line": 0,
+        "gross_minor": 23600,
+        "net_minor": 23600,
+        "taxable_minor": 20000,
+        "tax_minor": 3600,
+        "total_minor": 23600
+       }
+      ]
+     }
     },
     "invoice": {
      "TranDtls": {
@@ -6612,6 +6657,27 @@
       "amount_payable": 266,
       "reverse_charge": false,
       "price_includes_tax": true,
+      "bridge": {
+       "ok": true,
+       "decimals": 2,
+       "steps": [
+        {
+         "name": "gross",
+         "amount": 266,
+         "amount_minor": 26600
+        }
+       ],
+       "lines": [
+        {
+         "line": 0,
+         "gross_minor": 23600,
+         "net_minor": 23600,
+         "taxable_minor": 20000,
+         "tax_minor": 3600,
+         "total_minor": 23600
+        }
+       ]
+      },
       "notes": [
        "Your prices include tax, so the taxable value was worked back out of each price."
       ]
@@ -6667,6 +6733,15 @@
     "detail": "Line \"NOPE\" names an item this shop does not sell.",
     "hint": "Check the item id or code.",
     "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/books/money-check/resolve": {
+   "status": 200,
+   "example": {
+    "resolved": true,
+    "how": "confirmed",
+    "duplicate": false
    },
    "optional": []
   }

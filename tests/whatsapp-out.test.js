@@ -8,6 +8,7 @@
 // with the governance in it. The wire call itself stays unproven until a token exists, and is marked as such.
 //
 // Run: node tests/whatsapp-out.test.js
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -78,7 +79,7 @@ t('★★ absent evidence counts as OUTSIDE the window, never inside', () => {
 
 console.log('\nwhatsapp-out · ⚠️ it must never affect the chit');
 t('★★ the status route calls it AFTER res.json and does not await it', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   // ⚠️ `.notifyChitStatus(` — the CALL, not the first mention. The explanatory comment above it names the function
   // too, and matching that put the assertion window 200 characters short of the code it was meant to check. A test
   // reading documentation instead of implementation passes or fails for reasons that have nothing to do with either.

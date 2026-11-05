@@ -116,7 +116,11 @@ const STAFF = { identity: { identity_id: 'act-1', identity_type: 'actor', parent
   console.log('\nS10 · a non-writer\'s results stay under their own entity');
   await it('a shop that is not a board writer posts into its own entity', () => assert.strictEqual(testing.resultsEntityOf({ identity: { identity_id: SHOP_A } }), SHOP_A));
   await it('the board\'s own entity posts to the shared board', () => assert.strictEqual(testing.resultsEntityOf({ identity: { identity_id: BOARD } }), BOARD));
-  await it('the tester name is the token\'s, not the body\'s', () => assert.ok(/tester_name: who\.name\b/.test(src('routes/testing.js'))));
+  await it('the tester name is the token\'s, not the body\'s', () => {
+    /* #721 moved the row into resultRowOf(item, by, tester): the name still comes only from testerOf(req), the signed-in identity */
+    const t = src('routes/testing.js');
+    assert.ok(/tester_name: tester\.name\b/.test(t) && /resultRowOf\(item, by, who\)/.test(t) && /const who = testerOf\(req\)/.test(t));
+  });
 
   console.log('\nS11 · an unowned shared source is claimed by the root only');
   const assist = require('../routes/assist');

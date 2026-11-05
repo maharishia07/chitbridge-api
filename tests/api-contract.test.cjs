@@ -70,7 +70,10 @@ const keys = Object.keys(real);
 check('the real app has routes that validate against their own schema (routes/keys.js)', keys.includes('POST /api/keys') && keys.includes('DELETE /api/keys/:jti'));
 const ran = generator.runAll(real);
 check('every generated case of every real route passes', ran.failures.length === 0);
-check('the committed results equal what the cases give (run tools/api-contract-tests.cjs --write)', fs.readFileSync(generator.RESULTS_FILE, 'utf8') === generator.textOf(ran.results));
+/* CB_GENERATED (set by CI from the branch name, unset on a laptop): `regen` on a feature branch, where CI regenerates these files itself; strict or unset compares them */
+const REGEN = process.env.CB_GENERATED === 'regen';
+const sameAsGenerated = (name, onDisk, generated) => (REGEN ? console.log('  skipped (CB_GENERATED=regen, CI regenerates it): ' + name) : check(name, onDisk === generated));
+sameAsGenerated('the committed results equal what the cases give (run tools/api-contract-tests.cjs --write)', fs.readFileSync(generator.RESULTS_FILE, 'utf8'), generator.textOf(ran.results));
 
 /* ── the hardening cases (S33-S36): each one passes a route that keeps the promise and FAILS a route that breaks it, on a small app served the same way ── */
 const express = require('express');
@@ -120,8 +123,8 @@ const strictOperation = (schema) => ({ requestBody: { content: { 'application/js
   check('strict_input: the refusal names the unknown key itself, not "(body)"', answer(refusing, { body: { name: 'a', zz: 1 } }).body.errors[0].field === 'zz');
 
   const hardening = await generator.hardeningCases(API);
-  check('the committed hardening results equal what the cases give (run tools/api-contract-tests.cjs --write)', fs.readFileSync(generator.HARDENING_FILE, 'utf8') === generator.hardeningTextOf(hardening.results));
-  check('the committed evidence equals the passing cases, nothing by hand', fs.readFileSync(generator.EVIDENCE_FILE, 'utf8') === generator.evidenceTextOf(hardening.evidence));
+  sameAsGenerated('the committed hardening results equal what the cases give (run tools/api-contract-tests.cjs --write)', fs.readFileSync(generator.HARDENING_FILE, 'utf8'), generator.hardeningTextOf(hardening.results));
+  sameAsGenerated('the committed evidence equals the passing cases, nothing by hand', fs.readFileSync(generator.EVIDENCE_FILE, 'utf8'), generator.evidenceTextOf(hardening.evidence));
   check('the real app has hardening cases for every column', ['strict_input', 'output_allowlist', 'foreign_id_404', 'idempotent_money_write'].every((column) => Object.values(hardening.results).some((row) => row[column])));
   console.log('\n  ' + passed + ' passed, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);

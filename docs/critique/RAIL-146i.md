@@ -1,0 +1,13 @@
+# RAIL-146i critique — the party balance reaches a cost-blind co-assist (written before code, 2026-10-30)
+Base: #596 (RAIL-146e) branch l2/rail146e-crm-unbilled-cost, until batch 22 lands. Design note: C:/dev/docs/16-finance/DESIGN-RAIL-146i-dues-cost-blind.md. Critic: cb-critic G2 (verdict below).
+
+(a) The brief's claims, checked against the code
+- "lib/crm.js:146-152 hands balance_minor to a blind reader" — TRUE: net(c, s) adds the customer side (+ they owe you, SALE) and the supplier side (+ you owe them, PURCHASE) into one dues.balance_minor; nothing reads can_see_costs.
+- ":272 the record carries it" — TRUE: assemble() sets item.dues for list() and one(); routes/crm.js GET /parties/:id passes no blind.
+- "balances come from the books" — TRUE: party-fields.decorate reads the stored figures (books-engines by_party); nothing here sums a bill.
+- Same money by two more doors — TRUE: GET /api/books/dues plain read (routes/books.js:772, gate `on` only; finance=1 is owner-only) and GET /suppliers (relationships.js:312 decorate). The web CRM screen repaints from /dues (cap-books.js:1719 booksDuesLoad(true) after every payment → bkDuesStore → cap-crm-record.js:1205).
+
+(b) Conflicts: none. One can_see_costs read per request (cost.isCostBlind, #596's pattern), `minor:null` + `cost_hidden:true` (RAIL-146 shape), counts/dates/flags stand (RAIL-146 §3). The rule is finance's (consult-map row 1: a money definition on a screen); CRM's file carries the call, not the rule.
+(c) Simpler way: hide in party-fields.decorate — rejected: it is the STORED figure's reader for /parties, /customers and /suppliers and knows no caller. The rule lives once in lib/dues-view.js (pure), read by lib/crm.js and routes/books.js.
+(d) Risks: a both-sides party nets, so the customer half alone is a plausible wrong number (rollupGroup keeps a partial sum, 146b/146e null the figure; dues follows 146e because the web paints ONE figure with a direction word from its sign and the owner's figure is the net) → null; markLate must run before the hide (the flag is from the real figure); a ledger-off party has dues === null and no terms.supplier (the helper must leave null null and absent absent); the register hash is handler text only, so the lib-only change leaves GET /api/crm/parties signed and moves GET /api/crm/parties/:id and GET /api/books/dues; owner bytes must not move; base moves when batch 22 lands.
+(e) VERDICT (cb-critic): BUILD WITH CHANGES — (1) GET /api/books/dues in this PR through lib/dues-view (deferring it is the RAIL-146 cosmetic case inside the same screen); (2) null/absent guards in the helper; (3) R3 written as a decision; (4) the PR body names which route hashes move.

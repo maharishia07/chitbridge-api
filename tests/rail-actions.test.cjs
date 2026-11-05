@@ -19,6 +19,7 @@
  * Run: node tests/rail-actions.test.cjs · no DB, no network beyond 127.0.0.1.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
@@ -227,7 +228,11 @@ const tally = {};
       const o = await call(BEFORE, x.method, '/api/chits/' + x.chit + x.sub, x.who.token, x.body);
       /* a refusal now carries the Problem fields after its old keys (API-4 sweep): they are taken off, and so is a `code` the old body did not carry */
       const strip = (b, old) => { const c = Object.assign({}, b); delete c.why; delete c.created_at; delete c.message_id; delete c.dispute_id; if (c.type && /\/problems\//.test(String(c.type))) { ['type', 'title', 'status', 'detail', 'hint', 'request_id'].forEach((name) => delete c[name]); if (!old || old.code === undefined) delete c.code; } return JSON.stringify(c); };
-      const ok = o.status === x.after.status && strip(o.body) === strip(x.after.body, o.body);
+      /* RAIL-133 (deliberate, 28 Oct): on deliver-lines, assign-lines and amend a library's own 400 now says its words where the old route
+         said the safe sentence. ONLY that: same status, same keys, the old message must be the safe sentence and the new one a sentence of its own. */
+      const saidNow = (old, now) => o.status === 400 && /\/(deliver-lines|assign-lines|amend)$/.test(x.sub) && old && now && old.message === 'Something went wrong — please try again.' && typeof now.message === 'string' && now.message !== old.message
+        ? Object.assign({}, now, { message: old.message }) : now;
+      const ok = o.status === x.after.status && strip(o.body) === strip(saidNow(o.body, x.after.body), o.body);
       if (ok) same++;
       t(x.name + ' · ' + x.a + ': before ' + o.status + ' = after ' + x.after.status + ', same body but `why`', ok,
         'before ' + o.status + ' ' + strip(o.body).slice(0, 160) + '\n       after  ' + x.after.status + ' ' + strip(x.after.body).slice(0, 160));
@@ -236,7 +241,8 @@ const tally = {};
   }
 
   console.log('\n— C · one vocabulary, one rule —');
-  const SRC = fs.readFileSync(path.join(API, 'routes', 'chits.js'), 'utf8');
+  const SRC = CF.read(API);
+  const MOVE = fs.readFileSync(path.join(API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus lives here now (LEAN-PLAN §8 #3) */
   t('routes/chits.js no longer holds a transition table (validTransitions moved to the engine)', !/validTransitions\s*=/.test(SRC));
   t('routes/chits.js no longer asks access.canMessage — the message route asks the engine', !/access\.canMessage\(/.test(SRC));
   /* T1-RAIL: PUT /status asks through lib/rail-status statusGate (the one status write, which asks railActions.move) */
@@ -261,8 +267,8 @@ const tally = {};
     JSON.stringify(RA.forBill('bill_received', gap, railNo).reject) === JSON.stringify({ ok: true, needs: ['reason'] }));
   t('FX-F10W2 · …a viewer is refused Reject by the rail, word for word', RA.forBill('bill_received', null, { accept: { ok: false, why: 'read_only' }, reject: { ok: false, why: 'read_only' } }).reject.why === 'read_only');
   t('FX-F10W2 · PUT /status refuses a bill\'s reject without a reason, in words, with a code (reason_required)',
-    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(SRC) && /code: 'reason_required'/.test(SRC));
-  t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(SRC));
+    /new_status === 'rejected' && !String\(note \|\| ''\)\.trim\(\) && FOLDER_INV\.docOf\((?:hdr|header)\.rows\[0\], entity_id\) === 'bill_received'/.test(MOVE) && /code: 'reason_required'/.test(MOVE));
+  t('FX-F10W2 · a rejection / cancellation reaches the books hook (its Waiting row closes)', /\^\(accepted\|in_progress\|completed\|rejected\|cancelled\)\$\/\.test\(new_status\)/.test(MOVE));
   t('…the books wait on something else (a gap) → Accept refused WITH the books\' sentence and its todo',
     JSON.stringify(RA.forBill('bill_received', gap, railNo).accept) === JSON.stringify({ ok: false, why: 'books_waiting', say: gap.why, todo: 'record' }));
   t('…a supplier to add → refused, todo add_supplier', RA.forBill('bill_received', { todo: 'add_supplier', why: 'Who is X?' }, railNo).accept.todo === 'add_supplier');

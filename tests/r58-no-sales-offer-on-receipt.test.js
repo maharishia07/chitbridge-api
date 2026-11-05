@@ -4,6 +4,7 @@
  * self with no billed_at. routes/chits.js sendOffers applied the shop's live "₹300 → ₹30 back" to it. The shop is the
  * BUYER on a receipt: the gate is offers-live.isSalesDocument(purpose, business_json), asked at the send call site.
  */
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
@@ -49,7 +50,7 @@ const ok = (name, cond, why) => {
   } finally { cat.liveOffers = realLive; groups.groupsOf = realGroups; }
 
   console.log('\n── routes/chits.js asks the gate at the one place offers are applied ──\n');
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   ok('sendOffers reads purpose from the send state', /async function sendOffers\([^)]*\)\s*\{\s*const \{ sender_id, purpose,/.test(src));
   ok('the applyLiveOffers guard also asks isSalesDocument(purpose, bj)', /if \(!alreadyBilled && \([^)]*\) && require\('\.\.\/lib\/offers-live'\)\.isSalesDocument\(purpose, bj\)\)/.test(src));
 

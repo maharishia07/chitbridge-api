@@ -27,12 +27,24 @@ const access = require('../lib/access');
 const railActions = require('../lib/rail-actions');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { repeat: contract, schemaOptions, repeatFault, levelRefusal } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
+const { UUID_RE } = require('../lib/trace');
+const { repeat: contract, schemaOptions, repeatFault, levelRefusal, badChit, noSuchAgreement } = require('../lib/orders-contract'); // the contract (each route's operation) and the words of a refusal
 const RS = () => require('../lib/repeat-supply');
 
 const me = (req) => auth.entityOf(req);
 const who = (req) => ({ id: (req.identity && req.identity.identity_id) || null, name: (req.identity && req.identity.display_name) || null });
+/* S34: the agreement as lib/repeat-supply view answers it, every key named in the order the bytes had (rowOf, then side, actions, words, due) */
+// prettier-ignore
+const agreementOf = (held) => ({ agreement_id: held.agreement_id, entity_id: held.entity_id, chit_id: held.chit_id, customer_entity_id: held.customer_entity_id, source_chit_id: held.source_chit_id, every: held.every, unit: held.unit, anchor_day: held.anchor_day, next_on: held.next_on, end_on: held.end_on, runs_max: held.runs_max, runs_done: held.runs_done, mode: held.mode, state: held.state, terms: held.terms, counter: held.counter, skips: held.skips, runs: held.runs, last_run_on: held.last_run_on, state_by: held.state_by, state_at: held.state_at, state_note: held.state_note, created_by: held.created_by, created_at: held.created_at, updated_at: held.updated_at, customer: held.customer && { entity_id: held.customer.entity_id, name: held.customer.name }, money: held.money, currency: held.currency, subject: held.subject, side: held.side, actions: held.actions, words: held.words, due: held.due });
 const chitOf = (req) => String((req.query && req.query.chit) || (req.body && req.body.chit_id) || '') || null;
+
+/** ORD-73: an agreement id in the address that is not a uuid names nothing — 404 before the database sees it */
+router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...noSuchAgreement() })));
+/** ORD-73: the chit the caller names (body chit_id or ?chit=), when given, must be a uuid — 400 before the database sees it */
+function chitNamed(req, res, next) {
+  const named = chitOf(req);
+  return named === null || UUID_RE.test(named) ? next() : problem(req, res, { status: 400, ...badChit() });
+}
 
 /** the schema check of one route (its own operation in lib/orders-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
@@ -57,7 +69,7 @@ router.get('/', auth, async (req, res) => {
   try {
     const R = RS();
     if (!(await R.migrated(me(req)))) return res.json({ agreements: [], migrated: false, message: R.WHY.not_migrated });
-    res.json({ agreements: await R.list(me(req)), migrated: true });
+    res.json({ agreements: (await R.list(me(req))).map(agreementOf), migrated: true });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
@@ -65,7 +77,7 @@ router.get('/', auth, async (req, res) => {
 /** POST /api/repeat { chit_id, every, unit, start_on, anchor_day?, until: { runs? | on? }, mode? } → { agreement } — the agreement chit is sent */
 router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
   try {
-    res.json({ agreement: await RS().create(me(req), who(req), req.body || {}) });
+    res.json({ agreement: agreementOf(await RS().create(me(req), who(req), req.body || {})) });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
@@ -73,7 +85,8 @@ router.post('/', auth, writeGate, ...checked('POST /'), async (req, res) => {
 /** POST /api/repeat/sweep → { ran, problems } — the seller runs everything due now (what the nightly would do) */
 router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, res) => {
   try {
-    res.json(await RS().sweep(me(req), null, { request_id: req.id || null }));   /* SEC-90: a fault in problems[] says the safe sentence and this id */
+    const swept = await RS().sweep(me(req), null, { request_id: req.id || null }); /* SEC-90: a fault in problems[] says the safe sentence and this id */
+    res.json({ ran: swept.ran, problems: swept.problems });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
@@ -81,40 +94,41 @@ router.post('/sweep', auth, writeGate, ...checked('POST /sweep'), async (req, re
 /** GET /api/repeat/:id?chit= → { agreement } — either side; the customer names the chit they hold */
 router.get('/:id', auth, ...checked('GET /:id'), async (req, res) => {
   try {
-    res.json(await RS().one(me(req), req.params.id, chitOf(req)));
+    const found = await RS().one(me(req), req.params.id, chitOf(req));
+    res.json(found.read_only ? { agreement: agreementOf(found.agreement), read_only: found.read_only } : { agreement: agreementOf(found.agreement) }); /* read_only only for a third party who holds the chit */
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
 });
 
 /* ── the customer's side (through the rail: they hold the agreement chit) ── */
-router.post('/:id/accept', auth, customerGate('accept'), ...checked('POST /:id/accept'), async (req, res) => {
+router.post('/:id/accept', auth, customerGate('accept'), chitNamed, ...checked('POST /:id/accept'), async (req, res) => {
   try {
-    res.json({ agreement: await RS().accept(me(req), req.params.id, chitOf(req), who(req), railActions.meOf(req)) });
+    res.json({ agreement: agreementOf(await RS().accept(me(req), req.params.id, chitOf(req), who(req), railActions.meOf(req))) });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
 });
 /** POST /:id/counter { chit_id, lines?: [{ line_id, quantity }], every?, unit?, start_on?, note } */
-router.post('/:id/counter', auth, customerGate('amend'), ...checked('POST /:id/counter'), async (req, res) => {
+router.post('/:id/counter', auth, customerGate('amend'), chitNamed, ...checked('POST /:id/counter'), async (req, res) => {
   try {
-    res.json({ agreement: await RS().counter(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
+    res.json({ agreement: agreementOf(await RS().counter(me(req), req.params.id, chitOf(req), who(req), req.body || {})) });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
 });
-router.post('/:id/decline', auth, customerGate('reject'), ...checked('POST /:id/decline'), async (req, res) => {
+router.post('/:id/decline', auth, customerGate('reject'), chitNamed, ...checked('POST /:id/decline'), async (req, res) => {
   try {
-    res.json({ agreement: await RS().decline(me(req), req.params.id, chitOf(req), who(req), req.body || {}, railActions.meOf(req)) });
+    res.json({ agreement: agreementOf(await RS().decline(me(req), req.params.id, chitOf(req), who(req), req.body || {}, railActions.meOf(req))) });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
 });
 
 /* ── either side: skip the next run (the customer says why) ── */
-router.post('/:id/skip', auth, writeGate, ...checked('POST /:id/skip'), async (req, res) => {
+router.post('/:id/skip', auth, writeGate, chitNamed, ...checked('POST /:id/skip'), async (req, res) => {
   try {
-    res.json({ agreement: await RS().skip(me(req), req.params.id, chitOf(req), who(req), req.body || {}) });
+    res.json({ agreement: agreementOf(await RS().skip(me(req), req.params.id, chitOf(req), who(req), req.body || {})) });
   } catch (e) {
     problem(req, res, repeatFault(e, req));
   }
@@ -136,32 +150,35 @@ const seller = (route, answer) => [
 router.post(
   '/:id/agree',
   auth,
-  ...seller('POST /:id/agree', async (req) => ({ agreement: await RS().agree(me(req), req.params.id, who(req)) }))
+  ...seller('POST /:id/agree', async (req) => ({ agreement: agreementOf(await RS().agree(me(req), req.params.id, who(req))) }))
 );
 router.post(
   '/:id/refuse',
   auth,
-  ...seller('POST /:id/refuse', async (req) => ({ agreement: await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/refuse', async (req) => ({ agreement: agreementOf(await RS().refuseCounter(me(req), req.params.id, who(req), req.body || {})) }))
 );
 router.post(
   '/:id/pause',
   auth,
-  ...seller('POST /:id/pause', async (req) => ({ agreement: await RS().pause(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/pause', async (req) => ({ agreement: agreementOf(await RS().pause(me(req), req.params.id, who(req), req.body || {})) }))
 );
 router.post(
   '/:id/resume',
   auth,
-  ...seller('POST /:id/resume', async (req) => ({ agreement: await RS().resume(me(req), req.params.id, who(req)) }))
+  ...seller('POST /:id/resume', async (req) => ({ agreement: agreementOf(await RS().resume(me(req), req.params.id, who(req))) }))
 );
 router.post(
   '/:id/end',
   auth,
-  ...seller('POST /:id/end', async (req) => ({ agreement: await RS().end(me(req), req.params.id, who(req), req.body || {}) }))
+  ...seller('POST /:id/end', async (req) => ({ agreement: agreementOf(await RS().end(me(req), req.params.id, who(req), req.body || {})) }))
 );
 router.post(
   '/:id/run',
   auth,
-  ...seller('POST /:id/run', async (req) => RS().run(me(req), req.params.id, who(req), { request_id: req.id || null }))
+  ...seller('POST /:id/run', async (req) => {
+    const moved = await RS().run(me(req), req.params.id, who(req), { request_id: req.id || null });
+    return { agreement: agreementOf(moved.agreement), ran: moved.ran, problems: moved.problems };
+  })
 );
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
