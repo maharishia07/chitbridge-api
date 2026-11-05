@@ -109,8 +109,7 @@
   },
   "GET /api/entities/header": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "GET /api/entities/sides": {
@@ -1011,8 +1010,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/invoice/build": {
@@ -1670,7 +1668,7 @@
   "GET /api/network-offers": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "PUT /api/network-offers/policy": {
@@ -2128,8 +2126,7 @@
   },
   "GET /api/people": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "POST /api/connectors": {
@@ -3270,12 +3267,10 @@
   },
   "PUT /api/catalogue-face": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/combo-templates": {
@@ -3561,8 +3556,7 @@
   },
   "GET /api/assist/catalogue-mine": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 503"
+    "pass": true
    }
   },
   "PUT /api/assist/catalogue-source": {
@@ -4029,8 +4023,7 @@
   },
   "GET /api/channels": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "GET /api/channels/outbound": {
@@ -5158,8 +5151,7 @@
   },
   "GET /api/facts/rail/chits": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "GET /api/facts/:card": {
@@ -5665,12 +5657,10 @@
   },
   "POST /api/adopt/:chit_id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,

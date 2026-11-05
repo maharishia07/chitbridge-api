@@ -33106,6 +33106,699 @@
         "url": "/api/repeat/sweep",
         "body": {}
       }
+    },
+    "GET /api/people": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "may",
+          "access_choices"
+        ],
+        "properties": {
+          "people": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "user_id",
+                "actor_key",
+                "role",
+                "phone",
+                "email",
+                "has_email",
+                "code_given",
+                "state",
+                "away",
+                "access",
+                "last_at",
+                "jobs",
+                "cover",
+                "cover_options",
+                "may"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "user_id": {
+                  "type": "string"
+                },
+                "actor_key": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "has_email": {
+                  "type": "boolean"
+                },
+                "code_given": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "by",
+                    "at",
+                    "channel"
+                  ],
+                  "properties": {
+                    "by": {
+                      "type": "string"
+                    },
+                    "at": {
+                      "type": "string"
+                    },
+                    "channel": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "away": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "access": {
+                  "type": "object",
+                  "required": [
+                    "level",
+                    "label",
+                    "whole_entity",
+                    "can_see_costs"
+                  ],
+                  "properties": {
+                    "level": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "whole_entity": {
+                      "type": "boolean"
+                    },
+                    "can_see_costs": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "last_at": {
+                  "type": "string"
+                },
+                "jobs": {
+                  "type": "number"
+                },
+                "cover": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "cover_options": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "may": {
+                  "type": "object",
+                  "required": [
+                    "access",
+                    "email",
+                    "reset_pin",
+                    "switch",
+                    "cover",
+                    "away",
+                    "remove"
+                  ],
+                  "properties": {
+                    "access": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "email": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "reset_pin": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "switch": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why",
+                        "to"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "to": {
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "cover": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "away": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why",
+                        "to"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "to": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    },
+                    "remove": {
+                      "type": "object",
+                      "required": [
+                        "ok",
+                        "why"
+                      ],
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "why": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "add"
+            ],
+            "properties": {
+              "add": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "on",
+              "off",
+              "away"
+            ],
+            "properties": {
+              "on": {
+                "type": "number"
+              },
+              "off": {
+                "type": "number"
+              },
+              "away": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "access_choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "label",
+                "level",
+                "whole_entity",
+                "can_see_costs",
+                "why"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "level": {
+                  "type": "string"
+                },
+                "whole_entity": {
+                  "type": "boolean"
+                },
+                "can_see_costs": {
+                  "type": "boolean"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "payroll": {
+            "type": "object",
+            "required": [
+              "here",
+              "said"
+            ],
+            "properties": {
+              "here": {
+                "type": "boolean"
+              },
+              "said": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "capped": {
+            "type": "boolean"
+          },
+          "cap_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/people"
+      }
+    },
+    "POST /api/pricing/price": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "lines",
+          "total"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "lines[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/pricing/price",
+        "body": {
+          "lines": [
+            {
+              "qty": 2,
+              "listPrice": 10,
+              "pricing": {
+                "kind": "fixed",
+                "amount": 8
+              }
+            }
+          ]
+        }
+      }
+    },
+    "PUT /api/catalogue-face": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "updated_at"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/catalogue-face",
+        "body": {
+          "face": {
+            "purpose": "shop"
+          }
+        }
+      }
+    },
+    "GET /api/adopt/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "from",
+          "says",
+          "rows",
+          "counts"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "from": {
+            "type": "object",
+            "required": [
+              "name",
+              "vertical",
+              "supply_kind"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "vertical": {
+                "type": "string"
+              },
+              "supply_kind": {}
+            },
+            "additionalProperties": false
+          },
+          "says": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "offer",
+              "refused",
+              "already",
+              "not_for_sale"
+            ],
+            "properties": {
+              "offer": {
+                "type": "number"
+              },
+              "refused": {
+                "type": "number"
+              },
+              "already": {
+                "type": "number"
+              },
+              "not_for_sale": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "rows[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/adopt/33333333-3333-4333-8333-333333333333"
+      }
+    },
+    "POST /api/adopt/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "added",
+          "refused",
+          "says"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "says": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "added[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "refused[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/adopt/33333333-3333-4333-8333-333333333333",
+        "body": {
+          "accept": [
+            {
+              "line": 0,
+              "name": "Paracetamol",
+              "sku": "PARA-500"
+            },
+            {
+              "line": 1,
+              "name": "Tea",
+              "sku": ""
+            },
+            {
+              "line": 7,
+              "name": "Nothing",
+              "sku": "X"
+            }
+          ]
+        }
+      }
     }
   },
   "listed": {
@@ -33223,7 +33916,6 @@
     "GET /api/network-design": "open at draft - the saved drawing, stored verbatim from the owner body (PUT /: any object up to 2 MB, the design tool owns its keys); a closed shape would cut a key it does not list",
     "GET /api/notifications": "open at notifications[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/offers/openapi.json": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/privacy/facts": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/privacy/me": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products": "open at items[] — a value passed through (a name: its keys are not written in the handler); status_counts — a value passed through (an expression: its keys are not written in the handler); category_counts — a value passed through (a name: its keys are not written in the handler)",
@@ -33369,6 +34061,10 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/pricing/kinds": "open at kinds[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/adopt/:chit_id": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/adopt/:chit_id": "open at added[] — a value passed through (an expression: its keys are not written in the handler); refused[] — a value passed through (a name: its keys are not written in the handler)",
+    "POST /api/pricing/price": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

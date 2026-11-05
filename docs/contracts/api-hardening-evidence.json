@@ -22,6 +22,9 @@
   "PATCH /api/entities/policy": {
    "output_allowlist": true
   },
+  "GET /api/entities/header": {
+   "output_allowlist": true
+  },
   "GET /api/entities/sides": {
    "output_allowlist": true
   },
@@ -232,6 +235,9 @@
    "output_allowlist": true
   },
   "GET /api/pricing/kinds": {
+   "output_allowlist": true
+  },
+  "POST /api/pricing/price": {
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {
@@ -492,6 +498,9 @@
   },
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
+  },
+  "GET /api/people": {
+   "output_allowlist": true
   },
   "GET /api/folders": {
    "output_allowlist": true
@@ -803,6 +812,10 @@
   "GET /api/catalogue-face": {
    "output_allowlist": true
   },
+  "PUT /api/catalogue-face": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "PATCH /api/combo-templates/:id": {
    "foreign_id_404": true
   },
@@ -838,6 +851,9 @@
    "output_allowlist": true
   },
   "POST /api/assist/catalogue-adopt": {
+   "output_allowlist": true
+  },
+  "GET /api/assist/catalogue-mine": {
    "output_allowlist": true
   },
   "PUT /api/assist/catalogue-source": {
@@ -1000,6 +1016,9 @@
    "output_allowlist": true
   },
   "GET /api/capture/consolidate": {
+   "output_allowlist": true
+  },
+  "GET /api/channels": {
    "output_allowlist": true
   },
   "POST /api/channels/:id/provider-ref": {
@@ -1227,6 +1246,9 @@
   "POST /api/books/money-check/resolve": {
    "strict_input": true
   },
+  "GET /api/facts/rail/chits": {
+   "output_allowlist": true
+  },
   "GET /api/work/list": {
    "output_allowlist": true
   },
@@ -1387,6 +1409,10 @@
   "GET /api/adopt/:chit_id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/adopt/:chit_id": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "GET /health": {
    "output_allowlist": true
