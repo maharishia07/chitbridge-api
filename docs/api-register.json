@@ -33136,9 +33136,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "d52c6fc8c68a9760"
+        "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#747 stage2",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],

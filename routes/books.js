@@ -1447,13 +1447,48 @@ router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /
     problem(req, res, refusalOf(err, req));
   }
 });
-/** POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open) */
+/**
+ * FIN-63 step 2: the confirm's list read RAW, before it becomes money (never inside the shared writeAllocation: settleBills and Mark-paid use that,
+ * and a throw there rolls a payment back). → { words } for a 422, or { pairs }: against_ref TRIMMED (the hash and the engine take this one value),
+ * amount_minor a whole non-negative number read BEFORE any Math.round (a fraction is refused, never rounded), one line per bill.
+ */
+function confirmPairs(list) {
+  const seen = new Set(),
+    pairs = [];
+  for (const item of list) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return { words: 'Each line names a bill and an amount.' };
+    const against_ref = String(item.against_ref == null ? '' : item.against_ref).trim(),
+      amount = Number(item.amount_minor);
+    if (!against_ref) return { words: 'Each line names the bill it settles.' };
+    if (!Number.isInteger(amount)) return { words: 'Each amount is a whole number in paise/cents.' };
+    if (amount < 0) return { words: 'An amount cannot be negative.' };
+    if (seen.has(against_ref)) return { words: 'Bill ' + against_ref + ' is listed twice; give it one amount.' };
+    seen.add(against_ref);
+    pairs.push({ against_ref, amount_minor: amount });
+  }
+  return { pairs };
+}
+/** a payment's own money steps (R-1400), after the posting committed; never able to undo it */
+async function confirmSteps(req, e, id, pairs) {
+  try {
+    const pay = await withEntity(e, (h) => S.payment(h, e, id));
+    await require('../lib/bill-privacy').moneySteps(e, pay, pairs, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
+  } catch (e2) {
+    logger.error('books confirm: the R-1400 money steps failed after the posting committed — the books are right, the history step is missing', { id: req.id, payment_id: id, err: e2.message });
+  }
+}
+/**
+ * POST /payments/:id/confirm { allocations: [{ against_ref, amount_minor }] } — CBReceivables.confirmItems decides (disputed frozen, never more than open).
+ * ⭐ FIN-63 step 2: the SAME allocation pressed again (the payment's latest live batch, within books-replay.ALLOC_REPLAY_WINDOW_MS) answers
+ * 200 { ok, duplicate: true, items, allocated_minor } from the stored rows and posts nothing; a first posting carries no `duplicate` key.
+ */
 router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
     if (!UUID.test(id)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const list = Array.isArray((req.body || {}).allocations) ? req.body.allocations : [];
+    const read = confirmPairs(Array.isArray((req.body || {}).allocations) ? req.body.allocations : []);
+    if (read.words) return refuse(req, res, 422, 'BOOKS_REFUSED', read.words);
     const out = await withEntity(e, async (h) => {
       const p = await S.payment(h, e, id);
       if (!p) return null;
@@ -1463,20 +1498,18 @@ router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...check
         side: p.direction === 'in' ? 'customer' : 'supplier',
         credit_ref: 'pay:' + id,
         payment_id: id,
-        allocations: list.map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: Math.round(Number(item.amount_minor)) })),
+        allocations: read.pairs,
+        replay: true,
         currency: p.currency,
         by: byOf(req)
       });
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
+    /* a replay skips the money steps ON PURPOSE: moneySteps has no replay key, so a re-run would write each R-1400 step twice (lib/books-replay.js) */
+    if (out.duplicate) return res.json({ ok: out.ok, duplicate: true, items: out.items, allocated_minor: out.allocated_minor });
     /* ⭐ a payment against a BILL is a step of R-1400 — written at its messaging level (lib/bill-privacy): my history, and the
        other party's too while R-1400 is external (a remittance advice). After the posting committed; never able to undo it. */
-    try {
-      const pay = await withEntity(e, (h) => S.payment(h, e, id));
-      await require('../lib/bill-privacy').moneySteps(e, pay, list, { id: byOf(req), name: (req.identity && req.identity.display_name) || null });
-    } catch (e2) {
-      console.error('bill money steps:', e2.message);
-    }
+    await confirmSteps(req, e, id, read.pairs);
     res.json({ ok: out.ok, off: out.off, items: out.items, allocated_minor: out.allocated_minor });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

@@ -334,6 +334,7 @@ const INFRA_LIBS = [
   'books-cashflow.js',
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
+  'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
