@@ -433,9 +433,9 @@ async function ask(req, res, next) {
     if (isEmail) {
       email = input.toLowerCase();
       display_name = sanitise(req.body.display_name || input);
-      const existing = await query('SELECT identity_id, bridge_id FROM identities WHERE email = $1', [email]);
-      if (existing.rows.length > 0) {
-        identity_id = existing.rows[0].identity_id;
+      const existing = (await query('SELECT identity_id, bridge_id, user_id FROM identities WHERE email = $1', [email])).rows.filter(identityAuth.isAccount); // SEC-130
+      if (existing.length > 0) {
+        identity_id = existing[0].identity_id;
         console.log(`Existing entity login: ${email}`);
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
@@ -448,18 +448,17 @@ async function ask(req, res, next) {
        * display name — and the name must be UNAMBIGUOUS: taking rows[0] once mailed a code to the wrong owner and locked
        * the other out. Ambiguity is refused with how to be specific.
        */
-      let rows = await query(
-        `SELECT identity_id, bridge_id, email, display_name FROM identities
-         WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`,
-        [input]
+      const accounts = async (sql) => ({ rows: (await query(sql, [input])).rows.filter(identityAuth.isAccount) }); // SEC-130: a minted party is no account
+      let rows = await accounts(
+        `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
+         WHERE LOWER(user_id) = LOWER($1) AND identity_type = 'entity' AND status = 'active'`
       );
       if (!rows.rows.length) {
-        rows = await query(
-          `SELECT identity_id, bridge_id, email, display_name FROM identities
+        rows = await accounts(
+          `SELECT identity_id, bridge_id, email, display_name, user_id FROM identities
            WHERE LOWER(display_name) = LOWER($1)
            AND identity_type = 'entity'
-           AND status = 'active'`,
-          [input]
+           AND status = 'active'`
         );
         if (rows.rows.length > 1) {
           res.locals.code = 'AMBIGUOUS_NAME';
@@ -558,12 +557,12 @@ async function verify(req, res) {
       return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
     }
 
-    /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups — a handle carries a unique index whatever type owns it */
+    /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
     const COLS = `identity_id, bridge_id, display_name, email, user_id, identity_type,
                     pin_hash, pin_attempts, pin_locked_at, otp_code, ${OTP_HASH_COL}, otp_expires_at, otp_attempts, owner_scope, parent_entity_id`;
     let rows;
-    if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows;
-    else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows;
+    if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows.filter(identityAuth.isAccount);
+    else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows.filter(identityAuth.isAccount);
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
       const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
