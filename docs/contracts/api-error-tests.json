@@ -807,6 +807,7 @@
  ],
  "GET /api/folders": [
   401,
+  422,
   500
  ],
  "GET /api/folders/:id/chits": [
@@ -829,6 +830,7 @@
  ],
  "GET /api/folders/groupsum": [
   401,
+  422,
   500
  ],
  "GET /api/folders/inventory": [
@@ -837,6 +839,7 @@
  ],
  "GET /api/folders/messages": [
   401,
+  422,
   500
  ],
  "GET /api/folders/mis": [
@@ -846,10 +849,12 @@
  ],
  "GET /api/folders/reconcile": [
   401,
+  422,
   500
  ],
  "GET /api/folders/rules": [
   401,
+  422,
   500
  ],
  "GET /api/folders/rules/vocabulary": [
