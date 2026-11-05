@@ -62,7 +62,9 @@ const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
 
 /** the rows a statement gets: the ledger's switch, then a scenario's own rows, then nothing (or the secret failure when the db is down) */
-function rowsFor(sql) {
+function rowsFor(sql, params) {
+  /* K-1: a db that answers as Postgres does to a value that is no uuid (22P02), so a route that lets one through shows as a 500 */
+  if (world.db === 'uuid' && (params || []).some((value) => typeof value === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))) throw Object.assign(new Error('invalid input syntax for type uuid: "' + params[0] + '"'), { code: '22P02' });
   if (/FROM books_setting/.test(sql)) return world.ledgerOn ? { rows: [SETTING_ROW], rowCount: 1 } : { rows: [], rowCount: 0 };
   if (world.sqlRows) {
     const given = world.sqlRows(String(sql));
@@ -85,8 +87,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
-  const client = { query: async (sql) => rowsFor(sql) };
-  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rowsFor(sql, params) };
+  const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
@@ -317,6 +319,9 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('quantity-not-above-zero', 'POST /api/tax/compute', 400, { body: { lines: [{ name: 'tea', qty: 0, price: 10 }] } }),
   X('flag-not-true-or-false', 'POST /api/tax/compute', 400, { body: { priceIncludesTax: 'maybe', lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('no-country-no-tax', 'POST /api/tax/compute', 422, { body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
+  /* B2 (4 Nov): the chit id in the address is no uuid → the unknown id's 404, never the driver's 500 (K-1) */
+  X('chit-id-not-a-uuid', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/abc' }),
+  X('chit-id-holds-nul', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/a%00b' }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
@@ -562,6 +567,8 @@ function checkAnswers(recording) {
   const gated = answers.filter((one) => one.route.includes('/api/tax/rate') || one.route.includes('/api/invoice/build'));
   const outs = Object.keys(recording);
   check('a caller who is not signed in is refused with 401, and a key without the scope with 403', outs.filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401) && gated.filter((one) => one.status === 403).length >= 2);
+  const junkChit = ['chit-id-not-a-uuid', 'chit-id-holds-nul'].map((id) => recording['GET /api/invoice/:chit_id|' + id]);
+  check('K-1: a chit id that is no uuid (or holds a NUL) answers the unknown id 404 NOT_FOUND, never the driver 500', junkChit.every((one) => one && one.status === 404 && one.body.code === 'NOT_FOUND' && one.body.error === 'Not found'), junkChit.map((one) => one && one.status));
   const nothing = answers.filter((one) => one.route === 'POST /api/tax/compute');
   check('a malformed tax request is refused with 400 in words (validation), never a crash', nothing.some((one) => one.status === 400 && one.body && one.body.code === 'NO_LINES'));
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
