@@ -154,7 +154,7 @@ const orderTo = (from, to, ref) => ({ recipients: [{ display_name: to.name, brid
     if (!/business_status/.test(def)) skip('NW-09', 'a closed shop is not returned by network_search()', 'b833 is not applied on this database (network_search has no business_status filter)');
     else await kase('NW-09', 'a closed shop with catalogue_visibility=network is not returned by network_search() to its sibling; the open shop is, and the closed one returns when reopened', async () => {
       const word = 'Closedprobe' + RUN, S1 = (await activeStore(A, 'o')).S, S2 = (await activeStore(A, 'c')).S;
-      ok(await j('/api/entities/profile', { method: 'PATCH', token: S2.token, body: { catalogue_visibility: 'network' } }), 'S2 network');
+      for (const shop of [S1, S2]) ok(await j('/api/entities/profile', { method: 'PATCH', token: shop.token, body: { catalogue_visibility: 'network' } }), 'network visibility');   /* a new store starts private: both must be network for the premise */
       ok(await j('/api/products', { method: 'POST', token: S1.token, body: { item_data: { name: word + ' open item', unit: 'piece', price: 5 } } }), 'S1 item');
       ok(await j('/api/products', { method: 'POST', token: S2.token, body: { item_data: { name: word + ' closed item', unit: 'piece', price: 5 } } }), 'S2 item');
       const found = async () => (await pg.query('SELECT entity_id, bridge_id FROM network_search($1, $2, 50)', [S1.bridge, word])).rows.map((r) => r.bridge_id);
