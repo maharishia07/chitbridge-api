@@ -38790,6 +38790,18 @@
      }
     },
     {
+     "scenario": "route-another-shops-person",
+     "status": 404,
+     "body_keys": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     },
+     "fixture": {
+      "error": "Actor not found",
+      "message": "Co-assist not found under your entity"
+     }
+    },
+    {
      "scenario": "route-colleague-not-active",
      "status": 400,
      "body_keys": {
@@ -38909,24 +38921,12 @@
     },
     {
      "scenario": "bad-id",
-     "status": 400,
+     "status": 404,
      "body_keys": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      },
      "fixture": {
-      "error": "Validation failed",
-      "details": [
-       {
-        "field": "action",
-        "message": "Action must be pull push or return"
-       }
-      ]
+      "error": "Chit not found"
      }
     },
     {

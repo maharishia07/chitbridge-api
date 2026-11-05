@@ -2250,11 +2250,12 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 811,
-   "hash": "db74ffb600c474b0",
+   "hash": "d244d298c4147b45",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -2295,6 +2296,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -2306,7 +2308,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#704 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -2434,12 +2436,13 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1819,
-   "hash": "8c0f3b62f8a5d36a",
+   "line": 1832,
+   "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
+     400,
      401,
      500
     ],
@@ -2481,6 +2484,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     500
    ],
@@ -2492,7 +2496,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#704 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55002,8 +55006,8 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1719,
-   "hash": "1fea5d171d7c4b24",
+   "line": 1741,
+   "hash": "abee707135b53f2d",
    "does": "",
    "errors": {
     "count": 0,

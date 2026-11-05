@@ -67,6 +67,7 @@ const ROUTES = [
   ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/subtree', {}, 'not found'],
   ['/api/network', 'src/routes/network.js', 'GET', '/api/network/entities/abc/connections', {}, 'not found'],
   // ── routes/actors.js
+  ['/api/actors', 'routes/actors.js', 'PUT', '/api/actors/assign/abc', { action: 'pull' }, 'Chit not found'],
   // ── routes/catalogue.js
   // ── routes/channels.js
   ['/api/channels', 'routes/channels.js', 'DELETE', '/api/channels/abc', {}, 'Unbind failed'],
