@@ -32965,7 +32965,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1187,
-   "hash": "bc159fc978ac747d",
+   "hash": "9a64aceb18529725",
    "does": "",
    "errors": {
     "count": 2,
@@ -32988,8 +32988,7 @@
     "chit_header",
     "chit_status",
     "identities",
-    "journal_entry",
-    "party_item"
+    "journal_entry"
    ],
    "writes": [
     "books_payment"
@@ -33041,7 +33040,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bc159fc978ac747d"
+    "stale_since": "9a64aceb18529725"
    },
    "status": "partial",
    "callers": [
@@ -33090,8 +33089,7 @@
     "books_payment",
     "books_setting",
     "identities",
-    "journal_entry",
-    "party_item"
+    "journal_entry"
    ],
    "writes": [],
    "money": true,

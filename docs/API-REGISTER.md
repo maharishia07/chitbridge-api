@@ -1336,13 +1336,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, identities, journal_entry, party_item · writes (derived): books_payment · callers: cap-books.js · actions: -
+- reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, identities, journal_entry · writes (derived): books_payment · callers: cap-books.js · actions: -
 
 **POST /api/books/payments/:id/confirm** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, identities, journal_entry, party_item · writes (derived): - · callers: - · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/payments/:id/propose** · books · cb-accounting · partial
 - does: _not yet written_

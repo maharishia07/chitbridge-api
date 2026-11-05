@@ -46,7 +46,7 @@ const BREAKS = [
   [
     T,
     'routes/books.js',
-    '    await BP.moneySteps(e, pay, pairs,',
+    '    await billPrivacy.moneySteps(e, pay, pairs,',
     '    void (e, pay, pairs,',
     'a payment against a bill writes no step'
   ],
