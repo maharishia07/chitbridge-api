@@ -14,6 +14,7 @@
  * ⚠️ IT BUILDS, IT DOES NOT ISSUE. Nothing is written; an invoice number, a signature and the freeze belong to the chit.
  */
 const express = require('express');
+const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no chit (K-1)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { readFault, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
@@ -22,6 +23,9 @@ const auth = require('../middleware/auth');
 const S = require('../lib/services');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
+const shopClock = require('../lib/shop-clock'); // the seller's day, not the server's UTC
+const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const costView = require('../lib/cost-view'); // RAIL-146g: the invoice answer for a blind reader
 /** the schema check of one route (its own operation in lib/tax-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = contract.operationFor(route);
@@ -80,7 +84,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
         DocDtls: {
           Typ: 'INV',
           No: null,
-          Dt: require('../lib/shop-clock').today(seller && seller.Country)
+          Dt: shopClock.today(seller && seller.Country)
         } /* the seller's day (dayOf), not the server's UTC */,
         currency
       },
@@ -125,113 +129,17 @@ router.get(
   async (req, res) => {
     try {
       const me = auth.entityOf(req);
+      const notHeld = () => problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
+      if (!UUID.test(String(req.params.chit_id))) return notHeld(); /* K-1: a junk id answers as an unknown one, not a 500 with the driver's words */
       const hdr = await C.copyOf(req.params.chit_id, me);
-      if (!hdr) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: 'Not found', legacy: { error: 'Not found' } });
-      const e = await C.entryFor(hdr, me);
-      res.json({
-        chit_id: e.chit_id,
-        direction: e.direction,
-        sells: e.sells,
-        status: e.status,
-        provisional: e.provisional,
-        frozen: e.frozen,
-        rated: e.rated,
-        unrated: e.unrated,
-        seller: e.seller,
-        buyer: e.buyer,
-        invoice: e.invoice,
-        heads: T.heads(e.invoice)
-      });
+      if (!hdr) return notHeld();
+      /* RAIL-146g: a cost-blind co-assist reads no purchase invoice (lib/cost-view); M3: the answer is C.invoiceOf, the same as /api/tax/invoice/:id */
+      res.json(await costView.invoiceAnswer(await C.invoiceOf(hdr, me), await cost.isCostBlind(req, me), hdr, me));
     } catch (e) {
       problem(req, res, readFault(e, req));
     }
   }
 );
 
-router.openapi = {
-  paths: {
-    '/api/invoice/build': {
-      post: {
-        summary: 'Build an invoice: pricing structure → offers → tax → INV-01 block (nothing is issued)',
-        tags: ['invoice'],
-        security: [{ apiKey: [] }, { bearer: [] }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceBody' } } } },
-        responses: {
-          200: {
-            description: 'the built invoice and how it was arrived at',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/InvoiceResult' } } }
-          }
-        }
-      }
-    },
-    '/api/invoice/{chit_id}': {
-      get: {
-        summary: 'The tax invoice of a chit this entity holds',
-        tags: ['invoice'],
-        security: [{ apiKey: [] }, { bearer: [] }],
-        parameters: [{ name: 'chit_id', in: 'path', required: true, schema: { type: 'string' } }],
-        responses: { 200: { description: 'invoice' }, 404: { description: 'not held' } }
-      }
-    }
-  },
-  schemas: {
-    Party: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        Gstin: { type: 'string' },
-        State: { type: 'string', description: 'GST state code, e.g. 29' },
-        Pos: { type: 'string', description: 'place of supply (state code)' },
-        Country: { type: 'string', description: 'ISO 3166-1 alpha-2' },
-        RegType: { type: 'string', enum: ['regular', 'composition', 'unregistered'] }
-      }
-    },
-    InvoiceLine: {
-      type: 'object',
-      required: ['qty'],
-      properties: {
-        key: { type: 'string' },
-        item_id: { type: 'string' },
-        code: { type: 'string' },
-        name: { type: 'string' },
-        qty: { type: 'number' },
-        listPrice: { type: 'number' },
-        unit: { type: 'string' },
-        pricing: { $ref: '#/components/schemas/PricingStructure' },
-        discount: { type: 'number' },
-        gst_rate: { type: 'number' },
-        cess_rate: { type: 'number' },
-        hsn: { type: 'string' },
-        categories: { type: 'array', items: { type: 'string' } }
-      }
-    },
-    InvoiceBody: {
-      type: 'object',
-      required: ['lines'],
-      properties: {
-        seller: { $ref: '#/components/schemas/Party' },
-        buyer: { $ref: '#/components/schemas/Party' },
-        lines: { type: 'array', items: { $ref: '#/components/schemas/InvoiceLine' } },
-        offers: { type: 'array', items: { $ref: '#/components/schemas/Offer' } },
-        currency: { type: 'string' },
-        priceIncludesTax: { type: 'boolean' },
-        reverseCharge: { type: 'boolean' },
-        scheme: { type: 'string', description: 'GST (default) or a VAT-type scheme' }
-      }
-    },
-    InvoiceResult: {
-      type: 'object',
-      properties: {
-        pricing: { type: 'array', items: { type: 'object' } },
-        offers: { type: 'object' },
-        rates: { type: 'array', items: { type: 'object' } },
-        seller: { $ref: '#/components/schemas/Party' },
-        buyer: { $ref: '#/components/schemas/Party' },
-        invoice: { type: 'object', description: 'INV-01 shape: ItemList[], ValDtls, _cb{scheme,supply,notes}' },
-        heads: { type: 'object' }
-      }
-    }
-  }
-};
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

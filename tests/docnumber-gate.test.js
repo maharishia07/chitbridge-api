@@ -14,6 +14,7 @@
  * Run: node tests/docnumber-gate.test.js   · no network, no DB.
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const D = require('../lib/docnumber');
 
@@ -21,7 +22,7 @@ let pass = 0;
 const it = (what, fn) => { try { fn(); pass++; console.log('  ok  ' + what); }
   catch (e) { console.log('  FAIL ' + what + '\n       ' + e.message); process.exitCode = 1; } };
 
-const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+const route = CF.read(path.join(__dirname, '..'));
 /* the block the check lives in — bounded, so a match elsewhere in a 3,000-line file cannot fool this */
 const at = route.indexOf('let number_check = null;');
 const block = at > 0 ? route.slice(at, at + 1400) : '';

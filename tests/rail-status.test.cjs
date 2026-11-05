@@ -76,6 +76,7 @@ const realGate = railStatus.statusGate;
 railStatus.statusGate = async (db, e, c, to, me, o) => { GATES.push({ to, copy: (o && o.copy) || 'received', entity: e }); return realGate(db, e, c, to, me, o); };
 
 const chits = require(path.join(API, 'routes', 'chits'));
+const { moveStatus } = require(path.join(API, 'lib', 'chit-move')); /* the ONE status writer lives in lib now (LEAN-PLAN §8 #3) */
 const actors = require(path.join(API, 'routes', 'actors'));
 const app = express(); app.use(express.json()); app.use('/api/chits', chits); app.use('/api/actors', actors);
 const tok = (id) => jwt.sign({ identity_id: id, identity_type: 'entity', display_name: 'who-' + id.slice(0, 5) }, process.env.JWT_SECRET, { algorithm: 'HS256' });
@@ -152,7 +153,7 @@ const world = (rows) => { STATUS = rows.map((r) => Object.assign({ chit_id: C1 }
   t('actors push: back to pending through the gate', r.status === 200 && GATES.some((x) => x.to === 'pending') && STATUS[0].current_status === 'pending', r.status + ' ' + JSON.stringify(r.body));
   t('actors push: the status_pending timeline row carries the gate\'s from', SENT.some((s) => /'status_pending'/.test(s)));
   world([{ entity_id: R, direction: 'received', current_status: 'pending' }]);
-  const mv = await chits.moveStatus(R, C1, 'accepted', { id: R, name: 'R' }, '', EDITOR);
+  const mv = await moveStatus(R, C1, 'accepted', { id: R, name: 'R' }, '', EDITOR);
   t('moveStatus: its write is the gate\'s write', mv.code === 200 && GATES.some((x) => x.to === 'accepted') && STATUS[0].current_status === 'accepted');
   for (const x of updates()) t('every status UPDATE names its copy (direction)', /direction = '(received|sent)'/.test(x), x);
 

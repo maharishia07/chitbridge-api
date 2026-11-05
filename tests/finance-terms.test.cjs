@@ -4,6 +4,7 @@
  * Needs the books engines for the route half. Run: node tests/finance-terms.test.cjs
  */
 'use strict';
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const fs = require('fs'), path = require('path'), http = require('http');
 const H = require('./support/books-harness.cjs');
 const T = require('../lib/finance-terms');
@@ -86,7 +87,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   const lim = (m) => ({ query: async () => { touched++; return { rows: [{ credit_days: null, credit_limit_minor: m == null ? null : String(m) }] }; } });
   let LIMIT = 100000;
   D.withEntity = async (e, fn) => fn(lim(LIMIT));
-  hooks.isOn = async () => true; B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
+  hooks.isOn = async () => ({ enabled: true, country: 'IN', functional_currency: 'INR' }); B.controlOf = async () => ({ account_id: 'A' }); B.partyItems = async () => [];
   const bill = (how, amount, cust) => ({ currency: 'INR', customer: cust === null ? undefined : { entity_id: 'C1' }, payment: { parts: [{ how, amount }] } });
   let k = await T.creditSaleCheck('E1', bill('On credit', 1500));
   ok('credit ₹1500 against a ₹1000 limit → over, with the figures', k.over === true && k.party_id === 'C1' && k.limit_minor === 100000 && k.after_minor === 150000, JSON.stringify(k));
@@ -98,7 +99,7 @@ const logsOf = (db) => db.q.filter((x) => /INSERT INTO books_change_log/.test(x.
   ok('no limit anywhere → never over', (await T.creditSaleCheck('E1', bill('On credit', 999999))).over === false);
   hooks.isOn = async () => null; LIMIT = 100000;
   ok('ledger off → no check', (await T.creditSaleCheck('E1', bill('On credit', 1500))).over === false);
-  const chits = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const chits = CF.read(path.join(__dirname, '..'));
   ok('/send refuses OVER_LIMIT unless the owner allowed it (a counter key or the owner login)', /creditSaleCheck\(sender_id, business_json\)/.test(chits) && /code: 'OVER_LIMIT'/.test(chits) && /ov\.by && \(req\.till \|\| isOwner\(req\)\)/.test(chits));
 
   /* ── the routes before b298 has run ── */

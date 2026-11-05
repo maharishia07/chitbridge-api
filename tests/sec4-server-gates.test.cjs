@@ -171,12 +171,17 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 200);
   t('the CTP pull (publicViewFor with neither owner nor viewer) → the card only', !!ctp.sign_in && !ctp.items && Object.keys(ctp).sort().join(',') === 'shop,sign_in', Object.keys(ctp).join(','));
   t('a signed-in business reading as a viewer (enquiry, B2B) → the catalogue', !(await cat.publicViewFor(ent, { viewer: 'other-shop' })).sign_in);
   const CTP_SRC = fs.readFileSync(path.join(API, 'routes', 'ctp.js'), 'utf8');
-  t('routes/ctp.js answers a peer through publicViewFor + publicResponseFor (the same cut)', /cat\.publicViewFor\(ent, \{\}\)/.test(CTP_SRC) && /cat\.publicResponseFor\(view, false\)/.test(CTP_SRC));
+  t('routes/ctp.js answers a peer through publicViewFor + publicResponseFor (the same cut)', /catalogue\.publicViewFor\(ent, \{\}\)/.test(CTP_SRC) && /catalogue\.publicResponseFor\(view, false\)/.test(CTP_SRC));
   const CAT_SRC = fs.readFileSync(path.join(API, 'routes', 'catalogue.js'), 'utf8');
   t('the network storefront skips a sign-in-first department', /if \(view\.sign_in\) continue;/.test(CAT_SRC));
-  SQL.length = 0;
-  await call('GET', '/api/catalogue/network-store/shop-s', null);
-  t('the network lens (network-store) filters sign-in-first shops in its one statement', SQL.some((s) => /FROM catalogue_items ci/.test(s) && /storefront_access' = 'login'/.test(s)));
+  /* SEC-126: the network lens reads each shop through publicViewFor — the same sign-in cut, not a statement of its own */
+  let nr = await call('GET', '/api/catalogue/network-store/shop-s', null);
+  t('the network lens (network-store) lists nothing of a sign-in-first shop', nr.status === 200 && (nr.body.products || []).length === 0, show(nr));
+  SF = 'browse';
+  nr = await call('GET', '/api/catalogue/network-store/shop-s', null);
+  t('…and the same shop, browse-first, is listed', nr.status === 200 && (nr.body.products || []).length === 1, show(nr));
+  SF = 'login';
+  t('…through publicViewFor, never its own catalogue_items statement', /publicViewFor\(shop, \{\}\)/.test(CAT_SRC) && !/FROM catalogue_items ci WHERE ci\.entity_id = ANY/.test(CAT_SRC));
 
   console.log('\n— C · enquiries ring the supplier\'s bell, and there is a list —');
   BELL.length = 0;

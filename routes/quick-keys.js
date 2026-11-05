@@ -29,11 +29,17 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { contract, schemaOptions, words, quickKeyFault } = require('../lib/quick-keys-contract'); // the contract (each route's operation) and the words of a refusal
 const qk = require('../lib/quick-keys');
+const { UUID_RE } = require('../lib/trace');
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return problem(req, res, { status: 403, ...words.sessionOnly() });
   next();
 };
+
+/* CTR-172 — a group (or product) id in the address that is not a uuid names nothing this shop holds: answered 404 here, before the database puts its own words into a 500. One guard for every route of this file. */
+const noSuchGroup = (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.notFound() }));
+router.param('id', noSuchGroup);
+router.param('productId', noSuchGroup); // a product id that is not a uuid is a key that is not on the group
 
 const userOf = (req) => req.identity.identity_id;
 

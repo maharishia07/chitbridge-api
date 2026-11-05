@@ -31,6 +31,26 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock, Math.random and uuid are held still, so a difference is the code's and not the run's */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+  let minted = 0;
+  const uuidFile = require.resolve('uuid');
+  const realUuid = require('uuid');
+  require.cache[uuidFile].exports = Object.assign({}, realUuid, { v4: () => '00000000-0000-4000-8000-' + String((minted += 1)).padStart(12, '0') });
+}
 const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
@@ -126,6 +146,7 @@ function freshRepeat() {
   const { memory } = require('./support/repeat-supply-memory.cjs');
   const R = require(path.join(HERE, 'lib', 'repeat-supply'));
   repeatMemory = memory();
+  repeatMemory.postgres = true; /* K-1 (B2): the store keeps the rules of Postgres a junk value breaks (a chit id is a uuid, a NUL byte is no text) */
   repeatMemory.migrated = world.repeatMigrated;
   R.use(repeatMemory.store);
   R.useSender(repeatMemory.sendAs);
@@ -197,6 +218,19 @@ const BARE_COPY = { current_status: null, created_at: null, summary_json: null, 
 /** a shop that holds more copies than one read takes (lib/work-rows LIMIT): the answer says truncated and gives no counts */
 const MANY = (S) => { S.D.bigRows = Array.from({ length: 5000 }, (nothing, at) => S.copy(1 + (at % 5), { chit_id: S.U(500 + at) })); };
 const onSheet = (n, extra) => X('sheet-' + n[0], 'GET ' + WK + '/:chit_id', 200, Object.assign({ url: WK + '/' + chitOf(n[1]), setup: MIGRATED }, extra));
+/* S34: the SUCCESS side of the 14 repeat routes API-8 closed: every nullable column of the agreement is held as null in one scene and filled in another */
+const THIRD_PARTY = { identity_id: 'e4', identity_type: 'entity', display_name: 'Third shop' };
+const MONEY = { gross: 1000, savings: 0, net: 1000, tax: 180, total: 1180, currency_code: 'INR', provisional: true };
+/** the agreement with every optional column filled: the bill it came from, the anchor day, the end, the cap, the last run, who moved it, the stamp, the update, the money and the subject */
+const FULL_ROW = { state: 'agreed', source_chit_id: BILL_CHIT, unit: 'monthly', anchor_day: 15, next_on: '2099-01-15', end_on: '2099-12-31', runs_max: 5, last_run_on: '2098-12-15', state_by: SHOP, state_at: '2026-10-02T00:00:00Z', state_note: 'Checked', created_by: SHOP, updated_at: '2026-10-03T00:00:00Z', terms: { lines: [{ line_id: 'l1', quantity: 3 }] } };
+const filled = { prep: async () => { await seedAgreement(FULL_ROW); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], summary_json: { currency_code: 'INR', money: MONEY }, manual_subject: 'Repeat supply · every month' }); } };
+/** the agreement chit names nobody but the sender: the customer has no name on it */
+const unnamed = { prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }], all_recipients: [] }); } };
+const dueTwice = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3 }); } };
+const refusedRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.refuseSend = 'Not now'; } };
+const brokenRun = { prep: async () => { await seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 1 }); repeatMemory.sendAs = async () => { throw new Error(SECRET_SQL); }; require(path.join(HERE, 'lib', 'repeat-supply')).useSender(repeatMemory.sendAs); } };
+/** a third shop that holds the agreement chit reads the agreement and is told it is read only */
+const thirdParty = { url: RS + '/' + AGREEMENT + AT, setup: { who: THIRD_PARTY }, prep: async () => { await seedAgreement({ state: 'agreed' }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, 'e4', { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); repeatMemory.hold(AGREEMENT_CHIT, SHOP, CUSTOMER, { purpose: 'subscription', business_json: { repeat: { agreement_id: AGREEMENT } }, line_items: [{ line_id: 'l1', particulars: 'Tea', quantity: 2 }] }); } };
 const EXTRAS = [
   /* repeat supply: the seller's side */
   X('migrated-empty-list', 'GET ' + RS, 200, {}),
@@ -257,7 +291,37 @@ const EXTRAS = [
   X('sweep-as-viewer', 'POST ' + RS + '/sweep', 403, { setup: { who: VIEWER } }),
   X('create-as-viewer', 'POST ' + RS, 403, { body: {}, setup: { who: VIEWER } }),
   N('body-not-an-object', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: [] }, agreed)),
+  X('list-filled', 'GET ' + RS, 200, filled),
+  X('list-unnamed-customer', 'GET ' + RS, 200, unnamed),
+  X('one-filled', 'GET ' + RS + '/:id', 200, filled),
+  X('one-unnamed-customer', 'GET ' + RS + '/:id', 200, unnamed),
+  X('one-read-only', 'GET ' + RS + '/:id', 200, thirdParty),
+  X('pause-filled', 'POST ' + RS + '/:id/pause', 200, Object.assign({ body: { reason: 'stock' } }, filled)),
+  X('end-with-a-reason', 'POST ' + RS + '/:id/end', 200, Object.assign({ body: { reason: 'closed' } }, agreed)),
+  X('refuse-with-a-reason', 'POST ' + RS + '/:id/refuse', 200, Object.assign({ body: { reason: 'no' } }, countered)),
+  X('agree-the-lines', 'POST ' + RS + '/:id/agree', 200, { prep: () => seedAgreement({ state: 'countered', counter: { lines: [{ line_id: 'l1', quantity: 3 }], every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'more', by: CUSTOMER, at: '2026-10-02T00:00:00Z' } }) }),
+  X('counter-the-lines', 'POST ' + RS + '/:id/counter', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { lines: [{ line_id: 'l1', quantity: 3 }] } }, proposed, { setup: asCustomer })),
+  X('accept-unnamed', 'POST ' + RS + '/:id/accept', 200, Object.assign({ url: RS + '/' + AGREEMENT + '/accept' + AT }, unnamed, { prep: async () => { await seedAgreement({ state: 'proposed' }); } }, { setup: asCustomer })),
+  X('skip-twice', 'POST ' + RS + '/:id/skip', 200, Object.assign({ body: { reason: 'holiday' } }, filled)),
+  X('run-catches-up', 'POST ' + RS + '/:id/run', 200, dueTwice),
+  X('run-again-same-day', 'POST ' + RS + '/:id/run', 200, { prep: () => seedAgreement({ state: 'agreed', next_on: '2000-01-01', runs_max: 3, runs: { '2000-01-01': 'aaaaaaaa-0000-4000-8000-000000000009' } }) }),
+  X('run-refused-by-the-send', 'POST ' + RS + '/:id/run', 200, refusedRun),
+  X('run-breaks-in-the-send', 'POST ' + RS + '/:id/run', 200, brokenRun),
+  X('sweep-refused-by-the-send', 'POST ' + RS + '/sweep', 200, refusedRun),
+  X('sweep-breaks-in-the-send', 'POST ' + RS + '/sweep', 200, brokenRun),
+  X('sweep-catches-up', 'POST ' + RS + '/sweep', 200, dueTwice),
+  X('create-from-a-bare-bill', 'POST ' + RS, 200, { body: Object.assign({ chit_id: BILL_CHIT, anchor_day: 10, until: { on: '2099-12-31' }, mode: 'send' }, SCHEDULE, { until: { on: '2099-12-31' }, unit: 'monthly' }), prep: () => seedBill({ summary_json: {} }) }),
   N('body-not-an-object', 'POST ' + RS, 400, { body: [] }),
+  /* K-1 (B2): a chit id that is no uuid answers as one no shop holds (404, as an unknown bill or a chit the caller does not hold); text the database cannot store is a 400 in plain words */
+  N('create-bill-is-not-an-id', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'nope' }, SCHEDULE) }),
+  N('create-bill-with-a-nul-byte', 'POST ' + RS, 404, { body: Object.assign({ chit_id: 'a\u0000b' }, SCHEDULE) }),
+  N('one-chit-is-not-an-id', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=nope' }, agreed, { setup: { who: STRANGER } })),
+  N('one-chit-with-a-nul-byte', 'GET ' + RS + '/:id', 404, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a%00b' }, agreed, { setup: { who: STRANGER } })),
+  N('pause-reason-with-a-nul-byte', 'POST ' + RS + '/:id/pause', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('end-reason-with-a-nul-byte', 'POST ' + RS + '/:id/end', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('refuse-reason-with-a-nul-byte', 'POST ' + RS + '/:id/refuse', 400, Object.assign({ body: { reason: 'a\u0000b' } }, countered)),
+  N('skip-reason-with-a-nul-byte', 'POST ' + RS + '/:id/skip', 400, Object.assign({ body: { reason: 'a\u0000b' } }, agreed)),
+  N('counter-note-with-a-nul-byte', 'POST ' + RS + '/:id/counter', 400, Object.assign({ url: RS + '/' + AGREEMENT + '/counter' + AT, body: { every: 2, unit: 'weekly', start_on: '2099-02-01', note: 'a\u0000b' } }, proposed, { setup: asCustomer })),
   N('chit-given-twice', 'GET ' + RS + '/:id', 400, Object.assign({ url: RS + '/' + AGREEMENT + '?chit=a&chit=b' }, agreed)),
   /* work */
   X('list-orders-in', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in' }),
@@ -289,11 +353,16 @@ const EXTRAS = [
   onSheet(['order-with-no-lines', 3]),
   onSheet(['bare-copy', 3], { prep: changeCopy(3, BARE_COPY) }),
   X('sheet-bare-copy-no-tables', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(3), prep: changeCopy(3, BARE_COPY) }),
+  /* RAIL-146b: a co-assist WITHOUT can_see_costs — the cost-side rows lose their money (cost_hidden), the sheet and the unbilled figure too; no party is on a list here, so every row is unknown and hides */
+  X('list-orders-in-cost-blind', 'GET ' + WK + '/list', 200, { url: WK + '/list?view=orders_in', setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('sheet-cost-blind', 'GET ' + WK + '/:chit_id', 200, { url: WK + '/' + chitOf(1), setup: Object.assign({ who: STAFF }, MIGRATED), prep: (S) => { S.D.canSeeCosts = false; } }),
+  X('facts-unbilled-cost-blind', 'GET ' + WK + '/facts', 200, { url: WK + '/facts?unbilled=1', setup: { who: STAFF }, prep: (S) => { S.D.canSeeCosts = false; } }),
   /* counters */
   X('counters-listed', 'GET ' + CT, 200, { setup: { flags: FREE } }),
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),
   X('counters-listed-as-staff', 'GET ' + CT, 200, { setup: { flags: FREE, who: STAFF } }),
   X('counters-key-refused', 'GET ' + CT, 403, { setup: { asKey: true } }),
+  X('counter-make-unknown-key-refused', 'POST ' + CT, 400, { body: { colour: 'red', name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made', 'POST ' + CT, 201, { body: { name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made-unnamed', 'POST ' + CT, 201, { body: {}, setup: { flags: FREE } }),
   X('counter-none-left', 'POST ' + CT, 400, { body: {}, setup: { flags: FREE, bookedAll: true } }),
@@ -301,17 +370,20 @@ const EXTRAS = [
   X('counter-make-not-migrated', 'POST ' + CT, 503, { body: {}, setup: { flags: FREE, policyMissing: true } }),
   X('counter-make-as-staff', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, who: STAFF } }),
   X('counter-make-by-key', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, asKey: true } }),
+  X('counter-rename-unknown-key-refused', 'PATCH ' + CT + '/:id', 400, { body: { colour: 'red', name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-renamed', 'PATCH ' + CT + '/:id', 200, { body: { name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-rename-unnamed', 'PATCH ' + CT + '/:id', 400, { body: {}, setup: { flags: FREE } }),
   X('counter-rename-unknown', 'PATCH ' + CT + '/:id', 404, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/C9' }),
   X('counter-rename-lowercase-id', 'PATCH ' + CT + '/:id', 200, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/c1' }),
   X('counter-rename-fails', 'PATCH ' + CT + '/:id', 500, { body: { name: 'x' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-assign-unknown-key-refused', 'POST ' + CT + '/:id/assign', 400, { body: { colour: 'red', phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-assigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-unassigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '' }, setup: { flags: FREE } }),
   X('counter-assign-bad-phone', 'POST ' + CT + '/:id/assign', 400, { body: { phone: '12' }, setup: { flags: FREE } }),
   X('counter-assign-unknown', 'POST ' + CT + '/:id/assign', 404, { body: { phone: '' }, setup: { flags: FREE }, url: CT + '/C9/assign' }),
   X('counter-assign-as-staff', 'POST ' + CT + '/:id/assign', 403, { body: { phone: '' }, setup: { flags: FREE, who: STAFF } }),
   X('counter-assign-fails', 'POST ' + CT + '/:id/assign', 500, { body: { phone: '' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-open-unknown-key-refused', 'POST ' + CT + '/:id/open', 400, { body: { colour: 'red' }, setup: { flags: FREE, patchKeys: true } }),
   X('counter-opened', 'POST ' + CT + '/:id/open', 200, { body: {}, setup: { flags: FREE, patchKeys: true } }),
   X('counter-open-held', 'POST ' + CT + '/:id/open', 409, { body: {}, setup: { flags: HELD } }),
   X('counter-open-unknown', 'POST ' + CT + '/:id/open', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/open' }),
@@ -319,6 +391,7 @@ const EXTRAS = [
   X('counter-open-mint-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: new Error(SECRET_SQL) } }),
   X('counter-open-mint-refuses', 'POST ' + CT + '/:id/open', 400, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: Object.assign(new Error('Too many keys.'), { status: 400 }) } }),
   X('counter-open-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-release-unknown-key-refused', 'POST ' + CT + '/:id/release', 400, { body: { colour: 'red' }, setup: { flags: HELD } }),
   X('counter-released', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: HELD } }),
   X('counter-released-free', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: FREE } }),
   X('counter-release-unknown', 'POST ' + CT + '/:id/release', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/release' }),
@@ -378,7 +451,7 @@ function applyPatch(setup) {
     undo.push([owner, name, owner[name]]);
     owner[name] = given;
   };
-  const keys = require(path.join(HERE, 'routes', 'keys'));
+  const keys = require(path.join(HERE, 'lib', 'api-keys'));
   if (setup.patchKeys || setup.mintFails) {
     swap(keys, 'mint', async () => {
       if (setup.mintFails) throw setup.mintFails;
@@ -545,6 +618,7 @@ function checkOrdersWords() {
   const req = { id: 'r1' };
   const refused = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, code: 'REPEAT_ENDED', status: 422 }), req);
   check('repeatFault: a refusal keeps its own code and sentence, 422', refused.status === 422 && refused.code === 'REPEAT_ENDED' && sameValue(refused.legacy, { code: 'REPEAT_ENDED', error: 'Because.', message: 'Because.' }), refused);
+  check('repeatFault: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 REPEAT_BAD_REQUEST in plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.repeatFault(sqlError(code), req); return one.status === 400 && one.code === 'REPEAT_BAD_REQUEST' && sameValue(one.legacy, { error: 'Bad request', message: 'Cannot save this text. Type it again.' }); }));
   const bare = words.repeatFault(Object.assign(new Error('Because.'), { refused: true, status: 422 }), req);
   check('repeatFault: a refusal with no code is REPEAT_REFUSED', bare.code === 'REPEAT_REFUSED' && bare.legacy.code === 'REPEAT_REFUSED', bare);
   const odd = words.repeatFault(Object.assign(new Error('Closed.'), { status: 409, body: { why: 'wrong_step' } }), req);
@@ -569,15 +643,30 @@ function checkContractShape() {
 }
 
 /**
- * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
+ * API-8 output allow-list (S34), the way tests/api-problem-books.test.cjs proves it: a work read or a repeat-supply route whose derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root
  * and whose recorded 200s all fit it (types and nullable columns included) is proved here; the generator's proxy world holds no Tasks & Orders rows, so it answers the sheet 404.
  * → { route: { output_allowlist: true } } for the routes that held
  */
-function checkAllowList(recording) {
+/** S41 (K-1, B2): a chit id that is no uuid (or holds a NUL byte) answers exactly as one no shop holds: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (key) => JSON.stringify(Object.assign({}, (recording[key] || {}).body, { request_id: null }));
+  const pairs = [
+    ['GET /api/repeat/:id|', 'one-chit-is-not-an-id', 'one-as-a-stranger'],
+    ['GET /api/repeat/:id|', 'one-chit-with-a-nul-byte', 'one-as-a-stranger'],
+    ['POST /api/repeat|', 'create-bill-is-not-an-id', 'create-bill-unknown'],
+    ['POST /api/repeat|', 'create-bill-with-a-nul-byte', 'create-bill-unknown']
+  ];
+  pairs.forEach(([route, junk, unknown]) => {
+    check(junk + ': answers exactly as ' + unknown + ' (404, same body)', (recording[route + junk] || {}).status === 404 && (recording[route + unknown] || {}).status === 404 && bodyOf(route + junk) === bodyOf(route + unknown), { junk: (recording[route + junk] || {}).status, unknown: (recording[route + unknown] || {}).status });
+  });
+}
+
+function checkAllowList(recording, routes) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].forEach((route) => { /* in the order the evidence file is read: sorted */
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => mountOf(route) === RS)).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
     const shape = shapeOf(route);
     const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
     const fits = shape && engine.compile(shape.schema);
@@ -590,13 +679,13 @@ function checkAllowList(recording) {
 /** the work reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + WK + '/') && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => route.includes(' ' + WK + '/')).forEach((route) => {
+  Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route))).forEach((route) => {
     delete routes[route].output_allowlist;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
@@ -641,7 +730,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   check('the output allow-list dropped no key from any answer', require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys().length === 0, require(path.join(HERE, 'lib', 'output-allowlist')).droppedKeys());
-  const allowed = checkAllowList(recording);
+  checkJunkAnswersAsUnknown(recording);
+  const allowed = checkAllowList(recording, routes);
   const leaks = (key) => JSON.stringify(recording[key].body || {}).includes('vault');
   const refused = Object.keys(recording).filter((key) => recording[key].status >= 400);
   check('a refusal or a 500 never says its cause: no answer of 400 and over carries the database text', refused.filter(leaks).length === 0, refused.filter(leaks));
@@ -657,7 +747,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
     writeAllowList(allowed);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads and repeat-supply routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }

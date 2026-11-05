@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * api-problem-entities.test.cjs — API-4 sweep, the entities: every answer of routes/entities.js (25 routes: sign-up and sign-in, the profile, policy, routing, populations, erasure).
+ * api-problem-entities.test.cjs — API-4 sweep, the entities: every answer of routes/entities.js (24 routes: sign-up and sign-in, the profile, policy, routing, populations, erasure).
  *
  * OWNS      the proof that each refusal of the entities routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
@@ -65,7 +65,8 @@ const sources = () => ({
   header: require(path.join(HERE, 'lib', 'entity-header')),
   sides: require(path.join(HERE, 'lib', 'sides')),
   plans: require(path.join(HERE, 'lib', 'plans')),
-  govresolve: require(path.join(HERE, 'lib', 'govresolve'))
+  govresolve: require(path.join(HERE, 'lib', 'govresolve')),
+  search: require(path.join(HERE, 'lib', 'network-search')) /* NET-39: the Where picker's places, so its 500 can be shown */
 });
 const contractModule = () => require(path.join(HERE, 'lib', 'entities-contract.js'));
 

@@ -35,7 +35,7 @@ const itemSelectAt = src.indexOf('FROM catalogue_items WHERE entity_id = $1 AND 
 const readAtDeclAt = src.indexOf('const readAt = new Date().toISOString();');
 /* ⚠️ MOVED, NOT DELETED (2026-09-28): the cursor is readAt, or — for a delta sent in parts — the last row it carries.
    Never a fresh "now" taken after the read, which is the defect this file exists for. */
-const bodyAtAt = src.search(/at: deltaCursor \|\| readAt\b/);
+const bodyAtAt = src.search(/at: paged\.cursor \|\| asked\.readAt\b/);
 
 console.log('\n── the snapshot route exists, and in the order this test assumes ──\n');
 ok('the /snapshot route is present', snapshotStart >= 0);
@@ -51,7 +51,7 @@ ok('body.at uses readAt', bodyAtAt > itemSelectAt, 'body.at should read `at: rea
 const bodyLiteralStart = src.indexOf('const body = {');
 const bodyWindow = src.slice(bodyLiteralStart, bodyLiteralStart + 400);
 ok('the body literal\'s own `at:` field is `readAt`, not a fresh new Date()',
-  /at:\s*(deltaCursor\s*\|\|\s*)?readAt\s*(\/\*[\s\S]*?\*\/)?\s*,/.test(bodyWindow) && !/at:\s*new Date\(\)/.test(bodyWindow),
+  /at:\s*(paged\.cursor\s*\|\|\s*asked\.)?readAt\s*(\/\*[\s\S]*?\*\/)?\s*,/.test(bodyWindow) && !/at:\s*new Date\(\)/.test(bodyWindow),
   'body literal opens with: ' + bodyWindow.slice(0, 80).replace(/\s+/g, ' '));
 
 /* ⚠️⚠️ external review 2026-09-25: newest-first LIMIT 20000 dropped the OLDEST changes past the cap while the cursor jumped */
@@ -59,14 +59,14 @@ console.log('\n── a delta longer than the cap is sent in PARTS, never cut �
 const snap = src.slice(snapshotStart, src.indexOf('router.', snapshotStart + 30) > 0 ? src.indexOf('\nrouter.', snapshotStart + 30) : src.length);
 ok('the delta reads OLDEST first, one past the cap', /updated_at > \$2 ORDER BY updated_at ASC LIMIT \$3',\s*\[entity_id, since, DELTA_CAP \+ 1\]/.test(snap),
   'a newest-first delta cuts the oldest changes');
-ok('the delta goes through deltaPage, and the answer carries more', /const pg = deltaPage\(all, DELTA_CAP\)/.test(snap) && /more: deltaMore,/.test(snap));
+ok('the delta goes through deltaPage, and the answer carries more', /deltaPage\(\(itemRows && itemRows\.rows\) \|\| \[\], DELTA_CAP\)/.test(snap) && /more: paged\.more,/.test(snap));
 
 /* ⭐ SEC-SMALL item 5 (2026-10-14): the FULL read was still `ORDER BY updated_at DESC NULLS LAST LIMIT 20000`, cut in silence — a shop past
    the cap never received its oldest items, and the till's total check pulled the whole (cut) shop again on every refresh */
 console.log('\n── the FULL read pages by the same rule, and says its limit ──\n');
 ok('⭐ the full read is oldest-first, one past the cap, through the same parameter', /is_active = true ORDER BY updated_at ASC LIMIT \$2',\s*\[entity_id, DELTA_CAP \+ 1\]/.test(snap),
   'a full read that is newest-first LIMIT 20000 cuts the oldest items in silence');
-ok('deltaPage runs for a delta AND a full read (no `if (since)` around it)', !/if \(since\) \{\s*const pg = deltaPage/.test(snap) && /\{\s*const pg = deltaPage\(all, DELTA_CAP\);\s*all = pg\.rows;/.test(snap));
+ok('deltaPage runs for a delta AND a full read (no `if (since)` around it)', !/if \(since\) \{\s*const page = deltaPage/.test(snap) && /const page = deltaPage\(/.test(snap));
 ok('the answer says its limit beside more · at · total', /limit: DELTA_CAP,/.test(snap));
 ok('no bare LIMIT 20000 is left in the snapshot route', !/LIMIT 20000/.test(snap.replace(/\/\*[\s\S]*?\*\//g, '')), 'a silent cap remains');
 ok('the dues aggregate reads one past the cap and, cut, sends balances as UNKNOWN (absent) with a warn line',
@@ -100,7 +100,7 @@ if (fn) {
 }
 
 /* ⭐ and the behaviour itself: a counter that follows the cursor receives EVERY row, however many parts it takes */
-const fnSrc = src.match(/function deltaPage\(rows, cap\) \{[\s\S]*?\n\}/);
+const fnSrc = src.match(/function deltaPage\(rows, capacity\) \{[\s\S]*?\n\}/);
 ok('deltaPage exists', !!fnSrc);
 const deltaPage = new Function(fnSrc[0] + '; return deltaPage;')();
 const t0 = Date.parse('2026-09-28T10:00:00.000Z');

@@ -9,15 +9,23 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, faultOf } = require('../lib/forms-contract'); // the contract (each route's operation) and the one way a fault is worded
 const forms = require('../lib/forms');
 const access = require('../lib/access'); /* TRADE-SRV1 G8: issue · sign · attach are the owner's or an editor's; the reads say so (may/why) */
 const mayOf = (req) => {
-  const m = access.mayWrite(req);
-  return { issue: m, sign: m, attach: m };
+  const verdict = access.mayWrite(req);
+  return { issue: verdict, sign: verdict, attach: verdict };
 };
 const entityId = (req) => auth.entityOf(req);
+
+/* K-1 (API-10) — an issued-form id that is not a uuid names no form: the route's own 404 words (its screen's label, the library's sentence) before the database answers in a 500 */
+const NOT_FOUND_LABEL = { GET: 'Get instance failed', sign: 'Sign form failed', attach: 'Attach form failed' };
+const unknownInstance = (req) => {
+  const { code, detail, legacy } = faultOf(Object.assign(new Error('Form instance not found'), { status: 404 }), req, NOT_FOUND_LABEL[req.method === 'GET' ? 'GET' : req.path.split('/').pop()]);
+  return { code, detail, legacy }; // FORMS_NOT_FOUND, the code an unknown uuid answers: a bad id answers exactly as an unknown one (S41)
+};
+router.param('id', uuidParam(unknownInstance));
 
 // list the form definitions (the registry)
 router.get('/', auth, async (req, res) => {

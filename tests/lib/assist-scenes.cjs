@@ -13,6 +13,8 @@
 const AS = '/api/assist';
 const OTHER = '88888888-8888-4888-8888-888888888888';
 const STRANGER_ID = '66666666-6666-4666-8666-666666666666';
+/** the writes each watched scene asked for, by scene id (read by the test after the run) */
+const WRITES = {};
 const KNOWN_SOURCE = 'beta-royale-play@v1';
 const BEARER = { authorization: 'Bearer stand-in' };
 const MODEL_ON = { ASSIST_LLM_PROVIDER: 'anthropic' };
@@ -21,7 +23,13 @@ const MODEL_ON = { ASSIST_LLM_PROVIDER: 'anthropic' };
 function extras(tools) {
   const { SHOP, SECRET_SQL, answering, raising, firstOf, standard } = tools;
   const X = (id, route, expect, more) => Object.assign({ id, route, expect, setup: {} }, more);
+  const N = (id, route, expect, more) => X(id, route, expect, Object.assign({ after: true }, more)); // a refusal the handler makes itself, added by the sweep: nothing was frozen
   const at = (tail) => AS + tail;
+  /** rows that also LOG every write the handler asked for under this scene's id (WRITES[id]); a refusal of a foreign or unknown id must leave it empty */
+  const watched = (id, rows) => (sql, params) => {
+    if (/^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql))) (WRITES[id] = WRITES[id] || []).push(String(sql).trim().split(/\s+/).slice(0, 3).join(' '));
+    return rows ? rows(sql, params) : null;
+  };
   const boom = () => {
     throw new Error(SECRET_SQL);
   };
@@ -107,16 +115,16 @@ function extras(tools) {
     X('source-authored', 'PUT ' + at('/catalogue-source'), 200, { body: { source_key: 'x@v1', title: 'T', items: [{ name: 'Tussar' }] } }),
     X('source-fault', 'PUT ' + at('/catalogue-source'), 500, { body: { source_key: 'x@v1' }, setup: { jsonThrows: true }, throws: true }),
     X('container-needs-an-id', 'PUT ' + at('/container'), 422, { body: {} }),
-    X('container-of-another-brand', 'PUT ' + at('/container'), 403, { body: { container_id: 'a/b' }, setup: { sqlRows: containerRow(OTHER) } }),
+    N('container-of-another-brand', 'PUT ' + at('/container'), 404, { body: { container_id: 'a/b', content: { a: 1 } }, setup: { sqlRows: watched('container-of-another-brand', containerRow(OTHER)) } }),
     X('container-store-missing', 'PUT ' + at('/container'), 503, { body: { container_id: 'a/b' }, setup: { sqlRows: raising(/INSERT INTO product_container/, '42P01') } }),
-    X('container-authored', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', name: 'N', content: { a: 1 } } }),
+    X('container-authored', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', name: 'N', content: { a: 1 } }, setup: { sqlRows: watched('container-authored') } }),
     X('container-enhanced', 'PUT ' + at('/container'), 200, { body: { container_id: 'a/b', content: { a: 2 } }, setup: { sqlRows: containerRow(SHOP) } }),
     X('container-fault', 'PUT ' + at('/container'), 500, { body: { container_id: 'a/b' }, setup: { jsonThrows: true }, throws: true }),
     X('region-needs-both', 'PUT ' + at('/region-override'), 422, { body: { container_id: 'a/b' } }),
-    X('region-unknown-container', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU' } }),
-    X('region-of-another-brand', 'PUT ' + at('/region-override'), 403, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: containerRow(OTHER) } }),
+    X('region-unknown-container', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: watched('region-unknown-container') } }),
+    N('region-of-another-brand', 'PUT ' + at('/region-override'), 404, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: watched('region-of-another-brand', containerRow(OTHER)) } }),
     X('region-store-missing', 'PUT ' + at('/region-override'), 503, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: firstOf(containerRow(SHOP), raising(/container_region_override/, '42P01')) } }),
-    X('region-stored', 'PUT ' + at('/region-override'), 200, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: containerRow(SHOP) } }),
+    X('region-stored', 'PUT ' + at('/region-override'), 200, { body: { container_id: 'a/b', region: 'AU', overrides: { x: 1 } }, setup: { sqlRows: watched('region-stored', containerRow(SHOP)) } }),
     X('region-fault', 'PUT ' + at('/region-override'), 500, { body: { container_id: 'a/b', region: 'AU' }, setup: { sqlRows: containerRow(SHOP), jsonThrows: true }, throws: true })
   ];
 
@@ -170,4 +178,4 @@ function extras(tools) {
   return [].concat(assistant, conform, structure, adopt, authoring, reads, helpDesk_);
 }
 
-module.exports = { extras, OTHER, STRANGER_ID, KNOWN_SOURCE };
+module.exports = { extras, WRITES, OTHER, STRANGER_ID, KNOWN_SOURCE };

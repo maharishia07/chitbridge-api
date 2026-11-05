@@ -18,8 +18,10 @@
  * CARD 28-platform-and-operations/limits-idempotency-rate-limits
  */
 const express = require('express');
-const rateLimit = require('express-rate-limit');
+const { rateLimit } = require('../lib/rate-limit');
 const log = require('../lib/logger');
+const { contract } = require('../lib/csp-report-contract');
+const { declaresStatuses } = require('../lib/contract-kit'); // the contract (the route's operation: public, three refusals of its own stack)
 
 const router = express.Router();
 const REPORTS_PER_MIN = 30;
@@ -77,12 +79,14 @@ function reportsOf(body) {
   });
 }
 
-router.post('/', reportLimiter, express.json({ type: TYPES, limit: '8kb' }), (req, res) => {
+router.post('/', reportLimiter, express.json({ type: TYPES, limit: '8kb' }), declaresStatuses([413, 429]), ...contract.checked('POST /'), (req, res) => {
   reportsOf(req.body).forEach((item) => {
     if (item.directive || item.blocked) log.warn('csp violation', item);
   });
   res.status(204).end();
 });
+
+router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the route (lib/csp-report-contract.js)
 
 module.exports = router;
 module.exports.reportsOf = reportsOf;

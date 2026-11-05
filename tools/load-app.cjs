@@ -30,7 +30,7 @@ function stubDatabase(root, answer) {
       withEntity: async (id, body) => body(scoped(id)),
       withTransaction: async (body) => body(client),
       onEntity: async (id, db, body) => body(scoped(id)),
-      readBatch: async () => ({}),
+      readBatch: async (id, actor, statements) => Promise.all(statements.map((statement) => answerOf(id)(statement.text || statement, statement.params))),
       trySavepoint: async (db, body, fallback) => {
         try {
           return await body(db);

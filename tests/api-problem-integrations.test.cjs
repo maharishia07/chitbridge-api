@@ -92,7 +92,7 @@ function installStubs() {
       return patch;
     }
   });
-  mock('routes/keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
+  mock('lib/api-keys', { listOf: async () => [], setEnrol: async () => ({}), mint: async () => ({ key: 'k', name: 'n', last4: '0000' }) });
   mock('lib/profile', {
     profileValues: async () => {
       if (world.profileFails) throw new Error(SECRET_SQL);
@@ -120,6 +120,7 @@ function installStubs() {
 /* ── the scenarios: every error answer of routes/integrations.js (and the shared gates in front of it) ──────────
    inherited = the sign-in middleware's own 401, or requireScope's 403: tested, not yet a Problem (the old body, as for routes/keys.js)
    fresh     = an answer the route did not give before slice 1c (its schema's refusal): a Problem, with no frozen keys to keep */
+const A1 = '44444444-4444-4444-8444-444444444444'; /* a connector actor id: uuid-shaped, as the guard on :actor_id requires */
 const I = '/api/integrations';
 const BAD_TOKEN = { authorization: 'Bearer not-a-token' };
 const SIGNED = { authorization: 'Bearer stand-in' }; /* catalogue and download sign in only when a credential is offered */
@@ -141,17 +142,19 @@ const SCENARIOS = [
   { id: 'heartbeat-wrong-scope', route: 'POST /api/integrations/heartbeat', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'heartbeat-bad-body', route: 'POST /api/integrations/heartbeat', status: 400, body: { name: 12345 }, fresh: true },
   { id: 'heartbeat-db-fails', route: 'POST /api/integrations/heartbeat', status: 500, setup: { dbFails: true }, body: { name: 'kit' } },
-  { id: 'approve-no-token', route: 'POST /api/integrations/:actor_id/approve', status: 401, setup: { realAuth: true }, url: I + '/a1/approve', inherited: true },
-  { id: 'approve-key-asks', route: 'POST /api/integrations/:actor_id/approve', status: 403, setup: { asKey: true }, url: I + '/a1/approve' },
-  { id: 'approve-no-actor', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/a1/approve' },
-  { id: 'approve-no-key', route: 'POST /api/integrations/:actor_id/approve', status: 400, setup: { actor: { identity_id: 'a1', site: 'PC', connector_config: {} } }, url: I + '/a1/approve' },
-  { id: 'approve-db-fails', route: 'POST /api/integrations/:actor_id/approve', status: 500, setup: { dbFails: true }, url: I + '/a1/approve' },
+  { id: 'approve-no-token', route: 'POST /api/integrations/:actor_id/approve', status: 401, setup: { realAuth: true }, url: I + '/' + A1 + '/approve', inherited: true },
+  { id: 'approve-key-asks', route: 'POST /api/integrations/:actor_id/approve', status: 403, setup: { asKey: true }, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-no-actor', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-no-key', route: 'POST /api/integrations/:actor_id/approve', status: 400, setup: { actor: { identity_id: A1, site: 'PC', connector_config: {} } }, url: I + '/' + A1 + '/approve' },
+  { id: 'approve-bad-id', route: 'POST /api/integrations/:actor_id/approve', status: 404, url: I + '/abc/approve', fresh: true },
+  { id: 'approve-db-fails', route: 'POST /api/integrations/:actor_id/approve', status: 500, setup: { dbFails: true }, url: I + '/' + A1 + '/approve' },
   { id: 'books-no-token', route: 'POST /api/integrations/books', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'books-wrong-scope', route: 'POST /api/integrations/books', status: 403, setup: { asKey: true, scopes: ['offers'] }, body: {}, inherited: true },
   { id: 'books-no-chit', route: 'POST /api/integrations/books', status: 400, body: { kind: 'order' } },
   { id: 'books-not-found', route: 'POST /api/integrations/books', status: 404, body: { chit_id: CHIT } },
   { id: 'books-db-fails', route: 'POST /api/integrations/books', status: 500, setup: { dbFails: true }, body: { chit_id: CHIT } },
   { id: 'status-no-token', route: 'GET /api/integrations/status', status: 401, setup: { realAuth: true }, inherited: true },
+  { id: 'status-page-asked-twice', route: 'GET /api/integrations/status', status: 422, url: I + '/status?page=1&page=2', fresh: true },
   { id: 'status-db-fails', route: 'GET /api/integrations/status', status: 500, setup: { dbFails: true } },
   { id: 'streams-no-token', route: 'GET /api/integrations/streams', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'streams-policy-fails', route: 'GET /api/integrations/streams', status: 500, setup: { policyFails: true } },
@@ -167,10 +170,13 @@ const SCENARIOS = [
   { id: 'skip-not-found', route: 'POST /api/integrations/books/skip', status: 404, body: { chit_id: CHIT } },
   { id: 'skip-db-fails', route: 'POST /api/integrations/books/skip', status: 500, setup: { dbFails: true }, body: { chit_id: CHIT } },
   { id: 'reconcile-no-token', route: 'GET /api/integrations/reconcile', status: 401, setup: { realAuth: true }, inherited: true },
+  { id: 'reconcile-days-asked-twice', route: 'GET /api/integrations/reconcile', status: 422, url: I + '/reconcile?days=1&days=2', fresh: true },
   { id: 'reconcile-db-fails', route: 'GET /api/integrations/reconcile', status: 500, setup: { policyFails: true } },
   { id: 'ask-unknown-shop', route: 'POST /api/integrations/ask/:handle/stock', status: 404, url: I + '/ask/nobody/stock', body: {} },
+  { id: 'ask-nul-handle', route: 'POST /api/integrations/ask/:handle/stock', status: 404, url: I + '/ask/%00/stock', body: {}, fresh: true },
   { id: 'ask-db-fails', route: 'POST /api/integrations/ask/:handle/stock', status: 500, setup: { dbFails: true }, url: I + '/ask/nobody/stock', body: {} },
   { id: 'stock-unknown-shop', route: 'GET /api/integrations/stock/:handle', status: 404, url: I + '/stock/nobody' },
+  { id: 'stock-nul-handle', route: 'GET /api/integrations/stock/:handle', status: 404, url: I + '/stock/%00', fresh: true },
   { id: 'stock-db-fails', route: 'GET /api/integrations/stock/:handle', status: 500, setup: { dbFails: true }, url: I + '/stock/nobody' },
   { id: 'profilemap-no-token', route: 'GET /api/integrations/profile-map', status: 401, setup: { realAuth: true }, inherited: true },
   { id: 'profilemap-fails', route: 'GET /api/integrations/profile-map', status: 500, setup: { profileFails: true } },

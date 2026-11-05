@@ -75,7 +75,7 @@ it('the counter\'s own three reads join it, rather than hoping', () => {
  */
 it('⚠️⚠️ the bills query does not filter on direction — a SELF chit is received, not sent', () => {
   const src = fs.readFileSync(path.join(ROUTES, 'till.js'), 'utf8');
-  const q = src.slice(src.indexOf("router.get('/bills'"), src.indexOf("router.get('/bills'") + 2200);
+  const q = src.slice(src.indexOf('const BILLS_SQL'), src.indexOf('const BILLS_SQL') + 2200);
   assert.ok(q.indexOf('bill_no') > 0, 'the bills query no longer identifies a bill by its bill_no');
   assert.ok(q.indexOf("direction = 'sent'") < 0,
     "the bills query filters on direction = 'sent' again — a counter bill is sent to SELF and lands as 'received'");

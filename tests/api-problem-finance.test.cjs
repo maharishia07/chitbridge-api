@@ -26,10 +26,28 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
+/* --capture / --compare replay the same answers byte for byte: the clock and Math.random are held still, so a difference is the code's and not the run's (a folder's metrics age its chits by the clock) */
+if (process.argv.includes('--capture') || process.argv.includes('--compare')) {
+  let drawn = 0;
+  Math.random = () => ((drawn += 1) * 0.6180339887) % 1;
+  const FIXED_NOW = 1800000000000;
+  const RealDate = Date;
+  global.Date = class extends RealDate {
+    constructor(...given) {
+      if (given.length) super(...given);
+      else super(FIXED_NOW);
+    }
+    static now() {
+      return FIXED_NOW;
+    }
+  };
+}
 const allowlist = require('../lib/output-allowlist');
 const crypto = require('crypto');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4): this file writes the folders routes' output_allowlist rows */
+const FOLDERS_MINE = (route) => route.includes(' /api/folders/') || route.endsWith(' /api/folders');
 const MOUNTS = ['/api/folders', '/api/facts', '/api/pricing'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/folders': 'routes/folders.js', '/api/facts': 'routes/facts.js', '/api/pricing': 'routes/pricing.js' };
@@ -57,10 +75,36 @@ const SECRET_SQL = 'relation "folder" does not exist -- SELECT secret FROM vault
 const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false };
 const world = Object.assign({}, FRESH);
 
+/** an error the way pg raises one: a message and a SQLSTATE code */
+const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
+const IS_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NUL = '\u0000';
+const holdsNul = (value) => (typeof value === 'string' ? value.includes(NUL) : Array.isArray(value) && value.some(holdsNul));
+const isRealDay = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(value + 'T00:00:00Z').toISOString().slice(0, 10) === value;
+/**
+ * K-1 (B2): the stand-in keeps the rules of Postgres a junk value breaks, so a request that lets one reach the database is the 500 it was: a NUL byte in text is refused 22021 (22P05 inside a jsonb value),
+ * a value cast to uuid ($n::uuid, $n::uuid[]) that is not one is 22P02, and a $n::date that is no calendar day is 22008.
+ */
+function pgRules(sql, params) {
+  (params || []).forEach((one) => {
+    if (holdsNul(one)) throw sqlError('22021');
+    if (typeof one === 'string' && /^[[{]/.test(one) && one.includes('\\u0000')) throw sqlError('22P05');
+  });
+  [...String(sql).matchAll(/\$(\d+)::uuid(\[\])?/g)].forEach((cast) => {
+    const given = (params || [])[Number(cast[1]) - 1];
+    if ((cast[2] ? given || [] : [given]).some((one) => one !== null && one !== undefined && !IS_UUID.test(String(one)))) throw sqlError('22P02');
+  });
+  [...String(sql).matchAll(/\$(\d+)::date/g)].forEach((cast) => {
+    const given = (params || [])[Number(cast[1]) - 1];
+    if (given !== null && given !== undefined && !isRealDay(String(given))) throw sqlError('22008');
+  });
+}
+
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
-function rowsFor(sql) {
+function rowsFor(sql, params) {
+  pgRules(sql, params);
   if (world.sqlRows) {
-    const given = world.sqlRows(String(sql));
+    const given = world.sqlRows(String(sql), params);
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
@@ -70,9 +114,6 @@ const mock = (relative, exported) => {
   const file = require.resolve(path.join(HERE, relative));
   require.cache[file] = { id: file, filename: file, loaded: true, exports: exported };
 };
-/** an error the way pg raises one: a message and a SQLSTATE code */
-const sqlError = (code) => Object.assign(new Error('pg ' + code), { code });
-
 function installStubs() {
   const realAuth = require(path.join(HERE, 'middleware', 'auth'));
   const stubAuth = (req, res, next) => {
@@ -82,8 +123,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
-  const client = { query: async (sql) => rowsFor(sql) };
-  const known = { query: async (sql) => rowsFor(sql), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rowsFor(sql, params) };
+  const known = { query: async (sql, params) => rowsFor(sql, params), withEntity: async (id, run) => run(client), withTransaction: async (run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
@@ -132,6 +173,8 @@ const OWN_FOLDER = answering(/SELECT 1 FROM folder WHERE folder_id = \$1 AND ent
 /** a scenario for an answer the SEC-100 fix ADDS: the code before answered it otherwise (200 or 500), so nothing is frozen for it */
 const N = (id, route, status, extra) => X(id, route, status, Object.assign({ after: true }, extra));
 const BAD_WHEN = { when: { nonsense: 'x' } };
+/** a folder as PATCH /:id reads it back (RETURNING folder_id, parent_id, name): the parent is nullable */
+const FOLDER_BACK = (parent) => ({ folder_id: PARTY, parent_id: parent, name: 'Mayur' });
 const FOLDER_ROW = (extra) => Object.assign({ folder_id: PARTY, name: 'Mayur', scope: 'task', kind: 'filed' }, extra);
 /** a folder row as the folders list selects it (the folder table: migrations/000_baseline_2026-10-21.sql + b133's scope + b275's kind), count as the database answers a COUNT: text */
 const FOLDER_FILED = { folder_id: PARTY, parent_id: null, name: 'Mayur', sort: 1, scope: 'task', kind: 'filed', count: '2' };
@@ -145,6 +188,11 @@ const WHEN_FULL = Object.fromEntries(Object.entries(require(path.join(HERE, 'lib
 const RULE_FULL = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, last_matched_at: AT, match_count: '3', created_at: AT };
 /** a rule may hold any one term of the vocabulary (lib/match validate): this one only a sender, no doc, so no term is read as required */
 const RULE_FROM_ONLY = { rule_id: '88888888-8888-4888-8888-888888888888', folder_id: PARTY, name: 'From Asha', when: { from: 'asha' }, enabled: true, sort: 2, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
+/** a rule as lib/folder-rules create RETURNs it (no last_matched_at), then as update RETURNs it (no created_at); name is nullable, match_count a bigint (text) */
+const RULE_MADE = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: true, sort: 1, stop_processing: true, match_count: '0', created_at: AT };
+const RULE_MADE_BARE = Object.assign({}, RULE_MADE, { name: null, when: { from: 'asha' }, enabled: false, sort: 0, stop_processing: false });
+const RULE_SAVED = { rule_id: PARTY, folder_id: PARTY, name: 'Invoices', when: WHEN_FULL, enabled: false, sort: 2, stop_processing: true, match_count: '3' };
+const RULE_SAVED_BARE = Object.assign({}, RULE_SAVED, { name: null, when: { doc: 'invoice' } });
 const RULE_BARE = { rule_id: '33333333-3333-4333-8333-333333333333', folder_id: PARTY, name: null, when: { doc: 'invoice' }, enabled: false, sort: 0, stop_processing: false, last_matched_at: null, match_count: '0', created_at: AT };
 /** a message of the inbox as its statement selects it (chit_messages + the chit's header, line and status) */
 const MESSAGE_FULL = { message_id: PARTY, chit_id: PARTY, line_id: PARTY, sender_display_name: 'Asha', sender_entity_id: '44444444-4444-4444-8444-444444444444', message_text: 'Ring me', created_at: AT, msg_type: 'query', read_at: AT, kept: true, manual_subject: 'Rice', auto_subject: 'Order', track: 'order', particulars: 'Ponni 24 kg', chit_status: 'pending' };
@@ -193,6 +241,85 @@ const READY = [
   X('reconcile-two-folder-cycle', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: answering(/SELECT folder_id, parent_id, name FROM folder/, [{ folder_id: PARTY, parent_id: '33333333-3333-4333-8333-333333333333', name: 'A' }, { folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'B' }]) }, patch: withChits(CHITS) }),
   X('reconcile-does-not-add-up', 'GET ' + F + '/reconcile', 200, { setup: { sqlRows: FOLDER_ONE }, patch: withChits(CHITS.concat([STRAY])) })
 ];
+/** a filed folder's chit as GET /:id/chits selects it (chit_header + chit_status; the raiser's name a sub-select): the second with every nullable column NULL */
+const FILED_CHIT = { chit_id: PARTY, sender_entity_display_name: 'Asha Traders', auto_subject: 'Order', manual_subject: 'Rice', purpose: 'order', created_at: AT, business_json: { kind: 'device_signal', device_id: 'D1', value: 4, unit: 'C' }, created_by_actor_id: '44444444-4444-4444-8444-444444444444', raiser_name: 'Murugan', direction: 'received', current_status: 'pending', _total: '2' };
+const FILED_CHIT_BARE = { chit_id: '33333333-3333-4333-8333-333333333333', sender_entity_display_name: null, auto_subject: null, manual_subject: null, purpose: 'general', created_at: AT, business_json: null, created_by_actor_id: null, raiser_name: null, direction: 'sent', current_status: null, _total: '2' };
+/** a bill of a view folder as lib/folder-views members answers it: a lib/select row with its lifecycle (lib/bill-steps) */
+const VIEW_BILL = CHIT({ doc_kind: 'bill_received', bill: { step: 'received', code: 'B1', label: 'Received', by: null, at: AT, open: true, history: [] } });
+const MEMBERS = (chits) => ({ views: { members: async () => ({ chits, counts: { open: chits.length, closed: 0, total: chits.length }, state: 'open' }) } });
+/** S35: the folder read of routes/folders.js viewFolder finds a FILED folder of this shop (no row there is the unknown id's 404) */
+const FILED_HERE = answering(/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/, [{ folder_id: PARTY, name: 'Mayur', kind: null }]);
+const SHOP_VIEW = answering(/to_jsonb\(f\)->>'kind' AS kind FROM folder f WHERE f\.folder_id/, [{ folder_id: PARTY, name: 'From Asha', kind: 'view' }]);
+const SUBJECT_CHIT = CHIT({ chit_id: '77777777-7777-4777-8777-777777777777', manual_subject: 'Rice for Diwali', auto_subject: 'Order 7' });
+/** a matched chit with every nullable column of its sample NULL: no counterparty name (lib/select: no recipient name), no status, no created_at */
+const NAMELESS_CHIT = CHIT({ chit_id: '88888888-8888-4888-8888-888888888888', counterparty_name: null, current_status: null, created_at: null });
+/* S34, second pass: the success side of every folders route the first pass left (a write's read-back, a filed and a view folder, nullable columns NULL in one scene and filled in another) */
+const SWEEP_2 = [
+  X('folder-deleted', 'DELETE ' + F + '/:id', 200, { setup: { sqlRows: answering(/DELETE FROM folder WHERE/, [{}]) } }),
+  X('chit-filed', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: 'task' }]), answering(/UPDATE chit_status SET folder_id/, [{}])) } }),
+  X('chit-filed-in-a-folder-without-a-side', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: PARTY, direction: 'sent' }, setup: { sqlRows: firstOf(answering(/SELECT scope FROM folder/, [{ scope: null }]), answering(/UPDATE chit_status SET folder_id/, [{}, {}])) } }),
+  X('chit-unfiled', 'POST ' + F + '/move', 200, { body: { chit_id: PARTY, folder_id: null } }),
+  X('chits-listed', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [FILED_CHIT, FILED_CHIT_BARE])) } }),
+  X('chits-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?limit=9999&archived=1', setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [Object.assign({}, FILED_CHIT, { _total: '900' })])) } }),
+  X('chits-of-a-system-view', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits', patch: MEMBERS([VIEW_BILL]) }),
+  X('chits-of-a-shops-view', 'GET ' + F + '/:id/chits', 200, { setup: { sqlRows: SHOP_VIEW }, patch: MEMBERS([VIEW_BILL, CHIT({})]) }),
+  X('chits-of-a-view-past-the-cap', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + sysId('B-2100') + '/chits?limit=1', patch: MEMBERS([VIEW_BILL, VIEW_BILL]) }),
+  X('metrics-of-a-task-folder', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: firstOf(FILED_HERE, answering(/SELECT scope FROM folder/, [{ scope: 'task' }])) }, patch: withChits(CHITS) }),
+  X('metrics-of-a-system-view', 'GET ' + F + '/:id/metrics', 200, { url: F + '/' + sysId('B-2100') + '/metrics', patch: withChits(CHITS) }),
+  X('metrics-scope-read-fails', 'GET ' + F + '/:id/metrics', 200, { setup: { sqlRows: firstOf(FILED_HERE, raising(/SELECT scope FROM folder/, 'XX000')) }, patch: withChits(CHITS) }),
+  X('rules-of-a-folder', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: firstOf(OWN_FOLDER, answering(/FROM folder_rule/, [RULE_FULL, RULE_BARE, RULE_FROM_ONLY])) } }),
+  X('rules-of-a-folder-not-migrated', 'GET ' + F + '/:id/rules', 200, { setup: { sqlRows: firstOf(OWN_FOLDER, raising(/FROM folder_rule/, '42P01')) } }),
+  /* S35: an id no folder, rule or message of this shop has is a 404 (before: 200 with an empty list, or { deleted: 0 }); another shop's id is the same answer (tools/api-contract-tests.cjs foreign_id_404) */
+  N('chits-folder-not-here', 'GET ' + F + '/:id/chits', 404, {}),
+  N('metrics-folder-not-here', 'GET ' + F + '/:id/metrics', 404, {}),
+  N('rules-folder-not-here', 'GET ' + F + '/:id/rules', 404, {}),
+  N('folder-delete-not-here', 'DELETE ' + F + '/:id', 404, {}),
+  N('rule-delete-not-here', 'DELETE ' + F + '/rules/:rule_id', 404, {}),
+  X('rule-updated', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { enabled: false, sort: 2 }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED]) } }),
+  X('rule-updated-bare', 'PATCH ' + F + '/rules/:rule_id', 200, { body: { name: '' }, setup: { sqlRows: answering(/UPDATE folder_rule/, [RULE_SAVED_BARE]) } }),
+  X('rule-deleted', 'DELETE ' + F + '/rules/:rule_id', 200, { setup: { sqlRows: answering(/DELETE FROM folder_rule/, [{}]) } }),
+  X('preview-matched', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'invoice' } }, patch: withChits(CHITS.concat([SUBJECT_CHIT])) }),
+  X('preview-matched-a-nameless-chit', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'invoice' } }, patch: withChits([NAMELESS_CHIT]) }),
+  X('preview-matched-nothing', 'POST ' + F + '/rules/preview', 200, { body: { when: { doc: 'quote' } }, patch: withChits(CHITS) }),
+  X('level-set', 'PUT ' + F + '/inventory/:code', 200, { url: F + '/inventory/RT-4090', body: { msg: 'none' } }),
+  X('message-kept', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { kept: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ marked_count: '1' }]) } }),
+  /* RAIL-146g: a co-assist without can_see_costs reads the sum of the sales only, with cost_hidden: the closed groupsum shape holds the blind answer too */
+  X('groupsum-cost-blind', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=task', setup: { who: STAFF, sqlRows: answering(/FROM chit_detail/, [{ chit_id: PARTY, line_items: [{ particulars: 'Ponni 24 kg', quantity: 2, unit: 'kg', price: 50 }] }]) }, patch: withChits(CHITS) })
+];
+/**
+ * K-1 (B2): a value no column can hold, and an id that is shaped like one but is none. A NUL byte in a folder's or a rule's text is a 400 in plain words; a 36-character run of dashes in a query or
+ * address answers as any other junk word does (the route falls back, or refuses in its own words), never a 500. The stand-in db is pgRules: a request that reaches it with such a value is the 500 these were red on.
+ * B2: a query value given twice is the schema's own refusal (422) on the reads that took no other.
+ */
+const DASHES = '-'.repeat(36);
+const NL = '%00';
+const JUNK = [
+  N('create-name-with-a-nul-byte', 'POST ' + F, 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('create-view-name-with-a-nul-byte', 'POST ' + F, 400, { body: { name: 'a' + NUL + 'b', kind: 'view' } }),
+  N('rename-with-a-nul-byte', 'PATCH ' + F + '/:id', 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('rule-name-with-a-nul-byte', 'POST ' + F + '/:id/rules', 400, { body: { name: 'a' + NUL + 'b', when: { doc: 'invoice' } }, setup: { sqlRows: OWN_FOLDER } }),
+  N('rule-condition-with-a-nul-byte', 'POST ' + F + '/:id/rules', 400, { body: { when: { from: 'a' + NUL + 'b' } }, setup: { sqlRows: OWN_FOLDER } }),
+  N('rule-change-name-with-a-nul-byte', 'PATCH ' + F + '/rules/:rule_id', 400, { body: { name: 'a' + NUL + 'b' } }),
+  N('rule-change-condition-with-a-nul-byte', 'PATCH ' + F + '/rules/:rule_id', 400, { body: { when: { from: 'a' + NUL + 'b' } } }),
+  N('worklist-actor-is-dashes', 'GET ' + F + '/worklist', 200, { url: F + '/worklist?actor_id=' + DASHES }),
+  N('worklist-day-that-is-not-a-day', 'GET ' + F + '/worklist', 400, { url: F + '/worklist?due_on=2026-02-30' }),
+  N('groupsum-folder-is-dashes', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?folder_id=' + DASHES }),
+  N('message-is-dashes', 'POST ' + F + '/messages/:message_id/mark', 400, { url: F + '/messages/' + DASHES + '/mark', body: { read: true } }),
+  N('messages-actor-reads', 'GET ' + F + '/messages', 200, { url: F + '/messages?all=1', setup: { who: STAFF } }),
+  N('list-state-with-a-nul-byte', 'GET ' + F + '/:id/chits', 200, { url: F + '/' + PARTY + '/chits?state=a' + NL + 'b', setup: { sqlRows: firstOf(FILED_HERE, answering(/AS _total/, [FILED_CHIT])) } }),
+  N('list-page-twice', 'GET ' + F, 422, { url: F + '?page=1&page=2' }),
+  N('rules-page-twice', 'GET ' + F + '/rules', 422, { url: F + '/rules?page=1&page=2' }),
+  N('groupsum-scope-twice', 'GET ' + F + '/groupsum', 422, { url: F + '/groupsum?scope=task&scope=order' }),
+  N('messages-count-twice', 'GET ' + F + '/messages', 422, { url: F + '/messages?count=1&count=0' }),
+  N('reconcile-scope-twice', 'GET ' + F + '/reconcile', 422, { url: F + '/reconcile?scope=task&scope=order' })
+];
+/** S41 (K-1, B2): each junk value and the word that stands for "no such value" on its route: the same status, the same body but for the request id */
+const JUNK_PAIRS = [
+  ['worklist-actor', 'GET ' + F + '/worklist', F + '/worklist?actor_id=' + DASHES, F + '/worklist?actor_id=abc'],
+  ['groupsum-folder', 'GET ' + F + '/groupsum', F + '/groupsum?folder_id=' + DASHES, F + '/groupsum?folder_id=abc'],
+  ['message-id', 'POST ' + F + '/messages/:message_id/mark', F + '/messages/' + DASHES + '/mark', F + '/messages/abc/mark', { read: true }]
+];
+
 const EXTRAS = [
   /* the express-validator chains: a validation refusal keeps its { error, details } body */
   X('name-missing', 'POST ' + F, 400, { body: {} }),
@@ -202,6 +329,10 @@ const EXTRAS = [
   X('parent-not-found', 'POST ' + F, 400, { body: { name: 'Mayur', parent_id: PARTY } }),
   X('view-folder-not-migrated', 'POST ' + F, 503, { body: { name: 'Mayur', kind: 'view' }, setup: { sqlRows: raising(/INSERT INTO folder/, '42703') } }),
   X('view-folder-made', 'POST ' + F, 200, { body: { name: 'Mayur', kind: 'view' }, setup: { sqlRows: answering(/INSERT INTO folder/, [FOLDER_ROW({ kind: 'view' })]) } }),
+  /* S34: the view folder as the INSERT RETURNs it (folder_id, parent_id, name, sort, scope, kind): parent_id is NULL by the statement, sort is nullable */
+  X('view-folder-made-read-back', 'POST ' + F, 200, { body: { name: 'Mayur', kind: 'view', scope: 'order' }, setup: { sqlRows: answering(/INSERT INTO folder/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur', sort: null, scope: 'order', kind: 'view' }]) } }),
+  X('folder-made-under-a-parent', 'POST ' + F, 200, { body: { name: 'Late', parent_id: PARTY }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, [{ folder_id: '33333333-3333-4333-8333-333333333333', parent_id: PARTY, name: 'Late', sort: 0, scope: 'task' }])) } }),
+  X('folder-made-at-the-top', 'POST ' + F, 200, { body: { name: 'Mayur', scope: 'order' }, setup: { sqlRows: answering(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, [{ folder_id: PARTY, parent_id: null, name: 'Mayur', sort: null, scope: null }]) } }),
   X('folder-made-before-b133', 'POST ' + F, 200, { body: { name: 'Mayur' }, setup: { sqlRows: raising(/INSERT INTO folder \(entity_id, parent_id, name, scope\)/, '42703') } }),
   X('db-fails-with-a-name', 'PATCH ' + F + '/:id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { name: 'Mayur' } }),
@@ -212,8 +343,8 @@ const EXTRAS = [
   X('name-empty', 'PATCH ' + F + '/:id', 400, { body: { name: '' } }),
   N('parent-folder-not-found', 'PATCH ' + F + '/:id', 404, { body: { parent_id: '33333333-3333-4333-8333-333333333333' } }),
   N('parent-not-an-id', 'PATCH ' + F + '/:id', 404, { body: { parent_id: 'nope' } }),
-  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_ROW()])) } }),
-  X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_ROW()]) } }),
+  N('moved-under-own-folder', 'PATCH ' + F + '/:id', 200, { body: { parent_id: '33333333-3333-4333-8333-333333333333' }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/UPDATE folder SET/, [FOLDER_BACK('33333333-3333-4333-8333-333333333333')])) } }),
+  X('renamed', 'PATCH ' + F + '/:id', 200, { body: { name: 'Mayur' }, setup: { sqlRows: answering(/UPDATE folder SET/, [FOLDER_BACK(null)]) } }),
   X('db-fails-with-a-chit', 'POST ' + F + '/move', 500, { body: { chit_id: PARTY }, setup: { db: 'fail' } }),
   X('chit-not-an-id', 'POST ' + F + '/move', 400, { body: { chit_id: 'nope' } }),
   X('chit-missing', 'POST ' + F + '/move', 400, { body: {} }),
@@ -232,7 +363,8 @@ const EXTRAS = [
   X('condition-unknown', 'POST ' + F + '/:id/rules', 400, { body: BAD_WHEN }),
   X('rules-not-migrated', 'POST ' + F + '/:id/rules', 503, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, raising(/INSERT INTO folder_rule/, '42P01')) } }),
   N('rule-folder-not-found', 'POST ' + F + '/:id/rules', 404, { body: { when: { doc: 'invoice' } } }),
-  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { when: { doc: 'invoice' } }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [{ rule_id: PARTY, folder_id: PARTY }])) } }),
+  N('rule-made-in-own-folder', 'POST ' + F + '/:id/rules', 200, { body: { name: 'Invoices', when: WHEN_FULL, sort: 1, stop_processing: true }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [RULE_MADE])) } }),
+  N('rule-made-without-a-name', 'POST ' + F + '/:id/rules', 200, { body: { when: { from: 'asha' }, enabled: false }, setup: { sqlRows: firstOf(OWN_FOLDER, answering(/INSERT INTO folder_rule/, [RULE_MADE_BARE])) } }),
   X('rules-not-migrated', 'DELETE ' + F + '/rules/:rule_id', 503, { setup: { sqlRows: raising(/DELETE FROM folder_rule/, '42P01') } }),
   X('db-fails-with-a-change', 'PATCH ' + F + '/rules/:rule_id', 500, { body: { name: 'Mayur' }, setup: { db: 'fail' } }),
   X('rule-nothing-to-update', 'PATCH ' + F + '/rules/:rule_id', 400, { body: {} }),
@@ -262,14 +394,14 @@ const EXTRAS = [
   X('message-not-an-id', 'POST ' + F + '/messages/:message_id/mark', 400, { url: F + '/messages/nope/mark', body: { read: true } }),
   X('message-not-mine', 'POST ' + F + '/messages/:message_id/mark', 404, { body: { read: true } }),
   X('read-state-not-migrated', 'POST ' + F + '/messages/:message_id/mark', 503, { body: { read: true }, setup: { sqlRows: raising(/chit_message_mark/, '42883') } }),
-  X('message-marked', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { read: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ n: 1 }]) } }),
+  X('message-marked', 'POST ' + F + '/messages/:message_id/mark', 200, { body: { read: true }, setup: { sqlRows: answering(/chit_message_mark/, [{ marked_count: 1 }]) } }),
   X('badge-count', 'GET ' + F + '/messages', 200, { url: F + '/messages?count=1' }),
   X('actor-sees-theirs', 'GET ' + F + '/messages', 200, { setup: { who: STAFF } }),
   X('due-date-not-a-date', 'GET ' + F + '/worklist', 400, { url: F + '/worklist?due_on=tomorrow' }),
   X('actor-worklist', 'GET ' + F + '/worklist', 200, { setup: { who: STAFF } }),
   X('groupsum-order', 'GET ' + F + '/groupsum', 200, { url: F + '/groupsum?scope=order&folder_id=' + PARTY + '&chit_ids=' + PARTY }),
   X('mis-since', 'GET ' + F + '/mis', 200, { url: F + '/mis?since=2026-01-01' }),
-  X('mis-since-junk', 'GET ' + F + '/mis', 200, { url: F + '/mis?since=junk' }),
+  N('mis-since-junk', 'GET ' + F + '/mis', 400, { url: F + '/mis?since=junk' }),
   X('reconcile-order', 'GET ' + F + '/reconcile', 200, { url: F + '/reconcile?scope=order' }),
   X('folders-before-b133', 'GET ' + F, 200, { setup: { sqlRows: raising(/f\.scope,/, '42703') } }),
   X('system-folders-fail', 'GET ' + F, 200, { patch: { views: { systemFolders: async () => { throw new Error(SECRET_SQL); } } } }),
@@ -279,6 +411,7 @@ const EXTRAS = [
   X('inventory-read-fails', 'GET ' + F + '/inventory', 500, { patch: { views: { flagsOf: async () => { throw new Error(SECRET_SQL); } } } }),
   /* S34: the READY branch of the folder reads: the database holds rows, so the real handlers and the real libraries (lib/page-limit, lib/folder-rules, lib/assign, lib/measure) run over them */
   ...READY,
+  ...SWEEP_2,
   /* the Home facts */
   X('no-such-card', 'GET /api/facts/:card', 404, { url: '/api/facts/nope' }),
   X('prototype-name-is-no-card', 'GET /api/facts/:card', 404, { url: '/api/facts/constructor' }),
@@ -294,7 +427,8 @@ const EXTRAS = [
   X('priced-with-structure', 'POST /api/pricing/price', 200, { body: { lines: [{ qty: 2, listPrice: 10, pricing: { kind: 'fixed', amount: 8 } }] } }),
   X('shelf-fails', 'POST /api/pricing/price', 500, { setup: { db: 'fail' }, body: { lines: [{ code: 'tea', qty: 1 }] } }),
   X('kinds-answer-fails', 'GET /api/pricing/kinds', 500, { setup: { jsonThrows: true } }),
-  X('kinds', 'GET /api/pricing/kinds', 200, {})
+  X('kinds', 'GET /api/pricing/kinds', 200, {}),
+  ...JUNK
 ];
 
 function send(port, method, urlPath, body) {
@@ -399,7 +533,7 @@ function allowedFor() {
 }
 
 /** a body's random ids and clock stamps are the same answer on every run: masked before a body is hashed */
-const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/d{4}-dd-ddTdd:dd:dd(?:.d+)?Z/g, 'STAMP');
+const steady = (text) => text.replace(/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g, 'UUID').replace(/\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z/g, 'STAMP');
 const shaOf = (answer) => crypto.createHash('sha256').update(steady(answer.text)).digest('hex');
 /** --compare F: the answers now against a capture of the code before, byte for byte (status, content type, body); every difference printed */
 function compare(captureFile, recording) {
@@ -522,6 +656,59 @@ function checkOtherContracts() {
   check('facts: both routes are for a signed-in person and say a key is refused (403)', Object.values(facts.OPERATIONS).every((operation) => '403' in operation.responses && '401' in operation.responses));
 }
 
+/**
+ * API-8 output allow-list (S34): the pricing kinds read's derived 200 shape (docs/contracts/api-output-shapes.json) is CLOSED at its root and every recorded 200 of it fits that shape.
+ * The answer is one fixed table, so there is no nullable column; the rows of kinds[] stay open and are listed (the table owns their keys).
+ */
+function checkPricingAllowList(recording) {
+  console.log('\n-- the closed success shape of the pricing kinds read holds every recorded 200 --');
+  const route = 'GET /api/pricing/kinds';
+  const shape = allowlist.shapeOf(route);
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+  const fits = shape && engine.compile(shape.schema);
+  check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body)), { answers: answers.length, errors: fits && fits.errors });
+}
+
+/**
+ * API-8 output allow-list (S34), second pass: every folders route whose success schema is CLOSED (additionalProperties false, derived in docs/contracts/api-output-shapes.json from these
+ * answers and the handler's own keys) has every recorded 200 fit that schema with nothing pruned: a key the schema does not list would be cut, so a drop is an answer that moved.
+ * → { route: { output_allowlist: true } }, written to docs/contracts/api-hardening-evidence-areas.json for the folders routes only (facts and pricing keep the generator's evidence).
+ */
+function checkFoldersAllowList(recording) {
+  console.log('\n-- the closed success shapes of the folders routes hold every recorded 200 --');
+  const proved = {};
+  const operations = require(path.join(HERE, 'lib', 'folders-contract.js')).OPERATIONS;
+  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
+  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
+  Object.keys(operations).sort().forEach((route) => {
+    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
+    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const fits = schema && engine.compile(schema);
+    const held = !!schema && schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
+    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its closed schema lists', held, { closed: !!schema && schema.additionalProperties === false, answers: answers.length, errors: fits && fits.errors });
+    if (held) proved[route] = { output_allowlist: true };
+  });
+  return proved;
+}
+/** the folders routes the evidence file says output_allowlist for */
+function foldersEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => FOLDERS_MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+}
+/** write the folders output_allowlist rows into the evidence file (other routes and columns stay as they are) */
+function writeFoldersEvidence(proved) {
+  const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
+  const routes = onDisk.routes || {};
+  Object.keys(routes).filter(FOLDERS_MINE).forEach((route) => {
+    delete routes[route].output_allowlist;
+    if (!Object.keys(routes[route]).length) delete routes[route];
+  });
+  Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
+  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+}
+
 /** lib/contract-kit.js as built for this sweep: a public row, and a schema that refuses with the status a route always used */
 function checkKitWidening() {
   console.log('\n-- lib/contract-kit.js: public rows and the status of the schema refusal --');
@@ -534,7 +721,63 @@ function checkKitWidening() {
   check('kit: a row that says nothing still declares 422', '422' in contract.OPERATIONS['GET /api/x/thing'].responses);
 }
 
+/**
+ * S33 strict input: each of the eight folders writes refuses a body key no one reads, by name (UNKNOWN_FIELD, middleware/validate.js), in the route's own refusal
+ * (400 FOLDER_INVALID with the chain's old body where the route had a chain, else 422), while every key a web caller sends (app/cap-folders.js · app/cap-messages.js · app.html) is still let through.
+ */
+const STRICT_WRITES = [
+  ['PUT', F + '/inventory/B-2100', { on: true }, 422],
+  ['POST', F, { name: 'Mayur' }, 400],
+  ['PATCH', F + '/' + PARTY, { name: 'Mayur' }, 400],
+  ['POST', F + '/move', { chit_id: PARTY }, 400],
+  ['POST', F + '/' + PARTY + '/rules', { when: { doc: 'invoice' } }, 400],
+  ['PATCH', F + '/rules/' + PARTY, { enabled: true }, 400],
+  ['POST', F + '/rules/preview', { when: { doc: 'invoice' } }, 422],
+  ['POST', F + '/messages/' + PARTY + '/mark', { read: true }, 422]
+];
+/** the bodies the web sends today, key for key: none of them may meet UNKNOWN_FIELD */
+const WEB_BODIES = [
+  ['POST', F, { name: 'Mayur', scope: 'order' }],
+  ['PATCH', F + '/' + PARTY, { name: 'Mayur' }],
+  ['POST', F + '/move', { chit_id: PARTY, folder_id: PARTY }],
+  ['POST', F + '/' + PARTY + '/rules', { name: 'Invoices', when: { doc: 'invoice' } }],
+  ['PATCH', F + '/rules/' + PARTY, { sort: 2 }],
+  ['PATCH', F + '/rules/' + PARTY, { enabled: false }],
+  ['POST', F + '/rules/preview', { when: { doc: 'invoice' } }],
+  ['POST', F + '/messages/' + PARTY + '/mark', { read: true }],
+  ['POST', F + '/messages/' + PARTY + '/mark', { kept: false }]
+];
+async function checkStrictInput(port) {
+  console.log('\n-- strict input (S33): a key no one reads is refused by name; a key the web sends is not --');
+  for (const [method, url, valid, status] of STRICT_WRITES) {
+    Object.assign(world, FRESH);
+    const answer = await send(port, method, url, Object.assign({}, valid, { zz_unknown_field: 'x' }));
+    const body = answer.json || {};
+    const named = (body.errors || []).some((entry) => entry.field === 'zz_unknown_field' && entry.code === 'UNKNOWN_FIELD');
+    const oldBody = status === 422 || (body.error === 'Validation failed' && sameValue(body.details, [{ field: 'zz_unknown_field', message: 'Invalid value' }]));
+    check(method + ' ' + url + ': zz_unknown_field is refused ' + status + ' by name, in the route\'s own refusal', answer.status === status && named && !!body.type && oldBody, { status: answer.status, body });
+  }
+  for (const [method, url, sent] of WEB_BODIES) {
+    Object.assign(world, FRESH);
+    const answer = await send(port, method, url, sent);
+    const refused = ((answer.json || {}).errors || []).filter((entry) => entry.code === 'UNKNOWN_FIELD');
+    check(method + ' ' + url + ' ' + JSON.stringify(sent) + ': the web\'s keys are let through the schema', refused.length === 0, refused);
+  }
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
+/** S41: a 36-character run of dashes answers exactly as a plain junk word does on its route: the same status, the same body but for the request id and the clock */
+async function checkJunkPairs(port) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const bodyOf = (answer) => JSON.stringify(Object.assign({}, answer.json, { request_id: null, generated_at: null }));
+  for (const [id, route, junkUrl, plainUrl, body] of JUNK_PAIRS) {
+    const method = route.split(' ')[0];
+    const junk = await runScenario(port, { route, url: junkUrl, body, setup: {} });
+    const plain = await runScenario(port, { route, url: plainUrl, body, setup: {} });
+    check(id + ': the junk value answers exactly as the plain one (' + plain.status + ', same body)', junk.status < 500 && junk.status === plain.status && bodyOf(junk) === bodyOf(plain), { method, junk: junk.status, plain: plain.status });
+  }
+}
+
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
   installStubs();
@@ -562,6 +805,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const server = app.listen(0);
   const recording = {};
   const tested = await checkRoutes(server.address().port, scenariosOf(routes), recording);
+  if (!flagValue('--capture') && !flagValue('--compare')) await checkStrictInput(server.address().port);
+  if (!flagValue('--capture') && !flagValue('--compare')) await checkJunkPairs(server.address().port);
   server.close();
   if (flagValue('--compare')) process.exit(compare(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {
@@ -573,6 +818,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkChainsAgree();
   checkOtherContracts();
   checkKitWidening();
+  checkPricingAllowList(recording);
+  const foldersHeld = checkFoldersAllowList(recording);
+  if (argv.includes('--write')) writeFoldersEvidence(foldersHeld);
+  else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the folders routes whose 200 held closed here', sameValue(foldersEvidenceOnDisk(), foldersHeld), { onDisk: Object.keys(foldersEvidenceOnDisk()).length, held: Object.keys(foldersHeld).length });
   const legacy = JSON.parse(fs.readFileSync(LEGACY_FILE, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(MINE).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 100, frozen);

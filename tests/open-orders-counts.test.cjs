@@ -14,7 +14,7 @@ const src = (f) => fs.readFileSync(path.join(API, f), 'utf8');
 console.log('\n-- M168 one helper, two callers --\n');
 const home = src('lib/home-facts.js'), till = src('routes/till.js');
 t('home-facts orders calls open-orders.tasks(despatch)', /open-orders'\)\.tasks\(ctx\.entity, 'despatch'/.test(home), true);
-t('till /tasks calls open-orders.tasks', /open-orders'\)\.tasks\(entity_id, kind, limit\)/.test(till), true);
+t('till /tasks calls open-orders.tasks', /open-orders'\)\.tasks\(entity_id, kind, limit(, blind)?\)/.test(till), true);
 t('home-facts orders no longer reads purpose order itself', /purpose: 'order', direction: 'received'/.test(home), false);
 t('till.js keeps no second copy of orderOf', /function orderOf\(/.test(till), false);
 /* WX-O2C: the counter's own bills are left out at the database, not after a 300-row read */

@@ -108,7 +108,7 @@ ok('the snapshot says whether the shop holds stock from its OWN DATA, never its 
   assert.strictEqual(await mk(dbOf([{ reason: 'purchase' }], []), true), true, 'a Receive was made');
   assert.strictEqual(await mk(dbOf([{ reason: 'sale' }], [{ item_data: { name: 'Tomato' } }]), true), false, 'greengrocer: sales only, nothing tracked');
   assert.strictEqual(await mk(dbOf([], []), false), null, 'table not migrated: unknown, shown as usual');
-  assert(ROUTE.includes('holds_stock: await holdsStockOf(entity_id),'));
+  assert(ROUTE.includes('snap.holdsStock = await holdsStockOf(entity_id);') && ROUTE.includes('holds_stock: holdsStock,'));
 });
 
 console.log('- M130: no 403 on a normal load');

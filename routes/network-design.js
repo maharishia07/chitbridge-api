@@ -37,6 +37,11 @@ const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this neve
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
 const SINGLE_LIMIT = 200;
 
+/** the asking business's own row as the two network reads need it (its bridge id, its name and where it sits), or undefined when the account cannot be read */
+const placeOf = async (identityId) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+/** K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as for any text that finds nothing. */
+const searchable = (text) => text.replace(/\u0000/g, '\uFFFD');
+
 // GET /api/network-design — this entity's saved design (null if none yet).
 router.get('/', auth, async (req, res) => {
   try {
@@ -104,7 +109,7 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
     );
     res.json({ ok: true, updated_at: r.rows[0].updated_at });
   } catch (err) {
-    problem(req, res, contract.failed(err, req, 'Save failed'));
+    problem(req, res, contract.savedText(err, req, 'Save failed')); /* K-1: a NUL byte in a name of the drawing is a 400, not a 500 */
   }
 });
 
@@ -283,6 +288,7 @@ router.post('/reissue', auth, checked('POST /reissue'), async (req, res) => {
     const me = req.identity.identity_id;
     const uid = String((req.body && req.body.user_id) || '').trim();
     if (!uid) return problem(req, res, { status: 400, ...contract.words.noStoreNamed() });
+    if (uid.includes('\u0000')) return problem(req, res, { status: 404, ...contract.words.notYourStore(uid) }); /* K-1: a handle holding a NUL byte names no store of yours: answered as an unknown one, before the database */
 
     const r = await query(
       `SELECT identity_id, display_name, user_id FROM identities
@@ -399,7 +405,7 @@ async function visibleStores(meRow) {
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     const { visible, truncated } = await visibleStores(meRow);
@@ -441,7 +447,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
       return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
     }
 
-    const meRow = (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [me])).rows[0];
+    const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
@@ -453,7 +459,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const use = members.slice(0, MAX_STORES);
 
     const from = { lat: meRow.lat == null ? null : Number(meRow.lat), lng: meRow.lng == null ? null : Number(meRow.lng) };
-    const like = '%' + text.toLowerCase() + '%';
+    const like = '%' + searchable(text).toLowerCase() + '%';
     const rows = [];
     /**
      * The one place the availability answer is written, so its keys are named once (S34 output allow-list). A row is what the handler built from the store and the item, then what
@@ -493,7 +499,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
     const forceFanout = req.get('X-CB-Force-Fanout') === '1';
     try {
       if (forceFanout) throw Object.assign(new Error('forced fan-out'), { forced: true });
-      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, text, SINGLE_LIMIT]);
+      single = await query('SELECT * FROM network_search($1, $2, $3)', [meRow.bridge_id, searchable(text), SINGLE_LIMIT]);
     } catch (e) {
       /**
        * ⚠️ ANY failure of the fast path falls back to the fan-out — it does not fail the search.

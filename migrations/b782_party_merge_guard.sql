@@ -1,6 +1,6 @@
 -- b782_party_merge_guard.sql — CRM-43 (29 Oct 2026): the database refuses a merge that makes a chain or a loop on the party lists. A BACKSTOP to lib/party-fields.checkMergeTarget.
 --
--- ⚠️⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres). RECOMMENDATION ONLY: the api already refuses these cases (and serialises one shop's merges with an advisory
+-- ⚠️⚠️ RUN by Athi 2026-10-29 (Supabase SQL editor, AS postgres). Was a recommendation only: the api already refuses these cases (and serialises one shop's merges with an advisory
 --    lock), so nothing waits on this. Safe to re-run (CREATE OR REPLACE FUNCTION; the triggers are dropped and re-created). Touches no rows; existing data is not re-checked.
 --
 -- WHY. The api check and the UPDATE are two statements; a second writer path (a script, the SQL editor, a future route) would skip the check and leave A->B and B->A, and both parties vanish from the list.

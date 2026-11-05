@@ -726,7 +726,8 @@
    "allow": [
     "src/routes/catalogue.js",
     "src/services/catalogue.js",
-    "jest.setup.js"
+    "jest.setup.js",
+    "db/index.js"
    ]
   },
   {

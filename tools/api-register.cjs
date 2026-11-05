@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const card = require('./api-card.cjs');
 
 const TOOLS_DIR = __dirname;
 const rootArg = process.argv.indexOf('--root');
@@ -99,6 +100,11 @@ function routerFilesOf() {
   });
   return found;
 }
+
+/** the owner area of a route file: its name, except that routes/chits-<part>.js (LEAN-PLAN §8: routes/chits.js split by owner area) is still the chits area, so a move-only split changes a row's file and line and nothing else */
+/* a part of a split router answers in its parent's group (routes/chits-trace.js, and routes/chit-proposals.js which routes/chits.js uses: tools/server-mounts.cjs partParents) */
+const PARTS = require('./server-mounts.cjs').partParents(path.join(ROOT, 'routes'));
+const areaOfFile = (file) => path.basename(PARTS[path.basename(file)] || file, '.js').replace(/^chits-.+$/, 'chits');
 
 /** the functions every route shares (middleware/*.js exports): not "own" code of a route, never hashed with it */
 function sharedFunctions() {
@@ -301,13 +307,21 @@ function rowOf(leaf, context) {
   const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared);
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
-  const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400);
+  /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
+  const documentedOnly = (operation && operation['x-documented-statuses']) || [];
+  const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400 && !documentedOnly.includes(status));
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
   const columns = machineColumns({ source, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(operation || null);
-  return { key, method: leaf.method, path: leaf.path, owner_area: path.basename(info.file, '.js'), file: info.file, line: lineOf(fileText, leaf), hash: shortHash(hashSource), columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) };
+  const line = lineOf(fileText, leaf);
+  const area = areaOfFile(info.file);
+  const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key]));
 }
+
+/** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
+const basisOf = (columns, evidence) => (columns.output_allowlist && evidence && evidence.output_allowlist_basis === 'recordings' ? { output_allowlist_basis: 'recordings' } : {});
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
 const testedStatuses = (context, key) => (context.errorTests[key] || []).concat((context.contract[key] && context.contract[key].statuses) || []);
@@ -340,30 +354,20 @@ const readSignoffs = () => readJson('docs/api-signoffs.json', null);
 
 const blankHuman = () => Object.fromEntries(HUMAN_COLUMNS.map((name) => [name, null]));
 
-/** a hand-file entry as the human block of a row: signed while its hash is the row's hash, stale (date null, stale_since = the row's hash) once the code moved; the entry itself is never touched */
+/** a hand-file entry as the human block of a row: signed while its hash is the row's hash, stale (date null, stale_since = the row's hash) once the code moved; the entry itself is never touched; a key that is neither a human column nor `hash` is refused (it would reach the derived register) */
 function humanFromEntry(entry, row) {
   const { hash, ...block } = entry;
+  const stray = Object.keys(block).filter((name) => !HUMAN_COLUMNS.includes(name));
+  if (stray.length) throw new Error('docs/api-signoffs.json: "' + row.key + '" has keys that are not human columns: ' + stray.join(', '));
   const human = Object.assign(blankHuman(), block);
   return hash === row.hash ? human : Object.assign(human, { signed_off_by_date: null, stale_since: row.hash });
 }
 
-/** the human columns come from docs/api-signoffs.json by route key (S15); a base checkout with no hand file yet falls back to the committed register's blocks (removed in the next api PR) */
-function mergeHuman(rows, previous, signoffs) {
-  if (signoffs) {
-    rows.forEach((row) => {
-      const entry = signoffs.routes && signoffs.routes[row.key];
-      row.human = entry ? humanFromEntry(entry, row) : blankHuman();
-      row.status = statusOf(row.columns, row.human);
-    });
-    return;
-  }
-  console.log('docs/api-signoffs.json not found: human columns taken from the committed docs/api-register.json (fallback until the hand file lands)');
-  const before = new Map((previous.routes || []).map((row) => [row.key, row]));
+/** the human columns come from docs/api-signoffs.json by route key (S15); no hand file means no sign-offs (the old fallback to the committed register is gone: it let a derived file carry hand facts) */
+function mergeHuman(rows, signoffs) {
   rows.forEach((row) => {
-    const old = before.get(row.key);
-    const human = old && old.human ? old.human : blankHuman();
-    const stale = !!(human.signed_off_by_date && old.hash !== row.hash);
-    row.human = stale ? Object.assign({}, human, { signed_off_by_date: null, stale_since: row.hash }) : human;
+    const entry = signoffs && signoffs.routes && signoffs.routes[row.key];
+    row.human = entry ? humanFromEntry(entry, row) : blankHuman();
     row.status = statusOf(row.columns, row.human);
   });
 }
@@ -381,6 +385,27 @@ function signoffProblems(signoffs, rows) {
   });
 }
 
+/**
+ * M7: one router mounted at two prefixes (server.js mounts routes/ctp.js at / and at /api/ctp, deliberately) is ONE handler, so ONE row.
+ * Leaves with the same method, the same router and the same handler functions fold into the one with the longest path
+ * (the /api one); the shorter paths are listed on it as `aliases`. Nothing else folds: a different handler is a different endpoint.
+ */
+function foldAliases(all) {
+  const groups = new Map();
+  all.forEach((leaf) => {
+    const same = [...groups.keys()].find((head) => head.method === leaf.method && head.router === leaf.router && head.fns.length === leaf.fns.length && head.fns.every((fn, at) => fn === leaf.fns[at]));
+    groups.set(same || leaf, (groups.get(same || leaf) || []).concat(leaf));
+  });
+  const leaves = [];
+  const aliasesOf = new Map();
+  groups.forEach((members) => {
+    const sorted = members.slice().sort((first, second) => second.path.length - first.path.length);
+    leaves.push(sorted[0]);
+    if (sorted.length > 1) aliasesOf.set(sorted[0], sorted.slice(1).map((leaf) => leaf.path).sort());
+  });
+  return { leaves, aliasesOf };
+}
+
 /** walk the real app and build the whole register: one row per method and path, counts, hashes */
 function buildRegister() {
   const loader = require(path.join(TOOLS_DIR, 'load-app.cjs'));
@@ -389,15 +414,27 @@ function buildRegister() {
   const routerFiles = routerFilesOf();
   /* a code counts as registered once its shopkeeper sentence is written: a PENDING row is a seed, not a finished entry (S14) */
   const registered = new Set(readJson('docs/error-codes.json', { codes: [] }).codes.filter((row) => row.shopkeeper !== 'PENDING').map((row) => row.code));
-  const context = { app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: hardeningEvidence(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
+  const context = { tables: card.knownTables(ROOT), app, routerFiles, shared: sharedFunctions(), operations: operationsOfApp(), legacy: legacyRoutes(), scope: hardeningScope(), budget: readJson('round-trips.budget.json', { routes: {} }).routes, evidence: hardeningEvidence(), errorTests: readJson('docs/contracts/api-error-tests.json', {}), contract: readJson('docs/contracts/api-contract-results.json', { routes: {} }).routes, registered };
   const seen = new Set();
-  const rows = loader
-    .leavesOf(app, true)
-    .filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path))
-    .map((leaf) => rowOf(leaf, context))
+  const { leaves, aliasesOf } = foldAliases(loader.leavesOf(app, true).filter((leaf) => !seen.has(leaf.method + ' ' + leaf.path) && seen.add(leaf.method + ' ' + leaf.path)));
+  const rows = leaves
+    .map((leaf) => Object.assign(rowOf(leaf, context), aliasesOf.has(leaf) ? { aliases: aliasesOf.get(leaf) } : {}))
     .sort((left, right) => (left.key < right.key ? -1 : 1));
-  mergeHuman(rows, readJson('docs/api-register.json', {}), readSignoffs());
+  mergeHuman(rows, readSignoffs());
+  addEffect(rows, context.budget);
   return { version: 1, stage: STAGE, counts: countsOf(rows), machine_columns: MACHINE_COLUMNS, human_columns: HUMAN_COLUMNS, routes: rows };
+}
+
+/** callers, offline and round-trip share, once every row is known (they read the committed docs/contracts/api-callers.json and round-trips.budget.json, never the web checkout) */
+function addEffect(rows, budget) {
+  const callersByRoute = card.readCallers(ROOT);
+  const queueable = card.readQueueable(ROOT);
+  rows.forEach((row) => {
+    row.callers = callersByRoute[row.key] || [];
+    row.offline = card.offlineOf(row.key, queueable, row.applies.idempotent_money_write && row.columns.idempotent_money_write);
+    row.round_trips = card.roundTripsOf(row.key, budget, callersByRoute);
+    row.measured = card.unmeasured();
+  });
 }
 
 /** docs/contracts/api-legacy.json: { 'METHOD /path': { answers: [...] } } */
@@ -410,7 +447,8 @@ function legacyRoutes() {
 function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
-  return { routes: rows.length, not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns };
+  const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
 const mark = (value) => (value === true ? 'yes' : value === false ? 'no' : '-');
@@ -425,18 +463,21 @@ function renderMarkdown(register) {
     '',
     '**' + counts.routes + ' endpoints** counted (a method on a path, once; a router mounted twice counts at each mount). Earlier figures were a grep of 560 and the backlog\'s 605: this count replaces them.',
     '',
+    '**Endpoint cards: ' + (counts.routes - counts.no_does) + ' of ' + counts.routes + ' routes have a `@does` line** (the ratchet counts the rest; it may only go down).',
+    '',
     '**API standard: ' + counts.meets + ' of ' + counts.routes + ' meet** - partial ' + counts.partial + ' - not started ' + counts.not_started + '.',
     '',
+  ].concat(counts.output_allowlist_from_recordings ? ['**Output allow-list closed from recordings only: ' + counts.output_allowlist_from_recordings + ' routes** (`output_allowlist_basis: recordings` in `docs/api-register.json`; their keys are the recorded answers, so a new key is reported and kept, never dropped, until the handler names its keys).', ''] : []).concat([
     'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
     '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
-  ];
+  ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
-    lines.push('| ' + [row.method, row.path, row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
+    lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
   });
-  return lines.join('\n') + '\n';
+  return lines.concat(card.renderCards(register.routes)).join('\n') + '\n';
 }
 
 const jsonText = (register) => JSON.stringify(register, null, 1) + '\n';
@@ -460,6 +501,11 @@ function check(register) {
 /** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
 function main(argv) {
   const register = buildRegister();
+  if (argv.includes('--callers')) {
+    const webRoot = path.resolve(process.env.CB_WEB_DIR || path.join(ROOT, '..', 'chitbridge-web'));
+    console.log('wrote docs/contracts/api-callers.json: ' + card.writeCallers(ROOT, register.routes, webRoot) + ' routes with a calling screen');
+    return;
+  }
   if (argv.includes('--json')) return fs.writeFileSync(argv[argv.indexOf('--json') + 1], jsonText(register)); /* to a file: process.exit below can cut a piped stdout short */
   if (argv.includes('--check')) {
     const problems = check(register);
@@ -477,4 +523,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { mergeHuman, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

@@ -52,7 +52,7 @@ function seed(D, W, row) {
       { owner: OTHER_SHOP, party_id: IDS.foreign, followup_id: P(29), what: 'Not yours', due_at: day(1), created_at: '2026-09-08T01:00:00.000Z', done_at: null, assignee_user_id: OTHER_SHOP, source: 'manual' }
     ],
     migrated: true, team: [SHOP, 'A1', 'A2', 'A3'], country: null, points: null, memberships: [], queries: [], appended: [], pre: null, shopCountry: 'IN',
-    hiddenColumn: true, ledgerOn: true
+    hiddenColumn: true, ledgerOn: true, noSeries: false
   });
 }
 
@@ -89,6 +89,7 @@ function extraOf(D, W) {
       const head = { total: all.length, n_open: all.filter((r) => !r.answered_at).length, n_late: 0 };
       return { rows: all.length ? all.map((r) => Object.assign({}, head, r)) : [Object.assign({ request_id: null }, head)] };
     }
+    if (/^SELECT 1 FROM privacy_request WHERE owner_entity_id = \$1 AND request_id = \$2/.test(sql)) return { rows: W.requestRows.filter((x) => x.owner === p[0] && x.request_id === p[1]).map(() => ({ held: 1 })) }; /* lib/privacy unanswerable: is the request this shop's */
     if (/^UPDATE privacy_request SET answered_at = now\(\)/.test(sql)) {
       const r = W.requestRows.find((x) => x.owner === p[0] && x.request_id === p[1] && !x.answered_at);
       if (!r) return { rows: [] };
@@ -106,6 +107,25 @@ function extraOf(D, W) {
     if (/^UPDATE party_followup SET done_at = now\(\), done_by = \$3 WHERE owner_entity_id = \$1 AND party_id = \$2/.test(sql)) return { rows: [] };
     if (/^SELECT body FROM party_interaction/.test(sql)) return { rows: [] };
     return null;
+  };
+}
+
+const NUL = '\u0000';
+const IS_UUID = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[EA][0-9])$/i; /* the stand-in's own sign-in ids (E1, A1) stand for uuids */
+/** an error the way pg raises one */
+const pgError = (code, message) => Object.assign(new Error(message || 'pg ' + code), { code });
+/**
+ * K-1 (B2): the stand-in keeps Postgres's two rules a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021 (a list of text too), and a value that is
+ * not a uuid, compared with a uuid column, is refused 22P02. The two statements of this file that compare a body value with a uuid column are named here.
+ */
+function junkOf(next) {
+  const holdsNul = (v) => (typeof v === 'string' ? v.includes(NUL) : Array.isArray(v) ? v.some(holdsNul) : !!v && typeof v === 'object' && Object.values(v).some(holdsNul));
+  return async (sql, p) => {
+    (p || []).forEach((v) => { if (holdsNul(v)) throw pgError('22021', 'invalid byte sequence for encoding "UTF8": 0x00'); });
+    if (/FROM identities WHERE identity_id = \$1 AND/.test(sql) && !IS_UUID.test(String(p[0]))) throw pgError('22P02', 'invalid input syntax for type uuid');
+    if (/followup_id = \$4 AND done_at IS NULL/.test(sql) && !IS_UUID.test(String(p[3]))) throw pgError('22P02', 'invalid input syntax for type uuid');
+    if (/followup_id = \$4 AND done_at IS NULL/.test(sql)) return { rows: [], rowCount: 0 }; /* a follow-up this shop does not hold: nothing closed */
+    return next ? next(sql, p) : null;
   };
 }
 
@@ -141,6 +161,13 @@ const boom = async () => {
   throw new Error(SECRET_SQL);
 };
 
+/** one privacy request of a shop (b307), answered when `answeredAt` is given */
+const requestRow = (id, owner, answeredAt) => ({ request_id: id, owner, party_id: null, who: 'Lata', kind: 'access', country: 'IN', received_at: '2026-10-01T00:00:00.000Z', due_at: '2026-10-31T00:00:00.000Z', answered_at: answeredAt || null });
+/** S33 strict input: the 13 writes whose body refuses a key no one reads, by name, in the old 400 (tests/api-problem-crm.test.cjs checkStrictInput) */
+const STRICT_WRITES = [
+  ['POST', '/parties/:id/interactions'], ['POST', '/followups'], ['PATCH', '/followups/:id'], ['POST', '/leads'], ['POST', '/parties/:id/outcome'], ['POST', '/leads/import'], ['POST', '/parties/:id/stage'],
+  ['POST', '/walk-ins/add'], ['POST', '/parties/:id/contact-prefs'], ['POST', '/privacy-requests'], ['POST', '/privacy-requests/:id/answer'], ['POST', '/groups'], ['POST', '/segments/:key/send']
+];
 /** every named scene: [id, route, expected status, options]. Options: who, key, signedOut, db ('fail'), world (a change to W), data (a change to D), url, body, patch. */
 function extras() {
   const X = (id, route, status, o) => Object.assign({ id, route, expect: status, setup: {} }, o || {});
@@ -222,6 +249,8 @@ function extras() {
     X('party-remove-with-dues', 'DELETE ' + C + '/parties/:id', 409, { data: (D) => { D.stored.customer[A.chola] = { party_no: 'P-0002', balance_minor: 50000, oldest_due: '2026-09-01' }; }, url: C + '/parties/' + A.chola }),
     /* leads */
     X('lead-added', 'POST ' + C + '/leads', 201, { body: { name: 'Ravi Jewellers', phone: '+91 98400 12321', stage: 'demo' } }),
+    /* API-8 (S34): before b272 there is no number series, so a new party has no number (party_no null) */
+    X('lead-added-before-the-number-series', 'POST ' + C + '/leads', 201, { body: { name: 'Ravi Jewellers', stage: 'demo' }, data: (D) => { D.noSeries = true; } }),
     X('lead-no-name', 'POST ' + C + '/leads', 400, { body: { phone: '+91 98400 12321' } }),
     X('lead-bad-phone', 'POST ' + C + '/leads', 400, { body: { name: 'X', phone: 'abc' } }),
     X('lead-bad-stage', 'POST ' + C + '/leads', 400, { body: { name: 'X', stage: 'customer' } }),
@@ -240,6 +269,7 @@ function extras() {
     N('calls-scope-given-twice', 'GET ' + C + '/calls', 400, at('/calls?scope=mine&scope=all')),
     X('outcome-logged', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested' } }),
     X('outcome-moves-the-stage', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'demo_booked', due_at: day(3).slice(0, 10) } }),
+    X('outcome-ends-the-lead', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'wrong_number' } }), /* API-8 (S34): no next follow-up (followup null) */
     X('outcome-bad-pick', 'POST ' + C + '/parties/:id/outcome', 400, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'nope' } }),
     X('outcome-unknown', 'POST ' + C + '/parties/:id/outcome', 404, { url: C + '/parties/' + A.unknown + '/outcome', body: { outcome: 'interested' } }),
     X('outcome-before-b297', 'POST ' + C + '/parties/:id/outcome', 503, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'not_now' }, setup: { world: { leads: false } } }),
@@ -254,6 +284,7 @@ function extras() {
     X('import-before-b297', 'POST ' + C + '/leads/import', 503, { body: { rows: [{ name: 'A' }] }, setup: { world: { leads: false } } }),
     /* the walk-in */
     X('walk-in-added', 'POST ' + C + '/walk-ins/add', 201, { body: { phone: '+91 98400 55555', name: 'Corner shop' } }),
+    X('walk-in-added-before-the-number-series', 'POST ' + C + '/walk-ins/add', 201, { body: { phone: '+91 98400 55555', name: 'Corner shop' }, data: (D) => { D.noSeries = true; } }),
     X('walk-in-no-phone', 'POST ' + C + '/walk-ins/add', 400, { body: {} }),
     /* a database that fails under a request that is otherwise fine: a 500 that says nothing of its cause */
     X('followup-made-db-fails', 'POST ' + C + '/followups', 500, { body: { party_id: A.chola, what: 'x' }, setup: { db: 'fail' } }),
@@ -277,7 +308,8 @@ function extras() {
     X('request-unknown-party', 'POST ' + C + '/privacy-requests', 404, { body: { kind: 'access', who: 'Lata', party_id: A.unknown } }),
     X('request-not-migrated', 'POST ' + C + '/privacy-requests', 503, { body: { kind: 'access', who: 'Lata' }, setup: { world: { requests: false } } }),
     X('request-answered', 'POST ' + C + '/privacy-requests/:id/answer', 200, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'Sent the copy.' }, world: (W) => { W.requestRows.push({ request_id: '30000000-0000-4000-8000-000000000001', owner: SHOP, party_id: null, who: 'Lata', kind: 'access', country: 'IN', received_at: '2026-10-01T00:00:00.000Z', due_at: '2026-10-31T00:00:00.000Z', answered_at: null }); } }),
-    X('request-answered-twice', 'POST ' + C + '/privacy-requests/:id/answer', 409, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000002/answer', body: { outcome: 'done', answer: 'Sent.' } }),
+    X('request-answered-twice', 'POST ' + C + '/privacy-requests/:id/answer', 409, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000002/answer', body: { outcome: 'done', answer: 'Sent.' }, world: (W) => { W.requestRows.push(requestRow('30000000-0000-4000-8000-000000000002', SHOP, '2026-10-02T00:00:00.000Z')); } }),
+    N('request-answer-unknown-id', 'POST ' + C + '/privacy-requests/:id/answer', 404, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000003/answer', body: { outcome: 'done', answer: 'Sent.' } }), /* S35: a request this shop does not hold is the 404 (was the 409 of an answered one) */
     X('request-answer-no-outcome', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: {} }),
     X('request-answer-by-staff', 'POST ' + C + '/privacy-requests/:id/answer', 403, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'x' }, setup: { who: 'staff' } }),
     X('request-answer-not-an-id', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/nope/answer', body: { outcome: 'done', answer: 'x' } }),
@@ -297,11 +329,32 @@ function extras() {
     X('segment-send-preview', 'POST ' + C + '/segments/:key/send', 200, { url: C + '/segments/regular/send', body: { text: 'A new offer', dry: true } }),
     X('segment-send-by-viewer', 'POST ' + C + '/segments/:key/send', 403, { url: C + '/segments/regular/send', body: { text: 'x', dry: true }, setup: { who: 'viewer' } }),
     X('segment-send-unknown-key', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/nope/send', body: { text: 'x', dry: true } }),
+    N('segment-send-unknown-group', 'POST ' + C + '/segments/:key/send', 404, { url: C + '/segments/group:Nobody/send', body: { text: 'x', dry: true } }), /* S35: a group none of my customers carries is DELETE /groups/:name's 404 */
     X('segment-send-no-text', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { dry: true } }),
     X('segment-send-bad-channel', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', channel: 'sms', dry: true } }),
     X('segment-send-a-service-message', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: { text: 'x', purpose: 'service', dry: true } }),
-    N('segment-send-body-not-an-object', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: [] })
+    N('segment-send-body-not-an-object', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/regular/send', body: [] }),
+    /* K-1 (B2): a value no column can hold. A NUL byte in text Postgres keeps is a 400 in words (never a 500); a body id that is not a uuid answers as an unknown one (S41) */
+    N('junk-note-nul', 'POST ' + C + '/parties/:id/interactions', 400, { body: { kind: 'note', body: 'Spoke' + NUL + 'at the counter' }, setup: { junk: true } }),
+    N('junk-followup-nul', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring' + NUL + 'about it', due_at: day(2) }, setup: { junk: true } }),
+    N('junk-followup-edit-nul', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { what: 'Ring' + NUL }, setup: { junk: true } }),
+    N('junk-followup-assignee-not-an-id', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring', due_at: day(2), assignee_user_id: 'abc' }, setup: { junk: true } }),
+    N('junk-followup-assignee-unknown-id', 'POST ' + C + '/followups', 400, { body: { party_id: A.chola, what: 'Ring', due_at: day(2), assignee_user_id: A.unknown }, setup: { junk: true } }),
+    N('junk-followup-hand-on-not-an-id', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { assignee_user_id: 'abc' }, setup: { junk: true } }),
+    N('junk-followup-hand-on-unknown-id', 'PATCH ' + C + '/followups/:id', 400, { url: C + '/followups/' + P(21), body: { assignee_user_id: A.unknown }, setup: { junk: true } }),
+    N('junk-outcome-followup-not-an-id', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested', followup_id: 'abc' }, setup: { junk: true } }),
+    N('junk-outcome-followup-unknown-id', 'POST ' + C + '/parties/:id/outcome', 201, { url: C + '/parties/' + A.lead + '/outcome', body: { outcome: 'interested', followup_id: A.unknown }, setup: { junk: true } }),
+    N('junk-lead-nul', 'POST ' + C + '/leads', 400, { body: { name: 'Ravi' + NUL + 'Jewellers' }, setup: { junk: true } }),
+    N('junk-import-nul', 'POST ' + C + '/leads/import', 400, { body: { rows: [{ name: 'Kala' + NUL + 'Stores', phone: '+91 98400 11111' }] }, setup: { junk: true } }),
+    N('junk-walk-in-nul', 'POST ' + C + '/walk-ins/add', 400, { body: { phone: '+91 98400 55555', name: 'Corner' + NUL + 'shop' }, setup: { junk: true } }),
+    N('junk-request-nul', 'POST ' + C + '/privacy-requests', 400, { body: { kind: 'access', who: 'Lata' + NUL, party_id: A.chola }, setup: { junk: true } }),
+    N('junk-answer-nul', 'POST ' + C + '/privacy-requests/:id/answer', 400, { url: C + '/privacy-requests/30000000-0000-4000-8000-000000000001/answer', body: { outcome: 'done', answer: 'Sent' + NUL }, setup: { junk: true }, world: (W) => { W.requestRows.push(requestRow('30000000-0000-4000-8000-000000000001', SHOP, null)); } }),
+    N('junk-stage-nul', 'POST ' + C + '/parties/:id/stage', 400, { url: C + '/parties/' + A.lead + '/stage', body: { stage: 'tri' + NUL + 'al' }, setup: { junk: true } }),
+    N('junk-group-nul', 'POST ' + C + '/groups', 400, { body: { name: 'Deal' + NUL + 'ers', add: [A.plain] }, setup: { junk: true } }),
+    N('junk-group-drop-nul', 'DELETE ' + C + '/groups/:name', 400, { url: C + '/groups/Deal%00ers', setup: { junk: true } }),
+    N('junk-segment-key-nul', 'POST ' + C + '/segments/:key/send', 400, { url: C + '/segments/group:Deal%00ers/send', body: { text: 'x', dry: true }, setup: { junk: true } }),
+    N('junk-send-text-nul', 'POST ' + C + '/segments/:key/send', 200, { url: C + '/segments/regular/send', body: { text: 'A new' + NUL + 'offer', dry: true }, setup: { junk: true } })
   ];
 }
 
-module.exports = { preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day };
+module.exports = { junkOf, preOf, P, IDS, SHOP, OTHER_SHOP, LOGINS, SECRET_SQL, FRESH_WORLD, seed, extraOf, extras, day, requestRow, STRICT_WRITES };

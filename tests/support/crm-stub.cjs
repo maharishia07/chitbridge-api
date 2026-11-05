@@ -14,7 +14,7 @@ const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel));
 function make() {
   const data = {
     cust: [], sup: [], walk: [], stored: { customer: {}, supplier: {} }, chits: [], messages: [], disputes: [], ledger: [], changes: [],
-    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2'], country: null, points: null,
+    interactions: [], followups: [], migrated: true, hvMissing: false, hiddenColumn: true, team: ['E1', 'A1', 'A2', 'a1000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002'], country: null, points: null,
     queries: [], appended: [],
   };
   let seq = 0; const uid = () => '00000000-0000-4000-8000-' + String(++seq).padStart(12, '0');
@@ -122,10 +122,10 @@ function make() {
 
   /* the Ledger's stored figures, handed back the way party-fields.decorate would (ledger on = balance_minor present) */
   stub('lib/party-fields', {
-    SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => 'P-00099',
+    SCHEMES: ['GSTIN', 'PAN'], ensureNo: async () => { if (data.noSeries) throw new Error('relation "party_no_series" does not exist'); return 'P-00099'; }, /* noSeries: before b272 (the mint's savepoint answers null) */
     decorate: async (withEntity, owner, rows, idKey, side) => {
       for (const r of rows) { const s = data.stored[side][String(r[idKey])] || {};
-        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: null, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
+        Object.assign(r, { party_no: s.party_no || null, legal_name: s.legal_name || null, credit_days: s.credit_days == null ? null : s.credit_days, credit_limit_minor: s.credit_limit_minor == null ? null : s.credit_limit_minor, state_code: s.state_code || null, merged_into: null, tax_ids: s.tax_ids || [] });
         if (side === 'customer') r.nickname = s.nickname || null;
         if (data.ledgerOn !== false) { r.balance_minor = s.balance_minor || 0; r.oldest_due = s.oldest_due || null; } }
       return rows;

@@ -24,6 +24,6 @@ ok('NEW.customer_identity_id / NEW.supplier_entity_id are named nowhere else', !
 const app = fs.readFileSync(path.join(__dirname, '..', 'lib', 'party-fields.js'), 'utf8');
 ok('the function takes the per-shop lock first, with the key merge: + owner uuid text', /PERFORM pg_advisory_xact_lock\(hashtext\('merge:' \|\| NEW\.owner_entity_id::text\)\);/.test(fn) && fn.indexOf('pg_advisory_xact_lock') < fn.indexOf('EXISTS'));
 ok('the app takes the same key (merge: + lower-case owner)', /pg_advisory_xact_lock\(hashtext\(\$1\)\)', \['merge:' \+ String\(owner\)\.toLowerCase\(\)\]/.test(app));
-ok('it stays a DRAFT', /DRAFT — NOT RUN/.test(sql));
+ok('its header says Athi ran it', /RUN by Athi 2026-10-29/.test(sql));
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exitCode = fail ? 1 : 0;

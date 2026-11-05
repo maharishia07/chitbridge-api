@@ -8,8 +8,9 @@
 const router = require('express').Router();
 const net = require('../services/network');
 const auth = require('../../middleware/auth'); // require a valid JWT on every network route
-const { problem } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../../middleware/validate'); // S9: the request is checked against the route's own schema
+const { ownerOnly } = require('../../lib/owner'); // the ONE owner gate: a co-assist (staff, till, AI actor) or a key is refused
 const contract = require('../../lib/network-contract'); // the contract (each route's operation) and the words of a refusal
 // SECURITY (interim must-fix): cb_entity is DORMANT (2026-06-27 ruling) and these MUTATION routes still take
 // authority from the request body (`actingEntityId`) — there is no cb_entity<->identities bridge yet to verify
@@ -20,12 +21,25 @@ const contract = require('../../lib/network-contract'); // the contract (each ro
 /* ⭐ 2026-09-17: the authority half is built (src/services/network.js — the actor comes from the token, per-op rules), so writes
    are ON unless switched off. NETWORK_WRITE_ENABLED=false is the kill switch. */
 const WRITES_ENABLED = process.env.NETWORK_WRITE_ENABLED !== 'false';
-const auth_ = require('../../middleware/auth');
 /** the signed-in business's node — made a root the first time it takes part */
-const actorOf = (req) => net.nodeOf(auth_.entityOf(req), { ensure: true });
+const actorOf = (req) => net.nodeOf(auth.entityOf(req), { ensure: true });
 const gateWrite = (req, res, next) => (WRITES_ENABLED ? next() : problem(req, res, { status: 503, ...contract.words.writesOff() }));
 /** the schema check of one route (its own operation in lib/network-contract.js) */
 const checked = (route) => schemaValidate(contract.network.operationFor(route), contract.schemaOptions.network);
+/** NET-48: a connection that names someone who cannot exist is answered "not found" before the database is asked */
+const namesOne = (req, res, next) => {
+  const refusal = contract.unknownSide(req.body || {});
+  return refusal ? problem(req, res, refusal) : next();
+};
+/** K-1 (API-10, S41): an id in the address that is not a uuid names no row — answered exactly as an unknown uuid: an edge says EDGE_NOT_FOUND, a business says NOT_FOUND (the service's own words), before the database is asked */
+router.param(
+  'id',
+  uuidParam((req) =>
+    req.path.startsWith('/connections/') ? { detail: 'edge not found', legacy: { error: 'edge not found', code: 'EDGE_NOT_FOUND' }, code: 'EDGE_NOT_FOUND' } : { detail: 'not found', legacy: { error: 'not found', code: 'NOT_FOUND' } }
+  )
+);
+/** NET-55: deciding on a connection is the business's own act — never a co-assist's or a key's (build and reissue already say the same in network-design) */
+const ownerDecides = ownerOnly('Only the business owner can decide on a connection. Sign in as the business itself.');
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
@@ -56,7 +70,7 @@ router.post(
   auth,
   gateWrite,
   checked('POST /entities/:id/claim'),
-  h((req) => net.claim(req.params.id, auth_.entityOf(req)))
+  h((req) => net.claim(req.params.id, auth.entityOf(req)))
 );
 /**
  * ⭐⭐ GET /network/place?bridgeId=… — "where do I sit, and what is the whole network?", in ONE round trip.
@@ -137,6 +151,7 @@ router.post(
   auth,
   gateWrite,
   checked('POST /connections'),
+  namesOne,
   h(async (req) => {
     const b = req.body || {};
     const out = await net.requestConnect(
@@ -150,6 +165,7 @@ router.post(
 router.post(
   '/connections/:id/approve',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/approve'),
   h(async (req) => _told(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
@@ -157,6 +173,7 @@ router.post(
 router.post(
   '/connections/:id/decline',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/decline'),
   h(async (req) => _told(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
@@ -164,6 +181,7 @@ router.post(
 router.post(
   '/connections/:id/suspend',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/suspend'),
   h(async (req) => _told(await net.suspend(req.params.id, await actorOf(req))))
@@ -171,6 +189,7 @@ router.post(
 router.post(
   '/connections/:id/resume',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/resume'),
   h(async (req) => _told(await net.resume(req.params.id, await actorOf(req))))
@@ -178,6 +197,7 @@ router.post(
 router.post(
   '/connections/:id/disconnect',
   auth,
+  ownerDecides,
   gateWrite,
   checked('POST /connections/:id/disconnect'),
   h(async (req) => _told(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))

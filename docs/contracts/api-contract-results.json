@@ -26,6 +26,14 @@
     400
    ]
   },
+  "DELETE /api/channels/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/chits/:chit_id": {
    "cases": 3,
    "failed": 0,
@@ -50,6 +58,22 @@
     422
    ]
   },
+  "DELETE /api/combo-templates/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "DELETE /api/connectors/:actorId": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/crm/followups/:id": {
    "cases": 3,
    "failed": 0,
@@ -67,6 +91,14 @@
    ]
   },
   "DELETE /api/crm/parties/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "DELETE /api/definitions/:id": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -138,6 +170,14 @@
     400
    ]
   },
+  "DELETE /api/relationships/suppliers/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "DELETE /api/schemas/fields/:field_key": {
    "cases": 3,
    "failed": 0,
@@ -146,12 +186,36 @@
     422
    ]
   },
+  "GET /api/actors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/actors/:id/tasks": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/actors/access-events": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/adopt/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/assist/catalogue-mine": {
@@ -196,6 +260,14 @@
   },
   "GET /api/assist/resolve": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/attachments/:id": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -378,6 +450,30 @@
     422
    ]
   },
+  "GET /api/capture/consolidate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/:bridge_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "cases": 3,
    "failed": 0,
@@ -387,6 +483,14 @@
    ]
   },
   "GET /api/catalogue/:bridge_id/my-orders": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -404,6 +508,30 @@
   },
   "GET /api/catalogue/enquiry/:item_id": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/channels/outbound": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -451,6 +579,14 @@
    ]
   },
   "GET /api/chits/:chit_id/messages": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/chits/:chit_id/proposals": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -570,6 +706,14 @@
     422
    ]
   },
+  "GET /api/combo-templates": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/connections/list": {
    "cases": 2,
    "failed": 0,
@@ -580,6 +724,38 @@
   },
   "GET /api/connections/pending": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -640,6 +816,78 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/definitions": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/definitions/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/constitutions": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/me": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/mis": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/routing/preview": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/search": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/entities/usage": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/events/stream": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/facts/:card": {
@@ -826,6 +1074,14 @@
     422
    ]
   },
+  "GET /api/identity/documents": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/integrations/docs/:id": {
    "cases": 3,
    "failed": 0,
@@ -835,6 +1091,14 @@
    ]
   },
   "GET /api/integrations/download/:id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/integrations/kit/*": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
@@ -868,6 +1132,22 @@
   },
   "GET /api/invoice/:chit_id": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/kyb/position": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/marketing/came-back": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -914,6 +1194,22 @@
     400
    ]
   },
+  "GET /api/notifications": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/people": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "GET /api/products": {
    "cases": 2,
    "failed": 0,
@@ -954,12 +1250,84 @@
     400
    ]
   },
+  "GET /api/relationships/customers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/scorecard": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/scorecard/:entity_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/repeat/:id": {
    "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "GET /api/service/:chit_id": {
+   "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "GET /api/supplies": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "GET /api/tax/gstr": {
@@ -1195,7 +1563,7 @@
    ]
   },
   "PATCH /api/actors/:id": {
-   "cases": 4,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1216,6 +1584,22 @@
    "missing_input_ok": true,
    "statuses": [
     422
+   ]
+  },
+  "PATCH /api/combo-templates/:id": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "PATCH /api/counters/:id": {
@@ -1315,6 +1699,22 @@
    ]
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/relationships/customers/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "PATCH /api/relationships/suppliers/:id": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
@@ -1346,6 +1746,14 @@
     400
    ]
   },
+  "PATCH /api/supplies/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "PATCH /api/testing/incidents/:id": {
    "cases": 4,
    "failed": 0,
@@ -1363,7 +1771,7 @@
    ]
   },
   "POST /api/actors": {
-   "cases": 4,
+   "cases": 13,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1379,7 +1787,7 @@
    ]
   },
   "POST /api/actors/check-key": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1387,11 +1795,19 @@
    ]
   },
   "POST /api/actors/suggest-key": {
-   "cases": 3,
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/adopt/:chit_id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/assist": {
@@ -1443,6 +1859,14 @@
    ]
   },
   "POST /api/assist/resolve": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/attachments": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -1634,6 +2058,14 @@
     422
    ]
   },
+  "POST /api/books/money-check/resolve": {
+   "cases": 7,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/move-in/import": {
    "cases": 2,
    "failed": 0,
@@ -1802,6 +2234,54 @@
     422
    ]
   },
+  "POST /api/capture/:id/convert": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/dismiss": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/raise": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/:id/structure": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/simulate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/stores": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "cases": 3,
    "failed": 0,
@@ -1860,6 +2340,62 @@
   },
   "POST /api/catalogue/photo-extract": {
    "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/approve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/revoke": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/template": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/channels/:id/template-approve": {
+   "cases": 4,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1936,6 +2472,38 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "cases": 8,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/chits/:chit_id/raida": {
@@ -2066,8 +2634,88 @@
     400
    ]
   },
+  "POST /api/combo-templates": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/combo-templates/:id/push": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/connections/request": {
    "cases": 3,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/erp-ingest": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/ingest": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/connectors/reissue-code": {
+   "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2202,6 +2850,14 @@
     400
    ]
   },
+  "POST /api/csp-report": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/ctp/deliver": {
    "cases": 4,
    "failed": 0,
@@ -2218,12 +2874,36 @@
     400
    ]
   },
+  "POST /api/definitions": {
+   "cases": 6,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/definitions/freeze": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/entities/populations": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/events/ticket": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/folders": {
@@ -2370,6 +3050,22 @@
     422
    ]
   },
+  "POST /api/identity/documents/:scheme/code": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/integrations/:actor_id/approve": {
    "cases": 4,
    "failed": 0,
@@ -2434,6 +3130,22 @@
     400
    ]
   },
+  "POST /api/kyb/credential": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/kyb/field": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/network-design/build": {
    "cases": 2,
    "failed": 0,
@@ -2456,6 +3168,54 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "POST /api/network-offers/:id/choice": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/release": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "POST /api/network/connections": {
@@ -2522,7 +3282,55 @@
     400
    ]
   },
+  "POST /api/notifications/dismiss": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/notifications/seen": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/offers/evaluate": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/offers/explain": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/pricing/price": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/privacy/me/consent": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/privacy/me/requests": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -2634,6 +3442,30 @@
     400
    ]
   },
+  "POST /api/relationships/customers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/customers/:id/groups": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/relationships/suppliers": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/repeat": {
    "cases": 2,
    "failed": 0,
@@ -2738,6 +3570,86 @@
     422
    ]
   },
+  "POST /api/service/:chit_id/pause": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "cases": 5,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/ask": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/pin": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/renew": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/sessions/revoke": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/signin/verify": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/simulator/feedback": {
    "cases": 2,
    "failed": 0,
@@ -2747,6 +3659,30 @@
    ]
   },
   "POST /api/simulator/lead": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/supplies": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/supplies/:id/issue": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
+  "POST /api/supplies/purchase": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -3091,7 +4027,7 @@
    ]
   },
   "PUT /api/actors/:id/delegate": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3139,7 +4075,7 @@
    ]
   },
   "PUT /api/actors/settings": {
-   "cases": 2,
+   "cases": 8,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3242,6 +4178,14 @@
     400
    ]
   },
+  "PUT /api/definitions/:id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "PUT /api/entities/populations/:code/desk": {
    "cases": 4,
    "failed": 0,
@@ -3290,6 +4234,14 @@
     422
    ]
   },
+  "PUT /api/identity/documents/:scheme": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "PUT /api/integrations/streams": {
    "cases": 2,
    "failed": 0,
@@ -3304,6 +4256,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PUT /api/network-offers/policy": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PUT /api/products/:id/availability": {
@@ -3328,6 +4288,14 @@
    "missing_input_ok": true,
    "statuses": [
     400
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
    ]
   },
   "PUT /api/testing/cmdb/:ci": {

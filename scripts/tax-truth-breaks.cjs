@@ -1,11 +1,15 @@
-/* break each guard of "one invoice, everywhere" (2026-10-02: one computation — CBTax.determine at the counter — and every
-   other place only reads) once; every break must turn tests/tax-truth.test.cjs red; every
-   file is restored from a COPY (never git); each anchor is ONE line, matched once; CRLF-safe.
-   Run: node scripts/tax-truth-breaks.cjs */
+/**
+ * scripts/tax-truth-breaks.cjs: break each guard of one invoice, everywhere once; every break must turn its guard test red; every file is restored from a COPY (never git).
+ * OWNS       the list of deliberate breaks of these guards (each names the test it must turn red).
+ * CALLED BY  by hand (node scripts/tax-truth-breaks.cjs [repo root]); never by CI. A break aimed at routes/chits.js finds its anchor through tools/chits-files.cjs.
+ * FLOW       for each break: find the file holding the anchor, copy it, apply the break, run the guard test, expect red, restore the copy.
+ * CARD       15-tax-and-country-packs/tax-compute-rate-invoice-tax
+ */
 const fs = require('fs'),
   path = require('path'),
   { spawnSync } = require('child_process');
 const R = process.argv[2] || path.join(__dirname, '..');
+const CHITS = require('../tools/chits-files.cjs'); /* the ONE list of chits files: a break finds its anchor wherever the code lives now */
 const BREAKS = [
   /* (A) billing computes once — CBTax.determine() in the counter's billMoney(); the bill reads its answer */
   [
@@ -120,7 +124,7 @@ const BREAKS = [
 let caught = 0;
 const missed = [];
 for (const [test, file, from, to, what] of BREAKS) {
-  const abs = path.join(R, file),
+  const abs = path.join(R, CHITS.anchorFile(R, file, from)),
     copy = abs + '.breakcopy';
   const orig = fs.readFileSync(abs, 'utf8');
   fs.writeFileSync(copy, orig);
