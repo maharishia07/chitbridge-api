@@ -78,6 +78,11 @@ function extras(tools) {
     if (pattern.test(String(sql))) throw sqlError(code);
     return null;
   };
+  /** the one rule of Postgres a junk value breaks: a NUL byte in any text it is asked to keep is refused 22021 */
+  const nulRefusing = (sql, params) => {
+    if ((params || []).some((one) => typeof one === 'string' && one.includes('\u0000'))) throw sqlError('22021');
+    return null;
+  };
   const YOURSELF = 'GET ' + K + '/yourself';
   const CREDENTIAL = 'POST ' + K + '/credential';
   const POSITION = 'GET ' + K + '/position';
@@ -104,6 +109,11 @@ function extras(tools) {
     X('credential-nothing-named', CREDENTIAL, 400, { body: {} }),
     X('credential-body-a-list', CREDENTIAL, 400, { body: [] }),
     X('credential-title-blank', CREDENTIAL, 400, { body: { title: '', standard_key: '' } }),
+    /* K-1 (B2): a text no column can hold is a 400 in words, never a 500 */
+    X('credential-junk-title', CREDENTIAL, 400, { body: { title: 'Village\u0000 NOC' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-standard-key', CREDENTIAL, 400, { body: { standard_key: 'iec\u0000' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-doc-key', CREDENTIAL, 400, { body: { title: 'Village NOC', doc_key: '\u0000' }, setup: withRows(nulRefusing) }),
+    X('credential-junk-evidence-ref', CREDENTIAL, 400, { body: { title: 'Village NOC', evidence_ref: 'ref\u0000' }, setup: withRows(nulRefusing) }),
     X('credential-db-fails', CREDENTIAL, 500, { body: { title: 'Village NOC' }, setup: { db: 'fail' } }),
     X('credential-bad-date', CREDENTIAL, 400, { body: { title: 'Village NOC', valid_until: 'next spring' }, setup: withRows(noWrite(/INSERT INTO entity_compliance/, '22007')) }),
     X('credential-library-throws', CREDENTIAL, 500, { body: { title: 'x' }, patch: { kyb: { addCredential: thrown(SECRET_SQL) } } }),

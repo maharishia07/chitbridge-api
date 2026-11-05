@@ -197,6 +197,9 @@
   "GET /api/chits/:chit_id/messages": {
    "output_allowlist": true
   },
+  "GET /api/chits/:chit_id/proposals": {
+   "foreign_id_404": true
+  },
   "GET /api/chits/:chit_id/use": {
    "output_allowlist": true
   },
@@ -523,13 +526,41 @@
   "POST /api/books/accounts": {
    "output_allowlist": true
   },
+  "POST /api/books/accruals": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/assets": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "POST /api/books/cheques/:id/status": {
+   "output_allowlist": true
+  },
+  "POST /api/books/closing-stock": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/books/compare/preflight": {
    "output_allowlist": true
   },
   "POST /api/books/compare/snapshots": {
+   "output_allowlist": true
+  },
+  "POST /api/books/contra": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/depreciation/run": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/books/enable": {
@@ -551,6 +582,25 @@
    "output_allowlist": true
   },
   "POST /api/books/fx-revalue": {
+   "output_allowlist": true
+  },
+  "POST /api/books/gst/close": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/gst/pay": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/loans": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/books/money-check/resolve": {
    "output_allowlist": true
   },
   "POST /api/books/move-in/preflight": {
@@ -675,6 +725,18 @@
   },
   "POST /api/chits/:chit_id/payment": {
    "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "foreign_id_404": true
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida": {
    "output_allowlist": true
@@ -995,6 +1057,9 @@
   "PUT /api/actors/settings": {
    "output_allowlist": true
   },
+  "PUT /api/assist/region-override": {
+   "foreign_id_404": true
+  },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "output_allowlist": true
   },
@@ -1030,21 +1095,6 @@
   },
   "PUT /api/products/:id/status": {
    "output_allowlist": true
-  },
-  "GET /api/chits/:chit_id/proposals": {
-   "foreign_id_404": true
-  },
-  "POST /api/chits/:chit_id/proposals": {
-   "foreign_id_404": true
-  },
-  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
-   "foreign_id_404": true
-  },
-  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
-   "foreign_id_404": true
-  },
-  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
-   "foreign_id_404": true
   }
  }
 }

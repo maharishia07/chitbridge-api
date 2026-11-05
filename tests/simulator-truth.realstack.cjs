@@ -8,7 +8,7 @@
  *   SIM-02  POST /lead stores ONE sim_leads row (e-mail lower-cased, no org stored as null) and answers { token, leadId }; the token is no platform credential: a signed-in route refuses it (S1)
  *   SIM-03  POST /feedback with the lead id the gate gave stores a sim_feedback row under that lead; with none, lead_id is null
  *   SIM-04  a refused write stores nothing (a name under two letters, an e-mail without an @, a blank message)
- *   SIM-05  POST /feedback rating: a whole number is stored, 3.5 is the column's own refusal (22P02) and the generic 500, and nothing is written
+ *   SIM-05  POST /feedback rating: a whole number is stored, 3.5 is refused 400 SIM_FEEDBACK_RATING_NOT_WHOLE in words, and nothing is written (was the column's 22P02 as a 500)
  *   SIM-06  gap: the foreign-key oracle. A real lead id answers 200; a well-formed uuid nobody holds is the key's 23503 and a 36-character non-uuid is the cast's 22P02, both the generic 500. A signed-out caller
  *           can therefore tell whether a uuid is a lead (rated LOW: uuids are random and never listed). Listed for cb-security; the principle (every lead id answers alike) is the expectation
  * CALLED BY the S41 job (it picks up every *-truth.realstack.cjs) · by hand on the local stack. NOT run on the laptop that wrote it (no Docker there): written, runs in S41.
@@ -84,7 +84,7 @@ const signUp = (name, email, org) => j('/api/simulator/lead', { method: 'POST', 
       expect((await feedbackOf(message))[0].rating === 5, 'a rating sent as "5" is stored as 5');
       const decimal = 'Test decimal ' + RUN;
       const refused = await j('/api/simulator/feedback', { method: 'POST', body: { rating: 3.5, message: decimal } });
-      expect(refused.status === 500 && refused.b.error === 'Could not record that — please try again.' && (await feedbackOf(decimal)).length === 0, 'a rating of 3.5: ' + refused.status + ' ' + JSON.stringify(refused.b));
+      expect(refused.status === 400 && refused.b.code === 'SIM_FEEDBACK_RATING_NOT_WHOLE' && (await feedbackOf(decimal)).length === 0, 'a rating of 3.5: ' + refused.status + ' ' + JSON.stringify(refused.b));
     });
 
     await kase('SIM-06', 'every lead id answers alike: a real one, one nobody holds, and a non-uuid', async () => {

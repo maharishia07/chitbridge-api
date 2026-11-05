@@ -21,14 +21,26 @@ const ok = (name, fn) => {
 
 console.log('\n══ MONEY AT THE ORIGIN (ACC-192) ══\n');
 const money = fnBody(chits, 'async function sendMoney(');
-const moneyCore = fnBody(chits, 'async function moneyOfLines('); /* RAIL-106: the calculation sendMoney used to hold, now shared with a change order (lib/chit-proposal) */
+const sendMoneyLib = read('lib/send-money.js');
+const proposal = read('lib/chit-proposal.js');
 const issued = fnBody(chits, 'async function sendIssued(');
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
-  assert.ok(/await moneyOfLines\(/.test(money) && /invoice: originInvoice/.test(money), 'sendMoney must hand over the invoice it computed at send');
-  assert.ok(/originInvoice = invoice/.test(moneyCore) && /await invoiceAtSend\(/.test(moneyCore), 'the one calculation computes it');
+  assert.ok(/originInvoice: invoice/.test(money) && /await sendMoneyScope\.invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice the engine answered at send (lib/send-money)');
   assert.ok(/business_json\.invoice = st\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
   assert.ok(/!business_json\.invoice && st\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
+});
+ok('ONE calculation on every path: a send and a change order (RAIL-106) both ask lib/send-money invoiceOfLines; no route keeps a second one', () => {
+  assert.ok(/return invoiceOfLines\(/.test(fnBody(sendMoneyLib, 'async function invoiceAtSend(')), 'invoiceAtSend must be the send door of invoiceOfLines');
+  assert.ok(/require\('\.\/send-money'\)\.invoiceOfLines\(/.test(fnBody(proposal, 'async function priceMoney(')), 'a change order must price by the same call');
+  assert.ok(!/function moneyOfLines\(|function keepOffer\(/.test(chits), 'no second calculation left in the chits route');
+  assert.ok(/total_value: priced2\.block\.total/.test(proposal), 'a change order\'s total_value is the engine total, never the net');
+});
+ok('ONE rule on every path (Athi 2026-11-02, "refuse both"): a change order the engine cannot price is refused like a send, 503 MONEY_NOT_COMPUTED, never "Tax not decided"', () => {
+  const price = fnBody(proposal, 'async function priceMoney(');
+  assert.ok(/throw refused\(503, 'MONEY_NOT_COMPUTED', 'The money could not be worked out: '/.test(price), 'priceMoney must refuse in the send words');
+  assert.ok(/'MONEY_NOT_COMPUTED', error: 'The money could not be worked out', message: 'The money could not be worked out: '/.test(money), 'the send refuses the same way');
+  assert.ok(!/not_decided|Tax not decided/.test(proposal), 'no "Tax not decided" round is left in the change order');
 });
 ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', () => {
   const cond = issued.slice(issued.indexOf('if ('), issued.indexOf('moneyOfInvoice('));
@@ -36,7 +48,7 @@ ok('EVERY carried invoice is mapped the same way (not only a counter bill\'s)', 
   assert.ok(/moneyOfInvoice\(carried/.test(issued));
 });
 ok('only the counter\'s invoice is checked against the server (only it was computed elsewhere)', () => {
-  assert.ok(/if \(counterBill && issuedTotal != null\)/.test(issued));
+  assert.ok(/if \(counterBill && mapped\)/.test(issued));
 });
 ok('the books read a carried invoice as it is and never recompute it', () => {
   const entry = fnBody(copy, 'async function entryFor(');

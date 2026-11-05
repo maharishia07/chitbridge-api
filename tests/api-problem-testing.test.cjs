@@ -62,7 +62,7 @@ const lab = harness({
   notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || ADDED.has(scenario)
 });
 const { check } = lab;
-const sources = () => ({ board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')), fs: require('fs') });
+const sources = () => ({ raiseticket: require(path.join(HERE, 'lib', 'raiseticket')), board: require(path.join(HERE, 'lib', 'testboard')), storage: require(path.join(HERE, 'lib', 'storage')), fs: require('fs') });
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
   { id: 'staff-asks', setup: { who: STAFF } },
@@ -140,6 +140,35 @@ async function foreignWorld(port) {
   return seen.proved();
 }
 
+/** S41 (K-1, B2): a junk value answers exactly as the unknown value it stands for — the same status, the same body but for the request id — and a NUL byte in stored text is a 400 in plain words */
+async function junkWorld(port) {
+  console.log('\n-- a junk value answers as an unknown one --');
+  const bodyOf = (answer) => JSON.stringify(Object.assign({}, answer.json, { request_id: null, generated_at: null }));
+  for (const pair of scenes.pairs(tools)) {
+    const ask = async (url, body) => {
+      Object.assign(lab.world, { realAuth: false, db: 'ok', who: OWNER, sqlRows: pair.setup.sqlRows });
+      return lab.send(port, pair.method, url, body);
+    };
+    const junk = await ask(pair.junk, pair.body);
+    const unknown = await ask(pair.unknown, pair.unknownBody);
+    check(pair.id + ': the junk value answers exactly as the unknown one (' + unknown.status + ', same body)', junk.status < 500 && junk.status === unknown.status && bodyOf(junk) === bodyOf(unknown), { junk: junk.status, unknown: unknown.status });
+  }
+  const words = contractModule();
+  const text = words.faultOf(Object.assign(new Error('invalid byte sequence for encoding "UTF8": 0x00'), { code: '22021' }), { id: 'r1' }, 'Could not record it');
+  check('faultOf: a NUL byte in text (22021, 22P05 in a jsonb value) is a 400 in plain words, nothing of the database in it', text.status === 400 && sameValue(text.legacy, { error: 'Cannot save this text', message: 'Cannot save this text. Type it again.' }) && words.faultOf(Object.assign(new Error('x'), { code: '22P05' }), {}, 'x').status === 400, text);
+  check('bareFaultOf: the same 400 for the reads that never carried a message', words.bareFaultOf(Object.assign(new Error('x'), { code: '22021' }), {}, 'Failed').status === 400);
+  Object.assign(lab.world, { sqlRows: null });
+}
+
+/** SEC-93: a failed copy to the support queue says the safe sentence and the request id — never the error's own words (which named an environment variable) */
+function checkSupportWords(recording) {
+  console.log('\n-- the support copy that fails says nothing of its cause --');
+  ['POST /api/testing/requirements|requirement-support-fails', 'POST /api/testing/incidents|incident-support-fails'].forEach((key) => {
+    const why = (((recording[key] || {}).body || {}).support || {}).why;
+    check(key.split('|')[0] + ': support.why is the safe sentence and the request id, nothing of the cause', typeof why === 'string' && /^Something went wrong — please try again.\ \(ref [^)]+\)$/.test(why) && !/PLATFORM_ROOT_ENTITY/.test(why), why);
+  });
+}
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -164,9 +193,11 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkWords();
+  checkSupportWords(recording);
   checkCodesRegistered();
   checkContractShape(routes);
   const proved = await foreignWorld(server.address().port);
+  await junkWorld(server.address().port);
   server.close();
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);

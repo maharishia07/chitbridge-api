@@ -36,12 +36,15 @@ const CHE_LOCAL = 'c1111111-1111-4111-8111-111111111111'; /* a seller on this in
 const CHE_BARE = 'c2222222-2222-4222-8222-222222222222'; /* a local seller whose row holds no currency */
 const CHE_REMOTE = 'c3333333-3333-4333-8333-333333333333'; /* the stub of a seller on another installation: NULL money, on purpose */
 
+const COUNTRY = { [SYD]: 'AU', [CHE_LOCAL]: 'IN', [CHE_BARE]: 'IN' };
 const MONEY = { [SYD]: 'AUD', [CHE_LOCAL]: 'INR', [CHE_BARE]: null, [CHE_REMOTE]: null };
 const asked = { rows: [], regional: [], resolve: [] };
 const rowsFor = (sql, p) => {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   asked.rows.push(s);
   if (/^SELECT currency_code FROM identities WHERE identity_id = \$1/.test(s)) return [{ currency_code: MONEY[p[0]] || null }];
+  /* ACC-206: a local send asks the engine, which reads both parties (lib/send-money partiesOf); a party missing is a 503, so the stub holds them */
+  if (/^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s)) return p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: null, display_name: 'x', policy_flags: {}, country: COUNTRY[id] }));
   return [];
 };
 const q = async (sql, p) => {
@@ -156,7 +159,8 @@ const askedSellerMoney = () => asked.rows.some((s) => /^SELECT currency_code FRO
     assert.strictEqual(draft.refused, false);
     const stated = await priced({ seller: CHE_REMOTE, stated: 'inr' });
     assert.strictEqual(stated.refused, false);
-    assert.strictEqual(stated.st.moneyBlock.currency_code, 'INR');
+    assert.strictEqual(stated.st.currency_code, 'INR');
+    assert.strictEqual(stated.st.moneyBlock, null, 'a quotation: the seller elsewhere prices it, so this installation files no money (null, never 0 — ACC-206)');
   });
   await t('…a LOCAL seller and a self-chit are never refused for want of a stated currency (this installation knows their money)', async () => {
     assert.strictEqual((await priced({ seller: CHE_LOCAL })).refused, false);

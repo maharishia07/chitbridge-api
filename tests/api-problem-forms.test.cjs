@@ -51,7 +51,7 @@ const LABELS = {
 /* the stand-in db's secret sentence (a form's own text names the vault as a source, so the word alone proves nothing) */
 const LEAK = /SELECT secret|relation "catalogue_items"|does not exist/;
 /** scenes whose database error carries a SQLSTATE: the old 5xx body echoed it as `code`, and `code` is the Problem's own key now (INTERNAL), so it cannot ride */
-const SQLSTATE_SCENES = ['issue-write-fails', 'issue-db-fails-on-the-write', 'instance-not-an-id', 'instances-read-fails', 'sign-write-fails'];
+const SQLSTATE_SCENES = ['issue-write-fails', 'issue-db-fails-on-the-write', 'instances-read-fails', 'sign-write-fails'];
 const STRANGER = { identity_id: S.SHOP_B, identity_type: 'entity', display_name: 'Other shop' };
 const VIEWER = { identity_id: '77777777-7777-4777-8777-777777777777', parent_entity_id: S.SHOP, identity_type: 'actor', access_level: 'viewer', display_name: 'Test viewer' };
 const AFTER = new Set();
@@ -97,6 +97,7 @@ function checkWords() {
   const req = { id: 'r1' };
   const notReady = words.faultOf(Object.assign(new Error('Form is not ready — required fields unresolved: Applicant'), { status: 400, code: 'FORM_NOT_READY', unresolved: [{ id: 'applicant', label: 'Applicant' }] }), req, 'Issue form failed');
   check('faultOf: a form that is not ready keeps 400, its code FORM_NOT_READY, its own sentence and the list of what is missing, in the old key order', notReady.status === 400 && notReady.code === 'FORM_NOT_READY' && sameValue(Object.keys(notReady.legacy), ['error', 'code', 'message', 'unresolved']) && notReady.legacy.message.startsWith('Form is not ready'), notReady);
+  check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 FORMS_BAD_REQUEST in the screen label and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(Object.assign(new Error('pg ' + code + ' vault'), { code }), req, 'Sign form failed'); return one.status === 400 && one.code === 'FORMS_BAD_REQUEST' && sameValue(one.legacy, { error: 'Sign form failed', message: 'Cannot save this text. Type it again.' }) && !/vault/.test(JSON.stringify(one)); }));
   const missing = words.faultOf(Object.assign(new Error('Unknown form: x'), { status: 404 }), req, 'Get form failed');
   check('faultOf: a 404 keeps its sentence and answers FORMS_NOT_FOUND; no `code` key was sent before, so none rides', missing.status === 404 && missing.code === 'FORMS_NOT_FOUND' && !('code' in missing.legacy) && missing.legacy.message === 'Unknown form: x', missing);
   const clash = words.faultOf(Object.assign(new Error('Form is already signed'), { status: 409 }), req, 'Sign form failed');
@@ -205,6 +206,19 @@ function checkFrozen5xx(recording) {
 }
 
 /** a 2xx is never a Problem, and no answer of any status carries the text of a thrown error (the scene makes the database and the library throw a sentence with SQL in it) */
+/** S41 (K-1, B2): a chit id that is no uuid (or holds a NUL byte) answers exactly as a well-formed chit no shop is on: the same status, the same body but for the request id */
+function checkJunkAnswersAsUnknown(recording) {
+  console.log('\n-- a junk value answers as the word for "no such value" --');
+  const route = 'POST /api/forms/instances/:id/attach|';
+  const bodyOf = (scene) => JSON.stringify(Object.assign({}, (recording[route + scene] || {}).body, { request_id: null }));
+  const unknown = recording[route + 'attach-chit-no-shop-holds'] || {};
+  ['attach-chit-is-not-an-id', 'attach-chit-with-a-nul-byte'].forEach((scene) => {
+    check(scene + ': answers exactly as a chit no shop is on (403, same body)', unknown.status === 403 && (recording[route + scene] || {}).status === 403 && bodyOf(scene) === bodyOf('attach-chit-no-shop-holds'), { junk: (recording[route + scene] || {}).status, unknown: unknown.status });
+  });
+  const issue = (scene) => (recording['POST /api/forms/:key/issue|' + scene] || {});
+  check('issue: a deal that is no chit id (or holds a NUL byte) is the own FORMS_BAD_CONTEXT of the file, the sentence GET /instances/all gives; a well-formed one no chit holds still issues', ['issue-deal-is-not-a-chit-id', 'issue-deal-with-a-nul-byte'].every((scene) => issue(scene).status === 400 && issue(scene).body.code === 'FORMS_BAD_CONTEXT') && issue('issue-deal-no-chit-holds').status === 200, [issue('issue-deal-is-not-a-chit-id').status, issue('issue-deal-no-chit-holds').status]);
+}
+
 function checkNoLeakAnywhere(recording) {
   console.log('\n-- the body scan: a 2xx is never a Problem, and no body carries a thrown text --');
   const keys = Object.keys(recording);
@@ -338,6 +352,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   await checkCarriedStatus(port, all.filter((one) => one.synthetic));
   checkFrozen5xx(recording);
   checkNoLeakAnywhere(recording);
+  checkJunkAnswersAsUnknown(recording);
   await checkMayOnTheList(port);
   const foreign = await checkForeignIds(port);
   await checkSecondRecord(port);

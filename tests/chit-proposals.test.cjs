@@ -7,7 +7,7 @@
  *   A  ONE installation (two local parties, on a chit that also has a party elsewhere): the seller prices, the buyer's list shows it waiting, nothing of the agreed record moves until acceptance, accept switches both copies identically,
  *      a counter is never priced, reject changes nothing, a stale or replaced round is refused in words, the buyer's side never calls the tax engine
  *   B  TWO installations: the same flow, the proposal and the decision travel as events (lib/ctpreturn), the receiver stores the seller's invoice as issued, the invoices are byte-identical
- *   C  the fallback: a seller with no country states price and currency as entered and "Tax not decided", never a guessed tax
+ *   C  one rule on every path (Athi 2026-11-02, "refuse both"): a round the engine cannot price is refused like a send (503 MONEY_NOT_COMPUTED), nothing written
  *   D  the two jurisdictions: a quotation until accepted, the pro-forma after; the buyer's duty and taxes are never computed
  *   E  the bell: a proposal, accept, reject and counter ring the other party once, here and on arrival
  *
@@ -476,22 +476,16 @@ const call = (method, url, id, body) =>
     assert.strictEqual(B.header[SELL].business_json.invoice, undefined);
   });
 
-  console.log('\n== C · a seller with no country: price and currency as entered, tax not decided, in words ==\n');
-  await t('no pack, no guess: the proposal carries the prices and the currency and says "Tax not decided"; the tax figure is null, never 0', async () => {
+  console.log('\n== C · a round the engine cannot price is refused, exactly like a send ==\n');
+  await t('a seller with no country: the round is REFUSED 503 MONEY_NOT_COMPUTED in the send words (Athi 2 Nov: refuse both); no row, no event, nothing to accept', async () => {
     const w = oneInstallation(null);
-    const out = await as(w, () => proposals.propose(SELL, CH, Object.assign(price([{ line_id: L1, price: 95 }]), { currency_code: 'sgd' }), SELLER));
-    assert.strictEqual(out.money.tax, null);
-    assert.strictEqual(out.money.total, null);
-    assert.strictEqual(out.money.tax_state, 'not_decided');
-    assert.strictEqual(out.money.currency_code, 'SGD');
-    assert.ok(/^Tax not decided: /.test(out.tax_note), out.tax_note);
-    const row = rowsOf(w, BUY)[0];
-    assert.strictEqual(row.invoice, null);
-    assert.strictEqual(row.currency_code, 'SGD');
-    await as(w, () => proposals.decide(BUY, CH, row.proposal_id, 'accept', BUYER));
+    await assert.rejects(
+      as(w, () => proposals.propose(SELL, CH, Object.assign(price([{ line_id: L1, price: 95 }]), { currency_code: 'sgd' }), SELLER)),
+      (e) => e.status === 503 && e.code === 'MONEY_NOT_COMPUTED' && /^The money could not be worked out: .*Try again; if it repeats, tell us\.$/.test(e.message)
+    );
+    assert.strictEqual(w.props.length, 0, 'no chit_proposal row');
+    assert.strictEqual(w.out.length, 0, 'nothing queued for another installation');
     assert.strictEqual(w.header[BUY].business_json.invoice, undefined, 'no invoice is invented');
-    assert.strictEqual(w.header[BUY].summary_json.money.tax, null);
-    assert.strictEqual(w.detail[BUY].currency_code, 'SGD');
   });
 
   console.log('\n== D · two jurisdictions: a quotation until accepted, the pro-forma after ==\n');
@@ -517,15 +511,15 @@ const call = (method, url, id, body) =>
   await t('at send, a seller on another installation is not priced by the buyer’s installation: no tax rule runs, and the request is stamped a quotation with the buyer’s country', async () => {
     const { A } = twoInstallations();
     /* F7: a seller elsewhere needs the money stated by the buyer's screen (else 400 CURRENCY_REQUIRED) */
-    const st = { sender_id: BUY, line_items: clone(ITEMS), business_json: { currency: 'INR' }, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
+    const st = { sender_id: BUY, purpose: 'order', line_items: clone(ITEMS), business_json: { currency: 'INR' }, currency_code: 'INR', orderLike: true, toIds: [SELL_STUB], counterBill: false, sellerId: SELL_STUB };
     CUR = A;
     await chits.sendMoney(st, { body: {} }, {});
     assert.strictEqual(A.taxCalls.length, 0, 'the buyer’s installation ran no tax of its own on someone else’s goods');
     assert.strictEqual(st.originInvoice, null);
-    assert.strictEqual(st.moneyBlock.tax, null);
+    assert.strictEqual(st.moneyBlock, null, 'a quotation carries no money of this installation: null, never 0 (ACC-206)');
     assert.deepStrictEqual([st.business_json.jurisdiction.document, st.business_json.jurisdiction.seller_installation, st.business_json.jurisdiction.buyer_duty_and_taxes], ['quotation', 'inst-B', 'not_included']);
     const local = oneInstallation();
-    const st2 = { sender_id: BUY, line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL], counterBill: false, sellerId: SELL };
+    const st2 = { sender_id: BUY, purpose: 'order', line_items: clone(ITEMS), business_json: {}, currency_code: 'INR', orderLike: true, toIds: [SELL], counterBill: false, sellerId: SELL };
     CUR = local;
     await chits.sendMoney(st2, { body: {} }, {});
     assert.strictEqual(local.taxCalls.length, 1, 'a seller on the same installation is priced at send as before');

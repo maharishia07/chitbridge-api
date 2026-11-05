@@ -6564,7 +6564,29 @@
        "tax": 36,
        "total": 236
       }
-     ]
+     ],
+     "offers": [],
+     "bridge": {
+      "ok": true,
+      "decimals": 2,
+      "steps": [
+       {
+        "name": "gross",
+        "amount": 266,
+        "amount_minor": 26600
+       }
+      ],
+      "lines": [
+       {
+        "line": 0,
+        "gross_minor": 23600,
+        "net_minor": 23600,
+        "taxable_minor": 20000,
+        "tax_minor": 3600,
+        "total_minor": 23600
+       }
+      ]
+     }
     },
     "invoice": {
      "TranDtls": {
@@ -6635,6 +6657,27 @@
       "amount_payable": 266,
       "reverse_charge": false,
       "price_includes_tax": true,
+      "bridge": {
+       "ok": true,
+       "decimals": 2,
+       "steps": [
+        {
+         "name": "gross",
+         "amount": 266,
+         "amount_minor": 26600
+        }
+       ],
+       "lines": [
+        {
+         "line": 0,
+         "gross_minor": 23600,
+         "net_minor": 23600,
+         "taxable_minor": 20000,
+         "tax_minor": 3600,
+         "total_minor": 23600
+        }
+       ]
+      },
       "notes": [
        "Your prices include tax, so the taxable value was worked back out of each price."
       ]
@@ -6690,6 +6733,15 @@
     "detail": "Line \"NOPE\" names an item this shop does not sell.",
     "hint": "Check the item id or code.",
     "request_id": null
+   },
+   "optional": []
+  },
+  "POST /api/books/money-check/resolve": {
+   "status": 200,
+   "example": {
+    "resolved": true,
+    "how": "confirmed",
+    "duplicate": false
    },
    "optional": []
   }

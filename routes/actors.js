@@ -69,7 +69,7 @@ const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(Stri
 async function loginIdFor(actor_key, req) {
   let handle = null;
   try {
-    const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    const r = await db('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
   } catch (e) {
     logger.fellBack(
@@ -88,8 +88,7 @@ const { body, param, query } = require('express-validator');
 const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
-const { UUID_RE } = require('../lib/trace');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
@@ -97,7 +96,8 @@ const signin = require('./signin');
 
 /** the schema check of one route, to spread after its chain (lib/actors-contract.js): a body that is not an object, or a page asked twice, is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 /* PPL-26 (BH-12, the api #649 pattern): a person id in the address that is not a uuid names nobody in this shop. Answered 404 in words here, before the database puts its own words into a 500 */
-router.param('id', (req, res, next, id) => (UUID_RE.test(String(id)) ? next() : problem(req, res, { status: 404, ...words.coAssistGone() })));
+router.param('id', uuidParam(words.coAssistGone)); /* K-1: the one shared guard, the same words */
+router.param('chit_id', uuidParam(words.chitNotFound)); /* K-1: chit_status.chit_id is a uuid column; a bad id names no chit */
 
 /* PPL-26: a chain's trim() turns a list or an object into the text "[object Object]" BEFORE the schema looks, so a field that is trimmed is checked for being one plain value first (the message is the chain's way, the body its old "Validation failed") */
 const plainValue = (value) => value === null || typeof value !== 'object';
@@ -808,7 +808,7 @@ router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate,
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, ...checked('GET /'), async (req, res) => {
   try {
     // Actors can also call this to see colleagues — use parent entity id
     const entity_id = auth.entityOf(req);
@@ -1713,6 +1713,28 @@ router.get('/:id/tasks', auth, ...checked('GET /:id/tasks'), async (req, res) =>
   }
 });
 
+/** PUT /:id/tasks/route: the chit must be this shop's, and the person whose task count moves one of this shop's people
+ *  (S41: another shop's person, or no one, answers as GET /:id/tasks does, before a count is touched). Returns the words key of the 404, or null. */
+async function routeTargetMissing(handle, chit_id, from_actor_id, entity_id) {
+  const chit = await handle(
+    `SELECT chit_id, assigned_to_actor_id
+     FROM chit_status
+     WHERE chit_id = $1 AND entity_id = $2`,
+    [chit_id, entity_id]
+  );
+  if (chit.rows.length === 0) return 'taskNotFound';
+  const actor = await handle(
+    `SELECT identity_id, display_name, actor_key,
+            break_status, current_task_count, max_tasks
+     FROM identities
+     WHERE identity_id = $1
+     AND parent_entity_id = $2
+     AND identity_type = 'actor'`,
+    [from_actor_id, entity_id]
+  );
+  return actor.rows.length === 0 ? 'tasksActorGone' : null;
+}
+
 // ── PUT /api/actors/:id/tasks/route ─────────────────────────
 // Entity admin routes a specific task from an actor
 // action: pool (return to pool) | push (assign to another actor)
@@ -1730,17 +1752,8 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
     // the tx client so the existing calls flow through the context (and become atomic).
     await withEntity(entity_id, async (client) => {
       const handle = (t, p) => client.query(t, p);
-      // Verify chit belongs to this entity and is assigned to actor
-      const chit = await handle(
-        `SELECT chit_id, assigned_to_actor_id
-         FROM chit_status
-         WHERE chit_id = $1 AND entity_id = $2`,
-        [chit_id, entity_id]
-      );
-
-      if (chit.rows.length === 0) {
-        return problem(req, res, { status: 404, ...words.taskNotFound() });
-      }
+      const missing = await routeTargetMissing(handle, chit_id, from_actor_id, entity_id);
+      if (missing) return problem(req, res, { status: 404, ...words[missing]() });
 
       if (action === 'pool') {
         // Return to entity pool — W1-RAIL: the one writer (this copy also clears the name it used to leave behind)
@@ -1816,7 +1829,7 @@ router.put('/:id/tasks/route', auth, ownerWrite, ...checked('PUT /:id/tasks/rout
  * ⚠️ Declared AFTER the parameterised routes on purpose — there is no bare GET /:id here today, but adding one
  * later above this line would capture '/access-events' and the failure would look like an empty audit log.
  */
-router.get('/access-events', auth, async (req, res) => {
+router.get('/access-events', auth, ...checked('GET /access-events'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const subject = String(req.query.subject || '').trim();

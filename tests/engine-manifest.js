@@ -158,6 +158,10 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* ADOPTION (W2-REW): counter-bill.js is one READ of the shop's own bill by its number — the duplicate check and the reward
      both ask it; it computes nothing (the money is picked off summary_json, the points are rewards.earnedOn's). */
   'counter-bill.js',
+  /* ADOPTION (ACC-206): send-money.js scopes WHICH chits the adopted tax engine bills at send, makes the one call, and reads the engine's bridge verdict as data; money-check.js compares
+     stored copies for equality and raises a support ticket when they differ. Neither computes money (tests/money-check.test.cjs scans both for arithmetic). */
+  'send-money.js',
+  'money-check.js',
   /* ADOPTION, same split again: inventory.js decides what a movement DOES to a balance; stock-store.js knows where
      the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
      rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
@@ -298,6 +302,16 @@ const INFRA_LIBS = [
   'simulator-contract.js',
   /* API-4 stage-2 sweep, the authority forms: the contract of routes/forms.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform. tests/api-problem-forms.test.cjs (2026-10-23) */
   'forms-contract.js',
+  /* Lane B2 small files 1 (#700, 2026-11-04): the contracts of routes/adopt.js, routes/people.js and routes/csp-report.js — the contract of a door, not a rule of the platform */
+  'adopt-contract.js',
+  'people-contract.js',
+  'csp-report-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
+  'network-offers-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
+  'signin-contract.js',
+  /* Lane B2 (4 Nov 2026): the contract of routes/service.js — the contract of a route file, not a rule of the platform */
+  'service-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
   /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture, not a rule of the platform. (2026-10-15) */
