@@ -12,7 +12,7 @@
  * FLOW       walk lib/ + routes/ -> skip the long-count of ADOPTED files -> count -> compare with tests/fixtures/fn-size.json.
  * CARD       28-platform-and-operations/api-standard
  *
- * Adopted engine files (line 1 = the ADOPTED header) are measured in chitbridge-engines, not here: they skip the long-function count only.
+ * Adopted engine files (line 1 = the ADOPTED header) skip the long-function count only: chitbridge-engines counts them with its own fn-size ratchet (MNT-45, lands first, same batch).
  *
  * Reads with tests/support/js-scan.cjs (no parser dependency — the offline gate allows none).
  */
