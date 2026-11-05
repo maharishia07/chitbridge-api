@@ -6139,7 +6139,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-05.acc255';
+var TILL_BUILD = '2026-11-05.acc255b';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -22023,9 +22023,11 @@ async function dayServerCheck(rows){
   var sum = function(l){ return l.reduce(function(a, b){ return r2(a + (Number(b.total) || 0)); }, 0); };
   /* ACC-255: a refund is counted APART from the sales — one signed sum of both would read as a bill total that no bill has */
   var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
+  /* an old note stored no amount: when none of the refunds carries one the sum is null (the bare word), never ₹0.00 */
+  var backSum = function(list){ var known = back(list).filter(function(bill){ return bill.total != null; }); return known.length ? sum(known) : null; };
   return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
            moreTotal: sum(sales(more)), fewerTotal: sum(sales(fewer)), moreBack: back(more).length, fewerBack: back(fewer).length,
-           moreBackTotal: sum(back(more)), fewerBackTotal: sum(back(fewer)) };
+           moreBackTotal: backSum(more), fewerBackTotal: backSum(fewer) };
 }
 /** a refund amount as the till writes it: the minus sign, then the money (U+2212, never a hyphen) — a null amount (an old note) is the bare word */
 function refundMoney(total){ return total == null ? '' : '−' + money(Math.abs(Number(total) || 0)); }
@@ -22033,7 +22035,7 @@ function refundMoney(total){ return total == null ? '' : '−' + money(Math.abs(
 function dayCheckSide(rows, salesTotal, backCount, backTotal){
   var sold = rows.length - backCount, words = [];
   if (sold) words.push(sold + (sold === 1 ? ' bill' : ' bills') + ' · ' + money(salesTotal));
-  if (backCount) words.push(backCount + (backCount === 1 ? ' refund' : ' refunds') + ' · ' + refundMoney(backTotal));
+  if (backCount) words.push(backCount + (backCount === 1 ? ' refund' : ' refunds') + (backTotal == null ? '' : ' · ' + refundMoney(backTotal)));
   return words.join(' and ');
 }
 /** the one line under the day report, and the close greyed WITH it while the two sides disagree */
