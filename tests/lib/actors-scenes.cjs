@@ -411,9 +411,10 @@ function universal(planted) {
   };
 }
 
-/** PUT /:id/tasks/route reads the chit of the CALLER (the person in the path is never looked up): the caller's chit is there whoever the person is */
-function chitOfTheCaller() {
-  return (sql) => (/FROM chit_status/.test(sql) ? { rows: [PERSON_ROW], rowCount: 1 } : null);
+/** PUT /:id/tasks/route reads the chit of the CALLER (it is there whoever the person is) and then, since S41, the person in the path under the caller's shop: planted for shop A only, as universal() has it */
+function chitOfTheCaller(planted) {
+  const person = universal(planted);
+  return (sql, params) => (/FROM chit_status/.test(sql) ? { rows: [PERSON_ROW], rowCount: 1 } : person(sql, params));
 }
 
 module.exports = { extras, universal, chitOfTheCaller, STRANGER_ID, OTHER, PERSON, CHIT, PIN, SHOP };

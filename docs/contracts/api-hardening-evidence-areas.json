@@ -1042,6 +1042,7 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/tasks/route": {
+   "foreign_id_404": true,
    "output_allowlist": true
   },
   "PUT /api/actors/assign/:chit_id": {

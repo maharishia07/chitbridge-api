@@ -180,7 +180,7 @@ const FOREIGN_ROUTES = () => [
 /** one play(who, planted) of a foreign-id route: sets the world and asks as the stranger (shop B) or as the owner (shop A); the record is planted for shop A only */
 function playFor(port, item) {
   return async (who, planted) => {
-    const rows = item.chitIsTheCallers ? scenes.chitOfTheCaller() : scenes.universal(planted);
+    const rows = item.chitIsTheCallers ? scenes.chitOfTheCaller(planted) : scenes.universal(planted);
     Object.assign(world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', sqlRows: rows, jsonThrows: false, noCustomer: false });
     return lab.send(port, item.method, item.url, item.body);
   };
