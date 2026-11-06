@@ -33,7 +33,7 @@ const line = (re) => { const m = SRC.match(re); assert.ok(m, 'missing ' + re); r
 const BODY = [
   line(/^var DOC_TAGS = \{[^\n]*\};$/m), 'var SERIES_TURN = Promise.resolve(); var LAST_SERIES = null;',
   grab('DOCNUM'), grab('docCountry'), grab('tillScheme'), grab('docKindOf'), grab('todayIso'),
-  grab('underSeriesLock'), grab('nextNumber'), grab('takeNumber'), grab('seriesFor'), grab('resumeFromCloud'), grab('numberText'),
+  grab('underSeriesLock'), grab('nextNumber'), grab('takeNumber'), grab('seriesFor'), grab('rollSeries'), grab('switchPrefix'), 'var PARKED_MAX = 400;', grab('runKey'), grab('parkRuns'), grab('parkedNext'), grab('resumeFromCloud'), grab('numberText'),
   'return { nextNumber: nextNumber, setScheme: function(s){ OPT.series = s; }, setPrefix: function(p){ PREFIX = p; } };'
 ].join('\n');
 
@@ -186,6 +186,41 @@ const eq = (actual, expected, what) => assert.strictEqual(actual, expected, what
     eq(await c.nextNumber('', false), 'C1/26365/0450', '31 Dec');
     clock.now = at(2027, 1, 1, 0, 1);
     eq(await c.nextNumber('', false), 'C1/27001/0001', '1 Jan');
+  });
+
+  await t('a wrong clock cannot restart a used run: daily reset, 60 days forward and back, the numbers go on from where they stopped', async () => {
+    const clock = { now: at(2026, 11, 5, 10, 0) };
+    const c = counter('AU', 'C1', { dating: 'fy', resets: 'day', dayRollHour: 0 }, {}, clock);
+    eq(await c.nextNumber('', false), 'C1/26309/0001', '5 Nov');
+    eq(await c.nextNumber('', false), 'C1/26309/0002', '5 Nov second');
+    clock.now = at(2027, 1, 4, 10, 0);                         /* the date is set 60 days forward by mistake … */
+    eq(await c.nextNumber('', false), 'C1/27004/0001', '4 Jan (wrong clock)');
+    clock.now = at(2026, 11, 5, 11, 0);                        /* … and put right again */
+    eq(await c.nextNumber('', false), 'C1/26309/0003', '5 Nov again: the run resumes, 0001 is not issued twice');
+  });
+
+  await t('the ledger keeps 400 runs: a daily reset still remembers a day 360 days back', async () => {
+    const clock = { now: at(2026, 1, 1, 10, 0) };
+    const boxes = {};
+    const c = counter('AU', 'C1', { dating: 'fy', resets: 'day', dayRollHour: 0 }, boxes, clock);
+    const day1 = await c.nextNumber('', false);
+    for (let d = 2; d <= 360; d++) { clock.now = at(2026, 1, d, 10, 0); await c.nextNumber('', false); }
+    assert.ok(Object.keys(boxes.series.parked).length <= 400, 'bounded');
+    clock.now = at(2026, 1, 1, 12, 0);
+    eq(await c.nextNumber('', false), day1.replace('0001', '0002'), '1 Jan resumes after 360 days');
+  });
+
+  await t('the same prefix, another period: a parked run of a prefix that was switched away resumes', async () => {
+    const clock = { now: at(2026, 11, 5, 10, 0) };
+    const c = counter('AU', 'C1', { dating: 'fy', resets: 'year', dayRollHour: 0 }, {}, clock);
+    eq(await c.nextNumber('', false), 'C1/2026/0001', 'C1 2026');
+    c.setPrefix('C2'); eq(await c.nextNumber('', false), 'C2/2026/0001', 'C2 2026');
+    clock.now = at(2027, 1, 2, 10, 0);
+    eq(await c.nextNumber('', false), 'C2/2027/0001', 'C2 2027');
+    c.setPrefix('C1'); eq(await c.nextNumber('', false), 'C1/2027/0001', 'C1 2027');
+    clock.now = at(2026, 11, 6, 10, 0);                        /* the clock goes back */
+    eq(await c.nextNumber('', false), 'C1/2026/0002', 'C1 2026 resumes');
+    c.setPrefix('C2'); eq(await c.nextNumber('', false), 'C2/2026/0002', 'C2 2026 resumes');
   });
 
   /* ⭐ the node host (tools/tally-connector/till.js) prints the KEY as the label and ignores the shop scheme: unique today, pinned so a change to

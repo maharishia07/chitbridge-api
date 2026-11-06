@@ -6297,8 +6297,37 @@ async function takeNumber(kind, peek){
   }
   return numberText(D, { country: country, prefix: series.prefix, tagStyle: series.tagStyle, at: now, seq: seq, scheme: scheme, tag: tag, kind: kind });
 }
+/**
+ * ⭐ CTR-177 — THE RUNS THAT HAVE ENDED, KEPT BY PREFIX AND PERIOD. A key never legitimately comes round again (every key carries its year), so a
+ * roll back to a key we already issued in means the clock was wrong, and starting that run at 1 would issue its numbers a second time. The ledger
+ * is `parked["PREFIX|key"] = next`, 400 entries (a daily reset fills one a day: more than a year), oldest dropped.
+ */
+var PARKED_MAX = 400;
+/** the ledger key of one run: the prefix (upper case) and the period key */
+function runKey(prefix, period){ return String(prefix || '').toUpperCase() + '|' + period; }
+function parkRuns(series){
+  series.parked = series.parked || {};
+  series.parked[runKey(series.prefix, series.fy)] = series.next;
+  Object.keys(series.runs || {}).forEach(function(name){ series.parked[runKey(name, series.fy)] = series.runs[name]; });
+  var keys = Object.keys(series.parked);
+  keys.slice(0, Math.max(0, keys.length - PARKED_MAX)).forEach(function(old){ delete series.parked[old]; });
+}
+/** where the run of this prefix stopped in this period, if it has been here before (and consumes the entry) — else 0 */
+function parkedNext(series, prefix, period){
+  var key = runKey(prefix, period), stopped = Number((series.parked || {})[key]) || 0;
+  if (stopped) delete series.parked[key];
+  return stopped;
+}
+/** CTR-177: the shop's country counts a FINANCIAL year (India) — elsewhere the "fy" dating is the calendar run year, and the Settings words say so */
+function financialYearHere(){ return !!(window.CBDoc && CBDoc.rules(docCountry()).resets === 'year'); }
+function runYearWord(){ return financialYearHere() ? ' · financial year' : ' · year'; }
+/** the caution under the bill-number example: where the tail repeats, and (India) that a month or day label hides the financial year */
+function seriesWarn(scheme){
+  var warn = (scheme.resets === 'day') ? ' · ⚠️ 0001 every day' : (scheme.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
+  return warn && scheme.dating === 'fy' && financialYearHere() ? warn + ' · financial year not on the number' : warn;
+}
 /** today as YYYY-MM-DD in the shop's own clock — stamped on a series when it begins (CTR-177), so a support reader can see when a run started */
-function todayIso(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function todayIso(){ var now = new Date(); return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'); }
 /**
  * the series record as it stands for THIS number: the stored one, rolled when the period turned, re-based when the counter's prefix changed.
  * ⭐ THE TAG STYLE IS DECIDED ONCE, ON THE FIRST NUMBER, AND KEPT. `GRN/C1/26-27/0007` is seventeen
@@ -6307,12 +6336,24 @@ function todayIso(){ var d = new Date(); return d.getFullYear() + '-' + String(d
  * discontinuity we are trying to prevent. It rolls to the short form by itself at the next year-end.
  */
 function seriesFor(stored, period){
-  var s = stored || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short', lab: 2, since: todayIso() };
-  if (stored && !stored.tagStyle) s.tagStyle = 'long';          // a record written before this change
+  var series = stored || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short', lab: 2, since: todayIso() };
+  if (stored && !stored.tagStyle) series.tagStyle = 'long';          // a record written before this change
   /* ⭐ CTR-177: lab 2 = numbers carry their period in the label; lab 1 = this run issued numbers before that and keeps its old shape to the roll;
      a series that has issued nothing adopts the new label at once. */
-  if (s.lab !== 2) s.lab = Number(s.next) > 1 ? 1 : 2;
-  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); s.runs = {}; s.runsLab = {}; s.lab = 2; s.since = todayIso(); }
+  if (series.lab !== 2) series.lab = Number(series.next) > 1 ? 1 : 2;
+  if (series.fy !== period) rollSeries(series, period);
+  switchPrefix(series, tillId());
+  return series;
+}
+/** the period turned: the run that ends is parked (CTR-177), the new one begins at 1 — or resumes, if the clock brought us back to a period we issued in */
+function rollSeries(series, period){
+  parkRuns(series);
+  var back = parkedNext(series, series.prefix, period);
+  series.fy = period; series.next = back || 1; series.tagStyle = 'short'; series.scheme = tillScheme();
+  series.runs = {}; series.runsLab = {}; series.since = todayIso();
+  series.lab = 2;                              /* a new or resumed run is labelled: its text cannot equal an unlabelled one */
+}
+function switchPrefix(series, prefixNow){
   /**
    * ⚠️⚠️ A NEW PREFIX IS A NEW SERIES, AND A NEW SERIES STARTS AT ONE. This line used to swap the prefix and keep
    * the count — so a counter renamed C1 → C2 to escape a clash (Athi, 2026-09-17) would have issued C2/…/0008 as
@@ -6321,18 +6362,18 @@ function seriesFor(stored, period){
    */
   /* ⚠️ AND EACH PREFIX REMEMBERS WHERE IT STOPPED. Rename C1 → C2 → C1 without the ledger below and C1 would
      start again at 0001, on top of its own earlier invoices. `runs` is the high-water mark per prefix, per period. */
-  var prefixNow = tillId();
-  if (prefixNow && s.prefix && String(prefixNow).toUpperCase() !== String(s.prefix).toUpperCase()) {
-    s.runs = s.runs || {}; s.runsLab = s.runsLab || {};
-    s.runs[String(s.prefix).toUpperCase()] = s.next;                       /* the old run, parked where it ended */
-    s.runsLab[String(s.prefix).toUpperCase()] = s.lab;                     /* … and in the shape it issued in */
-    s.next = Number(s.runs[String(prefixNow).toUpperCase()]) || 1;         /* the new one resumes, or begins */
+  if (prefixNow && series.prefix && String(prefixNow).toUpperCase() !== String(series.prefix).toUpperCase()) {
+    var oldName = String(series.prefix).toUpperCase(), newName = String(prefixNow).toUpperCase();
+    series.runs = series.runs || {}; series.runsLab = series.runsLab || {};
+    series.runs[oldName] = series.next;                         /* the old run, parked where it ended */
+    series.runsLab[oldName] = series.lab;                       /* … and in the shape it issued in */
+    var fromRoll = series.runs[newName] ? 0 : parkedNext(series, prefixNow, series.fy);   /* a run parked by an earlier roll (already labelled) */
+    series.next = Number(series.runs[newName]) || fromRoll || 1;                           /* the new one resumes, or begins */
     /* ⭐ CTR-177: a resumed run keeps the old label only if it issued numbers in the old label; a run beginning at 1 is labelled */
-    s.lab = s.next > 1 ? (s.runsLab[String(prefixNow).toUpperCase()] || 1) : 2;
-    s.tagStyle = 'short'; s.scheme = tillScheme();
+    series.lab = fromRoll || series.next <= 1 ? 2 : (series.runsLab[newName] || 1);
+    series.tagStyle = 'short'; series.scheme = tillScheme();
   }
-  s.prefix = prefixNow || s.prefix;
-  return s;
+  series.prefix = prefixNow || series.prefix;
 }
 /**
  * ⭐⭐ THE CLOUD'S FLOOR FOR A NAMED COUNTER (routes/counters.js). A counter opened on a PC that has never held it,
@@ -27655,13 +27696,11 @@ function paintSetup(){
   /* ⭐ THE TWO WORKED EXAMPLES USE THIS COUNTER'S OWN PREFIX (walk 2026-10-09, TS2: the options were typed "C1/26-27/0003"
      while the next bill said C5). One prefix on the screen, from tillId(), the same call the bill number is made from. */
   try {
-    /* CTR-177: outside the year-reset countries (India) the "fy" dating is the calendar RUN year, not a financial year — said so */
-    var inYearRule = !!(window.CBDoc && CBDoc.rules(docCountry()).resets === 'year');
     var dateOpts = { fy: document.querySelector('#set_dating option[value="fy"]'), julian: document.querySelector('#set_dating option[value="julian"]') };
     if (window.CBDoc) ['fy', 'julian'].forEach(function(k){
       if (!dateOpts[k]) return;
       dateOpts[k].textContent = CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale', at: new Date(), seq: 3,
-        scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? (inYearRule ? ' · financial year' : ' · year') : ' · date');
+        scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? runYearWord() : ' · date');
     });
   } catch (e) { cbQuiet('paintSetup:2', e); }
   /* ⚠️⚠️ M55 (walk 2026-10-10): this was `var note`, and so is the UPI note further down this same function — one function-scoped
@@ -27675,10 +27714,7 @@ function paintSetup(){
                                           at: new Date(), seq: 3, scheme: sc }) : '';
     } catch (e) { cbQuiet('paintSetup:3', e); }
     /* ⭐ the worked example is the explanation — the cautions are short, the reasons are on the rows' titles */
-    var warn = (sc.resets === 'day') ? ' · ⚠️ 0001 every day'
-             : (sc.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
-    /* CTR-177: a month or day reset prints the month or day, so the financial year is not readable off the number (India) */
-    if (warn && sc.dating === 'fy' && window.CBDoc && CBDoc.rules(docCountry()).resets === 'year') warn += ' · financial year not on the number';
+    var warn = seriesWarn(sc);
     /**
      * ⭐⭐ THE WARNING CARRIES ITS OWN FIX (design-handoff §4 "Rows that need fixing": *"the same warning WITH
      * the button that fixes it"*). Financial-year dating already exists as an option two rows up — this is a
