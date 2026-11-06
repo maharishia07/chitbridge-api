@@ -26,6 +26,7 @@ const scenes = require('./lib/network-scenes.cjs');
 const { memory, B, NODE, EDGE, CONNECTION } = require('./lib/network-memory.cjs');
 const chains = require('./lib/network-chains.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -240,15 +241,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const searchJunk = junkKeys.filter((key) => /availability/.test(key));
   check('a search for text holding a NUL byte answers as one that finds nothing: 200 with no degraded mark', searchJunk.length === 1 && searchJunk.every((key) => recording[key].status === 200 && recording[key].body && recording[key].body.degraded === undefined), searchJunk.map((key) => recording[key]));
   check('the writes switched off answer 503 on all eight writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 8 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the network routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the three network route files', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
