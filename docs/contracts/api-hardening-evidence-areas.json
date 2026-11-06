@@ -57,6 +57,7 @@
    "foreign_id_404": true
   },
   "DELETE /api/relationships/suppliers/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/schemas/fields/:field_key": {
@@ -522,6 +523,7 @@
    "foreign_id_404": true
   },
   "PATCH /api/relationships/customers/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/suppliers/:id": {
@@ -970,6 +972,7 @@
    "foreign_id_404": true
   },
   "POST /api/relationships/customers/:id/groups": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/repeat": {
@@ -1162,6 +1165,60 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/status": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/constitutions": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/routing/preview": {
+   "output_allowlist": true
+  },
+  "GET /api/entities/search/places": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/customers": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/scorecard": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/scorecard/:entity_id": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/suppliers": {
+   "output_allowlist": true
+  },
+  "GET /api/relationships/suppliers/availability": {
+   "output_allowlist": true
+  },
+  "PATCH /api/entities/:id/erase": {
+   "output_allowlist": true
+  },
+  "PATCH /api/entities/me/exposure": {
+   "output_allowlist": true
+  },
+  "PATCH /api/entities/policy": {
+   "output_allowlist": true
+  },
+  "PATCH /api/entities/profile": {
+   "output_allowlist": true
+  },
+  "POST /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "POST /api/relationships/customers": {
+   "output_allowlist": true
+  },
+  "POST /api/relationships/suppliers": {
+   "output_allowlist": true
+  },
+  "PUT /api/entities/populations/:code/desk": {
+   "output_allowlist": true
+  },
+  "PUT /api/entities/routing": {
    "output_allowlist": true
   }
  }
