@@ -48,7 +48,7 @@ of file each thing is; this says what already does the job.
 | 47 | `again` | `signin-ui.js` |  |
 | 46 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 46 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
-| 45 | `write` | `junitresults.js` | control characters are not legal XML at all — |
+| 46 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 44 | `read` | `cap-print.js` |  |
 | 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
@@ -67,8 +67,8 @@ of file each thing is; this says what already does the job.
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `gate` | `country-setup.js` | gate(h, entity): |
 | 34 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
-| 34 | `live` | `receivables.js` | the allocations that still count: |
-| 34 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 35 | `live` | `receivables.js` | the allocations that still count: |
+| 35 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |

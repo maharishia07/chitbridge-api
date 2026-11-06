@@ -363,11 +363,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/party/:id/statement": {
-   "hash": "afa48422a5db9136",
+   "hash": "75a103e8fbb110ad",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
    "lifecycle": "stable"
   },
   "GET /api/books/payments/:id/advice": {
@@ -443,11 +443,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/year/:fy/status": {
-   "hash": "038f3eafdf01ef77",
+   "hash": "ed20d7411dd0c93e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
    "lifecycle": "stable"
   },
   "GET /api/capture/consolidate": {
@@ -2235,11 +2235,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
-   "hash": "f6198cb5a768e48f",
+   "hash": "ecce20760c8f63c3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
