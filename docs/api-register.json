@@ -1278,7 +1278,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -2218,11 +2218,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -7807,7 +7807,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
         "lifecycle": "stable"
       },
       "status": "partial",
@@ -12323,11 +12323,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 round 2",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -21790,11 +21790,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -21881,11 +21881,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -28010,11 +28010,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -28104,11 +28104,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [

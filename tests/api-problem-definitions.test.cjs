@@ -27,6 +27,7 @@ const { harness, OWNER, SECRET_SQL, sameValue, raising, answering, firstOf } = r
 const S = require('./lib/definitions-scenes.cjs');
 const chainTable = require('./lib/definitions-chains.cjs');
 const foreign = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -183,7 +184,7 @@ async function foreignWorld(port) {
 }
 
 /** the rows of api-error-tests.json and the evidence file this test owns: rewritten with --write, otherwise compared with what the scenarios showed */
-function settleRecords(tested, proved) {
+function settleRecords(tested, proved, allowHeld) {
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -192,10 +193,12 @@ function settleRecords(tested, proved) {
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     return;
   }
   check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/definitions.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
   check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
+  check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the definition routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
@@ -235,7 +238,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > MIN_FROZEN, frozen);
-  settleRecords(tested, proved);
+  settleRecords(tested, proved, ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check));
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })();
