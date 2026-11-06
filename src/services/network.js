@@ -1,4 +1,9 @@
-/* CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
+/**
+ * OWNS      the network tree and the edges between businesses: look up, register, request/approve/decline/suspend/resume/disconnect, claim, subtree, connections (who may do what is mayAct, one pure table)
+ * CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * FLOW      signed-in business → nodeOf (its place on the tree) → mayAct / same-network test → cb_entity · cb_edge → a row, or the 404 a missing id gets (SEC-138)
+ * CARD      04-network/connections-and-invitations
+ */
 const { pool, withTx } = require('../db');
 const bridge = require('../lib/bridgeId');
 const chit = require('./chit'); // NET-02 §F: real in-flight check
@@ -125,6 +130,17 @@ const _check = (op, ctx) => {
   const ok = mayAct(op, ctx);
   if (ok !== true) throw err(403, ok, 'NOT_ALLOWED');
 };
+/**
+ * SEC-138 (K-1): an edge the caller is not a party to is answered EXACTLY as an edge that does not exist (404 EDGE_NOT_FOUND, the same words),
+ * so the id tells a stranger nothing. A party still gets the rule's own 403 (asked it yourself, only the network may suspend): it already knows the edge.
+ * A caller with no actor (no place on the tree) is a stranger too: the same 404, never the 403 "sign in as a business" an existing edge would give (residual A).
+ */
+const _edgeGone = () => err(404, 'edge not found', 'EDGE_NOT_FOUND');
+const _checkEdge = (operation, edge, actor) => {
+  const actorId = String((actor && actor.id) || '');
+  if (!actorId || (actorId !== String(edge.parent_id) && actorId !== String(edge.child_id))) throw _edgeGone();
+  _check(operation, { edge, actorId });
+};
 
 // ---- LINK ----
 /**
@@ -169,8 +185,8 @@ async function approve({ edgeId }, actor) {
     const {
       rows: [edge]
     } = await c.query(`select * from cb_edge where id=$1 for update`, [edgeId]);
-    if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
-    _check('approve', { edge, actorId: actor && actor.id });
+    if (!edge) throw _edgeGone();
+    _checkEdge('approve', edge, actor);
     if (edge.state !== 'requested') throw err(409, `cannot approve from ${edge.state}`, 'BAD_STATE');
     if (edge.type === TREE) {
       const parent = await getById(edge.parent_id, c);
@@ -208,11 +224,11 @@ async function _edge(edgeId) {
   const {
     rows: [edge]
   } = await pool.query(`select * from cb_edge where id=$1`, [edgeId]);
-  if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
+  if (!edge) throw _edgeGone();
   return edge;
 }
 async function decline({ edgeId }, actor) {
-  _check('decline', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('decline', await _edge(edgeId), actor);
   const {
     rows: [edge]
   } = await pool.query(
@@ -231,11 +247,11 @@ async function _move(edgeId, from, to) {
   return edge;
 }
 async function suspend(edgeId, actor) {
-  _check('suspend', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('suspend', await _edge(edgeId), actor);
   return _move(edgeId, 'active', 'suspended');
 }
 async function resume(edgeId, actor) {
-  _check('resume', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('resume', await _edge(edgeId), actor);
   return _move(edgeId, 'suspended', 'active');
 }
 // ---- UNLINK ----
@@ -244,8 +260,8 @@ async function disconnect({ edgeId, settle = false }, actor) {
     const {
       rows: [edge]
     } = await c.query(`select * from cb_edge where id=$1 for update`, [edgeId]);
-    if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
-    _check('disconnect', { edge, actorId: actor && actor.id });
+    if (!edge) throw _edgeGone();
+    _checkEdge('disconnect', edge, actor);
     if (!['active', 'suspended'].includes(edge.state)) throw err(409, `cannot disconnect from ${edge.state}`, 'BAD_STATE');
     // NET-02 §F: truth is the open-chit query; in_flight flag kept as an optional cache (so NET-01 T6 still blocks).
     const open = (await chit.edgeHasOpenChit(edge.id, c)) || edge.in_flight;
@@ -292,9 +308,14 @@ async function _sameRoot(nodeId, actor) {
   ]);
   return !!(r && r.same);
 }
+const _nodeGone = () => err(404, 'not found', 'NOT_FOUND');
+const _rootOf = (path) => String(path || '').split('.')[0];
 async function subtree(entityId, actor) {
   const e = await getById(entityId);
-  if (!e) throw err(404, 'not found', 'NOT_FOUND');
+  if (!e) throw _nodeGone();
+  /* SEC-138: a node of ANOTHER network is answered as a node that does not exist (no second query: the root is the first label of the path).
+     Only an id inside the caller's own network may say "suspended". */
+  if (!actor || _rootOf(e.path) !== _rootOf(actor.path)) throw _nodeGone(); // no actor: a stranger too (residual A)
   if (!(await _sameRoot(e.id, actor)))
     throw err(403, 'that is not your network — or your membership is suspended; ask the network to resume it', 'NOT_ALLOWED');
   // b117: the PURPOSE joined in, so a member reading the tree sees why each branch exists rather than a list of
@@ -312,12 +333,11 @@ async function subtree(entityId, actor) {
 }
 async function connections(entityId, actor) {
   const e = await getById(entityId);
-  if (!e) throw err(404, 'not found', 'NOT_FOUND');
-  /* the node itself or one of its ancestors */
-  const {
-    rows: [ok]
-  } = await pool.query(`select ($1::ltree <@ $2::ltree) as ok`, [e.path, actor ? actor.path : '']).catch(() => ({ rows: [] }));
-  if (!ok || !ok.ok) throw err(403, 'those are not your connections', 'NOT_ALLOWED');
+  if (!e) throw _nodeGone();
+  /* the caller's own node or a node below it (the ltree test e.path <@ actor.path, done on the row already read: no second query).
+     SEC-138: any other node answers as one that does not exist. */
+  const mine = String((actor && actor.path) || ''); // no actor: nothing is below it, so the node answers as gone (residual A)
+  if (!mine || (String(e.path) !== mine && !String(e.path).startsWith(mine + '.'))) throw _nodeGone();
   const { rows } = await pool.query(
     `select e.*, pp.name as parent_name, cc.name as child_name
      from cb_edge e join cb_entity pp on pp.id=e.parent_id join cb_entity cc on cc.id=e.child_id
@@ -339,12 +359,18 @@ async function claim(entityId, actorEntityId) {
     [entityId, actorEntityId]
   );
   if (e) return e;
+  /* SEC-138: "already claimed" is told ONLY to the business whose bridge id the node carries (it holds the claim path and knows the node);
+     a missing node, a node of someone else and a node claimed by someone else all answer the one 404. One statement, so the work is the same for each. */
   const {
-    rows: [exists]
-  } = await pool.query(`select claimed from cb_entity where id=$1`, [entityId]);
-  if (!exists) throw err(404, 'not found', 'NOT_FOUND');
-  if (exists.claimed) throw err(409, 'already claimed', 'ALREADY_CLAIMED');
-  throw err(403, 'only the business this node belongs to can claim it', 'NOT_ALLOWED');
+    rows: [seen]
+  } = await pool.query(
+    `select c.claimed as claimed, (i.bridge_id = c.bridge_id) as mine
+       from cb_entity c left join identities i on i.identity_id=$2
+      where c.id=$1`,
+    [entityId, actorEntityId]
+  );
+  if (seen && seen.mine && seen.claimed) throw err(409, 'already claimed', 'ALREADY_CLAIMED');
+  throw _nodeGone();
 }
 module.exports = {
   register,

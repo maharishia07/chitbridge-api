@@ -88,12 +88,12 @@ const SUSP = /g\.type = 'governance' AND g\.state = 'suspended'/;
     assert.deepStrictEqual(access.p, ['N-ROOT', 'b_root.b_store', 'N-STORE']);
     assert.ok(/e\.id = \$3 or/.test(access.sql), 'its own node must stay readable');
   });
-  await it('a member in standing reads the tree; nobody signed in is refused before any read', async () => {
+  await it('a member in standing reads the tree; nobody signed in is answered 404 before the access read', async () => {
     calls.length = 0; answer = (c) => (/from cb_entity where id=\$1/.test(c.sql) ? { rows: [node] } : /as same from/.test(c.sql) ? { rows: [{ same: true }] } : { rows: [{ id: 'N-ROOT', path: 'b_root', depth: 0 }] });
     const rows = await net.subtree('N-ROOT', actor);
     assert.strictEqual(rows.length, 1);
     calls.length = 0; let e = null; try { await net.subtree('N-ROOT', null); } catch (x) { e = x; }
-    assert.ok(e && e.code === 'NOT_ALLOWED'); assert.strictEqual(calls.filter((c) => /as same from/.test(c.sql)).length, 0);
+    assert.ok(e && e.status === 404 && e.code === 'NOT_FOUND'); /* SEC-138 residual A: nobody signed in as a business answers as a node that does not exist */ assert.strictEqual(calls.filter((c) => /as same from/.test(c.sql)).length, 0);
   });
 
   console.log('\n' + (fail ? '✗ ' + fail + ' failed, ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
