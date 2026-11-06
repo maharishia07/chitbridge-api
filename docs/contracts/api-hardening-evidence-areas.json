@@ -500,12 +500,7 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
-  "GET /api/privacy/facts": {
-   "output_allowlist_basis": "recordings",
-   "output_allowlist": true
-  },
-  "GET /api/privacy/me": {
-   "output_allowlist_basis": "recordings",
+  "GET /api/network-offers": {
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -1239,6 +1234,9 @@
   },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/:id/choice": {
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
