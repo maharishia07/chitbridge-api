@@ -170,6 +170,9 @@
   "GET /api/books/year/:fy/status": {
    "output_allowlist": true
   },
+  "GET /api/capture/consolidate": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -689,10 +692,14 @@
    "foreign_id_404": true
   },
   "POST /api/capture/:id/raise": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/structure": {
    "foreign_id_404": true
+  },
+  "POST /api/capture/simulate": {
+   "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
