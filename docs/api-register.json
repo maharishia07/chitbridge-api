@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 169
+    "failing": 150
    },
    "output_allowlist": {
     "applies": 637,
@@ -36400,7 +36400,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6146,
-   "hash": "cb34c7ed90a137a9",
+   "hash": "b9353130dc633b3d",
    "does": "",
    "errors": {
     "count": 0,
@@ -36433,7 +36433,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36464,7 +36464,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cb34c7ed90a137a9"
+    "stale_since": "b9353130dc633b3d"
    },
    "status": "partial",
    "callers": [
@@ -36499,7 +36499,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4474,
-   "hash": "4063fb6f59ac6ff8",
+   "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
     "count": 0,
@@ -36532,7 +36532,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36563,7 +36563,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4063fb6f59ac6ff8"
+    "stale_since": "ee1d4525d1f5137e"
    },
    "status": "partial",
    "callers": [
@@ -36596,7 +36596,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4908,
-   "hash": "ee3617b9ff3ada02",
+   "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
     "count": 0,
@@ -36630,7 +36630,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36662,7 +36662,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ee3617b9ff3ada02"
+    "stale_since": "bc689fc0cbbafac5"
    },
    "status": "partial",
    "callers": [
@@ -36693,7 +36693,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3912,
-   "hash": "f9d325bb11b7f5e6",
+   "hash": "f07c1d1194dee405",
    "does": "",
    "errors": {
     "count": 0,
@@ -36724,7 +36724,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36755,7 +36755,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f9d325bb11b7f5e6"
+    "stale_since": "f07c1d1194dee405"
    },
    "status": "partial",
    "callers": [],
@@ -36780,7 +36780,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4282,
-   "hash": "e275be90e73d1615",
+   "hash": "4896e7d335ee37ca",
    "does": "",
    "errors": {
     "count": 0,
@@ -36817,7 +36817,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -36848,7 +36848,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e275be90e73d1615"
+    "stale_since": "4896e7d335ee37ca"
    },
    "status": "partial",
    "callers": [
@@ -37534,7 +37534,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4151,
-   "hash": "479526d135d780a1",
+   "hash": "41730ff204ae5789",
    "does": "",
    "errors": {
     "count": 0,
@@ -37565,7 +37565,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -37596,7 +37596,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "479526d135d780a1"
+    "stale_since": "41730ff204ae5789"
    },
    "status": "partial",
    "callers": [
@@ -37801,7 +37801,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3873,
-   "hash": "2a3bed85e5eb4b08",
+   "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
     "count": 0,
@@ -37832,7 +37832,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -37863,7 +37863,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2a3bed85e5eb4b08"
+    "stale_since": "e85b09ed8ef50acb"
    },
    "status": "partial",
    "callers": [
@@ -37892,7 +37892,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6225,
-   "hash": "de599def3fd8151d",
+   "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
     "count": 0,
@@ -37926,7 +37926,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -37957,7 +37957,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "de599def3fd8151d"
+    "stale_since": "8bedf386ef4eb682"
    },
    "status": "partial",
    "callers": [
@@ -37988,7 +37988,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6204,
-   "hash": "a4bc9af3df307f6e",
+   "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
     "count": 0,
@@ -38021,7 +38021,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38052,7 +38052,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a4bc9af3df307f6e"
+    "stale_since": "286bf4488547c3bb"
    },
    "status": "partial",
    "callers": [
@@ -38083,7 +38083,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6186,
-   "hash": "4b88a41af9602e17",
+   "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
     "count": 0,
@@ -38116,7 +38116,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38147,7 +38147,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4b88a41af9602e17"
+    "stale_since": "fa69ca4bf89ef8a3"
    },
    "status": "partial",
    "callers": [
@@ -38178,7 +38178,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6465,
-   "hash": "75e5de25ab8a058b",
+   "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
     "count": 0,
@@ -38214,7 +38214,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38244,7 +38244,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "75e5de25ab8a058b"
+    "stale_since": "e8a8e5f640b02b78"
    },
    "status": "partial",
    "callers": [
@@ -38541,7 +38541,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3983,
-   "hash": "dc988275757c672d",
+   "hash": "1899c9cfdf06ac32",
    "does": "",
    "errors": {
     "count": 0,
@@ -38574,7 +38574,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38604,7 +38604,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "dc988275757c672d"
+    "stale_since": "1899c9cfdf06ac32"
    },
    "status": "partial",
    "callers": [
@@ -38813,7 +38813,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4022,
-   "hash": "c3904d51d26c89aa",
+   "hash": "5342aa1379665464",
    "does": "",
    "errors": {
     "count": 0,
@@ -38843,7 +38843,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -38873,7 +38873,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c3904d51d26c89aa"
+    "stale_since": "5342aa1379665464"
    },
    "status": "partial",
    "callers": [],
@@ -56092,7 +56092,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5812,
-   "hash": "9d26dd4d966ea939",
+   "hash": "8d1af83e23757398",
    "does": "",
    "errors": {
     "count": 1,
@@ -56130,7 +56130,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56162,7 +56162,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9d26dd4d966ea939"
+    "stale_since": "8d1af83e23757398"
    },
    "status": "partial",
    "callers": [
@@ -56195,7 +56195,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6038,
-   "hash": "7c91c6607d810af7",
+   "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
     "count": 0,
@@ -56229,7 +56229,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56260,7 +56260,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7c91c6607d810af7"
+    "stale_since": "d105bc72cd618d86"
    },
    "status": "partial",
    "callers": [
@@ -56291,7 +56291,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6094,
-   "hash": "ac2768c0c89bd282",
+   "hash": "82caaa2e8c82db0c",
    "does": "",
    "errors": {
     "count": 0,
@@ -56326,7 +56326,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56358,7 +56358,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ac2768c0c89bd282"
+    "stale_since": "82caaa2e8c82db0c"
    },
    "status": "partial",
    "callers": [
@@ -56389,7 +56389,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6169,
-   "hash": "9641c194ec49396a",
+   "hash": "e98258687776f959",
    "does": "",
    "errors": {
     "count": 0,
@@ -56423,7 +56423,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56454,7 +56454,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9641c194ec49396a"
+    "stale_since": "e98258687776f959"
    },
    "status": "partial",
    "callers": [
@@ -56632,7 +56632,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4271,
-   "hash": "bf8d67dc430c628c",
+   "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
     "count": 0,
@@ -56663,7 +56663,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56694,7 +56694,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bf8d67dc430c628c"
+    "stale_since": "66fd0df7d138de7e"
    },
    "status": "partial",
    "callers": [
@@ -56727,7 +56727,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6312,
-   "hash": "c304eb6c18afe880",
+   "hash": "66977b3f37bccaf4",
    "does": "",
    "errors": {
     "count": 0,
@@ -56763,7 +56763,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56795,7 +56795,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c304eb6c18afe880"
+    "stale_since": "66977b3f37bccaf4"
    },
    "status": "partial",
    "callers": [
