@@ -292,9 +292,9 @@ function hardeningScope() {
 function scopeProblems(file, rows) {
   const byKey = new Map(rows.map((row) => [row.key, row]));
   const found = [];
-  ['public_ids', 'platform_only'].forEach((list) => Object.entries(file[list] || {}).forEach(([key, why]) => {
+  ['public_ids', 'platform_only'].forEach((list) => Object.entries(file[list] || {}).forEach(([key, reason]) => {
     if (!byKey.has(key)) found.push(list + ': "' + key + '" is not a route of the app');
-    if (!hasReason(why)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
+    if (!hasReason(reason)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
   }));
   const seen = new Set();
   (file.cannot_answer || []).forEach((entry) => {
