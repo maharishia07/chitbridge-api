@@ -21,14 +21,23 @@ const say = console.log.bind(console);
 const ROOT = path.join(__dirname, '..');
 const PERSON = '33333333-3333-4333-8333-333333333333';
 const SHOP = '11111111-1111-4111-8111-111111111111';
+const pinCount = require('./lib/pin-count-stub.cjs');
+const AUTH_PATH = require.resolve(path.join(ROOT, 'lib', 'identity-auth'));
+// CHANGE_PIN_AUTH: the mutation check swaps in an engine that counts by read-then-write
+if (process.env.CHANGE_PIN_AUTH) require.cache[AUTH_PATH] = { id: AUTH_PATH, filename: AUTH_PATH, loaded: true, exports: require(path.join(ROOT, process.env.CHANGE_PIN_AUTH)) };
 const identityAuth = require(path.join(ROOT, 'lib', 'identity-auth'));
 const queries = [];
 let row;
+const READ_THEN_WRITE = /^UPDATE identities SET pin_attempts = \$2(, pin_locked_at = NOW\(\))? WHERE identity_id = \$1$/;
 
 const stubDb = async (sql, args) => {
   const s = String(sql).replace(/\s+/g, ' ');
   queries.push(s);
-  if (/FROM identities WHERE identity_id = \$1/.test(s) && /pin_locked_at/.test(s)) return { rows: [row] };
+  await new Promise(setImmediate); // a real round trip: other requests run between two statements
+  const counted = pinCount.answer(s, args, () => row);
+  if (counted) return counted;
+  if (READ_THEN_WRITE.test(s)) { row.pin_attempts = args[1]; if (/pin_locked_at/.test(s)) row.pin_locked_at = new Date(); return { rows: [], rowCount: 1 }; } // the old statement, for the mutation
+  if (/^SELECT .*FROM identities WHERE identity_id = \$1$/.test(s) && /pin_locked_at/.test(s)) return { rows: [{ ...row }] };
   return { rows: [], rowCount: 0 };
 };
 const dbPath = require.resolve(path.join(ROOT, 'db'));
@@ -69,12 +78,13 @@ let server;
   const hash = await identityAuth.hashPin('1234');
 
   row = { pin_hash: hash, pin_attempts: 0, pin_locked_at: null };
-  let a = await send({ ...good, current_pin: '9999' });  check(a.status === 400 && /PIN_INCORRECT/.test(a.text), 'a wrong current PIN is refused 400 PIN_INCORRECT');
-  check(wrote(/UPDATE identities SET pin_attempts = \$1 WHERE/) && !wrote(PIN_WRITE), 'a wrong current PIN is COUNTED (UPDATE pin_attempts), no PIN written');
+  let a = await send({ ...good, current_pin: "9999" });
+  check(a.status === 400 && /PIN_INCORRECT/.test(a.text), 'a wrong current PIN is refused 400 PIN_INCORRECT');
+  check(row.pin_attempts === 1 && wrote(/SET pin_attempts = pin_attempts \+ 1/) && !wrote(PIN_WRITE), 'a wrong current PIN is COUNTED (UPDATE pin_attempts), no PIN written');
 
   row = { pin_hash: hash, pin_attempts: identityAuth.MAX_PIN_ATTEMPTS - 1, pin_locked_at: null };
   a = await send({ ...good, current_pin: '9999' });
-  check(a.status === 400 && /PIN_LOCKED/.test(a.text) && wrote(/pin_locked_at = NOW()/), 'the miss at the sign-in threshold (' + identityAuth.MAX_PIN_ATTEMPTS + ') LOCKS and says so in words');
+  check(a.status === 400 && /PIN_LOCKED/.test(a.text) && !!row.pin_locked_at, 'the miss at the sign-in threshold (' + identityAuth.MAX_PIN_ATTEMPTS + ') LOCKS and says so in words');
 
   row = { pin_hash: hash, pin_attempts: 5, pin_locked_at: new Date().toISOString() };
   a = await send(good);
@@ -83,6 +93,11 @@ let server;
   row = { pin_hash: hash, pin_attempts: 3, pin_locked_at: null };
   a = await send(good);
   check(a.status === 200 && wrote(PIN_WRITE) && wrote(/pin_attempts = 0/), 'the right current PIN changes it and resets the count');
+  row = { pin_hash: hash, pin_attempts: 0, pin_locked_at: null };
+  const max = identityAuth.MAX_PIN_ATTEMPTS;
+  const burst = await Promise.all(Array.from({ length: 12 }, () => change(server, { ...good, current_pin: '9999' })));
+  check(row.pin_attempts === max && !!row.pin_locked_at, '12 PARALLEL wrong PINs count at most ' + max + ' then lock (counted ' + row.pin_attempts + ', locked ' + !!row.pin_locked_at + ')');
+  check(burst.every((r) => r.status === 400) && burst.filter((r) => /PIN_INCORRECT/.test(r.text)).length === max - 1, 'in the burst ' + (max - 1) + ' are told "incorrect"; the 5th and the rest are told the PIN is locked');
   server.close();
   say(failed ? failed + ' FAILED' : 'all passed');
   process.exit(failed ? 1 : 0);
