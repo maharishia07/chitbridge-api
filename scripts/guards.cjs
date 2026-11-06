@@ -598,6 +598,7 @@ const GUARDS = [
   'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
   'policy-set.test.js', // MNT-47: the units set policy flag
   'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
+  'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

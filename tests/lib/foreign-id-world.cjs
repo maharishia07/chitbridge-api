@@ -91,4 +91,15 @@ function ownedBy(proved, mine) {
   return Object.fromEntries(Object.keys(proved).filter(mine).map((route) => [route, proved[route]]));
 }
 
-module.exports = { ownedBy, comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };
+/**
+ * weakened(play) — the same world with a store that reads by the id alone and ignores the owner: the stranger who asks for the planted id is answered as its owner is.
+ * biteCase(play) — the BITE (critic 6 Nov, Finding A): a foreign-id case must be able to FAIL. null when the real world holds AND the weakened one is caught; else the sentence.
+ */
+const weakened = (play) => (who, planted) => play(planted ? 'owner' : who, planted);
+async function biteCase(play) {
+  const real = await foreignIdCase(play);
+  if (real) return 'the real world already fails (' + real + '), so the bite is not measurable';
+  return (await foreignIdCase(weakened(play))) ? null : "cannot fail: a store that ignores the owner still passes the foreign-id case";
+}
+
+module.exports = { weakened, biteCase, ownedBy, comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };

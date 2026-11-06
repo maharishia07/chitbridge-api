@@ -45,6 +45,39 @@
   "POST /api/books/year/:fy/close": "label: a fiscal-year label, the same in every shop; it acts only on the caller's own periods (setPeriodStatus names entity_id = $1)",
   "POST /api/books/periods/:fy/:p/:act": "label: a fiscal-year label, a period number and an action word, the same in every shop; the UPDATE names the caller's entity (lib/books-store setPeriodStatus)",
   "POST /api/books/loans/:ref/emi": "per-shop reference: loan:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent",
-  "POST /api/books/accruals/:ref/reverse": "per-shop reference: accrual:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent"
- }
+  "POST /api/books/accruals/:ref/reverse": "per-shop reference: accrual:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent",
+  "GET /api/assist/catalogue-source/:key": "platform reference: the key names a catalogue source shared by every shop, not a row of any shop (routes/assist.js)",
+  "GET /api/catalogue/:bridge_id/my-documents": "public door family: the path id is the shop browsed, as GET /api/catalogue/:bridge_id; the read is the caller's own documents under it (entity_id of the caller)",
+  "GET /api/catalogue/:bridge_id/my-orders": "public door family: the path id is the shop browsed, as GET /api/catalogue/:bridge_id; the read is the caller's own orders under it (entity_id of the caller)",
+  "GET /api/catalogue/enquiry/:item_id": "counterparty door: an enquiry list is the caller's own, under another business's published item; the empty list is the answer (as POST /api/catalogue/enquiry/:item_id)",
+  "GET /api/facts/:card": "platform reference: the id is a card name of the facts engine, not a row of any shop",
+  "GET /api/forms/:key": "platform reference: the key names a form template, shared reference data the same in every shop",
+  "GET /api/governance/supplier-acceptance/:handle": "counterparty door: the handle is a public directory bridge id; an unknown handle answers 200 null by design (routes/governance.js)",
+  "GET /api/integrations/docs/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
+  "GET /api/integrations/download/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
+  "GET /api/products/:id/schedule": "collection under the caller's own items: the read is scoped to the caller's shop and answers [] for an unknown and a foreign id alike, so no id can be told apart (no oracle)",
+  "GET /api/products/media/:item_id/:mid": "public door: product media is served by unguessable ids, public by design (routes/products.js)",
+  "GET /api/till/engine/:name": "platform reference: the name is an engine file of the till, not a row of any shop",
+  "PATCH /api/entities/:id/erase": "platform only: platformGate refuses every shop before the id is read, so a shop never reaches it",
+  "PATCH /api/entities/me/prefs/:kind": "label: the kind is a preference name on the caller's own row, the same in every shop",
+  "POST /api/channels/:id/approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/channels/:id/revoke": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/channels/:id/template-approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
+  "POST /api/forms/:key/issue": "platform reference: the key names a form template, shared reference data the same in every shop; the issue is written to the caller's own shop",
+  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop",
+  "PUT /api/entities/populations/:code/desk": "platform only: rootGate refuses every shop; the code names a population, not a row of a shop",
+  "PUT /api/testing/cmdb/:ci": "builder only: the ci is a configuration-item name on the testing board's own entity, never a shop's row"
+ },
+ "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
+ "cannot_answer": [
+  {"route": "GET /api/catalogue/:bridge_id/my-documents", "status": 404, "reason": "the path id is the shop browsed; the read is the caller's own documents and answers a list, so there is no missing row to answer 404"},
+  {"route": "GET /api/catalogue/:bridge_id/my-orders", "status": 404, "reason": "the path id is the shop browsed; the read is the caller's own orders and answers a list, so there is no missing row to answer 404"},
+  {"route": "GET /api/catalogue/enquiry/:item_id", "status": 404, "reason": "an empty list is the answer for an item with no enquiries (decided in routes/catalogue.js); it never answers 404"},
+  {"route": "GET /api/governance/supplier-acceptance/:handle", "status": 404, "reason": "an unknown handle answers 200 null by design (public directory read); it never answers 404"},
+  {"route": "GET /api/products/:id/schedule", "status": 404, "reason": "a collection under the caller's own items: [] for unknown and foreign ids alike, never 404"},
+  {"route": "PUT /api/testing/cmdb/:ci", "status": 404, "reason": "the ci is a configuration-item name the builder writes; an unknown name is created, so it never answers 404"},
+  {"route": "GET /api/assist/gaps", "status": 500, "reason": "deprecated route that reads nothing and cannot fail"},
+  {"route": "GET /api/assist/whoami", "status": 500, "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"},
+  {"route": "POST /api/assist/resolve", "status": 500, "reason": "retired route that always answers 410 and reads nothing"}
+ ]
 }

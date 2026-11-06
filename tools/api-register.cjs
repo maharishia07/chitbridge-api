@@ -267,10 +267,17 @@ function hardeningApplies(leaf, operation, scope) {
   return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !scope.publicIds.has(key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
 }
 
+/** cannot_answer (scope file): { 'METHOD /path': Set of statuses } the route can never answer; an entry without a route, a status and a reason counts for nothing (tests/api-tools.test.cjs guards it) */
+function cannotAnswerOf(list) {
+  const found = {};
+  (list || []).filter((entry) => entry && entry.route && entry.status && String(entry.reason || '').trim()).forEach((entry) => (found[entry.route] = (found[entry.route] || new Set()).add(Number(entry.status))));
+  return found;
+}
+
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer) };
 }
 
 /** a mutating route whose path reads like money but is in no list: someone must say whether it is a money write (--check fails) */
@@ -289,7 +296,7 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     missing_input_answer: missingInputColumn(operation, result),
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
-    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
+    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status) || !!(scope.cannotAnswer && scope.cannotAnswer[key] && scope.cannotAnswer[key].has(status))),
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
     strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
