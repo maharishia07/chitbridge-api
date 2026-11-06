@@ -27,7 +27,7 @@ of file each thing is; this says what already does the job.
 | 66 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 68 | `register` | `regulation.js` | register(pack) → the pack — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
-| 63 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 64 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 62 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `here` | `screen-id.js` |  |
@@ -51,16 +51,16 @@ of file each thing is; this says what already does the job.
 | 46 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 43 | `read` | `cap-print.js` |  |
 | 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 42 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 42 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 40 | `rules` | `docnumber.js` | the rule set for a country — |
-| 40 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 41 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
-| 37 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 38 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 36 | `host` | `chit-sheet.js` |  |
 | 35 | `modal` | `app.html` |  |
@@ -91,7 +91,7 @@ of file each thing is; this says what already does the job.
 | 30 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
-| 28 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
+| 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 26 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -134,7 +134,7 @@ of file each thing is; this says what already does the job.
 | 19 | `entries` | `books-store.js` |  |
 | 20 | `governance` | `home-facts.js` |  |
 | 20 | `match` | `itemmatch.js` | actually state. |
-| 19 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 20 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |
 | 18 | `cblog` | `core.js` | const __cblog = []; |
@@ -194,7 +194,7 @@ of file each thing is; this says what already does the job.
 | 13 | `verdict` | `rail-thread.js` |  |
 | 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 13 | `post` | `books-manual.js` | POST /events — |
-| 14 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
+| 14 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 13 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
