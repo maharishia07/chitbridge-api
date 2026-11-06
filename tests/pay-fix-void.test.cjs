@@ -103,14 +103,15 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   const srcMove = fs.readFileSync(path.join(H.API, 'lib', 'chit-move.js'), 'utf8'); /* moveStatus + its cancel leg live in lib/chit-move.js now (LEAN-PLAN §8 #3) */
   const moveSrc = srcMove.slice(srcMove.indexOf('async function moveStatus('));
   const cancelSrc = srcMove.slice(srcMove.indexOf('async function cancelSentCopy('), srcMove.indexOf('async function moveStatus('));
-  t('moveStatus: the sender-cancel leg (cancelSentCopy) calls chitWithdrawnSaid on the sent copy\'s handle, after g.write(), and carries `books` on the answer (a refusal in words, never swallowed)',
-    /booksOnCancel = await cancelLegs\(/.test(moveSrc) && /if \(isSender\) return cancelSentCopy\(/.test(srcMove.slice(srcMove.indexOf('async function cancelLegs('))) && cancelSrc.indexOf('chitWithdrawnSaid(db, entity_id, chit_id, note, by.id)') > cancelSrc.indexOf('await gate.write()')
-    && /books: booksOnCancel/.test(srcMove) && /refused: err\.message/.test(fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8')));
+  /* ACC-238: the books call left cancelSentCopy (sender only, through the SENT copy) for cancelLegs (every cancel of MY copy, keyed by the entity); the reversal is takeBackRefused's, not chitWithdrawn's */
+  t('moveStatus: the books call is in cancelLegs (every cancel of my copy, keyed by the entity), no longer in cancelSentCopy, and carries `books` on the answer',
+    moveSrc.includes('booksOnCancel = await cancelLegs(') && !/books-hooks|chitWithdrawn/.test(cancelSrc.slice(0, cancelSrc.indexOf('/** ORD-FIX O6'))) && srcMove.slice(srcMove.indexOf('async function cancelLegs(')).includes("return require('./books-hooks').takeBackCancelled(entity_id, chit_id, by.id)")
+    && srcMove.includes('books: booksOnCancel') && fs.readFileSync(path.join(H.API, 'lib', 'books-hooks.js'), 'utf8').includes('refused: stuck.why'));
 
   /* the cancel leg runs ONLY for a move to `cancelled`: drop that condition and every status move would cancel its sender's copy and ask the books to reverse (critic note on #632) */
   const legsSrc = srcMove.slice(srcMove.indexOf('async function cancelLegs('), srcMove.indexOf('/** the 200 of a status that really moved */'));
   t('cancelLegs: a move to any status but `cancelled` has no cancel leg (returns null before the sender/recipient branch)',
-    legsSrc.length > 0 && /^async function cancelLegs\([^)]*\) \{\n  if \(new_status !== 'cancelled'\) return null;\n/.test(legsSrc) && legsSrc.indexOf('cancelSentCopy(') > legsSrc.indexOf("new_status !== 'cancelled'"));
+    legsSrc.length > 0 && /^async function cancelLegs\([^)]*\) \{\n  if \(new_status !== 'cancelled'\) return null;\n/.test(legsSrc) && legsSrc.indexOf('cancelSentCopy(') > legsSrc.indexOf("new_status !== 'cancelled'") && legsSrc.indexOf('takeBackCancelled(') > legsSrc.indexOf('cancelSentCopy('));
 
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
