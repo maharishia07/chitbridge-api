@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 422,
-  "meets": 205,
+  "partial": 418,
+  "meets": 209,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -45181,11 +45181,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "12c06e6fce741a91"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js",
     "screens.js"
@@ -45278,11 +45277,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "401b2636a525219e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js"
    ],
@@ -45370,11 +45368,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a3f9adfd80293c99"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "network-app.js"
    ],
@@ -57863,11 +57860,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "22e4af6d39bdd31a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js",
     "core.js"
