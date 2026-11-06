@@ -10,6 +10,7 @@
  * NW-08 a business with no part in an edge (and the store, which is not the network) is refused suspend, resume, disconnect, approve, decline ·
  * NW-03 a suspended member: both sides read it suspended, the store is handed no offers and cannot resume itself, the brand resumes it;
  * NW-03 a suspended member's order to the brand is refused 403 MEMBERSHIP_SUSPENDED in words (NET-7, fixed by api #420).
+ * NW-09 (NET-53, b833) a closed shop is not returned by network_search() to its sibling; skipped with a line while b833 is not applied.
  * Left to the stand-ins, no route on the stack proves them offline: NW-01 (lib/network-offer-scope.test: needs an authored source + a released offer),
  * NW-02 (till-network-unpriced.test: the counter snapshot needs a till key), NW-05 (network-build-golden.test: byte-equal over recorded SQL).
  * Setup: a business becomes a network node the first time it takes part (src/routes/network.js actorOf ensure), so the store makes one failed ask
@@ -21,7 +22,7 @@
  */
 const { Client } = require('pg');
 const H = require('./lib/truth-harness.cjs');
-const { DB, j, ok, pause, kase, expect, near, bill, receipt, freshShop, finish } = H;
+const { DB, j, ok, pause, kase, skip, expect, near, bill, receipt, freshShop, finish } = H;
 const RUN = 'nt' + (Date.now() % 1e10).toString(36);
 const COST = 31.7311, CUSTOMER = 'Zorbax Ownedcustomer', PHONE = '9876511177';
 let pg = null;
@@ -53,6 +54,21 @@ async function activeStore(A, tag) {
   const edge = ok(await j('/api/network/connections', { method: 'POST', token: A.token, body: { childBridgeId: S.bridge, type: 'commercial' } }), 'invite').b;
   ok(await edgeOp(S, edge.id, 'approve'), 'accept');
   return { S, edge };
+}
+/** NW-09: a brand's network BUILT through the design routes (an invitation leaves a store on its own path, so network_search would not find it under the brand).
+ *  Saves the drawing, builds it, then signs each built store in with the handle and the claim code the build returned. Returns the stores like freshShop does. */
+async function builtStores(A, names) {
+  const nodes = [{ key: 'r', name: 'Brand', root: true, owned: true, parent_key: null, holds: [] }]
+    .concat(names.map((n, i) => ({ key: 's' + i, name: n + ' ' + RUN, parent_key: 'r', owned: true, holds: ['catalogue'], exposure: 'protected' })));
+  ok(await j('/api/network-design', { method: 'PUT', token: A.token, body: { draft: { nodes } } }), 'save design');
+  const made = ok(await j('/api/network-design/build', { method: 'POST', token: A.token, body: {} }), 'build').b;
+  if ((made.created || []).length !== names.length) throw new Error('build created ' + (made.created || []).length + ' of ' + names.length + ' · ' + JSON.stringify(made.problems));
+  const stores = [];
+  for (const c of made.created) {
+    const v = ok(await j('/api/entities/verify', { method: 'POST', body: { user_id: c.handle, otp: c.claim_code } }), 'claim sign-in ' + c.handle).b;
+    stores.push({ token: v.token, bridge: c.bridge_id, name: c.name });
+  }
+  return stores;
 }
 /** a store joined to brand A by an invitation and then SUSPENDED by A (only the network suspends, src/services/network.js mayAct) */
 async function suspendedStore(A, tag) {
@@ -147,6 +163,27 @@ const orderTo = (from, to, ref) => ({ recipients: [{ display_name: to.name, brid
       const left = rows.reduce((a, x) => a + x.qty, 0);
       expect(near(left, 4), 'component movements ' + JSON.stringify(rows) + ' — expected 10 received minus 3 sold x 2 = 4 left');
     }, 'VB3: no consumes primitive; a sale of a BOM item moves only the item itself (BACKLOG:2636)');
+
+    /* NW-09 (NET-53, migration b833): a CLOSED shop is not searched inside its network. Two stores BUILT under a brand's root, S2 holds the item; S1 (the sibling) searches. */
+    const def = (await pg.query("SELECT pg_get_functiondef('public.network_search(text,text,integer)'::regprocedure) AS d")).rows[0].d;
+    if (!/business_status/.test(def)) skip('NW-09', 'a closed shop is not returned by network_search()', 'b833 is not applied on this database (network_search has no business_status filter)');
+    else await kase('NW-09', 'a closed shop with catalogue_visibility=network is not returned by network_search() to its sibling; the open shop is, and the closed one returns when reopened', async () => {
+      const word = 'Closedprobe' + RUN, built = await builtStores(await freshShop(RUN + 'n', 'Brand'), ['Open', 'Closed']);
+      const S1 = built[0], S2 = built[1];   /* BUILT under the root: an invitation never places a store under the brand's ltree (NET-85) */
+      ok(await j('/api/products', { method: 'POST', token: S1.token, body: { item_data: { name: word + ' open item', unit: 'piece', price: 5 } } }), 'S1 item');
+      ok(await j('/api/products', { method: 'POST', token: S2.token, body: { item_data: { name: word + ' closed item', unit: 'piece', price: 5 } } }), 'S2 item');
+      const found = async () => (await pg.query('SELECT entity_id, bridge_id FROM network_search($1, $2, 50)', [S1.bridge, word])).rows.map((r) => r.bridge_id);
+      const before = await found();
+      /* when the premise fails, say why: each store's identity row, its catalogue row count and whether it sits under the caller's root */
+      const why = async () => JSON.stringify((await pg.query("SELECT i.bridge_id, i.status, i.catalogue_visibility, i.business_status, e.path::text AS path, (SELECT count(*) FROM catalogue_items ci WHERE ci.entity_id = i.identity_id AND ci.is_active) AS items FROM identities i LEFT JOIN cb_entity e ON e.bridge_id = i.bridge_id WHERE i.bridge_id = ANY($1) AND i.identity_type = 'entity'", [[S1.bridge, S2.bridge]])).rows);
+      expect(before.includes(S1.bridge) && before.includes(S2.bridge), 'premise: while open, both shops are found by the sibling (S1 ' + S1.bridge + ', S2 ' + S2.bridge + '), got ' + JSON.stringify(before) + (before.length === 2 ? '' : ' · rows ' + await why()));
+      ok(await j('/api/entities/profile', { method: 'PATCH', token: S2.token, body: { business_status: 'closed' } }), 'close S2');
+      const closed = await found();
+      expect(!closed.includes(S2.bridge) && closed.includes(S1.bridge), 'closed: S2 must be absent and S1 still found, got ' + JSON.stringify(closed));
+      ok(await j('/api/entities/profile', { method: 'PATCH', token: S2.token, body: { business_status: 'open' } }), 'reopen S2');
+      const again = await found();
+      expect(again.includes(S2.bridge), 'reopened: S2 is found again, got ' + JSON.stringify(again));
+    });
   } finally { await pg.end(); }
   finish('network-truth', process.env.NETWORK_TRUTH_JSON, { run: RUN });
 })().catch((e) => { console.error('network truth could not run:', e && e.message); process.exit(2); });

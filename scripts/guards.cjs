@@ -561,6 +561,7 @@ const GUARDS = [
   'line-guard-missing-qty.test.cjs',
   'lint-ratchet.test.cjs',
   'network-member-rows.test.cjs',
+  'net-53-closed-shop-search.test.cjs',
   'network-offer-scope.test.cjs',
   'open-orders-counts.test.cjs',
   'ops-stock.test.cjs',
