@@ -111,6 +111,12 @@
   "GET /api/books/compare": {
    "output_allowlist": true
   },
+  "GET /api/books/compare/:id": {
+   "foreign_id_404": true
+  },
+  "GET /api/books/compare/:id/csv": {
+   "foreign_id_404": true
+  },
   "GET /api/books/daybook": {
    "output_allowlist": true
   },
@@ -130,7 +136,8 @@
    "output_allowlist": true
   },
   "GET /api/books/ledger/:account": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/books/move-in/imports": {
    "output_allowlist": true
@@ -142,8 +149,12 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/books/packs/:id/file": {
+   "foreign_id_404": true
+  },
   "GET /api/books/party/:id/statement": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -575,7 +586,8 @@
   },
   "POST /api/books/assets/:id/dispose": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/books/cheques/:id/status": {
    "output_allowlist": true,
@@ -657,7 +669,8 @@
    "foreign_id_404": true
   },
   "POST /api/books/parties/:id/dispute": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/books/payments": {
    "output_allowlist": true

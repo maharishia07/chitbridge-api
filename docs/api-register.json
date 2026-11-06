@@ -5920,9 +5920,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "d4481d7e3b7f8ccb"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -6875,9 +6874,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "ed20d7411dd0c93e"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -34189,9 +34187,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "ecce20760c8f63c3"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [

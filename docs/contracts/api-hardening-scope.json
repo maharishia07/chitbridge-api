@@ -1,5 +1,5 @@
 {
- "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). public_ids: routes whose path id is public by design (a public door, a counterparty door, platform reference), each with its reason; foreign_id_404 (S35) does not apply to them. tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
+ "about": "API-3 scope (API-STANDARD S33-S36). Curated by cb-api with the owning area. money_writes: routes that move or record money; each must require an Idempotency-Key. inbound: routes that take a peer's or a webhook's JSON; each must schema-check it before use. money_reviewed_not: routes whose path looks like money but that write nothing (a preview, a build). public_ids: routes whose path value S35 does not apply to, each with its reason: public by design (a public door, a counterparty door, platform reference), or a label or reference that names nothing outside the caller's own shop (a fiscal year, a per-shop reference); foreign_id_404 (S35) does not apply to them. tools/api-register.cjs --check fails when a mutating route that looks like money is in none of the lists.",
  "money_writes": [
   "DELETE /api/chits/:chit_id/payment",
   "PATCH /api/books/payments/:id",
@@ -40,6 +40,11 @@
   "GET /api/assist/container/:id": "platform reference: a container is shared catalogue reference that chits pin by version",
   "POST /api/integrations/ask/:handle/stock": "public door: a shop's published handle answers stock to an asking peer",
   "GET /api/integrations/stock/:handle": "public door: a shop's published handle answers stock to an asking peer",
-  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy"
+  "PUT /api/folders/inventory/:code": "platform reference: the code names a system folder of the platform's inventory (lib/folder-inventory: B-2100, RT-4090 …), the same in every shop; the switch is written to the caller's own policy",
+  "GET /api/books/year/:fy/status": "label: a fiscal-year label, the same in every shop; read only inside the caller's own periods (WHERE entity_id = $1), no path from the label to a row id (lib/books-store periods)",
+  "POST /api/books/year/:fy/close": "label: a fiscal-year label, the same in every shop; it acts only on the caller's own periods (setPeriodStatus names entity_id = $1)",
+  "POST /api/books/periods/:fy/:p/:act": "label: a fiscal-year label, a period number and an action word, the same in every shop; the UPDATE names the caller's entity (lib/books-store setPeriodStatus)",
+  "POST /api/books/loans/:ref/emi": "per-shop reference: loan:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent",
+  "POST /api/books/accruals/:ref/reverse": "per-shop reference: accrual:<ref> is the entry's source_ref, typed by the owner and unique inside one shop; looked up only with entity_id = $1, refused before any write when absent"
  }
 }
