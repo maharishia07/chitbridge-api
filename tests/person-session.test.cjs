@@ -13,6 +13,7 @@
  * And the STOP condition: a token issued before M05 (no jti / device_id) keeps working, unchanged, until its own exp.
  *
  * Run: node tests/person-session.test.cjs · no network beyond 127.0.0.1, no DB.
+ * CARD      18-identity-sign-in-and-access/sessions-and-devices
  */
 'use strict';
 const fs = require('fs');

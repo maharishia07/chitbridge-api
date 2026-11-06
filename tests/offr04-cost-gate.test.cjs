@@ -18,6 +18,7 @@
  * GET /api/entities/me/can-see-costs through real express with a stubbed auth/db — no live database.
  *
  * Run: node tests/offr04-cost-gate.test.cjs
+ * CARD      07-offers-pricing-and-combos/cost-and-margin-per-item
  */
 'use strict';
 const path = require('path');

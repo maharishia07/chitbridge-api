@@ -6,6 +6,7 @@
  *  - locale saves keep keys the person did not send (and signin's langs_seen)
  *  - static: no UPDATE in routes/ or lib/ writes either column as `= $n` (the whole store)
  * Run: node tests/prefs-merge.test.cjs   · no DB, no network (db stubbed: one in-memory identities row).
+ * CARD      20-settings-governance-and-plan/preferences-locale-appearance
  */
 const path = require('path');
 const fs = require('fs');

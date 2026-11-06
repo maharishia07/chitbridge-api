@@ -2,6 +2,7 @@
    languages it hears (T4). India's pack has a taxInvoice member since reg-in v1.73.0: a registered buyer's GSTIN is printed on the tax
    invoice (CGST Rules r.46(d)); the figures are untouched (tests/tax-truth proves the bill byte for byte).
    Extracts the page's own functions from till.html; the packs are the real ones (lib/regulation); no browser. */
+// CARD      09-counter/billing-and-the-bill
 'use strict';
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8').replace(/\r\n/g, '\n');

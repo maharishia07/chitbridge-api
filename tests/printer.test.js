@@ -6,6 +6,7 @@
  * two-column money, the cut, and the drawer pulse that must NOT fire on anything but a sale.
  *
  * Run: node tests/printer.test.js   · no printer, no Windows, no network — it reads the bytes.
+ * CARD      09-counter/printers-bill-slip-bill-print
  */
 'use strict';
 const assert = require('assert'), path = require('path');

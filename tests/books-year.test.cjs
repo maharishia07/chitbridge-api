@@ -7,6 +7,7 @@
  * the new year balances, profit in Retained earnings). A second close answers duplicate. After it: a typed date in the closed year is
  * refused YEAR_CLOSED (409); a bill that arrives for it moves to the first open day of the new year, its own date kept. Owner-only.
  * Run: node tests/books-year.test.cjs
+ * CARD      14-accounting/periods-month-lock-year-close
  */
 'use strict';
 const path = require('path');

@@ -11,6 +11,7 @@
  * numbering with it is worse than no number at all, because billing will have started by the time it shows.
  *
  * Run: node tests/dayopen.test.js   · no DB, no browser, no network.
+ * CARD      09-counter/day-open-day-close-summary-chits
  */
 const assert = require('assert');
 const D = require('../lib/dayopen');

@@ -16,6 +16,7 @@
  * fails here, by name, before it can open a second path.
  *
  * Run: node tests/counter-gates.test.cjs   · no DB, no network.
+ * CARD      09-counter/counters-and-keys-pair-enrol-open-release
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 

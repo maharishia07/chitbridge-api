@@ -17,6 +17,7 @@
  * that test and reproduces the original bug exactly.
  *
  * Run:  node tests/policy-defaults.test.js
+ * CARD      20-settings-governance-and-plan/policy-flags
  */
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 const assert = require('assert');

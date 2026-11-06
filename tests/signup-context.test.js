@@ -11,6 +11,7 @@
  * A misspelt column name is invisible until somebody registers. [[feedback-silence-is-the-bug]]
  *
  * Run: node tests/signup-context.test.js
+ * CARD      19-onboarding-and-shop-setup/register-a-business-and-verify
  */
 const assert = require('node:assert');
 const path = require('path');

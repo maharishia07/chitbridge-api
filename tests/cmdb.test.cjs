@@ -7,6 +7,7 @@
  * lib/cmdb.js; the routes are in routes/testing.js; every shop can read them and only a board writer can change them.
  *
  * Run: node tests/cmdb.test.cjs   · no DB, no network.
+ * CARD      20-settings-governance-and-plan/cmdb
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');

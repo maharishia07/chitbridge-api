@@ -7,6 +7,9 @@
  * leaves no half-recorded payment · a duplicate tax id is a 409 DUPLICATE_PARTY.
  * Needs the books engines v1.8.0 for the "on" half (BOOKS_ENGINES_SRC); without them it says so and checks the "off" half.
  * Run: node tests/books-routes.test.cjs
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
+ * CARD      14-accounting/statements-tb-pandl-bs-party-statement
+ * CARD      14-accounting/accounts-packs-and-auditor-file
  */
 'use strict';
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */

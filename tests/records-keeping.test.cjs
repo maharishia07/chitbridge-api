@@ -8,6 +8,7 @@
  *       the masters' writers log every change. (The live twin of A is b305's PROOFS P3/P4 — run on the database.)
  *   B · Retention floors (IN 8 FY / 72 months GST · AU 5–7 y · AE 5–7 y): ONE floor, lib/policy.js RECORDS_FLOOR_YEARS, at least as long
  *       as every registered pack asks; the mint applies it under every copy; the sweep never lists a copy younger than it.
+ * CARD      21-compliance-attestation-and-trade/our-obligations-per-country-records-keeping
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */

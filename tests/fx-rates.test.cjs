@@ -8,6 +8,7 @@
  * balance balances · the revaluation at a month end (closing rate) and its reversal on the next month's first day, idempotent, a missing rate
  * named · an AU shop importing in USD pays at a higher rate → the loss · before b391 / b392 every door answers BOOKS_NOT_MIGRATED in words.
  * Run: node tests/fx-rates.test.cjs
+ * CARD      14-accounting/foreign-currency
  */
 'use strict';
 const path = require('path');

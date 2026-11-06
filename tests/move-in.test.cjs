@@ -5,6 +5,8 @@
  * in-memory books rig (tests/support/books-harness.cjs, the sibling engines) for the write of a chart and a trial balance. No database, no network.
  *   · a code collision (their code already on another ledger) is skipped as a clash · a bad ABN is skipped with reg-au's own sentence
  *   · an unbalanced trial balance is REFUSED with the sentence · the debtors / creditors control rows are never posted (they arrive bill-wise)
+ * CARD      14-accounting/move-in-from-xero-quickbooks
+ * CARD      23-connectors-and-integrations/xero-quickbooks-myob
  */
 const assert = require('assert');
 const fs = require('fs');
