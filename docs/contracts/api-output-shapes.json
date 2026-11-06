@@ -5109,6 +5109,98 @@
         "url": "/api/crm/segments"
       }
     },
+    "GET /api/service/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "tracked",
+          "chit_id",
+          "resolution_codes",
+          "pause_reasons",
+          "impacts",
+          "urgencies"
+        ],
+        "properties": {
+          "tracked": {
+            "type": "boolean"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "resolution_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pause_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impacts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "urgencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "record": {
+            "type": "object"
+          },
+          "clock": {
+            "type": "object"
+          },
+          "pauses": {},
+          "readable": {
+            "type": "object",
+            "required": [
+              "respond",
+              "resolve",
+              "contested_resolve",
+              "disputed"
+            ],
+            "properties": {
+              "respond": {
+                "type": "string"
+              },
+              "resolve": {
+                "type": "string"
+              },
+              "contested_resolve": {
+                "type": "string"
+              },
+              "disputed": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "record",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "clock",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222"
+      }
+    },
     "PATCH /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -15125,6 +15217,113 @@
         "url": "/api/schemas/create-default"
       }
     },
+    "POST /api/service/:chit_id/pause": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "pause_id",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "pause_id": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause",
+        "body": {
+          "reason": "waiting_on_counterparty",
+          "from": "2026-11-04T06:00:00Z"
+        }
+      }
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/answer": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause/22222222-2222-4222-8222-222222222222/answer",
+        "body": {
+          "accepted": true
+        }
+      }
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/end": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause/22222222-2222-4222-8222-222222222222/end"
+      }
+    },
+    "POST /api/service/:chit_id/respond": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "responded_at"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "responded_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/respond"
+      }
+    },
     "POST /api/simulator/feedback": {
       "status": "200",
       "schema": {
@@ -16879,7 +17078,10 @@
             "type": "string"
           },
           "name": {
-            "type": "object"
+            "type": [
+              "object",
+              "string"
+            ]
           },
           "mime": {},
           "size": {
@@ -17101,7 +17303,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 4,
+      "observed": 3,
       "open": [
         {
           "path": "supply",
@@ -17376,7 +17578,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 17,
+      "observed": 16,
       "open": [
         {
           "path": "request",
@@ -17576,7 +17778,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 14,
+      "observed": 13,
       "open": [
         {
           "path": "document",
@@ -24626,6 +24828,39 @@
       "example": {
         "url": "/api/testing/trace",
         "body": {}
+      }
+    },
+    "PUT /api/service/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "record"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "record": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "record",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "impact": "High",
+          "urgency": "high"
+        }
       }
     },
     "PUT /api/testing/cmdb/:ci": {
@@ -33934,6 +34169,7 @@
     "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/schemas/fields": "open at (answer) — a computed key",
     "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
@@ -34069,6 +34305,7 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

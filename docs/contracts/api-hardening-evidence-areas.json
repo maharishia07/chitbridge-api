@@ -374,6 +374,9 @@
   "GET /api/governance/vault-schema": {
    "output_allowlist": true
   },
+  "GET /api/identity/documents": {
+   "output_allowlist": true
+  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -397,6 +400,15 @@
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/service/:chit_id": {
+   "output_allowlist": true
+  },
+  "GET /api/simulator/content": {
+   "output_allowlist": true
+  },
+  "GET /api/supplies": {
    "output_allowlist": true
   },
   "GET /api/testing/cmdb/:ci": {
@@ -507,6 +519,7 @@
    "foreign_id_404": true
   },
   "PATCH /api/supplies/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
@@ -526,6 +539,12 @@
    "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
+   "output_allowlist": true
+  },
+  "POST /api/assist": {
+   "output_allowlist": true
+  },
+  "POST /api/attachments": {
    "output_allowlist": true
   },
   "POST /api/books/accounts": {
@@ -885,6 +904,9 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
+  "POST /api/privacy/me/requests": {
+   "output_allowlist": true
+  },
   "POST /api/products": {
    "output_allowlist": true
   },
@@ -968,6 +990,33 @@
    "output_allowlist": true
   },
   "POST /api/repeat/sweep": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/respond": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/feedback": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/lead": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/:id/issue": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/purchase": {
    "output_allowlist": true
   },
   "POST /api/till/alias": {
@@ -1103,10 +1152,16 @@
   "PUT /api/governance/profile/vault": {
    "output_allowlist": true
   },
+  "PUT /api/identity/documents/:scheme": {
+   "output_allowlist": true
+  },
   "PUT /api/products/:id/availability": {
    "output_allowlist": true
   },
   "PUT /api/products/:id/status": {
+   "output_allowlist": true
+  },
+  "PUT /api/service/:chit_id": {
    "output_allowlist": true
   }
  }
