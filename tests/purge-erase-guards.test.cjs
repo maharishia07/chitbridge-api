@@ -29,6 +29,7 @@ function rows(sql, params, ctx) {
     return [{ count: ctx.openDisputes || 0 }];
   }
   if (/SELECT sealed FROM identities/.test(sql)) return ctx.sealed === undefined ? [] : [{ sealed: ctx.sealed }];
+  if (/UPDATE identities SET is_erased/.test(sql)) return ctx.matches === false ? [] : [{ identity_id: 'TARGET' }]; /* CMP-30: the UPDATE matched an entity, or (matches: false) none */
   return [];
 }
 const h = G.harness({ rows, known: { [SHOP]: 'SHOP', [ME]: 'ME', [CHIT]: 'CHIT', [TARGET]: 'TARGET' } });
