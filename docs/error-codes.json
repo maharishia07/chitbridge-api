@@ -3521,6 +3521,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "PIN_LOCKED",
+   "status": "400",
+   "title": "PIN is locked",
+   "shopkeeper": "Your PIN is locked after too many wrong tries.",
+   "hint": "Ask your owner to reset it.",
+   "owner_area": "actors",
+   "since": "2026-11-06"
+  },
+  {
    "code": "PLATFORM_BOUND",
    "status": "varies",
    "title": "Set by the platform",
