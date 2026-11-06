@@ -2685,7 +2685,7 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 156,
+   "line": 151,
    "hash": "f94b7cb156a834e9",
    "does": "",
    "errors": {
@@ -2702,7 +2702,6 @@
     "catalogue_items",
     "chit_detail",
     "chit_header",
-    "entity_profile",
     "supplier_list"
    ],
    "writes": [],
@@ -18220,7 +18219,7 @@
     "trips": 2,
     "wire": 4,
     "screens": [
-     "know-your-business.html 2/30"
+     "know-your-business.html 2/31"
     ]
    },
    "measured": {
@@ -18306,7 +18305,7 @@
     "trips": 9,
     "wire": 24,
     "screens": [
-     "know-your-business.html 9/30"
+     "know-your-business.html 9/31"
     ]
    },
    "measured": {
@@ -18387,10 +18386,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 14,
-    "wire": 34,
+    "trips": 15,
+    "wire": 35,
     "screens": [
-     "know-your-business.html 14/30"
+     "know-your-business.html 15/31"
     ]
    },
    "measured": {
@@ -29015,7 +29014,7 @@
    "owner_area": "adopt",
    "owner_agent": "cb-operations",
    "file": "routes/adopt.js",
-   "line": 193,
+   "line": 188,
    "hash": "ba9d3c0418ef50fa",
    "does": "",
    "errors": {
@@ -29033,7 +29032,6 @@
     "catalogue_items",
     "chit_detail",
     "chit_header",
-    "entity_profile",
     "supplier_list"
    ],
    "writes": [
@@ -45077,7 +45075,7 @@
     "trips": 5,
     "wire": 14,
     "screens": [
-     "know-your-business.html 5/30"
+     "know-your-business.html 5/31"
     ]
    },
    "measured": {

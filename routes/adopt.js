@@ -34,6 +34,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withEntity } = require('../db');
 const adopt = require('../lib/adopt');
+const govresolve = require('../lib/govresolve'); /* VERT-13: THE resolver of the shop's trade */
 const { mintProduct } = require('../lib/mint-product');
 const cost = require('../lib/cost');
 const { words, failed, contract } = require('../lib/adopt-contract'); // the contract (each route's operation) and the words of a refusal
@@ -62,15 +63,9 @@ async function senderOf(chit) {
 
 /** what the receiving shop is, and what it already stocks — the two things the engine needs about "me" */
 async function receiverOf(entity_id) {
-  let sectors = [];
-  try {
-    /* ⚠️ withEntity — this is the shop's OWN profile, and a bare query() would read nothing under RLS */
-    const p = await withEntity(entity_id, (db) => db.query(`SELECT sectors FROM entity_profile WHERE entity_id = $1`, [entity_id]));
-    const row = p.rows[0] || {};
-    sectors = row.sectors || [];
-  } catch (e) {
-    logger.fellBack('adopt receiverOf: the read failed — carried on without it', e);
-  }
+  /* VERT-13: the receiver's trade is THE resolver's (constitution → identity → declared sectors), the same answer every other box reads.
+     verticalOf never throws: a shop whose trade cannot be read answers "not stated" (logged), which gates nothing. */
+  const sectors = govresolve.tradeWordsOf(await govresolve.verticalOf(entity_id));
   /**
    * ⚠️⚠️ MATCH ON WHAT THE SUPPLIER CALLS IT, NOT ONLY ON WHAT THE SHOP CALLS IT — and [ADOPT-02] found this
    * the first time a person walked the screen. The shop adopted "Paracetamol 500mg strip" as "Paracetamol

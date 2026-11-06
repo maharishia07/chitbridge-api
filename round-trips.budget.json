@@ -1327,8 +1327,8 @@
     },
     "GET /api/kyb/yourself": {
       "file": "kyb.js",
-      "trips": 14,
-      "wire": 34,
+      "trips": 15,
+      "wire": 35,
       "fired": true,
       "status": 200,
       "extra": true
