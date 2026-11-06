@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 113 | `words` | `variant.browser.js` |  |
 | 110 | `withEntity` | `books-hooks.js` |  |
 | 110 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 101 | `read` | `books-cashflow.js` | Trips: |
+| 102 | `read` | `books-cashflow.js` | Trips: |
 | 92 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -73,7 +73,7 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
-| 33 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 34 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
@@ -193,7 +193,7 @@ of file each thing is; this says what already does the job.
 | 13 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 13 | `confirm` | `lab-kit.js` | opts: |
 | 13 | `verdict` | `rail-thread.js` |  |
-| 13 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
+| 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 13 | `post` | `books-manual.js` | POST /events — |
 | 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 13 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |

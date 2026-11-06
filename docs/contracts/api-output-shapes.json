@@ -36353,7 +36353,9 @@
     "GET /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/relationships/customers/:id/rewards": "open at recent[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler",
     "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/tax/gstr": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
@@ -36492,8 +36494,6 @@
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler",
-    "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
