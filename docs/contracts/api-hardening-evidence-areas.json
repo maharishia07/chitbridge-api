@@ -372,6 +372,9 @@
   "GET /api/entities/usage": {
    "output_allowlist": true
   },
+  "GET /api/events/stats": {
+   "output_allowlist": true
+  },
   "GET /api/folders": {
    "output_allowlist": true
   },
@@ -500,7 +503,7 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
-  "GET /api/network-offers": {
+  "GET /api/notifications": {
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -1138,6 +1141,9 @@
   "POST /api/entities/populations": {
    "output_allowlist": true
   },
+  "POST /api/events/ticket": {
+   "output_allowlist": true
+  },
   "POST /api/folders": {
    "output_allowlist": true
   },
@@ -1274,6 +1280,12 @@
   },
   "POST /api/privacy/me/consent": {
    "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/notifications/dismiss": {
+   "output_allowlist": true
+  },
+  "POST /api/notifications/seen": {
    "output_allowlist": true
   },
   "POST /api/privacy/me/requests": {

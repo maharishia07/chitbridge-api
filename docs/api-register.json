@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 31
+  "output_allowlist_from_recordings": 32
  },
  "machine_columns": [
   "schema_in",
@@ -15233,7 +15233,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/events.js",
    "line": 42,
-   "hash": "c5740815fe4127c4",
+   "hash": "764175d6c376c803",
    "does": "",
    "errors": {
     "count": 0,
@@ -15263,7 +15263,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -15287,6 +15287,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -21380,7 +21381,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
    "line": 57,
-   "hash": "75e5cc9c3b5f0480",
+   "hash": "c3cc73e1b867722e",
    "does": "",
    "errors": {
     "count": 0,
@@ -21411,7 +21412,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21434,6 +21435,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
