@@ -1037,8 +1037,7 @@
   },
   "POST /api/integrations/:actor_id/approve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1079,8 +1078,7 @@
   },
   "POST /api/integrations/books/skip": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2069,8 +2067,7 @@
   },
   "POST /api/connectors": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2117,8 +2114,7 @@
   },
   "POST /api/connectors/:actorId/erp-test": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2147,8 +2143,7 @@
   },
   "POST /api/connectors/reissue-code": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2157,8 +2152,7 @@
   },
   "POST /api/connectors/:actorId/regenerate-key": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2171,8 +2165,7 @@
   },
   "POST /api/connectors/:actorId/ping": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2185,8 +2178,7 @@
   },
   "POST /api/connectors/:actorId/connections": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2209,8 +2201,7 @@
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
