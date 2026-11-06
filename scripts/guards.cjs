@@ -680,7 +680,9 @@ const NEEDS_ENGINES = [
   'books-manual-events.test.cjs',
   'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
-  'pay-fix-void.test.cjs' // QA-80: runs the real chits router over the books harness
+  'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
+  'change-pin-lock.test.cjs', // PPL-30: change-pin counts a wrong current PIN and honours the lock like sign-in (verifyCredential, 5 tries, ASVS V2.2.1)
+  'change-pin-lock-mutation.test.cjs' // PPL-30: with the count-and-lock removed the test above goes red
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';

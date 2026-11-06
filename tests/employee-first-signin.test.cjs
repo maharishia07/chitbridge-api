@@ -66,6 +66,7 @@ async function q(sql, params) { params = params || []; const s = String(sql).rep
   if ((m = s.match(/^SELECT (.+?) FROM identities WHERE (.+)$/i))) { const cols = m[1].split(',').map((x) => x.trim());
     const rows = where(m[2], params).map((r) => { const o = {}; cols.forEach((c) => { o[c] = c === '1' ? 1 : (r[c] === undefined ? null : r[c]); }); return o; });
     return { rows, rowCount: rows.length }; }
+  const counted = require(path.join(API, 'tests', 'lib', 'pin-count-stub.cjs')).answer(s, params, (id) => DB[id]); if (counted) return counted;
   if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) { const hit = where(m[2], params);
     hit.forEach((r) => splitTop(m[1], ',').forEach((a) => { const k = a.match(/^(\w+) = (.+)$/); if (!k) throw new Error('stub db: unknown SET ' + a); r[k[1]] = value(k[2].trim(), params, r); }));
     return { rows: [], rowCount: hit.length }; }

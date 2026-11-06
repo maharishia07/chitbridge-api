@@ -721,7 +721,7 @@ router.put(
       if (req.identity.identity_type !== 'actor') {
         return problem(req, res, { status: 400, ...words.onlyActorsChangePin() });
       }
-      const actor = await db(`SELECT pin_hash, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
+      const actor = await db(`SELECT pin_hash, pin_attempts, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
       if (actor.rows.length === 0) {
         return problem(req, res, { status: 404, ...words.actorGone() });
       }
@@ -729,10 +729,10 @@ router.put(
       if (!a.pin_hash) {
         return problem(req, res, { status: 400, ...words.noPinSet() });
       }
-      // Verify current PIN
-      const match = await identityAuth.pinMatches(req.body.current_pin, a.pin_hash); // the one PIN engine
-      if (!match) {
-        return problem(req, res, { status: 400, ...words.pinIncorrect() });
+      // PPL-30: the sign-in door's own check (ONE PIN engine) — a locked person is turned away, a wrong PIN is counted and locks at MAX_PIN_ATTEMPTS (ASVS V2.2.1)
+      const check = await identityAuth.verifyCredential(db, { ...a, identity_id, identity_type: 'actor' }, { pin: req.body.current_pin });
+      if (!check.ok) {
+        return problem(req, res, { status: 400, ...(check.reason === 'PIN_LOCKED' ? words.pinLocked() : words.pinIncorrect()) });
       }
       const new_pin_hash = await identityAuth.hashPin(req.body.new_pin);
       await db(

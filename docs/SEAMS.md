@@ -20,7 +20,7 @@ of file each thing is; this says what already does the job.
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 73 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 74 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 71 | `next` | `dayopen.js` | the next thing to do — |
 | 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 66 | `list` | `cap-settings.js` |  |
@@ -97,7 +97,7 @@ of file each thing is; this says what already does the job.
 | 26 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 26 | `sheet` | `cap-employees.js` |  |
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `owner` | `books.js` |  |
 | 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |

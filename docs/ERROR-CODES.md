@@ -351,6 +351,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PIN | varies | Pin | Not an error. PIN is the postcode label used in India. | Nothing to do. | country | 2026-10-22 |
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
 | PIN_INCORRECT | 400 | Current PIN is wrong | The current PIN is not right. | Try again with your current PIN. | actors | 2026-10-23 |
+| PIN_LOCKED | 400 | PIN is locked | Your PIN is locked after too many wrong tries. | Ask your owner to reset it. | actors | 2026-11-06 |
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
 | POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
