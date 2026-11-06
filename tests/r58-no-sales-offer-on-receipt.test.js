@@ -52,7 +52,7 @@ const ok = (name, cond, why) => {
   console.log('\n── routes/chits.js asks the gate at the one place offers are applied ──\n');
   const src = CF.read(path.join(__dirname, '..'));
   ok('sendOffers reads purpose from the send state', /async function sendOffers\([^)]*\)\s*\{\s*const \{ sender_id, purpose,/.test(src));
-  ok('the applyLiveOffers guard also asks isSalesDocument(purpose, bj)', /if \(!alreadyBilled && \([^)]*\) && require\('\.\.\/lib\/offers-live'\)\.isSalesDocument\(purpose, bj\)\)/.test(src));
+  ok('the applyLiveOffers guard also asks isSalesDocument(purpose, bj)', /if \(!alreadyBilled && \([^)]*\) && require\('\.\.\/lib\/offers-live'\)\.isSalesDocument\(purpose, businessJson\)\)/.test(src));
 
   console.log('\n' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
