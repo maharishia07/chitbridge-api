@@ -134,6 +134,10 @@ const ADVICE_PATCH = (ready) => ({
 });
 /** a registered Indian shop: the identities row the tax routes read (its GSTIN makes a GSTR possible), and a held copy of one chit with its invoice block */
 const IN_SHOP = { sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [{ identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Ponni Stores', country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }], rowCount: 1 } : null) };
+/** the same shop with no GSTIN (unregistered), and one in Australia: the seller facts a handler answers as null */
+const shopWith = (extra) => ({ sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [Object.assign({ identity_id: SHOP, gstn: null, display_name: null, country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }, extra)], rowCount: 1 } : null) });
+const NO_GSTIN_SHOP = shopWith({});
+const AU_SHOP = shopWith({ country: 'AU', timezone: 'Australia/Sydney' });
 const COPY_ENTRY = { chit_id: PARTY, direction: 'sent', sells: true, status: 'accepted', provisional: false, frozen: true, rated: 1, unrated: 0, seller: { LglNm: 'Ponni Stores' }, buyer: { LglNm: 'Ravi' }, invoice: { Version: '1.1', ValDtls: { AssVal: 100 }, ItemList: [] } };
 const COPY_PATCH = { cost: { isCostBlind: async () => false }, taxcopy: { copyOf: async () => ({ chit_id: PARTY }), invoiceOf: async () => require(path.join(HERE, 'lib', 'tax-copy')).invoiceFrom(COPY_ENTRY) } };
 const BAD_MONEY = { party_id: PARTY, amount_minor: 100, currency: 'USD', mode: 'cash' };
@@ -347,6 +351,11 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('gstr1-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr1' }),
   X('gstr3b-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr3b' }),
   X('ledger-of-a-registered-shop', 'GET /api/tax/ledger', 200, { setup: IN_SHOP, url: '/api/tax/ledger?month=2026-10' }),
+  X('rated-lines-no-hsn', 'POST /api/tax/rate', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1 }] } }),
+  X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
+  X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),
+  X('built-unregistered-seller', 'POST /api/invoice/build', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
+  X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),

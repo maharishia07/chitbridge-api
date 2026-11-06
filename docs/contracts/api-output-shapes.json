@@ -15473,10 +15473,16 @@
                   "type": "string"
                 },
                 "unit_price": {
-                  "type": "number"
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 },
                 "list_price": {
-                  "type": "number"
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 },
                 "structure": {},
                 "why": {
@@ -15529,7 +15535,10 @@
                   "type": "string"
                 },
                 "gst_rate": {
-                  "type": "number"
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 },
                 "cess_rate": {
                   "type": "number"
@@ -15537,7 +15546,10 @@
                 "hsn": {},
                 "slab": {},
                 "source": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "scheme": {}
               },
@@ -15556,16 +15568,28 @@
             ],
             "properties": {
               "LglNm": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Gstin": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "State": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Country": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "RegType": {
                 "type": "string"
@@ -15576,23 +15600,28 @@
           "buyer": {
             "type": "object",
             "required": [
-              "LglNm",
-              "Gstin",
-              "State",
-              "Pos",
               "Country"
             ],
             "properties": {
               "LglNm": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Gstin": {},
               "State": {},
               "Pos": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Country": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
@@ -15606,7 +15635,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 1,
+      "observed": 3,
       "open": [
         {
           "path": "invoice",
@@ -15816,13 +15845,22 @@
             ],
             "properties": {
               "Gstin": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "State": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Country": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "RegType": {
                 "type": "string"
@@ -15833,17 +15871,22 @@
           "buyer": {
             "type": "object",
             "required": [
-              "Pos",
               "Country"
             ],
             "properties": {
               "Gstin": {},
               "State": {},
               "Pos": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "Country": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
@@ -15871,7 +15914,10 @@
             }
           },
           "currency": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "pack": {
             "type": "object",
@@ -15883,10 +15929,16 @@
             ],
             "properties": {
               "id": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "version": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "code": {},
               "why": {}
@@ -15905,7 +15957,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 2,
+      "observed": 4,
       "open": [
         {
           "path": "priced[]",
@@ -15986,7 +16038,10 @@
                   "type": "number"
                 },
                 "hsn": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "slab": {},
                 "source": {},
@@ -15999,7 +16054,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 1,
+      "observed": 2,
       "open": [],
       "closed_by": "recordings",
       "example": {
