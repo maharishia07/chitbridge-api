@@ -28871,38 +28871,92 @@
    "answers": [
     {
      "scenario": "shop-owner",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "viewer-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28910,35 +28964,85 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28946,11 +29050,25 @@
      "status": 500,
      "body_keys": {
       "error": "Boilerplate read failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Boilerplate read failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28958,11 +29076,25 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -29433,38 +29565,92 @@
    "answers": [
     {
      "scenario": "shop-owner",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "viewer-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -29472,35 +29658,85 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -29508,11 +29744,25 @@
      "status": 500,
      "body_keys": {
       "error": "Adopt failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Adopt failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -29520,11 +29770,55 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "shop-refused-adopt-writes-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -30804,11 +31098,213 @@
      "status": 500,
      "body_keys": {
       "error": "Conformance check failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Conformance check failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "shop-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "conformance-body-a-list",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must be a object.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must be a object.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "shop-refused-conformance-reads-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     }
    ]
