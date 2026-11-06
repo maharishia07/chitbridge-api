@@ -22521,15 +22521,247 @@
     "GET /api/kyb/risk": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "section",
+          "facts",
+          "note"
+        ],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "facts": {
+            "type": "object",
+            "required": [
+              "exposures",
+              "concentration",
+              "expiring"
+            ],
+            "properties": {
+              "exposures": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "severity",
+                    "fact",
+                    "detail"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string"
+                    },
+                    "fact": {
+                      "type": "string"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "concentration": {
+                "type": "object",
+                "required": [
+                  "top",
+                  "parties",
+                  "chits",
+                  "by_currency",
+                  "excluded"
+                ],
+                "properties": {
+                  "top": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "required": [
+                      "counterparty",
+                      "value",
+                      "pct"
+                    ],
+                    "properties": {
+                      "counterparty": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "number"
+                      },
+                      "pct": {
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "parties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "counterparty",
+                        "value",
+                        "pct"
+                      ],
+                      "properties": {
+                        "counterparty": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "number"
+                        },
+                        "pct": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
+                  },
+                  "chits": {
+                    "type": "number"
+                  },
+                  "by_currency": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "currency",
+                        "total",
+                        "chits",
+                        "top",
+                        "parties"
+                      ],
+                      "properties": {
+                        "currency": {
+                          "type": "string"
+                        },
+                        "total": {
+                          "type": "number"
+                        },
+                        "chits": {
+                          "type": "number"
+                        },
+                        "top": {
+                          "type": "object",
+                          "required": [
+                            "counterparty",
+                            "value",
+                            "pct"
+                          ],
+                          "properties": {
+                            "counterparty": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "number"
+                            },
+                            "pct": {
+                              "type": "number"
+                            }
+                          },
+                          "additionalProperties": false,
+                          "x-closed-by": "recordings"
+                        },
+                        "parties": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "required": [
+                              "counterparty",
+                              "value",
+                              "pct"
+                            ],
+                            "properties": {
+                              "counterparty": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "number"
+                              },
+                              "pct": {
+                                "type": "number"
+                              }
+                            },
+                            "additionalProperties": false,
+                            "x-closed-by": "recordings"
+                          }
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
+                  },
+                  "excluded": {
+                    "type": "object",
+                    "required": [
+                      "non_monetary",
+                      "awaiting_agreement"
+                    ],
+                    "properties": {
+                      "non_monetary": {
+                        "type": "number"
+                      },
+                      "awaiting_agreement": {
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "expiring": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "title",
+                    "valid_until",
+                    "days_left",
+                    "rung"
+                  ],
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "valid_until": {
+                      "type": "string"
+                    },
+                    "days_left": {
+                      "type": "number"
+                    },
+                    "rung": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 8,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/kyb/risk"
       }
@@ -22537,15 +22769,153 @@
     "GET /api/kyb/yourself": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "section",
+          "facts",
+          "note"
+        ],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "facts": {
+            "type": "object",
+            "required": [
+              "credentials",
+              "watched",
+              "summary"
+            ],
+            "properties": {
+              "credentials": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "applies",
+                    "standard",
+                    "doc",
+                    "title",
+                    "rung",
+                    "held",
+                    "valid_until",
+                    "expiring",
+                    "expired",
+                    "days_left"
+                  ],
+                  "properties": {
+                    "applies": {
+                      "type": "boolean"
+                    },
+                    "standard": {
+                      "type": "string"
+                    },
+                    "doc": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "rung": {
+                      "type": "string"
+                    },
+                    "held": {
+                      "type": "boolean"
+                    },
+                    "valid_until": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "expiring": {
+                      "type": "boolean"
+                    },
+                    "expired": {
+                      "type": "boolean"
+                    },
+                    "days_left": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "watched": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "standard",
+                    "title",
+                    "held"
+                  ],
+                  "properties": {
+                    "standard": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "held": {
+                      "type": "boolean"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "summary": {
+                "type": "object",
+                "required": [
+                  "held",
+                  "total",
+                  "verified",
+                  "documented",
+                  "declared",
+                  "expiring"
+                ],
+                "properties": {
+                  "held": {
+                    "type": "number"
+                  },
+                  "total": {
+                    "type": "number"
+                  },
+                  "verified": {
+                    "type": "number"
+                  },
+                  "documented": {
+                    "type": "number"
+                  },
+                  "declared": {
+                    "type": "number"
+                  },
+                  "expiring": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 5,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/kyb/yourself"
       }
@@ -22553,15 +22923,39 @@
     "POST /api/kyb/credential": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "added"
+        ],
+        "properties": {
+          "added": {
+            "type": "object",
+            "required": [
+              "standard",
+              "doc",
+              "title"
+            ],
+            "properties": {
+              "standard": {
+                "type": "string"
+              },
+              "doc": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
-      "observed": 6,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/kyb/credential",
         "body": {
@@ -22575,15 +22969,44 @@
     "POST /api/kyb/field": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "section",
+          "cached",
+          "charged",
+          "configured",
+          "results",
+          "note",
+          "wall"
+        ],
+        "properties": {
+          "section": {
+            "type": "string"
+          },
+          "cached": {
+            "type": "boolean"
+          },
+          "charged": {
+            "type": "boolean"
+          },
+          "configured": {
+            "type": "boolean"
+          },
+          "results": {},
+          "note": {
+            "type": "string"
+          },
+          "wall": {
+            "type": "boolean"
+          },
+          "reach": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 6,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/kyb/field",
         "body": {}
@@ -40676,8 +41099,6 @@
     "GET /api/integrations/stock/:handle": "open at stock[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/integrations/streams": "open at streams[] — a value passed through (an expression: its keys are not written in the handler); owner — a value passed through (an expression: its keys are not written in the handler); connectors[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/keys": "open at keys[] — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/kyb/risk": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/kyb/yourself": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/network-design": "open at draft - the saved drawing, stored verbatim from the owner body (PUT /: any object up to 2 MB, the design tool owns its keys); a closed shape would cut a key it does not list",
     "GET /api/notifications": "open at notifications[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/offers/openapi.json": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
@@ -40772,8 +41193,6 @@
     "POST /api/folders/:id/rules": "open at when — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/offers/evaluate": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/offers/explain": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/pricing/price": "open at lines[] — a value passed through (an expression: its keys are not written in the handler)",

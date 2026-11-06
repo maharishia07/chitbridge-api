@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 143
+    "failing": 146
    },
    "foreign_id_404": {
     "applies": 225,
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 37
+  "output_allowlist_from_recordings": 34
  },
  "machine_columns": [
   "schema_in",
@@ -20285,7 +20285,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
    "line": 43,
-   "hash": "8915f1d9ba96496e",
+   "hash": "a45d7fb9c9b70281",
    "does": "",
    "errors": {
     "count": 0,
@@ -20315,7 +20315,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -20337,6 +20337,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -20381,7 +20382,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
    "line": 17,
-   "hash": "34210505aba8c80d",
+   "hash": "e07b4c4feb40a728",
    "does": "",
    "errors": {
     "count": 0,
@@ -20409,7 +20410,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -20431,6 +20432,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -49925,7 +49927,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
    "line": 25,
-   "hash": "d690736e8fc7f695",
+   "hash": "7aea49ad0b8bbbea",
    "does": "",
    "errors": {
     "count": 0,
@@ -49955,7 +49957,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -49979,6 +49981,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -50021,7 +50024,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
    "line": 51,
-   "hash": "422369a4e10b2d4d",
+   "hash": "c7243483b6c92dfa",
    "does": "",
    "errors": {
     "count": 0,
@@ -50055,7 +50058,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -50078,6 +50081,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,

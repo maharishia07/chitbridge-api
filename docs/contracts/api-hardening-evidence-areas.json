@@ -482,6 +482,15 @@
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
   },
+  "GET /api/kyb/position": {
+   "output_allowlist": true
+  },
+  "GET /api/kyb/risk": {
+   "output_allowlist": true
+  },
+  "GET /api/kyb/yourself": {
+   "output_allowlist": true
+  },
   "GET /api/network-design": {
    "output_allowlist": true
   },
@@ -1210,6 +1219,12 @@
   },
   "POST /api/keys": {
    "bfla_role_check": true
+  },
+  "POST /api/kyb/credential": {
+   "output_allowlist": true
+  },
+  "POST /api/kyb/field": {
+   "output_allowlist": true
   },
   "POST /api/network-design/build": {
    "output_allowlist_basis": "recordings",
