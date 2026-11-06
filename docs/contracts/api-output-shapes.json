@@ -19677,13 +19677,22 @@
             "type": "string"
           },
           "base_url": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_type": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_ref": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "endpoints": {
             "type": "array",
@@ -19776,7 +19785,10 @@
               ],
               "properties": {
                 "receipt_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_type": {
                   "type": "string"
@@ -19791,7 +19803,10 @@
                   "type": "string"
                 },
                 "chit_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "received_at": {
                   "type": "string"
