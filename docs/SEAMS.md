@@ -133,7 +133,7 @@ of file each thing is; this says what already does the job.
 | 19 | `chip` | `screen-id.js` | var S = { app: |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `governance` | `home-facts.js` |  |
-| 19 | `match` | `itemmatch.js` | actually state. |
+| 20 | `match` | `itemmatch.js` | actually state. |
 | 19 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 18 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 18 | `next` | `cap-stock.js` | the next level: |
