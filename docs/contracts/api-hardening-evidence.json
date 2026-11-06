@@ -29,6 +29,7 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/me/exposure": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/entities/me/can-see-costs": {
@@ -38,13 +39,24 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/profile": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "PATCH /api/entities/:id/erase": {
+   "strict_input": true
   },
   "GET /api/entities/routing/preview": {
    "output_allowlist": true
   },
   "PUT /api/entities/routing": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "PUT /api/entities/populations/:code/desk": {
+   "strict_input": true
+  },
+  "POST /api/entities/populations": {
+   "strict_input": true
   },
   "GET /api/entities/entitlements": {
    "output_allowlist": true
@@ -644,7 +656,11 @@
   "GET /api/folders/mis": {
    "output_allowlist": true
   },
+  "POST /api/relationships/suppliers": {
+   "strict_input": true
+  },
   "PATCH /api/relationships/suppliers/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/relationships/suppliers/availability": {
@@ -659,11 +675,16 @@
   "GET /api/relationships/customers/:id/rewards": {
    "output_allowlist": true
   },
+  "POST /api/relationships/customers": {
+   "strict_input": true
+  },
   "POST /api/relationships/customers/:id/groups": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/customers/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
