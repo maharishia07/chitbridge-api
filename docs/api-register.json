@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 354,
-  "meets": 273,
+  "partial": 353,
+  "meets": 274,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -15629,12 +15629,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 258,
-   "hash": "7a0fb21d7292ba68",
+   "hash": "8df62bfce68a955b",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      404,
      422,
      500
@@ -15677,6 +15678,7 @@
    },
    "declared": [
     401,
+    403,
     404,
     422,
     500
@@ -15689,11 +15691,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7a0fb21d7292ba68"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43223,12 +43224,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 272,
-   "hash": "db7df182b93c138f",
+   "hash": "1e62a3126825dff1",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      404,
      422,
      500
@@ -43275,6 +43277,7 @@
    },
    "declared": [
     401,
+    403,
     404,
     422,
     500
@@ -43287,7 +43290,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43403,12 +43406,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 245,
-   "hash": "0b61f6fc54084304",
+   "hash": "7369a8d143536622",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
+     403,
      422,
      500
     ],
@@ -43448,6 +43452,7 @@
    },
    "declared": [
     401,
+    403,
     422,
     500
    ],
@@ -43461,7 +43466,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0b61f6fc54084304"
+    "stale_since": "7369a8d143536622"
    },
    "status": "partial",
    "callers": [],

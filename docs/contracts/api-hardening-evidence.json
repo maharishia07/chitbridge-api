@@ -771,15 +771,8 @@
   "POST /api/governance/entities/:id/reattest": {
    "strict_input": true
   },
-  "POST /api/governance/conformance": {
-   "output_allowlist": true
-  },
-  "GET /api/governance/boilerplate/:key": {
-   "output_allowlist": true
-  },
   "POST /api/governance/boilerplate/:key/adopt": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/governance/source": {
    "strict_input": true
