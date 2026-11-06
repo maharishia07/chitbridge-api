@@ -473,13 +473,28 @@
   "PUT /api/quick-keys/screen-config/default": {
    "strict_input": true
   },
+  "PUT /api/network-offers/policy": {
+   "strict_input": true
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "strict_input": true
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "strict_input": true
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "strict_input": true
+  },
   "POST /api/network-offers/:id/release": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/network-offers/:id/withdraw": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/network-offers/:id/choice": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/signin/logout": {
@@ -749,8 +764,15 @@
   "POST /api/catalogue/enquiry/:item_id": {
    "output_allowlist": true
   },
+  "POST /api/products": {
+   "strict_input": true
+  },
   "POST /api/products/status/bulk": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/products/bulk-update": {
+   "strict_input": true
   },
   "GET /api/products/workbook.xlsx": {
    "output_allowlist": true
@@ -771,12 +793,14 @@
    "output_allowlist": true
   },
   "POST /api/products/starter-columns": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/products/:id": {
    "foreign_id_404": true
   },
   "POST /api/products/:id/schedule": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/products/:id/schedule/:sid": {
@@ -786,9 +810,11 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PUT /api/products/:id/status": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "DELETE /api/products/:id": {
@@ -796,6 +822,7 @@
    "foreign_id_404": true
   },
   "POST /api/products/:id/media": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "DELETE /api/products/:id/media/:mid": {
@@ -807,6 +834,9 @@
   },
   "GET /api/products/lists": {
    "output_allowlist": true
+  },
+  "POST /api/products/lists/adopt": {
+   "strict_input": true
   },
   "POST /api/governance/entities": {
    "strict_input": true
