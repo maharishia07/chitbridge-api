@@ -52,6 +52,7 @@ function extras(tools) {
     X('claim-made', 'POST ' + at('/entities/:id/claim'), 200, { url: nodeUrl(NODE.c, 'claim'), body: {}, setup: world({}, { who: CHILD }) }),
     N('place-asked-twice', 'GET ' + at('/place'), 400, { url: at('/place?bridgeId=a&bridgeId=b'), setup: world({ tree: true }) }),
     X('place-found', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true }) }),
+    N('place-foreign', 'GET ' + at('/place'), 404, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true }, { who: STRANGER }) }), /* SEC-138: a node of another network answers as one that does not exist */
     X('place-a-root', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=AAAA2222'), setup: world({ tree: true }) }),
     X('place-suspended-member', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=CCCC4444'), setup: world({ tree: true, edge: { state: 'suspended' } }, { who: CHILD }) }),
     X('place-no-such-business', 'GET ' + at('/place'), 200, { url: at('/place?bridgeId=NOPE'), setup: world({ tree: true }) }),

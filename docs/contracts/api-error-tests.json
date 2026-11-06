@@ -1091,6 +1091,7 @@
  "GET /api/network/place": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/notifications": [
