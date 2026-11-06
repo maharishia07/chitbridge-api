@@ -42,7 +42,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/actors/access-events | actors | routes/actors.js:1832 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/actors/check-login | actors | routes/actors.js:698 | no | no | no | no | no | no | no | yes | no | yes | yes | yes | yes | not started |
 | GET | /api/actors/settings | actors | routes/actors.js:1513 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/adopt/:chit_id | adopt | routes/adopt.js:156 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/adopt/:chit_id | adopt | routes/adopt.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:336 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:614 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | GET | /api/assist/catalogue-sources | assist | routes/assist.js:195 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
@@ -335,7 +335,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/actors/login | actors | routes/actors.js:807 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/actors/set-pin | actors | routes/actors.js:701 | no | no | no | no | no | no | no | no | no | yes | yes | yes | yes | not started |
 | POST | /api/actors/suggest-key | actors | routes/actors.js:192 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/adopt/:chit_id | adopt | routes/adopt.js:193 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/adopt/:chit_id | adopt | routes/adopt.js:188 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | POST | /api/assist | assist | routes/assist.js:81 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/assist/catalogue-adopt | assist | routes/assist.js:257 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | POST | /api/assist/catalogue-structure | assist | routes/assist.js:201 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -784,13 +784,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-adopt.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, chit_detail, chit_header, entity_profile, supplier_list · writes (derived): - · callers: cap-adopt.js · actions: -
+- reads (derived): catalogue_items, chit_detail, chit_header, supplier_list · writes (derived): - · callers: cap-adopt.js · actions: -
 
 **POST /api/adopt/:chit_id** · adopt · cb-operations · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-adopt.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, chit_detail, chit_header, entity_profile, supplier_list · writes (derived): catalogue_items · callers: cap-adopt.js · actions: -
+- reads (derived): catalogue_items, chit_detail, chit_header, supplier_list · writes (derived): catalogue_items · callers: cap-adopt.js · actions: -
 
 ### assist (cb-ai, 0 of 22 with a description)
 
@@ -3185,19 +3185,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/kyb/position** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 4; share know-your-business.html 2/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 4; share know-your-business.html 2/31) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/risk** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money y (derived)
-- effect: offline online-only · round trips 9 (wire 24; share know-your-business.html 9/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 9 (wire 24; share know-your-business.html 9/31) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/yourself** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 14 (wire 34; share know-your-business.html 14/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 15 (wire 35; share know-your-business.html 15/31) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **POST /api/kyb/credential** · kyb · cb-compliance · partial
@@ -3209,7 +3209,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/kyb/field** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/31) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): kyb_field_cache · writes (derived): kyb_field_cache, usage_ledger · callers: know-your-business.html · actions: -
 
 ### marketing (cb-marketing, 0 of 1 with a description)

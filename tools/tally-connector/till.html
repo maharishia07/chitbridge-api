@@ -8365,7 +8365,7 @@ var TILL_OPS = [
    * under one roof." Product Lab joins the other two: a shop ADOPTS goods here rather than typing them.
    * ⚠️ A PERSON signs into it, not this counter — see the Offer Lab note above, which applies with more
    * force here: adopting creates sellable goods on a live shelf. */
-  { id: 'productlab', icon: '📋', label: 'Price Lab',          hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
+  { id: 'productlab', icon: '📋', label: 'Product Lab',          hint: 'adopt a ready-made product list — veg, egg, fish, chicken, meat · opens in a new tab', fn: 'openProductLab' },
   { id: 'offerlab', icon: '🧮', label: 'Offer Lab',          hint: 'work out a discount before you run it · opens in a new tab', fn: 'openOfferLab' },
   /* ⭐ [Labs split, 2026-09-26] Athi: "bring offer lab and combo lab as a separate item... combo lab earned
    * its place now" — was a modal reachable only from inside Offer Lab; now its own page, its own hub entry,
@@ -20621,7 +20621,7 @@ async function startOpen(){
   document.getElementById('startbody').insertAdjacentHTML('beforeend',
     '<button class="bring" data-testid="till-productlab-open" onclick="startClose();openProductLab()">'
     + '<b>Let me pick what I sell</b>'
-    + '<span class="out">Price Lab — the same lists, with a tick against each product</span>'
+    + '<span class="out">Product Lab — the same lists, with a tick against each product</span>'
     + '<span class="eg">choose a shelf at a time, set your own prices, add more whenever you like</span></button>');
 }
 function startClose(){ var d = document.getElementById('startdlg'); if (d && d.open) d.close(); }
