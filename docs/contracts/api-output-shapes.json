@@ -19621,13 +19621,10 @@
                   "properties": {
                     "topic": {
                       "type": "string"
-                    },
-                    "actor_health": {},
-                    "actor_last_seen": {},
-                    "connections": {},
-                    "PAGE_DEFAULT": {}
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "enabled": {
                   "type": "boolean"
@@ -19640,13 +19637,10 @@
                 },
                 "signal": {
                   "type": "string"
-                },
-                "actor_health": {},
-                "actor_last_seen": {},
-                "connections": {},
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -19657,13 +19651,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections"
       }
@@ -19706,7 +19701,8 @@
                 },
                 "path": {}
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "mode": {
@@ -19738,7 +19734,8 @@
                   "type": "string"
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           }
         },
@@ -19746,6 +19743,7 @@
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/provisioning"
       }
@@ -19795,10 +19793,10 @@
                 },
                 "received_at": {
                   "type": "string"
-                },
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -19809,13 +19807,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 4,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/receipts"
       }
@@ -20151,15 +20150,24 @@
     "POST /api/connectors/reissue-code": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "message",
+          "email"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "dev_otp": {}
+        },
+        "additionalProperties": false
       },
       "observed": 4,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a computed key"
-        }
-      ],
+      "open": [],
       "example": {
         "url": "/api/connectors/reissue-code",
         "body": {}
@@ -34018,7 +34026,6 @@
     "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/connectors/erp-ingest": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "POST /api/connectors/reissue-code": "open at (answer) — a computed key",
     "POST /api/crm/followups": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/leads/import": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/parties/:id/contact-prefs": "open at pref — a value passed through (a name: its keys are not written in the handler)",

@@ -19,6 +19,7 @@
    "output_allowlist": true
   },
   "DELETE /api/connectors/:actorId": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/crm/followups/:id": {
@@ -210,12 +211,15 @@
    "output_allowlist": true
   },
   "GET /api/connectors/:actorId/connections": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/provisioning": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/receipts": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/crm/calls": {
@@ -473,6 +477,7 @@
    "foreign_id_404": true
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/counters/:id": {
@@ -768,17 +773,29 @@
   "POST /api/chits/send": {
    "output_allowlist": true
   },
+  "POST /api/connectors": {
+   "output_allowlist": true
+  },
   "POST /api/connectors/:actorId/connections": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/erp-test": {
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/ping": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/regenerate-key": {
+   "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/connectors/ingest": {
+   "output_allowlist": true
+  },
+  "POST /api/connectors/reissue-code": {
+   "output_allowlist": true
   },
   "POST /api/counters/:id/assign": {
    "foreign_id_404": true
