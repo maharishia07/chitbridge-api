@@ -19030,14 +19030,7 @@
                 "identity_type",
                 "owner_scope",
                 "segment",
-                "on_rail",
-                "party_no",
-                "legal_name",
-                "credit_days",
-                "credit_limit_minor",
-                "state_code",
-                "merged_into",
-                "tax_ids"
+                "on_rail"
               ],
               "properties": {
                 "customer_list_id": {
@@ -19071,7 +19064,10 @@
                   "type": "string"
                 },
                 "user_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "display_name": {
                   "type": "string"
@@ -19098,7 +19094,25 @@
                 "credit_limit_minor": {},
                 "state_code": {},
                 "merged_into": {},
-                "tax_ids": {}
+                "tax_ids": {},
+                "balance_minor": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "oldest_due": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nickname": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
@@ -19502,17 +19516,8 @@
                 "user_id",
                 "display_name",
                 "supplier_entity_id",
-                "country",
                 "has_catalogue",
-                "facts",
-                "for_you",
-                "party_no",
-                "legal_name",
-                "credit_days",
-                "credit_limit_minor",
-                "state_code",
-                "merged_into",
-                "tax_ids"
+                "facts"
               ],
               "properties": {
                 "supplier_list_id": {
@@ -19547,7 +19552,10 @@
                   "type": "string"
                 },
                 "user_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "display_name": {
                   "type": "string"
@@ -19556,7 +19564,10 @@
                   "type": "string"
                 },
                 "country": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "has_catalogue": {
                   "type": "boolean"
@@ -19609,6 +19620,21 @@
                     "string",
                     "null"
                   ]
+                },
+                "balance_minor": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "oldest_due": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "cost_hidden": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false,
