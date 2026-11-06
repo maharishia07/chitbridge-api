@@ -68,6 +68,7 @@ const sources = () => ({
   govresolve: require(path.join(HERE, 'lib', 'govresolve')),
   search: require(path.join(HERE, 'lib', 'network-search')) /* NET-39: the Where picker's places, so its 500 can be shown */
 });
+const ALLOW = require('./lib/allowlist-world.cjs');
 const contractModule = () => require(path.join(HERE, 'lib', 'entities-contract.js'));
 
 /** lib/platformroot.js as a deployment with NO root configured: loaded fresh with the variable unset (it reads it once, when it loads), then the real one put back */
@@ -165,21 +166,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
  * a key the schema does not list would be cut, so a drop here is an answer that moved. → { route: { output_allowlist: true } }
  */
 function checkAllowList(recording) {
-  console.log('\n-- the closed success schemas hold every recorded 200 --');
-  const proved = {};
+  console.log('\n-- the closed success schemas hold every recorded success answer --');
   const operations = contractModule().OPERATIONS;
-  const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
-  Object.keys(operations).sort().filter((route) => !SIGN_IN.includes(route)).forEach((route) => {
-    const schema = (((operations[route].responses[200] || {}).content || {})['application/json'] || {}).schema;
-    if (!schema || schema.additionalProperties !== false) return;
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
-    const fits = engine.compile(schema);
-    const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
-    check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
-    if (held) proved[route] = { output_allowlist: true };
-  });
-  return FOREIGN.ownedBy(proved, lab.mine); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
+  return FOREIGN.ownedBy(ALLOW.checkAllowList(recording, Object.fromEntries(Object.keys(operations).filter((route) => !SIGN_IN.includes(route)).map((route) => [route, operations[route]])), check), lab.mine); /* only the routes this test owns */
 }
 /** the shop's routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
