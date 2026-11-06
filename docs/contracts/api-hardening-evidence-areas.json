@@ -294,6 +294,9 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/counters": {
+   "output_allowlist": true
+  },
   "GET /api/crm/calls": {
    "output_allowlist": true
   },
@@ -670,8 +673,9 @@
    "foreign_id_404": true
   },
   "PATCH /api/counters/:id": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true,
@@ -1074,19 +1078,23 @@
    "output_allowlist": true
   },
   "POST /api/counters": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/counters/:id/assign": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/counters/:id/open": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/counters/:id/release": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/crm/followups": {
    "output_allowlist": true
