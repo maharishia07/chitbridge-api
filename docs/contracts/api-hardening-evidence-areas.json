@@ -19,6 +19,7 @@
    "output_allowlist": true
   },
   "DELETE /api/connectors/:actorId": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/crm/followups/:id": {
@@ -52,6 +53,7 @@
    "output_allowlist": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "DELETE /api/relationships/suppliers/:id": {
@@ -168,6 +170,9 @@
   "GET /api/books/year/:fy/status": {
    "output_allowlist": true
   },
+  "GET /api/capture/consolidate": {
+   "output_allowlist": true
+  },
   "GET /api/catalogue/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -210,12 +215,15 @@
    "output_allowlist": true
   },
   "GET /api/connectors/:actorId/connections": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/provisioning": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/receipts": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/crm/calls": {
@@ -396,6 +404,9 @@
   "GET /api/products/template": {
    "output_allowlist": true
   },
+  "GET /api/quick-keys/groups": {
+   "output_allowlist": true
+  },
   "GET /api/repeat": {
    "output_allowlist": true
   },
@@ -484,6 +495,7 @@
    "foreign_id_404": true
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/counters/:id": {
@@ -503,6 +515,7 @@
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
@@ -690,10 +703,14 @@
    "foreign_id_404": true
   },
   "POST /api/capture/:id/raise": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/structure": {
    "foreign_id_404": true
+  },
+  "POST /api/capture/simulate": {
+   "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
@@ -779,17 +796,29 @@
   "POST /api/chits/send": {
    "output_allowlist": true
   },
+  "POST /api/connectors": {
+   "output_allowlist": true
+  },
   "POST /api/connectors/:actorId/connections": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/erp-test": {
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/ping": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/regenerate-key": {
+   "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/connectors/ingest": {
+   "output_allowlist": true
+  },
+  "POST /api/connectors/reissue-code": {
+   "output_allowlist": true
   },
   "POST /api/counters/:id/assign": {
    "foreign_id_404": true
@@ -933,7 +962,11 @@
   "POST /api/products/status/bulk": {
    "output_allowlist": true
   },
+  "POST /api/quick-keys/groups": {
+   "output_allowlist": true
+  },
   "POST /api/quick-keys/groups/:id/items": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/relationships/customers/:id/groups": {
