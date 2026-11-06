@@ -28,6 +28,9 @@
   "GET /api/entities/sides": {
    "output_allowlist": true
   },
+  "PATCH /api/entities/me/exposure": {
+   "output_allowlist": true
+  },
   "GET /api/entities/me/can-see-costs": {
    "output_allowlist": true
   },
@@ -38,6 +41,9 @@
    "output_allowlist": true
   },
   "GET /api/entities/routing/preview": {
+   "output_allowlist": true
+  },
+  "PUT /api/entities/routing": {
    "output_allowlist": true
   },
   "GET /api/entities/entitlements": {
@@ -261,6 +267,9 @@
    "output_allowlist": true
   },
   "POST /api/pricing/price": {
+   "output_allowlist": true
+  },
+  "POST /api/invoice/build": {
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {
@@ -853,7 +862,8 @@
    "output_allowlist": true
   },
   "PUT /api/network-design": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/network-design/validate": {
    "strict_input": true,
@@ -863,7 +873,8 @@
    "strict_input": true
   },
   "POST /api/network-design/reissue": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "GET /api/network-design/stores": {
    "output_allowlist": true
@@ -1217,10 +1228,12 @@
   },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
    "strict_input": true,
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/answer": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "GET /api/definitions/:id": {
    "foreign_id_404": true
@@ -1240,6 +1253,12 @@
    "foreign_id_404": true
   },
   "GET /api/tax/ledger": {
+   "output_allowlist": true
+  },
+  "POST /api/tax/rate": {
+   "output_allowlist": true
+  },
+  "POST /api/tax/compute": {
    "output_allowlist": true
   },
   "GET /api/books/status": {
