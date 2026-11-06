@@ -68,20 +68,16 @@ async function chitsBite() {
   check('chits bite: at least one chits route held in the real world (the comparison has something to bite)', flipped.length + stayed.length >= 1);
 }
 
-/* the exemptions of docs/contracts/api-hardening-scope.json (critic 6 Nov section 5): every entry carries a reason and names a route that exists, and a cannot_answer status is one the route declares */
+/* the exemptions of docs/contracts/api-hardening-scope.json: the ONE rule set is register.scopeProblems (also run by api-register.cjs --check); here it is run on the committed files, and the register is shown to read every cannot_answer entry */
 function exemptionsHaveReasons() {
   const scope = require(path.join(API, 'docs', 'contracts', 'api-hardening-scope.json'));
-  const routes = new Map(require(path.join(API, 'docs', 'api-register.json')).routes.map((row) => [row.key, row]));
-  const noReason = (text) => !String(text || '').trim().length;
-  check('public_ids: every entry has a reason', Object.entries(scope.public_ids).every(([, why]) => !noReason(why)));
-  check('public_ids: every entry names a route that exists', Object.keys(scope.public_ids).every((key) => routes.has(key)));
-  check('cannot_answer: every entry has a route, a status and a reason', scope.cannot_answer.every((entry) => entry.route && Number.isInteger(entry.status) && !noReason(entry.reason)));
-  check('cannot_answer: every entry names a route that exists and declares that status', scope.cannot_answer.every((entry) => routes.has(entry.route) && routes.get(entry.route).declared.includes(entry.status)));
-  const seen = scope.cannot_answer.map((entry) => entry.route + ' ' + entry.status);
-  check('cannot_answer: no route and status twice', new Set(seen).size === seen.length);
   const register = require(path.join(API, 'tools', 'api-register.cjs'));
+  const problems = register.scopeProblems(scope, require(path.join(API, 'docs', 'api-register.json')).routes);
+  problems.forEach((sentence) => console.log('  FINDING ' + sentence));
+  check('public_ids, platform_only and cannot_answer: every entry has a reason of 20+ characters, names a route that exists, and a cannot_answer status is declared', problems.length === 0);
   const parsed = register.hardeningScope();
   check('the register reads every cannot_answer entry (none dropped for want of a field)', Object.values(parsed.cannotAnswer).reduce((sum, set) => sum + set.size, 0) === scope.cannot_answer.length);
+  check('the register reads every platform_only entry', parsed.platformOnly.size === Object.keys(scope.platform_only).length);
 }
 
 (async () => {
