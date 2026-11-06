@@ -1,4 +1,9 @@
-/* CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
+/**
+ * OWNS      the network tree and the edges between businesses: look up, register, request/approve/decline/suspend/resume/disconnect, claim, subtree, connections (who may do what is mayAct, one pure table)
+ * CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * FLOW      signed-in business → nodeOf (its place on the tree) → mayAct / same-network test → cb_entity · cb_edge → a row, or the 404 a missing id gets (SEC-138)
+ * CARD      04-network/connections-and-invitations
+ */
 const { pool, withTx } = require('../db');
 const bridge = require('../lib/bridgeId');
 const chit = require('./chit'); // NET-02 §F: real in-flight check
@@ -131,10 +136,10 @@ const _check = (op, ctx) => {
  * A caller with no actor (no place on the tree) is a stranger too: the same 404, never the 403 "sign in as a business" an existing edge would give (residual A).
  */
 const _edgeGone = () => err(404, 'edge not found', 'EDGE_NOT_FOUND');
-const _checkEdge = (op, edge, actor) => {
-  const a = String((actor && actor.id) || '');
-  if (!a || (a !== String(edge.parent_id) && a !== String(edge.child_id))) throw _edgeGone();
-  _check(op, { edge, actorId: a });
+const _checkEdge = (operation, edge, actor) => {
+  const actorId = String((actor && actor.id) || '');
+  if (!actorId || (actorId !== String(edge.parent_id) && actorId !== String(edge.child_id))) throw _edgeGone();
+  _check(operation, { edge, actorId });
 };
 
 // ---- LINK ----
