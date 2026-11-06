@@ -84,7 +84,7 @@ function memory(options) {
       found.claimed = true;
       return [found];
     }],
-    [/^select claimed from cb_entity where id\s*=\s*\$1/, (p) => [entity(p[0])].filter(Boolean).map((one) => ({ claimed: one.claimed }))],
+    [/^select c\.claimed as claimed, \(i\.bridge_id = c\.bridge_id\) as mine from cb_entity c left join identities i on i\.identity_id=\$2 where c\.id=\$1/, (p) => [entity(p[0])].filter(Boolean).map((one) => ({ claimed: one.claimed, mine: !!identity(p[1]) && same(identity(p[1]).bridge_id, one.bridge_id) }))],
     [/^update cb_edge set state='declined', approved_by=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === 'requested').map((one) => move(one, 'declined'))],
     [/^update cb_edge set state=\$3 where id=\$1 and state=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === p[1]).map((one) => move(one, p[2]))],
     [/^select 1 from cb_edge where child_id=\$1 and type = \$2/, (p) => data.edges.filter((one) => one.child_id === p[0] && one.type === p[1] && ['active', 'suspended'].includes(one.state)).map(() => ({ '?column?': 1 }))],

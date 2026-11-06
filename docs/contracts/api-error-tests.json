@@ -1074,7 +1074,6 @@
  ],
  "GET /api/network/entities/:id/connections": [
   401,
-  403,
   404,
   500
  ],
@@ -2944,7 +2943,6 @@
  "POST /api/network/entities/:id/claim": [
   400,
   401,
-  403,
   404,
   409,
   500,

@@ -26611,14 +26611,14 @@
     },
     {
      "scenario": "connections-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     }
    ]
@@ -26675,14 +26675,14 @@
     },
     {
      "scenario": "subtree-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {
@@ -27611,14 +27611,14 @@
     },
     {
      "scenario": "approve-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27781,14 +27781,14 @@
     },
     {
      "scenario": "decline-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27927,14 +27927,14 @@
     },
     {
      "scenario": "disconnect-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -28503,14 +28503,14 @@
     },
     {
      "scenario": "claim-not-yours",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {

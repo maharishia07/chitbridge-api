@@ -517,6 +517,12 @@
   "GET /api/network-offers": {
    "output_allowlist": true
   },
+  "GET /api/network/entities/:id/connections": {
+   "foreign_id_404": true
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "foreign_id_404": true
+  },
   "GET /api/network/entities/lookup": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
@@ -1291,27 +1297,32 @@
   "POST /api/network/connections/:id/approve": {
    "bfla_role_check": true,
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/decline": {
    "bfla_role_check": true,
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/disconnect": {
    "bfla_role_check": true,
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/resume": {
    "bfla_role_check": true,
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/suspend": {
    "bfla_role_check": true,
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/entities": {
    "output_allowlist_basis": "recordings",
@@ -1319,7 +1330,8 @@
   },
   "POST /api/network/entities/:id/claim": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/notifications/dismiss": {
    "output_allowlist": true
