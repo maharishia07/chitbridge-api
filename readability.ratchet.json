@@ -3836,9 +3836,9 @@
     "noHeader": 0
   },
   "routes/entities.js": {
-    "score": 101,
-    "long40": 10,
-    "long80": 5,
+    "score": 99,
+    "long40": 9,
+    "long80": 4,
     "complex10": 10,
     "complex15": 4,
     "deep3": 2,
