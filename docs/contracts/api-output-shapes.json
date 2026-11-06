@@ -19086,11 +19086,7 @@
                 "particulars",
                 "quantity",
                 "price",
-                "total",
-                "unit",
-                "raw_phrase",
-                "qty_missing",
-                "needs_human"
+                "total"
               ],
               "properties": {
                 "particulars": {
@@ -19115,9 +19111,44 @@
                 "needs_human": {
                   "type": "boolean"
                 },
-                "useCatalogue": {}
+                "unit_size": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": "number"
+                },
+                "comment": {
+                  "type": "string"
+                },
+                "asked_as": {
+                  "type": "string"
+                },
+                "variant_unspecified": {},
+                "ambiguous": {},
+                "ambiguous_count": {},
+                "variant_candidates": {},
+                "ref": {},
+                "asked_unit": {
+                  "type": "string"
+                },
+                "lot": {},
+                "qty_unverified": {
+                  "type": "boolean"
+                },
+                "rate_unverified": {
+                  "type": "boolean"
+                },
+                "qty_rejected": {
+                  "type": "string"
+                },
+                "phrase_says": {},
+                "refused": {
+                  "type": "boolean"
+                },
+                "negation_unclear": {}
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "recipients": {
@@ -19134,10 +19165,10 @@
                 },
                 "role": {
                   "type": "string"
-                },
-                "useCatalogue": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "self_copy": {
@@ -19161,7 +19192,6 @@
                   "received_at",
                   "read_by",
                   "sender_verified",
-                  "delivery_at",
                   "raw_excerpt",
                   "media_count",
                   "label",
@@ -19172,22 +19202,37 @@
                     "type": "string"
                   },
                   "from": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "from_name": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "to": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "provider_msg_id": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "capture_id": {
                     "type": "string"
                   },
                   "received_at": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "read_by": {
                     "type": "string"
@@ -19227,18 +19272,30 @@
                       "asked_differs": {},
                       "catalogue_used": {
                         "type": "boolean"
-                      },
-                      "useCatalogue": {}
+                      }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
                   },
-                  "useCatalogue": {}
+                  "delivery_address": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "unplaced": {
+                    "type": "string"
+                  }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
               },
-              "useCatalogue": {}
+              "currency": {
+                "type": "string"
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
           "original": {
             "type": "object",
@@ -19252,17 +19309,18 @@
               },
               "text": {
                 "type": "string"
-              },
-              "useCatalogue": {}
+              }
             },
-            "additionalProperties": false
-          },
-          "useCatalogue": {}
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 2,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/22222222-2222-4222-8222-222222222222/raise"
       }
@@ -19330,13 +19388,14 @@
           },
           "created_at": {
             "type": "string"
-          },
-          "media_refs": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 3,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/simulate",
         "body": {
@@ -19388,7 +19447,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 7,
+      "observed": 8,
       "open": [],
       "example": {
         "url": "/api/capture/webhook/email"
@@ -19414,7 +19473,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 13,
+      "observed": 14,
       "open": [],
       "example": {
         "url": "/api/capture/webhook/whatsapp"
@@ -20503,38 +20562,41 @@
                 },
                 "conn_config": {
                   "type": "object",
-                  "required": [
-                    "topic"
-                  ],
+                  "required": [],
                   "properties": {
                     "topic": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
-                    "actor_health": {},
-                    "actor_last_seen": {},
-                    "connections": {},
-                    "PAGE_DEFAULT": {}
+                    "path": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": true
                 },
                 "enabled": {
                   "type": "boolean"
                 },
                 "last_seen": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "created_at": {
                   "type": "string"
                 },
                 "signal": {
                   "type": "string"
-                },
-                "actor_health": {},
-                "actor_last_seen": {},
-                "connections": {},
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -20545,13 +20607,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections"
       }
@@ -20568,13 +20631,22 @@
             "type": "string"
           },
           "base_url": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_type": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_ref": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "endpoints": {
             "type": "array",
@@ -20594,7 +20666,8 @@
                 },
                 "path": {}
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "mode": {
@@ -20623,10 +20696,14 @@
                   "type": "string"
                 },
                 "topic": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           }
         },
@@ -20634,6 +20711,7 @@
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/provisioning"
       }
@@ -20664,13 +20742,22 @@
               ],
               "properties": {
                 "receipt_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_type": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_ref": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "payload_hash": {
                   "type": "string"
@@ -20679,14 +20766,17 @@
                   "type": "string"
                 },
                 "chit_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "received_at": {
                   "type": "string"
-                },
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -20697,13 +20787,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 4,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/receipts"
       }
@@ -21039,15 +21130,24 @@
     "POST /api/connectors/reissue-code": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "message",
+          "email"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "dev_otp": {}
+        },
+        "additionalProperties": false
       },
       "observed": 4,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a computed key"
-        }
-      ],
+      "open": [],
       "example": {
         "url": "/api/connectors/reissue-code",
         "body": {}
@@ -34908,7 +35008,6 @@
     "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/connectors/erp-ingest": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "POST /api/connectors/reissue-code": "open at (answer) — a computed key",
     "POST /api/crm/followups": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/leads/import": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/parties/:id/contact-prefs": "open at pref — a value passed through (a name: its keys are not written in the handler)",

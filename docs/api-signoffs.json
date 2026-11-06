@@ -3561,6 +3561,62 @@
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
+  },
+  "DELETE /api/connectors/:actorId": {
+   "hash": "e5b9eacc9c599271",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "GET /api/connectors/:actorId/connections": {
+   "hash": "4574a239426bb2f1",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+   "lifecycle": "stable"
+  },
+  "GET /api/connectors/:actorId/provisioning": {
+   "hash": "c7ab8441a009fdac",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+   "lifecycle": "stable"
+  },
+  "GET /api/connectors/:actorId/receipts": {
+   "hash": "11be9936f414911a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape, widened",
+   "lifecycle": "stable"
+  },
+  "GET /api/quick-keys/groups": {
+   "hash": "084336e713d643ce",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/:id/raise": {
+   "hash": "6119468e82f68823",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 round 2",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/simulate": {
+   "hash": "332e360cbe8c6666",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
+   "lifecycle": "stable"
   }
  }
 }
