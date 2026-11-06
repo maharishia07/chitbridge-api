@@ -4,6 +4,7 @@
  *
  * The load-bearing tests are the two that could each cause an outage in opposite directions: an operator cap that
  * an entity can shrug off, and an ABSENT declaration that closes every shop on the platform.
+ * CARD      06-catalogue-pim/visibility-and-exposure
  */
 const assert = require('assert');
 const V = require('../lib/visibility-cap');

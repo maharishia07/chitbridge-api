@@ -23,6 +23,7 @@
  * ensureDefaultSchema, or its own UPDATE. What it may not do is write one column and forget the other.
  *
  * Run: node --test tests/visibility-mirror.test.cjs
+ * CARD      06-catalogue-pim/visibility-and-exposure
  */
 'use strict';
 const test = require('node:test');

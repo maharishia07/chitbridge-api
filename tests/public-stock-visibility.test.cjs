@@ -7,6 +7,8 @@
  * caller is answered exactly like a handle that does not exist.
  *
  * Run: node tests/public-stock-visibility.test.cjs · no DB (a recording stand-in), no network beyond 127.0.0.1.
+ * CARD      13-inventory-stock-and-traceability/stock-across-stores
+ * UNIT      13/Stock across stores (integrations ask/stock)
  */
 'use strict';
 const assert = require('assert'), path = require('path');

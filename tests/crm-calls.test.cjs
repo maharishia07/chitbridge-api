@@ -5,6 +5,7 @@
  *   3rd no-answer in a row → +3 days and a Parked suggestion · a customer's stage is not touched · b297 absent → 503 with NOTHING written · a foreign party → 404
  *   the RLS test: the queue and every write carry the shop (owner $1); another shop's rows never appear
  * Run: node tests/crm-calls.test.cjs
+ * CARD      11-crm-and-marketing/call-desk-and-outcomes
  */
 'use strict';
 const assert = require('assert'), path = require('path');
@@ -59,8 +60,8 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     D.migrated = true; F.forget(); assert.strictEqual(D.interactions.length, 0);
   });
   await ita('GET /calls: one statement; an untouched lead and a late follow-up; the outcome buttons come from the server (no days in them)', async () => {
-    D.followups.push({ owner: 'E1', party_id: P(2), followup_id: 'f1', what: 'Ring', due_at: new Date(Date.now() - 2 * 86400000).toISOString(), created_at: new Date().toISOString(), assignee_user_id: 'E1', source: 'manual' });
-    D.followups.push({ owner: 'E2', party_id: P(9), followup_id: 'f9', what: 'Theirs', due_at: new Date(Date.now() - 86400000).toISOString(), created_at: new Date().toISOString(), assignee_user_id: 'E2', source: 'manual' });
+    D.followups.push({ owner: 'E1', party_id: P(2), followup_id: '11111111-1111-4111-8111-111111111111', what: 'Ring', due_at: new Date(Date.now() - 2 * 86400000).toISOString(), created_at: new Date().toISOString(), assignee_user_id: 'E1', source: 'manual' });
+    D.followups.push({ owner: 'E2', party_id: P(9), followup_id: '99999999-9999-4999-8999-999999999999', what: 'Theirs', due_at: new Date(Date.now() - 86400000).toISOString(), created_at: new Date().toISOString(), assignee_user_id: 'E2', source: 'manual' });
     stmts = []; const r = await t.get('/calls?scope=all'); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     assert.strictEqual(stmts.filter((s) => /^SELECT q\./.test(s)).length, 1, 'ONE queue statement');
     assert.deepStrictEqual(r.body.calls.map((c) => c.party_id).sort(), [P(1), P(2), P(3)].sort(), 'the other shop never appears');
@@ -77,11 +78,11 @@ const post = (id, body) => t.post('/parties/' + id + '/outcome', body);
     assert.strictEqual((await t.get('/calls?scope=all&limit=1000000')).body.limit, 1000, 'the server\'s max, never the client\'s word');
   });
   await ita('interested: call logged (call · out · the word), the open follow-up closed, the next is +2 days, source interaction', async () => {
-    const r = await post(P(2), { outcome: 'interested', followup_id: 'f1' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));   /* R5: the row's own follow-up */
+    const r = await post(P(2), { outcome: 'interested', followup_id: '11111111-1111-4111-8111-111111111111' }); assert.strictEqual(r.status, 201, JSON.stringify(r.body));   /* R5: the row's own follow-up */
     assert.strictEqual(r.body.interaction.body, 'Interested'); assert.strictEqual(r.body.interaction.kind, 'call'); assert.strictEqual(r.body.interaction.direction, 'out');
     assert.strictEqual(r.body.followup.due_day, day(2)); assert.strictEqual(r.body.followup.source, 'interaction'); assert.strictEqual(r.body.stage, null);
-    assert.ok(D.followups.find((f) => f.followup_id === 'f1').done_at, 'the old follow-up is closed'); assert.strictEqual(D.followups.filter((f) => f.party_id === P(2) && !f.done_at).length, 1);
-    assert.ok(D.followups.find((f) => f.followup_id === 'f9' && !f.done_at), "another shop's follow-up is untouched");
+    assert.ok(D.followups.find((f) => f.followup_id === '11111111-1111-4111-8111-111111111111').done_at, 'the old follow-up is closed'); assert.strictEqual(D.followups.filter((f) => f.party_id === P(2) && !f.done_at).length, 1);
+    assert.ok(D.followups.find((f) => f.followup_id === '99999999-9999-4999-8999-999999999999' && !f.done_at), "another shop's follow-up is untouched");
   });
   await ita('demo booked: needs a day (400, nothing written); with a date it moves the lead to Demo', async () => {
     const n0 = D.interactions.length;

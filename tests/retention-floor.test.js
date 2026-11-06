@@ -8,6 +8,7 @@
  * ⚠️ Nothing deletes yet — retire is Ph2, purge Ph3, both human-gated. That is exactly why this is the moment to
  * build it: the guard has to exist before the deletion it constrains, or it arrives as a fix for damage already
  * done.
+ * CARD      27-data-lifecycle-retention-storage-archive/retention-rules-and-floor
  */
 const { test } = require('node:test');
 const assert = require('node:assert');

@@ -4,6 +4,7 @@
  *   2  an unregistered template / a junk section list is refused (coerce → undefined); a registered one and a real subset pass; [] is refused
  *   3  the public catalogue view carries shop.showcase from the policy_flags it already reads (no extra trip)
  * Run: node tests/showcase-policy.test.cjs   · no DB, no network.
+ * CARD      10-online-shop-and-storefront-orders/the-online-shop
  */
 'use strict';
 process.env.DATABASE_URL = ''; process.env.NODE_ENV = 'test';

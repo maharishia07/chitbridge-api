@@ -2,7 +2,8 @@
 // @type: unit
 /**
  * tests/retention-never-early.test.cjs — RETENTION NEVER RETIRES OWNED DATA EARLY (lib/retention.js).
- * UNIT      27 DATA LIFECYCLE / Retention rules & floor (its cited test files never resolved on disk; PM/SCORECARD-DATA.md code = 0.5)
+ * CARD      27-data-lifecycle-retention-storage-archive/retention-rules-and-floor
+ * UNIT      27/Retention rules & floor
  * OWNS      the rules that make a retention job safe BEFORE any deletion is wired: an open dispute never retires (null) · a resolved dispute is a FLOOR
  *           (max of the plain end and resolved + grace), never a restarted clock · an extension is bounded and refuses 0, negatives, words and the over-cap ·
  *           one copy's days = max(records-law floor, the owner's floor, the sender's ask) with the winning rule named, a sender can never SHORTEN a receiver's copy ·

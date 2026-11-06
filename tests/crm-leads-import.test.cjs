@@ -4,6 +4,7 @@
  *   route: who may (a viewer → 403 in words) · dry = the plan, nothing written · the real run = ONE statement per table, never one per row
  *          (the same statement count for 6 rows and for 300) · merged = the existing party becomes a lead · b297 not run → 503, nothing created
  * Run: node tests/crm-leads-import.test.cjs
+ * CARD      11-crm-and-marketing/leads-import-stages
  */
 'use strict';
 const assert = require('assert'), path = require('path');

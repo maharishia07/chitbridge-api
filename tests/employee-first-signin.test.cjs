@@ -8,6 +8,8 @@
  * e-mail — signed the same first-time co-assist in and said nothing, so no page could show the set-PIN step.
  *
  * Run: node tests/employee-first-signin.test.cjs · no network beyond 127.0.0.1, no DB (an in-memory identities table).
+ * CARD      17-people-employees-hr-and-payroll/pin-otp-first-sign-in
+ * UNIT      17/PIN, OTP, first sign-in
  */
 'use strict';
 const path = require('path');

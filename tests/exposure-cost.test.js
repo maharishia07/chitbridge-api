@@ -9,6 +9,7 @@
  * a seller never gets to choose to show it.
  *
  * Run: node tests/exposure-cost.test.js
+ * CARD      06-catalogue-pim/visibility-and-exposure
  */
 const assert = require('node:assert');
 const exposure = require('../lib/exposure');

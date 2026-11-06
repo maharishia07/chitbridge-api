@@ -6,6 +6,8 @@
  *
  * The load-bearing tests: a private department is simply absent, categories are never invented, and a search never
  * leaves a heading with nothing under it.
+ * CARD      04-network/network-storefront-network-store
+ * UNIT      04/Network storefront / network store
  */
 const assert = require('assert');
 const N = require('../lib/network-view');
