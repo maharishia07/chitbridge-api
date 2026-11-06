@@ -21,12 +21,14 @@
 const path = require('path');
 const fs = require('fs');
 const { harness, STAFF, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNTS = [{ mount: '/api/network-offers', file: 'routes/network-offers.js', contract: 'lib/network-offers-contract.js' }];
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const OFFER = '33333333-3333-4333-8333-333333333333';
@@ -120,6 +122,7 @@ function checkCodesRegistered(recording) {
   checkContracts(routes);
   checkCodesRegistered(recording);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
+  const allowHeld = ALLOW.checkAllowList(recording, Object.assign({}, ...MOUNTS.map((one) => contractOf(one).OPERATIONS)), check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -127,7 +130,9 @@ function checkCodesRegistered(recording) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/network-offers.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
+  } else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
+  if (!lab.argv.includes('--write')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/network-offers.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })().catch((failure) => {

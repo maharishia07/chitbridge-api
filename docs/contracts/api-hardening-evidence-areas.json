@@ -446,6 +446,9 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/network-offers": {
+   "output_allowlist": true
+  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -1095,6 +1098,9 @@
    "output_allowlist": true
   },
   "POST /api/network-design/validate": {
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/:id/choice": {
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
