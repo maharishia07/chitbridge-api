@@ -122,7 +122,8 @@ const minor = (rupees) => Math.round(rupees * 100);
   const posted = [];
   for (const r of rows.filter((x) => x.role !== 'Draft')) {
     const entry = await TC.entryFor(r, SHOP);
-    const k = K.classify({ chit: r, entry, setting: S, status: r.current_status, disputed: !!r.disputed });
+    /* ACC-223: a cancelled copy no longer posts, so the cancelled fixture is classified as it stood BEFORE the cancel (it posted at send), then withdrawn below */
+    const k = K.classify({ chit: r, entry, setting: S, status: r.current_status === 'cancelled' ? 'delivered' : r.current_status, disputed: !!r.disputed });
     if (k.kind === 'walkin' && r.chit_id === uuid(15)) { /* its day is already posted: the late-bill entry, exactly as postChit writes it */
       const ev = require(path.join(H.API, 'lib', 'books-engines')).posting().daySummary([k.bill], { ref: 'late ' + r.chit_id, date: '2026-09-25', counter: 'C1' }, { pack: require(path.join(H.API, 'lib', 'regulation')).packFor('IN') });
       const late = await X.B.postEntry(X.db, SHOP, Object.assign(ev, { source_ref: 'walkin-late:' + r.chit_id, source_chit_id: r.chit_id }));

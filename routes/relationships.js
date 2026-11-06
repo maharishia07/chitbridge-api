@@ -398,8 +398,8 @@ router.patch(
   ],
   auth,
   validateAsProblem,
+  refuseUnknownKeys(SUPPLIER_PATCH_KEYS), // CRM-44: the keys the Suppliers screens send are all in the list (first, so its frozen answer is the one a stranger key gets; the schema below is closed to match)
   ...checked('PATCH /suppliers/:id'),
-  refuseUnknownKeys(SUPPLIER_PATCH_KEYS), // CRM-44: the keys the Suppliers screens send are all in the list
   async (req, res) => {
     try {
       const owner = ctx(req);
@@ -986,8 +986,8 @@ router.patch(
   [body('segment_override').optional().isIn(['high_value', 'regular', 'new', 'inactive'])],
   auth,
   validateAsProblem,
+  refuseUnknownKeys(CUSTOMER_PATCH_KEYS), // CRM-44, first: its frozen answer is the one a stranger key gets; the schema below is closed to match
   ...checked('PATCH /customers/:id'),
-  refuseUnknownKeys(CUSTOMER_PATCH_KEYS),
   async (req, res) => {
     try {
       const owner = ctx(req);

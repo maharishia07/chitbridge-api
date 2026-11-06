@@ -151,6 +151,8 @@ const GUARDS = [
   'snapshot-wire.test.js', // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs', // the bill number's shape: what the date says vs when the run restarts
+  'ctr-177-bill-number-unique.test.cjs', // CTR-177: the till's real takeNumber never issues a number twice across a roll (needs the engines pin that carries the period label)
+  'ctr-187-return-on-credit.test.cjs', // CTR-187: a return on an On-credit bill offers Reduce what they owe first, whole note or nothing, refund.parts []
   'bell-param.test.cjs', // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'network-catalogue.test.cjs', // a brand publishes product changes; a store's own price is only ever suggested to
@@ -320,6 +322,14 @@ const GUARDS = [
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
+  'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
+  'platform-strict-input.test.cjs', // S33: channels platform doors and POST /api/keys refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'chits-b-strict-input.test.cjs', // S33: the rest of the chits write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'entities-strict-input.test.cjs', // S33: entities and relationships write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'offers-products-strict-input.test.cjs', // S33: products and network-offers write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'connectors-strict-input.test.cjs', // S33: connector cockpit and integrations write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'catalogue-strict-input.test.cjs', // S33: catalogue enquiry and photo-extract bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
@@ -354,6 +364,7 @@ const GUARDS = [
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-17-query-day.test.cjs', // API-17: a ?since= that is not a day (7, -1, abc, 2026-02-30, twice) answers 400 VALIDATION_FAILED on folders/mis, relationships/scorecard and capture/consolidate, the db never asked
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
+  'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
   'cmp-22-23-input.test.cjs', // CMP-22/23: a non-uuid identity_id on the identity-document routes answers 403 IDOC_SUBJECT_FORBIDDEN and a badly typed or impossible (2026-02-30) field of POST /api/kyb/credential 400 VALIDATION_FAILED, before the database
   'api-18-text-cap.test.cjs', // API-18: kind/name of POST /api/definitions, name of POST /api/keys and id of POST /api/integrations/heartbeat are capped at 200 characters; longer is a 400 before the database
@@ -367,6 +378,10 @@ const GUARDS = [
   'api-problem-governance.test.cjs', // API-4 sweep, governance: every refusal of routes/governance.js is a Problem with its old keys frozen; the foreign id of GET /entities/:id is the unknown id's 404; no 5xx says its cause
   'api-problem-chits.test.cjs', // API-4 sweep, chits: every refusal of routes/chits.js is a Problem with its old keys frozen; no 5xx says its cause; the schemas agree with the validator chains they replaced
   'api-problem-finance.test.cjs', // API-4 sweep, folders, Home facts and pricing: every refusal of routes/folders.js, routes/facts.js and routes/pricing.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-offers.test.cjs', // CAT-220: POST /api/offers/evaluate and /explain at the route: the discount and its reason in words, an expired or not-yet-started offer skipped, the shop's own shelf, a key not scoped 403
+  'api-problem-pricing.test.cjs', // CAT-221: POST /api/pricing/price at the route: the tier price at each quantity, below the first break the list price, fixed and range, an unpriced line null never 0
+  'api-problem-till-price.test.cjs', // CAT-222: POST /api/till/price (what is written, was, now, refusals in words) and GET /api/till/worth-an-offer (each reason in words, urgency order, clamped window) at the route
+  'cat-54-money-truth.test.cjs', // CAT-54: the money-truth matrix, hand-computed: tax-inclusive prices split out, one rounder per ISO 4217 minor unit, a split payment against the AU 5c cash step (cash only) and India's exact paisa
   'shop-actors.test.cjs', // SEC-103: actorOwned is true only for an actor of this shop; foreign, unknown and no-uuid are false, a database that is down is an error
   'sec100-folder-fk.test.cjs', // SEC-100: no write puts another shop's folder into a folder foreign key (rules, parent on create and move, routing); a foreign id and an unknown id answer alike, nothing is written
   'repeat-supply-status.test.cjs', // REPEAT-500: the repeat store reads a copy's status from chit_status through lib/select.rows, never h.current_status

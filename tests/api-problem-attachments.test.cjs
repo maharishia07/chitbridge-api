@@ -29,6 +29,7 @@ const crypto = require('crypto');
 const { harness, OWNER, STAFF, SECRET_SQL, SHOP, sameValue, raising, answering, firstOf, sqlError } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/attachments-scenes.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -368,18 +369,20 @@ function recordedRun(server, routes, recording) {
 }
 
 /** the statuses tested per route against docs/contracts/api-error-tests.json, and the foreign-id evidence against its file; --write rewrites both */
-function checkRecorded(tested, foreign) {
+function checkRecorded(tested, foreign, allowHeld) {
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (!lab.argv.includes('--write')) {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/attachments.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the attachment routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     return check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
   const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
   const merged = Object.assign(others, coverage);
   fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+  ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
 }
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
@@ -413,7 +416,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 20, frozen);
-  checkRecorded(tested, foreign);
+  checkRecorded(tested, foreign, ALLOW.checkAllowList(recording, contract.OPERATIONS, check));
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })();

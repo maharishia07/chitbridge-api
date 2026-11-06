@@ -139,12 +139,10 @@
   },
   "PATCH /api/entities/me/exposure": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/entities/me/can-see-costs": {
@@ -163,8 +161,7 @@
   },
   "PATCH /api/entities/profile": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -172,8 +169,7 @@
   },
   "PATCH /api/entities/:id/erase": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -203,12 +199,10 @@
   },
   "PUT /api/entities/routing": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/entities/populations": {
@@ -219,8 +213,7 @@
   },
   "PUT /api/entities/populations/:code/desk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -233,8 +226,7 @@
   },
   "POST /api/entities/populations": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -335,8 +327,7 @@
   },
   "POST /api/chits/:chit_id/reprice": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -347,8 +338,7 @@
   },
   "POST /api/chits/:chit_id/costs": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -380,8 +370,7 @@
   },
   "POST /api/chits/register/subjects": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -389,8 +378,7 @@
   },
   "POST /api/chits/register/subjects/:subject_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -408,8 +396,7 @@
   },
   "POST /api/chits/register/templates": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -417,8 +404,7 @@
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -430,8 +416,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -453,8 +438,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/revise": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -467,8 +451,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -494,8 +477,7 @@
   },
   "POST /api/chits/:chit_id/raida": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -507,8 +489,7 @@
   },
   "POST /api/chits/:chit_id/raida/:raida_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -521,8 +502,7 @@
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -543,8 +523,7 @@
   },
   "PUT /api/chits/:chit_id/use": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -556,8 +535,7 @@
   },
   "POST /api/chits/:chit_id/deliver-lines": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -569,8 +547,7 @@
   },
   "POST /api/chits/:chit_id/assign-lines": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -603,8 +580,7 @@
   },
   "POST /api/chits/:chit_id/payment": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -632,8 +608,7 @@
   },
   "POST /api/chits/:chit_id/books-request": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -644,8 +619,7 @@
   },
   "PUT /api/chits/:chit_id/status": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -657,8 +631,7 @@
   },
   "POST /api/chits/:chit_id/messages": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -680,8 +653,7 @@
   },
   "POST /api/chits/:chit_id/disputes": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -713,8 +685,7 @@
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -740,8 +711,7 @@
   },
   "PUT /api/chits/:chit_id/priority": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -752,8 +722,7 @@
   },
   "PUT /api/chits/:chit_id/priority-flag": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -765,8 +734,7 @@
   },
   "POST /api/chits/:chit_id/archive": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -778,8 +746,7 @@
   },
   "PUT /api/chits/:chit_id/star": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -790,8 +757,7 @@
   },
   "POST /api/chits/:chit_id/unread": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -802,8 +768,7 @@
   },
   "POST /api/chits/:chit_id/unarchive": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -814,8 +779,7 @@
   },
   "POST /api/chits/:chit_id/restore": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -835,8 +799,7 @@
   },
   "PUT /api/chits/:chit_id/void": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -848,8 +811,7 @@
   },
   "POST /api/chits/assign-bulk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1017,8 +979,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/invoice/:chit_id": {
@@ -1076,8 +1037,7 @@
   },
   "POST /api/integrations/:actor_id/approve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1118,8 +1078,7 @@
   },
   "POST /api/integrations/books/skip": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1661,8 +1620,7 @@
   },
   "PUT /api/network-offers/policy": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1671,8 +1629,7 @@
   },
   "POST /api/network-offers/catalogue/publish": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1681,8 +1638,7 @@
   },
   "POST /api/network-offers/catalogue/cancel": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1691,8 +1647,7 @@
   },
   "POST /api/network-offers/catalogue/price": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1701,8 +1656,7 @@
   },
   "POST /api/network-offers/:id/release": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1714,8 +1668,7 @@
   },
   "POST /api/network-offers/:id/withdraw": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1727,8 +1680,7 @@
   },
   "POST /api/network-offers/:id/choice": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1814,8 +1766,7 @@
   },
   "POST /api/keys": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2116,8 +2067,7 @@
   },
   "POST /api/connectors": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2164,8 +2114,7 @@
   },
   "POST /api/connectors/:actorId/erp-test": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2194,8 +2143,7 @@
   },
   "POST /api/connectors/reissue-code": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2204,8 +2152,7 @@
   },
   "POST /api/connectors/:actorId/regenerate-key": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2218,8 +2165,7 @@
   },
   "POST /api/connectors/:actorId/ping": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2232,8 +2178,7 @@
   },
   "POST /api/connectors/:actorId/connections": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2256,8 +2201,7 @@
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2443,8 +2387,7 @@
   },
   "POST /api/relationships/suppliers": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2459,8 +2402,7 @@
   },
   "PATCH /api/relationships/suppliers/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2516,8 +2458,7 @@
   },
   "POST /api/relationships/customers": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2526,8 +2467,7 @@
   },
   "POST /api/relationships/customers/:id/groups": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2538,8 +2478,7 @@
   },
   "PATCH /api/relationships/customers/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2704,8 +2643,7 @@
   },
   "POST /api/catalogue/photo-extract": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2724,8 +2662,7 @@
   },
   "POST /api/catalogue/enquiry/:item_id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2733,8 +2670,7 @@
   },
   "POST /api/products": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2753,8 +2689,7 @@
   },
   "POST /api/products/status/bulk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2762,8 +2697,7 @@
   },
   "POST /api/products/bulk-update": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2816,8 +2750,7 @@
   },
   "POST /api/products/starter-columns": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2848,8 +2781,7 @@
   },
   "POST /api/products/:id/schedule": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2879,8 +2811,7 @@
   },
   "PUT /api/products/:id/availability": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2892,8 +2823,7 @@
   },
   "PUT /api/products/:id/status": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2923,8 +2853,7 @@
   },
   "POST /api/products/:id/media": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2958,8 +2887,7 @@
   },
   "POST /api/products/lists/adopt": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3004,12 +2932,14 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "GET /api/governance/boilerplate/:key": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "POST /api/governance/boilerplate/:key/adopt": {
@@ -3017,7 +2947,8 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "POST /api/governance/source": {
@@ -3201,8 +3132,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/network-design/validate": {
@@ -3227,8 +3157,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/network-design/stores": {
@@ -3477,8 +3406,7 @@
   },
   "POST /api/assist": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3487,8 +3415,7 @@
   },
   "POST /api/assist/conform": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3506,8 +3433,7 @@
   },
   "POST /api/assist/catalogue-structure": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3515,8 +3441,7 @@
   },
   "POST /api/assist/catalogue-adopt": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3529,8 +3454,7 @@
   },
   "PUT /api/assist/catalogue-source": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3538,8 +3462,7 @@
   },
   "PUT /api/assist/container": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3557,8 +3480,7 @@
   },
   "PUT /api/assist/region-override": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3595,8 +3517,7 @@
   },
   "POST /api/assist/gap": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3604,8 +3525,7 @@
   },
   "POST /api/assist/publish": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3633,8 +3553,7 @@
   },
   "POST /api/testing/cases/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3642,8 +3561,7 @@
   },
   "POST /api/testing/trace": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3666,8 +3584,7 @@
   },
   "POST /api/testing/cases/import": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3680,8 +3597,7 @@
   },
   "POST /api/testing/cases/seed": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3716,8 +3632,7 @@
   },
   "POST /api/testing/cmdb/seed": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3758,8 +3673,7 @@
   },
   "POST /api/testing/cases/gherkin": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3767,8 +3681,7 @@
   },
   "POST /api/testing/requirements": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3781,8 +3694,7 @@
   },
   "PATCH /api/testing/requirements/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3794,8 +3706,7 @@
   },
   "POST /api/testing/incidents": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3808,8 +3719,7 @@
   },
   "PATCH /api/testing/incidents/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3821,8 +3731,7 @@
   },
   "POST /api/testing/evidence": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3850,8 +3759,7 @@
   },
   "POST /api/testing/changes": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3864,8 +3772,7 @@
   },
   "POST /api/testing/releases": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -4042,8 +3949,7 @@
   },
   "POST /api/channels/:id/approve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4056,8 +3962,7 @@
   },
   "POST /api/channels/:id/template-approve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4070,8 +3975,7 @@
   },
   "POST /api/channels/:id/revoke": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4249,7 +4153,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    },
    "foreign_id_404": {
     "pass": false,
@@ -4261,8 +4165,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 409"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -4273,8 +4176,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4361,8 +4263,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/tax/compute": {
@@ -4371,8 +4272,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/books/status": {
@@ -4772,10 +4672,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/year/:fy/close": {
@@ -4785,20 +4681,12 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "GET /api/books/year/:fy/status": {
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "GET /api/books/periods": {
@@ -5014,10 +4902,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/accruals": {
@@ -5036,10 +4920,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/contra": {

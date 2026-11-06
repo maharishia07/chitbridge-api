@@ -222,7 +222,7 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
       assert.strictEqual(byName(tb, 'Suppliers (Trade creditors)').status, 'equal');
       assert.strictEqual(byName(tb, 'GST collected').cause, 'only_theirs');
       assert.strictEqual(byName(tb, 'Bank Fees').status, 'gap');
-      const paid = byName(tb, 'GST paid'); assert.strictEqual(paid.status, 'only_ours'); assert.match(paid.why, /Only in ours: 1 entry/);
+      const paid = byName(tb, 'GST paid'); assert.strictEqual(paid.status, 'only_ours'); assert.match(paid.why, /Their file has one GST account \(matched to 2200\); this is the other half/);
       const pl = r.body.parts.pl.lines; assert.strictEqual(byName(pl, 'Sales').status, 'equal'); assert.strictEqual(byName(pl, 'Bank Fees').status, 'gap');
     });
     await ta('the BAS, box by box from our books: G1 and 1A equal, 1B different (ours counts GST paid)', async () => {

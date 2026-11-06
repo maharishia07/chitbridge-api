@@ -755,7 +755,8 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     let seq9 = 0;
     const top = () => X.T.items.reduce((m, i) => Math.max(m, Number(i.item_id)), 0);
     /** move the moment of every row written after `since` to `ms` ago (the stand-in's own clock is September: the window reads the shop clock) */
-    const age = (since, ms) => X.T.items.forEach((i) => { if (Number(i.item_id) > since) i.created_at = new Date(Date.now() - ms).toISOString(); });
+    /* ONE moment for the whole batch, as Postgres stamps one transaction: reading the clock per row split a batch across a millisecond (flaky 1 in ~15 runs) */
+    const age = (since, ms) => { const at = new Date(Date.now() - ms).toISOString(); X.T.items.forEach((i) => { if (Number(i.item_id) > since) i.created_at = at; }); };
     /** a supplier with bills { A: 50000, … } (minor units) and one 100000 payment on account */
     async function shop9(bills) {
       const n = ++seq9, party = '44444444-4444-4444-8444-' + String(n).padStart(12, '0'), ref = {};

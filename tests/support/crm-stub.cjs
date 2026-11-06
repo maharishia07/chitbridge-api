@@ -44,6 +44,10 @@ function make() {
     if (/^SELECT country, display_name FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: data.shopCountry || 'IN', display_name: 'Test shop' }] };   /* privacy.shopFacts (CON-2): the shop's law and name */
     if (/FROM books_setting/.test(sql)) return { rows: data.country ? [{ country: data.country, enabled: true }] : [] };
     /* the Ledger-side reads of the timeline */
+    /* partyOn (a list or the books) — before the party_item timeline read, since partyOn names party_item too (#770) */
+    if (/EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) AS customer/.test(sql)) {
+      return { rows: [{ customer: data.cust.some((r) => r.owner === p[0] && r.party_id === p[1]), supplier: data.sup.some((r) => r.owner === p[0] && r.party_id === p[1]), ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
+    }
     if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };
     if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };
     if (/FROM chit_messages/.test(sql)) return { rows: data.messages.filter((m) => p[0].indexOf(m.chit_id) >= 0 && m.created_at < p[1]) };
@@ -104,9 +108,6 @@ function make() {
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) { if (!data.migrated) { const e = new Error('function ops.f_crm_followup_entities() does not exist'); e.code = '42883'; throw e; } }
     if (/^SELECT owner_entity_id FROM ops\.f_crm_followup_entities/.test(sql)) return { rows: Array.from(new Set(data.followups.filter((r) => !r.done_at).map((r) => ({ owner_entity_id: r.owner })).map((x) => x.owner_entity_id))).map((x) => ({ owner_entity_id: x })) };
     /* lists */
-    if (/EXISTS \(SELECT 1 FROM customer_list WHERE owner_entity_id = \$1 AND customer_identity_id = \$2\) AS customer/.test(sql)) {
-      return { rows: [{ customer: data.cust.some((r) => r.owner === p[0] && r.party_id === p[1]), supplier: data.sup.some((r) => r.owner === p[0] && r.party_id === p[1]) }] };
-    }
     if (/^UPDATE customer_list SET hidden_at/.test(sql)) {
       if (!data.hiddenColumn) { const e = new Error('column "hidden_at" of relation "customer_list" does not exist'); e.code = '42703'; throw e; }
       data.cust.forEach((r) => { if (r.owner === p[0] && r.party_id === p[1] && !r.hidden_at) r.hidden_at = new Date().toISOString(); }); return { rows: [] };
