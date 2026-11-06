@@ -92,6 +92,38 @@ it('no root configured → nothing extra opens (a shop is still refused)', () =>
 it('per-tenant board (no TEST_BOARD_ENTITY): a shop still writes its own board', () => {
   assert.strictEqual(fresh({}).canWrite(SHOP), true);
 });
+console.log('\nSEC-120 FAIL CLOSED: sealed environment + no TEST_BOARD_ENTITY\n');
+
+/** run fn with NODE_ENV set (undefined = unset), restoring it after */
+function underNodeEnv(value, fn) {
+  const prev = process.env.NODE_ENV;
+  if (value == null) delete process.env.NODE_ENV; else process.env.NODE_ENV = value;
+  try { return fn(); } finally { if (prev == null) delete process.env.NODE_ENV; else process.env.NODE_ENV = prev; }
+}
+it('⭐ production + TEST_BOARD_ENTITY unset → a shop is refused the shared-board writes', () => {
+  const tb = fresh({});
+  underNodeEnv('production', () => assert.strictEqual(tb.canWriteShared(SHOP), false, 'a shop wrote the shared board in production'));
+});
+it('production + unset → the platform root still writes (and a NODE_ENV with a stray space is still production)', () => {
+  const tb = fresh({ PLATFORM_ROOT_ENTITY: ROOT });
+  underNodeEnv(' production', () => assert.strictEqual(tb.canWriteShared(ROOT), true));
+});
+it('production + TEST_BOARD_ENTITY set → as today (the board and the root write, a shop does not)', () => {
+  const tb = fresh({ TEST_BOARD_ENTITY: BOARD, PLATFORM_ROOT_ENTITY: ROOT });
+  underNodeEnv('production', () => {
+    assert.strictEqual(tb.canWriteShared(BOARD), true);
+    assert.strictEqual(tb.canWriteShared(ROOT), true);
+    assert.strictEqual(tb.canWriteShared(SHOP), false);
+  });
+});
+it('non-production + unset → as today (a shop writes its own board)', () => {
+  const tb = fresh({});
+  for (const v of ['development', 'test', null]) underNodeEnv(v, () => assert.strictEqual(tb.canWriteShared(SHOP), true, 'NODE_ENV=' + v));
+});
+it('the read door is unchanged: canWrite stays open on a per-tenant board even in production (reads and own findings keep working)', () => {
+  const tb = fresh({});
+  underNodeEnv('production', () => assert.strictEqual(tb.canWrite(SHOP), true));
+});
 fresh({});   /* leave the modules as the environment has them */
 
 console.log('\n' + (process.exitCode ? '✗ failed' : '✓ ' + pass + ' passed') + ' · ' + pass + ' checks\n');

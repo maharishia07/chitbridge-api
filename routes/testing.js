@@ -1055,7 +1055,7 @@ const CMDB_DIR = require('path').join(__dirname, '..', 'data', 'cmdb');
  * branch on; nothing of theirs is read or written first. Reads, results and the per-raiser kinds never come here.
  */
 function boardRefused(req, res) {
-  if (testboard.canWrite(auth.entityOf(req))) return false;
+  if (testboard.canWriteShared(auth.entityOf(req))) return false;
   /* the sentence and the code the screen branches on (NOT_BOARD_WRITER: 'Not a writer of the shared board') are lib/testing-contract.js notBoardWriter */
   problem(req, res, { status: 403, ...notBoardWriter() });
   return true;

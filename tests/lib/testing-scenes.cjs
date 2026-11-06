@@ -19,7 +19,7 @@ const FEATURE = 'Feature: CTR-01 Clicks\n  Scenario: [CTR-05] a click\n    Given
 const FEATURE_OK = 'Feature: CTR-01 Clicks\n  Scenario: CTR-05 a click\n    Given a screen\n    When I click\n    Then it opens\n';
 const TOO_LONG = 'p'.repeat(81);
 const SHIPPED_RECORD = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', 'data', 'cmdb', 'CAP-ADMIN.json'), 'utf8'));
-const cannotWrite = { board: { canWrite: () => false } };
+const cannotWrite = { board: { canWrite: () => false, canWriteShared: () => false } };
 
 const RUN = '33333333-3333-4333-8333-333333333333';
 const AT = '2026-10-01T10:00:00.000Z';
