@@ -56,6 +56,26 @@ async function newScreen(api) {
   (api.seeds.screens = api.seeds.screens || []).push(jti);
   return { code, jti };
 }
+/** an lt- chit of the load shop (a self receipt with one line; the fixed client_ref makes a second seed answer the same chit) */
+async function chitId(api) {
+  if (api.seeds.chit) return api.seeds.chit;
+  const ref = 'lt-chit-seed';
+  const out = await must(api, 'POST', '/api/chits/send', { recipients: [{ self: true, name: 'self' }], purpose: 'receipt', subject: 'lt- goods', manual_subject: 'lt- goods', client_ref: ref, business_json: { doc: 'receipt', doc_no: ref, doc_at: new Date().toISOString(), party: { name: 'lt-supplier' } }, line_items: [{ particulars: 'lt-rice', quantity: 1, unit: 'kg', price: 50, total: 50 }] });
+  api.seeds.chit = out.chit_id;
+  return out.chit_id;
+}
+/** an issued lt- form instance (the first form of the library, every required field typed by hand) */
+async function formInstance(api, fresh) {
+  if (api.seeds.form && !fresh) return api.seeds.form;
+  const key = 'certificate-of-origin';
+  const res = await must(api, 'POST', '/api/forms/' + key + '/resolve', {});
+  const manual = {};
+  (res.fields || []).filter((f) => f.required && f.value == null).forEach((f) => { manual[f.id] = 'lt-' + f.id; });
+  api.seeds.manualLast = manual;
+  const out = await must(api, 'POST', '/api/forms/' + key + '/issue', { manual });
+  api.seeds.form = out.form_id || out.id;
+  return api.seeds.form;
+}
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
   params: {},
@@ -65,6 +85,17 @@ module.exports = {
     if (api.seeds.counter) await api.call('POST', '/api/counters/' + api.seeds.counter + '/release', {});
   },
   routes: {
+    'POST /api/invoice/build': { body: () => ({ lines: [{ item_id: 'lt-x', name: 'lt-item', qty: 1, listPrice: 100, price: 100, gst_rate: 18 }], currency: 'INR' }) },
+    'GET /api/chits/:chit_id/diagnosis': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
+    'GET /api/chits/:chit_id/use': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
+    'GET /api/invoice/:chit_id': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
+    'GET /api/tax/invoice/:chit_id': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
+    'POST /api/chits/:chit_id/costs': { make: async (api) => ({ params: { chit_id: await chitId(api) }, body: { rows: [{ kind: 'other', amount: 1, currency: 'INR', note: 'lt-cost' }] } }) },
+    'POST /api/forms/:key/issue': { make: async (api) => { const res = await must(api, 'POST', '/api/forms/certificate-of-origin/resolve', {}); const manual = {}; (res.fields || []).filter((f) => f.required && f.value == null).forEach((f) => { manual[f.id] = 'lt-' + f.id; }); return { params: { key: 'certificate-of-origin' }, body: { manual } }; } },
+    'POST /api/forms/:key/resolve': { make: async () => ({ params: { key: 'certificate-of-origin' }, body: {} }) },
+    'GET /api/forms/instances/:id': { make: async (api) => ({ params: { id: await formInstance(api) } }) },
+    'POST /api/forms/instances/:id/sign': { fresh: true, make: async (api) => ({ params: { id: await formInstance(api, true) }, body: { name: 'lt-signer', designation: 'lt-tester' } }) },
+    'POST /api/forms/instances/:id/attach': { make: async (api) => ({ params: { id: await formInstance(api) }, body: { chit_id: await chitId(api) } }) },
     'GET /api/till/quick-keys/state': { make: async (api) => ({ headers: await asCounter(api), query: '?business_date=' + day() }) },
     'POST /api/till/quick-keys/state': { make: async (api) => ({ headers: await asCounter(api), body: { business_date: day(), active_group_ids: [] } }) },
     'POST /api/till/quick-keys/hide': { make: async (api) => ({ headers: await asCounter(api), body: { product_id: await itemId(api) } }) },
