@@ -18,9 +18,9 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2375 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
 | DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial |
 | DELETE | /api/channels/:id | channels | routes/channels.js:140 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5993 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4857 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
-| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6254 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/chits/:chit_id | chits | routes/chits.js:5994 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4858 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
+| DELETE | /api/chits/:chit_id/purge | chits | routes/chits.js:6255 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/combo-templates/:id | combo-templates | routes/combo-templates.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | DELETE | /api/connectors/:actorId | connectors | routes/connectors.js:1012 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | DELETE | /api/crm/followups/:id | crm | routes/crm.js:421 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
@@ -103,32 +103,32 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:944 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | GET | /api/channels | channels | routes/channels.js:29 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/channels/outbound | channels | routes/channels.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id | chits | routes/chits.js:3379 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4683 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/costs | chits | routes/chits.js:3930 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5733 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
-| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5687 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5261 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id | chits | routes/chits.js:3380 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/:chit_id/catalogue-overlay | chits | routes/chits.js:4684 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/costs | chits | routes/chits.js:3931 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/diagnosis | chits | routes/chits.js:5734 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
+| GET | /api/chits/:chit_id/disputes | chits | routes/chits.js:5688 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/messages | chits | routes/chits.js:5262 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/chits/:chit_id/proposals | chits | routes/chit-proposals.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/raida | chits | routes/chits.js:4137 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/chits/:chit_id/use | chits | routes/chits.js:4248 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| GET | /api/chits/:chit_id/raida | chits | routes/chits.js:4138 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/:chit_id/use | chits | routes/chits.js:4249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | GET | /api/chits/:id/children | chits | routes/chits-trace.js:41 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
 | GET | /api/chits/:id/trace | chits | routes/chits-trace.js:68 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/disputes/queue | chits | routes/chits.js:5894 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/folder | chits | routes/chits.js:2934 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/inbox | chits | routes/chits.js:3130 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/pulse | chits | routes/chits.js:3317 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
-| GET | /api/chits/raida/report | chits | routes/chits.js:4119 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/register/attachables | chits | routes/chits.js:3959 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/register/subjects | chits | routes/chits.js:3969 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/register/templates | chits | routes/chits.js:4011 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/register/walk/:from | chits | routes/chits.js:4076 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| GET | /api/chits/rollup | chits | routes/chits.js:3029 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/sent | chits | routes/chits.js:2867 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/disputes/queue | chits | routes/chits.js:5895 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/folder | chits | routes/chits.js:2935 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/inbox | chits | routes/chits.js:3131 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/pulse | chits | routes/chits.js:3318 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial |
+| GET | /api/chits/raida/report | chits | routes/chits.js:4120 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/register/attachables | chits | routes/chits.js:3960 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/register/subjects | chits | routes/chits.js:3970 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/register/templates | chits | routes/chits.js:4012 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/register/walk/:from | chits | routes/chits.js:4077 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| GET | /api/chits/rollup | chits | routes/chits.js:3030 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/sent | chits | routes/chits.js:2868 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/trace/batches | chits | routes/chits-trace.js:259 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/trace/by-batch | chits | routes/chits-trace.js:303 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/chits/trace/networks | chits | routes/chits-trace.js:475 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| GET | /api/chits/unread | chits | routes/chits.js:3344 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| GET | /api/chits/unread | chits | routes/chits.js:3345 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | GET | /api/combo-templates | combo-templates | routes/combo-templates.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/list | connections | routes/connections.js:202 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | GET | /api/connections/pending | connections | routes/connections.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
@@ -412,35 +412,35 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | POST | /api/channels/:id/revoke | channels | routes/channels.js:131 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
 | POST | /api/channels/:id/template | channels | routes/channels.js:73 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/channels/:id/template-approve | channels | routes/channels.js:122 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial |
-| POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4573 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6146 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4474 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4908 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/costs | chits | routes/chits.js:3912 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/chits/:chit_id/deliver-lines | chits | routes/chits.js:4282 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5503 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5109 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4820 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
+| POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4574 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6147 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4475 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/books-request | chits | routes/chits.js:4909 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/costs | chits | routes/chits.js:3913 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/chits/:chit_id/deliver-lines | chits | routes/chits.js:4283 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/disputes | chits | routes/chits.js:5504 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/messages | chits | routes/chits.js:5110 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/payment | chits | routes/chits.js:4821 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial |
 | POST | /api/chits/:chit_id/proposals | chits | routes/chit-proposals.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/proposals/:proposal_id/accept | chits | routes/chit-proposals.js:87 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/proposals/:proposal_id/counter | chits | routes/chit-proposals.js:90 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/chits/:chit_id/proposals/:proposal_id/reject | chits | routes/chit-proposals.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/raida | chits | routes/chits.js:4151 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/raida/:raida_id/close | chits | routes/chits.js:4207 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/:chit_id/raida/:raida_id/dispute | chits | routes/chits.js:4227 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
-| POST | /api/chits/:chit_id/reprice | chits | routes/chits.js:3873 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6225 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6204 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6186 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/assign-bulk | chits | routes/chits.js:6465 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/register/entries/:raida_id/accept | chits | routes/chits.js:4097 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
-| POST | /api/chits/register/entries/:raida_id/close | chits | routes/chits.js:4066 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/register/entries/:raida_id/revise | chits | routes/chits.js:4087 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/register/subjects | chits | routes/chits.js:3983 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| POST | /api/chits/register/subjects/:subject_id/close | chits | routes/chits.js:4001 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/register/subjects/:subject_id/entries | chits | routes/chits.js:4043 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
-| POST | /api/chits/register/templates | chits | routes/chits.js:4022 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
-| POST | /api/chits/send | chits | routes/chits.js:370 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/raida | chits | routes/chits.js:4152 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/raida/:raida_id/close | chits | routes/chits.js:4208 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/:chit_id/raida/:raida_id/dispute | chits | routes/chits.js:4228 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
+| POST | /api/chits/:chit_id/reprice | chits | routes/chits.js:3874 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/restore | chits | routes/chits.js:6226 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/unarchive | chits | routes/chits.js:6205 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/:chit_id/unread | chits | routes/chits.js:6187 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/assign-bulk | chits | routes/chits.js:6466 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/register/entries/:raida_id/accept | chits | routes/chits.js:4098 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial |
+| POST | /api/chits/register/entries/:raida_id/close | chits | routes/chits.js:4067 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/register/entries/:raida_id/revise | chits | routes/chits.js:4088 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/register/subjects | chits | routes/chits.js:3984 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| POST | /api/chits/register/subjects/:subject_id/close | chits | routes/chits.js:4002 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/register/subjects/:subject_id/entries | chits | routes/chits.js:4044 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial |
+| POST | /api/chits/register/templates | chits | routes/chits.js:4023 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
+| POST | /api/chits/send | chits | routes/chits.js:371 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial |
 | POST | /api/combo-templates | combo-templates | routes/combo-templates.js:80 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | POST | /api/combo-templates/:id/push | combo-templates | routes/combo-templates.js:214 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
 | POST | /api/connections/request | connections | routes/connections.js:26 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
@@ -627,13 +627,13 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 | PUT | /api/assist/container | assist | routes/assist.js:457 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | PUT | /api/assist/region-override | assist | routes/assist.js:525 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial |
 | PUT | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:74 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5812 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6038 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6094 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6169 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4952 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
-| PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4271 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
-| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6312 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:5813 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6039 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/priority-flag | chits | routes/chits.js:6095 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/star | chits | routes/chits.js:6170 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/status | chits | routes/chits.js:4953 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial |
+| PUT | /api/chits/:chit_id/use | chits | routes/chits.js:4272 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
+| PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6313 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:124 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:380 | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | yes | partial |
 | PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1625 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial |
@@ -1743,7 +1743,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/:chit_id/raida** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 6; share cap-worklist.js 3/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 7; share cap-worklist.js 4/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-worklist.js · actions: -
 
 **GET /api/chits/:chit_id/use** · chits · cb-rail · partial
@@ -1791,19 +1791,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/raida/report** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/attachables** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 8; share cap-register.js 2/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 8; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): register_attachable · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/subjects** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/templates** · chits · cb-rail · meets standard
@@ -1815,7 +1815,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/register/walk/:from** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/rollup** · chits · cb-rail · meets standard
@@ -1869,7 +1869,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/assign-lines** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): state_log · callers: cap-chit2.js, cap-tasks.js, cap-worklist.js · actions: -
 
 **POST /api/chits/:chit_id/books-request** · chits · cb-rail · meets standard
@@ -1887,7 +1887,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/deliver-lines** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities, state_log · writes (derived): state_log · callers: cap-chit2.js, cap-tasks.js, cap-worklist.js, till.html · actions: -
 
 **POST /api/chits/:chit_id/disputes** · chits · cb-rail · partial
@@ -1935,13 +1935,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/raida** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/:chit_id/raida/:raida_id/close** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-worklist.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-worklist.js 2/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-worklist.js · actions: -
 
 **POST /api/chits/:chit_id/raida/:raida_id/dispute** · chits · cb-rail · partial
@@ -1989,31 +1989,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/register/entries/:raida_id/close** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-register.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/entries/:raida_id/revise** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-register.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, register_subject · writes (derived): register_subject · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects/:subject_id/close** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-register.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects/:subject_id/entries** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-register.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/templates** · chits · cb-rail · partial
@@ -2595,7 +2595,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/entities/register** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-register.js 0/9, cap-worklist.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-register.js 0/21, cap-worklist.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): entity_governance, identities · callers: app.html, cap-register.js, cap-worklist.js, intake.html, register-form.js, signin-ui.js · actions: -
 
 **POST /api/entities/verify** · entities · cb-network · not started
@@ -2733,7 +2733,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/folders/worklist** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-messages.js 1/4, cap-worklist.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-messages.js 1/4, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-messages.js, cap-worklist.js, screens.js · actions: -
 
 **PATCH /api/folders/:id** · folders · cb-rail · meets standard

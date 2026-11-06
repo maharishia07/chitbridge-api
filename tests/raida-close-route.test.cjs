@@ -21,6 +21,7 @@ const NEXT_SUBJECT = '44444444-4444-4444-8444-444444444444';
 let SQL = [];
 let CLOSED = false;   // whether the entry already has a closing row
 function rowsFor(s, p) {
+  if (/SELECT capabilities FROM identities/.test(s)) return [{ capabilities: ['register'] }]; /* RAIL-90: the register is on for this shop */
   if (/SELECT kind, line_id, closes_id, subject_id, chit_id FROM register_entry/.test(s)) {
     return p[1] === ENTRY ? [{ kind: 'risk', line_id: null, closes_id: null, subject_id: '55555555-5555-4555-8555-555555555555', chit_id: CHIT }] : [];
   }
