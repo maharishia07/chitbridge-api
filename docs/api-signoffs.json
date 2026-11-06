@@ -75,11 +75,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/definitions/:id": {
-   "hash": "2f1f2eb1c5052ee7",
+   "hash": "e89a80ebaeec0b45",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
    "lifecycle": "stable"
   },
   "DELETE /api/folders/:id": {
@@ -491,11 +491,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/enquiry": {
-   "hash": "b199ff993db515f6",
+   "hash": "cbf7f5d3471e11a7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network-store/:networkId": {
@@ -3640,6 +3640,54 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 round 2",
+   "lifecycle": "stable"
+  },
+  "DELETE /api/schemas/fields/:field_key": {
+   "hash": "680c9ed819105397",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "GET /api/definitions": {
+   "hash": "48582059120182f1",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 round 2",
+   "lifecycle": "stable"
+  },
+  "GET /api/schemas/fields": {
+   "hash": "1b9b89daa7151131",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "GET /api/schemas/my": {
+   "hash": "b15cb6ab536ce729",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/schemas/fields/:field_key": {
+   "hash": "f592129d9f9cb22b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/schemas/fields/order": {
+   "hash": "9389f29f5f100aba",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
    "lifecycle": "stable"
   }
  }

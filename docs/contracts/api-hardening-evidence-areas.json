@@ -35,7 +35,8 @@
    "output_allowlist": true
   },
   "DELETE /api/definitions/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "DELETE /api/folders/:id": {
    "output_allowlist": true
@@ -61,7 +62,8 @@
    "foreign_id_404": true
   },
   "DELETE /api/schemas/fields/:field_key": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/actors": {
    "output_allowlist": true
@@ -530,7 +532,8 @@
    "foreign_id_404": true
   },
   "PATCH /api/schemas/fields/:field_key": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PATCH /api/supplies/:id": {
    "foreign_id_404": true
@@ -1147,7 +1150,8 @@
    "foreign_id_404": true
   },
   "PUT /api/definitions/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "PUT /api/folders/inventory/:code": {
    "output_allowlist": true
@@ -1219,6 +1223,54 @@
    "output_allowlist": true
   },
   "PUT /api/entities/routing": {
+   "output_allowlist": true
+  },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "output_allowlist": true
+  },
+  "GET /api/catalogue-face": {
+   "output_allowlist": true
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "output_allowlist": true
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "output_allowlist": true
+  },
+  "GET /api/catalogue/enquiry": {
+   "output_allowlist": true
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "output_allowlist": true
+  },
+  "GET /api/definitions": {
+   "output_allowlist": true
+  },
+  "GET /api/schemas/fields": {
+   "output_allowlist": true
+  },
+  "GET /api/schemas/my": {
+   "output_allowlist": true
+  },
+  "PATCH /api/schemas/fields/order": {
+   "output_allowlist": true
+  },
+  "PATCH /api/schemas/visibility": {
+   "output_allowlist": true
+  },
+  "POST /api/catalogue/enquiry/:item_id": {
+   "output_allowlist": true
+  },
+  "POST /api/definitions": {
+   "output_allowlist": true
+  },
+  "POST /api/definitions/freeze": {
+   "output_allowlist": true
+  },
+  "POST /api/schemas/create-default": {
+   "output_allowlist": true
+  },
+  "PUT /api/catalogue-face": {
    "output_allowlist": true
   }
  }
