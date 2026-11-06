@@ -18,6 +18,7 @@ const cases = require(path.join(__dirname, '..', 'tools', 'api-contract-tests.cj
 
 const ADOPT_ID = '33333333-3333-4333-8333-333333333333';
 const UUID_A = '44444444-4444-4444-8444-444444444444';
+const CHIT = '/api/chits/' + UUID_A;
 const PRICED_LINE = { qty: 1, listPrice: 5, pricing: { kind: 'fixed', amount: 4 } };
 /** [label, method, url, body, the status expected, whether the unknown key is named in the answer, whose token: 'shop' (default) or 'customer' (a storefront shopper)] */
 const PINS = [
@@ -82,7 +83,27 @@ const PINS = [
   ['POST /api/service/:chit_id/resolve answers the standard 422', 'POST', '/api/service/' + UUID_A + '/resolve', { resolution_code: 'fixed', note: 'done', zz_unknown_field: 1 }, 422, true],
   ['POST /api/service/:chit_id/pause answers the standard 422', 'POST', '/api/service/' + UUID_A + '/pause', { reason: 'awaiting_info', zz_unknown_field: 1 }, 422, true],
   ['POST /api/service/:chit_id/pause/:pause_id/end answers the standard 422', 'POST', '/api/service/' + UUID_A + '/pause/' + UUID_A + '/end', { zz_unknown_field: 1 }, 422, true],
-  ['POST /api/service/:chit_id/pause/:pause_id/answer answers the standard 422', 'POST', '/api/service/' + UUID_A + '/pause/' + UUID_A + '/answer', { accepted: true, zz_unknown_field: 1 }, 422, true]
+  ['POST /api/service/:chit_id/pause/:pause_id/answer answers the standard 422', 'POST', '/api/service/' + UUID_A + '/pause/' + UUID_A + '/answer', { accepted: true, zz_unknown_field: 1 }, 422, true],
+  /* chits.js API-30 strict_input (k13): the body the web, the till and the toolset send, plus one key nobody declared */
+  ['POST /api/chits/:chit_id/archive answers the standard 422', 'POST', CHIT + '/archive', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/unarchive answers the standard 422', 'POST', CHIT + '/unarchive', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/restore answers the standard 422', 'POST', CHIT + '/restore', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/unread answers the standard 422', 'POST', CHIT + '/unread', { zz_unknown_field: 1 }, 422, true],
+  ['PUT /api/chits/:chit_id/star answers the standard 422', 'PUT', CHIT + '/star', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/books-request answers the standard 422', 'POST', CHIT + '/books-request', { zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/reprice answers the standard 422', 'POST', CHIT + '/reprice', { preview: true, only_unpriced: true, zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/costs answers the standard 422', 'POST', CHIT + '/costs', { rows: [], zz_unknown_field: 1 }, 422, true],
+  ['PUT /api/chits/:chit_id/use answers the standard 422', 'PUT', CHIT + '/use', { use: 'resale', zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/deliver-lines answers the standard 422', 'POST', CHIT + '/deliver-lines', { rows: [{ line_id: UUID_A, quantity: 1 }], zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/assign-lines answers the standard 422', 'POST', CHIT + '/assign-lines', { edits: [{ line_id: UUID_A, assignee_actor_id: null }], zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/:chit_id/raida answers the standard 422', 'POST', CHIT + '/raida', { kind: 'risk', body: 'late stock', zz_unknown_field: 1 }, 422, true],
+  ['PUT /api/chits/:chit_id/priority keeps its old 400', 'PUT', CHIT + '/priority', { priority: 'high', reason: 'x', zz_unknown_field: 1 }, 400, true],
+  ['PUT /api/chits/:chit_id/priority-flag keeps its old 400', 'PUT', CHIT + '/priority-flag', { priority: true, zz_unknown_field: 1 }, 400, true],
+  ['PUT /api/chits/:chit_id/void keeps its old 400', 'PUT', CHIT + '/void', { reason: 'customer cancelled', zz_unknown_field: 1 }, 400, true],
+  ['PUT /api/chits/:chit_id/disputes/:dispute_id/resolve keeps its old 400', 'PUT', CHIT + '/disputes/' + UUID_A + '/resolve', { resolution_note: 'settled', zz_unknown_field: 1 }, 400, true],
+  ['POST /api/chits/register/subjects answers the standard 422', 'POST', '/api/chits/register/subjects', { type_key: 'other', name: 'Audit', zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/register/templates answers the standard 422', 'POST', '/api/chits/register/templates', { kind: 'risk', title: 'Late stock', zz_unknown_field: 1 }, 422, true],
+  ['POST /api/chits/assign-bulk keeps its old 400', 'POST', '/api/chits/assign-bulk', { chit_ids: [UUID_A], target_actor_id: UUID_A, zz_unknown_field: 1 }, 400, true]
 ];
 let failed = 0;
 const lines = []; /* the served app mutes console while it runs: the lines print after */

@@ -21,6 +21,7 @@ const path = require('path');
 const fs = require('fs');
 const { harness, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
 const S = require('./lib/service-scenes.cjs');
+const allow = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -28,6 +29,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/service';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -86,6 +88,7 @@ function checkJunkRefused(recording, scenes) {
     process.exit(0);
   }
   checkContract(routes);
+  const closedHeld = allow.checkAllowList(recording, contractModule().contract.OPERATIONS, check);
   checkJunkRefused(recording, scenes);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(routes).every((key) => recording[key + '|signed-out'].status === 401));
   check('a chit id that is not a uuid is a 404 on every route (the id is judged before sign-in, as it always was)', Object.keys(routes).every((key) => recording[key + '|bad-id'].status === 404));
@@ -97,7 +100,11 @@ function checkJunkRefused(recording, scenes) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/service.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    allow.writeEvidence(EVIDENCE_FILE, lab.mine, closedHeld);
+  } else {
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/service.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the service routes whose success answers held closed here', sameValue(allow.evidenceOf(EVIDENCE_FILE, lab.mine), closedHeld), closedHeld);
+  }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })().catch((failure) => {

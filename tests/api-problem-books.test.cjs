@@ -32,6 +32,7 @@ const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json')
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ANSWERS_FILE = path.join(HERE, 'docs', 'contracts', 'books-answers.json'); /* the period-end routes' 2xx answers, produced by tests/support/books-capture.cjs --build */
 const MOUNT = '/api/books';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/books': 'routes/books.js', '/api/tax': 'routes/tax.js', '/api/invoice': 'routes/invoice.js' };
@@ -132,6 +133,14 @@ const ADVICE_PATCH = (ready) => ({
   store: { payment: async () => ({ payment_id: PARTY }), adviceReady: async () => ready },
   books: { adviceFor: async () => ({ may: { send_advice: { ok: false, why: 'already_sent', say: 'An advice is already sent.' }, share_advice: { ok: true } }, advice: { chit_id: '99999999-9999-4999-8999-999999999999' } }) }
 });
+/** a registered Indian shop: the identities row the tax routes read (its GSTIN makes a GSTR possible), and a held copy of one chit with its invoice block */
+const IN_SHOP = { sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [{ identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Ponni Stores', country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }], rowCount: 1 } : null) };
+/** the same shop with no GSTIN (unregistered), and one in Australia: the seller facts a handler answers as null */
+const shopWith = (extra) => ({ sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [Object.assign({ identity_id: SHOP, gstn: null, display_name: null, country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }, extra)], rowCount: 1 } : null) });
+const NO_GSTIN_SHOP = shopWith({});
+const AU_SHOP = shopWith({ country: 'AU', timezone: 'Australia/Sydney' });
+const COPY_ENTRY = { chit_id: PARTY, direction: 'sent', sells: true, status: 'accepted', provisional: false, frozen: true, rated: 1, unrated: 0, seller: { LglNm: 'Ponni Stores' }, buyer: { LglNm: 'Ravi' }, invoice: { Version: '1.1', ValDtls: { AssVal: 100 }, ItemList: [] } };
+const COPY_PATCH = { cost: { isCostBlind: async () => false }, taxcopy: { copyOf: async () => ({ chit_id: PARTY }), invoiceOf: async () => require(path.join(HERE, 'lib', 'tax-copy')).invoiceFrom(COPY_ENTRY) } };
 const BAD_MONEY = { party_id: PARTY, amount_minor: 100, currency: 'USD', mode: 'cash' };
 /** the cash position of a shop with one drawer and nothing owed, made by the cash engine's own project() (the stand-in db cannot seat the ledgers read() needs) */
 const CASH_PATCH = {
@@ -332,6 +341,22 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   /* B2 (4 Nov): the chit id in the address is no uuid → the unknown id's 404, never the driver's 500 (K-1) */
   X('chit-id-not-a-uuid', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/abc' }),
   X('chit-id-holds-nul', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/a%00b' }),
+  /* API-31 (Wave M, tax + invoice): the 2xx answers of the seven routes, so their shapes close from recordings and the handlers' own literals (tools/api-allowlist.cjs) */
+  X('rated-lines', 'POST /api/tax/rate', 200, { setup: IN_SHOP, body: { lines: [{ key: 'a', name: 'tea', qty: 1, hsn: '0902' }] } }),
+  X('computed-intra-state', 'POST /api/tax/compute', 200, { setup: IN_SHOP, body: { buyer: { name: 'Walk-in' }, lines: [{ key: 'a', name: 'tea', qty: 2, price: 100, gst_rate: 5 }] } }),
+  X('computed-inclusive-flag', 'POST /api/tax/compute', 200, { setup: IN_SHOP, body: { priceIncludesTax: true, lines: [{ key: 'a', name: 'tea', qty: 1, price: 105, gst_rate: 5 }] } }),
+  X('built-invoice', 'POST /api/invoice/build', 200, { setup: IN_SHOP, body: { buyer: { name: 'Priya' }, lines: [{ key: 'a', name: 'tea', qty: 2, listPrice: 100, gst_rate: 5 }] } }),
+  X('chit-invoice', 'GET /api/tax/invoice/:chit_id', 200, { setup: IN_SHOP, patch: COPY_PATCH }),
+  X('chit-invoice', 'GET /api/invoice/:chit_id', 200, { setup: IN_SHOP, patch: COPY_PATCH }),
+  X('chit-invoice-cost-blind', 'GET /api/invoice/:chit_id', 200, { setup: IN_SHOP, patch: Object.assign({}, COPY_PATCH, { cost: { isCostBlind: async () => true } }) }),
+  X('gstr1-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr1' }),
+  X('gstr3b-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr3b' }),
+  X('ledger-of-a-registered-shop', 'GET /api/tax/ledger', 200, { setup: IN_SHOP, url: '/api/tax/ledger?month=2026-10' }),
+  X('rated-lines-no-hsn', 'POST /api/tax/rate', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1 }] } }),
+  X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
+  X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),
+  X('built-unregistered-seller', 'POST /api/invoice/build', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
+  X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
@@ -388,7 +413,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -510,7 +535,7 @@ function checkAllowList(recording) {
   const proved = {};
   const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
   const recorded = Object.assign({}, Object.fromEntries(Object.entries(fixture).filter(([, one]) => closedByRecordings(one.route))), recording); /* only for the routes whose shape is closed from them */
-  const words = require(path.join(HERE, 'lib', 'books-contract.js'));
+  const words = { OPERATIONS: Object.assign({}, require(path.join(HERE, 'lib', 'books-contract.js')).OPERATIONS, require(path.join(HERE, 'lib', 'tax-contract.js')).OPERATIONS) }; /* the ledger's routes and the tax and invoice services' (API-31) */
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   Object.keys(words.OPERATIONS).sort().forEach((route) => {
@@ -525,7 +550,7 @@ function checkAllowList(recording) {
   });
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
-  return proved;
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
 const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');
@@ -560,20 +585,22 @@ function foreignIdEvidenceOnDisk() {
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
-    delete routes[route].output_allowlist;
-    delete routes[route].foreign_id_404;
-    if (!Object.keys(routes[route]).length) delete routes[route];
+  Object.keys(routes).filter(MINE).forEach((route) => {
+    if (!(proved[route] && proved[route].output_allowlist)) {
+      delete routes[route].output_allowlist;
+      delete routes[route].output_allowlist_basis;
+    }
+    if (route.includes(' ' + MOUNT + '/')) delete routes[route].foreign_id_404; /* foreign ids are proved for the books mount only */
   });
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
-  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
-  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+  Object.keys(routes).filter((route) => !Object.keys(routes[route]).length).forEach((route) => delete routes[route]);
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes }), null, 1) + '\n'); /* every row keeps its place (the file is not one sorted list); a newly proved route is added at the end */
 }
 
 /** lib/tax-contract.js as a unit: the words of a tax refusal and of a fault, as the service always said them */

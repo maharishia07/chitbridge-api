@@ -29,6 +29,7 @@ const path = require('path');
 const fs = require('fs');
 const { harness, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
 const S = require('./lib/privacy-scenes.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -39,6 +40,7 @@ process.env.DATABASE_URL = '';
 const MOUNT = '/api/privacy';
 const ROUTE_COUNT = 4;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const SAFE = 'Something went wrong — please try again.';
 const LEAK = /SELECT secret|catalogue_items|relation "/;
@@ -340,14 +342,17 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 60, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the privacy routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/privacy.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');

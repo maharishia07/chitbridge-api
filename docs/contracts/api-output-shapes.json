@@ -59,6 +59,30 @@
         "url": "/api/actors/22222222-2222-4222-8222-222222222222/pin"
       }
     },
+    "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "deleted"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "deleted": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/catalogue/22222222-2222-4222-8222-222222222222/my-documents/22222222-2222-4222-8222-222222222222"
+      }
+    },
     "DELETE /api/chits/:chit_id": {
       "status": "200",
       "schema": {
@@ -2741,6 +2765,191 @@
         "url": "/api/catalogue-face"
       }
     },
+    "GET /api/catalogue/:bridge_id/my-documents": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "documents",
+          "count",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "documents": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "count": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "documents[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/catalogue/22222222-2222-4222-8222-222222222222/my-documents"
+      }
+    },
+    "GET /api/catalogue/:bridge_id/my-orders": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "orders",
+          "count",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "orders": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "count": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "orders[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/catalogue/22222222-2222-4222-8222-222222222222/my-orders"
+      }
+    },
+    "GET /api/catalogue/enquiry": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "enquiries",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "enquiries": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "enquiries[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/catalogue/enquiry"
+      }
+    },
+    "GET /api/catalogue/enquiry/:item_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "messages",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "message_text"
+              ],
+              "properties": {
+                "message_text": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/catalogue/enquiry/22222222-2222-4222-8222-222222222222"
+      }
+    },
     "GET /api/chits/:chit_id": {
       "status": "200",
       "schema": {
@@ -5109,6 +5318,397 @@
         "url": "/api/crm/segments"
       }
     },
+    "GET /api/invoice/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "direction",
+          "sells",
+          "status",
+          "provisional",
+          "frozen",
+          "rated",
+          "unrated",
+          "seller",
+          "buyer"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "sells": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "frozen": {
+            "type": "boolean"
+          },
+          "rated": {
+            "type": "number"
+          },
+          "unrated": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "Version",
+              "ValDtls",
+              "ItemList"
+            ],
+            "properties": {
+              "Version": {
+                "type": "string"
+              },
+              "ValDtls": {
+                "type": "object",
+                "required": [
+                  "AssVal"
+                ],
+                "properties": {
+                  "AssVal": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ItemList": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "heads": {
+            "type": "object",
+            "required": [
+              "taxable",
+              "cgst",
+              "sgst",
+              "igst",
+              "cess",
+              "vat",
+              "total",
+              "tax"
+            ],
+            "properties": {
+              "taxable": {
+                "type": "number"
+              },
+              "cgst": {
+                "type": "number"
+              },
+              "sgst": {
+                "type": "number"
+              },
+              "igst": {
+                "type": "number"
+              },
+              "cess": {
+                "type": "number"
+              },
+              "vat": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "cost_hidden": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/invoice/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/tax/gstr": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/gstr?month=2026-10&form=gstr1"
+      }
+    },
+    "GET /api/tax/invoice/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "direction",
+          "sells",
+          "status",
+          "provisional",
+          "frozen",
+          "rated",
+          "unrated",
+          "seller",
+          "buyer",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "sells": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "frozen": {
+            "type": "boolean"
+          },
+          "rated": {
+            "type": "number"
+          },
+          "unrated": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "Version",
+              "ValDtls",
+              "ItemList"
+            ],
+            "properties": {
+              "Version": {
+                "type": "string"
+              },
+              "ValDtls": {
+                "type": "object",
+                "required": [
+                  "AssVal"
+                ],
+                "properties": {
+                  "AssVal": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ItemList": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "heads": {
+            "type": "object",
+            "required": [
+              "taxable",
+              "cgst",
+              "sgst",
+              "igst",
+              "cess",
+              "vat",
+              "total",
+              "tax"
+            ],
+            "properties": {
+              "taxable": {
+                "type": "number"
+              },
+              "cgst": {
+                "type": "number"
+              },
+              "sgst": {
+                "type": "number"
+              },
+              "igst": {
+                "type": "number"
+              },
+              "cess": {
+                "type": "number"
+              },
+              "vat": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/tax/invoice/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/tax/ledger": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "month",
+          "period",
+          "gstin",
+          "registration",
+          "output",
+          "itc",
+          "net",
+          "count",
+          "provisional",
+          "rows",
+          "note"
+        ],
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "gstin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registration": {
+            "type": "string"
+          },
+          "output": {
+            "type": "object"
+          },
+          "itc": {
+            "type": "object"
+          },
+          "net": {
+            "type": "object"
+          },
+          "count": {
+            "type": "number"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "rows": {},
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "output",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "itc",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "net",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/ledger"
+      }
+    },
     "PATCH /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -5134,6 +5734,33 @@
         "url": "/api/crm/followups/10000000-0000-4000-8000-000000000021",
         "body": {
           "done": true
+        }
+      }
+    },
+    "POST /api/catalogue/enquiry/:item_id": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message_id",
+          "created_at"
+        ],
+        "properties": {
+          "message_id": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/catalogue/enquiry/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "message_text": "  is it fresh?  "
         }
       }
     },
@@ -9794,15 +10421,155 @@
     "GET /api/schemas/fields": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "attrs_ready",
+          "fields",
+          "system",
+          "undeclared"
+        ],
+        "properties": {
+          "attrs_ready": {
+            "type": "boolean"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field_key",
+                "field_name",
+                "field_type",
+                "required",
+                "display_order",
+                "used_by",
+                "retypable",
+                "retype_because",
+                "removable",
+                "locked_because"
+              ],
+              "properties": {
+                "field_key": {
+                  "type": "string"
+                },
+                "field_name": {
+                  "type": "string"
+                },
+                "field_type": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "display_order": {
+                  "type": "number"
+                },
+                "used_by": {
+                  "type": "number"
+                },
+                "retypable": {
+                  "type": "boolean"
+                },
+                "retype_because": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "removable": {
+                  "type": "boolean"
+                },
+                "locked_because": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "unit": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "leg": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "via": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "system": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field_key",
+                "field_name",
+                "field_type",
+                "managed_by",
+                "note",
+                "used_by"
+              ],
+              "properties": {
+                "field_key": {
+                  "type": "string"
+                },
+                "field_name": {
+                  "type": "string"
+                },
+                "field_type": {
+                  "type": "string"
+                },
+                "managed_by": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "used_by": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "undeclared": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "field_key",
+                "used_by"
+              ],
+              "properties": {
+                "field_key": {
+                  "type": "string"
+                },
+                "used_by": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
       },
       "observed": 6,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a computed key"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/schemas/fields"
       }
@@ -9816,7 +10583,10 @@
         ],
         "properties": {
           "schema": {
-            "type": "object"
+            "type": [
+              "object",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -12162,15 +12932,29 @@
     "PATCH /api/schemas/fields/:field_key": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "message",
+          "field_key"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "field_key": {
+            "type": "string"
+          },
+          "missing_required": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "observed": 17,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a computed key"
-        }
-      ],
+      "open": [],
       "example": {
         "url": "/api/schemas/fields/grade",
         "body": {
@@ -15037,6 +15821,243 @@
         }
       }
     },
+    "POST /api/invoice/build": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "order",
+          "pricing",
+          "offers",
+          "rates",
+          "seller",
+          "buyer",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "unit_price",
+                "list_price",
+                "structure",
+                "why"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "list_price": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "structure": {},
+                "why": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "offers": {
+            "type": "object",
+            "required": [
+              "subtotal",
+              "total",
+              "adjustments",
+              "notes",
+              "considered"
+            ],
+            "properties": {
+              "subtotal": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "adjustments": {},
+              "notes": {},
+              "considered": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "gst_rate",
+                "cess_rate",
+                "hsn",
+                "slab",
+                "source",
+                "scheme"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "gst_rate": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "cess_rate": {
+                  "type": "number"
+                },
+                "hsn": {},
+                "slab": {},
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "scheme": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm",
+              "Gstin",
+              "State",
+              "Country",
+              "RegType"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Gstin": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "State": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "RegType": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "Country"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Gstin": {},
+              "State": {},
+              "Pos": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "invoice": {
+            "type": "object"
+          },
+          "heads": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [
+        {
+          "path": "invoice",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "heads",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/invoice/build",
+        "body": {
+          "buyer": {
+            "name": "Priya"
+          },
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 2,
+              "listPrice": 100,
+              "gst_rate": 5
+            }
+          ]
+        }
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {
@@ -15180,6 +16201,266 @@
           "name": "Test Lead",
           "email": "lead@example.invalid",
           "org": "Test Org"
+        }
+      }
+    },
+    "POST /api/tax/compute": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "seller",
+          "buyer",
+          "price_includes_tax",
+          "priced",
+          "currency",
+          "pack",
+          "money",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "Gstin",
+              "State",
+              "Country",
+              "RegType"
+            ],
+            "properties": {
+              "Gstin": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "State": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "RegType": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "Country"
+            ],
+            "properties": {
+              "Gstin": {},
+              "State": {},
+              "Pos": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Country": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "price_includes_tax": {
+            "type": "object",
+            "required": [
+              "value",
+              "source"
+            ],
+            "properties": {
+              "value": {
+                "type": "boolean"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "priced": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "pack": {
+            "type": "object",
+            "required": [
+              "id",
+              "version",
+              "code",
+              "why"
+            ],
+            "properties": {
+              "id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "version": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "code": {},
+              "why": {}
+            },
+            "additionalProperties": false
+          },
+          "money": {
+            "type": "object"
+          },
+          "invoice": {
+            "type": "object"
+          },
+          "heads": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "priced[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "money",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "invoice",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "heads",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/compute",
+        "body": {
+          "priceIncludesTax": true,
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 1,
+              "price": 105,
+              "gst_rate": 5
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/tax/rate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "lines"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "item_id",
+                "code",
+                "name",
+                "gst_rate",
+                "cess_rate",
+                "hsn",
+                "slab",
+                "source",
+                "scheme"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "item_id": {},
+                "code": {},
+                "name": {
+                  "type": "string"
+                },
+                "gst_rate": {},
+                "cess_rate": {
+                  "type": "number"
+                },
+                "hsn": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "slab": {},
+                "source": {},
+                "scheme": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/tax/rate",
+        "body": {
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 1,
+              "hsn": "0902"
+            }
+          ]
         }
       }
     },
@@ -16879,7 +18160,10 @@
             "type": "string"
           },
           "name": {
-            "type": "object"
+            "type": [
+              "object",
+              "string"
+            ]
           },
           "mime": {},
           "size": {
@@ -17101,7 +18385,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 4,
+      "observed": 3,
       "open": [
         {
           "path": "supply",
@@ -17376,7 +18660,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 17,
+      "observed": 16,
       "open": [
         {
           "path": "request",
@@ -17576,7 +18860,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 14,
+      "observed": 13,
       "open": [
         {
           "path": "document",
@@ -18198,11 +19482,7 @@
                 "particulars",
                 "quantity",
                 "price",
-                "total",
-                "unit",
-                "raw_phrase",
-                "qty_missing",
-                "needs_human"
+                "total"
               ],
               "properties": {
                 "particulars": {
@@ -18227,9 +19507,44 @@
                 "needs_human": {
                   "type": "boolean"
                 },
-                "useCatalogue": {}
+                "unit_size": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": "number"
+                },
+                "comment": {
+                  "type": "string"
+                },
+                "asked_as": {
+                  "type": "string"
+                },
+                "variant_unspecified": {},
+                "ambiguous": {},
+                "ambiguous_count": {},
+                "variant_candidates": {},
+                "ref": {},
+                "asked_unit": {
+                  "type": "string"
+                },
+                "lot": {},
+                "qty_unverified": {
+                  "type": "boolean"
+                },
+                "rate_unverified": {
+                  "type": "boolean"
+                },
+                "qty_rejected": {
+                  "type": "string"
+                },
+                "phrase_says": {},
+                "refused": {
+                  "type": "boolean"
+                },
+                "negation_unclear": {}
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "recipients": {
@@ -18246,10 +19561,10 @@
                 },
                 "role": {
                   "type": "string"
-                },
-                "useCatalogue": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "self_copy": {
@@ -18273,7 +19588,6 @@
                   "received_at",
                   "read_by",
                   "sender_verified",
-                  "delivery_at",
                   "raw_excerpt",
                   "media_count",
                   "label",
@@ -18284,22 +19598,37 @@
                     "type": "string"
                   },
                   "from": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "from_name": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "to": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "provider_msg_id": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "capture_id": {
                     "type": "string"
                   },
                   "received_at": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "read_by": {
                     "type": "string"
@@ -18339,18 +19668,30 @@
                       "asked_differs": {},
                       "catalogue_used": {
                         "type": "boolean"
-                      },
-                      "useCatalogue": {}
+                      }
                     },
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
                   },
-                  "useCatalogue": {}
+                  "delivery_address": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "unplaced": {
+                    "type": "string"
+                  }
                 },
-                "additionalProperties": false
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
               },
-              "useCatalogue": {}
+              "currency": {
+                "type": "string"
+              }
             },
-            "additionalProperties": false
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
           "original": {
             "type": "object",
@@ -18364,17 +19705,18 @@
               },
               "text": {
                 "type": "string"
-              },
-              "useCatalogue": {}
+              }
             },
-            "additionalProperties": false
-          },
-          "useCatalogue": {}
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 2,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/22222222-2222-4222-8222-222222222222/raise"
       }
@@ -18442,13 +19784,14 @@
           },
           "created_at": {
             "type": "string"
-          },
-          "media_refs": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 3,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/simulate",
         "body": {
@@ -18500,7 +19843,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 7,
+      "observed": 8,
       "open": [],
       "example": {
         "url": "/api/capture/webhook/email"
@@ -18526,7 +19869,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 13,
+      "observed": 14,
       "open": [],
       "example": {
         "url": "/api/capture/webhook/whatsapp"
@@ -18593,14 +19936,7 @@
                 "identity_type",
                 "owner_scope",
                 "segment",
-                "on_rail",
-                "party_no",
-                "legal_name",
-                "credit_days",
-                "credit_limit_minor",
-                "state_code",
-                "merged_into",
-                "tax_ids"
+                "on_rail"
               ],
               "properties": {
                 "customer_list_id": {
@@ -18616,7 +19952,10 @@
                   "type": "number"
                 },
                 "last_txn_at": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "groups": {
                   "type": "array",
@@ -18631,7 +19970,10 @@
                   "type": "string"
                 },
                 "user_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "display_name": {
                   "type": "string"
@@ -18659,12 +20001,27 @@
                 "state_code": {},
                 "merged_into": {},
                 "tax_ids": {},
-                "count": {},
-                "groups_migrated": {},
-                "rows": {},
-                "PAGE_DEFAULT": {}
+                "balance_minor": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "oldest_due": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "nickname": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -18675,14 +20032,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "rows": {},
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 9,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/customers"
       }
@@ -18690,13 +20047,62 @@
     "GET /api/relationships/customers/:id/rewards": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "programme",
+          "points",
+          "says"
+        ],
+        "properties": {
+          "programme": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "points": {
+            "type": "number"
+          },
+          "says": {
+            "type": "string"
+          },
+          "worth": {
+            "type": "number"
+          },
+          "negative": {
+            "type": "boolean"
+          },
+          "earns": {
+            "type": "string"
+          },
+          "reach": {},
+          "next": {},
+          "money_known": {
+            "type": "boolean"
+          },
+          "expires_months": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "recent": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "expired_now": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
       },
       "observed": 6,
       "open": [
         {
-          "path": "(answer)",
-          "reason": "a computed key"
+          "path": "recent[]",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
         }
       ],
       "example": {
@@ -19016,27 +20422,24 @@
                 "user_id",
                 "display_name",
                 "supplier_entity_id",
-                "country",
                 "has_catalogue",
-                "facts",
-                "for_you",
-                "party_no",
-                "legal_name",
-                "credit_days",
-                "credit_limit_minor",
-                "state_code",
-                "merged_into",
-                "tax_ids"
+                "facts"
               ],
               "properties": {
                 "supplier_list_id": {
                   "type": "string"
                 },
                 "category": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "nickname": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "preferred": {
                   "type": "boolean"
@@ -19055,7 +20458,10 @@
                   "type": "string"
                 },
                 "user_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "display_name": {
                   "type": "string"
@@ -19064,7 +20470,10 @@
                   "type": "string"
                 },
                 "country": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "has_catalogue": {
                   "type": "boolean"
@@ -19093,12 +20502,10 @@
                     },
                     "source": {},
                     "as_of": {},
-                    "rung": {},
-                    "count": {},
-                    "rows": {},
-                    "PAGE_DEFAULT": {}
+                    "rung": {}
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "for_you": {},
                 "party_no": {},
@@ -19108,11 +20515,36 @@
                 "state_code": {},
                 "merged_into": {},
                 "tax_ids": {},
-                "count": {},
-                "rows": {},
-                "PAGE_DEFAULT": {}
+                "installation_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "installation_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "balance_minor": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "oldest_due": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "cost_hidden": {
+                  "type": "boolean"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -19123,112 +20555,16 @@
           },
           "limit": {
             "type": "number"
-          },
-          "rows": {},
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 6,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/suppliers"
-      }
-    },
-    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "supplier",
-          "items"
-        ],
-        "properties": {
-          "supplier": {
-            "type": "object",
-            "required": [
-              "identity_id",
-              "display_name",
-              "bridge_id",
-              "currency_code",
-              "business_status"
-            ],
-            "properties": {
-              "identity_id": {
-                "type": "string"
-              },
-              "display_name": {
-                "type": "string"
-              },
-              "bridge_id": {
-                "type": "string"
-              },
-              "currency_code": {
-                "type": "string"
-              },
-              "business_status": {
-                "type": "string"
-              },
-              "supplier": {},
-              "schema": {},
-              "fields": {},
-              "items": {},
-              "finishes": {},
-              "groups": {}
-            },
-            "additionalProperties": false
-          },
-          "schema": {
-            "type": "object",
-            "required": [
-              "fields"
-            ],
-            "properties": {
-              "fields": {},
-              "supplier": {},
-              "schema": {},
-              "items": {},
-              "finishes": {},
-              "groups": {}
-            },
-            "additionalProperties": false
-          },
-          "fields": {},
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "item_id"
-              ],
-              "properties": {
-                "item_id": {
-                  "type": "string"
-                },
-                "supplier": {},
-                "schema": {},
-                "fields": {},
-                "items": {},
-                "finishes": {},
-                "groups": {}
-              },
-              "additionalProperties": false
-            }
-          },
-          "finishes": {},
-          "groups": {},
-          "available": {
-            "type": "boolean"
-          },
-          "offers": {},
-          "categories": {}
-        },
-        "additionalProperties": false
-      },
-      "observed": 7,
-      "open": [],
-      "example": {
-        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/relationships/suppliers/availability": {
@@ -19615,38 +20951,41 @@
                 },
                 "conn_config": {
                   "type": "object",
-                  "required": [
-                    "topic"
-                  ],
+                  "required": [],
                   "properties": {
                     "topic": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
-                    "actor_health": {},
-                    "actor_last_seen": {},
-                    "connections": {},
-                    "PAGE_DEFAULT": {}
+                    "path": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
                   },
-                  "additionalProperties": false
+                  "additionalProperties": true
                 },
                 "enabled": {
                   "type": "boolean"
                 },
                 "last_seen": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "created_at": {
                   "type": "string"
                 },
                 "signal": {
                   "type": "string"
-                },
-                "actor_health": {},
-                "actor_last_seen": {},
-                "connections": {},
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -19657,13 +20996,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/connections"
       }
@@ -19680,13 +21020,22 @@
             "type": "string"
           },
           "base_url": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_type": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "auth_ref": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "endpoints": {
             "type": "array",
@@ -19706,7 +21055,8 @@
                 },
                 "path": {}
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "mode": {
@@ -19735,10 +21085,14 @@
                   "type": "string"
                 },
                 "topic": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           }
         },
@@ -19746,6 +21100,7 @@
       },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/provisioning"
       }
@@ -19776,13 +21131,22 @@
               ],
               "properties": {
                 "receipt_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_type": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_ref": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "payload_hash": {
                   "type": "string"
@@ -19791,14 +21155,17 @@
                   "type": "string"
                 },
                 "chit_id": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "received_at": {
                   "type": "string"
-                },
-                "PAGE_DEFAULT": {}
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -19809,13 +21176,14 @@
           },
           "limit": {
             "type": "number"
-          },
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 4,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/connectors/22222222-2222-4222-8222-222222222222/receipts"
       }
@@ -20151,15 +21519,24 @@
     "POST /api/connectors/reissue-code": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "message",
+          "email"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "dev_otp": {}
+        },
+        "additionalProperties": false
       },
       "observed": 4,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a computed key"
-        }
-      ],
+      "open": [],
       "example": {
         "url": "/api/connectors/reissue-code",
         "body": {}
@@ -20182,7 +21559,10 @@
             "type": "boolean"
           },
           "moved": {
-            "type": "object"
+            "type": [
+              "object",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -20272,10 +21652,16 @@
                   ]
                 },
                 "created_by": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "rules": {
-                  "type": "object",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
                   "properties": {
                     "percent": {
                       "type": "number"
@@ -20290,16 +21676,14 @@
                     "scheme": {
                       "type": "string"
                     },
-                    "hsn": {},
-                    "count": {},
-                    "governed_why": {},
-                    "rows": {},
-                    "PAGE_DEFAULT": {}
-                  },
-                  "additionalProperties": false
+                    "hsn": {}
+                  }
                 },
                 "version_at": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "governance": {
                   "type": "object",
@@ -20315,13 +21699,10 @@
                     "scheme": {
                       "type": "string"
                     },
-                    "authority": {},
-                    "count": {},
-                    "governed_why": {},
-                    "rows": {},
-                    "PAGE_DEFAULT": {}
+                    "authority": {}
                   },
-                  "additionalProperties": false
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
                 },
                 "network": {
                   "type": "object",
@@ -20339,24 +21720,21 @@
                       "type": "boolean"
                     },
                     "at": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "changed": {
                       "type": "boolean"
-                    },
-                    "count": {},
-                    "governed_why": {},
-                    "rows": {},
-                    "PAGE_DEFAULT": {}
+                    }
                   },
-                  "additionalProperties": false
-                },
-                "count": {},
-                "governed_why": {},
-                "rows": {},
-                "PAGE_DEFAULT": {}
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
             }
           },
           "total": {
@@ -20370,14 +21748,14 @@
           },
           "governed_why": {
             "type": "string"
-          },
-          "rows": {},
-          "PAGE_DEFAULT": {}
+          }
         },
-        "additionalProperties": false
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 9,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/definitions?kind=tax,category,offer"
       }
@@ -20420,7 +21798,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 2,
+      "observed": 3,
       "open": [
         {
           "path": "definition",
@@ -20513,7 +21891,7 @@
         },
         "additionalProperties": false
       },
-      "observed": 6,
+      "observed": 9,
       "open": [
         {
           "path": "definition",
@@ -33803,6 +35181,1046 @@
           ]
         }
       }
+    },
+    "GET /api/entities/constitutions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "constitutions",
+          "installation",
+          "allowed_countries",
+          "countries"
+        ],
+        "properties": {
+          "constitutions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "version",
+                "label",
+                "vertical",
+                "capabilities",
+                "is_default"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "number"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "vertical": {
+                  "type": "string"
+                },
+                "capabilities": {},
+                "is_default": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "installation": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "key",
+              "country",
+              "name",
+              "timezone"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "country": {},
+              "name": {},
+              "timezone": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "allowed_countries": {},
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "code",
+                "name",
+                "currency",
+                "fy_start_month",
+                "zones",
+                "locale",
+                "books",
+                "tax",
+                "languages",
+                "offer"
+              ],
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "fy_start_month": {
+                  "type": "number"
+                },
+                "zones": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "locale": {
+                  "type": "string"
+                },
+                "books": {
+                  "type": "boolean"
+                },
+                "tax": {
+                  "type": "object",
+                  "required": [
+                    "scheme",
+                    "name",
+                    "id",
+                    "return"
+                  ],
+                  "properties": {
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "return": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "languages": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "offer": {
+                  "type": "object",
+                  "required": [
+                    "timezone",
+                    "from",
+                    "source"
+                  ],
+                  "properties": {
+                    "timezone": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "from": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "source": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 8,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/entities/constitutions"
+      }
+    },
+    "GET /api/entities/routing/preview": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "why"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "why": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 7,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/entities/routing/preview"
+      }
+    },
+    "GET /api/entities/search/places": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "places"
+        ],
+        "properties": {
+          "places": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/entities/search/places"
+      }
+    },
+    "PATCH /api/entities/:id/erase": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/entities/88888888-8888-4888-8888-888888888888/erase",
+        "body": {}
+      }
+    },
+    "PATCH /api/entities/me/exposure": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "exposure"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "exposure": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "exposure",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/entities/me/exposure",
+        "body": {
+          "tax": false
+        }
+      }
+    },
+    "PATCH /api/entities/policy": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "flags"
+        ],
+        "properties": {
+          "flags": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 4,
+      "open": [
+        {
+          "path": "flags",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/entities/policy",
+        "body": {}
+      }
+    },
+    "PATCH /api/entities/profile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/entities/profile",
+        "body": {}
+      }
+    },
+    "POST /api/entities/populations": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "code",
+          "label"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/entities/populations",
+        "body": {
+          "code": " Lab ",
+          "label": "Lab",
+          "note": "for tests"
+        }
+      }
+    },
+    "PUT /api/entities/populations/:code/desk": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "code",
+          "desk_entity_id"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "code": {
+            "type": "string"
+          },
+          "desk_entity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/entities/populations/live/desk",
+        "body": {
+          "desk_entity_id": ""
+        }
+      }
+    },
+    "PUT /api/entities/routing": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "kind"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/entities/routing",
+        "body": {
+          "kind": "incident",
+          "folder_id": "",
+          "assignee_actor_id": "99999999-9999-4999-8999-999999999999",
+          "route_to_entity_id": null
+        }
+      }
+    },
+    "GET /api/service/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "tracked",
+          "chit_id",
+          "resolution_codes",
+          "pause_reasons",
+          "impacts",
+          "urgencies"
+        ],
+        "properties": {
+          "tracked": {
+            "type": "boolean"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "resolution_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pause_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "impacts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "urgencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "record": {
+            "type": "object"
+          },
+          "clock": {
+            "type": "object"
+          },
+          "pauses": {},
+          "readable": {
+            "type": "object",
+            "required": [
+              "respond",
+              "resolve",
+              "contested_resolve",
+              "disputed"
+            ],
+            "properties": {
+              "respond": {
+                "type": "string"
+              },
+              "resolve": {
+                "type": "string"
+              },
+              "contested_resolve": {
+                "type": "string"
+              },
+              "disputed": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "record",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "clock",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "POST /api/service/:chit_id/pause": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "pause_id",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "pause_id": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause",
+        "body": {
+          "reason": "waiting_on_counterparty",
+          "from": "2026-11-04T06:00:00Z"
+        }
+      }
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/answer": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause/22222222-2222-4222-8222-222222222222/answer",
+        "body": {
+          "accepted": true
+        }
+      }
+    },
+    "POST /api/service/:chit_id/pause/:pause_id/end": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "copies"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "copies": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/pause/22222222-2222-4222-8222-222222222222/end"
+      }
+    },
+    "POST /api/service/:chit_id/respond": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "responded_at"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "responded_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222/respond"
+      }
+    },
+    "PUT /api/service/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "record"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "record": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "record",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/service/22222222-2222-4222-8222-222222222222",
+        "body": {
+          "impact": "High",
+          "urgency": "high"
+        }
+      }
+    },
+    "POST /api/network-design/build": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "root",
+          "problems",
+          "notes"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "root": {
+            "type": "string"
+          },
+          "root_claimed": {
+            "type": "boolean"
+          },
+          "create": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "name",
+                "handle",
+                "parent_key",
+                "visibility",
+                "asked",
+                "purpose",
+                "sort_order",
+                "place"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "handle": {
+                  "type": "string"
+                },
+                "parent_key": {},
+                "visibility": {
+                  "type": "string"
+                },
+                "asked": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sort_order": {},
+                "place": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "update": {},
+          "invite": {},
+          "skip": {},
+          "problems": {},
+          "notes": {},
+          "counts": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip",
+              "problems",
+              "narrowed"
+            ],
+            "properties": {
+              "create": {
+                "type": "number"
+              },
+              "update": {
+                "type": "number"
+              },
+              "invite": {
+                "type": "number"
+              },
+              "skip": {
+                "type": "number"
+              },
+              "problems": {
+                "type": "number"
+              },
+              "narrowed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "created": {},
+          "updated": {},
+          "invited": {},
+          "skipped": {},
+          "message": {
+            "type": "string"
+          },
+          "claim_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-design/build",
+        "body": {
+          "dry_run": true
+        }
+      }
+    },
+    "POST /api/network-design/reissue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "user_id",
+          "display_name",
+          "claim_code",
+          "expires_at",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "claim_code": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "dev_otp": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/network-design/reissue",
+        "body": {
+          "user_id": "Shop-A.C"
+        }
+      }
+    },
+    "POST /api/network-design/validate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dry_run",
+          "sample",
+          "ok",
+          "root",
+          "would",
+          "breaks",
+          "notes",
+          "counts",
+          "says"
+        ],
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          },
+          "sample": {
+            "type": "boolean"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "root": {
+            "type": "string"
+          },
+          "would": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip"
+            ],
+            "properties": {
+              "create": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "name",
+                    "handle",
+                    "parent_key",
+                    "visibility",
+                    "asked",
+                    "purpose",
+                    "sort_order",
+                    "place"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "handle": {
+                      "type": "string"
+                    },
+                    "parent_key": {},
+                    "visibility": {
+                      "type": "string"
+                    },
+                    "asked": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sort_order": {},
+                    "place": {}
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "update": {},
+              "invite": {},
+              "skip": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "breaks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "name",
+                "reason"
+              ],
+              "properties": {
+                "key": {},
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "notes": {},
+          "counts": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip",
+              "problems",
+              "narrowed"
+            ],
+            "properties": {
+              "create": {
+                "type": "number"
+              },
+              "update": {
+                "type": "number"
+              },
+              "invite": {
+                "type": "number"
+              },
+              "skip": {
+                "type": "number"
+              },
+              "problems": {
+                "type": "number"
+              },
+              "narrowed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "says": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-design/validate",
+        "body": {}
+      }
+    },
+    "PUT /api/network-design": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "updated_at"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/network-design",
+        "body": {
+          "draft": {
+            "nodes": [
+              {
+                "key": "a",
+                "name": "Clothing"
+              }
+            ]
+          }
+        }
+      }
     }
   },
   "listed": {
@@ -33840,6 +36258,9 @@
     "GET /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/capture/webhook/whatsapp": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/catalogue-face": "open at face — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/catalogue/:bridge_id/my-documents": "open at documents[] — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/catalogue/:bridge_id/my-orders": "open at orders[] — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/catalogue/enquiry": "open at enquiries[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/channels": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/channels/outbound": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/chits/:chit_id": "open at header — a value passed through (an expression: its keys are not written in the handler); detail — a value passed through (an expression: its keys are not written in the handler); participants[] — a value passed through (an expression: its keys are not written in the handler); _timing — a value passed through (an expression: its keys are not written in the handler); live_set[] — a value passed through (an expression: its keys are not written in the handler); line_assignment — a value passed through (an expression: its keys are not written in the handler); line_delivery — a value passed through (an expression: its keys are not written in the handler); delivery_summary — a value passed through (an expression: its keys are not written in the handler)",
@@ -33930,12 +36351,15 @@
     "GET /api/products/starter-columns": "open at verticals[] — a value passed through (an expression: its keys are not written in the handler); starter — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/quick-keys/groups": "open at groups[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/relationships/customers/:id/rewards": "open at (answer) — a computed key",
+    "GET /api/relationships/customers/:id/rewards": "open at recent[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/schemas/fields": "open at (answer) — a computed key",
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler",
     "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/tax/gstr": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/tax/ledger": "open at output — a value passed through (an expression: its keys are not written in the handler); itc — a value passed through (an expression: its keys are not written in the handler); net — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/testing/changes": "open at changes[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cmdb": "open at records[] — a value passed through (a name: its keys are not written in the handler)",
@@ -33969,7 +36393,6 @@
     "PATCH /api/quick-keys/groups/:id/items": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/relationships/customers/:id": "open at party — a value passed through (a name: its keys are not written in the handler)",
     "PATCH /api/relationships/suppliers/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "PATCH /api/schemas/fields/:field_key": "open at (answer) — a computed key",
     "PATCH /api/supplies/:id": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/adopt/:chit_id": "open at added[] — a value passed through (an expression: its keys are not written in the handler); refused[] — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
@@ -34018,7 +36441,6 @@
     "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/connectors/:actorId/erp-test": "open at (answer) — a spread (...x) adds keys the text does not name",
     "POST /api/connectors/erp-ingest": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "POST /api/connectors/reissue-code": "open at (answer) — a computed key",
     "POST /api/crm/followups": "open at followup — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/leads/import": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/crm/parties/:id/contact-prefs": "open at pref — a value passed through (a name: its keys are not written in the handler)",
@@ -34039,6 +36461,7 @@
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/offers/evaluate": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -34059,6 +36482,7 @@
     "POST /api/schemas/create-default": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/tax/compute": "open at priced[] — a value passed through (a name: its keys are not written in the handler); money — a value passed through (an expression: its keys are not written in the handler); invoice — a value passed through (an expression: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/till/shop": "open at shop — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/actors/:id/status": "open at audit — a value passed through (an expression: its keys are not written in the handler); signed_out — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",
@@ -34069,6 +36493,7 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"
   }
 }

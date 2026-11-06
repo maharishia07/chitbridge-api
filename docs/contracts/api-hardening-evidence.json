@@ -28,6 +28,9 @@
   "GET /api/entities/sides": {
    "output_allowlist": true
   },
+  "PATCH /api/entities/me/exposure": {
+   "output_allowlist": true
+  },
   "GET /api/entities/me/can-see-costs": {
    "output_allowlist": true
   },
@@ -38,6 +41,9 @@
    "output_allowlist": true
   },
   "GET /api/entities/routing/preview": {
+   "output_allowlist": true
+  },
+  "PUT /api/entities/routing": {
    "output_allowlist": true
   },
   "GET /api/entities/entitlements": {
@@ -73,10 +79,12 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/reprice": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/costs": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/chits/register/attachables": {
@@ -86,12 +94,14 @@
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/register/templates": {
    "output_allowlist": true
   },
   "POST /api/chits/register/templates": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
@@ -110,6 +120,7 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/raida": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
@@ -119,12 +130,15 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/use": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/deliver-lines": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/assign-lines": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/amend": {
@@ -142,6 +156,7 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/books-request": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -155,6 +170,7 @@
    "output_allowlist": true
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/chits/disputes/queue": {
@@ -164,28 +180,35 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/priority": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/priority-flag": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/archive": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/star": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/unread": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/unarchive": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/restore": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -193,9 +216,11 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/void": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/assign-bulk": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/:id/trace": {
@@ -242,6 +267,9 @@
    "output_allowlist": true
   },
   "POST /api/pricing/price": {
+   "output_allowlist": true
+  },
+  "POST /api/invoice/build": {
    "output_allowlist": true
   },
   "GET /api/invoice/:chit_id": {
@@ -834,7 +862,8 @@
    "output_allowlist": true
   },
   "PUT /api/network-design": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/network-design/validate": {
    "strict_input": true,
@@ -844,7 +873,8 @@
    "strict_input": true
   },
   "POST /api/network-design/reissue": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "GET /api/network-design/stores": {
    "output_allowlist": true
@@ -973,9 +1003,11 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/close": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/trace": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/trace": {
@@ -988,12 +1020,14 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/import": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/engine": {
    "output_allowlist": true
   },
   "POST /api/testing/cases/seed": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/cmdb": {
@@ -1006,6 +1040,7 @@
    "output_allowlist": true
   },
   "POST /api/testing/cmdb/seed": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/results": {
@@ -1024,27 +1059,33 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/gherkin": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/requirements": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/requirements": {
    "output_allowlist": true
   },
   "PATCH /api/testing/requirements/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/incidents": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/incidents": {
    "output_allowlist": true
   },
   "PATCH /api/testing/incidents/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/evidence": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/stale": {
@@ -1060,12 +1101,14 @@
    "output_allowlist": true
   },
   "POST /api/testing/changes": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/changes": {
    "output_allowlist": true
   },
   "POST /api/testing/releases": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/releases": {
@@ -1185,10 +1228,12 @@
   },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
    "strict_input": true,
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/answer": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "GET /api/definitions/:id": {
    "foreign_id_404": true
@@ -1208,6 +1253,12 @@
    "foreign_id_404": true
   },
   "GET /api/tax/ledger": {
+   "output_allowlist": true
+  },
+  "POST /api/tax/rate": {
+   "output_allowlist": true
+  },
+  "POST /api/tax/compute": {
    "output_allowlist": true
   },
   "GET /api/books/status": {
