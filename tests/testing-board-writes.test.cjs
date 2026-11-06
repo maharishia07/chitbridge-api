@@ -92,7 +92,7 @@ it('no root configured → nothing extra opens (a shop is still refused)', () =>
 it('per-tenant board (no TEST_BOARD_ENTITY): a shop still writes its own board', () => {
   assert.strictEqual(fresh({}).canWrite(SHOP), true);
 });
-console.log('\nSEC-120 FAIL CLOSED: sealed environment + no TEST_BOARD_ENTITY\n');
+console.log('\nSEC-120 fails closed (heading in lower case: the guards runner reads a bare upper-case word as a failure): sealed environment + no TEST_BOARD_ENTITY\n');
 
 /** run fn with NODE_ENV set (undefined = unset), restoring it after */
 function underNodeEnv(value, fn) {
