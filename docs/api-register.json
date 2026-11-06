@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 422,
-  "meets": 205,
+  "partial": 407,
+  "meets": 220,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -22670,11 +22670,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c7796f384914558e"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -22852,11 +22851,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8cf4e576115ef2fb"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -22943,11 +22941,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b4d8b2a2ed26256c"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "record.html"
    ],
@@ -23135,11 +23132,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "46e6f0f00dc7dd6a"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23224,11 +23220,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ef445392025c7505"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23311,11 +23306,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "648b3631d4dd9f78"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23401,11 +23395,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "52497bb11fd4f7f5"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23493,11 +23486,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cde1efb7ead1d3ed"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23585,11 +23577,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9bca35743df8eeca"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23672,11 +23663,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e85095280e6bcaf9"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23764,11 +23754,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7a7c9c5b27829f86"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23856,11 +23845,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c2147cbd5b085bbb"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23946,11 +23934,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "99f94adaaabe158a"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -24031,11 +24018,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4f251bf1eda67e5c"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -24111,11 +24097,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0b7aa4bfcc5d0706"
+    "signed_off_by_date": "cb-api (laptop2, independent of builder) 2026-11-06 PR testing-signoff k13 (re-sign)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
