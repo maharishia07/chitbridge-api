@@ -326,15 +326,15 @@
     "noHeader": 0
   },
   "lib/books-hooks.js": {
-    "score": 191,
+    "score": 32,
     "long40": 4,
-    "long80": 2,
-    "complex10": 11,
+    "long80": 0,
+    "complex10": 17,
     "complex15": 7,
-    "deep3": 3,
-    "deep4": 1,
-    "cryptic": 157,
-    "noWhatLine": 6,
+    "deep3": 1,
+    "deep4": 0,
+    "cryptic": 3,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
