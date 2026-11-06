@@ -4731,10 +4731,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/year/:fy/close": {
@@ -4744,20 +4740,12 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "GET /api/books/year/:fy/status": {
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "GET /api/books/periods": {
@@ -4973,10 +4961,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/accruals": {
@@ -4995,10 +4979,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 422"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 422, not 404"
    }
   },
   "POST /api/books/contra": {
