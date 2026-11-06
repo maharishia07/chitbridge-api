@@ -194,8 +194,9 @@ async function checkRoutes(port, scenarios, recording) {
     );
     if (inherited(scenario, answer)) continue;
     kit.checkProblemBody(check, label, answer);
-    if (answer.status >= 500) check(label + ': a 5xx says nothing of its cause', !/party_secret|SELECT|vault|relation/.test(answer.text), answer.text);
-    else kit.checkLegacy(check, label, answer, kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id));
+    const frozen = kit.frozenOf(LEGACY_FILE, scenario.route, scenario.id);
+    if (answer.status >= 500) kit.checkServerError(check, label, answer, frozen, /party_secret|SELECT|vault|relation/);
+    else kit.checkLegacy(check, label, answer, frozen);
   }
   return tested;
 }

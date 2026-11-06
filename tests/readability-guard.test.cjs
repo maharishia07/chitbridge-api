@@ -4,7 +4,7 @@
  * OWNS      the api's run of the ONE readability tool (chitbridge-web tools/readability.cjs, acorn vendored there — no dependency here):
  *           only the functions and files this change touched are judged — a hard limit crossed, a NEW cryptic name, a new empty catch,
  *           a touched module with no header / no CARD line / no test row in trace.json, a file scoring worse than readability.ratchet.json.
- * CALLED BY scripts/guards.cjs (the offline gate, CI guards job — the web twin is checked out beside; locally C:/dev/chitbridge-web).
+ * CALLED BY scripts/guards.cjs (the offline gate, CI guards job — the web twin is checked out beside; locally C:/dev/chitbridge-web, or the folder CB_WEB_DIR names).
  * FLOW      find ../chitbridge-web/tools/readability.cjs ──▶ spawn `--changed --repo api --root <api> --base origin/main --ratchet --md`
  *           ──▶ print its report ──▶ FAIL on exit 1 · skip with a warning when the web tool is not beside (the web PR lands first)
  * CARD      qa/readability-guard
@@ -18,7 +18,9 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const API = path.join(__dirname, '..');
-const WEB_TOOL = path.join(API, '..', 'chitbridge-web', 'tools', 'readability.cjs');
+/* MNT-16: a worktree has no sibling chitbridge-web — CB_WEB_DIR names the twin (the way scripts/vendor-till.cjs does) */
+const WEB_DIR = process.env.CB_WEB_DIR ? path.resolve(process.env.CB_WEB_DIR) : path.join(API, '..', 'chitbridge-web');
+const WEB_TOOL = path.join(WEB_DIR, 'tools', 'readability.cjs');
 const BASE = process.env.CB_READABILITY_BASE || 'origin/main';
 const TIMEOUT_MS = 180000;
 
