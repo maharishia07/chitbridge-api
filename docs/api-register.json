@@ -22220,11 +22220,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -47257,11 +47257,11 @@
         "legacy keys frozen in docs/contracts/api-legacy.json"
       ],
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
