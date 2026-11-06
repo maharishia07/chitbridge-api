@@ -5648,268 +5648,91 @@
         "url": "/api/invoice/22222222-2222-4222-8222-222222222222"
       }
     },
-    "GET /api/network/entities/:id/connections": {
-      "status": "200",
-      "schema": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "required": [
-            "id",
-            "parent_id",
-            "child_id",
-            "type",
-            "state",
-            "requested_by",
-            "in_flight",
-            "created_at",
-            "parent_name",
-            "child_name"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "parent_id": {
-              "type": "string"
-            },
-            "child_id": {
-              "type": "string"
-            },
-            "type": {
-              "type": "string"
-            },
-            "state": {
-              "type": "string"
-            },
-            "requested_by": {
-              "type": "string"
-            },
-            "in_flight": {
-              "type": "boolean"
-            },
-            "created_at": {
-              "type": "string"
-            },
-            "parent_name": {
-              "type": "string"
-            },
-            "child_name": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "x-closed-by": "recordings"
-        }
-      },
-      "observed": 1,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/network/entities/aaaaaaaa-0000-4000-8000-00000000000c/connections"
-      }
-    },
-    "GET /api/network/entities/:id/subtree": {
-      "status": "200",
-      "schema": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "required": [
-            "id",
-            "bridge_id",
-            "name",
-            "path",
-            "depth"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            },
-            "bridge_id": {
-              "type": "string"
-            },
-            "name": {
-              "type": "string"
-            },
-            "path": {
-              "type": "string"
-            },
-            "depth": {
-              "type": "number"
-            }
-          },
-          "additionalProperties": false,
-          "x-closed-by": "recordings"
-        }
-      },
-      "observed": 1,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/network/entities/aaaaaaaa-0000-4000-8000-00000000000c/subtree"
-      }
-    },
-    "GET /api/network/entities/lookup": {
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
       "status": "200",
       "schema": {
         "type": "object",
         "required": [
-          "found"
+          "supplier",
+          "items"
         ],
         "properties": {
-          "found": {
-            "type": "boolean"
-          },
-          "entity": {
+          "supplier": {
             "type": "object",
             "required": [
-              "id",
-              "bridgeId",
-              "name",
-              "mode",
-              "claimed",
-              "status"
+              "identity_id",
+              "display_name",
+              "bridge_id",
+              "currency_code",
+              "business_status"
             ],
             "properties": {
-              "id": {
+              "identity_id": {
                 "type": "string"
               },
-              "bridgeId": {
+              "display_name": {
                 "type": "string"
               },
-              "name": {
+              "bridge_id": {
                 "type": "string"
               },
-              "mode": {
+              "currency_code": {
                 "type": "string"
               },
-              "claimed": {
-                "type": "boolean"
-              },
-              "status": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false,
-            "x-closed-by": "recordings"
-          }
-        },
-        "additionalProperties": false,
-        "x-closed-by": "recordings"
-      },
-      "observed": 4,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/network/entities/lookup?bridgeId=aaaa2222"
-      }
-    },
-    "GET /api/network/place": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "found"
-        ],
-        "properties": {
-          "found": {
-            "type": "boolean"
-          },
-          "entity": {
-            "type": "object",
-            "required": [
-              "id",
-              "bridgeId",
-              "name",
-              "mode",
-              "claimed",
-              "status"
-            ],
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "bridgeId": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "mode": {
-                "type": "string"
-              },
-              "claimed": {
-                "type": "boolean"
-              },
-              "status": {
+              "business_status": {
                 "type": "string"
               }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
           },
-          "rootBridge": {
-            "type": "string"
+          "schema": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "required": [
+              "fields"
+            ],
+            "properties": {
+              "fields": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
           },
-          "nodes": {
+          "fields": {},
+          "items": {
             "type": "array",
             "items": {
               "type": "object",
               "required": [
-                "id",
-                "bridge_id",
-                "name",
-                "path",
-                "depth"
+                "item_id"
               ],
               "properties": {
-                "id": {
+                "item_id": {
                   "type": "string"
-                },
-                "bridge_id": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "path": {
-                  "type": "string"
-                },
-                "depth": {
-                  "type": "number"
                 }
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
             }
           },
-          "refused": {
-            "type": "object",
-            "required": [
-              "code",
-              "message"
-            ],
-            "properties": {
-              "code": {
-                "type": "string"
-              },
-              "message": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false,
-            "x-closed-by": "recordings"
-          }
+          "groups": {},
+          "finishes": {},
+          "available": {
+            "type": "boolean"
+          },
+          "offers": {},
+          "categories": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
       },
-      "observed": 6,
+      "observed": 3,
       "open": [],
       "closed_by": "recordings",
       "example": {
-        "url": "/api/network/place"
+        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/tax/gstr": {
@@ -23194,15 +23017,46 @@
     "PATCH /api/relationships/suppliers/:id": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "party": {
+            "type": "object",
+            "required": [
+              "changed",
+              "party_no",
+              "party_id"
+            ],
+            "properties": {
+              "changed": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "party_no": {},
+              "party_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 6,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a spread (...x) adds keys the text does not name"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/suppliers/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
         "body": {
@@ -38801,9 +38655,8 @@
     "GET /api/products/:id/versions": "open at current — a value passed through (an expression: its keys are not written in the handler); versions[] — a value passed through (an expression: its keys are not written in the handler); version — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/products/lists": "open at lists[] — a value passed through (an expression: its keys are not written in the handler); mine[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/products/starter-columns": "open at verticals[] — a value passed through (an expression: its keys are not written in the handler); starter — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/relationships/customers/:id/rewards": "open at recent[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler",
+    "GET /api/quick-keys/groups": "open at groups[] — a value passed through (a name: its keys are not written in the handler)",
+    "GET /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
@@ -38839,8 +38692,8 @@
     "PATCH /api/entities/policy": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/folders/rules/:rule_id": "open at when — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/products/:id": "open at item — a value passed through (an expression: its keys are not written in the handler)",
-    "PATCH /api/relationships/customers/:id": "open at party — a value passed through (a name: its keys are not written in the handler)",
-    "PATCH /api/relationships/suppliers/:id": "open at (answer) — a spread (...x) adds keys the text does not name",
+    "PATCH /api/quick-keys/groups/:id": "open at group — a value passed through (a name: its keys are not written in the handler)",
+    "PATCH /api/quick-keys/groups/:id/items": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PATCH /api/supplies/:id": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/adopt/:chit_id": "open at added[] — a value passed through (an expression: its keys are not written in the handler); refused[] — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
@@ -38914,8 +38767,8 @@
     "POST /api/products/bulk": "open at items[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/products/import": "open at outcome[] — a value passed through (an expression: its keys are not written in the handler); summary — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/products/import/preflight": "open at report — a value passed through (a name: its keys are not written in the handler); identity — a value passed through (an expression: its keys are not written in the handler); preview[] — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/relationships/customers": "open at customer — a spread (...x) adds keys the text does not name",
-    "POST /api/relationships/suppliers": "open at supplier — a spread (...x) adds keys the text does not name",
+    "POST /api/quick-keys/groups": "open at group — a value passed through (a name: its keys are not written in the handler)",
+    "POST /api/quick-keys/groups/:id/items": "open at item — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/schemas/create-default": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
@@ -38932,6 +38785,10 @@
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/privacy/me/requests": "open at request — a value passed through (an expression: its keys are not written in the handler)"
+    "GET /api/relationships/customers/:id/rewards": "open at recent[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/relationships/scorecard": "open at counterparties[] — a value passed through (an expression: its keys are not written in the handler)",
+    "PATCH /api/relationships/customers/:id": "open at party — a value passed through (a name: its keys are not written in the handler)",
+    "POST /api/relationships/customers": "open at customer — a spread (...x) adds keys the text does not name",
+    "POST /api/relationships/suppliers": "open at supplier — a spread (...x) adds keys the text does not name"
   }
 }
