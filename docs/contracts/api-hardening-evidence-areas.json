@@ -250,15 +250,22 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": true
   },
+  "GET /api/connectors": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/connectors/:actorId/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/provisioning": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/receipts": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -592,6 +599,7 @@
    "foreign_id_404": true
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -930,13 +938,17 @@
    "output_allowlist": true
   },
   "POST /api/connectors": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/connectors/:actorId/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/erp-test": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/ping": {
@@ -946,6 +958,10 @@
   "POST /api/connectors/:actorId/regenerate-key": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/connectors/erp-ingest": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/connectors/ingest": {
    "output_allowlist": true
