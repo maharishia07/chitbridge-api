@@ -172,6 +172,58 @@
   "GET /api/till/verify": 3,
   "GET /api/till/worth-an-offer": 1,
   "GET /api/work/facts": 1,
-  "GET /api/work/list": 1
- }
+  "GET /api/work/list": 1,
+  "POST /api/network/entities": 2,
+  "POST /api/network/connections": 3,
+  "POST /api/network/connections/:id/approve": 3,
+  "POST /api/network/connections/:id/suspend": 3,
+  "POST /api/network/connections/:id/resume": 3,
+  "POST /api/network/connections/:id/disconnect": 3,
+  "POST /api/network/connections/:id/decline": 3
+ },
+ "measured": {
+  "POST /api/network/entities": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections/:id/approve": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections/:id/resume": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/connections/:id/decline": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  }
+ },
+ "_about": "Live counts of the routes the harness reached (tools/live-trips.cjs, SPD-39): measured[route] = { trips, status, basis, at }; routes[route] carries the same trips for tests/round-trips-all.test.cjs."
 }

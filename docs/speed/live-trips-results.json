@@ -1,0 +1,187 @@
+{
+ "about": "SPD-39 live-trips results (tools/live-trips.cjs): per failing-trips route, measured (live X-DB-Trips, highest of 3 after 1 warm-up) or unreached with the group and the reason. Resumable: measured routes are skipped.",
+ "at": "2026-11-06",
+ "server": "sit-in",
+ "summary": {
+  "measured": 7,
+  "unreached": 3
+ },
+ "routes": {
+  "POST /api/network/entities": {
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/network/connections": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/entities/:id/claim": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "needs an UNCLAIMED cb_entity row whose bridge_id is the caller's own (answered 409 ALREADY_CLAIMED): register() mints a new bridge id and a claimed node, so it takes a SQL fixture"
+  },
+  "POST /api/network/connections/:id/approve": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/suspend": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/resume": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/disconnect": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/network/connections/:id/decline": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "GET /api/network/entities/:id/connections": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/network/entities for :id"
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/network/entities for :id"
+  }
+ }
+}

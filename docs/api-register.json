@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 637,
-    "failing": 141
+    "failing": 134
    }
   },
   "reported": {
@@ -175,7 +175,7 @@
     "screens": [
      "cap-employees.js 1/5",
      "cap-workforce.js 1/65",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -483,7 +483,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -590,7 +590,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387",
+     "core.js 1/152",
      "till.html 1/1106"
     ]
    },
@@ -811,7 +811,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -1024,7 +1024,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -1549,7 +1549,7 @@
     "wire": 5,
     "screens": [
      "cap-folders.js 1/22",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -1759,7 +1759,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -1867,7 +1867,7 @@
      "app.html 1/249",
      "catalogue-lines.js 1/225",
      "combo-mode.js 1/155",
-     "core.js 1/387",
+     "core.js 1/152",
      "till.html 1/1106"
     ]
    },
@@ -2380,7 +2380,7 @@
     "screens": [
      "app.html 1/249",
      "cap-suppliers.js 1/5",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -2592,11 +2592,11 @@
     "wire": 2,
     "screens": [
      "app.html 2/249",
-     "cap-admin.js 2/527",
+     "cap-admin.js 2/245",
      "cap-chit2.js 2/15",
      "cap-workforce.js 2/65",
      "cap-worklist.js 2/12",
-     "core.js 2/387"
+     "core.js 2/152"
     ]
    },
    "measured": {
@@ -2973,7 +2973,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -3832,7 +3832,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/249",
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-assist.js 1/2"
     ]
    },
@@ -7231,7 +7231,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -9090,7 +9090,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -9321,7 +9321,7 @@
     "screens": [
      "app.html 1/249",
      "authority-forms.html 1/254",
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-books.js 1/43",
      "cap-chit2.js 1/15",
      "cap-crm-chits.js 1/3",
@@ -9332,7 +9332,7 @@
      "cap-register.js 1/23",
      "cap-worklist.js 1/12",
      "chit-sheet.js 1/2",
-     "core.js 1/387",
+     "core.js 1/152",
      "intake.html 1/5",
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
@@ -9871,7 +9871,7 @@
      "cap-crm-record.js 1/8",
      "cap-dispute.js 1/5",
      "cap-intake.js 1/6",
-     "core.js 1/387",
+     "core.js 1/152",
      "rail-thread.js 1/2",
      "screens.js 1/6"
     ]
@@ -10475,7 +10475,7 @@
     "trips": 2,
     "wire": 6,
     "screens": [
-     "cap-admin.js 2/527",
+     "cap-admin.js 2/245",
      "cap-dispute.js 2/5"
     ]
    },
@@ -10579,7 +10579,7 @@
     "wire": 7,
     "screens": [
      "app.html 3/249",
-     "cap-admin.js 3/527"
+     "cap-admin.js 3/245"
     ]
    },
    "measured": {
@@ -10686,7 +10686,7 @@
     "screens": [
      "app.html 2/249",
      "authority-forms.html 2/254",
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -11492,7 +11492,7 @@
     "screens": [
      "app.html 1/249",
      "authority-forms.html 1/254",
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-bank.js 1/8",
      "cap-connector.js 1/11",
      "cap-crm-groups.js 1/13",
@@ -12703,7 +12703,7 @@
     "wire": 3,
     "screens": [
      "app.html 1/249",
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116",
      "screen-id.js 1/5",
      "settings.html 1/1"
@@ -13726,7 +13726,7 @@
      "app.html 1/249",
      "cap-categories.js 1/6",
      "cap-catsetup.js 1/14",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -14229,7 +14229,7 @@
     "screens": [
      "app.html 6/249",
      "avatar.js 6/6",
-     "cap-admin.js 6/527",
+     "cap-admin.js 6/245",
      "cap-country.js 6/12",
      "cap-finance-returns.js 6/6",
      "cap-print.js 6/17",
@@ -14537,7 +14537,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-catsetup.js 1/14",
      "cap-country.js 1/12",
      "cap-crm-groups.js 1/13",
@@ -14741,7 +14741,7 @@
     "trips": 2,
     "wire": 8,
     "screens": [
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -15221,7 +15221,7 @@
     "trips": 1,
     "wire": 6,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -15324,7 +15324,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/387",
+     "core.js 0/152",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/1106"
@@ -15425,7 +15425,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/387",
+     "core.js 0/152",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/1106"
@@ -16317,7 +16317,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-messages.js 1/4"
     ]
    },
@@ -16417,7 +16417,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/527",
+     "cap-admin.js 2/245",
      "cap-mis.js 2/3"
     ]
    },
@@ -18421,7 +18421,7 @@
     "trips": 10,
     "wire": 20,
     "screens": [
-     "cap-admin.js 10/527",
+     "cap-admin.js 10/245",
      "cap-definitions.js 10/17",
      "cap-readiness.js 10/25"
     ]
@@ -19106,7 +19106,7 @@
     "trips": 1,
     "wire": 0,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -19589,7 +19589,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -19688,7 +19688,7 @@
     "trips": 3,
     "wire": 6,
     "screens": [
-     "cap-admin.js 3/527"
+     "cap-admin.js 3/245"
     ]
    },
    "measured": {
@@ -19786,7 +19786,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -19979,7 +19979,7 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -20182,7 +20182,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -20989,7 +20989,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "network-app.js 1/8"
     ]
    },
@@ -23813,7 +23813,7 @@
     "wire": 10,
     "screens": [
      "app.html 4/249",
-     "cap-admin.js 4/527",
+     "cap-admin.js 4/245",
      "cap-chit2.js 4/15",
      "cap-suppliers.js 4/5"
     ]
@@ -24982,7 +24982,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/527",
+     "cap-admin.js 2/245",
      "helpers.js 2/2"
     ]
    },
@@ -25084,7 +25084,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527"
+     "cap-admin.js 50/245"
     ]
    },
    "measured": {
@@ -25182,7 +25182,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "cap-admin.js 2/527"
+     "cap-admin.js 2/245"
     ]
    },
    "measured": {
@@ -29121,7 +29121,7 @@
     "screens": [
      "cap-employees.js 2/5",
      "cap-workforce.js 2/65",
-     "core.js 2/387"
+     "core.js 2/152"
     ]
    },
    "measured": {
@@ -29563,7 +29563,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -29968,7 +29968,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -30164,7 +30164,7 @@
     "wire": 0,
     "screens": [
      "avatar.js 0/6",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -30269,7 +30269,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-catsetup.js 1/14",
      "cap-country.js 1/12",
      "cap-crm-groups.js 1/13",
@@ -30384,11 +30384,11 @@
     "wire": 1,
     "screens": [
      "app.html 1/249",
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-country.js 1/12",
      "cap-network.js 1/53",
      "cap-shop.js 1/18",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -30492,7 +30492,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -30707,7 +30707,7 @@
      "cap-categories.js 0/6",
      "catalogue-lines.js 0/225",
      "combo-mode.js 0/155",
-     "core.js 0/387",
+     "core.js 0/152",
      "till.html 0/1106"
     ]
    },
@@ -31132,7 +31132,7 @@
      "cap-books.js 0/43",
      "cap-crm-record.js 0/8",
      "cap-suppliers.js 0/5",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -33023,9 +33023,9 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "cap-admin.js 0/527",
+     "cap-admin.js 0/245",
      "cap-assist.js 0/2",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -33123,7 +33123,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "core.js 50/387"
+     "core.js 50/152"
     ]
    },
    "measured": {
@@ -39791,7 +39791,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -39992,7 +39992,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -40292,7 +40292,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -40609,7 +40609,7 @@
     "screens": [
      "app.html 1/249",
      "cap-chit2.js 1/15",
-     "core.js 1/387",
+     "core.js 1/152",
      "screens.js 1/6"
     ]
    },
@@ -40822,7 +40822,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -42253,7 +42253,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -42357,7 +42357,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -42461,7 +42461,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -42567,7 +42567,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -44621,7 +44621,7 @@
     "trips": 1,
     "wire": 8,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -44832,7 +44832,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116",
      "screens.js 1/6"
     ]
@@ -44939,7 +44939,7 @@
     "trips": 1,
     "wire": 3,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -46600,7 +46600,7 @@
      "cap-categories.js 0/6",
      "cap-catsetup.js 0/14",
      "cap-definitions.js 0/17",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -47092,7 +47092,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/387",
+     "core.js 0/152",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/1106"
@@ -47501,7 +47501,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -48309,7 +48309,7 @@
     "wire": 0,
     "screens": [
      "cap-readiness.js 0/25",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -48933,7 +48933,7 @@
     "wire": 0,
     "screens": [
      "cap-readiness.js 0/25",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -49275,7 +49275,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "cap-settings.js 1/116"
     ]
    },
@@ -49577,7 +49577,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -49988,7 +49988,7 @@
     "wire": null,
     "screens": [
      "app.html 50/249",
-     "cap-admin.js 50/527",
+     "cap-admin.js 50/245",
      "cap-settings.js 50/116"
     ]
    },
@@ -50610,7 +50610,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527",
+     "cap-admin.js 1/245",
      "network-app.js 1/8"
     ]
    },
@@ -50723,7 +50723,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -50832,7 +50832,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -50936,7 +50936,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -51038,7 +51038,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -51142,7 +51142,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -51194,7 +51194,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51239,10 +51239,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527"
+     "cap-admin.js 3/245"
     ]
    },
    "measured": {
@@ -51295,7 +51295,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51342,11 +51342,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527",
-     "core.js 50/387"
+     "cap-admin.js 3/245",
+     "core.js 3/152"
     ]
    },
    "measured": {
@@ -51399,7 +51399,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51446,11 +51446,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527",
-     "core.js 50/387"
+     "cap-admin.js 3/245",
+     "core.js 3/152"
     ]
    },
    "measured": {
@@ -51503,7 +51503,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51550,11 +51550,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527",
-     "core.js 50/387"
+     "cap-admin.js 3/245",
+     "core.js 3/152"
     ]
    },
    "measured": {
@@ -51607,7 +51607,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51654,11 +51654,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527",
-     "core.js 50/387"
+     "cap-admin.js 3/245",
+     "core.js 3/152"
     ]
    },
    "measured": {
@@ -51711,7 +51711,7 @@
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51758,11 +51758,11 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
+    "trips": 3,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527",
-     "core.js 50/387"
+     "cap-admin.js 3/245",
+     "core.js 3/152"
     ]
    },
    "measured": {
@@ -51814,7 +51814,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -51857,7 +51857,7 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 2,
     "wire": null,
     "screens": []
    },
@@ -57297,7 +57297,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -57400,7 +57400,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "cap-admin.js 50/527"
+     "cap-admin.js 50/245"
     ]
    },
    "measured": {
@@ -61404,7 +61404,7 @@
     "screens": [
      "cap-employees.js 1/5",
      "cap-workforce.js 1/65",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -61515,7 +61515,7 @@
     "screens": [
      "cap-employees.js 0/5",
      "cap-workforce.js 0/65",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -61723,9 +61723,9 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "cap-admin.js 0/527",
+     "cap-admin.js 0/245",
      "cap-tasks.js 0/7",
-     "core.js 0/387",
+     "core.js 0/152",
      "workflow.js 0/1"
     ]
    },
@@ -61832,7 +61832,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -61935,7 +61935,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -62039,8 +62039,8 @@
     "trips": 2,
     "wire": 2,
     "screens": [
-     "cap-admin.js 2/527",
-     "core.js 2/387"
+     "cap-admin.js 2/245",
+     "core.js 2/152"
     ]
    },
    "measured": {
@@ -62560,7 +62560,7 @@
     "wire": 0,
     "screens": [
      "cap-dispute.js 0/5",
-     "core.js 0/387",
+     "core.js 0/152",
      "screens.js 0/6"
     ]
    },
@@ -62666,7 +62666,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -62773,7 +62773,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -62878,7 +62878,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/249",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -63032,7 +63032,7 @@
      "cap-suppliers.js 0/5",
      "cap-tasks.js 0/7",
      "chit-sheet.js 0/2",
-     "core.js 0/387",
+     "core.js 0/152",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
      "till.html 0/1106"
@@ -63247,7 +63247,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/249",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -63352,7 +63352,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "core.js 50/387"
+     "core.js 50/152"
     ]
    },
    "measured": {
@@ -63473,7 +63473,7 @@
      "app.html 1/249",
      "cap-categories.js 1/6",
      "cap-definitions.js 1/17",
-     "core.js 1/387"
+     "core.js 1/152"
     ]
    },
    "measured": {
@@ -63685,7 +63685,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {
@@ -63994,7 +63994,7 @@
     "wire": 14,
     "screens": [
      "cap-readiness.js 5/25",
-     "core.js 5/387"
+     "core.js 5/152"
     ]
    },
    "measured": {
@@ -64101,7 +64101,7 @@
     "screens": [
      "cap-print.js 7/17",
      "cap-shop.js 7/18",
-     "core.js 7/387"
+     "core.js 7/152"
     ]
    },
    "measured": {
@@ -64324,7 +64324,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "cap-admin.js 1/527"
+     "cap-admin.js 1/245"
     ]
    },
    "measured": {
@@ -64429,7 +64429,7 @@
     "wire": 0,
     "screens": [
      "cap-network.js 0/53",
-     "core.js 0/387"
+     "core.js 0/152"
     ]
    },
    "measured": {
@@ -64532,7 +64532,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "cap-admin.js 0/527"
+     "cap-admin.js 0/245"
     ]
    },
    "measured": {

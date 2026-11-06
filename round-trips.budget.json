@@ -3779,52 +3779,59 @@
     },
     "POST /api/network/connections": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 401 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/connections/:id/approve": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/connections/:id/decline": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/connections/:id/disconnect": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/connections/:id/resume": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/connections/:id/suspend": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/entities": {
       "file": "network.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/network/entities/:id/claim": {
       "file": "network.js",
