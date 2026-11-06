@@ -468,18 +468,26 @@
    "output_allowlist": true
   },
   "GET /api/relationships/customers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/customers/:id/rewards": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
    "output_allowlist": true
   },
   "GET /api/relationships/suppliers": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/suppliers/availability": {
@@ -633,10 +641,13 @@
    "foreign_id_404": true
   },
   "PATCH /api/relationships/customers/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/suppliers/:id": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/schemas/fields/:field_key": {
@@ -1156,6 +1167,7 @@
    "foreign_id_404": true
   },
   "POST /api/relationships/customers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/relationships/customers/:id/groups": {
@@ -1163,6 +1175,7 @@
    "foreign_id_404": true
   },
   "POST /api/relationships/suppliers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/repeat": {
