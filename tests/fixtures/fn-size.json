@@ -112,9 +112,6 @@
       "(anonymous)",
       "applyLiveOffers"
     ],
-    "lib/parallel-run.js": [
-      "compareStatement"
-    ],
     "lib/policy.js": [
       "coerce"
     ],
