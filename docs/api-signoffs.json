@@ -3689,6 +3689,22 @@
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 output shape",
    "lifecycle": "stable"
+  },
+  "GET /api/simulator/content": {
+   "hash": "381d8655bc80219d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "POST /api/privacy/me/requests": {
+   "hash": "c8714a4ba7879d84",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
+   "lifecycle": "stable"
   }
  }
 }
