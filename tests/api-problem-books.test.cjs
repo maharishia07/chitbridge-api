@@ -32,6 +32,7 @@ const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json')
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ANSWERS_FILE = path.join(HERE, 'docs', 'contracts', 'books-answers.json'); /* the period-end routes' 2xx answers, produced by tests/support/books-capture.cjs --build */
 const MOUNT = '/api/books';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/books': 'routes/books.js', '/api/tax': 'routes/tax.js', '/api/invoice': 'routes/invoice.js' };
@@ -525,7 +526,7 @@ function checkAllowList(recording) {
   });
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
-  return proved;
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
 const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');

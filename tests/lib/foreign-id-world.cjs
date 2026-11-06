@@ -86,4 +86,9 @@ function evidenceOf(file, mine) {
   return Object.fromEntries(Object.keys(routes).filter((route) => mine(route) && routes[route][COLUMN]).sort().map((route) => [route, { [COLUMN]: true }]));
 }
 
-module.exports = { comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };
+/** ownedBy(proved, mine) — the rows of a proved set whose route `mine(route)` names: a test's world may call another area's routes, but the evidence it writes and compares is its own */
+function ownedBy(proved, mine) {
+  return Object.fromEntries(Object.keys(proved).filter(mine).map((route) => [route, proved[route]]));
+}
+
+module.exports = { ownedBy, comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };
