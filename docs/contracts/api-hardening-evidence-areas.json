@@ -374,6 +374,10 @@
   "GET /api/governance/vault-schema": {
    "output_allowlist": true
   },
+  "GET /api/invoice/:chit_id": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -397,6 +401,13 @@
   },
   "GET /api/repeat/:id": {
    "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/tax/invoice/:chit_id": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/tax/ledger": {
    "output_allowlist": true
   },
   "GET /api/testing/cmdb/:ci": {
@@ -885,6 +896,10 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
+  "POST /api/invoice/build": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/products": {
    "output_allowlist": true
   },
@@ -969,6 +984,13 @@
   },
   "POST /api/repeat/sweep": {
    "output_allowlist": true
+  },
+  "POST /api/tax/compute": {
+   "output_allowlist": true
+  },
+  "POST /api/tax/rate": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/till/alias": {
    "output_allowlist": true
