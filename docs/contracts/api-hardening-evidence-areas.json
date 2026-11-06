@@ -265,6 +265,14 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": true
   },
+  "GET /api/connections/list": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/connections/pending": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/connectors/:actorId/connections": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -459,6 +467,14 @@
    "output_allowlist": true
   },
   "GET /api/network-design/stores": {
+   "output_allowlist": true
+  },
+  "GET /api/network/entities/lookup": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/network/place": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -974,6 +990,9 @@
   "POST /api/chits/send": {
    "output_allowlist": true
   },
+  "POST /api/connections/request": {
+   "output_allowlist": true
+  },
   "POST /api/connectors": {
    "output_allowlist": true
   },
@@ -1134,28 +1153,52 @@
    "bfla_role_check": true
   },
   "POST /api/network-design/build": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/network-design/reissue": {
    "output_allowlist": true
   },
   "POST /api/network-design/validate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/decline": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/disconnect": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/resume": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/suspend": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network/entities": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network/entities/:id/claim": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/privacy/me/requests": {
    "output_allowlist": true
@@ -1419,6 +1462,7 @@
    "output_allowlist": true
   },
   "PUT /api/connections/:id/respond": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PUT /api/definitions/:id": {
