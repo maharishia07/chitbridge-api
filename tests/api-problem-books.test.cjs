@@ -57,7 +57,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "books_entry" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null };
 const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
 const OTHER = '77777777-7777-4777-8777-777777777777'; /* another shop: the owner of the row in the foreign-id world */
@@ -66,11 +66,12 @@ const foreignRow = () => new Proxy({}, { get: (target, name) => (typeof name !==
 
 /** the rows a statement gets: the ledger's switch, then a scenario's own rows, then nothing (or the secret failure when the db is down) */
 function rowsFor(sql, params) {
+  if (world.sqlLog) world.sqlLog.push(String(sql));
   /* K-1: a db that answers as Postgres does to a value that is no uuid (22P02), so a route that lets one through shows as a 500 */
   if (world.db === 'uuid' && (params || []).some((value) => typeof value === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))) throw Object.assign(new Error('invalid input syntax for type uuid: "' + params[0] + '"'), { code: '22P02' });
   if (/FROM books_setting/.test(sql)) return world.ledgerOn ? { rows: [SETTING_ROW], rowCount: 1 } : { rows: [], rowCount: 0 };
-  /* S35 (Wave M · M3): the path id names ANOTHER shop's row — visible only to a statement that names its owner (the caller's scoped reads name the caller, so it is hidden, as RLS hides it); a read by the id alone surfaces it */
-  if (world.rowOwner && (params || []).includes(PARTY)) return params.includes(world.rowOwner) ? { rows: [foreignRow()], rowCount: 1 } : { rows: [], rowCount: 0 };
+  /* S35 (Wave M · M3): the path id names ANOTHER shop's row — hidden from a statement that names the caller (SHOP: a scoped read, as RLS hides it), shown to any statement that does not (a read by the id alone surfaces it) */
+  if (world.rowOwner && (params || []).includes(PARTY)) return params.includes(SHOP) ? { rows: [], rowCount: 0 } : { rows: [foreignRow()], rowCount: 1 };
   if (world.sqlRows) {
     const given = world.sqlRows(String(sql));
     if (given) return given;
@@ -191,6 +192,9 @@ const LEDGER_LINE_BARE = Object.assign({}, LEDGER_LINE, { doc_date: null, narrat
 const LEDGER_PATCH = { store: { accounts: async () => CHART, entryLines: async () => [LEDGER_LINE, LEDGER_LINE_BARE] }, books: { ledgerOf: async () => ({ opening_minor: 0, period0: false }) } };
 const LEDGER_PAGE_PATCH = { store: Object.assign({}, LEDGER_PATCH.store, { entryPage: async () => ({ rows: [LEDGER_LINE], limit: 10, next: null }), pageSums: async () => ({ before_dr: 0, before_cr: 0, dr: 1000, cr: 0, entries: 1 }) }), books: LEDGER_PATCH.books };
 const packIN = () => require(path.join(HERE, 'lib', 'books-engines')).packs().packFor('IN');
+const ASSET_DISPOSED = { entity: SHOP, asset_id: PARTY, name: 'Press', asset_class: 'plant', cost_minor: 100000, currency: 'INR', put_to_use: '2025-04-01', source_entry_id: ENTRY, source_chit_id: null, accumulated_minor: 20000, last_dep_fy: '2025-26', disposed_on: DAY, disposal_entry_id: ENTRY, proceeds_minor: 0, created_by: SHOP, wdv_minor: 0 };
+const COMPARE_READY = { store: { compareReady: async () => true } };
+const COMPARE_PATCH = { store: { compareReady: async () => true, compareParts: async () => [{ snapshot_id: PARTY, part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30', rows: [] }] } };
 const STATEMENT_PATCH = { books: { ledgerCtx: async () => ({ s: SETTING_ROW, chart: CHART, pack: packIN(), years: [], cache: {} }), yearBalances: async () => ({}) }, store: { ledgerLines: async () => [], entryLines: async () => [] } };
 const MANUAL_PREVIEW = { ok: true, kind: 'expense', voucher: { series: 'MJ', type: 'Journal' }, date: DAY, lines: [{ code: '5000', ledger: 'Rent', dr_minor: 1000, cr_minor: 0, type: 'expense', rule: 'expense' }], balanced: true, totals: { dr_minor: 1000, cr_minor: 1000 }, credit: null, bill: null, flags: [], refusals: [], code: null, duplicate: null }; /* books-manual preview :483 */
 const SHOP_TERMS = { credit_days: 30, credit_limit_minor: null, interest: null, early: null };
@@ -248,7 +252,14 @@ const WRITES_READY = [
   X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
   X('ledger-read-party', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/debtors?party=' + PARTY, patch: LEDGER_PATCH }),
   X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
-  X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: STATEMENT_PATCH })
+  X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: true, supplier: false, ledgered: false }) }) } }),
+  X('statement-ledgered-only', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: false, supplier: false, ledgered: true }) }) } }),
+  X('statement-stranger', 'GET /api/books/party/:id/statement', 404, {}),
+  /* S35 (Wave M · M3): the own id of a route whose other worlds (unknown, foreign) run the real code over the stand-in db; inWorlds is what those worlds keep too */
+  X('compare-read', 'GET /api/books/compare/:id', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
+  X('compare-read-csv', 'GET /api/books/compare/:id/csv', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
+  X('pack-file-served', 'GET /api/books/packs/:id/file', 200, { patch: { pack: { download: async () => ({ found: true, stored: true, pack: PACK_FULL, bytes: Buffer.from('zip') }) } } }),
+  X('asset-disposed', 'POST /api/books/assets/:id/dispose', 200, { body: { date: DAY }, patch: { period: { disposeAsset: async () => Object.assign({ asset: ASSET_DISPOSED }, JOURNAL, { moved: false }) } } })
 ];
 /* ── API-8 (2 of 2): months and the year, audit packs, recurring entries, exchange rates, the parallel run and the move-in preflight ── */
 const STAMP = '2026-09-30T10:00:00.000Z';
@@ -533,24 +544,39 @@ const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-a
  * S35 foreign_id_404 (Wave M · M3), the generator's own rule (tools/api-contract-tests.cjs foreignIdCase) over this file's worlds, because its proxy world never
  * reaches a books route (the country gate stops it): a route addressed by a uuid in its path is proved when (1) some recorded scenario found the caller's own
  * id (a 2xx), (2) the unknown id (the nothing-found world) is a 404, and (3) another shop's id (the foreign-id world: the row exists, owned by OTHER) answers
- * byte for byte as the unknown id. → { route: { foreign_id_404: true } } for the routes that held; a route whose path value is not a row's uuid (a year, an
- * account code, a ref) is not addressed by a shop's id and is left to docs/contracts/api-hardening-scope.json public_ids (cb-api).
+ * byte for byte as the unknown id. → { route: { foreign_id_404: true } } for the routes that held; a route whose path value is not a row's uuid (a year, a ref) is left to
+ * docs/contracts/api-hardening-scope.json public_ids (cb-api); the ledger's account code is read from the caller's own chart, so it is proved here too.
  */
 async function checkForeignIds(port, routes, recording) {
   const proved = {};
-  const idRoutes = Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && /:(id|chit_id)\b/.test(route));
+  const idRoutes = Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && /:(id|chit_id|account)\b/.test(route));
   for (const route of idRoutes) {
-    /* the request that found the caller's own id (a recorded 2xx: its body passes the route's own input checks), sent again at an unknown id and at another shop's */
-    const found = Object.values(recording).find((one) => one.route === route && one.status >= 200 && one.status < 300);
-    const ask = (id, setup) => runScenario(port, { id, route, url: urlOf(routes[route], false), body: found && found.request.body, setup });
-    const unknown = found ? await ask('unknown-id', {}) : null;
-    const foreign = found ? await ask('foreign-id', { rowOwner: OTHER }) : null;
-    const held = !!found && unknown.status === 404 && foreign.status === 404 && shaOf(foreign) === shaOf(unknown);
-    if (held) proved[route] = { foreign_id_404: true };
-    else console.log('  note  ' + route + ': foreign_id_404 not held here (' + (found ? 'unknown id ' + unknown.status + ', foreign id ' + foreign.status : 'no scenario finds the own id') + ') — the register keeps it open');
+    const outcome = await foreignIdOutcome(port, routes, recording, route);
+    if (route === 'POST ' + MOUNT + '/parties/:id/dispute') check('a dispute of a party that is not the shop writes no party_item row (unknown id and another shop id)', outcome.held && !outcome.wrote, outcome);
+    if (outcome.held) proved[route] = { foreign_id_404: true };
+    else console.log('  note  ' + route + ': foreign_id_404 not held here (' + outcome.why + ') — the register keeps it open');
   }
   check("S35: on every books route addressed by a uuid whose own id a scenario finds, another shop's id answers the unknown id's 404 byte for byte — or the route is named above (" + Object.keys(proved).length + ' of ' + idRoutes.length + ' held)', Object.keys(proved).length > 0);
+  await checkForeignBite(port, routes, recording);
   return proved;
+}
+/** one route: the request that found the caller's own id (a recorded 2xx: its body passes the route's own input checks), sent again at an unknown id and at another shop's; worldPatch swaps a store read in both worlds */
+async function foreignIdOutcome(port, routes, recording, route, worldPatch) {
+  const key = Object.keys(recording).find((one) => recording[one].route === route && recording[one].status >= 200 && recording[one].status < 300);
+  if (!key) return { held: false, why: 'no scenario finds the own id' };
+  const own = EXTRAS.find((one) => one.id === key.slice(route.length + 1)) || {};
+  const patch = Object.assign({}, own.inWorlds, worldPatch);
+  const seen = [];
+  const ask = (id, setup) => runScenario(port, { id, route, url: urlOf(routes[route], false), body: recording[key].request.body, setup: Object.assign({ sqlLog: seen }, setup), patch });
+  const unknown = await ask('unknown-id', {});
+  const foreign = await ask('foreign-id', { rowOwner: OTHER });
+  return { wrote: seen.some((one) => /INSERT INTO party_item/i.test(one)), held: unknown.status === 404 && foreign.status === 404 && shaOf(foreign) === shaOf(unknown), why: 'unknown id ' + unknown.status + ', foreign id ' + foreign.status };
+}
+/** the bite: a pack read by its id alone (no entity_id) must NOT hold, or the foreign-id world could not fail (S35, as tests/api-contract.test.cjs does for the generator) */
+async function checkForeignBite(port, routes, recording) {
+  const unscoped = { store: { pack: async (db, entity, id) => (await db.query('SELECT * FROM books_pack WHERE pack_id = $1', [id])).rows[0] || null } };
+  const outcome = await foreignIdOutcome(port, routes, recording, 'GET ' + MOUNT + '/packs/:id', unscoped);
+  check("foreign_id_404 bites: a pack read by its id alone (no entity_id) is NOT held (" + outcome.why + ')', !outcome.held);
 }
 /** the books routes the evidence file says foreign_id_404 for */
 function foreignIdEvidenceOnDisk() {

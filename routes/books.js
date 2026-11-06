@@ -673,6 +673,7 @@ router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/s
     const to = dateQ(req.query.to, today(req)),
       from = dateQ(req.query.from, fyStart(req, to));
     const out = await withEntity(e, async (h) => {
+      if (!(await B.knownParty(h, e, id))) return null;
       const st = E.ledger().partyStatement({ ...(await statementInput(h, e, id, from, to)), party: id, from, to });
       const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((item) => [String(item.entry_id), item]));
       /* where each entry came from (its bill, how it was paid, the counter, who rang it) - the same `source` the day book and a ledger carry, so a party's own ledger reads like theirs */
@@ -729,6 +730,7 @@ router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/s
         })
       };
     });
+    if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     res.json({ currency: curOf(req), party_id: id, from, to, code: out.code, opening_minor: out.opening_minor, closing_minor: out.closing_minor, lines: out.lines });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
