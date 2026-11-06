@@ -18,7 +18,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:764 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2375 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | yes |
+| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | DELETE | /api/channels/:id | channels | routes/channels.js:140 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5994 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4858 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
@@ -31,7 +31,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | DELETE | /api/definitions/:id | definitions | routes/definitions.js:487 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/folders/:id | folders | routes/folders.js:342 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:609 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| DELETE | /api/keys/:jti | keys | routes/keys.js:167 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| DELETE | /api/keys/:jti | keys | routes/keys.js:167 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | DELETE | /api/products/:id | products | routes/products.js:1776 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | DELETE | /api/products/:id/media/:mid | products | routes/products.js:1926 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1657 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
@@ -189,7 +189,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/governance/boilerplate/:key | governance | routes/governance.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/commerce-standards | governance | routes/governance.js:394 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/country-setup | governance | routes/governance.js:521 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/governance/entities/:id | governance | routes/governance.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/governance/entities/:id | governance | routes/governance.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/governance/instruments | governance | routes/governance.js:374 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/journey | governance | routes/governance.js:384 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/lanes | governance | routes/governance.js:346 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -562,10 +562,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | no | no | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/ask | signin | routes/signin.js:979 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/logout | signin | routes/signin.js:100 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial | yes | yes | no |
