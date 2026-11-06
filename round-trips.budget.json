@@ -429,6 +429,7 @@
       "wire": 3,
       "fired": true,
       "status": 422,
+      "basis": "live from sit-in 2026-11-06",
       "awaiting_client": {
         "pr": "FX1 web: Accounts › Rates + Month lock foreign balances",
         "since": "2026-10-14"
@@ -792,24 +793,27 @@
     },
     "GET /api/chits/raida/report": {
       "file": "chits.js",
-      "trips": 2,
+      "trips": 4,
       "wire": 5,
       "fired": true,
-      "status": 403
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/chits/register/attachables": {
       "file": "chits.js",
       "trips": 2,
       "wire": 5,
       "fired": true,
-      "status": 403
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/chits/register/subjects": {
       "file": "chits.js",
       "trips": 2,
       "wire": 5,
       "fired": true,
-      "status": 403
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/chits/register/templates": {
       "file": "chits.js",
@@ -817,6 +821,7 @@
       "wire": 5,
       "fired": true,
       "status": 403,
+      "basis": "live from sit-in 2026-11-06",
       "extra": true
     },
     "GET /api/chits/register/walk/:from": {
@@ -898,7 +903,8 @@
       "trips": 1,
       "wire": 1,
       "fired": true,
-      "status": 403
+      "status": 403,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/connectors/:actorId/connections": {
       "file": "connectors.js",
@@ -1065,7 +1071,8 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/entities/policy": {
       "file": "entities.js",
@@ -1079,7 +1086,8 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 404
+      "status": 404,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/entities/routing": {
       "file": "entities.js",
@@ -1132,6 +1140,7 @@
       "wire": 0,
       "fired": true,
       "status": 404,
+      "basis": "live from sit-in 2026-11-06",
       "extra": true
     },
     "GET /api/events/stream": {
@@ -1561,7 +1570,8 @@
       "trips": 0,
       "wire": 0,
       "fired": true,
-      "status": 400
+      "status": 400,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/network-design/stores": {
       "file": "network-design.js",
