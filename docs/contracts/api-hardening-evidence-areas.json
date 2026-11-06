@@ -61,8 +61,13 @@
    "output_allowlist": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "DELETE /api/relationships/suppliers/:id": {
    "output_allowlist": true,
@@ -465,6 +470,11 @@
    "output_allowlist": true
   },
   "GET /api/quick-keys/groups": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/quick-keys/screen-config/default": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/customers": {
@@ -626,10 +636,13 @@
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/customers/:id": {
@@ -1149,9 +1162,11 @@
    "output_allowlist": true
   },
   "POST /api/quick-keys/groups": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/quick-keys/groups/:id/items": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -1408,6 +1423,10 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/status": {
+   "output_allowlist": true
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "PUT /api/service/:chit_id": {
