@@ -34,6 +34,7 @@ const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
+const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
@@ -1877,6 +1878,7 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POS
     if (!counter_id) return refuseNoCounter(req, res);
     const body = req.body || {};
     if (!body.product_id) return refuseBad(req, res, 'product_id required');
+    if (body.by && !UUID_RE.test(String(body.by))) return refuseBad(req, res, 'by must be the id of the person who marked it sold out'); /* CTR-200: hidden_by is a uuid column; a name used to reach it and answer 500 */
     const rows = await withEntity(entity_id, (db) =>
       quickKeys.hideItem(db, entity_id, counter_id, body.product_id, body.shift_id, body.by || null, body.also_counters)
     );
