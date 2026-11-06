@@ -1795,19 +1795,19 @@
    "lifecycle": "stable"
   },
   "PATCH /api/testing/incidents/:id": {
-   "hash": "3480947172cfd1a2",
+   "hash": "df4e141b1b0c06bd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "PATCH /api/testing/requirements/:id": {
-   "hash": "2dfc6cd25cd9e02e",
+   "hash": "237a83a8f39b813c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/actors": {
@@ -3051,11 +3051,11 @@
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/close": {
-   "hash": "4e74875485f17eb9",
+   "hash": "5e677f9daa7e3d25",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/gherkin": {
@@ -3067,19 +3067,19 @@
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/import": {
-   "hash": "a9dadacfbdb762ea",
+   "hash": "dbae295a7dccf73c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/testing/cases/seed": {
-   "hash": "239b5875d663cee9",
+   "hash": "06758e59faf0376d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/testing/changes": {
@@ -3099,11 +3099,11 @@
    "lifecycle": "stable"
   },
   "POST /api/testing/evidence": {
-   "hash": "705602827fafad63",
+   "hash": "df76c8bae9c24aa4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/testing/releases": {
@@ -3131,11 +3131,11 @@
    "lifecycle": "stable"
   },
   "POST /api/testing/trace": {
-   "hash": "fc6370affdede9fd",
+   "hash": "19d16db3910377c1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
   "POST /api/till/alias": {
@@ -3544,6 +3544,22 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "lifecycle": "stable"
+  },
+  "POST /api/testing/incidents": {
+   "hash": "f029e6e0ada3ffd3",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+   "lifecycle": "stable"
+  },
+  "POST /api/testing/requirements": {
+   "hash": "e0ca8ea923c8e9c1",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   }
  }

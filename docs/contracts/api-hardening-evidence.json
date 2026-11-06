@@ -973,9 +973,11 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/close": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/trace": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/trace": {
@@ -988,12 +990,14 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/import": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/engine": {
    "output_allowlist": true
   },
   "POST /api/testing/cases/seed": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/cmdb": {
@@ -1006,6 +1010,7 @@
    "output_allowlist": true
   },
   "POST /api/testing/cmdb/seed": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/results": {
@@ -1024,27 +1029,33 @@
    "output_allowlist": true
   },
   "POST /api/testing/cases/gherkin": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/requirements": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/requirements": {
    "output_allowlist": true
   },
   "PATCH /api/testing/requirements/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/incidents": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/incidents": {
    "output_allowlist": true
   },
   "PATCH /api/testing/incidents/:id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/testing/evidence": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/stale": {
@@ -1060,12 +1071,14 @@
    "output_allowlist": true
   },
   "POST /api/testing/changes": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/changes": {
    "output_allowlist": true
   },
   "POST /api/testing/releases": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/testing/releases": {
