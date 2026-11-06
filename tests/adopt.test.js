@@ -2,6 +2,7 @@
  * ── tests/adopt.test.js · WHAT A SHOP MAY TAKE INTO ITS OWN CATALOGUE ──────────────────────────────────────────
  * Athi's four rules, each of them a refusal to do something convenient. Every one of these is a decision that
  * ends with a product on a storefront if it goes wrong, so they are asserted before any route can act on them.
+ * CARD      06-catalogue-pim/adopt-a-supplier-s-delivery-into-my-catalogue
  */
 'use strict';
 const assert = require('assert'), path = require('path');

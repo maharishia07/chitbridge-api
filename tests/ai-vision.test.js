@@ -8,6 +8,7 @@
 // It calls NO model: the outbound request body is intercepted so the exact payload can be asserted. What a real
 // model DOES with a photo cannot be proven here and needs Athi's live run (capability review-gate).
 //
+// CARD      06-catalogue-pim/media-and-photos-photo-item
 // Run: node tests/ai-vision.test.js
 const assert = require('node:assert');
 const fs = require('node:fs');
@@ -147,5 +148,6 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwA
 
   console.log('\nai-vision · ' + (fail ? '\x1b[31m' + fail + ' FAILED\x1b[0m' : '\x1b[32mall passed\x1b[0m') + '  (' + pass + ' assertions)');
   console.log('  \x1b[33m⚠️\x1b[0m  What a real model DOES with a photo is NOT covered — that needs Athi\'s live run (review-gate).\n');
+  console.log(pass + ' checks');
   process.exitCode = fail ? 1 : 0;
 })();

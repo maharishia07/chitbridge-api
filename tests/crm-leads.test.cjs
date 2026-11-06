@@ -4,6 +4,7 @@
  *   POST /parties/:id/stage: a NEW row, history kept · refused for another shop's party · b297 not run → 503 LEADS_NOT_MIGRATED, nothing created
  *   the migration file: RLS on entity_id, append-only, kind dictionary (the RLS test of the new table)
  * Run: node tests/crm-leads.test.cjs
+ * CARD      11-crm-and-marketing/leads-import-stages
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path');

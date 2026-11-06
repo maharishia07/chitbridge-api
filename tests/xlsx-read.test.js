@@ -16,6 +16,7 @@
  * as fixtures here.
  *
  * Run: node tests/xlsx-read.test.js   · no DB, no network.
+ * CARD      06-catalogue-pim/import-export-workbook-preflight
  */
 const assert = require('assert'), path = require('path');
 const X = require(path.join(__dirname, '..', 'lib', 'xlsx-read'));
