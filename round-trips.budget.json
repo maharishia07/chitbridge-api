@@ -999,12 +999,11 @@
       }
     },
     "GET /api/ctp/.well-known/ctp.json": {
-      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does",
       "file": "ctp.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 3,
+      "wire": 3,
       "fired": true,
-      "status": 404,
+      "status": 200,
       "extra": true
     },
     "GET /api/definitions": {
@@ -3426,22 +3425,20 @@
       "extra": true
     },
     "POST /api/ctp/deliver": {
-      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does",
       "file": "ctp.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 404,
-      "extra": true
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the stub answers 400 on the empty body (a floor, not the cost) now that the harness mounts ctp.js at /api/ctp as server.js does; needs a live measure or a fixture"
     },
     "POST /api/ctp/query": {
-      "why": "the harness mounts ctp.js at / only, so the /api/ctp door answers 404 there (trips 0 = not reached); the root manifest line GET /.well-known/ctp.json carries the measured cost; cb-speed: mount ctp.js at both paths as server.js does",
       "file": "ctp.js",
-      "trips": 0,
-      "wire": 0,
-      "fired": true,
-      "status": 404,
-      "extra": true
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "extra": true,
+      "why": "the stub answers 400 on the empty body (a floor, not the cost) now that the harness mounts ctp.js at /api/ctp as server.js does; needs a live measure or a fixture"
     },
     "POST /api/definitions": {
       "file": "definitions.js",

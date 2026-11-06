@@ -179,6 +179,8 @@ for (const f of [...new Set(called.map((r) => r.file))].sort()) {
   try { app.use(base, require(path.join(API, outsideRoutes[f] || path.join('routes', f)))); mountedFiles.add(f); }
   catch (e) { mountErr[f] = 'would not load: ' + String(e && e.message).slice(0, 60); }
 }
+/* server.js mounts ctp.js TWICE (server.js:386-387): at / for the bare-domain manifest AND at /api/ctp for deliver/query; the harness does the same */
+if (mountedFiles.has('ctp.js')) app.use('/api/ctp', require(path.join(API, 'routes', 'ctp.js')));
 
 /* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
    says `extra: true` and it is added to the list here, so it is still fired / checked and the "no longer called" check does not drop it. */
