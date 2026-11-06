@@ -2982,12 +2982,14 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "GET /api/governance/boilerplate/:key": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "POST /api/governance/boilerplate/:key/adopt": {
@@ -2995,7 +2997,8 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 403"
    }
   },
   "POST /api/governance/source": {
