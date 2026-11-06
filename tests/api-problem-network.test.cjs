@@ -219,6 +219,26 @@ async function checkOracleClosed(port, items) {
   check('POST approve: a party who asked the connection itself still reads the rule (403)', asker.status === 403, asker.status);
 }
 
+/**
+ * SEC-138 residual A: a caller whose identity has no place on the tree (no actor: not an entity, or no bridge id) must not tell an id that exists from one that does not.
+ * For the subtree, the connections and the 5 edge routes: a planted id and a missing id answer the same 404, byte for byte.
+ */
+async function checkNoActor(port, items) {
+  console.log(String.fromCharCode(10) + '-- SEC-138: a caller with no place on the tree learns nothing from an id --');
+  const NOBODY = { identity_id: '99999999-9999-4999-8999-999999999999', identity_type: 'entity', display_name: 'No place' };
+  const routes = items.filter((item) => item.route !== 'PUT /api/connections/:id/respond' && !item.route.endsWith('/claim'));
+  for (const item of routes) {
+    const answer = async (planted) => {
+      const rows = planted ? memory({ tree: true, edge: { state: 'requested' }, request: true }) : memory({ lonely: true });
+      Object.assign(world, { realAuth: false, who: NOBODY, asKey: false, db: 'ok', sqlRows: rows.answer, jsonThrows: false, noCustomer: false });
+      return lab.send(port, item.request.method, item.url, item.request.body);
+    };
+    const [missing, real] = [await answer(false), await answer(true)];
+    const code = /connections\/:id/.test(item.route) ?'EDGE_NOT_FOUND' : 'NOT_FOUND';
+    check(item.route + ': with no actor an existing id and a missing id are both 404 ' + code + ', byte for byte the same', missing.status === 404 && real.status === 404 && real.json && real.json.code === code && FOREIGN.comparable(missing) === FOREIGN.comparable(real), [missing.status, real.status]);
+  }
+}
+
 async function checkForeignIds(port) {
   console.log('\n-- signed in as another shop: a foreign id answers exactly as an unknown id (S35) --');
   const recording = FOREIGN.recorder();
@@ -228,6 +248,7 @@ async function checkForeignIds(port) {
   failures.forEach((sentence) => console.log('  FINDING ' + sentence));
   check('SEC-138: every network route addressed by an id answers the id of another shop exactly as an unknown id (' + items.length + ' routes)', failures.length === 0, failures);
   await checkOracleClosed(port, items);
+  await checkNoActor(port, items);
   return { proved: recording.proved(), failures, asked: items.length };
 }
 

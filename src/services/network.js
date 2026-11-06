@@ -128,12 +128,12 @@ const _check = (op, ctx) => {
 /**
  * SEC-138 (K-1): an edge the caller is not a party to is answered EXACTLY as an edge that does not exist (404 EDGE_NOT_FOUND, the same words),
  * so the id tells a stranger nothing. A party still gets the rule's own 403 (asked it yourself, only the network may suspend): it already knows the edge.
- * A caller with no actor keeps its 403 (a level refusal, before any existence question).
+ * A caller with no actor (no place on the tree) is a stranger too: the same 404, never the 403 "sign in as a business" an existing edge would give (residual A).
  */
 const _edgeGone = () => err(404, 'edge not found', 'EDGE_NOT_FOUND');
 const _checkEdge = (op, edge, actor) => {
   const a = String((actor && actor.id) || '');
-  if (a && a !== String(edge.parent_id) && a !== String(edge.child_id)) throw _edgeGone();
+  if (!a || (a !== String(edge.parent_id) && a !== String(edge.child_id))) throw _edgeGone();
   _check(op, { edge, actorId: a });
 };
 
@@ -310,7 +310,7 @@ async function subtree(entityId, actor) {
   if (!e) throw _nodeGone();
   /* SEC-138: a node of ANOTHER network is answered as a node that does not exist (no second query: the root is the first label of the path).
      Only an id inside the caller's own network may say "suspended". */
-  if (actor && _rootOf(e.path) !== _rootOf(actor.path)) throw _nodeGone();
+  if (!actor || _rootOf(e.path) !== _rootOf(actor.path)) throw _nodeGone(); // no actor: a stranger too (residual A)
   if (!(await _sameRoot(e.id, actor)))
     throw err(403, 'that is not your network — or your membership is suspended; ask the network to resume it', 'NOT_ALLOWED');
   // b117: the PURPOSE joined in, so a member reading the tree sees why each branch exists rather than a list of
@@ -331,8 +331,7 @@ async function connections(entityId, actor) {
   if (!e) throw _nodeGone();
   /* the caller's own node or a node below it (the ltree test e.path <@ actor.path, done on the row already read: no second query).
      SEC-138: any other node answers as one that does not exist. */
-  if (!actor) throw err(403, 'those are not your connections', 'NOT_ALLOWED'); // no sign-in as a business: a level refusal, not an existence answer
-  const mine = String(actor.path || '');
+  const mine = String((actor && actor.path) || ''); // no actor: nothing is below it, so the node answers as gone (residual A)
   if (!mine || (String(e.path) !== mine && !String(e.path).startsWith(mine + '.'))) throw _nodeGone();
   const { rows } = await pool.query(
     `select e.*, pp.name as parent_name, cc.name as child_name
