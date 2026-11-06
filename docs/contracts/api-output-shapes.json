@@ -18198,10 +18198,7 @@
                 "particulars",
                 "quantity",
                 "price",
-                "total",
-                "raw_phrase",
-                "qty_missing",
-                "needs_human"
+                "total"
               ],
               "properties": {
                 "particulars": {
@@ -18215,10 +18212,7 @@
                   "type": "number"
                 },
                 "unit": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "raw_phrase": {
                   "type": "string"
@@ -18228,7 +18222,42 @@
                 },
                 "needs_human": {
                   "type": "boolean"
-                }
+                },
+                "unit_size": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": "number"
+                },
+                "comment": {
+                  "type": "string"
+                },
+                "asked_as": {
+                  "type": "string"
+                },
+                "variant_unspecified": {},
+                "ambiguous": {},
+                "ambiguous_count": {},
+                "variant_candidates": {},
+                "ref": {},
+                "asked_unit": {
+                  "type": "string"
+                },
+                "lot": {},
+                "qty_unverified": {
+                  "type": "boolean"
+                },
+                "rate_unverified": {
+                  "type": "boolean"
+                },
+                "qty_rejected": {
+                  "type": "string"
+                },
+                "phrase_says": {},
+                "refused": {
+                  "type": "boolean"
+                },
+                "negation_unclear": {}
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
@@ -18275,7 +18304,6 @@
                   "received_at",
                   "read_by",
                   "sender_verified",
-                  "delivery_at",
                   "raw_excerpt",
                   "media_count",
                   "label",
@@ -18313,7 +18341,10 @@
                     "type": "string"
                   },
                   "received_at": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "read_by": {
                     "type": "string"
@@ -18357,10 +18388,22 @@
                     },
                     "additionalProperties": false,
                     "x-closed-by": "recordings"
+                  },
+                  "delivery_address": {
+                    "type": "string"
+                  },
+                  "notes": {
+                    "type": "string"
+                  },
+                  "unplaced": {
+                    "type": "string"
                   }
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "currency": {
+                "type": "string"
               }
             },
             "additionalProperties": false,
