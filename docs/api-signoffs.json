@@ -3617,6 +3617,30 @@
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#762 k13 output shape",
    "lifecycle": "stable"
+  },
+  "DELETE /api/relationships/suppliers/:id": {
+   "hash": "683aa6ccd46c28b5",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "GET /api/entities/search/places": {
+   "hash": "65104f92f9bba64a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 output shape",
+   "lifecycle": "stable"
+  },
+  "GET /api/relationships/customers": {
+   "hash": "acc4288324db9478",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 round 2",
+   "lifecycle": "stable"
   }
  }
 }
