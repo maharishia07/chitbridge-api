@@ -192,6 +192,15 @@
    "output_allowlist": true
   },
   "GET /api/capture/consolidate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/capture/pending": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/capture/stores": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/catalogue-face": {
@@ -827,19 +836,31 @@
    "output_allowlist": true
   },
   "POST /api/capture/:id/convert": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/dismiss": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/raise": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/structure": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/simulate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/capture/stores": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
