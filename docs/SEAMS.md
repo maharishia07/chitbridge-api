@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 113 | `words` | `variant.browser.js` |  |
 | 111 | `withEntity` | `books-hooks.js` |  |
 | 111 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 103 | `read` | `books-cashflow.js` | Trips: |
+| 104 | `read` | `books-cashflow.js` | Trips: |
 | 94 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -61,12 +61,12 @@ of file each thing is; this says what already does the job.
 | 37 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 37 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 37 | `missing` | `variant.browser.js` | refusing with no reason. |
+| 38 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 36 | `host` | `chit-sheet.js` |  |
 | 35 | `modal` | `app.html` |  |
 | 34 | `gate` | `country-setup.js` | gate(h, entity): |
 | 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
-| 34 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 35 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `live` | `receivables.js` | the allocations that still count: |
 | 36 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -88,7 +88,7 @@ of file each thing is; this says what already does the job.
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `hold` | `orders.js` |  |
-| 29 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 30 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 28 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
@@ -132,7 +132,7 @@ of file each thing is; this says what already does the job.
 | 19 | `note` | `device-id.js` | note(where, problem) — |
 | 19 | `chip` | `screen-id.js` | var S = { app: |
 | 19 | `entries` | `books-store.js` |  |
-| 19 | `governance` | `home-facts.js` |  |
+| 20 | `governance` | `home-facts.js` |  |
 | 20 | `match` | `itemmatch.js` | actually state. |
 | 19 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 18 | `next` | `cap-stock.js` | the next level: |
@@ -143,9 +143,9 @@ of file each thing is; this says what already does the job.
 | 18 | `later` | `signin-ui.js` |  |
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 18 | `verify` | `bookpack.js` | manifest's own hash. |
-| 18 | `summary` | `catalogue-read.js` | A count a person can act on: |
+| 19 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 18 | `notMigrated` | `crm-followups.js` |  |
-| 18 | `plan` | `crm-leads.js` | `existing`: |
+| 19 | `plan` | `crm-leads.js` | `existing`: |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 17 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
@@ -174,7 +174,7 @@ of file each thing is; this says what already does the job.
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
 | 15 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
-| 15 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
+| 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 15 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -194,7 +194,7 @@ of file each thing is; this says what already does the job.
 | 13 | `verdict` | `rail-thread.js` |  |
 | 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 13 | `post` | `books-manual.js` | POST /events — |
-| 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
+| 14 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 13 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
@@ -204,7 +204,7 @@ of file each thing is; this says what already does the job.
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
-| 13 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
+| 14 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
 | 11 | `close` | `avatar.js` |  |
