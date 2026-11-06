@@ -5109,6 +5109,397 @@
         "url": "/api/crm/segments"
       }
     },
+    "GET /api/invoice/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "direction",
+          "sells",
+          "status",
+          "provisional",
+          "frozen",
+          "rated",
+          "unrated",
+          "seller",
+          "buyer"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "sells": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "frozen": {
+            "type": "boolean"
+          },
+          "rated": {
+            "type": "number"
+          },
+          "unrated": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "Version",
+              "ValDtls",
+              "ItemList"
+            ],
+            "properties": {
+              "Version": {
+                "type": "string"
+              },
+              "ValDtls": {
+                "type": "object",
+                "required": [
+                  "AssVal"
+                ],
+                "properties": {
+                  "AssVal": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ItemList": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "heads": {
+            "type": "object",
+            "required": [
+              "taxable",
+              "cgst",
+              "sgst",
+              "igst",
+              "cess",
+              "vat",
+              "total",
+              "tax"
+            ],
+            "properties": {
+              "taxable": {
+                "type": "number"
+              },
+              "cgst": {
+                "type": "number"
+              },
+              "sgst": {
+                "type": "number"
+              },
+              "igst": {
+                "type": "number"
+              },
+              "cess": {
+                "type": "number"
+              },
+              "vat": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "cost_hidden": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/invoice/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/tax/gstr": {
+      "status": "200",
+      "schema": {
+        "type": "object"
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "(answer)",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/gstr?month=2026-10&form=gstr1"
+      }
+    },
+    "GET /api/tax/invoice/:chit_id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "chit_id",
+          "direction",
+          "sells",
+          "status",
+          "provisional",
+          "frozen",
+          "rated",
+          "unrated",
+          "seller",
+          "buyer",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "chit_id": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "sells": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "frozen": {
+            "type": "boolean"
+          },
+          "rated": {
+            "type": "number"
+          },
+          "unrated": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "LglNm"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "invoice": {
+            "type": "object",
+            "required": [
+              "Version",
+              "ValDtls",
+              "ItemList"
+            ],
+            "properties": {
+              "Version": {
+                "type": "string"
+              },
+              "ValDtls": {
+                "type": "object",
+                "required": [
+                  "AssVal"
+                ],
+                "properties": {
+                  "AssVal": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ItemList": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "heads": {
+            "type": "object",
+            "required": [
+              "taxable",
+              "cgst",
+              "sgst",
+              "igst",
+              "cess",
+              "vat",
+              "total",
+              "tax"
+            ],
+            "properties": {
+              "taxable": {
+                "type": "number"
+              },
+              "cgst": {
+                "type": "number"
+              },
+              "sgst": {
+                "type": "number"
+              },
+              "igst": {
+                "type": "number"
+              },
+              "cess": {
+                "type": "number"
+              },
+              "vat": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/tax/invoice/22222222-2222-4222-8222-222222222222"
+      }
+    },
+    "GET /api/tax/ledger": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "month",
+          "period",
+          "gstin",
+          "registration",
+          "output",
+          "itc",
+          "net",
+          "count",
+          "provisional",
+          "rows",
+          "note"
+        ],
+        "properties": {
+          "month": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "gstin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "registration": {
+            "type": "string"
+          },
+          "output": {
+            "type": "object"
+          },
+          "itc": {
+            "type": "object"
+          },
+          "net": {
+            "type": "object"
+          },
+          "count": {
+            "type": "number"
+          },
+          "provisional": {
+            "type": "boolean"
+          },
+          "rows": {},
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 6,
+      "open": [
+        {
+          "path": "output",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "itc",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "net",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/ledger"
+      }
+    },
     "PATCH /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -15037,6 +15428,214 @@
         }
       }
     },
+    "POST /api/invoice/build": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "order",
+          "pricing",
+          "offers",
+          "rates",
+          "seller",
+          "buyer",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pricing": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "unit_price",
+                "list_price",
+                "structure",
+                "why"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "unit_price": {
+                  "type": "number"
+                },
+                "list_price": {
+                  "type": "number"
+                },
+                "structure": {},
+                "why": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "offers": {
+            "type": "object",
+            "required": [
+              "subtotal",
+              "total",
+              "adjustments",
+              "notes",
+              "considered"
+            ],
+            "properties": {
+              "subtotal": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "adjustments": {},
+              "notes": {},
+              "considered": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "gst_rate",
+                "cess_rate",
+                "hsn",
+                "slab",
+                "source",
+                "scheme"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "gst_rate": {
+                  "type": "number"
+                },
+                "cess_rate": {
+                  "type": "number"
+                },
+                "hsn": {},
+                "slab": {},
+                "source": {
+                  "type": "string"
+                },
+                "scheme": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "LglNm",
+              "Gstin",
+              "State",
+              "Country",
+              "RegType"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              },
+              "Gstin": {
+                "type": "string"
+              },
+              "State": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              },
+              "RegType": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "LglNm",
+              "Gstin",
+              "State",
+              "Pos",
+              "Country"
+            ],
+            "properties": {
+              "LglNm": {
+                "type": "string"
+              },
+              "Gstin": {},
+              "State": {},
+              "Pos": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "invoice": {
+            "type": "object"
+          },
+          "heads": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "invoice",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "heads",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/invoice/build",
+        "body": {
+          "buyer": {
+            "name": "Priya"
+          },
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 2,
+              "listPrice": 100,
+              "gst_rate": 5
+            }
+          ]
+        }
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {
@@ -15180,6 +15779,240 @@
           "name": "Test Lead",
           "email": "lead@example.invalid",
           "org": "Test Org"
+        }
+      }
+    },
+    "POST /api/tax/compute": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "seller",
+          "buyer",
+          "price_includes_tax",
+          "priced",
+          "currency",
+          "pack",
+          "money",
+          "invoice",
+          "heads"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "seller": {
+            "type": "object",
+            "required": [
+              "Gstin",
+              "State",
+              "Country",
+              "RegType"
+            ],
+            "properties": {
+              "Gstin": {
+                "type": "string"
+              },
+              "State": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              },
+              "RegType": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "buyer": {
+            "type": "object",
+            "required": [
+              "Pos",
+              "Country"
+            ],
+            "properties": {
+              "Gstin": {},
+              "State": {},
+              "Pos": {
+                "type": "string"
+              },
+              "Country": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "price_includes_tax": {
+            "type": "object",
+            "required": [
+              "value",
+              "source"
+            ],
+            "properties": {
+              "value": {
+                "type": "boolean"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "priced": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "currency": {
+            "type": "string"
+          },
+          "pack": {
+            "type": "object",
+            "required": [
+              "id",
+              "version",
+              "code",
+              "why"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "code": {},
+              "why": {}
+            },
+            "additionalProperties": false
+          },
+          "money": {
+            "type": "object"
+          },
+          "invoice": {
+            "type": "object"
+          },
+          "heads": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [
+        {
+          "path": "priced[]",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        },
+        {
+          "path": "money",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "invoice",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "heads",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/tax/compute",
+        "body": {
+          "priceIncludesTax": true,
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 1,
+              "price": 105,
+              "gst_rate": 5
+            }
+          ]
+        }
+      }
+    },
+    "POST /api/tax/rate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "engine",
+          "version",
+          "lines"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "item_id",
+                "code",
+                "name",
+                "gst_rate",
+                "cess_rate",
+                "hsn",
+                "slab",
+                "source",
+                "scheme"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "item_id": {},
+                "code": {},
+                "name": {
+                  "type": "string"
+                },
+                "gst_rate": {},
+                "cess_rate": {
+                  "type": "number"
+                },
+                "hsn": {
+                  "type": "string"
+                },
+                "slab": {},
+                "source": {},
+                "scheme": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/tax/rate",
+        "body": {
+          "lines": [
+            {
+              "key": "a",
+              "name": "tea",
+              "qty": 1,
+              "hsn": "0902"
+            }
+          ]
         }
       }
     },
@@ -33936,6 +34769,8 @@
     "GET /api/schemas/my": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/simulator/content": "open at layers[] — a value passed through (an expression: its keys are not written in the handler); items[] — a value passed through (an expression: its keys are not written in the handler); shapes[] — a value passed through (an expression: its keys are not written in the handler); rules[] — a value passed through (an expression: its keys are not written in the handler); compare[] — a value passed through (an expression: its keys are not written in the handler); usps[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/supplies": "open at supplies[] — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/tax/gstr": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/tax/ledger": "open at output — a value passed through (an expression: its keys are not written in the handler); itc — a value passed through (an expression: its keys are not written in the handler); net — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cases": "open at cases[] — a value passed through (a name: its keys are not written in the handler)",
     "GET /api/testing/changes": "open at changes[] — a value passed through (an expression: its keys are not written in the handler); counts — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/testing/cmdb": "open at records[] — a value passed through (a name: its keys are not written in the handler)",
@@ -34039,6 +34874,7 @@
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/offers/evaluate": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
@@ -34059,6 +34895,7 @@
     "POST /api/schemas/create-default": "open at schema — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies": "open at supply — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/supplies/:id/issue": "open at balance — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/tax/compute": "open at priced[] — a value passed through (a name: its keys are not written in the handler); money — a value passed through (an expression: its keys are not written in the handler); invoice — a value passed through (an expression: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/till/shop": "open at shop — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/actors/:id/status": "open at audit — a value passed through (an expression: its keys are not written in the handler); signed_out — a value passed through (a name: its keys are not written in the handler)",
     "PUT /api/assist/container": "open at (answer) — a spread (...x) adds keys the text does not name",

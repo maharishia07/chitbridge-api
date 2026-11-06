@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 221
+    "failing": 215
    },
    "foreign_id_404": {
     "applies": 230,
@@ -33,7 +33,7 @@
     "failing": 144
    }
   },
-  "output_allowlist_from_recordings": 11
+  "output_allowlist_from_recordings": 15
  },
  "machine_columns": [
   "schema_in",
@@ -17963,7 +17963,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 124,
-   "hash": "aef8555d8e1a9f95",
+   "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
     "count": 1,
@@ -17996,7 +17996,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -18021,13 +18021,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "aef8555d8e1a9f95"
+    "stale_since": "3409e79df1fdaaf3"
    },
    "status": "partial",
    "callers": [],
@@ -22337,7 +22338,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 84,
-   "hash": "f09fd6ab43492660",
+   "hash": "c5a40c1567d877bd",
    "does": "",
    "errors": {
     "count": 0,
@@ -22397,7 +22398,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f09fd6ab43492660"
+    "stale_since": "c5a40c1567d877bd"
    },
    "status": "partial",
    "callers": [
@@ -22428,7 +22429,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 35,
-   "hash": "fb8b302614887695",
+   "hash": "9c845d230ed9134d",
    "does": "",
    "errors": {
     "count": 1,
@@ -22460,7 +22461,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -22484,13 +22485,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "fb8b302614887695"
+    "stale_since": "9c845d230ed9134d"
    },
    "status": "partial",
    "callers": [
@@ -22517,7 +22519,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "f20a0b794cbc7c41",
+   "hash": "be22b8f5a8198528",
    "does": "",
    "errors": {
     "count": 0,
@@ -22548,7 +22550,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -22575,8 +22577,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "be22b8f5a8198528"
    },
    "status": "partial",
    "callers": [
@@ -44746,7 +44749,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 35,
-   "hash": "6ce122667bc22cdd",
+   "hash": "c4bada48ce91bf2c",
    "does": "",
    "errors": {
     "count": 1,
@@ -44782,7 +44785,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -44807,13 +44810,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6ce122667bc22cdd"
+    "stale_since": "c4bada48ce91bf2c"
    },
    "status": "partial",
    "callers": [],
@@ -51381,7 +51385,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 165,
-   "hash": "4e3bb87304124c94",
+   "hash": "9b07b0f863c232da",
    "does": "",
    "errors": {
     "count": 0,
@@ -51415,7 +51419,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51444,8 +51448,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9b07b0f863c232da"
    },
    "status": "partial",
    "callers": [
@@ -51474,7 +51479,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 128,
-   "hash": "b9bff4e1944f3aa0",
+   "hash": "711be2ced816b9d2",
    "does": "",
    "errors": {
     "count": 0,
@@ -51507,7 +51512,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51532,12 +51537,14 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "711be2ced816b9d2"
    },
    "status": "partial",
    "callers": [
