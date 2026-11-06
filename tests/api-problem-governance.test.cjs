@@ -260,6 +260,7 @@ const writeExtras = [
   X('acceptance-read-not-switched-on', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] })
 ];
 /* SEC-133: these three answer a shop 403, so their library faults are reached as the platform */
+const REFUSED_SQL = []; /* every statement the two refused-shop scenarios let through (must stay empty) */
 const PLATFORM_DOORS = ['POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
 const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { setup: PLATFORM_DOORS.includes(route) ? { who: PLATFORM } : undefined, patch: FAIL(mod, fn) }));
 const SOURCE_BODY = { source_key: 'k' };
@@ -286,6 +287,9 @@ const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   X('no-constitution-to-reattest', 'POST /api/governance/entities/:id/reattest', 503, { setup: { who: PLATFORM, sqlRows: ANSWERS(ENTITY) } }),
   X('stored-override-widens', 'POST /api/governance/entities/:id/reattest', 422, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: WIDENS }]]) } }),
   X('reattest-fault', 'POST /api/governance/entities/:id/reattest', 500, { setup: { who: PLATFORM, db: 'fail' } }),
+  /* SEC-133: a refused shop reaches no statement at all, so nothing is written to entity_governance */
+  X('shop-refused-adopt-writes-nothing', 'POST /api/governance/boilerplate/:key/adopt', 403, { after: true, setup: { sqlRows: (sql) => { REFUSED_SQL.push(String(sql)); return null; } } }),
+  X('shop-refused-conformance-reads-nothing', 'POST /api/governance/conformance', 403, { after: true, setup: { sqlRows: (sql) => { REFUSED_SQL.push(String(sql)); return null; } }, body: { data: {}, scope: 'chit' } }),
   X('no-such-boilerplate', 'GET /api/governance/boilerplate/:key', 404, { setup: { who: PLATFORM } }),
   X('no-such-boilerplate-to-adopt', 'POST /api/governance/boilerplate/:key/adopt', 404, { setup: { who: PLATFORM } }),
   X('no-such-source', 'GET /api/governance/source/:key', 404, {}),
@@ -458,6 +462,7 @@ function checkAnswers(recording) {
   const platformOnly = ['POST /api/governance/entities', 'POST /api/governance/entities/:id/reattest', 'POST /api/governance/source', 'POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
   const manualScripts = ['scripts/prove-lifecycle.js', 'scripts/demo-lifecycle.js'].map((file) => fs.readFileSync(path.join(HERE, file), 'utf8'));
   check('SEC-133: both manual lifecycle scripts take a platform token (CB_PLATFORM_TOKEN) for the platform-only calls', manualScripts.every((text) => /process.env.CB_PLATFORM_TOKEN/.test(text) && /PLATFORM_TOKEN || token/.test(text)));
+  check('SEC-133: a shop refused at adopt or conformance reaches no statement: no INSERT or UPDATE of entity_governance, nothing read', REFUSED_SQL.length === 0 && !REFUSED_SQL.some((text) => /INSERT|UPDATE|entity_governance/i.test(text)), REFUSED_SQL);
   check('a shop login is refused with 403 NOT_PLATFORM at every platform-only door', platformOnly.every((route) => recording[route + '|shop-owner'] && recording[route + '|shop-owner'].status === 403 && recording[route + '|shop-owner'].body.code === 'NOT_PLATFORM'));
   check('a viewer is refused every trade write with 403 and the rail\'s word', ['PUT /api/governance/profile', 'POST /api/governance/compliance', 'POST /api/governance/verify'].every((route) => recording[route + '|viewer-asks'].status === 403 && recording[route + '|viewer-asks'].body.code === 'read_only'));
   const foreign = recording['GET /api/governance/entities/:id|foreign-entity-id'];

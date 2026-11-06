@@ -29750,6 +29750,36 @@
       "hint": "Check the address or the name and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "shop-refused-adopt-writes-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -31205,6 +31235,36 @@
         "detail": "(body) must be a object."
        }
       ]
+     }
+    },
+    {
+     "scenario": "shop-refused-conformance-reads-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     }
    ]
