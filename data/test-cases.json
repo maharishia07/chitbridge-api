@@ -64924,6 +64924,34 @@
    "changed_at": "2026-10-23T03:10:41+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/api-card-helpers.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE REGISTER'S DERIVED FACTS FOLLOW PRIVATE HELPERS: a call is real only after comments and strings are blanked, a due date or a count is not money.",
+   "claim": "THE REGISTER'S DERIVED FACTS FOLLOW PRIVATE HELPERS: a call is real only after comments and strings are blanked, a due date or a count is not money.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 92 lines. Run: node chitbridge-api/tests/api-card-helpers.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/api-card.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T17:53:45.237Z"
+  },
+  {
    "case_key": "chitbridge-api/tests/live-trips-writer.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
