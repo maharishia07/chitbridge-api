@@ -24,6 +24,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.OUTPUT_ALLOWLIST = 'enforce'; /* S34: a sweep test runs the allow-list for real; production defaults to report */
 const crypto = require('crypto');
+const FOREIGN = require('./lib/foreign-id-world.cjs');
+const EVIDENCE_FILE = path.join(__dirname, '..', 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const argv = process.argv.slice(2);
@@ -58,12 +60,12 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.identity_id, forgetKey: () => {}, SCOPE_NAMES: ['services', 'offers', 'pricing', 'tax', 'invoice', 'till', 'connector', 'testing'] }));
-  const rows = () => {
+  const rows = (params) => {
     if (world.dbFails) throw new Error(SECRET_SQL);
-    return { rows: [{ policy_flags: { api_keys: world.keys } }], rowCount: 1 };
+    return { rows: [{ policy_flags: { api_keys: world.keysOf ? world.keysOf(params && params[0]) : world.keys } }], rowCount: 1 }; /* keysOf: each shop reads its own list only (the foreign-id world) */
   };
-  const client = { query: async () => rows() };
-  const db = { query: async () => rows(), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
+  const client = { query: async (sql, params) => rows(params) };
+  const db = { query: async (sql, params) => rows(params), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   mock('db', db);
   mock('db/index', db);
   mock('lib/policy', { patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
@@ -120,7 +122,7 @@ function safeParse(text) {
 }
 
 async function runScenario(port, scenario) {
-  Object.assign(world, { realAuth: false, who: SHOP, asKey: false, keys: [], dbFails: false, platform: false }, scenario.setup);
+  Object.assign(world, { realAuth: false, who: SHOP, asKey: false, keys: [], keysOf: null, dbFails: false, platform: false }, scenario.setup);
   const [method, template] = scenario.route.split(' ');
   return send(port, method, scenario.url || template, scenario.body);
 }
@@ -173,6 +175,22 @@ async function checkKeysRoutes(port, recording) {
     if (scenario.status === 500) check(label + ': a 5xx says nothing of its cause', !/identities|SELECT|vault|relation/.test(answer.text), answer.text);
   }
   return tested;
+}
+
+/* Slice 1b (critic 6 Nov, class C): DELETE /api/keys/:jti in the foreign-id world. A shop's keys live in its OWN policy_flags, so shop B revoking shop A's jti reads B's list, finds nothing and
+   gets exactly the unknown jti's 404 KEY_NOT_FOUND; shop A's own jti is not a 404. Only this route is proved here (the file's other routes name no record by an id of theirs). */
+const KEYS_FOREIGN_ROUTE = 'DELETE /api/keys/:jti';
+const STRANGER = { identity_id: 'e2', identity_type: 'entity', owner_scope: 'entity' };
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign key id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const failures = await FOREIGN.runCases([{ route: KEYS_FOREIGN_ROUTE, play: async (who, planted) => {
+    Object.assign(world, { realAuth: false, who: who === 'owner' ? SHOP : STRANGER, asKey: false, keys: [], dbFails: false, platform: false, keysOf: (id) => (planted && id === SHOP.identity_id ? [KEY_A] : []) });
+    return send(port, 'DELETE', '/api/keys/' + KEY_A.jti);
+  } }], recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: DELETE /api/keys/:jti answers shop A\'s key id to shop B exactly as an unknown id (404, same body) and the own key id is not a 404', failures.length === 0, failures);
+  return recording.proved();
 }
 
 async function checkServerHandlers(recording) {
@@ -249,6 +267,7 @@ function checkUnits() {
   const server = app.listen(0);
   const recording = {};
   const tested = await checkKeysRoutes(server.address().port, recording);
+  const foreignProved = argv.includes('--capture') || argv.includes('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
   await checkServerHandlers(recording);
   if (!argv.includes('--capture') && !argv.includes('--compare')) checkAllowList(recording);
@@ -260,6 +279,9 @@ function checkUnits() {
   const OURS = (route) => / \/api\/keys(\/|$)/.test(route);
   const mine = Object.fromEntries(Object.keys(onDisk).filter(OURS).map((route) => [route, onDisk[route]]));
   const merged = Object.assign(Object.fromEntries(Object.keys(onDisk).filter((route) => !OURS(route)).map((route) => [route, onDisk[route]])), coverage);
+  const keysForeign = (route) => route === KEYS_FOREIGN_ROUTE;
+  if (argv.includes('--write')) FOREIGN.writeEvidence(EVIDENCE_FILE, keysForeign, foreignProved);
+  else if (!argv.includes('--capture')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for DELETE /api/keys/:jti exactly when it held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, keysForeign), foreignProved), foreignProved);
   if (argv.includes('--write')) fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   else if (!argv.includes('--capture')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover', sameValue(mine, coverage), coverage);
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');

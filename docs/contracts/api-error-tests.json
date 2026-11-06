@@ -3199,14 +3199,18 @@
   401,
   404,
   409,
-  422
+  422,
+  500,
+  503
  ],
  "POST /api/service/:chit_id/pause/:pause_id/answer": [
   400,
   401,
   404,
   409,
-  422
+  422,
+  500,
+  503
  ],
  "POST /api/service/:chit_id/pause/:pause_id/end": [
   400,
@@ -3214,19 +3218,23 @@
   404,
   409,
   422,
-  500
+  500,
+  503
  ],
  "POST /api/service/:chit_id/resolve": [
   400,
   401,
   404,
-  422
+  422,
+  500,
+  503
  ],
  "POST /api/service/:chit_id/respond": [
   401,
   404,
   422,
-  500
+  500,
+  503
  ],
  "POST /api/signin/ask": [
   400,
@@ -3787,7 +3795,8 @@
   401,
   404,
   422,
-  500
+  500,
+  503
  ],
  "PUT /api/testing/cmdb/:ci": [
   400,

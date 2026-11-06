@@ -40,6 +40,21 @@ async function foreignIdCase(play) {
   return null;
 }
 
+/**
+ * sameAsUnknownCase(play) — the weaker reading, for a read that answers a collection under the caller's OWN rows and never 404 (GET /api/products/:id/schedule: an empty list for an id the shop does
+ * not hold). null when another shop's id answers byte for byte as an unknown id AND the owner's own id answers something else (so the planted row was really read); else the sentence.
+ * It proves no oracle, not the S35 404; the handler's ownership filter is still the store's WHERE entity_id.
+ */
+async function sameAsUnknownCase(play) {
+  const unknown = await play('stranger', false);
+  if (unknown.status !== 200) return 'an unknown id answered ' + unknown.status + ', not 200';
+  const foreign = await play('stranger', true);
+  if (comparable(foreign) !== comparable(unknown)) return "another shop's id answered differently from the unknown id";
+  const own = await play('owner', true);
+  if (comparable(own) === comparable(unknown)) return "not reached: the owner's own id answered as an unknown id (the planted row was never read)";
+  return null;
+}
+
 /** runCases(cases, record) — every case { route, play } in turn; record(route, held) is told each result. Returns the failing sentences. */
 async function runCases(cases, record) {
   const failures = [];
@@ -91,4 +106,15 @@ function ownedBy(proved, mine) {
   return Object.fromEntries(Object.keys(proved).filter(mine).map((route) => [route, proved[route]]));
 }
 
-module.exports = { ownedBy, comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };
+/**
+ * weakened(play) — the same world with a store that reads by the id alone and ignores the owner: the stranger who asks for the planted id is answered as its owner is.
+ * biteCase(play) — the BITE (critic 6 Nov, Finding A): a foreign-id case must be able to FAIL. null when the real world holds AND the weakened one is caught; else the sentence.
+ */
+const weakened = (play) => (who, planted) => play(planted ? 'owner' : who, planted);
+async function biteCase(play, caseOf = foreignIdCase) {
+  const real = await caseOf(play);
+  if (real) return 'the real world already fails (' + real + '), so the bite is not measurable';
+  return (await caseOf(weakened(play))) ? null : "cannot fail: a store that ignores the owner still passes the foreign-id case";
+}
+
+module.exports = { sameAsUnknownCase, weakened, biteCase, ownedBy, comparable, foreignIdCase, runCases, recorder, writeEvidence, evidenceOf, COLUMN };

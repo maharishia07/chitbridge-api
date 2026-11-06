@@ -613,6 +613,7 @@ const GUARDS = [
   'units-alias.test.js', // QA wave 2: a rename is never a conversion
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
+  'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

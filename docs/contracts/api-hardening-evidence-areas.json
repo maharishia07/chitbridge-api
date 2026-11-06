@@ -11,7 +11,8 @@
    "foreign_id_404": true
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "DELETE /api/channels/:id": {
    "output_allowlist": true,
@@ -52,7 +53,8 @@
    "output_allowlist": true
   },
   "DELETE /api/keys/:jti": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "foreign_id_404": true
   },
   "DELETE /api/products/:id": {
    "output_allowlist": true
@@ -70,7 +72,8 @@
   },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "DELETE /api/relationships/suppliers/:id": {
    "output_allowlist": true,
@@ -451,7 +454,8 @@
    "output_allowlist": true
   },
   "GET /api/governance/entities/:id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/governance/instruments": {
    "output_allowlist": true
@@ -540,7 +544,8 @@
    "output_allowlist": true
   },
   "GET /api/products/:id/schedule": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/products/:id/versions": {
    "output_allowlist": true
@@ -568,14 +573,16 @@
   },
   "GET /api/relationships/customers/:id/rewards": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/relationships/suppliers": {
    "output_allowlist_basis": "recordings",
@@ -1226,8 +1233,8 @@
    "output_allowlist": true
   },
   "POST /api/governance/compliance": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/governance/conformance": {
    "output_allowlist": true
@@ -1242,12 +1249,12 @@
    "output_allowlist": true
   },
   "POST /api/governance/supplier-acceptance": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/governance/verify": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/identity/documents/:scheme/code": {
    "output_allowlist": true,
@@ -1339,7 +1346,8 @@
    "output_allowlist": true
   },
   "POST /api/products/:id/media": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/products/:id/schedule": {
    "output_allowlist": true
@@ -1439,16 +1447,19 @@
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/pause": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/answer": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/resolve": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/service/:chit_id/respond": {
    "output_allowlist": true
@@ -1620,12 +1631,12 @@
    "output_allowlist": true
   },
   "PUT /api/governance/profile": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "PUT /api/governance/profile/vault": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "PUT /api/identity/documents/:scheme": {
    "output_allowlist": true
@@ -1634,10 +1645,12 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PUT /api/products/:id/status": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PUT /api/quick-keys/screen-config/default": {
    "output_allowlist_basis": "recordings",

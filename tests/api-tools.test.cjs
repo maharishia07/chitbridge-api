@@ -94,5 +94,13 @@ t('card: a route\'s round-trip share is its trips over the trips of every budget
 t('card: the measured fields are empty (SPD-29 fills them), never a number', Object.values(card.unmeasured()).every((value) => value === null));
 t('card: the committed register carries the card fields on every row, and channels.js is fully described', (() => { const rows = require(path.join(API, 'docs', 'api-register.json')).routes; return rows.every((row) => row.owner_agent && row.errors && Array.isArray(row.reads) && typeof row.money === 'boolean' && row.offline && row.measured) && rows.filter((row) => row.owner_area === 'channels').every((row) => row.does); })());
 t('ratchet: routes with no @does may only go down; advisory (never fails) while HARD_FAIL_DOES is false', (() => { const head = { counts: { routes: 10, no_does: 8 } }; const saved = console.log; console.log = () => {}; const rose = ratchet.checkDoes({ total: 10, routes_without_does: 6 }, head, { routes_without_does: 8 }); console.log = saved; return rose.length === 0; })());
+const scopeRows = [{ key: 'GET /a/:id', declared: [404] }];
+const longWhy = 'a reason that is long enough to count';
+const scopeOf = (more) => register.scopeProblems(Object.assign({ public_ids: {}, platform_only: {}, cannot_answer: [] }, more), scopeRows);
+t('scope: a valid public_ids, platform_only and cannot_answer entry passes', scopeOf({ public_ids: { 'GET /a/:id': longWhy }, platform_only: { 'GET /a/:id': longWhy }, cannot_answer: [{ route: 'GET /a/:id', status: 404, reason: longWhy }] }).length === 0);
+t('scope: a one-character reason FAILS in each of the three lists', scopeOf({ public_ids: { 'GET /a/:id': 'x' } }).length === 1 && scopeOf({ platform_only: { 'GET /a/:id': 'x' } }).length === 1 && scopeOf({ cannot_answer: [{ route: 'GET /a/:id', status: 404, reason: 'x' }] }).length === 1);
+t('scope: a route the register lacks FAILS', scopeOf({ platform_only: { 'GET /nope/:id': longWhy } }).length === 1 && scopeOf({ public_ids: { 'GET /nope/:id': longWhy } }).length === 1);
+t('scope: a cannot_answer status the route does not declare FAILS, and a repeat FAILS', scopeOf({ cannot_answer: [{ route: 'GET /a/:id', status: 500, reason: longWhy }] }).length === 1 && scopeOf({ cannot_answer: [{ route: 'GET /a/:id', status: 404, reason: longWhy }, { route: 'GET /a/:id', status: 404, reason: longWhy }] }).length === 1);
+t('scope: the committed scope file passes against the committed register', register.scopeProblems(require(path.join(API, 'docs', 'contracts', 'api-hardening-scope.json')), require(path.join(API, 'docs', 'api-register.json')).routes).length === 0);
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

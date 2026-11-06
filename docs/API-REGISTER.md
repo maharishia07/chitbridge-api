@@ -18,7 +18,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | DELETE | /api/actors/:id/pin | actors | routes/actors.js:764 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/books/recurring/:id | books | routes/books.js:2375 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | yes |
+| DELETE | /api/catalogue/:bridge_id/my-documents/:id | catalogue | routes/catalogue.js:1985 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | DELETE | /api/channels/:id | channels | routes/channels.js:140 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | DELETE | /api/chits/:chit_id | chits | routes/chits.js:5994 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/chits/:chit_id/payment | chits | routes/chits.js:4858 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
@@ -31,12 +31,12 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | DELETE | /api/definitions/:id | definitions | routes/definitions.js:487 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/folders/:id | folders | routes/folders.js:342 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/folders/rules/:rule_id | folders | routes/folders.js:609 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| DELETE | /api/keys/:jti | keys | routes/keys.js:167 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| DELETE | /api/keys/:jti | keys | routes/keys.js:167 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | DELETE | /api/products/:id | products | routes/products.js:1776 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | DELETE | /api/products/:id/media/:mid | products | routes/products.js:1926 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | DELETE | /api/products/:id/schedule/:sid | products | routes/products.js:1657 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
 | DELETE | /api/quick-keys/groups/:id | quick-keys | routes/quick-keys.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:105 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| DELETE | /api/quick-keys/groups/:id/items/:productId | quick-keys | routes/quick-keys.js:105 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:497 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:191 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/actors | actors | routes/actors.js:811 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -46,17 +46,17 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/actors/settings | actors | routes/actors.js:1513 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:156 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:336 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:614 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:614 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/assist/catalogue-sources | assist | routes/assist.js:195 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/assist/container/:id | assist | routes/assist.js:487 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/assist/erp-handoffs | assist | routes/assist.js:499 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/gaps | assist | routes/assist.js:736 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/gaps | assist | routes/assist.js:736 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/assist/penetration | assist | routes/assist.js:581 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/assist/questions | assist | routes/assist.js:628 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | yes |
 | GET | /api/assist/regions | assist | routes/assist.js:547 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/assist/resolve | assist | routes/assist.js:565 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/assist/standards | assist | routes/assist.js:192 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/assist/whoami | assist | routes/assist.js:749 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/whoami | assist | routes/assist.js:749 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:102 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
 | GET | /api/books/accounts | books | routes/books.js:321 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/assets | books | routes/books.js:2426 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -96,11 +96,11 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1150 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1168 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
-| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1964 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial | yes | yes | yes |
-| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1938 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/catalogue/:bridge_id/my-documents | catalogue | routes/catalogue.js:1964 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/catalogue/:bridge_id/my-orders | catalogue | routes/catalogue.js:1938 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/catalogue/:bridge_id/support/preview | catalogue | routes/catalogue.js:1243 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/catalogue/enquiry | catalogue | routes/catalogue.js:1105 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2075 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/catalogue/enquiry/:item_id | catalogue | routes/catalogue.js:2075 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/catalogue/network-store/:networkId | catalogue | routes/catalogue.js:677 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/catalogue/network/:bridge_id | catalogue | routes/catalogue.js:944 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/channels | channels | routes/channels.js:29 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
@@ -147,7 +147,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/crm/parties/:id/timeline | crm | routes/crm.js:179 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/crm/privacy-requests | crm | routes/crm.js:639 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/crm/segments | crm | routes/crm.js:680 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/ctp/.well-known/ctp.json (also /.well-known/ctp.json) | ctp | routes/ctp.js:219 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/ctp/.well-known/ctp.json (also /.well-known/ctp.json) | ctp | routes/ctp.js:219 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/definitions | definitions | routes/definitions.js:81 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/definitions/:id | definitions | routes/definitions.js:222 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/entities/constitutions | entities | routes/entities.js:355 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
@@ -166,7 +166,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/entities/usage | entities | routes/entities.js:1241 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/events/stats | events | routes/events.js:42 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/events/stream | events | routes/events.js:30 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/facts/:card | facts | routes/facts.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/facts/:card | facts | routes/facts.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/facts/rail/chits | facts | routes/facts.js:36 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/folders | folders | routes/folders.js:80 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/folders/:id/chits | folders | routes/folders.js:483 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
@@ -181,7 +181,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/folders/rules/vocabulary | folders | routes/folders.js:634 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/folders/worklist | folders | routes/folders.js:868 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/forms | forms | routes/forms.js:31 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/forms/:key | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| GET | /api/forms/:key | forms | routes/forms.js:39 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | GET | /api/forms/instances/:id | forms | routes/forms.js:71 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | GET | /api/forms/instances/all | forms | routes/forms.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/governance/ai-skills | governance | routes/governance.js:590 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -189,7 +189,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/governance/boilerplate/:key | governance | routes/governance.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/commerce-standards | governance | routes/governance.js:394 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/country-setup | governance | routes/governance.js:521 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/governance/entities/:id | governance | routes/governance.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/governance/entities/:id | governance | routes/governance.js:88 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/governance/instruments | governance | routes/governance.js:374 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/journey | governance | routes/governance.js:384 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/lanes | governance | routes/governance.js:346 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -199,13 +199,13 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/governance/readiness | governance | routes/governance.js:328 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/readiness/:bridge_id | governance | routes/governance.js:608 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/source/:key | governance | routes/governance.js:314 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:764 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/governance/supplier-acceptance/:handle | governance | routes/governance.js:764 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/governance/track-record | governance | routes/governance.js:360 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/governance/vault-schema | governance | routes/governance.js:442 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/identity/documents | identity-docs | routes/identity-docs.js:136 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/integrations/catalogue | integrations | routes/integrations.js:362 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:275 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | yes |
-| GET | /api/integrations/download/:id | integrations | routes/integrations.js:380 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:275 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/integrations/download/:id | integrations | routes/integrations.js:380 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/integrations/kit | integrations | routes/integrations.js:249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/integrations/kit/* | integrations | routes/integrations.js:258 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/integrations/profile-map | integrations | routes/integrations.js:982 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
@@ -225,8 +225,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/network-offers | network-offers | routes/network-offers.js:216 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/network/entities/:id/connections | network | src/routes/network.js:143 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | no |
 | GET | /api/network/entities/:id/subtree | network | src/routes/network.js:137 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | no |
-| GET | /api/network/entities/lookup | network | src/routes/network.js:59 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| GET | /api/network/place | network | src/routes/network.js:92 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
+| GET | /api/network/entities/lookup | network | src/routes/network.js:59 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/network/place | network | src/routes/network.js:92 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/notifications | notifications | routes/notifications.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/offers/kinds | offers | routes/offers.js:45 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/offers/openapi.json | offers | routes/offers.js:109 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
@@ -236,18 +236,18 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/privacy/facts | privacy | routes/privacy.js:43 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/privacy/me | privacy | routes/privacy.js:64 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/products | products | routes/products.js:695 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/products/:id/schedule | products | routes/products.js:1607 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/products/:id/schedule | products | routes/products.js:1607 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/products/:id/versions | products | routes/products.js:1962 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/products/export.csv | products | routes/products.js:1054 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/products/lists | products | routes/products.js:2077 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1821 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/products/media/:item_id/:mid | products | routes/products.js:1821 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/products/starter-columns | products | routes/products.js:1385 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/products/template | products | routes/products.js:1083 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/products/workbook.xlsx | products | routes/products.js:983 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/quick-keys/groups | quick-keys | routes/quick-keys.js:52 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:125 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/relationships/customers | relationships | routes/relationships.js:740 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/relationships/customers/:id/rewards | relationships | routes/relationships.js:801 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/relationships/customers/:id/rewards | relationships | routes/relationships.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/relationships/customers/groups | relationships | routes/relationships.js:733 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/relationships/scorecard | relationships | routes/relationships.js:1058 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/relationships/scorecard/:entity_id | relationships | routes/relationships.js:1070 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -286,7 +286,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/till/bills | till | routes/till.js:3433 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/catalogue/blueprints | till | routes/till.js:3321 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/counters | till | routes/till.js:1808 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/till/engine/:name | till | routes/till.js:3990 | yes | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | no | partial | yes | yes | yes |
+| GET | /api/till/engine/:name | till | routes/till.js:3990 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/till/match | till | routes/till.js:3628 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/groups | till | routes/till.js:1817 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/till/quick-keys/hidden | till | routes/till.js:1857 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -312,10 +312,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PATCH | /api/connectors/:actorId/connections/:connId | connectors | routes/connectors.js:982 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PATCH | /api/counters/:id | counters | routes/counters.js:104 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PATCH | /api/crm/followups/:id | crm | routes/crm.js:411 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1213 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| PATCH | /api/entities/:id/erase | entities | routes/entities.js:1213 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | PATCH | /api/entities/me/exposure | entities | routes/entities.js:819 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PATCH | /api/entities/me/locale | entities | routes/entities.js:859 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | no | no |
-| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:813 | yes | yes | yes | yes | yes | yes | yes | no | no | no | yes | yes | yes | partial | yes | no | no |
+| PATCH | /api/entities/me/prefs/:kind | entities | routes/entities.js:813 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | no | no |
 | PATCH | /api/entities/policy | entities | routes/entities.js:444 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PATCH | /api/entities/profile | entities | routes/entities.js:892 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | PATCH | /api/folders/:id | folders | routes/folders.js:285 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
@@ -344,7 +344,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/assist/conform | assist | routes/assist.js:137 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/assist/gap | assist | routes/assist.js:664 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/assist/publish | assist | routes/assist.js:681 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/resolve | assist | routes/assist.js:743 | yes | yes | yes | yes | yes | no | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/assist/resolve | assist | routes/assist.js:743 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/attachments | attachments | routes/attachments.js:70 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/books/accounts | books | routes/books.js:350 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/books/accruals | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
@@ -408,12 +408,12 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/catalogue/network-store/:networkId/order | catalogue | routes/catalogue.js:813 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/catalogue/photo-extract | catalogue | routes/catalogue.js:2007 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/channels | channels | routes/channels.js:84 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/channels/:id/approve | channels | routes/channels.js:113 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/channels/:id/approve | channels | routes/channels.js:113 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/channels/:id/auto-raise | channels | routes/channels.js:62 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/channels/:id/provider-ref | channels | routes/channels.js:49 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/channels/:id/revoke | channels | routes/channels.js:131 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/channels/:id/revoke | channels | routes/channels.js:131 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/channels/:id/template | channels | routes/channels.js:73 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/channels/:id/template-approve | channels | routes/channels.js:122 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/channels/:id/template-approve | channels | routes/channels.js:122 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/chits/:chit_id/amend | chits | routes/chits.js:4574 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/chits/:chit_id/archive | chits | routes/chits.js:6147 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/chits/:chit_id/assign-lines | chits | routes/chits.js:4475 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -484,8 +484,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/folders/messages/:message_id/mark | folders | routes/folders.js:847 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/folders/move | folders | routes/folders.js:358 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/folders/rules/preview | folders | routes/folders.js:622 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/forms/:key/issue | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
-| POST | /api/forms/:key/resolve | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| POST | /api/forms/:key/issue | forms | routes/forms.js:55 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
+| POST | /api/forms/:key/resolve | forms | routes/forms.js:47 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/forms/instances/:id/attach | forms | routes/forms.js:87 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/forms/instances/:id/sign | forms | routes/forms.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/governance/ai-draft | governance | routes/governance.js:561 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -493,7 +493,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/governance/compliance | governance | routes/governance.js:650 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/governance/conformance | governance | routes/governance.js:245 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/governance/entities | governance | routes/governance.js:133 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/governance/entities/:id/reattest | governance | routes/governance.js:181 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/governance/entities/:id/reattest | governance | routes/governance.js:181 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/governance/source | governance | routes/governance.js:296 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/governance/supplier-acceptance | governance | routes/governance.js:724 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/governance/verify | governance | routes/governance.js:675 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -534,7 +534,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/privacy/me/consent | privacy | routes/privacy.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/privacy/me/requests | privacy | routes/privacy.js:85 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/products | products | routes/products.js:424 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/products/:id/media | products | routes/products.js:1861 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/products/:id/media | products | routes/products.js:1861 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/products/:id/schedule | products | routes/products.js:1625 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/products/availability/bulk | products | routes/products.js:1671 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/products/bulk | products | routes/products.js:488 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
@@ -562,11 +562,11 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/ask | signin | routes/signin.js:979 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/logout | signin | routes/signin.js:100 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/pin | signin | routes/signin.js:981 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
@@ -638,21 +638,21 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PUT | /api/chits/:chit_id/void | chits | routes/chits.js:6313 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/connections/:id/respond | connections | routes/connections.js:124 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | PUT | /api/definitions/:id | definitions | routes/definitions.js:380 | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1625 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| PUT | /api/entities/populations/:code/desk | entities | routes/entities.js:1625 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PUT | /api/entities/routing | entities | routes/entities.js:1544 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/folders/inventory/:code | folders | routes/folders.js:159 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/governance/country-setup | governance | routes/governance.js:533 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/governance/profile | governance | routes/governance.js:420 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/governance/profile/vault | governance | routes/governance.js:471 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:236 | yes | yes | yes | yes | yes | no | yes | yes | yes | no | yes | yes | no | partial | yes | yes | no |
+| PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:236 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | PUT | /api/integrations/streams | integrations | routes/integrations.js:759 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/network-design | network-design | routes/network-design.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:274 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/products/:id/availability | products | routes/products.js:1716 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
-| PUT | /api/products/:id/status | products | routes/products.js:1746 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
+| PUT | /api/products/:id/availability | products | routes/products.js:1716 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| PUT | /api/products/:id/status | products | routes/products.js:1746 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:135 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/service/:chit_id | service | routes/service.js:168 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1136 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | no | partial | yes | yes | no |
+| PUT | /api/service/:chit_id | service | routes/service.js:168 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1136 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | no |
 
 ## Endpoint cards
 
@@ -663,13 +663,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/actors/:id/pin** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 1; share cap-employees.js 1/5, cap-workforce.js 1/11, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 1; share cap-employees.js 1/5, cap-workforce.js 1/65, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
 
 **GET /api/actors** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share app.html 2/132, cap-admin.js 2/118, cap-chit2.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 2; share app.html 2/249, cap-admin.js 2/527, cap-chit2.js 2/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html, cap-admin.js, cap-chit2.js, cap-workforce.js, cap-worklist.js, core.js · actions: -
 
 **GET /api/actors/:id/tasks** · actors · cb-people · partial
@@ -687,31 +687,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/actors/check-login** · actors · cb-people · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/actors/settings** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 2; share cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_actor_settings · writes (derived): entity_actor_settings · callers: cap-admin.js · actions: -
 
 **PATCH /api/actors/:id** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline queueable · round trips 2 (wire 2; share cap-employees.js 2/5, cap-workforce.js 2/11, core.js 2/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 2 (wire 2; share cap-employees.js 2/5, cap-workforce.js 2/65, core.js 2/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_actor_settings, identities · writes (derived): identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
 
 **POST /api/actors** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-employees.js 0/5, cap-workforce.js 0/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-employees.js 0/5, cap-workforce.js 0/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_actor_settings, identities · writes (derived): identities · callers: app.html, cap-employees.js, cap-workforce.js · actions: -
 
 **POST /api/actors/:id/otp** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-workforce.js · actions: -
 
 **POST /api/actors/check-key** · actors · cb-people · meets standard
@@ -723,13 +723,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/actors/login** · actors · cb-people · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **POST /api/actors/set-pin** · actors · cb-people · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **POST /api/actors/suggest-key** · actors · cb-people · meets standard
@@ -741,13 +741,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PUT /api/actors/:id/delegate** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 1; share cap-employees.js 1/5, cap-workforce.js 1/11, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 1; share cap-employees.js 1/5, cap-workforce.js 1/65, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
 
 **PUT /api/actors/:id/status** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-employees.js 0/5, cap-workforce.js 0/11, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-employees.js 0/5, cap-workforce.js 0/65, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): chit_disputes, chit_status, entity_actor_settings, identities · callers: cap-employees.js, cap-workforce.js, core.js · actions: -
 
 **PUT /api/actors/:id/tasks/route** · actors · cb-people · partial
@@ -759,25 +759,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PUT /api/actors/assign/:chit_id** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, cap-admin.js 0/118, cap-tasks.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, cap-admin.js 0/527, cap-tasks.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_status, identities · writes (derived): - · callers: app.html, cap-admin.js, cap-tasks.js, core.js, workflow.js · actions: -
 
 **PUT /api/actors/break** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_status, identities · writes (derived): chit_status, identities · callers: app.html, core.js · actions: -
 
 **PUT /api/actors/change-pin** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): chit_disputes, identities · callers: cap-admin.js · actions: -
 
 **PUT /api/actors/settings** · actors · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline queueable · round trips 2 (wire 2; share cap-admin.js 2/118, core.js 2/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 2 (wire 2; share cap-admin.js 2/527, core.js 2/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_actor_settings, identities · writes (derived): entity_actor_settings · callers: cap-admin.js, core.js · actions: -
 
 ### adopt (cb-operations, 0 of 2 with a description)
@@ -799,25 +799,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/assist/catalogue-mine** · assist · cb-ai · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/assist/catalogue-source/:key** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/assist/catalogue-sources** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_source · writes (derived): - · callers: cap-catsetup.js · actions: -
 
 **GET /api/assist/container/:id** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): product_version · writes (derived): - · callers: - · actions: -
 
 **GET /api/assist/erp-handoffs** · assist · cb-ai · meets standard
@@ -841,7 +841,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/assist/questions** · assist · cb-ai · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132, cap-admin.js 1/118, cap-assist.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249, cap-admin.js 1/527, cap-assist.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): assist_qa · writes (derived): - · callers: app.html, cap-admin.js, cap-assist.js · actions: -
 
 **GET /api/assist/regions** · assist · cb-ai · meets standard
@@ -853,79 +853,79 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/assist/resolve** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): product_version, resolved_blueprint · writes (derived): resolved_blueprint · callers: - · actions: -
 
 **GET /api/assist/standards** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/assist/whoami** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132, cap-assist.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249, cap-assist.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas · writes (derived): - · callers: app.html, cap-assist.js · actions: -
 
 **POST /api/assist** · assist · cb-ai · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 422, 500, 502, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-assist.js 0/2, screen-id.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-assist.js 0/2, screen-id.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-assist.js, screen-id.js, tasks.html · actions: -
 
 **POST /api/assist/catalogue-adopt** · assist · cb-ai · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 6 (wire 12; share app.html 6/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 12; share app.html 6/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, catalogue_source · writes (derived): catalogue_adoption · callers: app.html · actions: -
 
 **POST /api/assist/catalogue-structure** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_source · writes (derived): - · callers: app.html · actions: -
 
 **POST /api/assist/conform** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **POST /api/assist/gap** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/assist/publish** · assist · cb-ai · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, cap-admin.js 0/118, cap-assist.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, cap-admin.js 0/527, cap-assist.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas · writes (derived): catalogue_items · callers: app.html, cap-admin.js, cap-assist.js, core.js · actions: -
 
 **POST /api/assist/resolve** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 410, 422, 500 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: core.js · actions: -
 
 **PUT /api/assist/catalogue-source** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_source · writes (derived): catalogue_source · callers: - · actions: -
 
 **PUT /api/assist/container** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **PUT /api/assist/region-override** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): product_container · writes (derived): container_region_override · callers: - · actions: -
 
 ### attachments (cb-rail, 0 of 2 with a description)
@@ -933,13 +933,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/attachments/:id** · attachments · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share app.html 50/249, attach-ui.js 50/50) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, attach-ui.js · actions: -
 
 **POST /api/attachments** · attachments · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 413, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, attach-ui.js 0/0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, attach-ui.js 0/50) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_messages · writes (derived): - · callers: app.html, attach-ui.js · actions: -
 
 ### books (cb-accounting, 0 of 78 with a description)
@@ -947,55 +947,55 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/books/recurring/:id** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 6; share cap-period.js 2/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 6; share cap-period.js 2/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/accounts** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-bank.js 1/4, cap-books.js 1/26, cap-entry.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 3; share cap-bank.js 4/8, cap-books.js 4/43, cap-entry.js 4/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, ledger_account · writes (derived): - · callers: cap-bank.js, cap-books.js, cap-entry.js · actions: -
 
 **GET /api/books/assets** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-period.js 2/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/bank/rail** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-bank.js 1/4, cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-bank.js 2/8, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, chit_detail, chit_header, chit_status, customer_list, identities, supplier_list · writes (derived): - · callers: cap-bank.js, cap-books.js · actions: -
 
 **GET /api/books/bs** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, ledger_account · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/cashflow** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-finance-cash.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-finance-cash.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-finance-cash.js · actions: -
 
 **GET /api/books/cheques** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 3; share cap-books.js 5/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, customer_list, identities, ledger_account, party_item, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/compare** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3; share cap-compare.js 3/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_compare_part, books_setting, identities · writes (derived): - · callers: cap-compare.js · actions: -
 
 **GET /api/books/compare/:id** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_compare_part, books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-compare.js · actions: -
 
 **GET /api/books/compare/:id/csv** · books · cb-accounting · partial
@@ -1007,73 +1007,73 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/books/daybook** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/dues** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26, cap-finance-pay.js 1/3, cap-finance.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3; share cap-books.js 3/43, cap-finance-pay.js 3/5, cap-finance.js 3/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, party_tax_id, supplier_list · writes (derived): - · callers: cap-books.js, cap-finance-pay.js, cap-finance.js · actions: -
 
 **GET /api/books/events** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/5, cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/8, cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js, cap-period.js · actions: -
 
 **GET /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3; share cap-fx.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, fx_rate, identities, journal_entry, journal_line · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, supplier_list · writes (derived): - · callers: cap-fx.js · actions: -
 
 **GET /api/books/health** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share accounts.html 1/7, app.html 1/132, cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share accounts.html 2/14, app.html 2/249, cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_outbox, books_setting, identities · writes (derived): - · callers: accounts.html, app.html, cap-books.js, cap-move-in.js, crm.html, index.html · actions: -
 
 **GET /api/books/ledger/:account** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-bank.js 1/4, cap-books.js 1/26, cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-bank.js 1/8, cap-books.js 1/43, cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank.js, cap-books.js, cap-period.js · actions: -
 
 **GET /api/books/move-in/imports** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/packs** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_pack, books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/packs/:id** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_pack, books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/packs/:id/file** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, PACK_NO_FILE] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/party/:id/statement** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, chit_detail, chit_disputes, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/payments/:id/advice** · books · cb-accounting · meets standard
@@ -1085,55 +1085,55 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/books/periods** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, fiscal_period, identities, journal_entry · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/pl** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/recurring** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-period.js 2/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/returns** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **GET /api/books/status** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [OWNER_ONLY] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 6; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 6; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/books/terms** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-crm-record.js 1/7, cap-finance-terms.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-crm-record.js 2/8, cap-finance-terms.js 2/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_change_log, books_setting, identities · writes (derived): - · callers: cap-crm-record.js, cap-finance-terms.js · actions: -
 
 **GET /api/books/todo** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share accounts.html 1/7, cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 7 (wire 3; share accounts.html 7/14, cap-period.js 7/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: accounts.html, cap-period.js · actions: -
 
 **GET /api/books/trial-balance** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/year/:fy/status** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, fiscal_period, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **PATCH /api/books/payments/:id** · books · cb-accounting · partial
@@ -1145,79 +1145,79 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/books/recurring/:id** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/accounts** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, ledger_account · writes (derived): books_change_log, ledger_account · callers: cap-books.js · actions: -
 
 **POST /api/books/accruals** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/accruals/:ref/reverse** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/assets** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/assets/:id/dispose** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/check** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/cheques/:id/status** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, journal_entry · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/closing-stock** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/compare/preflight** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 4 code(s) [BOOKS_BAD_REQUEST, COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-compare.js · actions: -
 
 **POST /api/books/compare/snapshots** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 4 code(s) [BOOKS_BAD_REQUEST, COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_compare_part, books_setting, identities · writes (derived): books_compare_part · callers: cap-compare.js · actions: -
 
 **POST /api/books/contra** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/depreciation/run** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/enable** · books · cb-accounting · meets standard
@@ -1229,163 +1229,163 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/books/entries** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, journal_entry, ledger_account · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/entries/:id/reverse** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [ALREADY_REVERSED, LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js · actions: -
 
 **POST /api/books/events** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js · actions: -
 
 **POST /api/books/fx-rates** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/fx-rates/import** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/fx-revalue** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-fx.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-fx.js · actions: -
 
 **POST /api/books/gst/close** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/gst/pay** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline idempotent · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline idempotent · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/loans** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/loans/:ref/emi** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/move-in/import** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): - · callers: cap-move-in.js · actions: -
 
 **POST /api/books/move-in/preflight** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-move-in.js · actions: -
 
 **POST /api/books/move-in/preview** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-move-in.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, catalogue_items, customer_list, identities, party_tax_id, supplier_list · writes (derived): - · callers: cap-move-in.js · actions: -
 
 **POST /api/books/opening** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/outbox/retry** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/packs** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-books.js · actions: -
 
 **POST /api/books/packs/:id/ack** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, PACK_NO_FILE] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_pack, books_setting, identities · writes (derived): books_change_log, books_pack · callers: cap-books.js · actions: -
 
 **POST /api/books/parties/:id/dispute** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-finance-pay.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-finance-pay.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, journal_entry · writes (derived): - · callers: cap-finance-pay.js · actions: -
 
 **POST /api/books/payments** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline idempotent · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline idempotent · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, chit_disputes, chit_header, chit_status, identities, journal_entry · writes (derived): books_payment · callers: cap-books.js · actions: -
 
 **POST /api/books/payments/:id/confirm** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline idempotent · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline idempotent · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/payments/:id/propose** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, chit_header, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/payments/preview** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26, cap-finance-pay.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43, cap-finance-pay.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, books_setting, chit_header, identities, journal_entry · writes (derived): - · callers: cap-books.js, cap-finance-pay.js · actions: -
 
 **POST /api/books/periods/:fy/:p/:act** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, fiscal_period, identities · writes (derived): books_change_log, fiscal_period · callers: - · actions: -
 
 **POST /api/books/preview** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-entry.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-entry.js · actions: -
 
 **POST /api/books/recurring** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/recurring/:id/post** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/recurring/:id/skip** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-period.js 50/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): - · callers: cap-period.js · actions: -
 
 **POST /api/books/setting** · books · cb-accounting · meets standard
@@ -1397,19 +1397,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/books/terms** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [LEDGER_OFF, OWNER_ONLY, TERMS_NOT_MIGRATED] · statuses 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-finance-cheques.js 1/1, cap-finance-terms.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-finance-cheques.js 1/1, cap-finance-terms.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): books_change_log, books_setting · callers: cap-finance-cheques.js, cap-finance-terms.js · actions: -
 
 **POST /api/books/write-off** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities, journal_entry · writes (derived): - · callers: - · actions: -
 
 **POST /api/books/year/:fy/close** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, PERIOD_RETURN_OPEN, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/520) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_setting, identities · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
 ### books-money (cb-accounting, 0 of 1 with a description)
@@ -1443,13 +1443,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/capture/webhook/whatsapp** · capture · cb-connect · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/capture/:id/convert** · capture · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, intake.html 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, intake.html 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): capture · callers: app.html, intake.html · actions: -
 
 **POST /api/capture/:id/dismiss** · capture · cb-connect · partial
@@ -1479,7 +1479,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/capture/stores** · capture · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/capture/webhook/email** · capture · cb-connect · not started
@@ -1499,7 +1499,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/catalogue/:bridge_id/my-documents/:id** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_attachment · writes (derived): cb_attachment · callers: - · actions: -
 
 **GET /api/catalogue/:bridge_id** · catalogue · cb-catalogue · meets standard
@@ -1511,25 +1511,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/catalogue/:bridge_id/capture-fields** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 400, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/catalogue/:bridge_id/my-documents** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_attachment · writes (derived): - · callers: - · actions: -
 
 **GET /api/catalogue/:bridge_id/my-orders** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/catalogue/:bridge_id/support/preview** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 400, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/catalogue/enquiry** · catalogue · cb-catalogue · meets standard
@@ -1541,67 +1541,67 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/catalogue/enquiry/:item_id** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_messages · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/catalogue/network-store/:networkId** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 2 code(s) [NETWORK_READ_FAILED, NO_SUCH_NETWORK] · statuses 400, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/catalogue/network/:bridge_id** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 2 code(s) [NETWORK_READ_FAILED, NOT_FOUND] · statuses 400, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_entity, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/catalogue/:bridge_id/login/verify** · catalogue · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [CONTACT_INVALID, NOT_FOUND, SIGNIN_REFUSED] · statuses 400, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: app.html · actions: -
 
 **POST /api/catalogue/:bridge_id/order/confirm** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 6 code(s) [CONTACT_INVALID, NOT_FOUND, ORDER_REJECTED, SHOP_CLOSED, SIGNIN_REFUSED, SUBMISSION_REJECTED] · statuses 400, 403, 404, 409, 422, 500, 503 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, catalogue_items, chit_messages, definition, definition_version, entity_schemas, identities, product_container · writes (derived): chit_detail, chit_header, chit_status, customer_list, erp_handoff, identities, source_penetration, state_log · callers: - · actions: -
 
 **POST /api/catalogue/:bridge_id/order/start** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 3 code(s) [CONTACT_INVALID, NOT_FOUND, SHOP_CLOSED] · statuses 400, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: - · actions: -
 
 **POST /api/catalogue/:bridge_id/support** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 4 code(s) [CONTACT_INVALID, NOT_FOUND, SIGNIN_REFUSED, SUPPORT_NOT_TAKEN] · statuses 400, 404, 422, 500, 502 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: - · actions: -
 
 **POST /api/catalogue/:bridge_id/support/start** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 2 code(s) [CONTACT_INVALID, NOT_FOUND] · statuses 400, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: - · actions: -
 
 **POST /api/catalogue/enquiry/:item_id** · catalogue · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): - · callers: app.html · actions: -
 
 **POST /api/catalogue/network-store/:networkId/order** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 7 code(s) [NETWORK_ORDERS_OFF, NOT_THIS_NETWORK, NO_MATCHING_PRODUCTS, NO_OPERATOR, NO_SUCH_NETWORK, ORDER_EMPTY, SIGN_IN_FIRST] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/catalogue/photo-extract** · catalogue · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### catalogue-face (cb-catalogue, 0 of 2 with a description)
@@ -1609,13 +1609,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/catalogue-face** · catalogue-face · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-catalogue.js 1/10, cap-catsetup.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-catalogue.js 1/13, cap-catsetup.js 1/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face · writes (derived): - · callers: app.html, cap-catalogue.js, cap-catsetup.js · actions: -
 
 **PUT /api/catalogue-face** · catalogue-face · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 413, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-catsetup.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-catsetup.js 0/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, entity_schemas, schema_fields · writes (derived): catalogue_face · callers: app.html, cap-catsetup.js · actions: -
 
 ### channels (cb-connect, 10 of 10 with a description)
@@ -1623,13 +1623,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/channels/:id** · channels · cb-connect · partial
 - does: A channel id of yours -> we remove that binding -> a confirmation that it is gone.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): channel_binding · callers: cap-admin.js · actions: -
 
 **GET /api/channels** · channels · cb-connect · partial
 - does: Nothing in -> we read your channels, whether each provider is set up and your bound numbers in one go -> the list for the Channels panel.
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/channels/outbound** · channels · cb-connect · partial
@@ -1641,43 +1641,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/channels** · channels · cb-connect · partial
 - does: A channel, an address and a label -> we bind that address to your shop, waiting for platform approval -> the new binding.
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/channels/:id/approve** · channels · cb-connect · partial
 - does: A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): - · callers: - · actions: -
 
 **POST /api/channels/:id/auto-raise** · channels · cb-connect · partial
 - does: On or off for one of your channels -> we switch hands-free raising of chits for that line (a line not yet verified still raises nothing) -> the updated channel.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): channel_binding · callers: cap-admin.js · actions: -
 
 **POST /api/channels/:id/provider-ref** · channels · cb-connect · partial
 - does: The provider's line id for one of your channels -> we save it so sends can be addressed -> the updated channel.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): channel_binding · callers: - · actions: -
 
 **POST /api/channels/:id/revoke** · channels · cb-connect · partial
 - does: A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): - · callers: - · actions: -
 
 **POST /api/channels/:id/template** · channels · cb-connect · partial
 - does: A template name and state you were shown on Meta's approval screen -> we record it against your channel -> the updated channel.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): channel_binding · callers: cap-admin.js · actions: -
 
 **POST /api/channels/:id/template-approve** · channels · cb-connect · partial
 - does: A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).
 - errors: 0 code(s) [-] · statuses 400, 403, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): channel_binding · writes (derived): channel_binding · callers: - · actions: -
 
 ### chits (cb-rail, 0 of 65 with a description)
@@ -1685,31 +1685,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/chits/:chit_id** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37, till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387, till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status · writes (derived): chit_status, state_log · callers: app.html, core.js, till.html · actions: -
 
 **DELETE /api/chits/:chit_id/payment** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_payment, journal_entry · writes (derived): chit_header · callers: app.html · actions: -
 
 **DELETE /api/chits/:chit_id/purge** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_attachment, chit_detail, chit_header, chit_messages, chit_status, state_log · writes (derived): cb_attachment, chit_detail, chit_header, chit_messages, chit_status, state_log · callers: app.html, core.js · actions: -
 
 **GET /api/chits/:chit_id** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, authority-forms.html 1/4, cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, authority-forms.html 1/254, cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_header, chit_line, chit_line_amendment, chit_line_assignment, chit_line_delivery, chit_status, identities, state_log · writes (derived): chit_reads, chit_status, state_log · callers: app.html, authority-forms.html, cap-admin.js, cap-books.js, cap-chit2.js, cap-crm-chits.js, cap-crm-record.js, cap-crm.js, cap-dispute.js, cap-messages.js, cap-register.js, cap-worklist.js, chit-sheet.js, core.js, intake.html, rail-thread.js, screen-id.js, tasks.html, till.html · actions: -
 
 **GET /api/chits/:chit_id/catalogue-overlay** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 8; share app.html 2/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 8; share app.html 2/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_item_version, catalogue_items, chit_header · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/chits/:chit_id/costs** · chits · cb-rail · partial
@@ -1721,19 +1721,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/:chit_id/diagnosis** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_disputes, chit_header, chit_status · writes (derived): - · callers: - · actions: -
 
 **GET /api/chits/:chit_id/disputes** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-dispute.js 1/5, screen-id.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-dispute.js 1/5, screen-id.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status · writes (derived): - · callers: app.html, cap-dispute.js, screen-id.js, screens.js, tasks.html · actions: -
 
 **GET /api/chits/:chit_id/messages** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-chit2.js 1/13, cap-crm-record.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-chit2.js 1/15, cap-crm-record.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_messages, chit_status, ctp_event_out · writes (derived): state_log · callers: app.html, cap-chit2.js, cap-crm-record.js, cap-dispute.js, cap-intake.js, core.js, rail-thread.js, screens.js · actions: -
 
 **GET /api/chits/:chit_id/proposals** · chits · cb-rail · partial
@@ -1751,7 +1751,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/:chit_id/use** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
 
 **GET /api/chits/:id/children** · chits · cb-rail · partial
@@ -1769,43 +1769,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/disputes/queue** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [DISPUTES_NOT_SET_UP] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 6; share cap-admin.js 2/118, cap-dispute.js 2/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 6; share cap-admin.js 2/527, cap-dispute.js 2/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities, state_log · writes (derived): state_log · callers: cap-admin.js, cap-dispute.js · actions: -
 
 **GET /api/chits/folder** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 3 (wire 7; share app.html 3/132, cap-admin.js 3/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 7; share app.html 3/249, cap-admin.js 3/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_messages, identities · writes (derived): - · callers: app.html, cap-admin.js · actions: -
 
 **GET /api/chits/inbox** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 2 (wire 6; share app.html 2/132, authority-forms.html 2/4, cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 6; share app.html 2/249, authority-forms.html 2/254, cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_messages, chit_status, identities, state_log · writes (derived): - · callers: app.html, authority-forms.html, cap-admin.js · actions: -
 
 **GET /api/chits/pulse** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status, state_log · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/chits/raida/report** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 5; share cap-register.js 4/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/attachables** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 8; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): register_attachable · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/subjects** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/register/templates** · chits · cb-rail · meets standard
@@ -1817,19 +1817,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/register/walk/:from** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **GET /api/chits/rollup** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 5; share app.html 1/132, till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 5; share app.html 1/249, till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status · writes (derived): - · callers: app.html, till.html · actions: -
 
 **GET /api/chits/sent** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 5; share app.html 1/132, authority-forms.html 1/4, cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 5; share app.html 1/249, authority-forms.html 1/254, cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_disputes, chit_header, chit_status, identities, state_log · writes (derived): chit_reads, chit_status, state_log · callers: app.html, authority-forms.html, cap-admin.js, cap-bank.js, cap-connector.js, cap-crm-groups.js, cap-marketing.js, cap-mis.js, cap-repeat.js, rail-advice.js, screen-id.js, till.html · actions: -
 
 **GET /api/chits/trace/batches** · chits · cb-rail · meets standard
@@ -1853,49 +1853,49 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/chits/unread** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-folders.js 0/22, cap-mis.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-folders.js 0/22, cap-mis.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_reads, chit_status · writes (derived): - · callers: app.html, cap-folders.js, cap-mis.js · actions: -
 
 **POST /api/chits/:chit_id/amend** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, workflow.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, workflow.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_header · writes (derived): state_log · callers: app.html, workflow.js · actions: -
 
 **POST /api/chits/:chit_id/archive** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 7; share app.html 1/132, cap-chit2.js 1/13, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 7; share app.html 1/249, cap-chit2.js 1/15, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_status · callers: app.html, cap-chit2.js, core.js, screens.js · actions: -
 
 **POST /api/chits/:chit_id/assign-lines** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/15, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): state_log · callers: cap-chit2.js, cap-tasks.js, cap-worklist.js · actions: -
 
 **POST /api/chits/:chit_id/books-request** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_header · callers: app.html, cap-admin.js · actions: -
 
 **POST /api/chits/:chit_id/costs** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/:chit_id/deliver-lines** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/15, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities, state_log · writes (derived): state_log · callers: cap-chit2.js, cap-tasks.js, cap-worklist.js, till.html · actions: -
 
 **POST /api/chits/:chit_id/disputes** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-crm-record.js 0/7, cap-dispute.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-crm-record.js 0/8, cap-dispute.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status, identities · writes (derived): chit_status, state_log · callers: app.html, cap-crm-record.js, cap-dispute.js, cap-legend.js, cap-match.js, cap-network.js, chit-sheet.js, screens.js · actions: -
 
 **POST /api/chits/:chit_id/messages** · chits · cb-rail · partial
@@ -1907,7 +1907,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/payment** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): books_outbox, chit_header · callers: app.html · actions: -
 
 **POST /api/chits/:chit_id/proposals** · chits · cb-rail · partial
@@ -1937,7 +1937,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/raida** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/:chit_id/raida/:raida_id/close** · chits · cb-rail · partial
@@ -1949,127 +1949,127 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/chits/:chit_id/raida/:raida_id/dispute** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/:chit_id/reprice** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-chit2.js · actions: -
 
 **POST /api/chits/:chit_id/restore** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_status, state_log · callers: app.html, core.js · actions: -
 
 **POST /api/chits/:chit_id/unarchive** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_status · callers: app.html, core.js · actions: -
 
 **POST /api/chits/:chit_id/unread** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_status · callers: app.html, core.js · actions: -
 
 **POST /api/chits/assign-bulk** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status, entity_actor_settings, identities · writes (derived): identities, state_log · callers: app.html, core.js · actions: -
 
 **POST /api/chits/register/entries/:raida_id/accept** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/register/entries/:raida_id/close** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/entries/:raida_id/revise** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, register_subject · writes (derived): register_subject · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects/:subject_id/close** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/subjects/:subject_id/entries** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/21) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-register.js 2/23) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-register.js · actions: -
 
 **POST /api/chits/register/templates** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/send** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-readiness.js 0/19, cap-tasks.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-readiness.js 0/25, cap-tasks.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, chit_status · writes (derived): - · callers: app.html, cap-readiness.js, cap-tasks.js, intake.html, rail-advice.js, till.html · actions: -
 
 **PUT /api/chits/:chit_id/disputes/:dispute_id/resolve** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [DISPUTE_TARGET_NOT_PARTY] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-dispute.js 0/5, core.js 0/37, screens.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-dispute.js 0/5, core.js 0/387, screens.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_header, identities · writes (derived): chit_header · callers: cap-dispute.js, core.js, screens.js · actions: -
 
 **PUT /api/chits/:chit_id/priority** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status · writes (derived): chit_status · callers: app.html, core.js · actions: -
 
 **PUT /api/chits/:chit_id/priority-flag** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status · writes (derived): chit_status · callers: app.html, core.js · actions: -
 
 **PUT /api/chits/:chit_id/star** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status · writes (derived): chit_status · callers: app.html, core.js · actions: -
 
 **PUT /api/chits/:chit_id/status** · chits · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, cap-assist.js 0/2, cap-bank.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, cap-assist.js 0/2, cap-bank.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: app.html, cap-assist.js, cap-bank.js, cap-books.js, cap-catalogue.js, cap-compare.js, cap-country.js, cap-crm-calls.js, cap-crm-groups.js, cap-crm-leads.js, cap-crm-privacy.js, cap-crm-record.js, cap-crm.js, cap-dispute.js, cap-employees.js, cap-finance-cheques.js, cap-finance-returns.js, cap-marketing.js, cap-period.js, cap-register.js, cap-settings.js, cap-shop.js, cap-suppliers.js, cap-tasks.js, chit-sheet.js, core.js, country-profiles.js, shop-privacy.js, till.html · actions: -
 
 **PUT /api/chits/:chit_id/use** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-books.js 1/26, chit-sheet.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-books.js 1/43, chit-sheet.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: app.html, cap-books.js, chit-sheet.js · actions: -
 
 **PUT /api/chits/:chit_id/void** · chits · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status · writes (derived): chit_status, state_log · callers: app.html, core.js · actions: -
 
 ### combo-templates (cb-catalogue, 0 of 5 with a description)
@@ -2077,31 +2077,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/combo-templates/:id** · combo-templates · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share combo-mode.js 50/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): combo_templates · writes (derived): combo_templates · callers: combo-mode.js · actions: -
 
 **GET /api/combo-templates** · combo-templates · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share combo-mode.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share combo-mode.js 1/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): combo_templates · writes (derived): - · callers: combo-mode.js · actions: -
 
 **PATCH /api/combo-templates/:id** · combo-templates · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 400, 401, 404, 500 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share combo-mode.js 50/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): combo_templates · writes (derived): combo_templates · callers: combo-mode.js · actions: -
 
 **POST /api/combo-templates** · combo-templates · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share combo-mode.js 50/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): combo_templates · writes (derived): combo_templates · callers: combo-mode.js · actions: -
 
 **POST /api/combo-templates/:id/push** · combo-templates · cb-catalogue · partial
 - does: _not yet written_
 - errors: 3 code(s) [COMBO_INVALID, COST_BLIND, NOT_FOUND] · statuses 400, 401, 403, 404, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 4; share combo-mode.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share combo-mode.js 1/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, combo_templates, entity_schemas · writes (derived): combo_templates · callers: combo-mode.js · actions: -
 
 ### connections (cb-network, 0 of 4 with a description)
@@ -2121,13 +2121,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/connections/request** · connections · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connections, identities · writes (derived): connections, state_log · callers: - · actions: -
 
 **PUT /api/connections/:id/respond** · connections · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connections, identities · writes (derived): connections, state_log · callers: core.js · actions: -
 
 ### connectors (cb-connect, 0 of 14 with a description)
@@ -2135,13 +2135,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/connectors/:actorId** · connectors · cb-connect · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): identities · callers: cap-connector.js, core.js · actions: -
 
 **GET /api/connectors** · connectors · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): connector_connection, identities · writes (derived): - · callers: cap-workforce.js · actions: -
 
 **GET /api/connectors/:actorId/connections** · connectors · cb-connect · meets standard
@@ -2165,13 +2165,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/connectors/:actorId/connections/:connId** · connectors · cb-connect · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 1; share cap-connector.js 1/11, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): connector_connection · callers: cap-connector.js, core.js · actions: -
 
 **POST /api/connectors** · connectors · cb-connect · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/11) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-workforce.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-workforce.js · actions: -
 
 **POST /api/connectors/:actorId/connections** · connectors · cb-connect · meets standard
@@ -2221,37 +2221,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/counters** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share app.html 1/132, cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share app.html 1/249, cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html, cap-admin.js, cap-settings.js, screen-id.js, settings.html · actions: -
 
 **PATCH /api/counters/:id** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-settings.js 0/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-settings.js 0/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **POST /api/counters** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 8; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 8; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, identities · writes (derived): - · callers: cap-admin.js, cap-settings.js · actions: -
 
 **POST /api/counters/:id/assign** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: - · actions: -
 
 **POST /api/counters/:id/open** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 1 code(s) [COUNTER_HELD] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/118, cap-settings.js 1/65, screens.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/527, cap-settings.js 1/116, screens.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js, cap-settings.js, screens.js · actions: -
 
 **POST /api/counters/:id/release** · counters · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js, cap-settings.js · actions: -
 
 ### crm (cb-crm, 0 of 24 with a description)
@@ -2259,19 +2259,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/crm/followups/:id** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 5; share cap-crm.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 5; share cap-crm.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): party_followup · writes (derived): party_followup · callers: cap-crm.js · actions: -
 
 **DELETE /api/crm/groups/:name** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-crm-groups.js 1/10) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-crm-groups.js 1/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): customer_list · callers: cap-crm-groups.js · actions: -
 
 **DELETE /api/crm/parties/:id** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 11; share cap-crm-record.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 11; share cap-crm-record.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): customer_list, supplier_list · callers: cap-crm-record.js · actions: -
 
 **GET /api/crm/calls** · crm · cb-crm · meets standard
@@ -2283,19 +2283,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/crm/followups** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 8; share cap-crm.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 8; share cap-crm.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm.js · actions: -
 
 **GET /api/crm/parties** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 14; share cap-crm-leads.js 1/1, cap-crm.js 1/6, cap-finance-terms.js 1/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 14; share cap-crm-leads.js 4/4, cap-crm.js 4/9, cap-finance-terms.js 4/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm-leads.js, cap-crm.js, cap-finance-terms.js · actions: -
 
 **GET /api/crm/parties/:id** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 14; share cap-crm-groups.js 1/10, cap-crm-record.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 14; share cap-crm-groups.js 1/13, cap-crm-record.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages · writes (derived): - · callers: cap-crm-groups.js, cap-crm-record.js · actions: -
 
 **GET /api/crm/parties/:id/contact-prefs** · crm · cb-crm · meets standard
@@ -2307,7 +2307,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/crm/parties/:id/timeline** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 11; share cap-crm-record.js 1/7, cap-crm.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 11; share cap-crm-record.js 1/8, cap-crm.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): books_change_log, chit_disputes, chit_messages, identities, memberships, party_followup, party_interaction, party_item · writes (derived): party_interaction · callers: cap-crm-record.js, cap-crm.js · actions: -
 
 **GET /api/crm/privacy-requests** · crm · cb-crm · meets standard
@@ -2319,37 +2319,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/crm/segments** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 28; share cap-crm-groups.js 3/10) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 28; share cap-crm-groups.js 6/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-crm-groups.js · actions: -
 
 **PATCH /api/crm/followups/:id** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-crm.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-crm.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): party_followup · callers: cap-crm.js · actions: -
 
 **POST /api/crm/followups** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money y (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-record.js 0/7, cap-crm.js 0/6, cap-finance-cheques.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-record.js 0/8, cap-crm.js 0/9, cap-finance-cheques.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages · writes (derived): party_followup · callers: cap-crm-record.js, cap-crm.js, cap-finance-cheques.js · actions: -
 
 **POST /api/crm/groups** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-crm-groups.js 1/10) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-crm-groups.js 1/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): customer_list · writes (derived): customer_list · callers: cap-crm-groups.js · actions: -
 
 **POST /api/crm/leads** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): customer_list, identities, memberships · callers: cap-crm-leads.js · actions: -
 
 **POST /api/crm/leads/import** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm-leads.js · actions: -
 
 **POST /api/crm/parties/:id/contact-prefs** · crm · cb-crm · meets standard
@@ -2361,7 +2361,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/crm/parties/:id/interactions** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-crm-groups.js 1/10, cap-crm-record.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-crm-groups.js 1/13, cap-crm-record.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages · writes (derived): party_interaction · callers: cap-crm-groups.js, cap-crm-record.js · actions: -
 
 **POST /api/crm/parties/:id/outcome** · crm · cb-crm · meets standard
@@ -2373,7 +2373,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/crm/parties/:id/stage** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-leads.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): customer_list, identities · writes (derived): memberships · callers: cap-crm-leads.js · actions: -
 
 **POST /api/crm/privacy-requests** · crm · cb-crm · meets standard
@@ -2391,13 +2391,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/crm/segments/:key/send** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-groups.js 0/10) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-groups.js 0/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm-groups.js · actions: -
 
 **POST /api/crm/walk-ins/add** · crm · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-crm-record.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-crm-record.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): customer_list, identities · callers: cap-crm-record.js · actions: -
 
 ### csp-report (cb-security, 0 of 1 with a description)
@@ -2413,7 +2413,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/ctp/.well-known/ctp.json** · ctp · cb-rail · partial
 - does: _not yet written_
 - errors: 1 code(s) [CTP_MANIFEST_UNAVAILABLE] · statuses 500 · money n (derived)
-- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): installation, population · writes (derived): - · callers: - · actions: -
 
 **POST /api/ctp/deliver** · ctp · cb-rail · partial
@@ -2433,37 +2433,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/definitions/:id** · definitions · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-categories.js 1/6, cap-definitions.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-categories.js 1/6, cap-definitions.js 1/17) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_status_log · callers: cap-categories.js, cap-definitions.js · actions: -
 
 **GET /api/definitions** · definitions · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132, cap-categories.js 1/6, cap-catsetup.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249, cap-categories.js 1/6, cap-catsetup.js 1/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version, identities, region_layer · writes (derived): - · callers: app.html, cap-categories.js, cap-catsetup.js, core.js · actions: -
 
 **GET /api/definitions/:id** · definitions · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-categories.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-categories.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_status_log, definition_version, identities · writes (derived): - · callers: app.html, cap-categories.js · actions: -
 
 **POST /api/definitions** · definitions · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 428, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-categories.js 0/6, cap-catsetup.js 0/12, cap-definitions.js 0/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-categories.js 0/6, cap-catsetup.js 0/14, cap-definitions.js 0/17) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_version · callers: cap-categories.js, cap-catsetup.js, cap-definitions.js, core.js · actions: -
 
 **POST /api/definitions/freeze** · definitions · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: app.html · actions: -
 
 **PUT /api/definitions/:id** · definitions · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 422, 428, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-categories.js 1/6, cap-definitions.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-categories.js 1/6, cap-definitions.js 1/17) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version · writes (derived): definition, definition_status_log, definition_version · callers: app.html, cap-categories.js, cap-definitions.js, core.js · actions: -
 
 ### entities (cb-network, 0 of 25 with a description)
@@ -2477,7 +2477,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/entities/entitlements** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-settings.js 2/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-settings.js 2/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **GET /api/entities/header** · entities · cb-network · meets standard
@@ -2489,49 +2489,49 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/entities/me** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share app.html 2/132, avatar.js 2/2, cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 2; share app.html 6/249, avatar.js 6/6, cap-admin.js 6/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: app.html, avatar.js, cap-admin.js, cap-country.js, cap-finance-returns.js, cap-print.js, cap-shop.js, cap-workforce.js, catalogue.html, till.html · actions: -
 
 **GET /api/entities/me/can-see-costs** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/10, cap-catsetup.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/13, cap-catsetup.js 0/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-catalogue.js, cap-catsetup.js · actions: -
 
 **GET /api/entities/mis** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money y (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_entity, identities, population, supplier_list · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/entities/policy** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, cap-catsetup.js 1/12, cap-country.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, cap-catsetup.js 1/14, cap-country.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, cap-catsetup.js, cap-country.js, cap-crm-groups.js, cap-settings.js · actions: -
 
 **GET /api/entities/populations** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, population · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/entities/routing** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 8; share cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 8; share cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_entity, entity_work_routing, folder, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/entities/routing/preview** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 7 (wire 1; share app.html 7/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/entities/search** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-crm.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-crm.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-crm.js · actions: -
 
 **GET /api/entities/search/places** · entities · cb-network · meets standard
@@ -2549,19 +2549,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/entities/usage** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 6; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 6; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): usage_ledger · writes (derived): - · callers: cap-admin.js, cap-settings.js · actions: -
 
 **PATCH /api/entities/:id/erase** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: - · actions: -
 
 **PATCH /api/entities/me/exposure** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-admin.js · actions: -
 
 **PATCH /api/entities/me/locale** · entities · cb-network · partial
@@ -2573,49 +2573,49 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/entities/me/prefs/:kind** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share avatar.js 0/2, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share avatar.js 0/6, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): identities · callers: avatar.js, core.js · actions: -
 
 **PATCH /api/entities/policy** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, cap-catsetup.js 1/12, cap-country.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, cap-catsetup.js 1/14, cap-country.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): identities · callers: cap-admin.js, cap-catsetup.js, cap-country.js, cap-crm-groups.js, cap-settings.js · actions: -
 
 **PATCH /api/entities/profile** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 1; share app.html 1/132, cap-admin.js 1/118, cap-country.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 1; share app.html 1/249, cap-admin.js 1/527, cap-country.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): entity_schemas, identities · callers: app.html, cap-admin.js, cap-country.js, cap-network.js, cap-shop.js, core.js · actions: -
 
 **POST /api/entities/populations** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): population · callers: app.html · actions: -
 
 **POST /api/entities/register** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-register.js 0/21, cap-worklist.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-register.js 0/23, cap-worklist.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): entity_governance, identities · callers: app.html, cap-register.js, cap-worklist.js, intake.html, register-form.js, signin-ui.js · actions: -
 
 **POST /api/entities/verify** · entities · cb-network · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, intake.html 0/5, register-form.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, intake.html 0/5, register-form.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, intake.html, register-form.js · actions: -
 
 **PUT /api/entities/populations/:code/desk** · entities · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): population · writes (derived): population · callers: app.html · actions: -
 
 **PUT /api/entities/routing** · entities · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): folder, identities · writes (derived): entity_work_routing · callers: cap-admin.js · actions: -
 
 ### events (cb-rail, 0 of 3 with a description)
@@ -2623,19 +2623,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/events/stats** · events · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share core.js 0/37, promo.html 0/15, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share core.js 0/387, promo.html 0/67, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: core.js, promo.html, rail-bell.js, till.html · actions: -
 
 **GET /api/events/stream** · events · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share core.js 0/37, promo.html 0/15, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share core.js 0/387, promo.html 0/67, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: core.js, promo.html, rail-bell.js, till.html · actions: -
 
 **POST /api/events/ticket** · events · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share core.js 0/37, promo.html 0/15, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share core.js 0/387, promo.html 0/67, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: core.js, promo.html, rail-bell.js, till.html · actions: -
 
 ### facts (cb-reports, 0 of 2 with a description)
@@ -2657,7 +2657,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/folders/:id** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 5; share cap-folders.js 1/22, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 5; share cap-folders.js 1/22, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): folder · writes (derived): folder · callers: cap-folders.js, core.js · actions: -
 
 **DELETE /api/folders/rules/:rule_id** · folders · cb-rail · meets standard
@@ -2669,13 +2669,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/folders** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 9; share accounts.html 3/7, cap-folders.js 3/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 9; share accounts.html 3/14, cap-folders.js 3/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_status, folder · writes (derived): - · callers: accounts.html, cap-folders.js · actions: -
 
 **GET /api/folders/:id/chits** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money y (derived)
-- effect: offline online-only · round trips 2 (wire 8; share accounts.html 2/7, cap-folders.js 2/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 8; share accounts.html 2/14, cap-folders.js 2/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_status, folder, identities · writes (derived): - · callers: accounts.html, cap-folders.js · actions: -
 
 **GET /api/folders/:id/metrics** · folders · cb-rail · meets standard
@@ -2705,13 +2705,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/folders/messages** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/118, cap-messages.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/527, cap-messages.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_line, chit_line_assignment, chit_messages, chit_status · writes (derived): - · callers: cap-admin.js, cap-messages.js · actions: -
 
 **GET /api/folders/mis** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/118, cap-mis.js 2/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/527, cap-mis.js 2/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, cap-mis.js · actions: -
 
 **GET /api/folders/reconcile** · folders · cb-rail · meets standard
@@ -2735,13 +2735,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/folders/worklist** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-messages.js 1/4, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-messages.js 1/4, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-messages.js, cap-worklist.js, screens.js · actions: -
 
 **PATCH /api/folders/:id** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-folders.js 0/22, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-folders.js 0/22, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): folder · writes (derived): folder · callers: cap-folders.js, core.js · actions: -
 
 **PATCH /api/folders/rules/:rule_id** · folders · cb-rail · meets standard
@@ -2753,7 +2753,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/folders** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-folders.js 0/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-folders.js 0/22) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): folder · writes (derived): folder · callers: app.html, cap-folders.js · actions: -
 
 **POST /api/folders/:id/rules** · folders · cb-rail · meets standard
@@ -2771,7 +2771,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/folders/move** · folders · cb-rail · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-folders.js 0/22, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-folders.js 0/22, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): folder · writes (derived): chit_status · callers: cap-folders.js, core.js · actions: -
 
 **POST /api/folders/rules/preview** · folders · cb-rail · meets standard
@@ -2791,19 +2791,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/forms** · forms · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share authority-forms.html 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share authority-forms.html 0/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: authority-forms.html · actions: -
 
 **GET /api/forms/:key** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/forms/instances/:id** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share authority-forms.html 50/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): form_instance · writes (derived): - · callers: authority-forms.html · actions: -
 
 **GET /api/forms/instances/all** · forms · cb-compliance · partial
@@ -2815,25 +2815,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/forms/:key/issue** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share authority-forms.html 50/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: authority-forms.html · actions: -
 
 **POST /api/forms/:key/resolve** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share authority-forms.html 50/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: authority-forms.html · actions: -
 
 **POST /api/forms/instances/:id/attach** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share authority-forms.html 50/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): form_instance · callers: authority-forms.html · actions: -
 
 **POST /api/forms/instances/:id/sign** · forms · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share authority-forms.html 50/254) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: authority-forms.html · actions: -
 
 ### governance (cb-settings, 0 of 30 with a description)
@@ -2865,7 +2865,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/governance/country-setup** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 7; share cap-country.js 2/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 7; share cap-country.js 2/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-country.js · actions: -
 
 **GET /api/governance/entities/:id** · governance · cb-settings · partial
@@ -2877,7 +2877,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/governance/instruments** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-readiness.js 0/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-readiness.js 0/25) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-readiness.js · actions: -
 
 **GET /api/governance/journey** · governance · cb-settings · meets standard
@@ -2889,37 +2889,37 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/governance/lanes** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 4; share cap-readiness.js 2/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 4; share cap-readiness.js 6/25) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-readiness.js · actions: -
 
 **GET /api/governance/profile** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 4 (wire 10; share app.html 4/132, cap-print.js 4/13, cap-readiness.js 4/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 10; share app.html 4/249, cap-print.js 4/17, cap-readiness.js 4/25) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-print.js, cap-readiness.js, cap-shop.js · actions: -
 
 **GET /api/governance/profile/path** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 8 (wire 16) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 12 (wire 16) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/governance/profile/readiness** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 7 (wire 15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 12 (wire 15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/governance/readiness** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 8 (wire 20; share cap-admin.js 8/118, cap-definitions.js 8/15, cap-readiness.js 8/19) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 10 (wire 20; share cap-admin.js 10/527, cap-definitions.js 10/17, cap-readiness.js 10/25) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): standard_source · writes (derived): - · callers: cap-admin.js, cap-definitions.js, cap-readiness.js · actions: -
 
 **GET /api/governance/readiness/:bridge_id** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/governance/source/:key** · governance · cb-settings · partial
@@ -2931,7 +2931,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/governance/supplier-acceptance/:handle** · governance · cb-settings · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share app.html 2/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 2; share app.html 2/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, supplier_readiness_acceptance · writes (derived): - · callers: app.html · actions: -
 
 **GET /api/governance/track-record** · governance · cb-settings · meets standard
@@ -2949,7 +2949,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/governance/ai-draft** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-assist.js 0/2, cap-dispute.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-assist.js 0/2, cap-dispute.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-assist.js, cap-dispute.js, cap-readiness.js · actions: -
 
 **POST /api/governance/boilerplate/:key/adopt** · governance · cb-settings · meets standard
@@ -2961,7 +2961,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/governance/compliance** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-readiness.js 0/19, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-readiness.js 0/25, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-readiness.js, core.js · actions: -
 
 **POST /api/governance/conformance** · governance · cb-settings · partial
@@ -2991,31 +2991,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/governance/supplier-acceptance** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 3 code(s) [GOV_BAD_REQUEST, NOT_FOUND, SRA_NOT_MIGRATED] · statuses 400, 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): supplier_readiness_acceptance · callers: app.html · actions: -
 
 **POST /api/governance/verify** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [VERIFICATION_FAILED] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-readiness.js 0/19, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-readiness.js 0/25, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-readiness.js, core.js · actions: -
 
 **PUT /api/governance/country-setup** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [OWNER_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-country.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-country.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): entity_governance, identities · callers: cap-country.js · actions: -
 
 **PUT /api/governance/profile** · governance · cb-settings · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 5 (wire 14; share cap-readiness.js 5/19, core.js 5/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 5 (wire 14; share cap-readiness.js 5/25, core.js 5/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-readiness.js, core.js · actions: -
 
 **PUT /api/governance/profile/vault** · governance · cb-settings · partial
 - does: _not yet written_
 - errors: 1 code(s) [VAULT_VERSION_REQUIRED] · statuses 401, 403, 409, 422, 500 · money n (derived)
-- effect: offline queueable · round trips 7 (wire null; share cap-print.js 7/13, cap-shop.js 7/14, core.js 7/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 7 (wire null; share cap-print.js 7/17, cap-shop.js 7/18, core.js 7/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-print.js, cap-shop.js, core.js · actions: -
 
 ### identity-docs (cb-compliance, 0 of 4 with a description)
@@ -3023,25 +3023,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/identity/documents** · identity-docs · cb-compliance · partial
 - does: _not yet written_
 - errors: 1 code(s) [IDOC_NOT_MIGRATED] · statuses 401, 403, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-iddocs.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-iddocs.js 2/152) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, identity_documents · writes (derived): - · callers: cap-iddocs.js · actions: -
 
 **POST /api/identity/documents/:scheme/code** · identity-docs · cb-compliance · partial
 - does: _not yet written_
 - errors: 2 code(s) [IDOC_NOT_FOUND, IDOC_NOT_MIGRATED] · statuses 400, 401, 403, 404, 409, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-iddocs.js 50/152) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, identity_documents · writes (derived): identity_documents · callers: cap-iddocs.js · actions: -
 
 **POST /api/identity/documents/:scheme/verify** · identity-docs · cb-compliance · partial
 - does: _not yet written_
 - errors: 2 code(s) [IDOC_NOT_FOUND, IDOC_NOT_MIGRATED] · statuses 400, 401, 403, 404, 422, 429, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-iddocs.js 50/152) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, identity_documents · writes (derived): identity_documents · callers: cap-iddocs.js · actions: -
 
 **PUT /api/identity/documents/:scheme** · identity-docs · cb-compliance · partial
 - does: _not yet written_
 - errors: 6 code(s) [IDOC_CONSENT_REQUIRED, IDOC_EMPLOYER_ONLY, IDOC_INVALID_VALUE, IDOC_NOT_MIGRATED, IDOC_UNKNOWN_DOCUMENT, VAULT_ENC_UNCONFIGURED] · statuses 400, 401, 403, 404, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-iddocs.js 50/152, cap-workforce.js 50/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identity_documents · callers: cap-iddocs.js, cap-workforce.js · actions: -
 
 ### integrations (cb-connect, 0 of 17 with a description)
@@ -3049,19 +3049,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/integrations/catalogue** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118, cap-settings.js 0/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 0; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js, cap-settings.js · actions: -
 
 **GET /api/integrations/docs/:id** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/integrations/download/:id** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-settings.js 50/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **GET /api/integrations/kit** · integrations · cb-connect · partial
@@ -3073,25 +3073,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/integrations/kit/*** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/integrations/profile-map** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/integrations/reconcile** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 6; share cap-admin.js 3/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 6; share cap-admin.js 3/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/integrations/status** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, cap-settings.js · actions: -
 
 **GET /api/integrations/stock/:handle** · integrations · cb-connect · partial
@@ -3103,13 +3103,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/integrations/streams** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 2; share cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/integrations/:actor_id/approve** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 3 code(s) [CONNECTOR_HAS_NO_KEY, KEY_CANNOT_DECIDE, NOT_FOUND] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-admin.js, cap-settings.js · actions: -
 
 **POST /api/integrations/ask/:handle/stock** · integrations · cb-connect · partial
@@ -3121,13 +3121,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/integrations/books** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): chit_header · callers: - · actions: -
 
 **POST /api/integrations/books/skip** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 2 code(s) [KEY_CANNOT_DECIDE, NOT_FOUND] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): chit_header · callers: cap-admin.js · actions: -
 
 **POST /api/integrations/heartbeat** · integrations · cb-connect · partial
@@ -3139,13 +3139,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/integrations/profile** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 1 code(s) [INTEGRATION_BAD_REQUEST] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: - · actions: -
 
 **PUT /api/integrations/streams** · integrations · cb-connect · partial
 - does: _not yet written_
 - errors: 3 code(s) [INTEGRATION_BAD_REQUEST, KEY_CANNOT_DECIDE, NO_STREAM_NAMED] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): identities · callers: cap-admin.js · actions: -
 
 ### invoice (cb-accounting, 0 of 2 with a description)
@@ -3153,13 +3153,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/invoice/:chit_id** · invoice · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/invoice/build** · invoice · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [INVOICE_BAD_REQUEST] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): - · callers: - · actions: -
 
 ### keys (cb-security, 0 of 3 with a description)
@@ -3167,19 +3167,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/keys/:jti** · keys · cb-security · partial
 - does: _not yet written_
 - errors: 2 code(s) [KEY_CANNOT_MANAGE_KEYS, KEY_NOT_FOUND] · statuses 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 3; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-admin.js, cap-settings.js · actions: -
 
 **GET /api/keys** · keys · cb-security · partial
 - does: _not yet written_
 - errors: 1 code(s) [KEY_CANNOT_MANAGE_KEYS] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire null; share cap-admin.js 1/527, cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-admin.js, cap-settings.js · actions: -
 
 **POST /api/keys** · keys · cb-security · partial
 - does: _not yet written_
 - errors: 3 code(s) [INVALID_KEY_REQUEST, KEY_CANNOT_MANAGE_KEYS, NOT_PLATFORM] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 50 (wire null; share app.html 50/132, cap-admin.js 50/118, cap-settings.js 50/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share app.html 50/249, cap-admin.js 50/527, cap-settings.js 50/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: app.html, cap-admin.js, cap-settings.js · actions: -
 
 ### kyb (cb-compliance, 0 of 5 with a description)
@@ -3187,31 +3187,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/kyb/position** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 4; share know-your-business.html 2/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 4; share know-your-business.html 6/88) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/risk** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money y (derived)
-- effect: offline online-only · round trips 9 (wire 24; share know-your-business.html 9/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 11 (wire 24; share know-your-business.html 11/88) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/yourself** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 14 (wire 34; share know-your-business.html 14/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 16 (wire 34; share know-your-business.html 16/88) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **POST /api/kyb/credential** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share know-your-business.html 50/88) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **POST /api/kyb/field** · kyb · cb-compliance · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/30) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/88) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): kyb_field_cache · writes (derived): kyb_field_cache, usage_ledger · callers: know-your-business.html · actions: -
 
 ### marketing (cb-marketing, 0 of 1 with a description)
@@ -3227,73 +3227,73 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/network/entities/:id/connections** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **GET /api/network/entities/:id/subtree** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-network.js 50/53) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-network.js · actions: -
 
 **GET /api/network/entities/lookup** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 1; share cap-network.js 0/53) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-network.js · actions: -
 
 **GET /api/network/place** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 1; share cap-network.js 0/53) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-network.js · actions: -
 
 **POST /api/network/connections** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-admin.js 50/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/network/connections/:id/approve** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share cap-admin.js 50/527, core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, core.js · actions: -
 
 **POST /api/network/connections/:id/decline** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share cap-admin.js 50/527, core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, core.js · actions: -
 
 **POST /api/network/connections/:id/disconnect** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share cap-admin.js 50/527, core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, core.js · actions: -
 
 **POST /api/network/connections/:id/resume** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share cap-admin.js 50/527, core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, core.js · actions: -
 
 **POST /api/network/connections/:id/suspend** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline queueable · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 50 (wire null; share cap-admin.js 50/527, core.js 50/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, core.js · actions: -
 
 **POST /api/network/entities** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/network/entities/:id/claim** · network · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### network-design (cb-network, 0 of 7 with a description)
@@ -3301,43 +3301,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/network-design** · network-design · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-network.js 1/3, network-app.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-network.js 1/53, network-app.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, network_design · writes (derived): - · callers: cap-network.js, network-app.js · actions: -
 
 **GET /api/network-design/availability** · network-design · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-network-member.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-network-member.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, cb_entity, identities, network_design · writes (derived): - · callers: cap-network-member.js · actions: -
 
 **GET /api/network-design/stores** · network-design · cb-network · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-network-member.js 1/1, network-app.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 1; share cap-network-member.js 2/2, network-app.js 2/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_entity, identities, network_design · writes (derived): - · callers: cap-network-member.js, network-app.js · actions: -
 
 **POST /api/network-design/build** · network-design · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-network.js 1/3, screens.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-network.js 1/53, screens.js 1/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, network_design · writes (derived): - · callers: cap-network.js, screens.js · actions: -
 
 **POST /api/network-design/reissue** · network-design · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-network.js 0/3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-network.js 0/53) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: cap-network.js · actions: -
 
 **POST /api/network-design/validate** · network-design · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 413, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 6; share network-app.js 3/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 6; share network-app.js 3/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, network_design · writes (derived): - · callers: network-app.js · actions: -
 
 **PUT /api/network-design** · network-design · cb-network · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 413, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share cap-network.js 0/3, core.js 0/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share cap-network.js 0/53, core.js 0/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, network_design · writes (derived): network_design · callers: cap-network.js, core.js · actions: -
 
 ### network-offers (cb-network, 0 of 8 with a description)
@@ -3345,49 +3345,49 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/network-offers** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, network-app.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, network-app.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, catalogue_source, cb_edge, cb_entity, definition, identities · writes (derived): - · callers: cap-admin.js, network-app.js · actions: -
 
 **POST /api/network-offers/:id/choice** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 2 code(s) [OFFER_UNKNOWN, SESSION_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118, network-app.js 1/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527, network-app.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js, network-app.js · actions: -
 
 **POST /api/network-offers/:id/release** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 4 code(s) [NOT_FOUND, OFFER_ENDS_BEFORE_START, OFFER_NOT_LIVE, SESSION_ONLY] · statuses 400, 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/network-offers/:id/withdraw** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 3 code(s) [NOT_FOUND, OFFER_NOT_RELEASED, SESSION_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/network-offers/catalogue/cancel** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 
 **POST /api/network-offers/catalogue/price** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 
 **POST /api/network-offers/catalogue/publish** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 
 **PUT /api/network-offers/policy** · network-offers · cb-network · partial
 - does: _not yet written_
 - errors: 2 code(s) [POLICY_NOT_VALID, SESSION_ONLY] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js · actions: -
 
 ### notifications (cb-rail, 0 of 3 with a description)
@@ -3395,19 +3395,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/notifications** · notifications · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 3 (wire 9; share app.html 3/132, rail-bell.js 3/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 9; share app.html 3/249, rail-bell.js 3/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html, rail-bell.js · actions: -
 
 **POST /api/notifications/dismiss** · notifications · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, rail-bell.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): state_log · writes (derived): notif_dismissed · callers: app.html, rail-bell.js · actions: -
 
 **POST /api/notifications/seen** · notifications · cb-rail · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, rail-bell.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, rail-bell.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, rail-bell.js · actions: -
 
 ### offers (cb-catalogue, 0 of 4 with a description)
@@ -3427,13 +3427,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/offers/evaluate** · offers · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [LINES_REQUIRED] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **POST /api/offers/explain** · offers · cb-catalogue · partial
 - does: _not yet written_
 - errors: 1 code(s) [LINES_REQUIRED] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### openapi (cb-api, 0 of 1 with a description)
@@ -3449,7 +3449,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/people** · people · cb-people · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132, cap-books.js 1/26, cap-employees.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249, cap-books.js 1/43, cap-employees.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): access_events, identities · writes (derived): - · callers: app.html, cap-books.js, cap-employees.js, cap-tasks.js, employees.html, screen-id.js, shell.js · actions: -
 
 ### pricing (cb-catalogue, 0 of 2 with a description)
@@ -3463,7 +3463,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/pricing/price** · pricing · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): - · callers: - · actions: -
 
 ### privacy (cb-compliance, 0 of 4 with a description)
@@ -3497,157 +3497,157 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/products/:id** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, catalogue-lines.js 1/20, combo-mode.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, catalogue-lines.js 1/225, combo-mode.js 1/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: app.html, catalogue-lines.js, combo-mode.js, core.js, till.html · actions: -
 
 **DELETE /api/products/:id/media/:mid** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share catalogue-lines.js 1/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share catalogue-lines.js 1/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, media_blobs · writes (derived): catalogue_items, media_blobs · callers: catalogue-lines.js · actions: -
 
 **DELETE /api/products/:id/schedule/:sid** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share app.html 2/132, catalogue-lines.js 2/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share app.html 2/249, catalogue-lines.js 2/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, catalogue-lines.js · actions: -
 
 **GET /api/products** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 9; share app.html 2/132, cap-catalogue.js 2/10, cap-categories.js 2/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 9; share app.html 2/249, cap-catalogue.js 2/13, cap-categories.js 2/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): - · callers: app.html, cap-catalogue.js, cap-categories.js, cap-catsetup.js, cap-chit2.js, cap-definitions.js, combo-mode.js · actions: -
 
 **GET /api/products/:id/schedule** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share catalogue-lines.js 1/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share catalogue-lines.js 1/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: catalogue-lines.js · actions: -
 
 **GET /api/products/:id/versions** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500, 503 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, catalogue-lines.js 1/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, catalogue-lines.js 1/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_item_version, catalogue_items, identities · writes (derived): - · callers: app.html, catalogue-lines.js · actions: -
 
 **GET /api/products/export.csv** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 9; share app.html 3/132, catalogue-lines.js 3/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 9; share app.html 5/249, catalogue-lines.js 5/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, catalogue_items, entity_schemas · writes (derived): - · callers: app.html, catalogue-lines.js · actions: -
 
 **GET /api/products/lists** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money y (derived)
-- effect: offline online-only · round trips 3 (wire 6; share catalogue-lines.js 3/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 6; share catalogue-lines.js 3/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): - · callers: catalogue-lines.js · actions: -
 
 **GET /api/products/media/:item_id/:mid** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 404, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share app.html 50/249, catalogue-lines.js 50/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, media_blobs · writes (derived): - · callers: app.html, catalogue-lines.js · actions: -
 
 **GET /api/products/starter-columns** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-catsetup.js 0/12, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-catsetup.js 0/14, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-catsetup.js, catalogue-lines.js · actions: -
 
 **GET /api/products/template** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 4 (wire 13; share cap-catalogue.js 4/10, catalogue-lines.js 4/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 13; share cap-catalogue.js 5/13, catalogue-lines.js 5/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, catalogue_items, entity_schemas · writes (derived): - · callers: cap-catalogue.js, catalogue-lines.js · actions: -
 
 **GET /api/products/workbook.xlsx** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 4 (wire 13; share catalogue-lines.js 4/20, till.html 4/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 13; share catalogue-lines.js 6/225, till.html 6/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, catalogue_items, entity_schemas · writes (derived): - · callers: catalogue-lines.js, till.html · actions: -
 
 **PATCH /api/products/:id** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, cap-catalogue.js 0/10, cap-categories.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, cap-catalogue.js 0/13, cap-categories.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas · writes (derived): catalogue_items · callers: app.html, cap-catalogue.js, cap-categories.js, catalogue-lines.js, combo-mode.js, core.js, till.html · actions: -
 
 **POST /api/products** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-catalogue.js 0/10, combo-mode.js 0/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-catalogue.js 0/13, combo-mode.js 0/155) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas · writes (derived): - · callers: app.html, cap-catalogue.js, combo-mode.js · actions: -
 
 **POST /api/products/:id/media** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 413, 500, 503 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): catalogue_items, media_blobs · callers: catalogue-lines.js · actions: -
 
 **POST /api/products/:id/schedule** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas · writes (derived): - · callers: app.html, catalogue-lines.js · actions: -
 
 **POST /api/products/availability/bulk** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share catalogue-lines.js 50/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): catalogue_items · callers: catalogue-lines.js · actions: -
 
 **POST /api/products/bulk** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share catalogue-lines.js 50/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas · writes (derived): - · callers: catalogue-lines.js · actions: -
 
 **POST /api/products/bulk-update** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas · writes (derived): catalogue_items · callers: app.html, catalogue-lines.js · actions: -
 
 **POST /api/products/import** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 413, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/10, catalogue-lines.js 0/20, till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/13, catalogue-lines.js 0/225, till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, catalogue_items, entity_schemas, schema_fields · writes (derived): catalogue_items · callers: cap-catalogue.js, catalogue-lines.js, till.html · actions: -
 
 **POST /api/products/import/preflight** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/10, catalogue-lines.js 0/20, till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-catalogue.js 0/13, catalogue-lines.js 0/225, till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_face, catalogue_items, entity_schemas · writes (derived): - · callers: cap-catalogue.js, catalogue-lines.js, till.html · actions: -
 
 **POST /api/products/lists/adopt** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share catalogue-lines.js 50/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas · writes (derived): definition, definition_version · callers: catalogue-lines.js · actions: -
 
 **POST /api/products/starter-columns** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-catsetup.js 0/12, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-catsetup.js 0/14, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas, schema_fields · writes (derived): - · callers: app.html, cap-catsetup.js, catalogue-lines.js · actions: -
 
 **POST /api/products/status/bulk** · products · cb-catalogue · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: app.html, catalogue-lines.js · actions: -
 
 **PUT /api/products/:id/availability** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: app.html, catalogue-lines.js · actions: -
 
 **PUT /api/products/:id/status** · products · cb-catalogue · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-catalogue.js 0/10, catalogue-lines.js 0/20) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-catalogue.js 0/13, catalogue-lines.js 0/225) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: app.html, cap-catalogue.js, catalogue-lines.js · actions: -
 
 ### quick-keys (cb-counter, 0 of 9 with a description)
@@ -3655,7 +3655,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/quick-keys/groups/:id** · quick-keys · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): quick_key_group · writes (derived): quick_key_group · callers: - · actions: -
 
 **DELETE /api/quick-keys/groups/:id/items/:productId** · quick-keys · cb-counter · partial
@@ -3679,7 +3679,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/quick-keys/groups/:id** · quick-keys · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): quick_key_group · writes (derived): quick_key_group · callers: - · actions: -
 
 **PATCH /api/quick-keys/groups/:id/items** · quick-keys · cb-counter · partial
@@ -3691,13 +3691,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/quick-keys/groups** · quick-keys · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): quick_key_group · callers: - · actions: -
 
 **POST /api/quick-keys/groups/:id/items** · quick-keys · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): quick_key_group · writes (derived): quick_key_group_item · callers: - · actions: -
 
 **PUT /api/quick-keys/screen-config/default** · quick-keys · cb-counter · partial
@@ -3711,13 +3711,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/relationships/suppliers/:id** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline queueable · round trips 1 (wire 4; share app.html 1/132, cap-suppliers.js 1/3, core.js 1/37) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 1 (wire 4; share app.html 1/249, cap-suppliers.js 1/5, core.js 1/387) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): supplier_list · writes (derived): - · callers: app.html, cap-suppliers.js, core.js · actions: -
 
 **GET /api/relationships/customers** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 10; share app.html 2/132, cap-definitions.js 2/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 10; share app.html 2/249, cap-definitions.js 2/17) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): customer_list, identities · writes (derived): - · callers: app.html, cap-definitions.js · actions: -
 
 **GET /api/relationships/customers/:id/rewards** · relationships · cb-crm · partial
@@ -3729,7 +3729,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/relationships/customers/groups** · relationships · cb-crm · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-definitions.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-definitions.js 1/17) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: app.html, cap-definitions.js · actions: -
 
 **GET /api/relationships/scorecard** · relationships · cb-crm · meets standard
@@ -3747,49 +3747,49 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/relationships/suppliers** · relationships · cb-crm · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money y (derived)
-- effect: offline online-only · round trips 2 (wire 10; share app.html 2/132, cap-admin.js 2/118, cap-chit2.js 2/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 4 (wire 10; share app.html 4/249, cap-admin.js 4/527, cap-chit2.js 4/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas, identities, installation, party_tax_id, supplier_list · writes (derived): - · callers: app.html, cap-admin.js, cap-chit2.js, cap-suppliers.js · actions: -
 
 **GET /api/relationships/suppliers/:supplier_entity_id/catalogue** · relationships · cb-crm · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132, cap-chit2.js 1/13) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249, cap-chit2.js 1/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, supplier_list · writes (derived): - · callers: app.html, cap-chit2.js · actions: -
 
 **GET /api/relationships/suppliers/availability** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas, identities, supplier_list · writes (derived): - · callers: app.html · actions: -
 
 **PATCH /api/relationships/customers/:id** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-books.js 0/26, cap-crm-record.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-books.js 0/43, cap-crm-record.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): customer_list · callers: app.html, cap-books.js, cap-crm-record.js · actions: -
 
 **PATCH /api/relationships/suppliers/:id** · relationships · cb-crm · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline queueable · round trips 0 (wire 0; share app.html 0/132, cap-books.js 0/26, cap-crm-record.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline queueable · round trips 0 (wire 0; share app.html 0/249, cap-books.js 0/43, cap-crm-record.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, supplier_list · writes (derived): identities, supplier_list · callers: app.html, cap-books.js, cap-crm-record.js, cap-suppliers.js, core.js · actions: -
 
 **POST /api/relationships/customers** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-crm-record.js 0/7, cap-crm.js 0/6) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-crm-record.js 0/8, cap-crm.js 0/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): customer_list, identities · callers: app.html, cap-crm-record.js, cap-crm.js · actions: -
 
 **POST /api/relationships/customers/:id/groups** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share app.html 1/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share app.html 1/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): customer_list · callers: app.html · actions: -
 
 **POST /api/relationships/suppliers** · relationships · cb-crm · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132, cap-books.js 0/26, cap-crm-record.js 0/7) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249, cap-books.js 0/43, cap-crm-record.js 0/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, supplier_list · writes (derived): supplier_list · callers: app.html, cap-books.js, cap-crm-record.js, cap-crm.js, cap-suppliers.js · actions: -
 
 ### repeat-supply (cb-orders, 0 of 14 with a description)
@@ -3883,13 +3883,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **DELETE /api/schemas/fields/:field_key** · schemas · cb-capability · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas, schema_fields · writes (derived): schema_fields · callers: cap-catsetup.js · actions: -
 
 **GET /api/schemas/fields** · schemas · cb-capability · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 6; share app.html 3/132, cap-catalogue.js 3/10, cap-catsetup.js 3/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 6; share app.html 5/249, cap-catalogue.js 5/13, cap-catsetup.js 5/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas, schema_fields · writes (derived): - · callers: app.html, cap-catalogue.js, cap-catsetup.js · actions: -
 
 **GET /api/schemas/my** · schemas · cb-capability · meets standard
@@ -3901,25 +3901,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/schemas/fields/:field_key** · schemas · cb-capability · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-catsetup.js 1/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas, schema_fields · writes (derived): schema_fields · callers: cap-catsetup.js · actions: -
 
 **PATCH /api/schemas/fields/order** · schemas · cb-capability · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-catsetup.js 0/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-catsetup.js 0/14) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, entity_schemas, schema_fields · writes (derived): schema_fields · callers: cap-catsetup.js · actions: -
 
 **PATCH /api/schemas/visibility** · schemas · cb-capability · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): entity_schemas · callers: - · actions: -
 
 **POST /api/schemas/create-default** · schemas · cb-capability · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): entity_schemas, schema_fields · writes (derived): - · callers: - · actions: -
 
 ### server (cb-platform, 0 of 2 with a description)
@@ -3927,13 +3927,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /health** · server · cb-platform · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 **OPTIONS *** · server · cb-platform · not started
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses - · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
 ### service (cb-rail, 0 of 7 with a description)
@@ -3985,19 +3985,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/signin/devices** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 1 code(s) [KEY_CANNOT_SIGN_IN] · statuses - · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **GET /api/signin/sessions** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 1 code(s) [KEY_CANNOT_SIGN_IN] · statuses - · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share cap-settings.js 1/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share cap-settings.js 1/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **POST /api/signin/ask** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 409, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share signin-ui.js 50/150) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: signin-ui.js · actions: -
 
 **POST /api/signin/logout** · signin · cb-security · partial
@@ -4009,25 +4009,25 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/signin/pin** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share signin-ui.js 50/150) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): identities · callers: signin-ui.js · actions: -
 
 **POST /api/signin/renew** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 2 code(s) [KEY_CANNOT_SIGN_IN, NO_DEVICE] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/signin/sessions/revoke** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 1 code(s) [KEY_CANNOT_SIGN_IN] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-settings.js 0/65) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-settings.js 0/116) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-settings.js · actions: -
 
 **POST /api/signin/verify** · signin · cb-security · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 403, 409, 500, 503 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share signin-ui.js 50/150) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: signin-ui.js · actions: -
 
 ### simulator (cb-demo, 0 of 3 with a description)
@@ -4041,13 +4041,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/simulator/feedback** · simulator · cb-demo · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): sim_feedback · callers: - · actions: -
 
 **POST /api/simulator/lead** · simulator · cb-demo · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): sim_leads · callers: - · actions: -
 
 ### supplies (cb-operations, 0 of 5 with a description)
@@ -4061,7 +4061,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PATCH /api/supplies/:id** · supplies · cb-operations · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): supply_item · callers: - · actions: -
 
 **POST /api/supplies** · supplies · cb-operations · partial
@@ -4087,31 +4087,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/tax/gstr** · tax · cb-accounting · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/118, helpers.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/527, helpers.js 2/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js, helpers.js · actions: -
 
 **GET /api/tax/invoice/:chit_id** · tax · cb-accounting · partial
 - does: _not yet written_
 - errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-admin.js 50/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-admin.js · actions: -
 
 **GET /api/tax/ledger** · tax · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share cap-admin.js 2/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/tax/compute** · tax · cb-accounting · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/118) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/tax/rate** · tax · cb-accounting · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share cap-admin.js 50/527) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): - · callers: cap-admin.js · actions: -
 
 ### testing (cb-qa, 0 of 33 with a description)
@@ -4137,13 +4137,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/testing/cmdb** · testing · cb-qa · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share record.html 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share record.html 1/101) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition · writes (derived): definition, definition_version, test_result · callers: record.html · actions: -
 
 **GET /api/testing/cmdb/:ci** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share record.html 50/101) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: record.html · actions: -
 
 **GET /api/testing/coverage** · testing · cb-qa · meets standard
@@ -4239,7 +4239,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/testing/cases/gherkin** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **POST /api/testing/cases/import** · testing · cb-qa · meets standard
@@ -4257,13 +4257,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/testing/changes** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **POST /api/testing/cmdb/seed** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **POST /api/testing/evidence** · testing · cb-qa · meets standard
@@ -4275,19 +4275,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/testing/incidents** · testing · cb-qa · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition · writes (derived): definition, definition_version, test_result · callers: app.html · actions: -
 
 **POST /api/testing/releases** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: - · actions: -
 
 **POST /api/testing/requirements** · testing · cb-qa · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share app.html 0/132) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: app.html · actions: -
 
 **POST /api/testing/results** · testing · cb-qa · partial
@@ -4299,7 +4299,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **POST /api/testing/results/junit** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition · writes (derived): test_result · callers: - · actions: -
 
 **POST /api/testing/trace** · testing · cb-qa · meets standard
@@ -4311,7 +4311,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **PUT /api/testing/cmdb/:ci** · testing · cb-qa · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share record.html 50/101) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version, test_result · callers: record.html · actions: -
 
 ### till (cb-counter, 0 of 42 with a description)
@@ -4319,253 +4319,253 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/till/bills** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/catalogue/blueprints** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/counters** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/engine/:name** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/match** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 11; share cap-match.js 3/3, till.html 3/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 11; share cap-match.js 3/3, till.html 3/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_header · writes (derived): - · callers: cap-match.js, till.html · actions: -
 
 **GET /api/till/quick-keys/groups** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money y (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, quick_key_group, quick_key_group_item · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/hidden** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_hidden_item · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/screen-config** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): device_screen_config · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/quick-keys/state** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_quick_key_state · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/reward** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/screens** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/snapshot** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 15 (wire 46; share promo.html 15/15, till.html 15/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 17 (wire 46; share promo.html 17/67, till.html 17/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: promo.html, till.html · actions: -
 
 **GET /api/till/stock** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/summary** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-mis-trend.js 1/1, till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-mis-trend.js 1/1, till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-mis-trend.js, till.html · actions: -
 
 **GET /api/till/tasks** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 10; share till.html 2/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 10; share till.html 2/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/verify** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire 9; share till.html 3/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 9; share till.html 3/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, catalogue_items, identities · writes (derived): - · callers: till.html · actions: -
 
 **GET /api/till/worth-an-offer** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/alias** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/catalogue** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 422, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): definition, definition_version · callers: till.html · actions: -
 
 **POST /api/till/close** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/diagnostic** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/enrol** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/flags** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/listen** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version, identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/offer-item** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): definition, definition_version · callers: till.html · actions: -
 
 **POST /api/till/pair** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share app.html 1/132, till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share app.html 1/249, till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: app.html, till.html · actions: -
 
 **POST /api/till/pair/claim** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 404, 429, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share promo.html 50/67, till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: promo.html, till.html · actions: -
 
 **POST /api/till/price** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version, identities · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/hide** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): counter_hidden_item · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/screen-config** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): device_screen_config · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/state** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): counter_quick_key_state · callers: till.html · actions: -
 
 **POST /api/till/quick-keys/unhide** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): counter_hidden_item · writes (derived): counter_hidden_item · callers: till.html · actions: -
 
 **POST /api/till/rate** · till · cb-counter · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 409, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, definition, definition_version, identities · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/reconcile** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/reward** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money y (derived)
-- effect: offline online-only · round trips 0 (wire 0; share till.html 0/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 0 (wire 0; share till.html 0/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/reward/claim** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 500 · money y (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/screens/rename** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/screens/revoke** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/shop** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 5; share till.html 2/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 2 (wire 5; share till.html 2/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_detail, chit_header, identities · writes (derived): identities · callers: till.html · actions: -
 
 **POST /api/till/state** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 1; share till.html 1/48) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1; share till.html 1/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): - · callers: till.html · actions: -
 
 **POST /api/till/stock** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: till.html · actions: -
 
 **POST /api/till/stock/bulk** · till · cb-counter · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips - · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 50 (wire null; share till.html 50/1106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): catalogue_items · callers: till.html · actions: -
 
 ### work (cb-orders, 0 of 3 with a description)
@@ -4579,7 +4579,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/work/facts** · work · cb-orders · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-finance.js 1/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 4; share cap-finance.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-finance.js · actions: -
 
 **GET /api/work/list** · work · cb-orders · partial
