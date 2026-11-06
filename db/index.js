@@ -45,11 +45,24 @@ async function tryConnect(config) {
  *     Supabase's transaction pooler, where a session SET is not guaranteed to land on the backend that runs the work.
  * ⚠️ NOT a startup parameter (Pool's `statement_timeout` option): a transaction pooler may refuse unknown ones.
  */
+/**
+ * ⭐ PLT-42 · THE SETTINGS RUN INSIDE THE CONNECTION STEP, NOT AFTER IT. They used to be fired from the pool's 'connect' event, which
+ * cannot wait: the first caller's statement was queued behind them on the same client, and pg 8 warns about that (queued
+ * client.query() on a busy client is removed in pg@9). Here connect() resolves only once the settings have landed, so the pool never
+ * hands out a busy client. A failed SET is a warning, as before — the connection is still usable.
+ */
+class SessionClient extends pg.Client {
+  connect(callback) {
+    const settle = (error) => (error ? Promise.resolve(error) : this.query(sessionSql()).then(() => null, (failure) => { console.warn('session settings not set:', failure.message); return null; }));
+    if (typeof callback !== 'function') return super.connect().then(() => settle(null)).then(() => undefined);
+    super.connect((error) => settle(error).then((late) => callback(late || undefined)));
+    return undefined;
+  }
+}
+const sessionSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : ''); };
+
 function armPool(p) {
-  const ms = require('../lib/limits').statementTimeoutMs();
   p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
-  /* one trip per NEW connection, not per request: the zone pin (M210) rides with the statement deadline */
-  p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
 const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return 'BEGIN; SET LOCAL ' + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
@@ -67,7 +80,7 @@ async function createPool() {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+      return armPool(new Pool({ ...a.config, Client: SessionClient, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
