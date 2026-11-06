@@ -6139,7 +6139,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-05.acc255b';
+var TILL_BUILD = '2026-11-06.ctr177';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6284,6 +6284,10 @@ async function takeNumber(kind, peek){
   var scheme = (stored && Number(stored.next) > 1 && stored.scheme) ? stored.scheme : tillScheme();
   var period = D.periodKey({ country: country, at: now, scheme: scheme });
   var series = seriesFor(stored, period);
+  /* ⭐ CTR-177: a series that issued numbers BEFORE the label carried its period (lab 1) keeps the old label until its period rolls (then
+     lab 2); everything else prints the period it resets on, so a roll can never print a number twice. ONE scheme object feeds numberText,
+     so the sales body, the tagged body and the long-tag branch all carry the flag. */
+  if (series.lab !== 2) scheme = Object.assign({}, scheme, { legacyLabel: true });
   if (!tag) resumeFromCloud(series, period);
   var seq = series.next; series.next = seq + 1;
   /* ⭐ where this number sits in its counter's run — travels on the bill so the cloud can keep the high-water mark */
@@ -6294,6 +6298,37 @@ async function takeNumber(kind, peek){
   return numberText(D, { country: country, prefix: series.prefix, tagStyle: series.tagStyle, at: now, seq: seq, scheme: scheme, tag: tag, kind: kind });
 }
 /**
+ * ⭐ CTR-177 — THE RUNS THAT HAVE ENDED, KEPT BY PREFIX AND PERIOD. A key never legitimately comes round again (every key carries its year), so a
+ * roll back to a key we already issued in means the clock was wrong, and starting that run at 1 would issue its numbers a second time. The ledger
+ * is `parked["PREFIX|key"] = next`, 400 entries (a daily reset fills one a day: more than a year), oldest dropped.
+ */
+var PARKED_MAX = 400;
+/** the ledger key of one run: the prefix (upper case) and the period key */
+function runKey(prefix, period){ return String(prefix || '').toUpperCase() + '|' + period; }
+function parkRuns(series){
+  series.parked = series.parked || {};
+  series.parked[runKey(series.prefix, series.fy)] = series.next;
+  Object.keys(series.runs || {}).forEach(function(name){ series.parked[runKey(name, series.fy)] = series.runs[name]; });
+  var keys = Object.keys(series.parked);
+  keys.slice(0, Math.max(0, keys.length - PARKED_MAX)).forEach(function(old){ delete series.parked[old]; });
+}
+/** where the run of this prefix stopped in this period, if it has been here before (and consumes the entry) — else 0 */
+function parkedNext(series, prefix, period){
+  var key = runKey(prefix, period), stopped = Number((series.parked || {})[key]) || 0;
+  if (stopped) delete series.parked[key];
+  return stopped;
+}
+/** CTR-177: the shop's country counts a FINANCIAL year (India) — elsewhere the "fy" dating is the calendar run year, and the Settings words say so */
+function financialYearHere(){ return !!(window.CBDoc && CBDoc.rules(docCountry()).resets === 'year'); }
+function runYearWord(){ return financialYearHere() ? ' · financial year' : ' · year'; }
+/** the caution under the bill-number example: where the tail repeats, and (India) that a month or day label hides the financial year */
+function seriesWarn(scheme){
+  var warn = (scheme.resets === 'day') ? ' · ⚠️ 0001 every day' : (scheme.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
+  return warn && scheme.dating === 'fy' && financialYearHere() ? warn + ' · financial year not on the number' : warn;
+}
+/** today as YYYY-MM-DD in the shop's own clock — stamped on a series when it begins (CTR-177), so a support reader can see when a run started */
+function todayIso(){ var now = new Date(); return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0'); }
+/**
  * the series record as it stands for THIS number: the stored one, rolled when the period turned, re-based when the counter's prefix changed.
  * ⭐ THE TAG STYLE IS DECIDED ONCE, ON THE FIRST NUMBER, AND KEPT. `GRN/C1/26-27/0007` is seventeen
  * characters — over India's limit on the DEFAULT till id — so a new series uses the one-letter tag. But a
@@ -6301,9 +6336,24 @@ async function takeNumber(kind, peek){
  * discontinuity we are trying to prevent. It rolls to the short form by itself at the next year-end.
  */
 function seriesFor(stored, period){
-  var s = stored || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short' };
-  if (stored && !stored.tagStyle) s.tagStyle = 'long';          // a record written before this change
-  if (s.fy !== period) { s.fy = period; s.next = 1; s.tagStyle = 'short'; s.scheme = tillScheme(); s.runs = {}; }
+  var series = stored || { prefix: tillId(), fy: period, next: 1, tagStyle: 'short', lab: 2, since: todayIso() };
+  if (stored && !stored.tagStyle) series.tagStyle = 'long';          // a record written before this change
+  /* ⭐ CTR-177: lab 2 = numbers carry their period in the label; lab 1 = this run issued numbers before that and keeps its old shape to the roll;
+     a series that has issued nothing adopts the new label at once. */
+  if (series.lab !== 2) series.lab = Number(series.next) > 1 ? 1 : 2;
+  if (series.fy !== period) rollSeries(series, period);
+  switchPrefix(series, tillId());
+  return series;
+}
+/** the period turned: the run that ends is parked (CTR-177), the new one begins at 1 — or resumes, if the clock brought us back to a period we issued in */
+function rollSeries(series, period){
+  parkRuns(series);
+  var back = parkedNext(series, series.prefix, period);
+  series.fy = period; series.next = back || 1; series.tagStyle = 'short'; series.scheme = tillScheme();
+  series.runs = {}; series.runsLab = {}; series.since = todayIso();
+  series.lab = 2;                              /* a new or resumed run is labelled: its text cannot equal an unlabelled one */
+}
+function switchPrefix(series, prefixNow){
   /**
    * ⚠️⚠️ A NEW PREFIX IS A NEW SERIES, AND A NEW SERIES STARTS AT ONE. This line used to swap the prefix and keep
    * the count — so a counter renamed C1 → C2 to escape a clash (Athi, 2026-09-17) would have issued C2/…/0008 as
@@ -6312,15 +6362,18 @@ function seriesFor(stored, period){
    */
   /* ⚠️ AND EACH PREFIX REMEMBERS WHERE IT STOPPED. Rename C1 → C2 → C1 without the ledger below and C1 would
      start again at 0001, on top of its own earlier invoices. `runs` is the high-water mark per prefix, per period. */
-  var prefixNow = tillId();
-  if (prefixNow && s.prefix && String(prefixNow).toUpperCase() !== String(s.prefix).toUpperCase()) {
-    s.runs = s.runs || {};
-    s.runs[String(s.prefix).toUpperCase()] = s.next;                       /* the old run, parked where it ended */
-    s.next = Number(s.runs[String(prefixNow).toUpperCase()]) || 1;         /* the new one resumes, or begins */
-    s.tagStyle = 'short'; s.scheme = tillScheme();
+  if (prefixNow && series.prefix && String(prefixNow).toUpperCase() !== String(series.prefix).toUpperCase()) {
+    var oldName = String(series.prefix).toUpperCase(), newName = String(prefixNow).toUpperCase();
+    series.runs = series.runs || {}; series.runsLab = series.runsLab || {};
+    series.runs[oldName] = series.next;                         /* the old run, parked where it ended */
+    series.runsLab[oldName] = series.lab;                       /* … and in the shape it issued in */
+    var fromRoll = series.runs[newName] ? 0 : parkedNext(series, prefixNow, series.fy);   /* a run parked by an earlier roll (already labelled) */
+    series.next = Number(series.runs[newName]) || fromRoll || 1;                           /* the new one resumes, or begins */
+    /* ⭐ CTR-177: a resumed run keeps the old label only if it issued numbers in the old label; a run beginning at 1 is labelled */
+    series.lab = fromRoll || series.next <= 1 ? 2 : (series.runsLab[newName] || 1);
+    series.tagStyle = 'short'; series.scheme = tillScheme();
   }
-  s.prefix = prefixNow || s.prefix;
-  return s;
+  series.prefix = prefixNow || series.prefix;
 }
 /**
  * ⭐⭐ THE CLOUD'S FLOOR FOR A NAMED COUNTER (routes/counters.js). A counter opened on a PC that has never held it,
@@ -24911,6 +24964,7 @@ function todayHow(k){ TODAY_HOW = (TODAY_HOW === k) ? '' : String(k || ''); open
  */
 function billHow(b){
   var src = b && (b.kind === 'credit_note' ? b.refunds : b.kind === 'expense' ? b.spent : b.payments) || [];
+  if (b && b.kind === 'credit_note' && !src.length) src = [{ how: 'Off what they owe', amount: Math.abs(Number(b.total) || 0) }];   /* CTR-187: nothing went out of the drawer */
   var m = {}, order = [];
   src.forEach(function(p){
     if (!p || !p.how) return;
@@ -25254,6 +25308,7 @@ async function retOpen(no){
   /* ⭐ M44 (walk 2026-10-10): the refund starts as the bill was PAID — it took payments[0], which was Card on a cash bill */
   RET_HOW = retPaidBy(bill);
   if (retWays(bill).indexOf(RET_HOW) < 0) RET_HOW = 'Cash';
+  if (retOwedFor(bill, 0).fits) RET_HOW = RET_OWED;      /* CTR-187: on credit and still owing — reduce what they owe is the first answer */
   try { document.getElementById('billsdlg').close(); } catch (e) { cbQuiet('retOpen:2', e); }
   retPaint();
   var d = document.getElementById('retdlg'); if (d && d.showModal && !d.open) d.showModal();
@@ -25291,6 +25346,72 @@ function retWays(bill){
   return out;
 }
 function retHow(v){ RET_HOW = v; retPaint(); }
+/**
+ * ⭐⭐ CTR-187 — A RETURN ON AN ON-CREDIT BILL OFFERS "Reduce what they owe" FIRST. The money never left the shop: the customer owes, so the
+ * return takes the amount OFF what they owe (a credit note against the invoice, Xero's "allocate"), instead of paying cash out of the drawer
+ * for goods that were never paid for. The note goes out with refund.parts [] and the customer on it; lib/books-hooks.js already posts that as
+ * a return against the party (Cr debtors) — nothing server-side changes.
+ * ⚠️ WHOLE NOTE OR NOTHING: the books post a return as either "reduce what they owe" or "money back", never half of each (a split is refused as
+ * unbalanced), so the option is usable only when the whole return fits inside what is still owing on this bill; otherwise the return goes back
+ * in a cash way, as before. The note's total stays the note's total (refund.total); only the parts say how it was settled.
+ */
+var RET_OWED = 'owed';
+/** how this return will be settled, and the words around it: the cash way as before, or taken off what they owe (CTR-187); `refusal` when the till will not issue it */
+function retPlan(against, total, tender){
+  if (tender !== RET_OWED) return { refunds: [{ how: tender, amount: total }], ask: 'Give back ' + money(total) + ' in ' + tender + ' against ' + against.no + '?',
+                                    yes: 'Yes, give it back', done: money(total) + ' back in ' + tender, refusal: '' };
+  var owed = retOwedFor(against, total);     /* the books would refuse a half-and-half; so does the till */
+  return { refunds: [], ask: 'Take ' + money(total) + ' off what ' + retCustomerName(against) + ' owes, against ' + against.no + '?',
+           yes: 'Yes, take it off', done: money(total) + ' off what they owe', refusal: owed.fits ? '' : owed.sentence };
+}
+/** says the refusal, or asks the cashier to confirm: true only when the return should go ahead */
+async function retConfirm(plan){
+  if (plan.refusal) { toastLine(plan.refusal); return false; }
+  return sure(plan.ask, plan.yes, 'Take a return');
+}
+/** the name a note is spoken to: the customer on the bill, else "they" */
+function retCustomerName(bill){ return (bill.customer && bill.customer.name && !/^walk.?in$/i.test(bill.customer.name)) ? bill.customer.name : 'the customer'; }
+/** what earlier credit notes on this bill already took off what is owing: their total less the money they paid back */
+function retReducedBefore(bill){
+  var taken = 0;
+  retPriorOf(bill).forEach(function(note){
+    var paid = 0; (note.refunds || []).forEach(function(part){ paid = r2(paid + Math.abs(Number(part.amount) || 0)); });
+    taken = r2(taken + Math.max(0, Math.abs(Number(note.total) || 0) - paid));
+  });
+  return taken;
+}
+/** what the snapshot says this customer owes now, counting the credit this counter gave since — null when the snapshot does not carry a balance */
+function retCustomerOwes(identityId){
+  var customer = ((S && S.customers) || []).filter(function(entry){ return entry && entry.identity_id === identityId; })[0];
+  if (!customer || customer.balance_minor == null || customer.balance_minor === '') return null;
+  return r2(booksMajor(customer.balance_minor) + (CREDIT_SINCE[identityId] || 0));
+}
+/** the sentence that says why "Reduce what they owe" cannot be used (empty when it can) */
+function retOwedRefusal(identityId, max, total){
+  if (!booksOn()) return 'The shop\u2019s Ledger is off, so this goes back another way.';
+  if (!identityId) return 'This bill has no customer the shop knows, so this goes back another way.';
+  if (max < 0.005) return 'Nothing is owing on this bill any more.';
+  return total > max + 0.004 ? ('They owe ' + money(max) + ' on this bill, less than this return. Give it back another way, or return less.') : '';
+}
+/** is "Reduce what they owe" offered for this bill, does a return of `total` fit, and the sentence that says why not (or what it will do) */
+function retOwedFor(bill, total){
+  var credit = 0;
+  ((bill && bill.payments) || []).forEach(function(part){ if (part && part.how === 'On credit') credit = r2(credit + (Number(part.amount) || 0)); });
+  if (!(credit > 0)) return { offered: false, fits: false, max: 0, sentence: '' };
+  var identityId = bill.customer && bill.customer.identity_id;
+  var owes = identityId ? retCustomerOwes(identityId) : null;
+  var left = r2(credit - retReducedBefore(bill));
+  var max = owes == null ? left : Math.min(left, Math.max(0, owes));
+  var refusal = retOwedRefusal(identityId, max, total);
+  return { offered: true, fits: !refusal, max: max,
+           sentence: refusal || ('Takes ' + money(total) + ' off what they owe, as far as this counter knows (' + money(max) + ' owing on this bill).') };
+}
+/** the "Back as" options: Reduce what they owe first (greyed with its sentence when it cannot be used), then the cash ways */
+function retHowOptions(ways, owed){
+  var pick = function(tender){ return RET_HOW === tender ? ' selected' : ''; };
+  return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
+    + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
+}
 /**
  * ⭐ WHAT THE SHOP OWES BACK. Every figure is the ORIGINAL line's own, scaled by the share coming back — so a
  * line that was sold at an offer is refunded at what was actually charged for it, not at today's price.
@@ -25342,6 +25463,8 @@ function retPaint(){
   var box = document.getElementById('retbody'); if (!box || !RET_FOR) return;
   var m = retMoney();
   var ways = {}; retWays(RET_FOR).forEach(function(w){ ways[w] = true; });
+  var owed = retOwedFor(RET_FOR, m.total);
+  if (RET_HOW === RET_OWED && !owed.fits) RET_HOW = retPaidBy(RET_FOR);    /* too big for what they owe: back to the cash way, said under the box */
   box.innerHTML =
     '<div class="retagainst">Against <b>' + esc(RET_FOR.no) + '</b> · '
       + esc(atShop(RET_FOR.at)) + ' · ' + money(Number(RET_FOR.total) || 0)
@@ -25367,9 +25490,9 @@ function retPaint(){
         + RET_WHYS.map(function(w){ return '<option value="' + w[0] + '"' + (RET_WHY === w[0] ? ' selected' : '')
             + '>' + w[1] + '</option>'; }).join('') + '</select></label>'
       + '<label>Back as <select data-testid="till-ret-how" onchange="retHow(this.value)">'
-        + Object.keys(ways).map(function(w){ return '<option value="' + esc(w) + '"' + (RET_HOW === w ? ' selected' : '')
-            + '>' + esc(w) + '</option>'; }).join('') + '</select></label>'
+        + retHowOptions(ways, owed) + '</select></label>'
     + '</div>'
+    + (owed.offered ? '<div class="u" data-testid="till-ret-owed-note">' + esc(owed.sentence) + '</div>' : '')
     + '<div class="rettotal"><span>To give back</span><b data-testid="till-ret-total">' + money(m.total) + '</b></div>';
   var go = document.getElementById('retgo');
   if (go) { go.disabled = !(m.total > 0); go.textContent = m.total > 0 ? ('Give back ' + money(m.total)) : 'Nothing chosen'; }
@@ -25729,8 +25852,8 @@ async function retIssue(){
   if (!retCanIssue()) { toastLine(RET_WHYNOT); return; }
   var against = RET_FOR, why = RET_WHY, how = RET_HOW;
   var words = (RET_WHYS.filter(function(w){ return w[0] === why; })[0] || RET_WHYS[0])[1];
-  if (!(await sure('Give back ' + money(m.total) + ' in ' + how + ' against ' + against.no + '?',
-                   'Yes, give it back', 'Take a return'))) return;
+  var plan = retPlan(against, m.total, how);
+  if (!(await retConfirm(plan))) return;
   var body = {
     /* ⚠️ THE DISCRIMINATOR. isSaleRow() is an allow-list of sale kinds, so this keeps a credit note out of the
        renumber-and-resend path that belongs to bills. */
@@ -25747,7 +25870,7 @@ async function retIssue(){
     heads: against.heads || null, supply: against.supply || null,
     /* ⭐⭐ MONEY OUT — the counter's first. Recorded as its own array rather than a negative payment, because a
        payment is money TAKEN and every reader of 'payments' assumes that. */
-    refunds: [{ how: how, amount: m.total }],
+    refunds: plan.refunds,     /* CTR-187: [] + the customer = taken off what they owe (books-hooks posts it) */
     customer: against.customer || { name: 'Walk-in' },
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
@@ -25769,7 +25892,7 @@ async function retIssue(){
   slipDocButtons(true, false);
   var sd = document.getElementById('slipdlg'); if (sd && sd.showModal && !sd.open) sd.showModal();
   autoPrint(html);
-  toastLine('Credit note ' + (cn.no || '') + ' — ' + money(m.total) + ' back in ' + how);
+  toastLine('Credit note ' + (cn.no || '') + ' — ' + plan.done);
   /* ⭐ ONE WAY OF SAYING "the day moved", so a sale and a return cannot drift apart again */
   try { menuFresh(); paintStatus(); } catch (e) { cbQuiet('retIssue:1', e); }
 }
@@ -25796,7 +25919,7 @@ function retSlipHTML(cn){
     + '<hr><div style="font-weight:800">Given back'
     + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
     + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
-    + '<div>in ' + esc(((cn.refunds || [])[0] || {}).how || 'Cash') + '</div>'
+    + '<div>' + (cn.refunds && cn.refunds.length ? 'in ' + esc(cn.refunds[0].how || 'Cash') : 'Taken off what you owe') + '</div>'
     + '</div>';
 }
 /**
@@ -27647,7 +27770,7 @@ function paintSetup(){
     if (window.CBDoc) ['fy', 'julian'].forEach(function(k){
       if (!dateOpts[k]) return;
       dateOpts[k].textContent = CBDoc.compose({ country: docCountry(), prefix: tillId(), kind: 'sale', at: new Date(), seq: 3,
-        scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? ' · financial year' : ' · date');
+        scheme: Object.assign({}, sc, { dating: k }) }) + (k === 'fy' ? runYearWord() : ' · date');
     });
   } catch (e) { cbQuiet('paintSetup:2', e); }
   /* ⚠️⚠️ M55 (walk 2026-10-10): this was `var note`, and so is the UPI note further down this same function — one function-scoped
@@ -27661,8 +27784,7 @@ function paintSetup(){
                                           at: new Date(), seq: 3, scheme: sc }) : '';
     } catch (e) { cbQuiet('paintSetup:3', e); }
     /* ⭐ the worked example is the explanation — the cautions are short, the reasons are on the rows' titles */
-    var warn = (sc.resets === 'day') ? ' · ⚠️ 0001 every day'
-             : (sc.resets === 'month') ? ' · ⚠️ 0001 every month' : '';
+    var warn = seriesWarn(sc);
     /**
      * ⭐⭐ THE WARNING CARRIES ITS OWN FIX (design-handoff §4 "Rows that need fixing": *"the same warning WITH
      * the button that fixes it"*). Financial-year dating already exists as an option two rows up — this is a

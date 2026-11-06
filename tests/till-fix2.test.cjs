@@ -141,7 +141,7 @@ function numberingOn(DB, extra) {
     DOC_TAGS: { GRN: 'receipt', DC: 'despatch', CN: 'credit', EXP: 'expense', SUB: 'subscription', R: 'payment' },
     LAST_SERIES: null }, extra || {});
   vm.createContext(ctx);
-  const src = liftVar('SERIES_TURN') + ['docKindOf', 'seriesLockName', 'underSeriesLock', 'seriesFor', 'resumeFromCloud', 'numberText', 'takeNumber']
+  const src = liftVar('SERIES_TURN') + liftVar('PARKED_MAX') + ['docKindOf', 'seriesLockName', 'underSeriesLock', 'todayIso', 'runKey', 'parkRuns', 'parkedNext', 'rollSeries', 'switchPrefix', 'seriesFor', 'resumeFromCloud', 'numberText', 'takeNumber']
     .map(liftIf).join('') + lift('nextNumber');
   vm.runInContext(src, ctx);
   return ctx;
