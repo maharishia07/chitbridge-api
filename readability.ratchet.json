@@ -456,15 +456,15 @@
     "noHeader": 0
   },
   "lib/books.js": {
-    "score": 314,
-    "long40": 17,
-    "long80": 1,
-    "complex10": 21,
-    "complex15": 12,
-    "deep3": 1,
+    "score": 52,
+    "long40": 7,
+    "long80": 0,
+    "complex10": 18,
+    "complex15": 5,
+    "deep3": 0,
     "deep4": 0,
-    "cryptic": 258,
-    "noWhatLine": 4,
+    "cryptic": 21,
+    "noWhatLine": 1,
     "emptyCatch": 0,
     "noHeader": 0
   },
