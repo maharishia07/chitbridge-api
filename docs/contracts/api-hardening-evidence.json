@@ -97,6 +97,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/chits/register/subjects/:subject_id/close": {
+   "strict_input": true
+  },
   "GET /api/chits/register/templates": {
    "output_allowlist": true
   },
@@ -105,12 +108,20 @@
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/chits/register/entries/:raida_id/close": {
+   "strict_input": true
   },
   "GET /api/chits/register/walk/:from": {
    "output_allowlist": true
   },
+  "POST /api/chits/register/entries/:raida_id/revise": {
+   "strict_input": true
+  },
   "POST /api/chits/register/entries/:raida_id/accept": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/raida/report": {
@@ -123,7 +134,11 @@
    "strict_input": true,
    "foreign_id_404": true
   },
+  "POST /api/chits/:chit_id/raida/:raida_id/close": {
+   "strict_input": true
+  },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/:chit_id/use": {
@@ -149,6 +164,7 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/payment": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -161,10 +177,15 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/status": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/messages": {
+   "strict_input": true,
    "output_allowlist": true
+  },
+  "POST /api/chits/:chit_id/disputes": {
+   "strict_input": true
   },
   "GET /api/chits/:chit_id/diagnosis": {
    "output_allowlist": true

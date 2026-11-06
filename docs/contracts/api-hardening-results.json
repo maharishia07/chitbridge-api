@@ -384,8 +384,7 @@
   },
   "POST /api/chits/register/subjects/:subject_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -411,8 +410,7 @@
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -424,8 +422,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -447,8 +444,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/revise": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -461,8 +457,7 @@
   },
   "POST /api/chits/register/entries/:raida_id/accept": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -500,8 +495,7 @@
   },
   "POST /api/chits/:chit_id/raida/:raida_id/close": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -514,8 +508,7 @@
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -593,8 +586,7 @@
   },
   "POST /api/chits/:chit_id/payment": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -633,8 +625,7 @@
   },
   "PUT /api/chits/:chit_id/status": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -646,8 +637,7 @@
   },
   "POST /api/chits/:chit_id/messages": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -669,8 +659,7 @@
   },
   "POST /api/chits/:chit_id/disputes": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,

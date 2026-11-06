@@ -5,12 +5,12 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 357,
-  "meets": 270,
+  "partial": 358,
+  "meets": 269,
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 126
    },
    "output_allowlist": {
     "applies": 637,
@@ -36865,7 +36865,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5503,
-   "hash": "ea930de8245bd3e1",
+   "hash": "af03af9e31a2886c",
    "does": "",
    "errors": {
     "count": 0,
@@ -36903,7 +36903,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -36977,7 +36977,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5109,
-   "hash": "c6a07b1aeacfccc8",
+   "hash": "907837f4841fdfde",
    "does": "",
    "errors": {
     "count": 0,
@@ -37014,7 +37014,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -37074,7 +37074,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4820,
-   "hash": "e497f7a73e38b01a",
+   "hash": "10046b55f800d3dc",
    "does": "",
    "errors": {
     "count": 0,
@@ -37107,7 +37107,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": false,
@@ -37139,7 +37139,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e497f7a73e38b01a"
+    "stale_since": "10046b55f800d3dc"
    },
    "status": "partial",
    "callers": [
@@ -37516,7 +37516,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4151,
-   "hash": "41730ff204ae5789",
+   "hash": "311169405940eae0",
    "does": "",
    "errors": {
     "count": 0,
@@ -37576,10 +37576,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "311169405940eae0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-register.js"
    ],
@@ -37606,7 +37607,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4207,
-   "hash": "a2a7aa5d1d83d8de",
+   "hash": "19bcedf0e932c932",
    "does": "",
    "errors": {
     "count": 0,
@@ -37637,7 +37638,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -37696,7 +37697,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4227,
-   "hash": "a6b86a1d6d491d8f",
+   "hash": "9250618eaade5a10",
    "does": "",
    "errors": {
     "count": 0,
@@ -37727,7 +37728,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -38251,7 +38252,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4097,
-   "hash": "40945af1720316ac",
+   "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
     "count": 0,
@@ -38282,7 +38283,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -38337,7 +38338,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4066,
-   "hash": "4da9aa2267f6a5f5",
+   "hash": "90c66f0cfb0c470f",
    "does": "",
    "errors": {
     "count": 0,
@@ -38368,7 +38369,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -38427,7 +38428,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4087,
-   "hash": "f562f4561052b995",
+   "hash": "d3bcaba8227c7630",
    "does": "",
    "errors": {
     "count": 0,
@@ -38458,7 +38459,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -38608,7 +38609,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4001,
-   "hash": "7631077758f063ea",
+   "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
     "count": 0,
@@ -38639,7 +38640,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -38698,7 +38699,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4043,
-   "hash": "b7c1d5b5f6e060a8",
+   "hash": "9ce79b392b49494f",
    "does": "",
    "errors": {
     "count": 0,
@@ -38729,7 +38730,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -56452,7 +56453,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4952,
-   "hash": "bdc0ab6cc433cce6",
+   "hash": "bca557ce84285e48",
    "does": "",
    "errors": {
     "count": 0,
@@ -56483,7 +56484,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56514,7 +56515,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bdc0ab6cc433cce6"
+    "stale_since": "bca557ce84285e48"
    },
    "status": "partial",
    "callers": [
