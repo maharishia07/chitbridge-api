@@ -60,10 +60,22 @@ function knownTables(root) {
 }
 
 /** the text of function `name` defined in `text` (function declaration or const/assignment), by balanced braces; '' when not found. Crude on purpose: best effort. */
-function functionText(text, name) {
+function functionText(text, name, afterParams) {
   const found = new RegExp('(?:function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=|\\b' + name + '\\s*:\\s*(?:async\\s*)?(?:function|\\())').exec(text);
   if (!found) return '';
-  const open = text.indexOf('{', found.index);
+  let open = text.indexOf('{', found.index);
+  const paren = text.indexOf('(', found.index);
+  /* a function declaration's body starts after its parameter list, whose own braces (a destructured parameter) are not the body */
+  if (afterParams && /^function/.test(found[0]) && paren >= 0 && paren < open) {
+    let nesting = 0;
+    for (let at = paren; at < text.length; at++) {
+      if (text[at] === '(') nesting++;
+      else if (text[at] === ')' && --nesting === 0) {
+        open = text.indexOf('{', at);
+        break;
+      }
+    }
+  }
   if (open < 0) return '';
   let depth = 0;
   for (let at = open; at < text.length; at++) {
@@ -98,30 +110,44 @@ function requiresOf(fileText, fileAbs) {
   return out;
 }
 
-/** the handler's source plus the text of the helpers it calls (same file, or a module it requires), `depth` levels down; best effort */
+/** words that look like calls but are never helpers */
+const NOT_HELPERS = ['if', 'for', 'while', 'switch', 'catch', 'function', 'require', 'query', 'json', 'status', 'send'];
+
+/** a same-file helper that exactly ONE call site in its file reaches: what a readability split of one function leaves behind. A shared helper (ensureYear, onDb) is not private, so a read-only route never inherits another route's writes */
+function privateHelper(text, name) {
+  if (!/^[A-Za-z_$][\w$]*$/.test(name)) return false;
+  if (!new RegExp('(?:function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=)').test(text)) return false;
+  const calls = text.match(new RegExp('(?<!function\\s+)(?<![.\\w$])' + name + '\\s*\\(', 'g')) || [];
+  return calls.length === 1;
+}
+
+/**
+ * the handler's source plus the text of the helpers it calls, best effort. A hop into another function costs one of `depth` levels, except a hop to a PRIVATE
+ * helper (see privateHelper): splitting one function into same-file helpers (MNT-12 readability work) must not hide its table access.
+ */
 function reachableText(source, fileText, fileAbs, depth) {
   const parts = [source];
   const seen = new Set();
   const modules = requiresOf(fileText, fileAbs);
   const cache = new Map();
   const textOf = (file) => (cache.has(file) ? cache.get(file) : (cache.set(file, fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''), cache.get(file)));
-  let frontier = [source];
-  for (let level = 0; level < depth; level++) {
-    const next = [];
-    frontier.forEach((piece) => {
-      const { plain, member } = callsIn(piece);
-      const wanted = [];
-      plain.forEach((name) => wanted.push({ name, from: fileAbs, text: fileText }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), whole: false }] : [])));
-      member.filter(([owner]) => modules.has(owner)).forEach(([owner, name]) => wanted.push({ name, from: modules.get(owner), text: textOf(modules.get(owner)) }));
-      wanted.forEach((want) => {
-        const id = want.from + '#' + want.name;
-        if (seen.has(id) || !want.text || ['if', 'for', 'while', 'switch', 'catch', 'function', 'require', 'query', 'json', 'status', 'send'].includes(want.name)) return;
-        seen.add(id);
-        const body = functionText(want.text, want.name);
-        if (body) (parts.push(body), next.push(body));
-      });
+  const queue = [{ piece: source, from: fileAbs, text: fileText, level: 0 }];
+  while (queue.length) {
+    const { piece, from, text, level } = queue.shift();
+    const { plain, member } = callsIn(piece);
+    const wanted = [];
+    /* a plain call to a helper of the SAME file the piece was read from is free (it costs no level), tried first so a free path wins over a costly one */
+    plain.forEach((name) => privateHelper(text, name) && wanted.push({ name, from, text, level, free: true }));
+    /* the original hops, each one a level: a plain call to a helper of the route's file or of a module it requires, and `module.fn(` calls */
+    plain.forEach((name) => wanted.push({ name, from: fileAbs, text: fileText, level: level + 1 }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1 }] : [])));
+    member.filter(([owner]) => modules.has(owner)).forEach(([owner, name]) => wanted.push({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1 }));
+    wanted.forEach((want) => {
+      const id = want.from + '#' + want.name;
+      if (want.level > depth || seen.has(id) || !want.text || NOT_HELPERS.includes(want.name)) return;
+      seen.add(id);
+      const body = functionText(want.text, want.name, want.free);
+      if (body) (parts.push(body), queue.push({ piece: body, from: want.from, text: want.text, level: want.level }));
     });
-    frontier = next;
   }
   return parts.join('\n');
 }
@@ -153,7 +179,7 @@ function errorsOf(declaredStatuses, codes, registeredCodes) {
 
 /** the card facts of one route, given what api-register.cjs already knows (handler source, file text, declared statuses, codes) */
 function cardOf({ root, area, source, fileText, fileAbs, line, declared, codes, registeredCodes, curatedMoney, known }) {
-  const text = fileAbs ? reachableText(source, fileText, fileAbs, 2) : source;
+  const text = fileAbs ? reachableText(source, fileText, fileAbs, Number(process.env.CARD_DEPTH) || 2) : source;
   const tables = tablesOf(text, known);
   return {
     does: tagAbove(fileText, line, 'does'),
@@ -284,4 +310,4 @@ function renderCards(rows) {
 /** routes with no @does (the ratchet's count; it may only go down) */
 const withoutDoes = (rows) => rows.filter((row) => !row.does).length;
 
-module.exports = { AGENT_OF, agentOf, commentAbove, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, queueableRoutes, scanCallers, writeCallers, renderCard, renderCards, withoutDoes, shapeOf, CALLERS_FILE };
+module.exports = { reachableText, privateHelper, AGENT_OF, agentOf, commentAbove, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, queueableRoutes, scanCallers, writeCallers, renderCard, renderCards, withoutDoes, shapeOf, CALLERS_FILE };

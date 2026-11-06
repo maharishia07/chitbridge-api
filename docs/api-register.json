@@ -3950,6 +3950,7 @@
     "codes": []
    },
    "reads": [
+    "container_region_override",
     "product_version",
     "resolved_blueprint"
    ],
@@ -6513,6 +6514,7 @@
     ]
    },
    "reads": [
+    "account_balance",
     "books_payment",
     "books_setting",
     "chit_detail",
@@ -9116,7 +9118,8 @@
     "codes": []
    },
    "reads": [
-    "channel_binding"
+    "channel_binding",
+    "channel_outbound"
    ],
    "writes": [],
    "money": false,
@@ -9996,7 +9999,9 @@
     "codes": []
    },
    "reads": [
-    "chit_header"
+    "chit_header",
+    "customer_list",
+    "identities"
    ],
    "writes": [],
    "money": false,
@@ -13242,6 +13247,7 @@
     "chit_messages",
     "identities",
     "memberships",
+    "party_contact_pref",
     "party_followup",
     "party_interaction",
     "party_item"
@@ -13448,6 +13454,8 @@
     "codes": []
    },
    "reads": [
+    "definition",
+    "definition_version",
     "identities"
    ],
    "writes": [],
@@ -13547,6 +13555,7 @@
    },
    "reads": [
     "installation",
+    "membership_certificate",
     "population"
    ],
    "writes": [],
@@ -22535,7 +22544,8 @@
     "codes": []
    },
    "reads": [
-    "catalogue_items"
+    "catalogue_items",
+    "identities"
    ],
    "writes": [],
    "money": true,
@@ -23328,7 +23338,10 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "definition",
+    "definition_version"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -23716,7 +23729,9 @@
     "party_tax_id",
     "supplier_list"
    ],
-   "writes": [],
+   "writes": [
+    "party_tax_id"
+   ],
    "money": true,
    "actions": [],
    "derived": [
@@ -27961,10 +27976,19 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "catalogue_adoption",
+    "catalogue_items",
+    "customer_list",
+    "entity_profile",
+    "entity_schemas",
+    "identities",
+    "party_item",
+    "schema_fields",
+    "stock_movement",
+    "supplier_list"
    ],
    "writes": [],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -28061,7 +28085,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "stock_balance"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -28357,10 +28383,12 @@
    "reads": [
     "catalogue_adoption",
     "catalogue_items",
-    "identities"
+    "customer_list",
+    "identities",
+    "supplier_list"
    ],
    "writes": [],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -30593,7 +30621,8 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas"
+    "entity_schemas",
+    "identities"
    ],
    "writes": [
     "catalogue_items"
@@ -32423,9 +32452,13 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
-   "money": false,
+   "reads": [
+    "entity_wallet"
+   ],
+   "writes": [
+    "usage_ledger"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -32529,12 +32562,15 @@
    },
    "reads": [
     "catalogue_adoption",
-    "catalogue_source"
+    "catalogue_source",
+    "entity_wallet",
+    "identities"
    ],
    "writes": [
-    "catalogue_adoption"
+    "catalogue_adoption",
+    "usage_ledger"
    ],
-   "money": false,
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -32631,10 +32667,13 @@
     "codes": []
    },
    "reads": [
-    "catalogue_source"
+    "catalogue_source",
+    "entity_wallet"
    ],
-   "writes": [],
-   "money": false,
+   "writes": [
+    "usage_ledger"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -32728,9 +32767,13 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
-   "money": false,
+   "reads": [
+    "entity_wallet"
+   ],
+   "writes": [
+    "usage_ledger"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -33876,12 +33919,19 @@
     ]
    },
    "reads": [
+    "books_payment",
     "books_setting",
+    "customer_list",
     "identities",
-    "journal_entry"
+    "journal_entry",
+    "journal_line",
+    "party_item",
+    "supplier_list"
    ],
-   "writes": [],
-   "money": false,
+   "writes": [
+    "party_item"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -34631,13 +34681,22 @@
     ]
    },
    "reads": [
+    "books_payment",
     "books_setting",
+    "chit_header",
+    "chit_status",
+    "customer_list",
     "identities",
     "journal_entry",
-    "ledger_account"
+    "journal_line",
+    "ledger_account",
+    "party_item",
+    "supplier_list"
    ],
-   "writes": [],
-   "money": false,
+   "writes": [
+    "party_item"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -35809,7 +35868,12 @@
     "party_tax_id",
     "supplier_list"
    ],
-   "writes": [],
+   "writes": [
+    "customer_list",
+    "identities",
+    "ledger_account",
+    "supplier_list"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -36570,12 +36634,19 @@
     ]
    },
    "reads": [
+    "books_payment",
     "books_setting",
+    "customer_list",
     "identities",
-    "journal_entry"
+    "journal_entry",
+    "journal_line",
+    "party_item",
+    "supplier_list"
    ],
-   "writes": [],
-   "money": false,
+   "writes": [
+    "party_item"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -36683,8 +36754,12 @@
     "chit_disputes",
     "chit_header",
     "chit_status",
+    "customer_list",
     "identities",
-    "journal_entry"
+    "journal_entry",
+    "journal_line",
+    "party_item",
+    "supplier_list"
    ],
    "writes": [
     "books_payment"
@@ -36793,10 +36868,16 @@
    "reads": [
     "books_payment",
     "books_setting",
+    "customer_list",
     "identities",
-    "journal_entry"
+    "journal_entry",
+    "journal_line",
+    "party_item",
+    "supplier_list"
    ],
-   "writes": [],
+   "writes": [
+    "party_item"
+   ],
    "money": true,
    "actions": [],
    "derived": [
@@ -37868,12 +37949,19 @@
     ]
    },
    "reads": [
+    "books_payment",
     "books_setting",
+    "customer_list",
     "identities",
-    "journal_entry"
+    "journal_entry",
+    "journal_line",
+    "party_item",
+    "supplier_list"
    ],
-   "writes": [],
-   "money": false,
+   "writes": [
+    "party_item"
+   ],
+   "money": true,
    "actions": [],
    "derived": [
     "reads",
@@ -38755,7 +38843,13 @@
     "statuses": [],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "channel_binding",
+    "channel_outbound",
+    "customer_list",
+    "identities",
+    "party_contact_pref"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -40920,6 +41014,8 @@
     "state_log"
    ],
    "writes": [
+    "chit_header",
+    "chit_status",
     "state_log"
    ],
    "money": false,
@@ -41154,7 +41250,8 @@
     "identities"
    ],
    "writes": [
-    "chit_header"
+    "chit_header",
+    "state_log"
    ],
    "money": false,
    "actions": [],
@@ -41359,7 +41456,10 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "chit_line",
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -41553,7 +41653,10 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "chit_line",
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -42460,6 +42563,7 @@
     "identities"
    ],
    "writes": [
+    "chit_status",
     "identities",
     "state_log"
    ],
@@ -44304,11 +44408,13 @@
     "codes": []
    },
    "reads": [
+    "capability",
     "connector_connection",
     "customer_list",
     "entity_actor_settings",
     "identities",
-    "supplier_list"
+    "supplier_list",
+    "work_pattern"
    ],
    "writes": [
     "connector_connection",
@@ -45140,7 +45246,9 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "customer_list",
+    "identities",
+    "supplier_list"
    ],
    "writes": [
     "customer_list",
@@ -45446,7 +45554,9 @@
    },
    "reads": [
     "chit_disputes",
-    "chit_messages"
+    "chit_messages",
+    "identities",
+    "party_contact_pref"
    ],
    "writes": [
     "party_interaction"
@@ -45653,7 +45763,8 @@
    },
    "reads": [
     "customer_list",
-    "identities"
+    "identities",
+    "supplier_list"
    ],
    "writes": [
     "memberships"
@@ -45755,7 +45866,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "identities"
+   ],
    "writes": [
     "privacy_request"
    ],
@@ -45856,7 +45969,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "privacy_request"
+   ],
    "writes": [
     "privacy_request"
    ],
@@ -46374,10 +46489,13 @@
    },
    "reads": [
     "chit_header",
+    "chit_messages",
     "identities",
     "installation",
     "membership_certificate",
-    "population"
+    "population",
+    "registry_change",
+    "registry_entry"
    ],
    "writes": [],
    "money": false,
@@ -50182,10 +50300,17 @@
     "codes": []
    },
    "reads": [
+    "cb_edge",
+    "cb_entity",
     "identities",
     "network_design"
    ],
-   "writes": [],
+   "writes": [
+    "cb_edge",
+    "cb_entity",
+    "identities",
+    "network_design"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -50289,7 +50414,8 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "identities",
+    "network_design"
    ],
    "writes": [
     "identities"
@@ -50824,6 +50950,7 @@
     ]
    },
    "reads": [
+    "catalogue_adoption",
     "identities"
    ],
    "writes": [
@@ -50927,7 +51054,9 @@
      "SESSION_ONLY"
     ]
    },
-   "reads": [],
+   "reads": [
+    "catalogue_adoption"
+   ],
    "writes": [
     "catalogue_adoption"
    ],
@@ -51030,6 +51159,7 @@
     ]
    },
    "reads": [
+    "catalogue_adoption",
     "identities"
    ],
    "writes": [
@@ -52872,7 +53002,8 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas"
+    "entity_schemas",
+    "identities"
    ],
    "writes": [],
    "money": false,
@@ -53077,7 +53208,9 @@
     "codes": []
    },
    "reads": [
-    "entity_schemas"
+    "entity_schemas",
+    "identities",
+    "schema_fields"
    ],
    "writes": [],
    "money": false,
@@ -53179,7 +53312,8 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas"
+    "entity_schemas",
+    "identities"
    ],
    "writes": [
     "catalogue_items"
@@ -53288,6 +53422,7 @@
     "catalogue_face",
     "catalogue_items",
     "entity_schemas",
+    "identities",
     "schema_fields"
    ],
    "writes": [
@@ -53502,7 +53637,9 @@
    },
    "reads": [
     "catalogue_items",
-    "entity_schemas"
+    "entity_schemas",
+    "identities",
+    "schema_fields"
    ],
    "writes": [
     "definition",
@@ -56294,7 +56431,8 @@
    },
    "reads": [],
    "writes": [
-    "identities"
+    "identities",
+    "signin_events"
    ],
    "money": false,
    "actions": [],
@@ -56595,7 +56733,9 @@
     "codes": []
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "signin_events"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -57083,7 +57223,9 @@
     "codes": []
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "supply_item"
+   ],
    "money": true,
    "actions": [],
    "derived": [
@@ -57897,7 +58039,8 @@
    },
    "reads": [
     "definition",
-    "definition_version"
+    "definition_version",
+    "test_result"
    ],
    "writes": [
     "definition",
@@ -58800,7 +58943,11 @@
     "codes": []
    },
    "reads": [
-    "catalogue_items"
+    "catalogue_items",
+    "chit_header",
+    "entity_schemas",
+    "identities",
+    "schema_fields"
    ],
    "writes": [
     "definition",
@@ -59320,7 +59467,9 @@
     "definition_version",
     "identities"
    ],
-   "writes": [],
+   "writes": [
+    "catalogue_items"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -59839,7 +59988,9 @@
     ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "counter_hidden_item"
+   ],
    "writes": [
     "counter_hidden_item"
    ],
@@ -61509,6 +61660,7 @@
     "identities"
    ],
    "writes": [
+    "chit_status",
     "identities",
     "state_log"
    ],
@@ -62446,7 +62598,8 @@
     "identities"
    ],
    "writes": [
-    "chit_header"
+    "chit_header",
+    "state_log"
    ],
    "money": false,
    "actions": [],
@@ -62867,9 +63020,15 @@
     "codes": []
    },
    "reads": [
-    "chit_header"
+    "chit_disputes",
+    "chit_header",
+    "chit_status"
    ],
-   "writes": [],
+   "writes": [
+    "chit_header",
+    "chit_status",
+    "state_log"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -63984,8 +64143,12 @@
      "VAULT_VERSION_REQUIRED"
     ]
    },
-   "reads": [],
-   "writes": [],
+   "reads": [
+    "identities"
+   ],
+   "writes": [
+    "entity_profile"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -64930,7 +65093,8 @@
    },
    "reads": [
     "definition",
-    "definition_version"
+    "definition_version",
+    "test_result"
    ],
    "writes": [
     "definition",
