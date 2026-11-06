@@ -337,6 +337,9 @@
   "GET /api/entities/usage": {
    "output_allowlist": true
   },
+  "GET /api/events/stats": {
+   "output_allowlist": true
+  },
   "GET /api/folders": {
    "output_allowlist": true
   },
@@ -444,6 +447,9 @@
    "output_allowlist": true
   },
   "GET /api/network-design/stores": {
+   "output_allowlist": true
+  },
+  "GET /api/notifications": {
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -1019,6 +1025,9 @@
   "POST /api/entities/populations": {
    "output_allowlist": true
   },
+  "POST /api/events/ticket": {
+   "output_allowlist": true
+  },
   "POST /api/folders": {
    "output_allowlist": true
   },
@@ -1111,6 +1120,12 @@
   },
   "POST /api/network/connections/:id/suspend": {
    "bfla_role_check": true
+  },
+  "POST /api/notifications/dismiss": {
+   "output_allowlist": true
+  },
+  "POST /api/notifications/seen": {
+   "output_allowlist": true
   },
   "POST /api/privacy/me/requests": {
    "output_allowlist": true
