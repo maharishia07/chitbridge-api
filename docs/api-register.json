@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 133
    },
    "output_allowlist": {
     "applies": 637,
@@ -1495,7 +1495,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 166,
+   "line": 167,
    "hash": "037a59863cd4f43e",
    "does": "",
    "errors": {
@@ -18052,7 +18052,7 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 123,
+   "line": 124,
    "hash": "5d347d3eb8faeb49",
    "does": "",
    "errors": {
@@ -35751,7 +35751,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 113,
-   "hash": "daa1e2e3f204410f",
+   "hash": "8313c4aa22920254",
    "does": "A channel id and the platform key -> we mark that number as verified for its shop -> the verified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -35783,7 +35783,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -36018,7 +36018,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 131,
-   "hash": "4fec3ffef1fe9308",
+   "hash": "31837452b6421448",
    "does": "A channel id and the platform key -> we withdraw the verification of that number -> the unverified channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -36050,7 +36050,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -36197,7 +36197,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/channels.js",
    "line": 122,
-   "hash": "addfba275c3956e0",
+   "hash": "9f5b52ecc583b57e",
    "does": "A channel id, the shop and the template name and the platform key -> we record Meta's approval of that template -> the updated channel (platform operators only).",
    "errors": {
     "count": 0,
@@ -36231,7 +36231,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -44817,8 +44817,8 @@
    "owner_area": "keys",
    "owner_agent": "cb-security",
    "file": "routes/keys.js",
-   "line": 150,
-   "hash": "80b226ce0f610970",
+   "line": 151,
+   "hash": "f608bc9d17d38dbe",
    "does": "",
    "errors": {
     "count": 3,
@@ -44855,7 +44855,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -44886,7 +44886,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "80b226ce0f610970"
+    "stale_since": "f608bc9d17d38dbe"
    },
    "status": "partial",
    "callers": [

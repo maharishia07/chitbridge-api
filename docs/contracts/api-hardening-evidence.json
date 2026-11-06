@@ -462,6 +462,7 @@
    "output_allowlist": true
   },
   "POST /api/keys": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/schemas/create-default": {
@@ -1153,6 +1154,15 @@
    "strict_input": true
   },
   "POST /api/channels": {
+   "strict_input": true
+  },
+  "POST /api/channels/:id/approve": {
+   "strict_input": true
+  },
+  "POST /api/channels/:id/template-approve": {
+   "strict_input": true
+  },
+  "POST /api/channels/:id/revoke": {
    "strict_input": true
   },
   "DELETE /api/channels/:id": {
