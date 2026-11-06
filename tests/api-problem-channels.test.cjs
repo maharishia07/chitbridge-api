@@ -28,6 +28,7 @@ const express = require('express');
 const { harness, PARTY, OWNER, STAFF, SECRET_SQL, sameValue, answering, raising, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/channels-scenes.cjs');
 const foreign = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -250,6 +251,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 80, frozen);
   check('a caller who is not signed in is refused with 401 on every route that asks for a session', Object.keys(recording).filter((key) => key.endsWith('|signed-out') && !/\/(approve|revoke|template-approve)\|/.test(key)).every((key) => recording[key].status === 401));
   check('a 500 never says its cause: no 5xx answer of any route carries the database text', Object.values(recording).filter((one) => one.status >= 500).every((one) => !/SELECT|vault|relation "/.test(JSON.stringify(one.body || {}))));
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -257,8 +259,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/channels.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }

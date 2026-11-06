@@ -14,6 +14,8 @@
    "output_allowlist": true
   },
   "DELETE /api/channels/:id": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "DELETE /api/chits/:chit_id": {
@@ -228,6 +230,14 @@
   "GET /api/catalogue/network/:bridge_id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "GET /api/channels": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/channels/outbound": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/chits/:chit_id": {
    "output_allowlist": true
@@ -869,14 +879,36 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/channels": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "POST /api/channels/:id/approve": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/channels/:id/auto-raise": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "POST /api/channels/:id/provider-ref": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
+  "POST /api/channels/:id/revoke": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/channels/:id/template": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template-approve": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/chits/:chit_id/amend": {
    "output_allowlist": true
