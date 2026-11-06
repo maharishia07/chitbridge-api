@@ -301,6 +301,7 @@ async function run(opts) {
     results[r.key] = out;
     console.log((out.state === 'measured' ? 'MEASURED ' + String(out.trips).padStart(3) : 'unreached   ') + '  ' + r.key.padEnd(62) + (out.state === 'measured' ? '' : out.group + ' · ' + out.reason));
   }
+  if (typeof HINTS.cleanup === 'function') { try { await HINTS.cleanup(API); } catch (e) { console.log('cleanup failed: ' + e.message.slice(0, 160)); } }
   return results;
 }
 let lastBody = null;

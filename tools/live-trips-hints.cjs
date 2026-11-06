@@ -30,10 +30,62 @@ async function newPayment(api) {
   const out = await must(api, 'POST', '/api/books/payments', { party_id: await customerId(api), direction: 'in', amount: 1 + Math.floor(Math.random() * 9000) / 100, mode: 'cash', client_ref: 'lt-pay-' + u() });
   return out.payment.payment_id;
 }
+/** the key of an open lt- counter of the load shop (a till session): created once, released again when the run ends (cleanup below) */
+async function counterKey(api, fresh) {
+  if (api.seeds.ckey && !fresh) return api.seeds.ckey;
+  const list = (await must(api, 'GET', '/api/counters')).counters || [];
+  let c = list.find((x) => String(x.name || '').startsWith('lt-'));
+  if (!c) c = (await must(api, 'POST', '/api/counters', { name: 'lt-counter' })).counter;
+  if (c.state !== 'closed') await api.call('POST', '/api/counters/' + c.id + '/release', {});
+  const opened = await must(api, 'POST', '/api/counters/' + c.id + '/open', {});
+  api.seeds.ckey = opened.key; api.seeds.counter = c.id;
+  return opened.key;
+}
+const asCounter = async (api, fresh) => ({ authorization: 'Bearer ' + await counterKey(api, fresh) });
+/** the first product of the load shop */
+async function itemId(api) {
+  if (!api.seeds.item) api.seeds.item = (await must(api, 'GET', '/api/products?limit=1')).items[0].item_id;
+  return api.seeds.item;
+}
+/** a screen key (a paired shop screen): pair a code, claim it, read the key's jti */
+async function newScreen(api) {
+  const code = (await must(api, 'POST', '/api/till/pair', {})).code;
+  const claimed = await must(api, 'POST', '/api/till/pair/claim', { code });
+  const jwt = String(claimed.key || claimed.token || '');
+  const jti = JSON.parse(Buffer.from(jwt.split('.')[1] || 'e30', 'base64url').toString()).jti;
+  (api.seeds.screens = api.seeds.screens || []).push(jti);
+  return { code, jti };
+}
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
   params: {},
+  /** the run's end: switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
+  cleanup: async (api) => {
+    for (const jti of api.seeds.screens || []) await api.call('POST', '/api/till/screens/revoke', { jti });
+    if (api.seeds.counter) await api.call('POST', '/api/counters/' + api.seeds.counter + '/release', {});
+  },
   routes: {
+    'GET /api/till/quick-keys/state': { make: async (api) => ({ headers: await asCounter(api), query: '?business_date=' + day() }) },
+    'POST /api/till/quick-keys/state': { make: async (api) => ({ headers: await asCounter(api), body: { business_date: day(), active_group_ids: [] } }) },
+    'POST /api/till/quick-keys/hide': { make: async (api) => ({ headers: await asCounter(api), body: { product_id: await itemId(api) } }) },
+    'POST /api/till/quick-keys/unhide': { make: async (api) => ({ headers: await asCounter(api), body: { product_id: await itemId(api) } }) },
+    'POST /api/till/quick-keys/screen-config': { make: async (api) => ({ headers: await asCounter(api), body: { config: { lt: true } } }) },
+    'GET /api/till/reward': { query: '?scheme=phone&value=9840000001' },
+    'POST /api/till/reward/claim': { skip: ['precondition', 'refused 400 "this shop runs no programme": the load shop has no reward programme and creating one is a money rule (points are not currency), not a fixture'] },
+    'POST /api/till/alias': { make: async (api) => ({ body: { item_id: await itemId(api), text: 'lt-' + u(), by: 'lt-live-trips' } }) },
+    'POST /api/till/catalogue': { skip: ['precondition', 'refused 409 CATALOGUE_NOT_EMPTY: it starts a catalogue only in a shop with no products, and the load shop holds 12 (and emptying it is a deletion)'] },
+    'POST /api/till/close': { fresh: true, make: async (api) => { const headers = await asCounter(api, true); api.seeds.ckey = null; return { headers, body: {} }; } },
+    'POST /api/till/diagnostic': { make: async (api) => ({ headers: await asCounter(api), body: { code: 'lt-live-trips' } }) },
+    'POST /api/till/flags': { make: async (api) => ({ body: { item_id: await itemId(api), screen: true } }) },
+    'POST /api/till/offer-item': { skip: ['fixture', 'moves a product in or out of a LIVE offer; the load shop holds no live offer and making one is a money promise (deliberate confirm), not a fixture'] },
+    'POST /api/till/stock': { make: async (api) => ({ body: { item_id: await itemId(api), status: 'available', by: 'lt-live-trips' } }) },
+    'POST /api/till/stock/bulk': { make: async (api) => ({ body: { item_ids: [await itemId(api)], status: 'available', by: 'lt-live-trips' } }) },
+    'POST /api/till/enrol': { fresh: true, make: async (api) => { await counterKey(api, true); api.seeds.ckey = null; return { body: { counter: api.seeds.counter, name: 'lt-live-trips', takeover: true } }; } },
+    'POST /api/till/pair/claim': { skip: ['no-header', 'public door (no sign-in): it answers 200 but the entity is not known before the code is read, so X-DB-Trips is not sent; the work is 1 key mint, measured by hand as unknown'] },
+    'POST /api/till/screens/rename': { make: async (api) => ({ body: { jti: (await newScreen(api)).jti, name: 'lt-screen' } }) },
+    'POST /api/till/screens/revoke': { fresh: true, make: async (api) => ({ body: { jti: (await newScreen(api)).jti } }) },
+    'GET /api/till/engine/:name': { make: async () => ({ params: { name: 'offers' } }) },
+    'POST /api/counters/:id/assign': { make: async (api) => { await counterKey(api); return { params: { id: api.seeds.counter }, body: { phone: null } }; } },
     'POST /api/books/accruals/:ref/reverse': { fresh: true, make: async (api) => { const ref = 'lt-ACC-' + u(); await must(api, 'POST', '/api/books/accruals', { ref, kind: 'outstanding', class: 'electricity', amount: 100, date: '2026-09-15', narration: 'lt- live-trips' }); return { params: { ref }, body: { client_ref: 'lt-' + u() } }; } },
     'POST /api/books/assets/:id/dispose': { fresh: true, make: async (api) => { const a = await must(api, 'POST', '/api/books/assets', { name: 'lt-asset-' + u(), class: 'furniture', cost: 1000, date: day(), how: 'cash' }); const id = a.asset_id || (a.asset && a.asset.asset_id); return { params: { id }, body: { date: day(), proceeds: 0, client_ref: 'lt-' + u() } }; } },
     'POST /api/books/loans/:ref/emi': { fresh: true, make: async (api) => { const ref = 'lt-LOAN-' + u(); await must(api, 'POST', '/api/books/loans', { ref, lender: 'lt-bank', amount: 1000, into: 'bank', rate: 10, date: day() }); return { params: { ref }, body: { principal: 10, interest: 1, date: day(), client_ref: 'lt-' + u() } }; } },
