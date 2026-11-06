@@ -151,5 +151,7 @@ t('register: a route whose success schema holds an x-closed-by recordings node c
   return same(reg.basisOf({ output_allowlist: true }, {}, marked), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, {}, literal), {}) && same(reg.basisOf({ output_allowlist: false }, {}, marked), {});
 })());
 
+t('prune: a key named like a prototype member (constructor, toString) is not on the list and is dropped (SEC-121)', (() => { const out = allow.prune(closed({ a: {} }), JSON.parse('{"a":1,"constructor":2,"toString":3,"__proto__":4}')).value; return Object.keys(out).join() === 'a'; })());
+
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
