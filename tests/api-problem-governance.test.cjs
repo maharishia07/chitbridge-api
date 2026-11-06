@@ -43,6 +43,7 @@ if (argv.includes('--capture') || argv.includes('--compare')) {
   };
 }
 const MOUNT = '/api/governance';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ROUTE_FILE = 'routes/governance.js';
 const MINE = (route) => route.includes(' ' + MOUNT + '/');
@@ -419,7 +420,7 @@ function checkAllowList(recording) {
   /* under OUTPUT_ALLOWLIST=enforce the recorded answers are already cut, so the filter's own count is the proof that no scenario lost a key */
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
-  return proved;
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the governance routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
