@@ -286,6 +286,7 @@
    "output_allowlist": true
   },
   "POST /api/integrations/:actor_id/approve": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/integrations/books": {
@@ -298,6 +299,7 @@
    "output_allowlist": true
   },
   "POST /api/integrations/books/skip": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/integrations/reconcile": {
@@ -562,6 +564,27 @@
   },
   "GET /api/people": {
    "output_allowlist": true
+  },
+  "POST /api/connectors": {
+   "strict_input": true
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "strict_input": true
+  },
+  "POST /api/connectors/reissue-code": {
+   "strict_input": true
+  },
+  "POST /api/connectors/:actorId/regenerate-key": {
+   "strict_input": true
+  },
+  "POST /api/connectors/:actorId/ping": {
+   "strict_input": true
+  },
+  "POST /api/connectors/:actorId/connections": {
+   "strict_input": true
+  },
+  "PATCH /api/connectors/:actorId/connections/:connId": {
+   "strict_input": true
   },
   "GET /api/folders": {
    "output_allowlist": true

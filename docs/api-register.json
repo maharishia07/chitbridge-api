@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 128
    },
    "output_allowlist": {
     "applies": 637,
@@ -26438,7 +26438,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 982,
-   "hash": "1cf3e7639cafff38",
+   "hash": "ea0e27d69ed819ff",
    "does": "",
    "errors": {
     "count": 0,
@@ -26472,7 +26472,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39255,7 +39255,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 191,
-   "hash": "68b57a10310aaeca",
+   "hash": "edcd006cf45aa22b",
    "does": "",
    "errors": {
     "count": 0,
@@ -39288,7 +39288,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39347,7 +39347,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 921,
-   "hash": "39788dad152dccf2",
+   "hash": "45c59297489b4a7c",
    "does": "",
    "errors": {
     "count": 0,
@@ -39381,7 +39381,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39441,7 +39441,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 742,
-   "hash": "71943cd74062c482",
+   "hash": "42ba8e631e29f45f",
    "does": "",
    "errors": {
     "count": 0,
@@ -39475,7 +39475,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39535,7 +39535,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 906,
-   "hash": "6162c106b4962e57",
+   "hash": "888a9edf8f9752b2",
    "does": "",
    "errors": {
     "count": 0,
@@ -39570,7 +39570,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39630,7 +39630,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 859,
-   "hash": "810725499624c700",
+   "hash": "5c5dd3f7f0c7925f",
    "does": "",
    "errors": {
     "count": 0,
@@ -39664,7 +39664,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -39913,7 +39913,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/connectors.js",
    "line": 834,
-   "hash": "e975b057c814c758",
+   "hash": "5321fbf8637c444b",
    "does": "",
    "errors": {
     "count": 0,
@@ -39946,7 +39946,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -44170,7 +44170,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 634,
-   "hash": "0781f6879ca92518",
+   "hash": "50f239c79eda159f",
    "does": "",
    "errors": {
     "count": 3,
@@ -44209,7 +44209,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -44242,7 +44242,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0781f6879ca92518"
+    "stale_since": "50f239c79eda159f"
    },
    "status": "partial",
    "callers": [
@@ -44448,7 +44448,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 800,
-   "hash": "918358dc8a020ca7",
+   "hash": "0b96999e34365e2d",
    "does": "",
    "errors": {
     "count": 2,
@@ -44483,7 +44483,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -44513,8 +44513,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0b96999e34365e2d"
    },
    "status": "partial",
    "callers": [
