@@ -44,6 +44,7 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `DB_POOLER_URL` | optional | `postgres://<user>:<password>@<pooler-host>:6543/postgres?sslmode=no-verify` | yes | HX1: a second DSN, tried only when `DATABASE_URL` fails — carries its OWN credentials; nothing else is ever tried (`db/connect-config.js`). |
 | `PGSSLMODE` | optional | `no-verify` | no | TLS when the URL has no `sslmode`. Neither set: a sealed env uses TLS without verification (every host); any other env no TLS. |
 | `PGSSL` | optional | `disable` | no | Old switch, still honoured: `disable` = no TLS when neither `sslmode` nor `PGSSLMODE` says otherwise. |
+| `DB_POOL_MAX` | optional | `10` | no | PLT-64: connections the api's pool may open (1-100, default 10; anything else stops the boot). A small server lowers it with Postgres `max_connections`. |
 | `DB_BOOT_WAIT_MS` | optional | `15000` | no | How long a request waits for the pool at boot. |
 | `DB_STATEMENT_TIMEOUT_MS` | optional | `15000` | no | Per-statement deadline; 0 = off. |
 | `DB_SLOW_MS` | optional | `500` | no | Logs statements slower than this. |

@@ -49,6 +49,8 @@ FP=$($MC fingerprint)
 FINGERPRINT=$(printf '%s\n' "$FP" | json fingerprint)
 [ -z "$WANT_FP" ] || [ "$WANT_FP" = "$FINGERPRINT" ] || die "the master's key fingerprint is $FINGERPRINT, not the $WANT_FP you were given"
 PIN=$(printf '%s\n' "$FP" | json public_key)
+# PLT-64: a key that already has a row here (active or retired) is never re-used: refuse BEFORE the target is touched (registerMember refuses it too)
+! $MC list | grep -q "\"installation_key\": \"$KEY\"" || die "$KEY already has a row on this master (active or retired): give the new installation a new key"
 HANDLE=$($MC next-handle "$SCOPE" | json handle)
 [ -n "$HANDLE" ] || die "no root handle could be allocated for scope $SCOPE"
 TOKEN=$(openssl rand -hex 24)
