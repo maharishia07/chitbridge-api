@@ -24,6 +24,7 @@
 const path = require('path');
 const fs = require('fs');
 const { harness, OWNER, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 const S = require('./lib/kyb-scenes.cjs');
 
 const HERE = path.join(__dirname, '..');
@@ -35,6 +36,7 @@ delete process.env.KYB_FIELD_PROVIDER;
 delete process.env.KYB_FIELD_KEY;
 const MOUNT = '/api/kyb';
 const ROUTE_COUNT = 5;
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const SAFE = 'Something went wrong — please try again.';
@@ -294,6 +296,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 20, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -301,7 +304,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/kyb.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
