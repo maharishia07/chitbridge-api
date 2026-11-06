@@ -12183,7 +12183,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 210,
+   "line": 219,
    "hash": "59e047fa21d05e3f",
    "does": "",
    "errors": {
@@ -41569,8 +41569,8 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 307,
-   "hash": "69f1768751c4ee2e",
+   "line": 316,
+   "hash": "5c520fe73951ec52",
    "does": "",
    "errors": {
     "count": 8,
@@ -41645,11 +41645,11 @@
     "/deliver"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -41673,8 +41673,8 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 548,
-   "hash": "9f9c25cceb63a2e7",
+   "line": 557,
+   "hash": "1e7ffefe0fa6a348",
    "does": "",
    "errors": {
     "count": 6,
@@ -41744,11 +41744,11 @@
     "/query"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],

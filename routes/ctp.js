@@ -54,6 +54,15 @@ const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL
 /** refusalTo(req, res, flag) → refuse({ status, code, why }): a Problem that keeps the keys a peer reads — `<flag>: false` and `why`, word for word */
 const refusalTo = (req, res, flag) => ({ why, ...spec }) => problem(req, res, Object.assign(spec, { detail: why, legacy: { [flag]: false, why } }));
 
+/**
+ * RAIL-126 b · THE TOLERANT READER'S DOOR: a minor of our major goes on (a field we do not know is ignored by what reads the body); another major is refused 400
+ * CTP_VERSION_UNSUPPORTED, in words naming both (lib/ctpenvelope versionRefusal). A value that is no version never gets here: the schema answered it.
+ */
+const readsVersion = (flag) => (req, res, next) => {
+  const wrongVersion = envelope.versionRefusal(req.body.ctp);
+  return wrongVersion ? refusalTo(req, res, flag)(wrongVersion) : next();
+};
+
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -304,7 +313,7 @@ async function deliverOnce(opened, copy, installationKey, recipientId) {
 }
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
-router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), async (req, res) => {
+router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), readsVersion('accepted'), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
   const refuse = refusalTo(req, res, 'accepted');
 
@@ -545,7 +554,7 @@ const repeatMarks = (once) => (once.repeat ? { repeat: true, duplicate: true } :
  * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
  * customer or a minted party is refused by name, because none of them is a thing another installation may address.
  */
-router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), async (req, res) => {
+router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), readsVersion('ok'), async (req, res) => {
   const refuse = refusalTo(req, res, 'ok');
   try {
     const q = req.body; /* a CTP/1 query: the schema refused anything else, in the old words */
