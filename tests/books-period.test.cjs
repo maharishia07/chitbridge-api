@@ -11,6 +11,8 @@
  * Run: node tests/books-period.test.cjs
  * CARD      14-accounting/periods-month-lock-year-close
  * CARD      14-accounting/fixed-assets-and-depreciation
+ * CARD      13-inventory-stock-and-traceability/closing-stock-for-the-books
+ * UNIT      13/Closing stock for the books
  */
 'use strict';
 const path = require('path');

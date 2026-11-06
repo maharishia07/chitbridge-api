@@ -3,6 +3,8 @@
  * tests/network-offer-scope.test.cjs — PRICE-FIX F1: a brand's network offer reaches ONLY the brand's lines at the store.
  * A whole-catalogue / category offer used to be copied unchanged, so it also discounted the store's own products.
  * No DB: db + membership are stubbed.  Run: node tests/network-offer-scope.test.cjs
+ * CARD      04-network/network-offers-brand-releases-price-catalogue-st
+ * UNIT      04/Network offers — brand releases price/catalogue, store chooses
  */
 const path = require('path'), API = path.join(__dirname, '..');
 const BRAND = 'brand-1', STORE = 'store-1', OFF = 'off-1', CAT = 'cat-1';

@@ -11,6 +11,8 @@
  * whether a chit can be addressed to someone who can never open it, and (c) whether the row leaked into the global
  * business search, publishing who supplies you to every competitor. None of the three would ever produce a
  * complaint, so all three are asserted here.
+ * CARD      12-suppliers-and-procurement/local-suppliers
+ * UNIT      12/Local (off-rail) suppliers
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */

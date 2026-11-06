@@ -4,6 +4,7 @@
  *
  * The load-bearing test is the ROUND TRIP: what comes out must go back in. Everything else is a detail that would
  * corrupt it — an unescaped quote, a comma inside a description, a price that loses its currency.
+ * CARD      06-catalogue-pim/import-export-workbook-preflight
  */
 const assert = require('assert');
 const CSV = require('../lib/csv');

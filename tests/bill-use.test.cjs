@@ -10,6 +10,8 @@
  *       a catalogue that cannot be read → nothing posted, waiting, named (never "all expense")
  *   · stock: a goods-in receipt against the bill moves stock only for its resale lines
  * Run: node tests/bill-use.test.cjs
+ * CARD      12-suppliers-and-procurement/purchase-order-and-goods-receipt
+ * UNIT      12/Purchase order & goods receipt
  */
 'use strict';
 const path = require('path');

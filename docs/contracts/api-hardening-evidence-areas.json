@@ -14,6 +14,8 @@
    "output_allowlist": true
   },
   "DELETE /api/channels/:id": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "DELETE /api/chits/:chit_id": {
@@ -39,6 +41,7 @@
    "output_allowlist": true
   },
   "DELETE /api/definitions/:id": {
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true,
    "output_allowlist": true
   },
@@ -61,8 +64,13 @@
    "output_allowlist": true
   },
   "DELETE /api/quick-keys/groups/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "DELETE /api/relationships/suppliers/:id": {
    "output_allowlist": true,
@@ -192,6 +200,15 @@
    "output_allowlist": true
   },
   "GET /api/capture/consolidate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/capture/pending": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/capture/stores": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/catalogue-face": {
@@ -229,6 +246,14 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/channels": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "GET /api/channels/outbound": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/chits/:chit_id": {
    "output_allowlist": true
   },
@@ -250,17 +275,35 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": true
   },
+  "GET /api/connections/list": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/connections/pending": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/connectors": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/connectors/:actorId/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/provisioning": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/connectors/:actorId/receipts": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "GET /api/counters": {
+   "output_allowlist": true
   },
   "GET /api/crm/calls": {
    "output_allowlist": true
@@ -290,10 +333,13 @@
    "output_allowlist": true
   },
   "GET /api/definitions": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/definitions/:id": {
-   "foreign_id_404": true
+   "output_allowlist_basis": "recordings",
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/entities/constitutions": {
    "output_allowlist": true
@@ -337,6 +383,9 @@
   "GET /api/entities/usage": {
    "output_allowlist": true
   },
+  "GET /api/events/stats": {
+   "output_allowlist": true
+  },
   "GET /api/folders": {
    "output_allowlist": true
   },
@@ -373,8 +422,18 @@
   "GET /api/folders/worklist": {
    "output_allowlist": true
   },
+  "GET /api/forms": {
+   "output_allowlist": true
+  },
+  "GET /api/forms/:key": {
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/forms/instances/all": {
+   "output_allowlist": true
   },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
@@ -437,6 +496,15 @@
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
   },
+  "GET /api/kyb/position": {
+   "output_allowlist": true
+  },
+  "GET /api/kyb/risk": {
+   "output_allowlist": true
+  },
+  "GET /api/kyb/yourself": {
+   "output_allowlist": true
+  },
   "GET /api/network-design": {
    "output_allowlist": true
   },
@@ -444,6 +512,28 @@
    "output_allowlist": true
   },
   "GET /api/network-design/stores": {
+   "output_allowlist": true
+  },
+  "GET /api/network-offers": {
+   "output_allowlist": true
+  },
+  "GET /api/network/entities/lookup": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/network/place": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/notifications": {
+   "output_allowlist": true
+  },
+  "GET /api/privacy/facts": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/privacy/me": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -465,21 +555,34 @@
    "output_allowlist": true
   },
   "GET /api/quick-keys/groups": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/quick-keys/screen-config/default": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/customers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/customers/:id/rewards": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
    "output_allowlist": true
   },
   "GET /api/relationships/suppliers": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/suppliers/availability": {
@@ -592,12 +695,14 @@
    "foreign_id_404": true
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/counters/:id": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PATCH /api/crm/followups/:id": {
    "foreign_id_404": true,
@@ -626,17 +731,23 @@
    "output_allowlist": true
   },
   "PATCH /api/quick-keys/groups/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/quick-keys/groups/:id/items": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/customers/:id": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/relationships/suppliers/:id": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/schemas/fields/:field_key": {
@@ -827,19 +938,31 @@
    "output_allowlist": true
   },
   "POST /api/capture/:id/convert": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/dismiss": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/raise": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/:id/structure": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/capture/simulate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/capture/stores": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -869,14 +992,39 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/catalogue/photo-extract": {
+   "output_allowlist": true
+  },
+  "POST /api/channels": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "POST /api/channels/:id/approve": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/channels/:id/auto-raise": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "POST /api/channels/:id/provider-ref": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
+  "POST /api/channels/:id/revoke": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/channels/:id/template": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
+  },
+  "POST /api/channels/:id/template-approve": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/chits/:chit_id/amend": {
    "output_allowlist": true
@@ -929,14 +1077,21 @@
   "POST /api/chits/send": {
    "output_allowlist": true
   },
+  "POST /api/connections/request": {
+   "output_allowlist": true
+  },
   "POST /api/connectors": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/connectors/:actorId/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/erp-test": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/connectors/:actorId/ping": {
@@ -947,6 +1102,10 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/connectors/erp-ingest": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "POST /api/connectors/ingest": {
    "output_allowlist": true
   },
@@ -954,19 +1113,23 @@
    "output_allowlist": true
   },
   "POST /api/counters": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/counters/:id/assign": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/counters/:id/open": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/counters/:id/release": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/crm/followups": {
    "output_allowlist": true
@@ -1011,12 +1174,17 @@
    "output_allowlist": true
   },
   "POST /api/definitions": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/definitions/freeze": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "POST /api/events/ticket": {
    "output_allowlist": true
   },
   "POST /api/folders": {
@@ -1035,15 +1203,21 @@
    "output_allowlist": true
   },
   "POST /api/forms/:key/issue": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/resolve": {
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/attach": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/sign": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/governance/ai-draft": {
    "output_allowlist": true
@@ -1076,9 +1250,11 @@
    "bfla_role_check": true
   },
   "POST /api/identity/documents/:scheme/code": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/identity/documents/:scheme/verify": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/invoice/build": {
@@ -1088,31 +1264,75 @@
   "POST /api/keys": {
    "bfla_role_check": true
   },
+  "POST /api/kyb/credential": {
+   "output_allowlist": true
+  },
+  "POST /api/kyb/field": {
+   "output_allowlist": true
+  },
   "POST /api/network-design/build": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/network-design/reissue": {
    "output_allowlist": true
   },
   "POST /api/network-design/validate": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/:id/choice": {
+   "output_allowlist": true
+  },
+  "POST /api/network/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/decline": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/disconnect": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/resume": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/suspend": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network/entities": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/network/entities/:id/claim": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/notifications/dismiss": {
+   "output_allowlist": true
+  },
+  "POST /api/notifications/seen": {
+   "output_allowlist": true
+  },
+  "POST /api/privacy/me/consent": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
   },
   "POST /api/privacy/me/requests": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/products": {
@@ -1149,13 +1369,16 @@
    "output_allowlist": true
   },
   "POST /api/quick-keys/groups": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/quick-keys/groups/:id/items": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/relationships/customers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/relationships/customers/:id/groups": {
@@ -1163,6 +1386,7 @@
    "foreign_id_404": true
   },
   "POST /api/relationships/suppliers": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/repeat": {
@@ -1221,6 +1445,9 @@
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/resolve": {
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/respond": {
@@ -1372,9 +1599,11 @@
    "output_allowlist": true
   },
   "PUT /api/connections/:id/respond": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PUT /api/definitions/:id": {
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true,
    "output_allowlist": true
   },
@@ -1408,6 +1637,10 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/status": {
+   "output_allowlist": true
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "PUT /api/service/:chit_id": {

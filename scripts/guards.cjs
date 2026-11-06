@@ -164,6 +164,10 @@ const GUARDS = [
   'network-standing.test.cjs', // ⭐ TOP-CORRECT 2: a SUSPENDED member is refused the `network` catalogue tier and the tree — one edge-state read (network-membership standingSql), the root alone is not enough
   'send-suspended.test.cjs', // NET-7: a SUSPENDED member's send is refused 403 MEMBERSHIP_SUSPENDED in words (one standing() read); active, no edge, draft, self-chit pass
   'public-stock-visibility.test.cjs', // ⭐ TOP-CORRECT 5: the anonymous stock doors (/integrations/stock/:handle, /ask/:handle/stock) obey the storefront's visibility — private/closed/network = the same 404 as no shop
+  'network-view.test.js', // QA wave 1 (FR-N5/N6): one shopfront over many departments - a private department is absent, categories are never invented, search finds only what is shown
+  'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
+  'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
+  'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
      format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
@@ -598,6 +602,17 @@ const GUARDS = [
   'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
   'policy-set.test.js', // MNT-47: the units set policy flag
   'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
+  'crm-calls.test.cjs', // QA wave 2: the call desk: queue, outcomes, the follow-up the call answered is closed (a uuid; a non-uuid closes nothing)
+  'csv.test.js', // QA wave 2: the CSV round trip - what comes out goes back in
+  'csv-preflight.test.js', // QA wave 2: import preflight: every refusal named before a row is written
+  'visibility-cap.test.js', // QA wave 2: a visibility choice bounded by an operator cap; an absent declaration closes nobody
+  'visibility-mirror.test.cjs', // QA wave 2: the two visibility columns hold one fact, every writer writes both
+  'exposure-cost.test.js', // QA wave 2: cost never reaches a customer-facing surface
+  'ai-vision.test.js', // QA wave 2: photo to item: the vision request body, caps-only, injection through the image path
+  'gs1.test.js', // QA wave 2: the GS1 check digit and the judgement around it
+  'units-alias.test.js', // QA wave 2: a rename is never a conversion
+  'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
+  'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

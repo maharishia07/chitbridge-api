@@ -7,6 +7,7 @@
  * not parse is NEVER swapped in, because a counter that cannot start is worse than a counter that is a week old.
  *
  * Run: node tests/kit-update.test.js   · no DB, no browser, no network.
+ * CARD      23-connectors-and-integrations/tally-connector
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), os = require('os'), path = require('path'), crypto = require('crypto');

@@ -666,26 +666,26 @@ function checkAllowList(recording, routes) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => mountOf(route) === RS)).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => [RS, CT].includes(mountOf(route)))).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
     const shape = shapeOf(route);
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const answers = Object.values(recording).filter((one) => one.route === route && String(one.status) === String((shape || {}).status || 200) && one.body);
     const fits = shape && engine.compile(shape.schema);
     const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body));
     check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return FOREIGN.ownedBy(proved, (route) => [RS, WK].includes(mountOf(route))); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
+  return FOREIGN.ownedBy(proved, (route) => [RS, WK, CT].includes(mountOf(route))); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the work reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route))).forEach((route) => {
+  Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route))).forEach((route) => {
     delete routes[route].output_allowlist;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
@@ -747,7 +747,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
     writeAllowList(allowed);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads and repeat-supply routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads, repeat-supply and counters routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }
