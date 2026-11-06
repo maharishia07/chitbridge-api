@@ -531,6 +531,7 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',
   'country-registry-callers.test.cjs',
@@ -608,6 +609,7 @@ const files = all
 const NEEDS_ENGINES = [
   'books-close-country.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'pay-fix.test.cjs',
   'rcm-post.test.cjs',
   'engines-pinned.test.js',
