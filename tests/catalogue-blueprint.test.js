@@ -7,6 +7,7 @@
  * store in no time."*
  *
  * Run: node tests/catalogue-blueprint.test.js   · no DB, no network.
+ * CARD      06-catalogue-pim/blueprints
  */
 const assert = require('assert'), path = require('path');
 const API = path.join(__dirname, '..');

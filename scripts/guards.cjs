@@ -602,6 +602,17 @@ const GUARDS = [
   'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
   'policy-set.test.js', // MNT-47: the units set policy flag
   'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
+  'crm-calls.test.cjs', // QA wave 2: the call desk: queue, outcomes, the follow-up the call answered is closed (a uuid; a non-uuid closes nothing)
+  'csv.test.js', // QA wave 2: the CSV round trip - what comes out goes back in
+  'csv-preflight.test.js', // QA wave 2: import preflight: every refusal named before a row is written
+  'visibility-cap.test.js', // QA wave 2: a visibility choice bounded by an operator cap; an absent declaration closes nobody
+  'visibility-mirror.test.cjs', // QA wave 2: the two visibility columns hold one fact, every writer writes both
+  'exposure-cost.test.js', // QA wave 2: cost never reaches a customer-facing surface
+  'ai-vision.test.js', // QA wave 2: photo to item: the vision request body, caps-only, injection through the image path
+  'gs1.test.js', // QA wave 2: the GS1 check digit and the judgement around it
+  'units-alias.test.js', // QA wave 2: a rename is never a conversion
+  'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
+  'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

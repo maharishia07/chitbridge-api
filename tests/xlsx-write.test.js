@@ -13,6 +13,7 @@
  * the round-trip cannot see them.
  *
  * Run: node tests/xlsx-write.test.js   · no DB, no network.
+ * CARD      06-catalogue-pim/import-export-workbook-preflight
  */
 const assert = require('assert'), path = require('path');
 const API = path.join(__dirname, '..');

@@ -4,6 +4,7 @@
  * ⚠️ The failure this guards against does not look like a failure. If an alias table ever gains an entry that
  * changes a quantity's meaning (crate → kg), every total downstream stays plausible and is wrong, and nothing
  * in the UI can tell. So the last test asserts the negative: units that need a factor are NOT folded together.
+ * CARD      06-catalogue-pim/units-conversion-codes
  */
 const { test } = require('node:test');
 const assert = require('node:assert');
