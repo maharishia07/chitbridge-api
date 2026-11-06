@@ -73,10 +73,12 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/reprice": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/costs": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/chits/register/attachables": {
@@ -86,12 +88,14 @@
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/register/templates": {
    "output_allowlist": true
   },
   "POST /api/chits/register/templates": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/chits/register/subjects/:subject_id/entries": {
@@ -110,6 +114,7 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/raida": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
@@ -119,12 +124,15 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/use": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/deliver-lines": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/assign-lines": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/amend": {
@@ -142,6 +150,7 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/books-request": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -155,6 +164,7 @@
    "output_allowlist": true
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "GET /api/chits/disputes/queue": {
@@ -164,28 +174,35 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/priority": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/priority-flag": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/archive": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/star": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/unread": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/unarchive": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/restore": {
+   "strict_input": true,
    "output_allowlist": true,
    "foreign_id_404": true
   },
@@ -193,9 +210,11 @@
    "foreign_id_404": true
   },
   "PUT /api/chits/:chit_id/void": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/chits/assign-bulk": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/chits/:id/trace": {
