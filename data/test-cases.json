@@ -64924,6 +64924,90 @@
    "changed_at": "2026-10-23T03:10:41+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/live-trips-writer.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE LIVE ROUND-TRIP WRITER: merges measured trips into the budget, never raises a fired ceiling (fails instead), keeps registered_only/extra/awaiting_client.",
+   "claim": "THE LIVE ROUND-TRIP WRITER: merges measured trips into the budget, never raises a fired ceiling (fails instead), keeps registered_only/extra/awaiting_client.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 74 lines. Run: node chitbridge-api/tests/live-trips-writer.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips-writer.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/live-trips-tool.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE LIVE ROUND-TRIP HARNESS, AS A UNIT: refuses a route with no budget line, restores SIT state on a thrown error, cleanup touches only tagged rows.",
+   "claim": "THE LIVE ROUND-TRIP HARNESS, AS A UNIT: refuses a route with no budget line, restores SIT state on a thrown error, cleanup touches only tagged rows.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 62 lines. Run: node chitbridge-api/tests/live-trips-tool.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/live-trips-network.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE HARNESS NETWORK STEPS, AS UNITS: request building and answer reading against a fake client, no network.",
+   "claim": "THE HARNESS NETWORK STEPS, AS UNITS: request building and answer reading against a fake client, no network.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 61 lines. Run: node chitbridge-api/tests/live-trips-network.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips-network.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/assign-merge-patch.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
