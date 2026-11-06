@@ -2315,27 +2315,27 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/archive": {
-   "hash": "bb57518baa5d6aee",
+   "hash": "b9353130dc633b3d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/assign-lines": {
-   "hash": "033ba1833edc157a",
+   "hash": "ee1d4525d1f5137e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/books-request": {
-   "hash": "f1261716ab50b218",
+   "hash": "bc689fc0cbbafac5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/costs": {
@@ -2347,11 +2347,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
-   "hash": "7c6fe581bbb94181",
+   "hash": "4896e7d335ee37ca",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
@@ -2363,59 +2363,59 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
-   "hash": "659c6ddb81952ef4",
+   "hash": "41730ff204ae5789",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/reprice": {
-   "hash": "b8739cdb69130686",
+   "hash": "e85b09ed8ef50acb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/restore": {
-   "hash": "bff670d16c1973fc",
+   "hash": "8bedf386ef4eb682",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/unarchive": {
-   "hash": "53214e1f816dbb5d",
+   "hash": "286bf4488547c3bb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/unread": {
-   "hash": "cc6a9bccb319682e",
+   "hash": "fa69ca4bf89ef8a3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/assign-bulk": {
-   "hash": "a5ce4d89eefc0a51",
+   "hash": "e8a8e5f640b02b78",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/register/subjects": {
-   "hash": "91ef772a2c9c80d6",
+   "hash": "1899c9cfdf06ac32",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "POST /api/chits/register/templates": {
@@ -3403,35 +3403,35 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
-   "hash": "c2325cbe73f259fc",
+   "hash": "8d1af83e23757398",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/priority": {
-   "hash": "59600f5511771cf4",
+   "hash": "d105bc72cd618d86",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/priority-flag": {
-   "hash": "bdcc6791026b87ae",
+   "hash": "40d8bf50c2425779",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/star": {
-   "hash": "63dac164e0864b45",
+   "hash": "e98258687776f959",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/status": {
@@ -3443,19 +3443,19 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/use": {
-   "hash": "7ee86b115feec09f",
+   "hash": "66fd0df7d138de7e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/void": {
-   "hash": "66ea83dae3a68cd1",
+   "hash": "66977b3f37bccaf4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
   "PUT /api/connections/:id/respond": {
