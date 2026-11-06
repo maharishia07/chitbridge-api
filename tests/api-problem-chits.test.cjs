@@ -71,6 +71,7 @@ function rowsFor(sql) {
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
   if (world.migrated && /information_schema/.test(sql)) return { rows: [{ '?column?': 1 }], rowCount: 1 }; /* lib/schema: every table and column is there */
+  if (/SELECT capabilities FROM identities/.test(sql)) return { rows: [{ capabilities: ['register'] }], rowCount: 1 }; /* RAIL-90: the register is on for the test shop */
   if (/SELECT COUNT\(/i.test(sql)) return { rows: [{ count: '0' }], rowCount: 1 }; /* a count of nothing is 0, not no row */
   return { rows: [], rowCount: 0 };
 }

@@ -84,6 +84,7 @@ function run(sql, p, ctx) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   SQL.push({ s, p, ctx });
   p = p || [];
+  if (/^SELECT capabilities FROM identities/.test(s)) return [{ capabilities: ['register'] }]; /* RAIL-90: the register is on for these shops */
   /* the two reads whose text also names other tables — matched first */
   if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue (before T3)
   /* T3-DISPUTES-ASSIST: the widened queue — $2 status · $3 side · $4 ILIKE words · $5 limit · $6 offset, RLS = my copies; _total = count(*) OVER() */

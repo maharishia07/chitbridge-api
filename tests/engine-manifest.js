@@ -387,7 +387,7 @@ const INFRA_LIBS = [
    * built. Classifying it engine today would lock a file that is expected to grow, and the engine lock means
    * default-no-change.
    */
-  'raida.js',
+  'raida.js', 'register-gate.js', /* RAIL-90: the per-shop switch of the register, infra beside it */
   'vaultcrypto.js', 'retention.js',
   /**
    * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists
