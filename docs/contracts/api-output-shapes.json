@@ -18199,7 +18199,6 @@
                 "quantity",
                 "price",
                 "total",
-                "unit",
                 "raw_phrase",
                 "qty_missing",
                 "needs_human"
@@ -18216,7 +18215,10 @@
                   "type": "number"
                 },
                 "unit": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "raw_phrase": {
                   "type": "string"
@@ -18284,16 +18286,28 @@
                     "type": "string"
                   },
                   "from": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "from_name": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "to": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "provider_msg_id": {
-                    "type": "string"
+                    "type": [
+                      "string",
+                      "null"
+                    ]
                   },
                   "capture_id": {
                     "type": "string"
@@ -19617,22 +19631,31 @@
                 },
                 "conn_config": {
                   "type": "object",
-                  "required": [
-                    "topic"
-                  ],
+                  "required": [],
                   "properties": {
                     "topic": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "path": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
-                  "additionalProperties": false,
-                  "x-closed-by": "recordings"
+                  "additionalProperties": true
                 },
                 "enabled": {
                   "type": "boolean"
                 },
                 "last_seen": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "created_at": {
                   "type": "string"
@@ -19742,7 +19765,10 @@
                   "type": "string"
                 },
                 "topic": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -19791,10 +19817,16 @@
                   ]
                 },
                 "doc_type": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "doc_ref": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "payload_hash": {
                   "type": "string"
