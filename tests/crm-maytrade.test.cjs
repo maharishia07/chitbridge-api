@@ -32,7 +32,7 @@ it('nobody by that id → never a throw, why "unknown"', async () => { ROW = nul
 it('the SQL is istest\'s, not a copy (one rule)', () => { assert.strictEqual(L.mayTradeSql('i', '$1'), istest.mayTradeSql('i', '$1')); });
 it('tillMaySend and the till snapshot ask local-identity, not a second rule', () => {
   const chits = CF.read(API), till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  assert.ok(/localIdentity\.mayTradeSql\('i', '\$1'\)/.test(chits) && /localIdentity\.mayTrade\(sender_id, eid\)/.test(chits), 'chits.js tillMaySend');
+  assert.ok(/localIdentity\.mayTradeSql\('i', '\$1'\)/.test(chits) && /localIdentity\.mayTrade\(sender_id, customerId\)/.test(chits), 'chits.js tillMaySend');
   assert.ok(/local-identity'\)\.mayTradeSql\('i', '\$1'\)/.test(till), 'till.js snapshot');
 });
 it('mint kind "cus" hands out ~owner.cus-NNNN (the same mint as a supplier, a different series)', async () => {
