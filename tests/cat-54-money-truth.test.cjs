@@ -96,6 +96,8 @@ function rounding() {
   eq('JPY has 0 minor units · 0.5 → 1 · 1.4 → 1 · 1234.5 → 1235', [R(0.5, 'JPY'), R(1.4, 'JPY'), R(1234.5, 'JPY')], [1, 1, 1235]);
   eq('KWD / BHD / OMR have 3 · 1.0005 → 1.001 · 2.3456 → 2.346 · 1.0004 → 1', [R(1.0005, 'KWD'), R(2.3456, 'BHD'), R(1.0004, 'OMR')], [1.001, 2.346, 1]);
   eq("decimals(): JPY 0 · USD 2 · KWD 3 · no code at all 2 (today's behaviour)", [MONEY.decimals('JPY'), MONEY.decimals('USD'), MONEY.decimals('KWD'), MONEY.decimals(undefined)], [0, 2, 3, 2]);
+  /* paper: 3 × ¥333 = ¥999 incl at 10%: 999 × 10 / 110 = 90.82 → ¥91 tax; taxable 999 − 91 = ¥908 (no sen: whole yen) */
+  eq('a bill in JPY is whole yen: 3 × ¥333 incl at 10% → taxable 908 · tax 91 · total 999', row(bill([L(3, 333, 10)], { country: 'JP', registered: true }, true, 'JPY').heads), [908, 91, 999]);
   eq('a blank price is null, never 0: "", "  ", null, {}, "abc"', ['', '  ', null, {}, 'abc'].map((value) => MONEY.priceOf(value)), [null, null, null, null, null]);
   eq('a real zero is 0 and a numeric string is read: 0 · "12.50" · {amount: "3"}', [MONEY.priceOf(0), MONEY.priceOf('12.50'), MONEY.priceOf({ amount: '3' })], [0, 12.5, 3]);
 }
