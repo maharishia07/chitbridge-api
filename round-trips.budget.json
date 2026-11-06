@@ -313,10 +313,11 @@
     },
     "GET /api/attachments/:id": {
       "file": "attachments.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/books/accounts": {
       "file": "books.js",
@@ -478,10 +479,11 @@
     },
     "GET /api/books/packs/:id/file": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/books/party/:id/statement": {
       "file": "books.js",
@@ -707,10 +709,11 @@
     },
     "GET /api/chits/:chit_id/diagnosis": {
       "file": "chits.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/chits/:chit_id/disputes": {
       "file": "chits.js",
@@ -1274,10 +1277,11 @@
     },
     "GET /api/forms/instances/:id": {
       "file": "forms.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/forms/instances/all": {
       "file": "forms.js",
@@ -1514,10 +1518,11 @@
     },
     "GET /api/invoice/:chit_id": {
       "file": "invoice.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/keys": {
       "file": "keys.js",
@@ -1904,10 +1909,11 @@
     },
     "GET /api/tax/invoice/:chit_id": {
       "file": "tax.js",
-      "trips": 50,
+      "trips": 2,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/tax/ledger": {
       "file": "tax.js",
@@ -2070,10 +2076,11 @@
     },
     "GET /api/till/engine/:name": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 0,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/till/match": {
       "file": "till.js",
@@ -2108,17 +2115,19 @@
     },
     "GET /api/till/quick-keys/state": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/till/reward": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 1,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "GET /api/till/screens": {
       "file": "till.js",
@@ -2534,10 +2543,11 @@
     },
     "POST /api/books/accruals/:ref/reverse": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/assets": {
       "file": "books.js",
@@ -2549,10 +2559,11 @@
     },
     "POST /api/books/assets/:id/dispose": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/check": {
       "file": "books.js",
@@ -2571,10 +2582,11 @@
     },
     "POST /api/books/closing-stock": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/compare/preflight": {
       "file": "books.js",
@@ -2600,10 +2612,11 @@
     },
     "POST /api/books/depreciation/run": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/enable": {
       "file": "books.js",
@@ -2690,10 +2703,11 @@
     },
     "POST /api/books/loans/:ref/emi": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/money-check/resolve": {
       "file": "books.js",
@@ -2777,10 +2791,11 @@
     },
     "POST /api/books/payments/:id/propose": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/payments/preview": {
       "file": "books.js",
@@ -2791,10 +2806,11 @@
     },
     "POST /api/books/periods/:fy/:p/:act": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/preview": {
       "file": "books.js",
@@ -2812,17 +2828,19 @@
     },
     "POST /api/books/recurring/:id/post": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/recurring/:id/skip": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 5,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/setting": {
       "file": "books.js",
@@ -2840,10 +2858,11 @@
     },
     "POST /api/books/write-off": {
       "file": "books.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/books/year/:fy/close": {
       "file": "books.js",
@@ -3047,10 +3066,11 @@
     },
     "POST /api/chits/:chit_id/costs": {
       "file": "chits.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/chits/:chit_id/deliver-lines": {
       "file": "chits.js",
@@ -3316,10 +3336,11 @@
     },
     "POST /api/counters/:id/assign": {
       "file": "counters.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/counters/:id/open": {
       "file": "counters.js",
@@ -3544,31 +3565,35 @@
     },
     "POST /api/forms/:key/issue": {
       "file": "forms.js",
-      "trips": 50,
+      "trips": 8,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/forms/:key/resolve": {
       "file": "forms.js",
-      "trips": 50,
+      "trips": 7,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/forms/instances/:id/attach": {
       "file": "forms.js",
-      "trips": 50,
+      "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/forms/instances/:id/sign": {
       "file": "forms.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/governance/ai-draft": {
       "file": "governance.js",
@@ -3701,10 +3726,11 @@
     },
     "POST /api/invoice/build": {
       "file": "invoice.js",
-      "trips": 50,
+      "trips": 8,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/keys": {
       "file": "keys.js",
@@ -4346,10 +4372,11 @@
     },
     "POST /api/till/alias": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/catalogue": {
       "file": "till.js",
@@ -4360,31 +4387,35 @@
     },
     "POST /api/till/close": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 7,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/diagnostic": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/enrol": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/flags": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/listen": {
       "file": "till.js",
@@ -4425,31 +4456,35 @@
     },
     "POST /api/till/quick-keys/hide": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 6,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/quick-keys/screen-config": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/quick-keys/state": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/quick-keys/unhide": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/rate": {
       "file": "till.js",
@@ -4484,17 +4519,19 @@
     },
     "POST /api/till/screens/rename": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/screens/revoke": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/shop": {
       "file": "till.js",
@@ -4514,17 +4551,19 @@
     },
     "POST /api/till/stock": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "POST /api/till/stock/bulk": {
       "file": "till.js",
-      "trips": 50,
+      "trips": 3,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "PUT /api/actors/:id/delegate": {
       "file": "actors.js",

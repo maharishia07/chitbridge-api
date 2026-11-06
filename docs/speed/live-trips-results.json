@@ -3,8 +3,8 @@
  "at": "2026-11-06",
  "server": "sit-in",
  "summary": {
-  "measured": 27,
-  "unreached": 114
+  "measured": 66,
+  "unreached": 75
  },
  "routes": {
   "POST /api/network/entities": {
@@ -206,14 +206,52 @@
    ]
   },
   "GET /api/attachments/:id": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/attachments for :id"
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
+   "url": "/api/attachments/d4c57634-6b27-4845-823f-3faf0fa280f7",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    }
+   ]
   },
   "GET /api/books/packs/:id/file": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/books/packs for :id"
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/books/packs/3f873985-e376-4a71-a094-982684245dba/file",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
   },
   "GET /api/capture/webhook/whatsapp": {
    "state": "unreached",
@@ -222,18 +260,56 @@
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/catalogue for :bridge_id"
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/catalogue/CBXCP2HLFE/capture-fields",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
   },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/catalogue for :bridge_id"
+   "group": "role",
+   "reason": "needs a storefront customer login (customerAuth: a buyer who signed in on the shop window by e-mail code), not a shop token; no such customer on the load shop"
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/catalogue for :bridge_id"
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/catalogue/CBXCP2HLFE/support/preview",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
   },
   "GET /api/catalogue/network-store/:networkId": {
    "state": "unreached",
@@ -243,17 +319,50 @@
   "GET /api/catalogue/network/:bridge_id": {
    "state": "unreached",
    "group": "fixture",
-   "reason": "no object to read under /api/catalogue/network for :bridge_id"
+   "reason": "404 · NOT_FOUND · Shop not found",
+   "url": "/api/catalogue/network/CBXCP2HLFE",
+   "calls": [
+    {
+     "status": 404,
+     "trips": null
+    }
+   ]
   },
   "GET /api/chits/:chit_id/diagnosis": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/chits for :chit_id"
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/diagnosis",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
   },
   "GET /api/chits/:chit_id/use": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/chits for :chit_id"
+   "group": "example-refused",
+   "reason": "409 · CHIT_NOT_A_BILL · Only a bill you received says what its goods are for",
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/use",
+   "calls": [
+    {
+     "status": 409,
+     "trips": 1
+    }
+   ]
   },
   "GET /api/forms/:key": {
    "state": "measured",
@@ -280,9 +389,28 @@
    ]
   },
   "GET /api/forms/instances/:id": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/forms/instances for :id"
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
+   "url": "/api/forms/instances/03dea1ce-924a-4afb-a4fb-639196c435f0",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    }
+   ]
   },
   "GET /api/integrations/docs/:id": {
    "state": "unreached",
@@ -307,19 +435,76 @@
    ]
   },
   "GET /api/invoice/:chit_id": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/invoice for :chit_id"
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/invoice/7fb98fa2-fceb-4a66-8c08-577463fbd0ad",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
   },
   "GET /api/products/media/:item_id/:mid": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/products/media for :item_id"
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/products/media/6aef0168-7a71-43c4-abff-9b891967d61b/702fadc2-a298-4300-9bbc-b7b9ae0c9bda",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
   },
   "GET /api/tax/invoice/:chit_id": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/tax/invoice for :chit_id"
+   "state": "measured",
+   "trips": 2,
+   "status": 200,
+   "url": "/api/tax/invoice/7fb98fa2-fceb-4a66-8c08-577463fbd0ad",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
   },
   "GET /api/testing/cmdb/:ci": {
    "state": "unreached",
@@ -327,31 +512,74 @@
    "reason": "no object to read under /api/testing/cmdb for :ci"
   },
   "GET /api/till/engine/:name": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no object to read under /api/till/engine for :name"
-  },
-  "GET /api/till/quick-keys/state": {
-   "state": "unreached",
-   "group": "role",
-   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
-   "url": "/api/till/quick-keys/state",
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/till/engine/offers",
    "calls": [
     {
-     "status": 403,
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
      "trips": 0
     }
    ]
   },
+  "GET /api/till/quick-keys/state": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/till/quick-keys/state",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    },
+    {
+     "status": 200,
+     "trips": 2
+    }
+   ]
+  },
   "GET /api/till/reward": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · scheme (identity|phone) and value required",
+   "state": "measured",
+   "trips": 1,
+   "status": 200,
    "url": "/api/till/reward",
    "calls": [
     {
-     "status": 400,
-     "trips": 0
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
+    },
+    {
+     "status": 200,
+     "trips": 1
     }
    ]
   },
@@ -428,9 +656,28 @@
    ]
   },
   "POST /api/books/accruals/:ref/reverse": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/accruals for :ref"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/accruals/lt-ACC-117680/reverse",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/assets": {
    "state": "measured",
@@ -457,9 +704,28 @@
    ]
   },
   "POST /api/books/assets/:id/dispose": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/assets for :id"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/assets/abfd845b-dca4-4c87-a13f-ca361b307606/dispose",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/check": {
    "state": "measured",
@@ -486,13 +752,25 @@
    ]
   },
   "POST /api/books/closing-stock": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "422 · BOOKS_REFUSED · The stock on the books (1000) already equals the closing value — nothing to post.",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/books/closing-stock",
    "calls": [
     {
-     "status": 422,
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
      "trips": 4
     }
    ]
@@ -522,26 +800,45 @@
    ]
   },
   "POST /api/books/depreciation/run": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "422 · BOOKS_REFUSED · Depreciation for 2026-27 runs at the year end (2027-03-31) or after — the year has not end",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/books/depreciation/run",
    "calls": [
     {
-     "status": 422,
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
      "trips": 4
     }
    ]
   },
   "POST /api/books/gst/close": {
    "state": "unreached",
-   "group": "precondition",
-   "reason": "closes a GST period of the load shop (a one-way books act); needs Athi/cb-accounting to say which period may be closed on sit-in"
+   "group": "example-refused",
+   "reason": "409 · PERIOD_LOCKED · That month is locked. Open it again (with a reason) to record this.",
+   "url": "/api/books/gst/close",
+   "calls": [
+    {
+     "status": 409,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/gst/pay": {
    "state": "unreached",
    "group": "precondition",
-   "reason": "posts a GST challan payment against a closed period; needs a closed period first (see gst/close)"
+   "reason": "a challan can only pay tax OWED (422: more than the tax owed - CGST owed 0); the old empty period 2026-27/1 owes nothing and a period with tax owed is not an empty one (no tax posted on the load shop before November)"
   },
   "POST /api/books/loans": {
    "state": "measured",
@@ -568,39 +865,153 @@
    ]
   },
   "POST /api/books/loans/:ref/emi": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/loans for :ref"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/loans/lt-LOAN-bcdc15/emi",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/payments/:id/confirm": {
    "state": "unreached",
    "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/payments for :id"
+   "reason": "allocates a payment to an open bill; a manual journal bill (Dr 1300 with the party) is refused as \"there is no bill\" by the confirm route (3 tries): needs a bill made by a real sale (counter/invoice chit), not a journal"
   },
   "POST /api/books/payments/:id/propose": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/payments for :id"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/payments/ff817e2e-30d2-468b-b07c-3a981619d414/propose",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/periods/:fy/:p/:act": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/periods for :fy"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/periods/2026-27/1/lock",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/recurring/:id/post": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/recurring for :id"
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/books/recurring/0cc09f11-20d0-4eb8-9cbb-b3c1a9c5073c/post",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
   },
   "POST /api/books/recurring/:id/skip": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/books/recurring for :id"
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/books/recurring/af816b1a-2dc6-46c6-9b8d-e607b06d43d9/skip",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
   },
   "POST /api/books/write-off": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "needs a customer party with an open balance (a lt- credit sale) to write off"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/write-off",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/capture/stores": {
    "state": "measured",
@@ -677,9 +1088,28 @@
    "reason": "no lt- object to act on under /api/channels for :id"
   },
   "POST /api/chits/:chit_id/costs": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/chits for :chit_id"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/chits/7fb98fa2-fceb-4a66-8c08-577463fbd0ad/costs",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
    "state": "unreached",
@@ -740,9 +1170,28 @@
    ]
   },
   "POST /api/counters/:id/assign": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/counters for :id"
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/counters/C1/assign",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
   },
   "POST /api/ctp/deliver": {
    "state": "unreached",
@@ -755,24 +1204,100 @@
    "reason": "needs a signed envelope from another installation (CTP crossing)"
   },
   "POST /api/forms/:key/issue": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/forms for :key"
+   "state": "measured",
+   "trips": 8,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin/issue",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    }
+   ]
   },
   "POST /api/forms/:key/resolve": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/forms for :key"
+   "state": "measured",
+   "trips": 7,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin/resolve",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    }
+   ]
   },
   "POST /api/forms/instances/:id/attach": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/forms/instances for :id"
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
+   "url": "/api/forms/instances/03dea1ce-924a-4afb-a4fb-639196c435f0/attach",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    }
+   ]
   },
   "POST /api/forms/instances/:id/sign": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "no lt- object to act on under /api/forms/instances for :id"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/forms/instances/f6768ed1-7a4a-4c3c-8d6e-1b52e84967ab/sign",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/identity/documents/:scheme/code": {
    "state": "unreached",
@@ -821,14 +1346,26 @@
    ]
   },
   "POST /api/invoice/build": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · INVOICE_BAD_REQUEST · lines[] required",
+   "state": "measured",
+   "trips": 8,
+   "status": 200,
    "url": "/api/invoice/build",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
+    },
+    {
+     "status": 200,
+     "trips": 8
     }
    ]
   },
@@ -955,7 +1492,7 @@
   "POST /api/products/lists/adopt": {
    "state": "unreached",
    "group": "example-refused",
-   "reason": "400 · PRODUCT_BAD_REQUEST · There is no product list called \"lt-list-ddca92\".",
+   "reason": "400 · PRODUCT_BAD_REQUEST · There is no product list called \"lt-list-bcee41\".",
    "url": "/api/products/lists/adopt",
    "calls": [
     {
@@ -992,7 +1529,7 @@
    "state": "unreached",
    "group": "example-refused",
    "reason": "400 · QUICK_KEY_INVALID · product_id required",
-   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e/items",
+   "url": "/api/quick-keys/groups/82b09d3b-0bdc-4a28-8ddb-c6c063d22b67/items",
    "calls": [
     {
      "status": 400,
@@ -1120,206 +1657,334 @@
    ]
   },
   "POST /api/till/alias": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · an alias needs an item and the words the supplier uses",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/alias",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },
   "POST /api/till/catalogue": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "409 · CATALOGUE_NOT_EMPTY · This shop already has 12 products. Starting a catalogue again would add a second copy of e",
-   "url": "/api/till/catalogue",
-   "calls": [
-    {
-     "status": 409,
-     "trips": 3
-    }
-   ]
+   "group": "precondition",
+   "reason": "refused 409 CATALOGUE_NOT_EMPTY: it starts a catalogue only in a shop with no products, and the load shop holds 12 (and emptying it is a deletion)"
   },
   "POST /api/till/close": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · Only a paired counter can close itself.",
+   "state": "measured",
+   "trips": 7,
+   "status": 200,
    "url": "/api/till/close",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
+    },
+    {
+     "status": 200,
+     "trips": 7
     }
    ]
   },
   "POST /api/till/diagnostic": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · Only a paired counter can report itself.",
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
    "url": "/api/till/diagnostic",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
     }
    ]
   },
   "POST /api/till/enrol": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "404 · TILL_REFUSED · There is no counter C1 in this shop.",
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
    "url": "/api/till/enrol",
    "calls": [
     {
-     "status": 404,
-     "trips": 4
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 6
     }
    ]
   },
   "POST /api/till/flags": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · item_id required",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/flags",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },
   "POST /api/till/offer-item": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · offer_id and item_id required",
-   "url": "/api/till/offer-item",
-   "calls": [
-    {
-     "status": 400,
-     "trips": 2
-    }
-   ]
+   "group": "fixture",
+   "reason": "moves a product in or out of a LIVE offer; the load shop holds no live offer and making one is a money promise (deliberate confirm), not a fixture"
   },
   "POST /api/till/pair/claim": {
    "state": "unreached",
-   "group": "fixture",
-   "reason": "404 · PAIR_CODE_UNKNOWN · That code is wrong or has expired. Ask ChitBridge for a new one.",
-   "url": "/api/till/pair/claim",
-   "calls": [
-    {
-     "status": 404,
-     "trips": null
-    }
-   ]
+   "group": "no-header",
+   "reason": "public door (no sign-in): it answers 200 but the entity is not known before the code is read, so X-DB-Trips is not sent; the work is 1 key mint, measured by hand as unknown"
   },
   "POST /api/till/quick-keys/hide": {
-   "state": "unreached",
-   "group": "role",
-   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "state": "measured",
+   "trips": 6,
+   "status": 200,
    "url": "/api/till/quick-keys/hide",
    "calls": [
     {
-     "status": 403,
-     "trips": 2
+     "status": 200,
+     "trips": 6
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
     }
    ]
   },
   "POST /api/till/quick-keys/screen-config": {
-   "state": "unreached",
-   "group": "role",
-   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/till/quick-keys/screen-config",
    "calls": [
     {
-     "status": 403,
-     "trips": 2
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
     }
    ]
   },
   "POST /api/till/quick-keys/state": {
-   "state": "unreached",
-   "group": "role",
-   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/till/quick-keys/state",
    "calls": [
     {
-     "status": 403,
-     "trips": 2
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
     }
    ]
   },
   "POST /api/till/quick-keys/unhide": {
-   "state": "unreached",
-   "group": "role",
-   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/till/quick-keys/unhide",
    "calls": [
     {
-     "status": 403,
-     "trips": 2
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
     }
    ]
   },
   "POST /api/till/reward/claim": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · from and to holders required",
-   "url": "/api/till/reward/claim",
-   "calls": [
-    {
-     "status": 400,
-     "trips": 2
-    }
-   ]
+   "group": "precondition",
+   "reason": "refused 400 \"this shop runs no programme\": the load shop has no reward programme and creating one is a money rule (points are not currency), not a fixture"
   },
   "POST /api/till/screens/rename": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · Which screen?",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/screens/rename",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },
   "POST /api/till/screens/revoke": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · Which screen?",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/screens/revoke",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },
   "POST /api/till/stock": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · item_id required",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/stock",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },
   "POST /api/till/stock/bulk": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "400 · TILL_BAD_REQUEST · item_ids required",
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
    "url": "/api/till/stock/bulk",
    "calls": [
     {
-     "status": 400,
-     "trips": 2
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
     }
    ]
   },

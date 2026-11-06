@@ -76,15 +76,28 @@ async function formInstance(api, fresh) {
   api.seeds.form = out.form_id || out.id;
   return api.seeds.form;
 }
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+/** this shop's own public address (its bridge id) */
+async function myBridge(api) {
+  if (!api.seeds.bridge) api.seeds.bridge = (await must(api, 'GET', '/api/entities/me')).entity.bridge_id;
+  return api.seeds.bridge;
+}
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
   params: {},
   /** the run's end: switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
   cleanup: async (api) => {
+    for (const p of [1, 2]) await api.call('POST', '/api/books/periods/' + OLD_FY + '/' + p + '/unlock', { reason: 'lt- live-trips: restore' });
     for (const jti of api.seeds.screens || []) await api.call('POST', '/api/till/screens/revoke', { jti });
     if (api.seeds.counter) await api.call('POST', '/api/counters/' + api.seeds.counter + '/release', {});
   },
   routes: {
+    'GET /api/catalogue/:bridge_id/capture-fields': { make: async (api) => ({ params: { bridge_id: await myBridge(api) } }) },
+    'GET /api/catalogue/:bridge_id/my-documents': { skip: ['role', 'needs a storefront customer login (customerAuth: a buyer who signed in on the shop window by e-mail code), not a shop token; no such customer on the load shop'] },
+    'GET /api/catalogue/:bridge_id/support/preview': { make: async (api) => ({ params: { bridge_id: await myBridge(api) } }) },
+    'GET /api/catalogue/network/:bridge_id': { make: async (api) => ({ params: { bridge_id: await myBridge(api) } }) },
+    'GET /api/attachments/:id': { make: async (api) => { const out = await must(api, 'POST', '/api/attachments', { chit_id: await chitId(api), name: 'lt-file.txt', mime: 'text/plain', data_base64: Buffer.from('lt- live-trips').toString('base64') }); return { params: { id: out.id } }; } },
+    'GET /api/products/media/:item_id/:mid': { make: async (api) => { const item = await itemId(api); const out = await must(api, 'POST', '/api/products/' + item + '/media', { name: 'lt-pixel.png', mime: 'image/png', data_base64: PNG }); const mid = out.mid || out.id || (out.media && (out.media.id || out.media.mid)) || (Array.isArray(out.media) && out.media[out.media.length - 1].id); return { params: { item_id: item, mid } }; } },
     'POST /api/invoice/build': { body: () => ({ lines: [{ item_id: 'lt-x', name: 'lt-item', qty: 1, listPrice: 100, price: 100, gst_rate: 18 }], currency: 'INR' }) },
     'GET /api/chits/:chit_id/diagnosis': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
     'GET /api/chits/:chit_id/use': { make: async (api) => ({ params: { chit_id: await chitId(api) } }) },
@@ -127,7 +140,7 @@ module.exports = {
     'POST /api/books/write-off': { fresh: true, make: async (api) => ({ body: { party_id: await customerId(api), amount: 1, reason: 'lt- live-trips probe', client_ref: 'lt-wo-' + u() } }) },
     'POST /api/books/gst/close': { make: async () => ({ body: { fy: OLD_FY, period: 1 } }) },
     'POST /api/books/gst/pay': { skip: ['precondition', 'a challan can only pay tax OWED (422: more than the tax owed - CGST owed 0); the old empty period 2026-27/1 owes nothing and a period with tax owed is not an empty one (no tax posted on the load shop before November)'] },
-    'POST /api/books/periods/:fy/:p/:act': { make: async () => ({ params: { fy: OLD_FY, p: '1', act: 'lock' }, body: { reason: 'lt- live-trips (unlocked again after the run)' } }) },
+    'POST /api/books/periods/:fy/:p/:act': { make: async () => ({ params: { fy: OLD_FY, p: '2', act: 'lock' }, body: { reason: 'lt- live-trips (unlocked again after the run)' } }) },
     'GET /api/books/packs/:id/file': { make: async (api) => { if (!api.seeds.pack) api.seeds.pack = (await must(api, 'POST', '/api/books/packs', { kind: 'month', fiscal_year: OLD_FY, period: 1 })).pack.pack_id; return { params: { id: api.seeds.pack } }; } },
     'GET /api/assist/resolve': { query: '?region=IN' },
     'POST /api/books/accruals': { body: () => ({ ref: 'lt-ELEC-' + u(), kind: 'outstanding', class: 'electricity', amount: 100, date: day(), narration: 'lt- live-trips' }) },
