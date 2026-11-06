@@ -1535,14 +1535,14 @@
     "noHeader": 1
   },
   "lib/identity-auth.js": {
-    "score": 35,
+    "score": 34,
     "long40": 2,
     "long80": 0,
     "complex10": 3,
     "complex15": 3,
     "deep3": 1,
     "deep4": 1,
-    "cryptic": 22,
+    "cryptic": 21,
     "noWhatLine": 3,
     "emptyCatch": 0,
     "noHeader": 0
