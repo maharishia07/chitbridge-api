@@ -16,5 +16,10 @@
   "inbound_validated": 2,
   "trips_budgeted": 144
  },
+ "reported_failing": {
+  "bfla_role_check": 0,
+  "parameterised_query": 39,
+  "rate_limited": 479
+ },
  "debt": []
 }
