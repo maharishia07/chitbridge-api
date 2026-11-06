@@ -59,23 +59,22 @@ function knownTables(root) {
   return tables;
 }
 
+/** where a function declaration's body opens: the first { after its parameter list, whose own braces (a destructured parameter) are not the body */
+function bodyAfterParams(text, from) {
+  const paren = text.indexOf('(', from);
+  let nesting = 0;
+  for (let at = paren; paren >= 0 && at < text.length; at++) {
+    if (text[at] === '(') nesting++;
+    else if (text[at] === ')' && --nesting === 0) return text.indexOf('{', at);
+  }
+  return text.indexOf('{', from);
+}
+
 /** the text of function `name` defined in `text` (function declaration or const/assignment), by balanced braces; '' when not found. Crude on purpose: best effort. */
 function functionText(text, name, afterParams) {
   const found = new RegExp('(?:function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=|\\b' + name + '\\s*:\\s*(?:async\\s*)?(?:function|\\())').exec(text);
   if (!found) return '';
-  let open = text.indexOf('{', found.index);
-  const paren = text.indexOf('(', found.index);
-  /* a function declaration's body starts after its parameter list, whose own braces (a destructured parameter) are not the body */
-  if (afterParams && /^function/.test(found[0]) && paren >= 0 && paren < open) {
-    let nesting = 0;
-    for (let at = paren; at < text.length; at++) {
-      if (text[at] === '(') nesting++;
-      else if (text[at] === ')' && --nesting === 0) {
-        open = text.indexOf('{', at);
-        break;
-      }
-    }
-  }
+  const open = afterParams && /^function/.test(found[0]) ? bodyAfterParams(text, found.index) : text.indexOf('{', found.index);
   if (open < 0) return '';
   let depth = 0;
   for (let at = open; at < text.length; at++) {
@@ -121,6 +120,16 @@ function privateHelper(text, name) {
   return calls.length === 1;
 }
 
+/** the helpers a piece of source calls, as { name, from, text, level, free }: free hops first, so a free path wins over a costly one */
+function hopsFrom({ piece, from, text, level }, route, modules, textOf) {
+  const { plain, member } = callsIn(piece);
+  const free = plain.size ? [...plain].filter((name) => privateHelper(text, name)).map((name) => ({ name, from, text, level, free: true })) : [];
+  /* the original hops, each one a level: a plain call to a helper of the route's file or of a module it requires, and `module.fn(` calls */
+  const costly = [...plain].flatMap((name) => [{ name, from: route.abs, text: route.text, level: level + 1 }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1 }] : [])]);
+  const members = member.filter(([owner]) => modules.has(owner)).map(([owner, name]) => ({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1 }));
+  return [...free, ...costly, ...members];
+}
+
 /**
  * the handler's source plus the text of the helpers it calls, best effort. A hop into another function costs one of `depth` levels, except a hop to a PRIVATE
  * helper (see privateHelper): splitting one function into same-file helpers (MNT-12 readability work) must not hide its table access.
@@ -133,21 +142,13 @@ function reachableText(source, fileText, fileAbs, depth) {
   const textOf = (file) => (cache.has(file) ? cache.get(file) : (cache.set(file, fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''), cache.get(file)));
   const queue = [{ piece: source, from: fileAbs, text: fileText, level: 0 }];
   while (queue.length) {
-    const { piece, from, text, level } = queue.shift();
-    const { plain, member } = callsIn(piece);
-    const wanted = [];
-    /* a plain call to a helper of the SAME file the piece was read from is free (it costs no level), tried first so a free path wins over a costly one */
-    plain.forEach((name) => privateHelper(text, name) && wanted.push({ name, from, text, level, free: true }));
-    /* the original hops, each one a level: a plain call to a helper of the route's file or of a module it requires, and `module.fn(` calls */
-    plain.forEach((name) => wanted.push({ name, from: fileAbs, text: fileText, level: level + 1 }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1 }] : [])));
-    member.filter(([owner]) => modules.has(owner)).forEach(([owner, name]) => wanted.push({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1 }));
-    wanted.forEach((want) => {
+    for (const want of hopsFrom(queue.shift(), { abs: fileAbs, text: fileText }, modules, textOf)) {
       const id = want.from + '#' + want.name;
-      if (want.level > depth || seen.has(id) || !want.text || NOT_HELPERS.includes(want.name)) return;
+      if (want.level > depth || seen.has(id) || !want.text || NOT_HELPERS.includes(want.name)) continue;
       seen.add(id);
       const body = functionText(want.text, want.name, want.free);
       if (body) (parts.push(body), queue.push({ piece: body, from: want.from, text: want.text, level: want.level }));
-    });
+    }
   }
   return parts.join('\n');
 }
