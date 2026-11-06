@@ -39,6 +39,7 @@
    "output_allowlist": true
   },
   "DELETE /api/definitions/:id": {
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true,
    "output_allowlist": true
   },
@@ -290,10 +291,13 @@
    "output_allowlist": true
   },
   "GET /api/definitions": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/definitions/:id": {
-   "foreign_id_404": true
+   "output_allowlist_basis": "recordings",
+   "foreign_id_404": true,
+   "output_allowlist": true
   },
   "GET /api/entities/constitutions": {
    "output_allowlist": true
@@ -1011,9 +1015,11 @@
    "output_allowlist": true
   },
   "POST /api/definitions": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/definitions/freeze": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/entities/populations": {
@@ -1375,6 +1381,7 @@
    "foreign_id_404": true
   },
   "PUT /api/definitions/:id": {
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true,
    "output_allowlist": true
   },
