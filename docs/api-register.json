@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 242,
-  "meets": 385,
+  "partial": 241,
+  "meets": 386,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -61881,11 +61881,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2cc704f2d6675973"
+    "signed_off_by_date": "cb-api-reviewer 2026-11-06 PR#843 re-sign (PPL-30)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
