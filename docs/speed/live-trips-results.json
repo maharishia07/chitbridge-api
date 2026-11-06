@@ -3,8 +3,8 @@
  "at": "2026-11-06",
  "server": "sit-in",
  "summary": {
-  "measured": 90,
-  "unreached": 51
+  "measured": 92,
+  "unreached": 49
  },
  "routes": {
   "POST /api/network/entities": {
@@ -242,29 +242,48 @@
   },
   "GET /api/assist/catalogue-source/:key": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "429 · RATE_LIMITED · Too many assistant requests — please try again shortly.",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Unknown source.",
    "url": "/api/assist/catalogue-source/royale-play@v1",
    "calls": [
     {
-     "status": 429,
+     "status": 404,
      "trips": null
     }
    ]
   },
   "GET /api/assist/container/:id": {
    "state": "unreached",
-   "group": "limiter",
-   "reason": "the fixture could not be made: PUT /api/assist/container → 429 {\"error\":\"Too many requests\",\"message\":\"Too many assistant requests — please try again shortly.\",\"type\":\"https://chitbridge.com/problems/rate_limited\",\"title\":\""
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/api/assist/container/lt%2Fbc6d73",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
   },
   "GET /api/assist/resolve": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "429 · RATE_LIMITED · Too many assistant requests — please try again shortly.",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Unknown container or version.",
    "url": "/api/assist/resolve",
    "calls": [
     {
-     "status": 429,
+     "status": 404,
      "trips": null
     }
    ]
@@ -723,12 +742,24 @@
   },
   "POST /api/assist/gap": {
    "state": "unreached",
-   "group": "example-refused",
-   "reason": "429 · RATE_LIMITED · Too many assistant requests — please try again shortly.",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
    "url": "/api/assist/gap",
    "calls": [
     {
-     "status": 429,
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
      "trips": null
     }
    ]
@@ -2268,14 +2299,26 @@
    ]
   },
   "PUT /api/assist/catalogue-source": {
-   "state": "unreached",
-   "group": "example-refused",
-   "reason": "429 · RATE_LIMITED · Too many assistant requests — please try again shortly.",
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
    "url": "/api/assist/catalogue-source",
    "calls": [
     {
-     "status": 429,
-     "trips": null
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
     }
    ]
   },
@@ -2304,9 +2347,28 @@
    ]
   },
   "PUT /api/assist/region-override": {
-   "state": "unreached",
-   "group": "limiter",
-   "reason": "the fixture could not be made: PUT /api/assist/container → 429 {\"error\":\"Too many requests\",\"message\":\"Too many assistant requests — please try again shortly.\",\"type\":\"https://chitbridge.com/problems/rate_limited\",\"title\":\""
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/assist/region-override",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "PUT /api/connections/:id/respond": {
    "state": "measured",

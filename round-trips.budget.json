@@ -4643,10 +4643,11 @@
     },
     "PUT /api/assist/catalogue-source": {
       "file": "assist.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "PUT /api/assist/container": {
       "file": "assist.js",
@@ -4658,10 +4659,11 @@
     },
     "PUT /api/assist/region-override": {
       "file": "assist.js",
-      "trips": 50,
+      "trips": 4,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 200,
+      "basis": "live from sit-in 2026-11-06"
     },
     "PUT /api/catalogue-face": {
       "file": "catalogue-face.js",
