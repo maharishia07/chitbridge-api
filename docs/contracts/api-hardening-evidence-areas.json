@@ -536,6 +536,7 @@
    "output_allowlist": true
   },
   "PATCH /api/supplies/:id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "PATCH /api/testing/incidents/:id": {
@@ -1271,6 +1272,60 @@
    "output_allowlist": true
   },
   "PUT /api/catalogue-face": {
+   "output_allowlist": true
+  },
+  "GET /api/identity/documents": {
+   "output_allowlist": true
+  },
+  "GET /api/service/:chit_id": {
+   "output_allowlist": true
+  },
+  "GET /api/simulator/content": {
+   "output_allowlist": true
+  },
+  "GET /api/supplies": {
+   "output_allowlist": true
+  },
+  "POST /api/assist": {
+   "output_allowlist": true
+  },
+  "POST /api/attachments": {
+   "output_allowlist": true
+  },
+  "POST /api/privacy/me/requests": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/respond": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/feedback": {
+   "output_allowlist": true
+  },
+  "POST /api/simulator/lead": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/:id/issue": {
+   "output_allowlist": true
+  },
+  "POST /api/supplies/purchase": {
+   "output_allowlist": true
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "output_allowlist": true
+  },
+  "PUT /api/service/:chit_id": {
    "output_allowlist": true
   }
  }

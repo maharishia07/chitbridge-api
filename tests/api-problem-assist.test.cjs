@@ -135,7 +135,7 @@ function checkFrozenFiveHundreds(recording, legacy) {
 }
 
 /* the routes this file's API-8 sweep closed (2026-10-29); the other assist shapes predate the sweep and are judged in their own pass */
-const SWEPT = ['GET /catalogue-mine', 'GET /penetration', 'GET /regions'].map((key) => key.replace(' /', ' ' + MOUNT + '/'));
+const SWEPT = ['GET /catalogue-mine', 'GET /penetration', 'GET /regions'].map((key) => key.replace(' /', ' ' + MOUNT + '/')).concat('POST ' + MOUNT);
 /**
  * output_allowlist in the shop's own world (API-8, S34), as tests/api-problem-entities.test.cjs: the generator's stand-in database cannot reach catalogue-mine's rows (it answers 503), so here every
  * swept route whose 200 schema is closed (additionalProperties false, derived from the answers and the handler's own keys) has every recorded 200 fit that schema, and the allow-list filter drops
