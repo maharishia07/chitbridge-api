@@ -59,11 +59,22 @@ function knownTables(root) {
   return tables;
 }
 
+/** where a function declaration's body opens: the first { after its parameter list, whose own braces (a destructured parameter) are not the body */
+function bodyAfterParams(text, from) {
+  const paren = text.indexOf('(', from);
+  let nesting = 0;
+  for (let at = paren; paren >= 0 && at < text.length; at++) {
+    if (text[at] === '(') nesting++;
+    else if (text[at] === ')' && --nesting === 0) return text.indexOf('{', at);
+  }
+  return text.indexOf('{', from);
+}
+
 /** the text of function `name` defined in `text` (function declaration or const/assignment), by balanced braces; '' when not found. Crude on purpose: best effort. */
-function functionText(text, name) {
+function functionText(text, name, afterParams) {
   const found = new RegExp('(?:function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=|\\b' + name + '\\s*:\\s*(?:async\\s*)?(?:function|\\())').exec(text);
   if (!found) return '';
-  const open = text.indexOf('{', found.index);
+  const open = afterParams && /^function/.test(found[0]) ? bodyAfterParams(text, found.index) : text.indexOf('{', found.index);
   if (open < 0) return '';
   let depth = 0;
   for (let at = open; at < text.length; at++) {
@@ -98,30 +109,96 @@ function requiresOf(fileText, fileAbs) {
   return out;
 }
 
-/** the handler's source plus the text of the helpers it calls (same file, or a module it requires), `depth` levels down; best effort */
+/** words that look like calls but are never helpers */
+const NOT_HELPERS = ['if', 'for', 'while', 'switch', 'catch', 'function', 'require', 'query', 'json', 'status', 'send'];
+
+/** where the literal that starts at `at` ends (a quote closes at the same quote, a regex at its slash), or `at` when none starts there */
+function closingQuote(text, at, quote) {
+  let end = at + 1;
+  while (end < text.length && text[end] !== quote) end += text[end] === '\\' ? 2 : 1;
+  return end + 1;
+}
+
+/** where the comment, string, template or regex literal starting at `at` ends; `at` itself when no literal starts there */
+function literalEnd(text, at) {
+  const lineEnd = text.indexOf('\n', at) < 0 ? text.length : text.indexOf('\n', at);
+  const blockEnd = text.indexOf('*/', at + 2) < 0 ? text.length : text.indexOf('*/', at + 2) + 2;
+  if (text.startsWith('//', at)) return lineEnd;
+  if (text.startsWith('/*', at)) return blockEnd;
+  if ("'\"`".includes(text[at])) return closingQuote(text, at, text[at]);
+  const prior = text.slice(0, at).trimEnd().slice(-1);
+  const startsRegex = text[at] === '/' && (prior === '' || '(,=:[!&|?{};'.includes(prior));
+  return startsRegex ? closingQuote(text, at, '/') : at;
+}
+
+const blankCache = new Map();
+
+/** overwrite out[from..to) with spaces, keeping line breaks */
+function blankRange(out, from, to) {
+  for (let at = from; at < to; at++) if (out[at] !== '\n') out[at] = ' ';
+}
+
+/** source with every comment, string, template and regex literal blanked to spaces (same length), so a name inside one is never taken for a call or a definition */
+function blankLiterals(text) {
+  if (blankCache.has(text)) return blankCache.get(text);
+  const out = text.split('');
+  for (let at = 0; at < text.length; ) {
+    const end = literalEnd(text, at);
+    blankRange(out, at, end);
+    at = Math.max(end, at + 1);
+  }
+  const result = out.join('');
+  blankCache.set(text, result);
+  return result;
+}
+
+/** a function of this name is really DEFINED in the (blanked) text: a declaration, or a const/let/var holding a function or an arrow; a value that merely has the name is not */
+function definesFunction(blank, name) {
+  const declared = new RegExp('function\\s+' + name + '\\s*\\(');
+  const held = new RegExp('(?:const|let|var)\\s+' + name + '\\s*=\\s*(?:async\\s+)?(?:function\\b|[\\w$]+\\s*=>|\\((?:[^()]|\\([^()]*\\))*\\)\\s*=>)');
+  return declared.test(blank) || held.test(blank);
+}
+
+/** a same-file helper that exactly ONE real call site in its file reaches: what a readability split of one function leaves behind. A shared helper (ensureYear, onDb) is not private, so a read-only route never inherits another route's writes */
+function privateHelper(text, name) {
+  if (!/^[A-Za-z_$][\w$]*$/.test(name)) return false;
+  const blank = blankLiterals(text);
+  if (!definesFunction(blank, name)) return false;
+  const calls = blank.match(new RegExp('(?<!function\\s+)(?<![.\\w$])' + name + '\\s*\\(', 'g')) || [];
+  return calls.length === 1;
+}
+
+/** the helpers a piece of source calls, as { name, from, text, level, free, confined }. A piece that came through a free hop is CONFINED: it is read without its comments and strings, and what it calls resolves only in its own file (never against the route file) */
+function hopsFrom({ piece, from, text, level, confined, byName, self }, route, modules, textOf) {
+  const { plain, member } = callsIn(confined ? blankLiterals(piece) : piece);
+  const real = confined ? plain : callsIn(blankLiterals(piece)).plain;
+  const free = byName ? [] : [...real].filter((name) => name !== self && privateHelper(text, name)).map((name) => ({ name, from, text, level, free: true, confined: true }));
+  /* a confined piece follows private helpers of its own file and  calls through the route's requires, as before; a bare name is NOT looked up in the route file or its modules */
+  const tried = (name) => [{ name, from: route.abs, text: route.text, level: level + 1, byName: true }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1, byName: true }] : [])];
+  const costly = confined ? [] : [...plain].flatMap(tried);
+  const members = member.filter(([owner]) => modules.has(owner)).map(([owner, name]) => ({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1, confined, byName }));
+  return [...free, ...costly, ...members];
+}
+
+/**
+ * the handler's source plus the text of the helpers it calls, best effort. A hop into another function costs one of `depth` levels, except a hop to a PRIVATE
+ * helper (see privateHelper): splitting one function into same-file helpers (MNT-12 readability work) must not hide its table access.
+ */
 function reachableText(source, fileText, fileAbs, depth) {
   const parts = [source];
   const seen = new Set();
   const modules = requiresOf(fileText, fileAbs);
   const cache = new Map();
   const textOf = (file) => (cache.has(file) ? cache.get(file) : (cache.set(file, fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : ''), cache.get(file)));
-  let frontier = [source];
-  for (let level = 0; level < depth; level++) {
-    const next = [];
-    frontier.forEach((piece) => {
-      const { plain, member } = callsIn(piece);
-      const wanted = [];
-      plain.forEach((name) => wanted.push({ name, from: fileAbs, text: fileText }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), whole: false }] : [])));
-      member.filter(([owner]) => modules.has(owner)).forEach(([owner, name]) => wanted.push({ name, from: modules.get(owner), text: textOf(modules.get(owner)) }));
-      wanted.forEach((want) => {
-        const id = want.from + '#' + want.name;
-        if (seen.has(id) || !want.text || ['if', 'for', 'while', 'switch', 'catch', 'function', 'require', 'query', 'json', 'status', 'send'].includes(want.name)) return;
-        seen.add(id);
-        const body = functionText(want.text, want.name);
-        if (body) (parts.push(body), next.push(body));
-      });
-    });
-    frontier = next;
+  const queue = [{ piece: source, from: fileAbs, text: fileText, level: 0 }];
+  while (queue.length) {
+    for (const want of hopsFrom(queue.shift(), { abs: fileAbs, text: fileText }, modules, textOf)) {
+      const id = want.from + '#' + want.name + (want.confined ? '!' : '');
+      if (want.level > depth || seen.has(id) || !want.text || NOT_HELPERS.includes(want.name)) continue;
+      seen.add(id);
+      const body = functionText(want.text, want.name, want.free);
+      if (body) (parts.push(body), queue.push({ piece: body, from: want.from, text: want.text, level: want.level, confined: want.confined, byName: want.byName, self: want.name }));
+    }
   }
   return parts.join('\n');
 }
@@ -141,8 +218,8 @@ function tablesOf(text, known) {
   return { reads: [...reads].sort(), writes: [...writes].sort() };
 }
 
-/** a money column named in the SQL, or the route is on the curated money-write list */
-const MONEY_COLUMN = /\b(amount|price|cost|total|balance|fee|mrp|discount|paid|due|credit|debit)[a-z_]*\b|_minor\b/i;
+/** a money column named in the SQL (a due DATE is not one, nor is a bare `total`, which is as often a count as a sum: total_value and total_minor are), or the route is on the curated money-write list */
+const MONEY_COLUMN = /\b(amount|price|cost|total(?=_)|balance|fee|mrp|discount|paid|credit|debit)[a-z_]*\b|_minor\b/i;
 const moneyOf = (text, curated) => !!curated || sqlStrings(text).some((sql) => MONEY_COLUMN.test(sql));
 
 /** the codes and statuses a route can answer: declared statuses plus the codes its handler writes that the register knows */
@@ -284,4 +361,4 @@ function renderCards(rows) {
 /** routes with no @does (the ratchet's count; it may only go down) */
 const withoutDoes = (rows) => rows.filter((row) => !row.does).length;
 
-module.exports = { AGENT_OF, agentOf, commentAbove, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, queueableRoutes, scanCallers, writeCallers, renderCard, renderCards, withoutDoes, shapeOf, CALLERS_FILE };
+module.exports = { reachableText, privateHelper, AGENT_OF, agentOf, commentAbove, tagAbove, actionsAbove, knownTables, functionText, tablesOf, moneyOf, errorsOf, cardOf, readCallers, readQueueable, offlineOf, roundTripsOf, unmeasured, queueableRoutes, scanCallers, writeCallers, renderCard, renderCards, withoutDoes, shapeOf, CALLERS_FILE };
