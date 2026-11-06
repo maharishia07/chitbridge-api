@@ -2,6 +2,7 @@
  * books-cashflow.test.cjs — CB FINANCE · CASH POSITION (F3): lib/books-cashflow.project() over fixture dues items + balances + held cheques + GST,
  * a SHORTFALL case and a NO-SHORTFALL case, then GET /cashflow and the cheques' pdc_reminders through the real router over the in-memory books.
  * Pure: every figure is checked to the minor unit. Needs the books engines (../chitbridge-engines/src). Run: node tests/books-cashflow.test.cjs
+ * CARD      16-finance/cash-position-and-cash-flow
  */
 'use strict';
 const path = require('path');
@@ -14,9 +15,10 @@ const SHOP = '11111111-1111-4111-8111-111111111111', SRI = '22222222-2222-4222-8
 const mk = (id, extra) => Object.assign({ identity_id: id, identity_type: 'entity', display_name: 'Shop' }, extra || {});
 let WHO = null;
 const authFor = (who) => Object.assign((req, res, next) => { req.identity = WHO || who; next(); }, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id, requireScope: () => (req, res, next) => next() });
+let KEYN = 0;
 const call = (port, method, p, body) => new Promise((done) => {
   const b = body ? JSON.stringify(body) : '';
-  const r = http.request({ host: '127.0.0.1', port, path: p, method: method || 'GET', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  const r = http.request({ host: '127.0.0.1', port, path: p, method: method || 'GET', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'cf-' + (++KEYN) } },
     (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });

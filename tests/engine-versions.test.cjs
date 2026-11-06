@@ -13,6 +13,7 @@
  * These read the source, and say so: the live halves are proved by e2e/till-shop-switch-pc.cjs (the real program).
  *
  * Run: node tests/engine-versions.test.cjs   · no DB, no network.
+ * CARD      28-platform-and-operations/engines-boundary
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');

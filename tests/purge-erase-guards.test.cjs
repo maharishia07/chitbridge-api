@@ -29,6 +29,7 @@ function rows(sql, params, ctx) {
     return [{ count: ctx.openDisputes || 0 }];
   }
   if (/SELECT sealed FROM identities/.test(sql)) return ctx.sealed === undefined ? [] : [{ sealed: ctx.sealed }];
+  if (/UPDATE identities SET is_erased/.test(sql)) return ctx.matches === false ? [] : [{ identity_id: 'TARGET' }]; /* CMP-30: the UPDATE matched an entity, or (matches: false) none */
   return [];
 }
 const h = G.harness({ rows, known: { [SHOP]: 'SHOP', [ME]: 'ME', [CHIT]: 'CHIT', [TARGET]: 'TARGET' } });
@@ -111,6 +112,12 @@ async function it(what, fn) { await fn(); checks++; console.log('  ok  ' + what)
     assert.strictEqual(w.length, 1);
     assert.ok(/UPDATE identities SET is_erased=true/.test(w[0].sql) && w[0].params[0] === 'TARGET');
     assert.strictEqual(r.body.message, 'Identity tombstoned');
+  });
+
+  await it('an erase that matched no entity is a 404, never "Identity tombstoned" (CMP-30 · GDPR Art. 17 · DPDP s.12)', async () => {
+    const r = await erase({ sealed: false, matches: false }, { ...shop, owner_scope: 'platform' });
+    assert.strictEqual(r.status, 404, JSON.stringify(r.body));
+    assert.ok(!/tombstoned/i.test(JSON.stringify(r.body)), 'an erasure that erased nothing reads as done');
   });
 
   console.log('\n  ' + checks + ' checks');

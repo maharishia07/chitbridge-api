@@ -15,13 +15,14 @@
  *     left on — which is exactly what happened the morning it was switched on.
  *
  * Run: node tests/trips-headers.test.cjs
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 'use strict';
 const express = require('express');
 const compression = require('compression');
 
-let bad = 0;
-const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) bad++; };
+let bad = 0, total = 0;
+const ok = (c, m) => { total++; console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) bad++; };
 
 /** a fresh app per case, because the middleware reads the env when the request arrives */
 function build(who) {
@@ -95,7 +96,7 @@ const YOURS = '22222222-2222-2222-2222-222222222222';
     ok(t.traceOn(MINE, 9999).minutes === 60, "an hour is the most anyone can ask for");
     t.traceOff(MINE);
   }
-  console.log('');
+  console.log('\n  ' + (total - bad) + ' passed, ' + bad + ' failed · ' + total + ' checks');
   /* ⚠ exitCode, never process.exit(), while an http server is closing — it aborts libuv mid-close */
   process.exitCode = bad ? 1 : 0;
 })();

@@ -8,6 +8,8 @@
  *   M6  two number-takers in flight never print the same bill number (one series lock)
  *   L4  the close's "last bill" is the sale with the highest series number — never a text sort
  * Run: node tests/till-fix2.test.cjs
+ * CARD      08-rewards-and-loyalty/earn-claim-at-the-till
+ * CARD      09-counter/offline-queue-and-replay
  */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
 const API = path.join(__dirname, '..');

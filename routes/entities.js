@@ -1215,7 +1215,9 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
     const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
     if (s.rows[0] && s.rows[0].sealed) return problem(req, res, { status: 403, ...contract.words.sealed() });
-    await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
+    const done = await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1 RETURNING identity_id`, [req.params.id]);
+    /* an erasure that matched nothing erased nothing: never answer 'done' for it (GDPR Art. 17 · DPDP s.12). A non-uuid id is answered 404 by router.param above (K-1), before the database is asked. */
+    if (!done.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...contract.words.identityUnknown() });
     res.json({ message: 'Identity tombstoned', id: req.params.id });
   } catch (err) {
     problem(req, res, failed(err, req, 'Erase failed'));

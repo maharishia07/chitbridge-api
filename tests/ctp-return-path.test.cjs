@@ -13,6 +13,7 @@
  *   F  the new codes are registered (the door itself is tests/ctp-return-door.test.cjs)
  *
  * Offline: the database, the address book and the transport are stubs. Run: node tests/ctp-return-path.test.cjs
+ * CARD      05-ctp-and-cross-installation/ctp-return-path
  */
 'use strict';
 const assert = require('assert');
