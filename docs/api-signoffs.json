@@ -2755,27 +2755,27 @@
    "lifecycle": "stable"
   },
   "POST /api/network-design/build": {
-   "hash": "c685c2abd9c91bb7",
+   "hash": "12c06e6fce741a91",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
    "lifecycle": "stable"
   },
   "POST /api/network-design/reissue": {
-   "hash": "62029f6165abba94",
+   "hash": "401b2636a525219e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
    "lifecycle": "stable"
   },
   "POST /api/network-design/validate": {
-   "hash": "011c3deba0df900b",
+   "hash": "a3f9adfd80293c99",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
    "lifecycle": "stable"
   },
   "POST /api/network/connections": {
@@ -3523,11 +3523,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/network-design": {
-   "hash": "0a0f0647d76be8ad",
+   "hash": "22e4af6d39bdd31a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
    "lifecycle": "stable"
   },
   "PUT /api/products/:id/availability": {
