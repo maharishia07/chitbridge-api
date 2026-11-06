@@ -540,7 +540,8 @@
    "output_allowlist": true
   },
   "GET /api/products/:id/schedule": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/products/:id/versions": {
    "output_allowlist": true

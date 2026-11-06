@@ -177,7 +177,7 @@ const FORMAT_SAMPLES = { uuid: PATH_ID, 'date-time': '2026-01-01T00:00:00.000Z',
 const NO_ROWS = { rows: [], rowCount: 0 };
 
 /** what the stand-in database holds now: 'none' (no world: every read is empty), 'missing' (nothing exists), 'own' (the caller's row), 'foreign' (another shop's row) */
-const world = { mode: 'none', fields: {}, keys: new Map() };
+const world = { mode: 'none', fields: {}, keys: new Map(), weak: false };
 
 /** a value that fits one field's schema, its format honoured (an id that must be a uuid gets one) */
 const fittingValue = (schema) => (schema && FORMAT_SAMPLES[schema.format]) || sampleOf(schema || { type: 'string' });
@@ -253,6 +253,8 @@ function settleKey(verb, sql, slot, held, params) {
 function rowVisible(sql, params, entity) {
   if (/^\s*insert\b/i.test(sql)) return true;
   if (world.mode === 'own') return true;
+  /* weak: the BITE check (tests/api-foreign-bite.test.cjs): a store that ignores the owner shows another shop's row to every statement, as a read by the id alone would */
+  if (world.weak && world.mode === 'foreign') return true;
   return world.mode === 'foreign' && entity !== CALLER_SHOP && !params.includes(CALLER_SHOP);
 }
 

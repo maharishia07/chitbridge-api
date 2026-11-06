@@ -260,17 +260,52 @@ const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasS
 /** trips_budgeted (S38): the route has a FIRED line (a measured ceiling, not the placeholder) in round-trips.budget.json; tests/round-trips-all.test.cjs fails the guards when the route goes over it. Making it cheaper is cb-speed's; this only checks the budget exists */
 const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[key].fired === true);
 
+/** a route whose path id S35 does not apply to: public by design (public_ids) or reachable only by the platform or the builder (platform_only); both lists live in api-hardening-scope.json, each entry with its reason */
+const idExempt = (scope, key) => scope.publicIds.has(key) || scope.platformOnly.has(key);
+
 /** which of the six columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
 function hardeningApplies(leaf, operation, scope) {
   const key = leaf.method + ' ' + leaf.path;
   const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
-  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !scope.publicIds.has(key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !idExempt(scope, key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+}
+
+/** cannot_answer (scope file): { 'METHOD /path': Set of statuses } the route can never answer; an entry without a route, a status and a reason of MIN_REASON characters counts for nothing (scopeProblems, run by --check, names it) */
+const MIN_REASON = 20;
+const hasReason = (text) => String(text || '').trim().length >= MIN_REASON;
+function cannotAnswerOf(list) {
+  const found = {};
+  (list || []).filter((entry) => entry && entry.route && entry.status && hasReason(entry.reason)).forEach((entry) => (found[entry.route] = (found[entry.route] || new Set()).add(Number(entry.status))));
+  return found;
 }
 
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer) };
+}
+
+/**
+ * scopeProblems(file, rows) — the exemptions of api-hardening-scope.json (public_ids, platform_only, cannot_answer) held to one rule each, for --check: a reason of MIN_REASON characters or more,
+ * a route the register has, for cannot_answer a status that route declares, and no route and status twice. A one-character reason, a typo'd route or an undeclared status is a sentence here.
+ */
+function scopeProblems(file, rows) {
+  const byKey = new Map(rows.map((row) => [row.key, row]));
+  const found = [];
+  ['public_ids', 'platform_only'].forEach((list) => Object.entries(file[list] || {}).forEach(([key, why]) => {
+    if (!byKey.has(key)) found.push(list + ': "' + key + '" is not a route of the app');
+    if (!hasReason(why)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
+  }));
+  const seen = new Set();
+  (file.cannot_answer || []).forEach((entry) => {
+    const name = 'cannot_answer: "' + entry.route + ' ' + entry.status + '"';
+    if (!byKey.has(entry.route)) found.push(name + ' is not a route of the app');
+    else if (!byKey.get(entry.route).declared.includes(entry.status)) found.push(name + ': the route does not declare that status');
+    if (!hasReason(entry.reason)) found.push(name + ' needs a reason of at least ' + MIN_REASON + ' characters');
+    if (seen.has(entry.route + ' ' + entry.status)) found.push(name + ' is listed twice');
+    seen.add(entry.route + ' ' + entry.status);
+  });
+  return found.map((sentence) => 'docs/contracts/api-hardening-scope.json ' + sentence);
 }
 
 /** a mutating route whose path reads like money but is in no list: someone must say whether it is a money write (--check fails) */
@@ -289,11 +324,11 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     missing_input_answer: missingInputColumn(operation, result),
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
-    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
+    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status) || !!(scope.cannotAnswer && scope.cannotAnswer[key] && scope.cannotAnswer[key].has(status))),
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
     strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
-    foreign_id_404: foreignIdColumn(leaf, evidence, scope.publicIds.has(key)),
+    foreign_id_404: foreignIdColumn(leaf, evidence, idExempt(scope, key)),
     idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
     inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
     trips_budgeted: tripsBudgetedColumn(key, budget)
@@ -506,9 +541,10 @@ function check(register) {
   same(JSON_FILE, jsonText(register));
   const codes = require(path.join(TOOLS_DIR, 'error-codes.cjs')).check();
   const unsaid = unclassifiedMoney(register.routes, hardeningScope()).map((key) => key + ' looks like a money write but is in neither list of docs/contracts/api-hardening-scope.json (money_writes or money_reviewed_not)');
+  const scopeFound = scopeProblems(readJson('docs/contracts/api-hardening-scope.json', {}), register.routes);
   const overrides = evidenceOverrides(readJson('docs/contracts/api-hardening-results.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
   if (overrides.length) console.log(overrides.length + ' column(s) proved by an area test where the generated case failed (review each):\n  ' + overrides.join('\n  '));
-  return problems.concat(codes.problems, unsaid, signoffProblems(readSignoffs(), register.routes));
+  return problems.concat(codes.problems, unsaid, scopeFound, signoffProblems(readSignoffs(), register.routes));
 }
 
 /** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
@@ -536,4 +572,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
