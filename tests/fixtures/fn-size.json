@@ -1,8 +1,8 @@
 {
   "limit": 80,
-  "long_functions": 154,
-  "worst_complexity": 176,
-  "worst_at": "lib/books-hooks.js classify",
+  "long_functions": 148,
+  "worst_complexity": 98,
+  "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
     "lib/adopt.js": [
       "consider"
@@ -20,10 +20,6 @@
     "lib/books-cashflow.js": [
       "datedSide",
       "project"
-    ],
-    "lib/books-hooks.js": [
-      "classify",
-      "postChit"
     ],
     "lib/books-nightly.js": [
       "check"
