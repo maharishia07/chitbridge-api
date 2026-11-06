@@ -275,6 +275,14 @@
   "GET /api/chits/:id/children": {
    "output_allowlist": true
   },
+  "GET /api/connections/list": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/connections/pending": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/connectors": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
@@ -506,7 +514,26 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/network-offers": {
+   "output_allowlist": true
+  },
+  "GET /api/network/entities/lookup": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/network/place": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/notifications": {
+   "output_allowlist": true
+  },
+  "GET /api/privacy/facts": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/privacy/me": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/products": {
@@ -968,6 +995,14 @@
   "POST /api/catalogue/photo-extract": {
    "output_allowlist": true
   },
+  "POST /api/channels": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "POST /api/channels/:id/approve": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/channels/:id/auto-raise": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
@@ -1246,11 +1281,11 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
-  "POST /api/network/connections": {
-   "output_allowlist_basis": "recordings",
+  "POST /api/network-offers/:id/choice": {
    "output_allowlist": true
   },
-  "POST /api/network-offers/:id/choice": {
+  "POST /api/network/connections": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
@@ -1286,14 +1321,14 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
-  "POST /api/privacy/me/consent": {
-   "output_allowlist_basis": "recordings",
-   "output_allowlist": true
-  },
   "POST /api/notifications/dismiss": {
    "output_allowlist": true
   },
   "POST /api/notifications/seen": {
+   "output_allowlist": true
+  },
+  "POST /api/privacy/me/consent": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/privacy/me/requests": {

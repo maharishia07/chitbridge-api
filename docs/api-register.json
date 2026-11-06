@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 144
+    "failing": 76
    },
    "foreign_id_404": {
     "applies": 225,
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 35
+  "output_allowlist_from_recordings": 119
  },
  "machine_columns": [
   "schema_in",
