@@ -16,7 +16,7 @@ const { make, row } = require('./support/crm-stub.cjs');
 const t = make(), D = t.data, F = require('../lib/crm-followups'), H = require('../lib/books-hooks');
 const CALLS = require('../lib/crm-calls');   /* the module under test, by name: its public table and its day arithmetic (W2-CRM) */
 const P = (n) => '10000000-0000-4000-8000-' + String(n).padStart(12, '0');
-const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), 'IN');
+const day = (n) => H.dayOf(new Date(Date.now() + n * 86400000).toISOString(), null);   /* the stub shop has no zone (country: null), so its day is the server's default day — not IST, which differs after IST midnight */
 let pass = 0;
 const ita = async (what, fn) => { try { await fn(); pass++; console.log('  ok  ' + what); } catch (e) { console.log('  FAIL ' + what + '\n      ' + (e.stack || e.message).split('\n').slice(0, 4).join('\n      ')); process.exitCode = 1; } };
 const cs = (r, via, n) => Object.assign(r, { customer_type: 'entity', added_via: via || 'manual', txn_count: n == null ? 1 : n, segment: 'new' });
