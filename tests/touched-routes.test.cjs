@@ -34,12 +34,19 @@ const strict = tool.judge(base, head, 'fail');
 t('fail mode fails a touched route below 13/13', strict.failed === true);
 t('fail mode passes when every touched route meets the standard', tool.judge(base, { machine_columns: COLUMNS, routes: [head.routes[3]] }, 'fail').failed === false);
 
-t('the checklist line carries the three numbers and the mode', /Touch rule, routes \(report, warn mode until \d{4}-\d\d-\d\d\): routes touched 2 · at 13\/13 1 · below 1/.test(tool.line(warn)));
+t('the checklist line carries the three numbers and the mode', /Touch rule, routes \(report, warn mode until 2026-12-01\): routes touched 2 · at 13\/13 1 · below 1/.test(tool.line(warn, '2026-12-01')));
 t('the report names the route and what it lacks', /GET \/b \(routes\/x\.js\) 1\/2 — lacks schema_out/.test(tool.report(warn)));
-t('mode: warn before the switch, fail from it, an explicit option wins', tool.modeFor('2026-11-06') === 'warn' && tool.modeFor('2099-01-01') === 'fail' && tool.modeFor('2026-11-06', 'fail') === 'fail');
+t('mode: warn before the switch, fail from it, an explicit option wins', tool.modeFor('2026-11-06', undefined, '2026-12-01') === 'warn' && tool.modeFor('2099-01-01', undefined, '2026-12-01') === 'fail' && tool.modeFor('2026-11-06', 'fail', '2026-12-01') === 'fail');
+t('mode: no date owner means skip, never a copied date', tool.modeFor('2099-01-01', undefined, null) === 'skip');
 
-const run = spawnSync(process.execPath, [path.join(__dirname, '..', 'tools', 'touched-routes.cjs'), '--base', 'HEAD', '--md'], { encoding: 'utf8' });
-t('the tool runs on this checkout with base = HEAD: nothing touched, exit 0', run.status === 0 && /touched routes: 0/.test(run.stdout) && /Touch rule, routes/.test(run.stdout));
+const run = spawnSync(process.execPath, [path.join(__dirname, '..', 'tools', 'touched-routes.cjs'), '--strict', '--base', 'HEAD', '--md'], { encoding: 'utf8' });
+t('the tool runs on this checkout with base = HEAD: nothing touched, exit 0 (strict: needs no web tool)', run.status === 0 && /touched routes: 0/.test(run.stdout) && /Touch rule, routes/.test(run.stdout));
+
+const TOOL = path.join(__dirname, '..', 'tools', 'touched-routes.cjs');
+const noWeb = spawnSync(process.execPath, [TOOL, '--web-tool', path.join(__dirname, 'no-such-web-tool.cjs'), '--base', 'HEAD'], { encoding: 'utf8' });
+t('web tool absent: prints the sentence, judges nothing, exit 0', noWeb.status === 0 && /web tool not found: touch rule skipped/.test(noWeb.stdout) && !/touched routes:/.test(noWeb.stdout));
+const noBase = spawnSync(process.execPath, [TOOL, '--strict', '--base', 'no-such-ref-for-touch-rule'], { encoding: 'utf8' });
+t('base register unreadable: prints the sentence, never fails, even with --strict', noBase.status === 0 && /base register unreadable: judgement skipped/.test(noBase.stdout) && !/touched routes:/.test(noBase.stdout));
 
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
 console.log('  ' + (pass + fail) + ' checks');
