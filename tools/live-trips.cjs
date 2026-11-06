@@ -34,11 +34,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /* ── routes the harness must not fire, each with the reason that goes in the results ── */
 const DENY = {
-  'PATCH /api/entities/:id/erase': ['destructive', 'erases the entity (the load shop itself); never fired'],
-  'POST /api/signin/ask': ['limiter', 'sign-in limiter is 30 per 15 min per IP and the harness signs in once; measure by hand with a spare budget'],
-  'POST /api/signin/verify': ['limiter', 'sign-in limiter is 30 per 15 min per IP; one sign-in only'],
-  'POST /api/signin/pin': ['limiter', 'sign-in limiter is 30 per 15 min per IP; one sign-in only'],
-  'POST /api/signin/renew': ['limiter', 'sign-in limiter is 30 per 15 min per IP; it would also rotate the cached token'],
+  'PATCH /api/entities/:id/erase': ['destructive', 'platform role + destructive; needs a platform token and a throwaway identity (PR #844 makes it answer 404 on no match, which is a floor, not a cost)'],
+  'POST /api/signin/ask': ['no-header', 'pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header'],
+  'POST /api/signin/verify': ['no-header', 'pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header'],
+  'POST /api/signin/pin': ['no-header', 'pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header'],
+  'POST /api/signin/renew': ['no-header', 'pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header'],
   'POST /api/catalogue/photo-extract': ['external', 'calls the vision provider (paid, outside sit-in)'],
   'POST /api/identity/documents/:scheme/code': ['external', 'sends a code through an outside provider'],
   'POST /api/identity/documents/:scheme/verify': ['external', 'checks a code from an outside provider'],
@@ -224,7 +224,7 @@ async function measure(key, route, ctx, sample, hint) {
     let query = sample.query || '';
     let headers = sample.headers;
     if (make && (i === 0 || hint.fresh)) {
-      made = await make(API, i);
+      try { made = await make(API, i); } catch (e) { return { state: 'unreached', group: /429|Too many/.test(e.message) ? 'limiter' : 'fixture', reason: 'the fixture could not be made: ' + e.message.slice(0, 200) }; }
       if (made && made.unreached) return { state: 'unreached', group: made.unreached[0], reason: made.unreached[1] };
       url = await urlFromMade(key, route, ctx, made || {});
       if (url.reason) return { state: 'unreached', group: url.reason[0], reason: url.reason[1] };

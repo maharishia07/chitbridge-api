@@ -238,7 +238,31 @@
   "POST /api/till/screens/rename": 3,
   "POST /api/till/screens/revoke": 3,
   "POST /api/till/stock": 3,
-  "POST /api/till/stock/bulk": 3
+  "POST /api/till/stock/bulk": 3,
+  "POST /api/network/entities/:id/claim": 2,
+  "GET /api/network/entities/:id/connections": 0,
+  "GET /api/network/entities/:id/subtree": 0,
+  "GET /api/integrations/download/:id": 2,
+  "GET /api/integrations/kit/*": 0,
+  "POST /api/books/gst/close": 4,
+  "POST /api/channels/:id/provider-ref": 3,
+  "POST /api/chits/register/entries/:raida_id/accept": 4,
+  "POST /api/chits/register/templates": 4,
+  "POST /api/connections/request": 7,
+  "POST /api/integrations/books": 4,
+  "POST /api/offers/evaluate": 3,
+  "POST /api/offers/explain": 3,
+  "POST /api/pricing/price": 6,
+  "POST /api/products/bulk": 8,
+  "POST /api/quick-keys/groups/:id/items": 3,
+  "POST /api/tax/rate": 6,
+  "POST /api/testing/changes": 3,
+  "POST /api/testing/releases": 3,
+  "POST /api/testing/results/junit": 3,
+  "PUT /api/connections/:id/respond": 6,
+  "PUT /api/governance/profile/vault": 6,
+  "PUT /api/identity/documents/:scheme": 4,
+  "PATCH /api/supplies/:id": 3
  },
  "measured": {
   "POST /api/network/entities": {
@@ -632,6 +656,150 @@
    "at": "2026-11-06"
   },
   "POST /api/till/stock/bulk": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/network/entities/:id/claim": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "GET /api/network/entities/:id/connections": {
+   "trips": 0,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "trips": 0,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "GET /api/integrations/download/:id": {
+   "trips": 2,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "GET /api/integrations/kit/*": {
+   "trips": 0,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/gst/close": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/chits/register/entries/:raida_id/accept": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/chits/register/templates": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/connections/request": {
+   "trips": 7,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/integrations/books": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/offers/evaluate": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/offers/explain": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/pricing/price": {
+   "trips": 6,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/products/bulk": {
+   "trips": 8,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "trips": 3,
+   "status": 201,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/tax/rate": {
+   "trips": 6,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/testing/changes": {
+   "trips": 3,
+   "status": 201,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/testing/releases": {
+   "trips": 3,
+   "status": 201,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/testing/results/junit": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PUT /api/connections/:id/respond": {
+   "trips": 6,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PUT /api/governance/profile/vault": {
+   "trips": 6,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PATCH /api/supplies/:id": {
    "trips": 3,
    "status": 200,
    "basis": "live from sit-in 2026-11-06",
