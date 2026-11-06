@@ -15037,6 +15037,340 @@
         }
       }
     },
+    "POST /api/network-design/build": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "root",
+          "problems",
+          "notes"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "dry_run": {
+            "type": "boolean"
+          },
+          "root": {
+            "type": "string"
+          },
+          "root_claimed": {
+            "type": "boolean"
+          },
+          "create": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "name",
+                "handle",
+                "parent_key",
+                "visibility",
+                "asked",
+                "purpose",
+                "sort_order",
+                "place"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "handle": {
+                  "type": "string"
+                },
+                "parent_key": {},
+                "visibility": {
+                  "type": "string"
+                },
+                "asked": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sort_order": {},
+                "place": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "update": {},
+          "invite": {},
+          "skip": {},
+          "problems": {},
+          "notes": {},
+          "counts": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip",
+              "problems",
+              "narrowed"
+            ],
+            "properties": {
+              "create": {
+                "type": "number"
+              },
+              "update": {
+                "type": "number"
+              },
+              "invite": {
+                "type": "number"
+              },
+              "skip": {
+                "type": "number"
+              },
+              "problems": {
+                "type": "number"
+              },
+              "narrowed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "created": {},
+          "updated": {},
+          "invited": {},
+          "skipped": {},
+          "message": {
+            "type": "string"
+          },
+          "claim_note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-design/build",
+        "body": {
+          "dry_run": true
+        }
+      }
+    },
+    "POST /api/network-design/reissue": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "user_id",
+          "display_name",
+          "claim_code",
+          "expires_at",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "user_id": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "claim_code": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "dev_otp": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "example": {
+        "url": "/api/network-design/reissue",
+        "body": {
+          "user_id": "Shop-A.C"
+        }
+      }
+    },
+    "POST /api/network-design/validate": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "dry_run",
+          "sample",
+          "ok",
+          "root",
+          "would",
+          "breaks",
+          "notes",
+          "counts",
+          "says"
+        ],
+        "properties": {
+          "dry_run": {
+            "type": "boolean"
+          },
+          "sample": {
+            "type": "boolean"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "root": {
+            "type": "string"
+          },
+          "would": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip"
+            ],
+            "properties": {
+              "create": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "key",
+                    "name",
+                    "handle",
+                    "parent_key",
+                    "visibility",
+                    "asked",
+                    "purpose",
+                    "sort_order",
+                    "place"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "handle": {
+                      "type": "string"
+                    },
+                    "parent_key": {},
+                    "visibility": {
+                      "type": "string"
+                    },
+                    "asked": {
+                      "type": "string"
+                    },
+                    "purpose": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sort_order": {},
+                    "place": {}
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "update": {},
+              "invite": {},
+              "skip": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "breaks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "name",
+                "reason"
+              ],
+              "properties": {
+                "key": {},
+                "name": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "notes": {},
+          "counts": {
+            "type": "object",
+            "required": [
+              "create",
+              "update",
+              "invite",
+              "skip",
+              "problems",
+              "narrowed"
+            ],
+            "properties": {
+              "create": {
+                "type": "number"
+              },
+              "update": {
+                "type": "number"
+              },
+              "invite": {
+                "type": "number"
+              },
+              "skip": {
+                "type": "number"
+              },
+              "problems": {
+                "type": "number"
+              },
+              "narrowed": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "says": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network-design/validate",
+        "body": {}
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {
@@ -16730,6 +17064,43 @@
         "url": "/api/folders/inventory/RT-4090",
         "body": {
           "msg": "none"
+        }
+      }
+    },
+    "PUT /api/network-design": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "updated_at"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "updated_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/network-design",
+        "body": {
+          "draft": {
+            "nodes": [
+              {
+                "key": "a",
+                "name": "Clothing"
+              }
+            ]
+          }
         }
       }
     },

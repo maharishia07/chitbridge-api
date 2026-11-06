@@ -374,6 +374,15 @@
   "GET /api/governance/vault-schema": {
    "output_allowlist": true
   },
+  "GET /api/network-design": {
+   "output_allowlist": true
+  },
+  "GET /api/network-design/availability": {
+   "output_allowlist": true
+  },
+  "GET /api/network-design/stores": {
+   "output_allowlist": true
+  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -885,6 +894,15 @@
   "POST /api/identity/documents/:scheme/verify": {
    "foreign_id_404": true
   },
+  "POST /api/network-design/build": {
+   "output_allowlist": true
+  },
+  "POST /api/network-design/reissue": {
+   "output_allowlist": true
+  },
+  "POST /api/network-design/validate": {
+   "output_allowlist": true
+  },
   "POST /api/products": {
    "output_allowlist": true
   },
@@ -1101,6 +1119,9 @@
    "output_allowlist": true
   },
   "PUT /api/governance/profile/vault": {
+   "output_allowlist": true
+  },
+  "PUT /api/network-design": {
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {

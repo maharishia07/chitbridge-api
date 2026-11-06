@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 221
+    "failing": 217
    },
    "foreign_id_404": {
     "applies": 230,
@@ -45116,7 +45116,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 185,
-   "hash": "c685c2abd9c91bb7",
+   "hash": "12c06e6fce741a91",
    "does": "",
    "errors": {
     "count": 0,
@@ -45151,7 +45151,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -45181,8 +45181,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "12c06e6fce741a91"
    },
    "status": "partial",
    "callers": [
@@ -45213,7 +45214,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 283,
-   "hash": "302cf707867f5001",
+   "hash": "401b2636a525219e",
    "does": "",
    "errors": {
     "count": 0,
@@ -45248,7 +45249,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -45279,7 +45280,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "302cf707867f5001"
+    "stale_since": "401b2636a525219e"
    },
    "status": "partial",
    "callers": [
@@ -45308,7 +45309,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 147,
-   "hash": "011c3deba0df900b",
+   "hash": "a3f9adfd80293c99",
    "does": "",
    "errors": {
     "count": 0,
@@ -45341,7 +45342,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -45369,8 +45370,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a3f9adfd80293c99"
    },
    "status": "partial",
    "callers": [
@@ -57798,7 +57800,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-design.js",
    "line": 57,
-   "hash": "142a488a3c917511",
+   "hash": "22e4af6d39bdd31a",
    "does": "",
    "errors": {
     "count": 0,
@@ -57833,7 +57835,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -57863,7 +57865,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "142a488a3c917511"
+    "stale_since": "22e4af6d39bdd31a"
    },
    "status": "partial",
    "callers": [
