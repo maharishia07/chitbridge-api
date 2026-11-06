@@ -4578,6 +4578,7 @@
     "books_compare_part",
     "books_setting",
     "chit_header",
+    "chit_status",
     "identities",
     "journal_entry",
     "journal_line",
@@ -4680,6 +4681,7 @@
     "books_compare_part",
     "books_setting",
     "chit_header",
+    "chit_status",
     "identities",
     "journal_entry",
     "journal_line",
@@ -4774,6 +4776,7 @@
    "reads": [
     "books_setting",
     "chit_header",
+    "chit_status",
     "customer_list",
     "identities",
     "journal_entry",
@@ -5382,6 +5385,7 @@
    "reads": [
     "books_setting",
     "chit_header",
+    "chit_status",
     "identities",
     "journal_entry",
     "journal_line",
