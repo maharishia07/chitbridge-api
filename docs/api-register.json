@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 121
    },
    "output_allowlist": {
     "applies": 637,
@@ -45374,7 +45374,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 400,
-   "hash": "e015926bdd4d30ff",
+   "hash": "c36e793df0bba213",
    "does": "",
    "errors": {
     "count": 2,
@@ -45408,7 +45408,7 @@
     "codes_registered": true,
     "error_tests": false,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -45471,7 +45471,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 360,
-   "hash": "e293619dcba0d014",
+   "hash": "119c9b2336edaf9b",
    "does": "",
    "errors": {
     "count": 4,
@@ -45511,7 +45511,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -45573,7 +45573,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 382,
-   "hash": "4cb60c200ef584b5",
+   "hash": "124bca4861c9e758",
    "does": "",
    "errors": {
     "count": 3,
@@ -45611,7 +45611,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -45672,7 +45672,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 311,
-   "hash": "e2f896a8f59e3ee4",
+   "hash": "a8c24c8c06001e7c",
    "does": "",
    "errors": {
     "count": 1,
@@ -45707,7 +45707,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -45766,7 +45766,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 321,
-   "hash": "fa78d9c144e2dd67",
+   "hash": "b32d98aa24818ba6",
    "does": "",
    "errors": {
     "count": 1,
@@ -45799,7 +45799,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -45858,7 +45858,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 293,
-   "hash": "e5282d27e356eb80",
+   "hash": "3e06c9dd5558a92c",
    "does": "",
    "errors": {
     "count": 1,
@@ -45893,7 +45893,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47294,7 +47294,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 424,
-   "hash": "2bdad3b0043c841f",
+   "hash": "914d6553a1cbbf4e",
    "does": "",
    "errors": {
     "count": 0,
@@ -47325,7 +47325,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47356,7 +47356,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2bdad3b0043c841f"
+    "stale_since": "914d6553a1cbbf4e"
    },
    "status": "partial",
    "callers": [
@@ -47389,7 +47389,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1861,
-   "hash": "58fd041e164a2b0c",
+   "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
     "count": 0,
@@ -47425,7 +47425,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -47458,7 +47458,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "58fd041e164a2b0c"
+    "stale_since": "ed53688af3eee973"
    },
    "status": "partial",
    "callers": [
@@ -47487,7 +47487,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1625,
-   "hash": "7ea6a92aeb157dc6",
+   "hash": "ec834b16142998da",
    "does": "",
    "errors": {
     "count": 0,
@@ -47521,7 +47521,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47554,7 +47554,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7ea6a92aeb157dc6"
+    "stale_since": "ec834b16142998da"
    },
    "status": "partial",
    "callers": [
@@ -47763,7 +47763,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 642,
-   "hash": "d908395d7388c9ab",
+   "hash": "366d97c351174a18",
    "does": "",
    "errors": {
     "count": 0,
@@ -47797,7 +47797,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47828,7 +47828,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d908395d7388c9ab"
+    "stale_since": "366d97c351174a18"
    },
    "status": "partial",
    "callers": [
@@ -48058,7 +48058,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2179,
-   "hash": "52a72c7438622ba6",
+   "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
     "count": 0,
@@ -48092,7 +48092,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -48122,7 +48122,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "52a72c7438622ba6"
+    "stale_since": "dba1915afac8678d"
    },
    "status": "partial",
    "callers": [
@@ -48149,7 +48149,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1396,
-   "hash": "6aa71f5674d69c65",
+   "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
     "count": 0,
@@ -48180,7 +48180,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -48210,7 +48210,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6aa71f5674d69c65"
+    "stale_since": "2eaff1d170a6af28"
    },
    "status": "partial",
    "callers": [
@@ -48243,7 +48243,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 539,
-   "hash": "377f87c3c07abfe8",
+   "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
     "count": 0,
@@ -48273,7 +48273,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -48303,7 +48303,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "377f87c3c07abfe8"
+    "stale_since": "b194b999878fae7b"
    },
    "status": "partial",
    "callers": [
@@ -57858,7 +57858,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 274,
-   "hash": "c366a186bcc54fb2",
+   "hash": "63680e549970c2eb",
    "does": "",
    "errors": {
     "count": 2,
@@ -57891,7 +57891,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -57951,7 +57951,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1716,
-   "hash": "4542ca9a59f3af0b",
+   "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
     "count": 0,
@@ -57982,7 +57982,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -58013,7 +58013,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "4542ca9a59f3af0b"
+    "stale_since": "fc5e543be6478abb"
    },
    "status": "partial",
    "callers": [
@@ -58044,7 +58044,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1746,
-   "hash": "9c17b0e78a2b8f1c",
+   "hash": "b2a20c518803f776",
    "does": "",
    "errors": {
     "count": 0,
@@ -58075,7 +58075,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
@@ -58106,7 +58106,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9c17b0e78a2b8f1c"
+    "stale_since": "b2a20c518803f776"
    },
    "status": "partial",
    "callers": [
