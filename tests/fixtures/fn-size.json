@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 155,
+  "long_functions": 150,
   "worst_complexity": 176,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -215,12 +215,7 @@
       "POST /:chit_id/messages",
       "POST /assign-bulk",
       "PUT /:chit_id/status",
-      "PUT /:chit_id/void",
-      "chitFilters",
-      "sendCopies",
-      "sendCopyPolicy",
-      "sendLegacyReceiverRows",
-      "sendLegacySenderRows"
+      "PUT /:chit_id/void"
     ],
     "routes/connectors.js": [
       "POST /ingest",

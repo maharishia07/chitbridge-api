@@ -62,7 +62,7 @@ it('⭐⭐⭐ only a COUNTER document is checked', () => {
    * document numbers, none are governed by this rule, and checking them would refuse — or here, wrongly flag —
    * perfectly good references on chits that have nothing to do with a till.
    */
-  assert.ok(/_b\.till && _b\.till\.id/.test(block),
+  assert.ok(/businessJson\.till && businessJson\.till\.id/.test(block),
     'the check no longer requires a till id, so every client_ref on the platform is now judged as a bill number');
 });
 

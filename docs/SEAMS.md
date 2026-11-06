@@ -88,7 +88,7 @@ of file each thing is; this says what already does the job.
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `hold` | `orders.js` |  |
-| 28 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 29 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 28 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |

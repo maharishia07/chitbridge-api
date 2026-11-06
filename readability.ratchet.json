@@ -3641,15 +3641,15 @@
     "noHeader": 0
   },
   "routes/books.js": {
-    "score": 313,
+    "score": 221,
     "long40": 18,
     "long80": 4,
-    "complex10": 15,
-    "complex15": 10,
+    "complex10": 14,
+    "complex15": 8,
     "deep3": 1,
     "deep4": 0,
-    "cryptic": 262,
-    "noWhatLine": 3,
+    "cryptic": 176,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
@@ -3719,16 +3719,16 @@
     "noHeader": 0
   },
   "routes/chits.js": {
-    "score": 358,
-    "long40": 56,
-    "long80": 16,
-    "complex10": 33,
-    "complex15": 13,
-    "deep3": 7,
+    "score": 153,
+    "long40": 27,
+    "long80": 10,
+    "complex10": 17,
+    "complex15": 7,
+    "deep3": 4,
     "deep4": 1,
-    "cryptic": 223,
-    "noWhatLine": 7,
-    "emptyCatch": 2,
+    "cryptic": 86,
+    "noWhatLine": 0,
+    "emptyCatch": 1,
     "noHeader": 0
   },
   "routes/combo-templates.js": {

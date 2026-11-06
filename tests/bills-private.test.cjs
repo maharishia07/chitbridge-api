@@ -165,7 +165,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('a payment against something that is not a bill writes no bill step', wrote(/state_log/).length === 0);
     const booksSrc = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8');
     /* FIN-63 step 2: confirmSteps (defined above the route) is the one place moneySteps runs for the confirm; the route calls it after the posting and after the replay answer */
-    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, pay, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
+    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, payment, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
 
     console.log('\n══ D · THE SELLER\'S LIFECYCLE — never a buyer step; the dispute and the shared payment ══\n');
     reset(); ROWS = [sellerRow()];
