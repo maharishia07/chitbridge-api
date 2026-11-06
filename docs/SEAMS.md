@@ -142,7 +142,7 @@ of file each thing is; this says what already does the job.
 | 18 | `today` | `kural.js` |  |
 | 18 | `more` | `lab-kit.js` | idKey: |
 | 18 | `later` | `signin-ui.js` |  |
-| 18 | `label` | `bill-privacy.js` | label(step, mine) — |
+| 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 18 | `verify` | `bookpack.js` | manifest's own hash. |
 | 18 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 18 | `notMigrated` | `crm-followups.js` |  |
