@@ -82,16 +82,56 @@ async function myBridge(api) {
   if (!api.seeds.bridge) api.seeds.bridge = (await must(api, 'GET', '/api/entities/me')).entity.bridge_id;
   return api.seeds.bridge;
 }
+const LOAD_ID = 'a3866c39-af9a-4eb7-969a-71b7715e89bf'; /* cbt-in-load's identity (its own row is the only one the harness edits by SQL) */
+const LOAD_NODE = '2ba7df12-486c-437c-b4b5-1acd99b2f350'; /* its cb_entity row */
+/** the register capability on for the load shop only (its capabilities column was NULL; cleanup puts NULL back) */
+function registerOn(api) {
+  if (api.seeds.registerOn) return;
+  api.sql("update identities set capabilities = '[\"register\"]'::jsonb where identity_id = '" + LOAD_ID + "' and capabilities is null");
+  api.seeds.registerOn = true;
+}
+/** a pool shop (cbt-in-*) with no connection to the load shop, its identity id and handle */
+function freePoolShop(api, skip) {
+  const rows = api.sql("select identity_id, user_id from identities where user_id like 'cbt-in-%' and user_id <> 'cbt-in-load' and identity_id not in (select to_entity_id from connections where from_entity_id = '" + LOAD_ID + "' union select from_entity_id from connections where to_entity_id = '" + LOAD_ID + "') order by user_id limit 8");
+  return rows.find((r) => !(skip || []).includes(r[0]));
+}
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
   params: {},
   /** the run's end: switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
   cleanup: async (api) => {
+    if (api.seeds.registerOn) api.sql("update identities set capabilities = null where identity_id = '" + LOAD_ID + "' and capabilities = '[\"register\"]'::jsonb");
+    if (api.seeds.unclaimed) api.sql("update cb_entity set claimed = true where id = '" + LOAD_NODE + "'");
     for (const p of [1, 2]) await api.call('POST', '/api/books/periods/' + OLD_FY + '/' + p + '/unlock', { reason: 'lt- live-trips: restore' });
     for (const jti of api.seeds.screens || []) await api.call('POST', '/api/till/screens/revoke', { jti });
     if (api.seeds.counter) await api.call('POST', '/api/counters/' + api.seeds.counter + '/release', {});
   },
   routes: {
+    'POST /api/chits/register/templates': { make: async (api) => { registerOn(api); return { body: { kind: 'risk', title: 'lt-template-' + u() } }; } },
+    'POST /api/chits/register/entries/:raida_id/accept': { make: async (api) => { registerOn(api); const e = await must(api, 'POST', '/api/chits/' + await chitId(api) + '/raida', { kind: 'risk', body: 'lt- risk ' + u() }); return { params: { raida_id: e.raida_id || e.id }, body: { rationale: 'lt- accepted for the live-trips run', authority_level: 'owner' } }; } },
+    'POST /api/network/entities/:id/claim': { fresh: true, make: async (api) => { api.sql("update cb_entity set claimed = false where id = '" + LOAD_NODE + "'"); api.seeds.unclaimed = true; return { params: { id: LOAD_NODE }, body: {} }; } },
+    'GET /api/network/entities/:id/connections': { make: async () => ({ params: { id: LOAD_NODE } }) },
+    'GET /api/network/entities/:id/subtree': { make: async () => ({ params: { id: LOAD_NODE } }) },
+    'POST /api/connections/request': { make: async (api) => { const p = freePoolShop(api); if (!p) return cannot('fixture', 'every pool shop is already connected to the load shop'); return { body: { to_entity_id: p[0], note: 'lt- live-trips' } }; } },
+    'PUT /api/connections/:id/respond': { make: async (api) => { const p = freePoolShop(api); if (!p) return cannot('fixture', 'every pool shop is already connected to the load shop'); const tok = await api.tokenFor(p[1]); const r = await api.call('POST', '/api/connections/request', { to_entity_id: LOAD_ID, note: 'lt- live-trips' }, { authorization: 'Bearer ' + tok }); if (r.status !== 200 && r.status !== 201) return cannot('fixture', 'a pool shop could not ask the load shop: ' + r.status + ' ' + JSON.stringify(r.body).slice(0, 100)); const id = (r.body && (r.body.connection_id || (r.body.connection && r.body.connection.connection_id))); return { params: { id }, body: { action: 'accept' } }; } },
+    'POST /api/channels/:id/provider-ref': { make: async (api) => { const ch = await must(api, 'POST', '/api/channels', { channel: 'whatsapp', address: '+9190000' + String(Math.floor(Math.random() * 90000) + 10000), label: 'lt-line' }); return { params: { id: ch.id || (ch.channel && ch.channel.id) }, body: { provider_ref: 'lt-' + u() } }; } },
+    'PUT /api/identity/documents/:scheme': { make: async () => ({ params: { scheme: 'PHONE' }, body: { value: '98400' + String(Math.floor(Math.random() * 90000) + 10000) } }) },
+    'PATCH /api/supplies/:id': { make: async (api) => { const made = await must(api, 'POST', '/api/supplies', { name: 'lt-supply-' + u(), unit: 'piece' }); const id = made.supply ? made.supply.supply_item_id : made.supply_id || made.id; return { params: { id }, body: { note: 'lt- live-trips' } }; } },
+    'POST /api/offers/evaluate': { body: () => ({ lines: [{ name: 'lt-item', qty: 2, unitPrice: 100 }], offers: [], ctx: { currency: 'INR' } }) },
+    'POST /api/offers/explain': { body: () => ({ lines: [{ name: 'lt-item', qty: 2, unitPrice: 100 }], offers: [], ctx: { currency: 'INR' } }) },
+    'POST /api/pricing/price': { make: async (api) => ({ body: { lines: [{ item_id: await itemId(api), qty: 1, listPrice: 100 }] } }) },
+    'POST /api/tax/rate': { make: async (api) => ({ body: { lines: [{ item_id: await itemId(api), qty: 1, price: 100, name: 'lt-item' }] } }) },
+    'POST /api/assist/gap': { body: () => ({ q: 'lt- how do I count stock?' }) },
+    'PUT /api/assist/catalogue-source': { body: () => ({ source_key: 'royale-play@v1' }) },
+    'PUT /api/assist/region-override': { make: async (api) => { const cid = 'lt/' + u(); await must(api, 'PUT', '/api/assist/container', { container_id: cid, name: 'lt-container' }); return { body: { container_id: cid, region: 'IN' } }; } },
+    'GET /api/assist/container/:id': { make: async (api) => { const cid = 'lt/' + u(); await must(api, 'PUT', '/api/assist/container', { container_id: cid, name: 'lt-container' }); return { params: { id: encodeURIComponent(cid) } }; } },
+    'GET /api/assist/resolve': { make: async (api) => { const cid = 'lt/' + u(); const put = await must(api, 'PUT', '/api/assist/container', { container_id: cid, name: 'lt-container' }); return { query: '?region=IN&container=' + encodeURIComponent(cid) + '&version=' + (put.version || 1) }; } },
+    'GET /api/assist/catalogue-source/:key': { make: async () => ({ params: { key: 'royale-play@v1' } }) },
+    'POST /api/testing/results/junit': { body: () => ({ xml: '<testsuites><testsuite name="lt-suite" tests="1"><testcase name="[CTR-05] lt-case" classname="lt"/></testsuite></testsuites>' }) },
+    'POST /api/testing/changes': { body: () => ({ summary: 'lt- live-trips probe ' + u(), backout: 'lt- nothing to undo: test shop', cites: { kind: 'incident', ref: 'lt-SPD-39' } }) },
+    'POST /api/testing/releases': { fresh: true, make: async (api) => { const c = await must(api, 'POST', '/api/testing/changes', { summary: 'lt- release change ' + u(), backout: 'lt- nothing', cites: { kind: 'incident', ref: 'lt-SPD-39' } }); const id = c.definition_id || c.id || (c.change && (c.change.definition_id || c.change.id)); return { body: { name: 'lt-rel-' + u(), changes: [id] } }; } },
+    'PUT /api/governance/profile/vault': { make: async (api) => { const prof = await must(api, 'GET', '/api/governance/profile'); return { body: { patch: { sections: {} }, version: prof.vault_version } }; } },
+    'POST /api/products/lists/adopt': { skip: ['precondition', 'adopting a list writes a dozen or more catalogue products that carry no lt- prefix and the harness may not delete them; the load shop already holds 12'] },
     'GET /api/catalogue/:bridge_id/capture-fields': { make: async (api) => ({ params: { bridge_id: await myBridge(api) } }) },
     'GET /api/catalogue/:bridge_id/my-documents': { skip: ['role', 'needs a storefront customer login (customerAuth: a buyer who signed in on the shop window by e-mail code), not a shop token; no such customer on the load shop'] },
     'GET /api/catalogue/:bridge_id/support/preview': { make: async (api) => ({ params: { bridge_id: await myBridge(api) } }) },
@@ -152,8 +192,6 @@ module.exports = {
     'POST /api/combo-templates': { body: () => ({ name: 'lt-combo-' + u(), definition: [{ name: 'lt-group', min: 1, max: 1, options: [{ name: 'lt-option' }] }] }) },
     'POST /api/quick-keys/groups': { body: () => ({ name: 'lt-group-' + u() }) },
     'POST /api/capture/stores': { body: () => ({ phone: '+9190000' + String(Math.floor(Math.random() * 90000) + 10000), display_name: 'lt-store-' + u() }) },
-    'POST /api/testing/changes': { body: () => ({ summary: 'lt- live-trips probe ' + u(), backout: 'lt- nothing to undo: test shop' }) },
-    'POST /api/testing/releases': { skip: ['fixture', 'needs the id of a testing change (definition) to carry; the testing board is its own shop and the load shop holds none'] },
     'PATCH /api/combo-templates/:id': { body: () => ({ name: 'lt-combo-' + u() }) },
     'PATCH /api/quick-keys/groups/:id': { body: () => ({ name: 'lt-group-' + u() }) },
     'PUT /api/assist/container': { body: () => ({ container_id: 'lt/' + u(), name: 'lt-container' }) },
