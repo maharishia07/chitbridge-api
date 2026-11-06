@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 150,
+  "long_functions": 148,
   "worst_complexity": 176,
   "worst_at": "lib/books-hooks.js classify",
   "long": {
@@ -33,10 +33,6 @@
     ],
     "lib/books-payables.js": [
       "view"
-    ],
-    "lib/books-period.js": [
-      "runDepreciation",
-      "taxReturn"
     ],
     "lib/books-tally.js": [
       "build"
