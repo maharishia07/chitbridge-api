@@ -4655,6 +4655,180 @@
         "url": "/api/chits/unread"
       }
     },
+    "GET /api/connections/list": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "connections",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "connection_id",
+                "from_entity_id",
+                "from_display_name",
+                "from_bridge_id",
+                "to_entity_id",
+                "to_display_name",
+                "to_bridge_id",
+                "status",
+                "note",
+                "created_at"
+              ],
+              "properties": {
+                "connection_id": {
+                  "type": "string"
+                },
+                "from_entity_id": {
+                  "type": "string"
+                },
+                "from_display_name": {
+                  "type": "string"
+                },
+                "from_bridge_id": {
+                  "type": "string"
+                },
+                "to_entity_id": {
+                  "type": "string"
+                },
+                "to_display_name": {
+                  "type": "string"
+                },
+                "to_bridge_id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/connections/list?limit=1"
+      }
+    },
+    "GET /api/connections/pending": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "count",
+          "requests",
+          "total",
+          "page",
+          "limit"
+        ],
+        "properties": {
+          "count": {
+            "type": "number"
+          },
+          "requests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "connection_id",
+                "from_entity_id",
+                "from_display_name",
+                "from_bridge_id",
+                "to_entity_id",
+                "to_display_name",
+                "to_bridge_id",
+                "status",
+                "note",
+                "created_at"
+              ],
+              "properties": {
+                "connection_id": {
+                  "type": "string"
+                },
+                "from_entity_id": {
+                  "type": "string"
+                },
+                "from_display_name": {
+                  "type": "string"
+                },
+                "from_bridge_id": {
+                  "type": "string"
+                },
+                "to_entity_id": {
+                  "type": "string"
+                },
+                "to_display_name": {
+                  "type": "string"
+                },
+                "to_bridge_id": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "total": {
+            "type": "number"
+          },
+          "page": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/connections/pending"
+      }
+    },
     "GET /api/crm/calls": {
       "status": "200",
       "schema": {
@@ -5469,6 +5643,270 @@
         "url": "/api/invoice/22222222-2222-4222-8222-222222222222"
       }
     },
+    "GET /api/network/entities/:id/connections": {
+      "status": "200",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "parent_id",
+            "child_id",
+            "type",
+            "state",
+            "requested_by",
+            "in_flight",
+            "created_at",
+            "parent_name",
+            "child_name"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "parent_id": {
+              "type": "string"
+            },
+            "child_id": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "requested_by": {
+              "type": "string"
+            },
+            "in_flight": {
+              "type": "boolean"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "parent_name": {
+              "type": "string"
+            },
+            "child_name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "x-closed-by": "recordings"
+        }
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/entities/aaaaaaaa-0000-4000-8000-00000000000c/connections"
+      }
+    },
+    "GET /api/network/entities/:id/subtree": {
+      "status": "200",
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "bridge_id",
+            "name",
+            "path",
+            "depth"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "bridge_id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "depth": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false,
+          "x-closed-by": "recordings"
+        }
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/entities/aaaaaaaa-0000-4000-8000-00000000000c/subtree"
+      }
+    },
+    "GET /api/network/entities/lookup": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "found"
+        ],
+        "properties": {
+          "found": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "object",
+            "required": [
+              "id",
+              "bridgeId",
+              "name",
+              "mode",
+              "claimed",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "bridgeId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "claimed": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/entities/lookup?bridgeId=aaaa2222"
+      }
+    },
+    "GET /api/network/place": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "found"
+        ],
+        "properties": {
+          "found": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "object",
+            "required": [
+              "id",
+              "bridgeId",
+              "name",
+              "mode",
+              "claimed",
+              "status"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "bridgeId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "claimed": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "rootBridge": {
+            "type": "string"
+          },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "bridge_id",
+                "name",
+                "path",
+                "depth"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "bridge_id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "depth": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "refused": {
+            "type": "object",
+            "required": [
+              "code",
+              "message"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/place"
+      }
+    },
     "GET /api/tax/gstr": {
       "status": "200",
       "schema": {
@@ -5761,6 +6199,51 @@
         "url": "/api/catalogue/enquiry/22222222-2222-4222-8222-222222222222",
         "body": {
           "message_text": "  is it fresh?  "
+        }
+      }
+    },
+    "POST /api/connections/request": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "connection_id",
+          "to"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "connection_id": {
+            "type": "string"
+          },
+          "to": {
+            "type": "object",
+            "required": [
+              "display_name",
+              "bridge_id"
+            ],
+            "properties": {
+              "display_name": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/connections/request",
+        "body": {
+          "to_entity_id": "77777777-7777-4777-8777-777777777777",
+          "note": "hi"
         }
       }
     },
@@ -16058,6 +16541,398 @@
         }
       }
     },
+    "POST /api/network/connections": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections",
+        "body": {
+          "childHandle": "shop-a.c"
+        }
+      }
+    },
+    "POST /api/network/connections/:id/approve": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by",
+          "in_flight",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "in_flight": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections/eeeeeeee-0000-4000-8000-000000000001/approve",
+        "body": {}
+      }
+    },
+    "POST /api/network/connections/:id/decline": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by",
+          "in_flight",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "in_flight": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections/eeeeeeee-0000-4000-8000-000000000001/decline",
+        "body": {}
+      }
+    },
+    "POST /api/network/connections/:id/disconnect": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by",
+          "in_flight",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "in_flight": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections/eeeeeeee-0000-4000-8000-000000000001/disconnect",
+        "body": {}
+      }
+    },
+    "POST /api/network/connections/:id/resume": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by",
+          "in_flight",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "in_flight": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections/eeeeeeee-0000-4000-8000-000000000001/resume",
+        "body": {}
+      }
+    },
+    "POST /api/network/connections/:id/suspend": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "parent_id",
+          "child_id",
+          "type",
+          "state",
+          "requested_by",
+          "in_flight",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parent_id": {
+            "type": "string"
+          },
+          "child_id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "requested_by": {
+            "type": "string"
+          },
+          "in_flight": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/connections/eeeeeeee-0000-4000-8000-000000000001/suspend",
+        "body": {}
+      }
+    },
+    "POST /api/network/entities": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "bridge_id",
+          "name",
+          "mode",
+          "claimed",
+          "path"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bridge_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "claimed": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/entities",
+        "body": {
+          "name": "Acme"
+        }
+      }
+    },
+    "POST /api/network/entities/:id/claim": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "bridge_id",
+          "name",
+          "mode",
+          "claimed",
+          "status",
+          "path"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "bridge_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "claimed": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/entities/aaaaaaaa-0000-4000-8000-00000000000c/claim",
+        "body": {}
+      }
+    },
     "POST /api/quick-keys/groups": {
       "status": "201",
       "schema": {
@@ -17976,6 +18851,37 @@
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/void",
         "body": {
           "reason": "Mistake"
+        }
+      }
+    },
+    "PUT /api/connections/:id/respond": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "connection_id",
+          "status"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "connection_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "example": {
+        "url": "/api/connections/cccccccc-0000-4000-8000-000000000001/respond",
+        "body": {
+          "action": "accept"
         }
       }
     },
