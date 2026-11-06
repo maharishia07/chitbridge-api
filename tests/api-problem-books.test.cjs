@@ -585,20 +585,22 @@ function foreignIdEvidenceOnDisk() {
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
-    delete routes[route].output_allowlist;
-    delete routes[route].foreign_id_404;
-    if (!Object.keys(routes[route]).length) delete routes[route];
+  Object.keys(routes).filter(MINE).forEach((route) => {
+    if (!(proved[route] && proved[route].output_allowlist)) {
+      delete routes[route].output_allowlist;
+      delete routes[route].output_allowlist_basis;
+    }
+    if (route.includes(' ' + MOUNT + '/')) delete routes[route].foreign_id_404; /* foreign ids are proved for the books mount only */
   });
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
-  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
-  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+  Object.keys(routes).filter((route) => !Object.keys(routes[route]).length).forEach((route) => delete routes[route]);
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes }), null, 1) + '\n'); /* every row keeps its place (the file is not one sorted list); a newly proved route is added at the end */
 }
 
 /** lib/tax-contract.js as a unit: the words of a tax refusal and of a fault, as the service always said them */
