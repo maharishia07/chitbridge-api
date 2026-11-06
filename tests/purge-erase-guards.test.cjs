@@ -114,6 +114,12 @@ async function it(what, fn) { await fn(); checks++; console.log('  ok  ' + what)
     assert.strictEqual(r.body.message, 'Identity tombstoned');
   });
 
+  await it('an erase that matched no entity is a 404, never "Identity tombstoned" (CMP-30 · GDPR Art. 17 · DPDP s.12)', async () => {
+    const r = await erase({ sealed: false, matches: false }, { ...shop, owner_scope: 'platform' });
+    assert.strictEqual(r.status, 404, JSON.stringify(r.body));
+    assert.ok(!/tombstoned/i.test(JSON.stringify(r.body)), 'an erasure that erased nothing reads as done');
+  });
+
   console.log('\n  ' + checks + ' checks');
   console.log('  ' + checks + ' passed');
   process.exit(0);
