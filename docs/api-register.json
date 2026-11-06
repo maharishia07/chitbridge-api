@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 330,
-  "meets": 297,
+  "partial": 288,
+  "meets": 339,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -468,13 +468,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -2263,13 +2263,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -7828,13 +7828,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-intake.js",
     "intake.html"
@@ -7927,13 +7927,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -8487,13 +8487,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -8779,13 +8779,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -9075,13 +9075,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -9174,13 +9174,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-marketing.js"
    ],
@@ -9958,13 +9958,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -12271,13 +12271,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-workforce.js"
    ],
@@ -13815,13 +13815,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-categories.js"
@@ -15306,13 +15306,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "core.js",
     "promo.html",
@@ -17181,13 +17181,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -18708,13 +18708,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -18994,13 +18994,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-iddocs.js"
    ],
@@ -20361,13 +20361,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "know-your-business.html"
    ],
@@ -20456,13 +20456,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "know-your-business.html"
    ],
@@ -20973,13 +20973,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "network-app.js"
@@ -21464,13 +21464,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -22006,13 +22006,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -22100,13 +22100,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "shop-privacy.js"
    ],
@@ -22309,13 +22309,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -23211,13 +23211,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -23408,13 +23408,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-rewards.js"
    ],
@@ -23794,13 +23794,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -23902,13 +23902,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-chit2.js"
@@ -24868,13 +24868,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -30899,13 +30899,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -31109,13 +31109,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -32408,13 +32408,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-adopt.js"
    ],
@@ -38171,13 +38171,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "intake.html"
@@ -38274,13 +38274,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-intake.js",
     "intake.html"
@@ -38476,13 +38476,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-intake.js",
     "intake.html"
@@ -39776,13 +39776,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -39977,13 +39977,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -40277,13 +40277,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -43981,13 +43981,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-connector.js"
    ],
@@ -50175,13 +50175,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "know-your-business.html"
    ],
@@ -52045,13 +52045,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -52145,13 +52145,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -52547,13 +52547,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "shop-privacy.js"
    ],
@@ -64826,13 +64826,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
