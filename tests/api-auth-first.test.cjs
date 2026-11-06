@@ -73,5 +73,7 @@ function call(port, method, urlPath) {
   console.log('  ' + (sane ? 'ok  ' : 'FAIL') + '  the walk found the signed-in routes (a walk that finds nothing would pass everything)');
   console.log('  ' + (wrong.length ? 'FAIL' : 'ok  ') + '  every signed-in route answers 401 signed out, ids and body ignored');
   wrong.forEach((line) => console.log('        ' + line));
+  const failed = (sane ? 0 : 1) + (wrong.length ? 1 : 0);
+  console.log('2 checks' + (failed ? ', ' + failed + ' FAILED' : ', all ok')); /* the line scripts/guards.cjs counts: without it the guard proved "0 checks" and went red */
   process.exit(sane && !wrong.length ? 0 : 1);
 })();
