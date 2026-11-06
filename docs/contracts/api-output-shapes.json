@@ -2009,7 +2009,8 @@
           "total_minor": {
             "type": "number"
           },
-          "payables": {}
+          "payables": {},
+          "follow_up_total": {}
         },
         "additionalProperties": false
       },

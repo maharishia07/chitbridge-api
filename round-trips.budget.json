@@ -233,10 +233,11 @@
     "GET /api/assist/penetration": {
       "file": "assist.js",
       "trips": 1,
-      "wire": 1,
+      "wire": 4,
       "fired": true,
       "status": 200,
-      "extra": true
+      "extra": true,
+      "why": "the withEntity RLS-transaction wrapper is BEGIN/SET LOCAL/query/COMMIT = 4 statements on the wire for 1 real query, same as every withEntity-bound route (e.g. DELETE /api/channels/:id, DELETE /api/chits/:chit_id); wire:1 was a mis-measurement at write time, SEC-75c"
     },
     "GET /api/assist/questions": {
       "file": "assist.js",
