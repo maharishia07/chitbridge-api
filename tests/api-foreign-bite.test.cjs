@@ -1,6 +1,7 @@
 /**
  * tests/api-foreign-bite.test.cjs — the BITE of the foreign-id proof (S35, critic 6 Nov 2026 Finding A): a foreign-id case that cannot fail proves nothing.
  *
+ * HONEST LIMIT  this proves the HARNESS can fail (a weakened store is caught). It does NOT prove a handler keeps its ownership check: bypassing RLS on GET /:chit_id left the real-handler comparison green (api-foreign-bite 11/11 in the review). A handler is proved by its own area test and a SIT run.
  * OWNS      (1) the helper bite: tests/lib/foreign-id-world.cjs biteCase goes red against a store that ignores the owner and green against a scoped one;
  *           (2) the chits bite: the generator's foreign world (tools/api-contract-tests.cjs, world.weak) over the REAL chits routes: with the store weakened,
  *               the routes whose store read decides the answer must flip to failing. Routes that stay green are LISTED (held by another check, or never reading).
@@ -39,6 +40,10 @@ async function helperBite() {
   check('helper bite: a world that answers 404 to everyone (cannot tell shops apart) is named, not passed', (await FOREIGN.biteCase(alwaysNotFound)) !== null);
 }
 
+/* the chits routes the generator's real world holds (foreign_id_404), and the ones among them held by another check than the store read (none today); both numbers are pinned on purpose */
+const HELD_CHITS_ROUTES = 23;
+const HELD_ELSEWHERE = [];
+
 async function chitsBite() {
   const app = generator.appForCases(API);
   const chits = (leaf) => /^\/api\/chits\/:/.test(leaf.path);
@@ -64,8 +69,9 @@ async function chitsBite() {
   });
   console.log('  chits routes held in the real world: ' + (flipped.length + stayed.length) + ' · caught by the weakened store: ' + flipped.length);
   stayed.forEach((key) => console.log('  note  ' + key + ': stays green under a weakened store (held by another check, or the id is never read)'));
-  check('chits bite: the weakened store is caught on at least one real chits route', flipped.length >= 1);
-  check('chits bite: at least one chits route held in the real world (the comparison has something to bite)', flipped.length + stayed.length >= 1);
+  check('chits bite: the real world holds exactly ' + HELD_CHITS_ROUTES + ' chits routes (a number that moves is a decision, not drift)', flipped.length + stayed.length === HELD_CHITS_ROUTES, flipped.length + stayed.length);
+  stayed.forEach((key) => check('chits bite: ' + key + ' is caught by the weakened store (or listed as held by another check)', HELD_ELSEWHERE.includes(key)));
+  check('chits bite: every held chits route flips under the weakened store (' + flipped.length + ' of ' + (flipped.length + stayed.length - HELD_ELSEWHERE.length) + ' that read the store)', flipped.length === HELD_CHITS_ROUTES - HELD_ELSEWHERE.length);
 }
 
 /* the exemptions of docs/contracts/api-hardening-scope.json: the ONE rule set is register.scopeProblems (also run by api-register.cjs --check); here it is run on the committed files, and the register is shown to read every cannot_answer entry */
