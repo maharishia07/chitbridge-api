@@ -1568,6 +1568,15 @@
    "since": "2026-10-25"
   },
   {
+   "code": "CTP_VERSION_UNSUPPORTED",
+   "status": "400",
+   "title": "Version not read",
+   "shopkeeper": "This installation reads CTP/1, any minor version; the message is of another major version.",
+   "hint": "The sending installation must send a CTP/1 message (minor versions and extra fields are fine).",
+   "owner_area": "ctp",
+   "since": "2026-11-06"
+  },
+  {
    "code": "CURRENCY_ENTITY_ONLY",
    "status": "403",
    "title": "Currency is the business’s",
