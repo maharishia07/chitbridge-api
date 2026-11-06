@@ -2006,10 +2006,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
    }
   },
   "POST /api/identity/documents/:scheme/code": {
@@ -2880,10 +2876,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
    }
   },
   "POST /api/governance/conformance": {
