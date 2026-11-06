@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 243,
-  "meets": 384,
+  "partial": 241,
+  "meets": 386,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -18,7 +18,7 @@
    },
    "foreign_id_404": {
     "applies": 203,
-    "failing": 28
+    "failing": 20
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -20987,7 +20987,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 143,
-   "hash": "42577ef876211751",
+   "hash": "a0d06b8ea42b5e78",
    "does": "",
    "errors": {
     "count": 0,
@@ -21018,7 +21018,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -21057,7 +21057,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "42577ef876211751"
+    "stale_since": "a0d06b8ea42b5e78"
    },
    "status": "partial",
    "callers": [],
@@ -21082,7 +21082,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 137,
-   "hash": "c0c31a441acaddd9",
+   "hash": "54709250f70dc4dd",
    "does": "",
    "errors": {
     "count": 0,
@@ -21113,7 +21113,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -21152,7 +21152,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c0c31a441acaddd9"
+    "stale_since": "54709250f70dc4dd"
    },
    "status": "partial",
    "callers": [
@@ -21248,11 +21248,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e154f449feca36d9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js"
    ],
@@ -21279,7 +21278,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 92,
-   "hash": "7e8c2ddbf83eaffa",
+   "hash": "4747f2c6ffbcb794",
    "does": "",
    "errors": {
     "count": 0,
@@ -21346,11 +21345,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7e8c2ddbf83eaffa"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js"
    ],
@@ -51119,7 +51117,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 149,
-   "hash": "9b7c15d6b4b67374",
+   "hash": "a148db102e19064e",
    "does": "",
    "errors": {
     "count": 0,
@@ -51190,7 +51188,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "9b7c15d6b4b67374"
+    "stale_since": "a148db102e19064e"
    },
    "status": "partial",
    "callers": [
@@ -51219,7 +51217,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 165,
-   "hash": "ce2763a6f71b8745",
+   "hash": "cf94b2f1ecb4b050",
    "does": "",
    "errors": {
     "count": 0,
@@ -51251,7 +51249,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51292,7 +51290,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ce2763a6f71b8745"
+    "stale_since": "cf94b2f1ecb4b050"
    },
    "status": "partial",
    "callers": [
@@ -51323,7 +51321,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 173,
-   "hash": "bccd1442173619f3",
+   "hash": "0fc9c8e13510c1f5",
    "does": "",
    "errors": {
     "count": 0,
@@ -51355,7 +51353,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51396,7 +51394,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "bccd1442173619f3"
+    "stale_since": "0fc9c8e13510c1f5"
    },
    "status": "partial",
    "callers": [
@@ -51427,7 +51425,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 197,
-   "hash": "134ffaa014390daa",
+   "hash": "f2723d9cbe44782d",
    "does": "",
    "errors": {
     "count": 0,
@@ -51459,7 +51457,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51500,7 +51498,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "134ffaa014390daa"
+    "stale_since": "f2723d9cbe44782d"
    },
    "status": "partial",
    "callers": [
@@ -51531,7 +51529,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 189,
-   "hash": "afe75d264ecdd4b9",
+   "hash": "3816956041ef4601",
    "does": "",
    "errors": {
     "count": 0,
@@ -51563,7 +51561,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51604,7 +51602,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "afe75d264ecdd4b9"
+    "stale_since": "3816956041ef4601"
    },
    "status": "partial",
    "callers": [
@@ -51635,7 +51633,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 181,
-   "hash": "134dfcfbadfa6a89",
+   "hash": "53cbc22c6326a455",
    "does": "",
    "errors": {
     "count": 0,
@@ -51667,7 +51665,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51708,7 +51706,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "134dfcfbadfa6a89"
+    "stale_since": "53cbc22c6326a455"
    },
    "status": "partial",
    "callers": [
@@ -51835,7 +51833,7 @@
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
    "line": 68,
-   "hash": "e0ec9d82016c0ee3",
+   "hash": "f50ade78cee2531b",
    "does": "",
    "errors": {
     "count": 0,
@@ -51867,7 +51865,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": false
@@ -51908,7 +51906,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e0ec9d82016c0ee3"
+    "stale_since": "f50ade78cee2531b"
    },
    "status": "partial",
    "callers": [],
