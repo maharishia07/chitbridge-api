@@ -184,6 +184,9 @@ async function foreignWorld(port) {
     const shopA = keep.tables.data;
     const untouched = shopA.items.length === 2 && shopA.items.every((one) => (one.product_id === S.TEA ? one.position === 1 : one.position === 2)) && shopA.groups.every((one) => !one.is_deleted && one.version === 1);
     check(route + ': another shop\'s group answers exactly as an unknown one (200, same body: partial on the 404 column, not a leak) and changes nothing of the other shop\'s', unknown.status === 200 && foreign.comparable(alien) === foreign.comparable(unknown) && untouched, { unknown: unknown.status, alien: alien.status, untouched });
+    /* Slice 1 (critic 6 Nov, class C): the same proof is the route's foreign_id_404 evidence: its unknown id answers 200 by design (an idempotent remove), the foreign id answers the same bytes, and the owner's own id is a different answer */
+    const own = await play('owner', true);
+    seen.record(route, unknown.status === 200 && foreign.comparable(alien) === foreign.comparable(unknown) && untouched && foreign.comparable(own) !== foreign.comparable(alien));
   }
   return seen.proved();
 }
