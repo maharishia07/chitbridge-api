@@ -2643,8 +2643,7 @@
   },
   "POST /api/catalogue/photo-extract": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2663,8 +2662,7 @@
   },
   "POST /api/catalogue/enquiry/:item_id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
