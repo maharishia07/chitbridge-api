@@ -1,5 +1,5 @@
 /**
- * p1-7-bas-basis.test.cjs — P1-7 · CTRY-87 (b): the BAS says the basis it is READ on, first among its notes: "Basis: non-cash (accrual), GST at invoice date".
+ * p1-7-bas-basis.test.cjs — P1-7 · CTRY-87 (b): the BAS says the basis it is READ on, first among its notes: "Basis: non-cash (accrual): GST in the period of the invoice or the payment, whichever comes first".
  *
  * An Australian shop (hand figures): a walk-in sale on 20 Sep 2026 of A$100.00 + A$10.00 GST, cash; another on 5 Oct of A$200.00 + A$20.00 GST.
  *   BAS 2026-Q1 (Jul-Sep): 1A = 10.00 (the September invoice, at its invoice date), and the October one is NOT in it.
@@ -15,7 +15,7 @@ const H = require('./support/books-harness.cjs');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
-const BASIS = 'Basis: non-cash (accrual), GST at invoice date';
+const BASIS = 'Basis: non-cash (accrual): GST in the period of the invoice or the payment, whichever comes first';
 const AU = 'aaaaaaaa-1111-4111-8111-111111111111', AE = 'eeeeeeee-1111-4111-8111-111111111111', IN = '11111111-1111-4111-8111-111111111111';
 const owner = (id, name) => ({ identity_id: id, identity_type: 'entity', display_name: name });
 let WHO = owner(AU, 'Bondi Grocer');
