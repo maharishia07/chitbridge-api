@@ -112,7 +112,7 @@ t('their larger figure is not "Ask them for it": it asks to look in our books fi
 });
 t('entryLines reads the chit status from its one lateral chit read (no new trip); SQL pinned, unrun here', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-store.js'), 'utf8');
-  assert.ok(/c\.status AS src_status/.test(src) && /SELECT x\.chit_id, x\.purpose, \(SELECT cs\.current_status FROM chit_status cs WHERE cs\.chit_id = x\.chit_id AND cs\.entity_id = x\.entity_id AND cs\.direction = x\.direction\) AS status, x\.business_json/.test(src) && !/x\.status, x\.business_json/.test(src) /* chit_header has no status column, it lives in chit_status: SIT run 15 found the 500; the real query runs in CI realstack (people-truth) */);
+  assert.ok(/cst\.current_status AS src_status/.test(src) && /LEFT JOIN chit_status cst ON cst\.chit_id = c\.chit_id AND cst\.entity_id = \$1 AND cst\.direction = c\.direction/.test(src) && !/x\.status, x\.business_json/.test(src) /* chit_header has no status column, it lives in chit_status: SIT run 15 found the 500; the real query runs in CI realstack (people-truth) */);
 });
 
 console.log('\nACC-232 · their return is for THEIR period');
