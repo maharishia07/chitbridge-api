@@ -226,13 +226,13 @@ const writeExtras = [
   X('governed-entity-created-with-exception', 'POST /api/governance/entities', 201, { setup: { who: PLATFORM, sqlRows: CREATE_ROWS }, body: { display_name: 'A', email: 'a@b.c', plan: 'free', params_override: UNKNOWN_KEY_OVERRIDE } }),
   X('governed-entity-reattested', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: {} }]]) } }),
   X('governed-entity-reattested-with-exception', 'POST /api/governance/entities/:id/reattest', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: UNKNOWN_KEY_OVERRIDE }]]) } }),
-  X('conformance-flagged', 'POST /api/governance/conformance', 200, { setup: { sqlRows: STANDARDS_ROWS }, body: { data: {}, scope: 'chit' } }),
-  X('conformance-pass', 'POST /api/governance/conformance', 200, { setup: { sqlRows: STANDARDS_ROWS }, body: { data: { hs_code: '1006' } } }),
-  X('conformance-no-standards', 'POST /api/governance/conformance', 200, { body: { scope: 'entity' } }),
-  X('boilerplate-read', 'GET /api/governance/boilerplate/:key', 200, { setup: { sqlRows: MOULD_ROWS } }),
-  X('boilerplate-read-bare', 'GET /api/governance/boilerplate/:key', 200, { setup: { sqlRows: BARE_MOULD_ROWS } }),
-  X('boilerplate-adopted', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { sqlRows: MOULD_ROWS } }),
-  X('boilerplate-adopted-bare', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { sqlRows: BARE_MOULD_ROWS } }),
+  X('conformance-flagged', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM, sqlRows: STANDARDS_ROWS }, body: { data: {}, scope: 'chit' } }),
+  X('conformance-pass', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM, sqlRows: STANDARDS_ROWS }, body: { data: { hs_code: '1006' } } }),
+  X('conformance-no-standards', 'POST /api/governance/conformance', 200, { setup: { who: PLATFORM }, body: { scope: 'entity' } }),
+  X('boilerplate-read', 'GET /api/governance/boilerplate/:key', 200, { setup: { who: PLATFORM, sqlRows: MOULD_ROWS } }),
+  X('boilerplate-read-bare', 'GET /api/governance/boilerplate/:key', 200, { setup: { who: PLATFORM, sqlRows: BARE_MOULD_ROWS } }),
+  X('boilerplate-adopted', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { who: PLATFORM, sqlRows: MOULD_ROWS } }),
+  X('boilerplate-adopted-bare', 'POST /api/governance/boilerplate/:key/adopt', 200, { setup: { who: PLATFORM, sqlRows: BARE_MOULD_ROWS } }),
   X('source-registered-new', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/INSERT INTO identities/, [SOURCE_ENTITY]]) }, body: { source_key: 'k', title: 'K source', facet: 'quality', template: { scope: 'entity' } } }),
   X('source-registered-again-renamed', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', title: 'K renamed' } }),
   X('source-registered-a-brand', 'POST /api/governance/source', 200, { setup: { who: PLATFORM, sqlRows: ANSWERS([/SELECT identity_id, bridge_id, display_name FROM identities WHERE email/, [Object.assign({}, SOURCE_ENTITY)]]) }, body: { source_key: 'k', kind: 'brand' } }),
@@ -259,7 +259,9 @@ const writeExtras = [
   X('acceptance-read-unknown-supplier', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [TABLE_THERE] }),
   X('acceptance-read-not-switched-on', 'GET /api/governance/supplier-acceptance/:handle', 200, { patch: [{ mod: 'lib/schema', fn: 'hasTable', value: async () => false }] })
 ];
-const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { patch: FAIL(mod, fn) }));
+/* SEC-133: these three answer a shop 403, so their library faults are reached as the platform */
+const PLATFORM_DOORS = ['POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
+const faultExtras = FAULTS.map(([route, mod, fn]) => X('library-fault', route, 500, { setup: PLATFORM_DOORS.includes(route) ? { who: PLATFORM } : undefined, patch: FAIL(mod, fn) }));
 const SOURCE_BODY = { source_key: 'k' };
 const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   /* B2 (4 Nov): a query value given twice, or a body that is a list, is refused 422 (new in B2, no old body) by the route's schema check */
@@ -267,7 +269,7 @@ const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   X('lanes-vertical-twice', 'GET /api/governance/lanes', 422, { after: true, url: MOUNT + '/lanes?vertical=paint&vertical=tea' }),
   X('instruments-incoterm-twice', 'GET /api/governance/instruments', 422, { after: true, url: MOUNT + '/instruments?incoterm=CIF&incoterm=FOB' }),
   X('journey-incoterm-twice', 'GET /api/governance/journey', 422, { after: true, url: MOUNT + '/journey?incoterm=CIF&incoterm=FOB' }),
-  X('conformance-body-a-list', 'POST /api/governance/conformance', 422, { after: true, body: [] }),
+  X('conformance-body-a-list', 'POST /api/governance/conformance', 422, { setup: { who: PLATFORM }, after: true, body: [] }),
   /* K-1: the platform names an id that is not a uuid: the unknown id's 404, and the database is never asked (it would answer 22P02 and a 500) */
   X('platform-reads-junk-id', 'GET /api/governance/entities/:id', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc', after: true }),
   X('platform-reattests-junk-id', 'POST /api/governance/entities/:id/reattest', 404, { setup: { who: PLATFORM, sqlRows: (sql) => { if (/FROM identities/.test(sql)) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' }); return null; } }, url: MOUNT + '/entities/abc/reattest', after: true }),
@@ -284,8 +286,8 @@ const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   X('no-constitution-to-reattest', 'POST /api/governance/entities/:id/reattest', 503, { setup: { who: PLATFORM, sqlRows: ANSWERS(ENTITY) } }),
   X('stored-override-widens', 'POST /api/governance/entities/:id/reattest', 422, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/FROM identities WHERE governed_by/, [{ params_override: WIDENS }]]) } }),
   X('reattest-fault', 'POST /api/governance/entities/:id/reattest', 500, { setup: { who: PLATFORM, db: 'fail' } }),
-  X('no-such-boilerplate', 'GET /api/governance/boilerplate/:key', 404, {}),
-  X('no-such-boilerplate-to-adopt', 'POST /api/governance/boilerplate/:key/adopt', 404, {}),
+  X('no-such-boilerplate', 'GET /api/governance/boilerplate/:key', 404, { setup: { who: PLATFORM } }),
+  X('no-such-boilerplate-to-adopt', 'POST /api/governance/boilerplate/:key/adopt', 404, { setup: { who: PLATFORM } }),
   X('no-such-source', 'GET /api/governance/source/:key', 404, {}),
   X('source-unnamed', 'POST /api/governance/source', 400, { setup: { who: PLATFORM }, body: {} }),
   X('source-fault', 'POST /api/governance/source', 500, { setup: { who: PLATFORM }, body: SOURCE_BODY, patch: FAIL('lib/source', 'registerSource') }),
@@ -453,7 +455,9 @@ function checkAnswers(recording) {
   const answers = Object.values(recording);
   const keys = Object.keys(recording);
   check('a caller who is not signed in is refused with 401', keys.filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
-  const platformOnly = ['POST /api/governance/entities', 'POST /api/governance/entities/:id/reattest', 'POST /api/governance/source'];
+  const platformOnly = ['POST /api/governance/entities', 'POST /api/governance/entities/:id/reattest', 'POST /api/governance/source', 'POST /api/governance/conformance', 'GET /api/governance/boilerplate/:key', 'POST /api/governance/boilerplate/:key/adopt'];
+  const manualScripts = ['scripts/prove-lifecycle.js', 'scripts/demo-lifecycle.js'].map((file) => fs.readFileSync(path.join(HERE, file), 'utf8'));
+  check('SEC-133: both manual lifecycle scripts take a platform token (CB_PLATFORM_TOKEN) for the platform-only calls', manualScripts.every((text) => /process.env.CB_PLATFORM_TOKEN/.test(text) && /PLATFORM_TOKEN || token/.test(text)));
   check('a shop login is refused with 403 NOT_PLATFORM at every platform-only door', platformOnly.every((route) => recording[route + '|shop-owner'] && recording[route + '|shop-owner'].status === 403 && recording[route + '|shop-owner'].body.code === 'NOT_PLATFORM'));
   check('a viewer is refused every trade write with 403 and the rail\'s word', ['PUT /api/governance/profile', 'POST /api/governance/compliance', 'POST /api/governance/verify'].every((route) => recording[route + '|viewer-asks'].status === 403 && recording[route + '|viewer-asks'].body.code === 'read_only'));
   const foreign = recording['GET /api/governance/entities/:id|foreign-entity-id'];

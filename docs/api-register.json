@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 422,
-  "meets": 205,
+  "partial": 423,
+  "meets": 204,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -15629,12 +15629,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 258,
-   "hash": "7a0fb21d7292ba68",
+   "hash": "6d92366f0d90cf8c",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      404,
      422,
      500
@@ -15677,6 +15678,7 @@
    },
    "declared": [
     401,
+    403,
     404,
     422,
     500
@@ -15691,7 +15693,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7a0fb21d7292ba68"
+    "stale_since": "6d92366f0d90cf8c"
    },
    "status": "partial",
    "callers": [],
@@ -43248,12 +43250,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 272,
-   "hash": "db7df182b93c138f",
+   "hash": "45d2802aeb7ad70b",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
      401,
+     403,
      404,
      422,
      500
@@ -43300,6 +43303,7 @@
    },
    "declared": [
     401,
+    403,
     404,
     422,
     500
@@ -43312,10 +43316,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "45d2802aeb7ad70b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43428,12 +43433,13 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 245,
-   "hash": "0b61f6fc54084304",
+   "hash": "15443b824f72f7a7",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
+     403,
      422,
      500
     ],
@@ -43473,6 +43479,7 @@
    },
    "declared": [
     401,
+    403,
     422,
     500
    ],
@@ -43486,7 +43493,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0b61f6fc54084304"
+    "stale_since": "15443b824f72f7a7"
    },
    "status": "partial",
    "callers": [],
