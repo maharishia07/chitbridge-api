@@ -17,7 +17,7 @@
     "failing": 150
    },
    "foreign_id_404": {
-    "applies": 204,
+    "applies": 205,
     "failing": 41
    },
    "idempotent_money_write": {
@@ -22224,7 +22224,7 @@
    "applies": {
     "strict_input": false,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": false,
     "inbound_validated": false,
     "trips_budgeted": true

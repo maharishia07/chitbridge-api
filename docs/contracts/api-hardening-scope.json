@@ -55,7 +55,6 @@
   "GET /api/governance/supplier-acceptance/:handle": "counterparty door: the handle is a public directory bridge id; an unknown handle answers 200 null by design (routes/governance.js)",
   "GET /api/integrations/docs/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
   "GET /api/integrations/download/:id": "platform reference: the id names a connector-kit catalogue entry, the same for every shop",
-  "GET /api/products/:id/schedule": "collection under the caller's own items: the read is scoped to the caller's shop and answers [] for an unknown and a foreign id alike, so no id can be told apart (no oracle)",
   "GET /api/products/media/:item_id/:mid": "public door: product media is served by unguessable ids, public by design (routes/products.js)",
   "GET /api/till/engine/:name": "platform reference: the name is an engine file of the till, not a row of any shop",
   "PATCH /api/entities/me/prefs/:kind": "label: the kind is a preference name on the caller's own row, the same in every shop",
