@@ -313,11 +313,11 @@
     },
     "GET /api/attachments/:id": {
       "file": "attachments.js",
-      "trips": 1,
+      "trips": 3,
       "wire": null,
       "fired": true,
       "status": 200,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-in 2026-11-06: 1 on a 200; the offline stub answers 404 and reads 3 (the harness ceiling is the larger)"
     },
     "GET /api/books/accounts": {
       "file": "books.js",
