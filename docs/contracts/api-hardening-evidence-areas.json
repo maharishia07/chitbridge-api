@@ -446,6 +446,14 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
+  "GET /api/privacy/facts": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "GET /api/privacy/me": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "GET /api/products": {
    "output_allowlist": true
   },
@@ -1112,7 +1120,12 @@
   "POST /api/network/connections/:id/suspend": {
    "bfla_role_check": true
   },
+  "POST /api/privacy/me/consent": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "POST /api/privacy/me/requests": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/products": {
