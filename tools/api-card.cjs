@@ -112,21 +112,71 @@ function requiresOf(fileText, fileAbs) {
 /** words that look like calls but are never helpers */
 const NOT_HELPERS = ['if', 'for', 'while', 'switch', 'catch', 'function', 'require', 'query', 'json', 'status', 'send'];
 
-/** a same-file helper that exactly ONE call site in its file reaches: what a readability split of one function leaves behind. A shared helper (ensureYear, onDb) is not private, so a read-only route never inherits another route's writes */
+/** where the literal that starts at `at` ends (a quote closes at the same quote, a regex at its slash), or `at` when none starts there */
+function closingQuote(text, at, quote) {
+  let end = at + 1;
+  while (end < text.length && text[end] !== quote) end += text[end] === '\\' ? 2 : 1;
+  return end + 1;
+}
+
+/** where the comment, string, template or regex literal starting at `at` ends; `at` itself when no literal starts there */
+function literalEnd(text, at) {
+  const lineEnd = text.indexOf('\n', at) < 0 ? text.length : text.indexOf('\n', at);
+  const blockEnd = text.indexOf('*/', at + 2) < 0 ? text.length : text.indexOf('*/', at + 2) + 2;
+  if (text.startsWith('//', at)) return lineEnd;
+  if (text.startsWith('/*', at)) return blockEnd;
+  if ("'\"`".includes(text[at])) return closingQuote(text, at, text[at]);
+  const prior = text.slice(0, at).trimEnd().slice(-1);
+  const startsRegex = text[at] === '/' && (prior === '' || '(,=:[!&|?{};'.includes(prior));
+  return startsRegex ? closingQuote(text, at, '/') : at;
+}
+
+const blankCache = new Map();
+
+/** overwrite out[from..to) with spaces, keeping line breaks */
+function blankRange(out, from, to) {
+  for (let at = from; at < to; at++) if (out[at] !== '\n') out[at] = ' ';
+}
+
+/** source with every comment, string, template and regex literal blanked to spaces (same length), so a name inside one is never taken for a call or a definition */
+function blankLiterals(text) {
+  if (blankCache.has(text)) return blankCache.get(text);
+  const out = text.split('');
+  for (let at = 0; at < text.length; ) {
+    const end = literalEnd(text, at);
+    blankRange(out, at, end);
+    at = Math.max(end, at + 1);
+  }
+  const result = out.join('');
+  blankCache.set(text, result);
+  return result;
+}
+
+/** a function of this name is really DEFINED in the (blanked) text: a declaration, or a const/let/var holding a function or an arrow; a value that merely has the name is not */
+function definesFunction(blank, name) {
+  const declared = new RegExp('function\\s+' + name + '\\s*\\(');
+  const held = new RegExp('(?:const|let|var)\\s+' + name + '\\s*=\\s*(?:async\\s+)?(?:function\\b|[\\w$]+\\s*=>|\\((?:[^()]|\\([^()]*\\))*\\)\\s*=>)');
+  return declared.test(blank) || held.test(blank);
+}
+
+/** a same-file helper that exactly ONE real call site in its file reaches: what a readability split of one function leaves behind. A shared helper (ensureYear, onDb) is not private, so a read-only route never inherits another route's writes */
 function privateHelper(text, name) {
   if (!/^[A-Za-z_$][\w$]*$/.test(name)) return false;
-  if (!new RegExp('(?:function\\s+' + name + '\\s*\\(|(?:const|let|var)\\s+' + name + '\\s*=)').test(text)) return false;
-  const calls = text.match(new RegExp('(?<!function\\s+)(?<![.\\w$])' + name + '\\s*\\(', 'g')) || [];
+  const blank = blankLiterals(text);
+  if (!definesFunction(blank, name)) return false;
+  const calls = blank.match(new RegExp('(?<!function\\s+)(?<![.\\w$])' + name + '\\s*\\(', 'g')) || [];
   return calls.length === 1;
 }
 
-/** the helpers a piece of source calls, as { name, from, text, level, free }: free hops first, so a free path wins over a costly one */
-function hopsFrom({ piece, from, text, level }, route, modules, textOf) {
-  const { plain, member } = callsIn(piece);
-  const free = plain.size ? [...plain].filter((name) => privateHelper(text, name)).map((name) => ({ name, from, text, level, free: true })) : [];
-  /* the original hops, each one a level: a plain call to a helper of the route's file or of a module it requires, and `module.fn(` calls */
-  const costly = [...plain].flatMap((name) => [{ name, from: route.abs, text: route.text, level: level + 1 }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1 }] : [])]);
-  const members = member.filter(([owner]) => modules.has(owner)).map(([owner, name]) => ({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1 }));
+/** the helpers a piece of source calls, as { name, from, text, level, free, confined }. A piece that came through a free hop is CONFINED: it is read without its comments and strings, and what it calls resolves only in its own file (never against the route file) */
+function hopsFrom({ piece, from, text, level, confined, byName, self }, route, modules, textOf) {
+  const { plain, member } = callsIn(confined ? blankLiterals(piece) : piece);
+  const real = confined ? plain : callsIn(blankLiterals(piece)).plain;
+  const free = byName ? [] : [...real].filter((name) => name !== self && privateHelper(text, name)).map((name) => ({ name, from, text, level, free: true, confined: true }));
+  /* a confined piece follows private helpers of its own file and  calls through the route's requires, as before; a bare name is NOT looked up in the route file or its modules */
+  const tried = (name) => [{ name, from: route.abs, text: route.text, level: level + 1, byName: true }, ...(modules.has(name) ? [{ name, from: modules.get(name), text: textOf(modules.get(name)), level: level + 1, byName: true }] : [])];
+  const costly = confined ? [] : [...plain].flatMap(tried);
+  const members = member.filter(([owner]) => modules.has(owner)).map(([owner, name]) => ({ name, from: modules.get(owner), text: textOf(modules.get(owner)), level: level + 1, confined, byName }));
   return [...free, ...costly, ...members];
 }
 
@@ -143,11 +193,11 @@ function reachableText(source, fileText, fileAbs, depth) {
   const queue = [{ piece: source, from: fileAbs, text: fileText, level: 0 }];
   while (queue.length) {
     for (const want of hopsFrom(queue.shift(), { abs: fileAbs, text: fileText }, modules, textOf)) {
-      const id = want.from + '#' + want.name;
+      const id = want.from + '#' + want.name + (want.confined ? '!' : '');
       if (want.level > depth || seen.has(id) || !want.text || NOT_HELPERS.includes(want.name)) continue;
       seen.add(id);
       const body = functionText(want.text, want.name, want.free);
-      if (body) (parts.push(body), queue.push({ piece: body, from: want.from, text: want.text, level: want.level }));
+      if (body) (parts.push(body), queue.push({ piece: body, from: want.from, text: want.text, level: want.level, confined: want.confined, byName: want.byName, self: want.name }));
     }
   }
   return parts.join('\n');
@@ -180,7 +230,7 @@ function errorsOf(declaredStatuses, codes, registeredCodes) {
 
 /** the card facts of one route, given what api-register.cjs already knows (handler source, file text, declared statuses, codes) */
 function cardOf({ root, area, source, fileText, fileAbs, line, declared, codes, registeredCodes, curatedMoney, known }) {
-  const text = fileAbs ? reachableText(source, fileText, fileAbs, Number(process.env.CARD_DEPTH) || 2) : source;
+  const text = fileAbs ? reachableText(source, fileText, fileAbs, 2) : source;
   const tables = tablesOf(text, known);
   return {
     does: tagAbove(fileText, line, 'does'),

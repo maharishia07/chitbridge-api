@@ -40,10 +40,11 @@ fs.writeFileSync(
     '  return lookA(db);',
     '}',
     'async function lookA(db) { return lookB(db); }',
-    'async function lookB(db) { return shared(db); }',
-    // shared is called from lookB AND from other(): not private, and beyond the depth: its write must NOT leak to a read-only route
+    'async function lookB(db) { return mid(db); }',
+    'async function mid(db) { return shared(db); }',
+    // mid is called from lookB AND other(): not private, so it costs a level, and shared (also called by other) is not private and sits beyond the depth: its write must NOT leak to a read-only route
     'async function shared(db) { await db.query(`INSERT INTO cog (id) VALUES (1)`); }',
-    'async function other(db) { return shared(db); }',
+    'async function other(db) { await mid(db); return shared(db); }',
     'module.exports = { enable, peek, other };',
     ''
   ].join('\n')
@@ -59,6 +60,26 @@ t('a destructured parameter list in the helper does not hide its body', writesOf
 t('a shared helper beyond the depth does not leak its write onto a read-only route', writesOf(peekHandler).length === 0);
 t('privateHelper: one call site is private, two are not', card.privateHelper('function a(){ b(); }\nfunction b(){}', 'b') && !card.privateHelper('function a(){ b(); b(); }\nfunction b(){}', 'b'));
 t('privateHelper: a method call or a name that is not defined here is not a private helper', !card.privateHelper('function a(){ x.b(); }\nfunction b(){}', 'b') && !card.privateHelper('function a(){ c(); }', 'c'));
+
+t('privateHelper: a call that is only in a comment is no call (one real call plus a comment mention is still private; a comment alone is not)', card.privateHelper('function a(){ b(); }\n// b(x) is also mentioned here\nfunction b(){}', 'b') && !card.privateHelper('function a(){ /* b() */ }\nfunction b(){}', 'b'));
+t('privateHelper: count(*) inside an SQL string is no call, so a function called count is not followed from it', !card.privateHelper('function a(){ q(`SELECT count(*) FROM t`); }\nfunction count(){}', 'count'));
+t('privateHelper: a const that merely holds a value of that name is not a function', !card.privateHelper('function a(){ list(); }\nconst list = [1, 2];', 'list') && card.privateHelper('function a(){ list(); }\nconst list = async (db) => db;', 'list'));
+
+/* a piece reached only by a bare name (it may be a name collision) does not hand out its private helpers; a comment never names a helper */
+const route2 = path.join(dir, 'route2.js');
+const lonely = 'async (req, res) => { await row(); res.json({}); }'; // a bare-name call
+fs.writeFileSync(route2, ['const B = require("./lib");', 'async function row() { return rowMid(); }',
+  'async function rowMid() { return rowTail(); }', 'async function rowTail() { await db.query(`INSERT INTO sprocket (id) VALUES (1)`); }', 'async function enable() { await db.query(`INSERT INTO gadget (id) VALUES (1)`); }', ''].join('\n'));
+const text2 = fs.readFileSync(route2, 'utf8');
+const writes2 = (source) => card.tablesOf(card.reachableText(source, text2, route2, 2), known).writes;
+t('a piece reached only by a bare name (it may be a name collision) hands out no free hops: row, rowMid and rowTail sit one costly hop each, so rowTail is out of depth 2', writes2(lonely).join() === '');
+
+/* the committed register: the false facts the first version of the free hop produced stay out (a regression for each cause: a name inside an SQL string, a value called like a helper, a name inside a comment) */
+const registered = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'docs', 'api-register.json'), 'utf8')).routes;
+const rowOf = (key) => registered.find((item) => item.key === key) || { reads: ['?'], writes: ['?'] };
+t('GET /api/till/verify does not read customer_list or supplier_list (count(*) in its SQL is no call)', !rowOf('GET /api/till/verify').reads.some((table) => ['customer_list', 'supplier_list'].includes(table)));
+t('GET /api/relationships/suppliers writes nothing (a `const list` is not a helper called list)', rowOf('GET /api/relationships/suppliers').writes.length === 0);
+t('POST /api/till/quick-keys/hide does not read counter_hidden_item (a name in a comment is no call)', !rowOf('POST /api/till/quick-keys/hide').reads.includes('counter_hidden_item'));
 
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n');
