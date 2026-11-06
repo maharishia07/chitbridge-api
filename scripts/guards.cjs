@@ -521,6 +521,16 @@ const GUARDS = [
   'move-in-added-via.test.cjs', // QM-1: the move-in writes only an added_via the migrations' CHECKs allow (read from the .sql); a 23514 is a 422 sentence
   'local-kind.test.cjs', // K-DB OPS-41: a minted party is 'local' once b769's CHECK allows it, 'supplier' + a log line before; an unreadable CHECK never fails a mint
   'retention-archive-gate.test.cjs', // K-DB DB-21/PM-16: a retention commit without an archive receipt is BLOCKED, deletes 0, sends no write; every attempt is one flush event
+  /* QA coverage 2026-11-06 (areas 08 · 13 · 27): units with no proof until now. Each header names its UNIT and CARD. */
+  'rewards-customer-view.test.cjs', // 08 Customer's rewards view: no programme is a sentence · points never a currency · the balance is the whole-ledger SUM · reading never writes · a NUL id is 400
+  'points.test.js', // 08 a point can never be added to a rupee (it was green and reached by no runner)
+  'retention-never-early.test.cjs', // 27 Retention rules: an open dispute never retires · a resolved one is a FLOOR · the extension is bounded · a sender cannot shorten a copy · a runaway sweep is blocked
+  'retention-floor.test.js', // 27 the receiver-side retention floor (it was green and reached by no runner)
+  'purge-erase-guards.test.cjs', // 27 Auto-purge / erase: a sent or received copy is never purged · an open or unreadable dispute refuses · only the creator, only my entity · erase is platform-only, tombstone not delete
+  'storage-ownership.test.cjs', // 27 Object storage: a key not under the owner is NOT_OWNER before any read · one replicated row per participant · a replay stores once · a half-set config falls back to the db
+  'trace-edge.test.cjs', // 13 Batch traceability: no silent holes · is_origin only a true boolean · parents a UUID set · units to one base, unknown unit says so (the qty coercion holes: trace-edge-qty.known-failing.cjs)
+  'inventory-engine.test.cjs', // 13 On hand & movements: the sign comes from the reason · every refusal says why · weighted average and its three edges · replay equals applying one by one (null-rate hole: inventory-null-rate.known-failing.cjs)
+  'stocked-counted.test.cjs', // 13 what is not stock never moves a balance: the product flag wins · else the trade · one query · an unreadable flag keeps items counted
   /* QA-79 (22 Oct): tests that passed offline (stub db, no server) and no runner reached. Their output is counted as '<n> passed' too. */
   'account-sessions.test.cjs',
   'actors-create-level.test.cjs',
