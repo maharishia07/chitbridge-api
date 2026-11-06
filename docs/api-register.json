@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 243,
-  "meets": 384,
+  "partial": 244,
+  "meets": 383,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -61808,7 +61808,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 705,
-   "hash": "68ee59b61d998671",
+   "hash": "2cc704f2d6675973",
    "does": "",
    "errors": {
     "count": 0,
@@ -61881,10 +61881,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2cc704f2d6675973"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
