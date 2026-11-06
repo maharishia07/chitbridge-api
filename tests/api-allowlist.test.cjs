@@ -95,7 +95,7 @@ t('checkCaptures: a recorded answer with a key the shape lacks is named', tool.c
 const contract = require(path.join(API, 'lib', 'assist-contract.js'));
 const whoami = contract.operationFor('GET /whoami');
 t('kit: a route with a derived shape answers under that closed schema, and its checked() chain holds the filter', whoami.responses[200].content['application/json'].schema.additionalProperties === false && contract.checked('GET /whoami').some((fn) => fn && fn.outputAllowlist));
-t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', contract.operationFor('POST /conform').responses[200].content['application/json'].schema.additionalProperties === undefined && !contract.checked('POST /conform').some((fn) => fn && fn.outputAllowlist));
+t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', contract.operationFor('POST /resolve').responses[200].content['application/json'].schema.additionalProperties === undefined && !contract.checked('POST /resolve').some((fn) => fn && fn.outputAllowlist));
 
 /* ── closed from recordings only (a route answered by a shared wrapper): reported, never enforced ── */
 const wrapped = tool.deriveShape({ samples: [{ ok: true, entry_id: 'e1', lines: [{ code: '1', dr: 1 }] }, { ok: true, duplicate: true, entry_id: 'e1' }], source: null, recordings: true });
@@ -128,6 +128,27 @@ t('deriveShape: identifiers a passed-through value happens to name (a shorthand 
 t('deriveShape: a passed-through value whose answers held no key stays open instead of taking its names as keys', (() => {
   const shape = tool.deriveShape({ samples: [{}], source: literal('rows.map((r) => ({ a: 1 }))') });
   return shape.open.length === 1 && shape.schema.additionalProperties === undefined;
+})());
+t('fromRecordings: a handler that hands its answer on (a library call, a spread) closes over the recorded keys, marked, only when asked', (() => {
+  const text = ["router.get('/a', auth, async (req, res) => { res.json(await lib.listThings(req.query)); });", "router.get('/b', auth, async (req, res) => { res.json({ ...await lib.one(), extra: 1 }); });"];
+  const samples = { 200: [{ rows: [{ id: 1 }], total: 1 }] };
+  const asked = tool.shapeEntry({ key: 'GET /api/a', line: 1 }, { byStatus: samples, lines: text, captures: [], fromRecordings: true });
+  const spread = tool.shapeEntry({ key: 'GET /api/b', line: 2 }, { byStatus: { 200: [{ a: 1 }] }, lines: text, captures: [], fromRecordings: true });
+  const plain = tool.shapeEntry({ key: 'GET /api/a', line: 1 }, { byStatus: samples, lines: text, captures: [] });
+  return asked.closed_by === 'recordings' && asked.schema.additionalProperties === false && asked.schema.properties.rows.items['x-closed-by'] === 'recordings' && !asked.open.length
+    && same(Object.keys(spread.schema.properties).sort(), ['a', 'extra']) && spread.schema['x-closed-by'] === 'recordings' && plain.open.length === 1 && plain.closed_by === undefined;
+})());
+t('mergeShapeFile: a run keeps every other route in its place and puts a new route just before the first key that sorts after it (no whole-file re-sort, so parallel area runs do not collide)', (() => {
+  const file = { _about: 'x', routes: { 'GET /b': { v: 1 }, 'GET /a': { v: 1 }, 'GET /z': { v: 1 } }, listed: {} };
+  const out = tool.mergeShapeFile(file, { shapes: { 'GET /c': { v: 2 }, 'GET /a': { v: 3 } }, listed: {} });
+  return same(Object.keys(out.routes), ['GET /b', 'GET /a', 'GET /c', 'GET /z']) && out.routes['GET /a'].v === 3;
+})());
+t('register: a route whose success schema holds an x-closed-by recordings node carries the basis whichever test proved it; a literal-closed one does not', (() => {
+  const reg = require(path.join(API, 'tools', 'api-register.cjs'));
+  const of = (schema) => ({ responses: { 200: { content: { 'application/json': { schema } } } } });
+  const marked = of({ type: 'object', additionalProperties: false, properties: { rows: { type: 'array', items: { type: 'object', additionalProperties: false, 'x-closed-by': 'recordings' } } } });
+  const literal = of({ type: 'object', additionalProperties: false, properties: {} });
+  return same(reg.basisOf({ output_allowlist: true }, {}, marked), { output_allowlist_basis: 'recordings' }) && same(reg.basisOf({ output_allowlist: true }, {}, literal), {}) && same(reg.basisOf({ output_allowlist: false }, {}, marked), {});
 })());
 
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
