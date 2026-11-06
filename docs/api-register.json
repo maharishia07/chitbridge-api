@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 128
    },
    "output_allowlist": {
     "applies": 637,
@@ -29111,7 +29111,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 81,
-   "hash": "43ec3db496e1bf2a",
+   "hash": "4d3d32ed0f02786e",
    "does": "",
    "errors": {
     "count": 0,
@@ -29140,7 +29140,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29170,7 +29170,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "43ec3db496e1bf2a"
+    "stale_since": "4d3d32ed0f02786e"
    },
    "status": "partial",
    "callers": [
@@ -29205,7 +29205,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 257,
-   "hash": "b2f3d624f80db544",
+   "hash": "89946324f32549b9",
    "does": "",
    "errors": {
     "count": 0,
@@ -29240,7 +29240,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29272,7 +29272,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b2f3d624f80db544"
+    "stale_since": "89946324f32549b9"
    },
    "status": "partial",
    "callers": [
@@ -29301,7 +29301,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 201,
-   "hash": "51a061d0d4040a3c",
+   "hash": "e6d3cd6540e6a97f",
    "does": "",
    "errors": {
     "count": 0,
@@ -29331,7 +29331,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29360,7 +29360,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "51a061d0d4040a3c"
+    "stale_since": "e6d3cd6540e6a97f"
    },
    "status": "partial",
    "callers": [
@@ -29389,7 +29389,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 137,
-   "hash": "eb4a657ee89de7d7",
+   "hash": "a5410b7249e1a159",
    "does": "",
    "errors": {
     "count": 0,
@@ -29417,7 +29417,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29446,7 +29446,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "eb4a657ee89de7d7"
+    "stale_since": "a5410b7249e1a159"
    },
    "status": "partial",
    "callers": [
@@ -29475,7 +29475,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 664,
-   "hash": "86ff97ac61ac9146",
+   "hash": "f35cc44639c74477",
    "does": "",
    "errors": {
     "count": 0,
@@ -29502,7 +29502,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29530,7 +29530,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "86ff97ac61ac9146"
+    "stale_since": "f35cc44639c74477"
    },
    "status": "partial",
    "callers": [],
@@ -29555,7 +29555,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 681,
-   "hash": "b2df6dc4cadf72b1",
+   "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
     "count": 0,
@@ -29588,7 +29588,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -29619,7 +29619,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b2df6dc4cadf72b1"
+    "stale_since": "e2ec4b3294857387"
    },
    "status": "partial",
    "callers": [
@@ -55695,7 +55695,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 395,
-   "hash": "45850a50048a8d1f",
+   "hash": "e8f1198436967af4",
    "does": "",
    "errors": {
     "count": 0,
@@ -55729,7 +55729,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -55761,7 +55761,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "45850a50048a8d1f"
+    "stale_since": "e8f1198436967af4"
    },
    "status": "partial",
    "callers": [],
@@ -55786,7 +55786,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 457,
-   "hash": "029d84fc977310c8",
+   "hash": "4eeac5b430e4bcc7",
    "does": "",
    "errors": {
     "count": 0,
@@ -55816,7 +55816,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -55848,7 +55848,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "029d84fc977310c8"
+    "stale_since": "4eeac5b430e4bcc7"
    },
    "status": "partial",
    "callers": [],
@@ -55873,7 +55873,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 525,
-   "hash": "e6e1c7e444598660",
+   "hash": "5899c1359da94cf9",
    "does": "",
    "errors": {
     "count": 0,
@@ -55907,7 +55907,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
