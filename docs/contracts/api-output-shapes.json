@@ -4655,6 +4655,134 @@
         "url": "/api/chits/unread"
       }
     },
+    "GET /api/counters": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "counters",
+          "free",
+          "may"
+        ],
+        "properties": {
+          "counters": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "created_at",
+                "state",
+                "break_since",
+                "break_by",
+                "held_by",
+                "next",
+                "period",
+                "last_no",
+                "last_at",
+                "closed_at",
+                "assigned"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "state": {
+                  "type": "string"
+                },
+                "break_since": {},
+                "break_by": {},
+                "held_by": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "name",
+                    "since",
+                    "seen",
+                    "diag"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "since": {
+                      "type": "string"
+                    },
+                    "seen": {},
+                    "diag": {}
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "next": {},
+                "period": {},
+                "last_no": {},
+                "last_at": {},
+                "closed_at": {},
+                "assigned": {}
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "free": {
+            "type": "number"
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "manage"
+            ],
+            "properties": {
+              "manage": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 7,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/counters"
+      }
+    },
     "GET /api/crm/calls": {
       "status": "200",
       "schema": {
@@ -5709,6 +5837,37 @@
         "url": "/api/tax/ledger"
       }
     },
+    "PATCH /api/counters/:id": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id",
+          "name"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/counters/c1",
+        "body": {
+          "name": "x"
+        }
+      }
+    },
     "PATCH /api/crm/followups/:id": {
       "status": "200",
       "schema": {
@@ -5762,6 +5921,271 @@
         "body": {
           "message_text": "  is it fresh?  "
         }
+      }
+    },
+    "POST /api/counters": {
+      "status": "201",
+      "schema": {
+        "type": "object",
+        "required": [
+          "counter"
+        ],
+        "properties": {
+          "counter": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "created_at",
+              "state",
+              "break_since",
+              "break_by",
+              "held_by",
+              "next",
+              "period",
+              "last_no",
+              "last_at",
+              "closed_at",
+              "assigned"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "break_since": {},
+              "break_by": {},
+              "held_by": {},
+              "next": {},
+              "period": {},
+              "last_no": {},
+              "last_at": {},
+              "closed_at": {},
+              "assigned": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/counters",
+        "body": {
+          "name": "Back office"
+        }
+      }
+    },
+    "POST /api/counters/:id/assign": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "counter"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "counter": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "created_at",
+              "state",
+              "break_since",
+              "break_by",
+              "held_by",
+              "next",
+              "period",
+              "last_no",
+              "last_at",
+              "closed_at",
+              "assigned"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "break_since": {},
+              "break_by": {},
+              "held_by": {},
+              "next": {},
+              "period": {},
+              "last_no": {},
+              "last_at": {},
+              "closed_at": {},
+              "assigned": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "required": [
+                  "phone",
+                  "at"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/counters/C1/assign",
+        "body": {
+          "phone": "+919812345678"
+        }
+      }
+    },
+    "POST /api/counters/:id/open": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "key",
+          "counter"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "counter": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "created_at",
+              "state",
+              "break_since",
+              "break_by",
+              "held_by",
+              "next",
+              "period",
+              "last_no",
+              "last_at",
+              "closed_at",
+              "assigned"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "state": {
+                "type": "string"
+              },
+              "break_since": {},
+              "break_by": {},
+              "held_by": {
+                "type": "object",
+                "required": [
+                  "since",
+                  "seen",
+                  "diag"
+                ],
+                "properties": {
+                  "since": {},
+                  "seen": {},
+                  "diag": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "next": {},
+              "period": {},
+              "last_no": {},
+              "last_at": {},
+              "closed_at": {},
+              "assigned": {}
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/counters/C1/open",
+        "body": {}
+      }
+    },
+    "POST /api/counters/:id/release": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id",
+          "released_from"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "released_from": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/counters/C1/release",
+        "body": {}
       }
     },
     "POST /api/crm/followups": {

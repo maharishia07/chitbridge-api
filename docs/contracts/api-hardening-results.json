@@ -1479,7 +1479,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
