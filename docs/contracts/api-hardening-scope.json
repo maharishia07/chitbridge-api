@@ -58,13 +58,16 @@
   "GET /api/products/:id/schedule": "collection under the caller's own items: the read is scoped to the caller's shop and answers [] for an unknown and a foreign id alike, so no id can be told apart (no oracle)",
   "GET /api/products/media/:item_id/:mid": "public door: product media is served by unguessable ids, public by design (routes/products.js)",
   "GET /api/till/engine/:name": "platform reference: the name is an engine file of the till, not a row of any shop",
-  "PATCH /api/entities/:id/erase": "platform only: platformGate refuses every shop before the id is read, so a shop never reaches it",
   "PATCH /api/entities/me/prefs/:kind": "label: the kind is a preference name on the caller's own row, the same in every shop",
+  "POST /api/forms/:key/issue": "platform reference: the key names a form template, shared reference data the same in every shop; the issue is written to the caller's own shop",
+  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop"
+ },
+ "platform_only_about": "platform_only: routes only the platform (admin key, rootGate, platformGate) or the builder can call, each with its reason. They are NOT public: no shop ever reaches the id, so foreign_id_404 (S35) does not apply, exactly as for public_ids. Read by tools/api-register.cjs hardeningScope; tools/api-register.cjs --check holds the same rules as public_ids (reason of 20+ characters, a route that exists).",
+ "platform_only": {
+  "PATCH /api/entities/:id/erase": "platform only: platformGate refuses every shop before the id is read, so a shop never reaches it",
   "POST /api/channels/:id/approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
   "POST /api/channels/:id/revoke": "platform only: the admin gate (platform key) refuses every shop before the id is read",
   "POST /api/channels/:id/template-approve": "platform only: the admin gate (platform key) refuses every shop before the id is read",
-  "POST /api/forms/:key/issue": "platform reference: the key names a form template, shared reference data the same in every shop; the issue is written to the caller's own shop",
-  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop",
   "PUT /api/entities/populations/:code/desk": "platform only: rootGate refuses every shop; the code names a population, not a row of a shop",
   "PUT /api/testing/cmdb/:ci": "builder only: the ci is a configuration-item name on the testing board's own entity, never a shop's row"
  },
