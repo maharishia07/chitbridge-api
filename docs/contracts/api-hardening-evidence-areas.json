@@ -469,11 +469,11 @@
   "GET /api/network-design/stores": {
    "output_allowlist": true
   },
-  "GET /api/network/entities/lookup": {
+  "GET /api/privacy/facts": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
-  "GET /api/network/place": {
+  "GET /api/privacy/me": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
@@ -1200,7 +1200,12 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
+  "POST /api/privacy/me/consent": {
+   "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
   "POST /api/privacy/me/requests": {
+   "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "POST /api/products": {
