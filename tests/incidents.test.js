@@ -15,6 +15,7 @@
  * ⭐ Every rule below is one somebody could relax while changing something else, and NONE OF THEM FAILS LOUDLY
  * when broken: an incident resolved with nothing recorded still shows green, a stored duration still prints a
  * number, and a lifecycle word in the status column still saves. They are exactly the rules that need a guard.
+ * CARD      21-compliance-attestation-and-trade/incidents
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 

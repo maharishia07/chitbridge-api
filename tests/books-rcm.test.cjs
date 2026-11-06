@@ -6,6 +6,7 @@
  * It is paid in CASH only — gstClose adds it to the challan beside the forward tax (no credit is used against it) and gstPay pays it:
  * Dr RCM payable · Cr the bank. A bill with no RCM line is unchanged (no `rcm` key at all).
  * Run: node tests/books-rcm.test.cjs
+ * CARD      15-tax-and-country-packs/reverse-charge
  */
 'use strict';
 const path = require('path');

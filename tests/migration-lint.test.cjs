@@ -10,6 +10,7 @@
  *
  * These migrations are run BY HAND in the Supabase SQL editor, so there is no runner to catch either mistake.
  * This file is the runner.
+ * CARD      28-platform-and-operations/migrations-and-schema
  */
 const fs = require('fs');
 const path = require('path');

@@ -12,6 +12,7 @@
  *
  * ⚠️ This only catches what the baseline itself already knows. Refresh it — `railway run node
  * scripts/rls-census.cjs --save` — after a migration adds RLS to a new table, same as rls-census.cjs's own use.
+ * CARD      18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
  */
 const fs = require('fs');
 const path = require('path');

@@ -8,6 +8,7 @@
  *
  * ⚠️ The engines repo must sit beside this one (C:\\dev\\chitbridge-engines). If it is missing this FAILS — a check that
  * quietly skips is how drift would come back. [[feedback-silence-is-the-bug]]
+ * CARD      28-platform-and-operations/engines-boundary
  */
 const path = require('path'), fs = require('fs'), { spawnSync } = require('child_process');
 const DEV = path.join(__dirname, '..', '..');

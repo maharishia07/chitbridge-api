@@ -3,6 +3,7 @@
  * with the verdict as a word (local · inactive · shopper · other_population) and the sentence beside it. Offline: the
  * database is a stand-in that answers the one question from ROW. Also the mint of kind 'cus' (~owner.cus-NNNN).
  * Run: node tests/crm-maytrade.test.cjs
+ * CARD      28-platform-and-operations/worlds-regions-data-residency-test-vs-production
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
