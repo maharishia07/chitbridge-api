@@ -218,8 +218,8 @@ function tablesOf(text, known) {
   return { reads: [...reads].sort(), writes: [...writes].sort() };
 }
 
-/** a money column named in the SQL, or the route is on the curated money-write list */
-const MONEY_COLUMN = /\b(amount|price|cost|total|balance|fee|mrp|discount|paid|due|credit|debit)[a-z_]*\b|_minor\b/i;
+/** a money column named in the SQL (a due DATE is not one, nor is a bare `total`, which is as often a count as a sum: total_value and total_minor are), or the route is on the curated money-write list */
+const MONEY_COLUMN = /\b(amount|price|cost|total(?=_)|balance|fee|mrp|discount|paid|credit|debit)[a-z_]*\b|_minor\b/i;
 const moneyOf = (text, curated) => !!curated || sqlStrings(text).some((sql) => MONEY_COLUMN.test(sql));
 
 /** the codes and statuses a route can answer: declared statuses plus the codes its handler writes that the register knows */

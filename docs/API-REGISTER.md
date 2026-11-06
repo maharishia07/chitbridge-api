@@ -1534,7 +1534,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/catalogue/enquiry** · catalogue · cb-catalogue · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_items, chit_messages · writes (derived): - · callers: - · actions: -
 
@@ -2282,7 +2282,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/crm/followups** · crm · cb-crm · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 8; share cap-crm.js 1/9) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: cap-crm.js · actions: -
 
@@ -2294,7 +2294,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/crm/parties/:id** · crm · cb-crm · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 14; share cap-crm-groups.js 1/13, cap-crm-record.js 1/8) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages · writes (derived): - · callers: cap-crm-groups.js, cap-crm-record.js · actions: -
 
@@ -2312,7 +2312,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/crm/privacy-requests** · crm · cb-crm · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 5; share cap-crm-privacy.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): privacy_request · writes (derived): - · callers: cap-crm-privacy.js · actions: -
 
@@ -2330,7 +2330,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/crm/followups** · crm · cb-crm · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-crm-record.js 0/8, cap-crm.js 0/9, cap-finance-cheques.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_disputes, chit_messages · writes (derived): party_followup · callers: cap-crm-record.js, cap-crm.js, cap-finance-cheques.js · actions: -
 
@@ -2378,7 +2378,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/crm/privacy-requests** · crm · cb-crm · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-crm-privacy.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): privacy_request · callers: cap-crm-privacy.js · actions: -
 
@@ -2500,7 +2500,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/entities/mis** · entities · cb-network · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 404, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share app.html 0/249) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): cb_entity, identities, population, supplier_list · writes (derived): - · callers: app.html · actions: -
 
@@ -3476,7 +3476,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/privacy/me** · privacy · cb-compliance · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 403, 500 · money y (derived)
+- errors: 0 code(s) [-] · statuses 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share shop-privacy.js 0/0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities, privacy_request · writes (derived): - · callers: shop-privacy.js · actions: -
 
@@ -3488,7 +3488,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/privacy/me/requests** · privacy · cb-compliance · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500, 503 · money y (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share shop-privacy.js 0/0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): privacy_request · callers: shop-privacy.js · actions: -
 

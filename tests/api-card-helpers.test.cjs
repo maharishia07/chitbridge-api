@@ -81,6 +81,11 @@ t('GET /api/till/verify does not read customer_list or supplier_list (count(*) i
 t('GET /api/relationships/suppliers writes nothing (a `const list` is not a helper called list)', rowOf('GET /api/relationships/suppliers').writes.length === 0);
 t('POST /api/till/quick-keys/hide does not read counter_hidden_item (a name in a comment is no call)', !rowOf('POST /api/till/quick-keys/hide').reads.includes('counter_hidden_item'));
 
+/* money is a money column, not a due DATE: due_at and a count are not money; due_minor, amount_due and balance_due are */
+t('moneyOf: a due date (due_at) is not money', !card.moneyOf('`SELECT due_at FROM party_followup WHERE entity_id = $1`', false));
+t('moneyOf: due_minor, amount_due and balance_due are money', card.moneyOf('`SELECT due_minor FROM party_item`', false) && card.moneyOf('`SELECT amount_due FROM party_item`', false) && card.moneyOf('`SELECT balance_due FROM party_item`', false));
+t('moneyOf: a bare total (a count as often as a sum) is not money; total_value, total_minor and a SUM of an amount are', !card.moneyOf('`SELECT count(*)::int AS total FROM privacy_request`', false) && !card.moneyOf('`WITH c AS (SELECT 1 AS n) SELECT total FROM c`', false) && card.moneyOf('`SELECT total_value FROM chit_header`', false) && card.moneyOf('`SELECT SUM(amount_minor) AS total FROM party_item`', false));
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log('\n  ' + pass + ' passed, ' + fail + ' failed\n');
 process.exit(fail ? 1 : 0);

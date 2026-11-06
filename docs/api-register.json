@@ -8639,7 +8639,7 @@
     "chit_messages"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -12841,7 +12841,7 @@
    },
    "reads": [],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -13045,7 +13045,7 @@
     "chit_messages"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -13364,7 +13364,7 @@
     "privacy_request"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -14379,7 +14379,7 @@
     "supplier_list"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -22042,7 +22042,7 @@
     "privacy_request"
    ],
    "writes": [],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -45054,7 +45054,7 @@
    "writes": [
     "party_followup"
    ],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -45883,7 +45883,7 @@
    "writes": [
     "privacy_request"
    ],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
@@ -52701,7 +52701,7 @@
    "writes": [
     "privacy_request"
    ],
-   "money": true,
+   "money": false,
    "actions": [],
    "derived": [
     "reads",
