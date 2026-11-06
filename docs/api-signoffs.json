@@ -1714,6 +1714,7 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
    "lifecycle": "stable"
   },
+  "PATCH /api/connectors/:actorId/connections/:connId": {"hash":"ea0e27d69ed819ff","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "PATCH /api/counters/:id": {
    "hash": "4354a479efe73878",
    "names_clear": true,
@@ -1794,6 +1795,7 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
    "lifecycle": "stable"
   },
+  "PATCH /api/relationships/customers/:id": {"hash":"967b68cf080c3479","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "PATCH /api/testing/incidents/:id": {
    "hash": "df4e141b1b0c06bd",
    "names_clear": true,
@@ -2442,6 +2444,11 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
    "lifecycle": "stable"
   },
+  "POST /api/connectors": {"hash":"edcd006cf45aa22b","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/connectors/:actorId/connections": {"hash":"45c59297489b4a7c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/connectors/:actorId/ping": {"hash":"888a9edf8f9752b2","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/connectors/:actorId/regenerate-key": {"hash":"5c5dd3f7f0c7925f","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/connectors/reissue-code": {"hash":"5321fbf8637c444b","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/counters": {
    "hash": "fd7345906c262e93",
    "names_clear": true,
@@ -2938,6 +2945,9 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
+  "POST /api/relationships/customers": {"hash":"3f50c6474a55bc42","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/relationships/customers/:id/groups": {"hash":"2e173065a6d44af7","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "POST /api/relationships/suppliers": {"hash":"61a8c3db14666976","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/repeat": {
    "hash": "2522e6bd4363543c",
    "names_clear": true,
