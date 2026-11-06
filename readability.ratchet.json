@@ -391,14 +391,14 @@
     "noHeader": 0
   },
   "lib/books-period.js": {
-    "score": 176,
-    "long40": 10,
-    "long80": 2,
-    "complex10": 6,
-    "complex15": 2,
+    "score": 18,
+    "long40": 9,
+    "long80": 0,
+    "complex10": 5,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 156,
+    "cryptic": 4,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0

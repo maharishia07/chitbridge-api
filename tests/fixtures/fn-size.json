@@ -30,10 +30,6 @@
     "lib/books-payables.js": [
       "view"
     ],
-    "lib/books-period.js": [
-      "runDepreciation",
-      "taxReturn"
-    ],
     "lib/books-tally.js": [
       "build"
     ],

@@ -25,7 +25,7 @@ of file each thing is; this says what already does the job.
 | 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 66 | `list` | `cap-settings.js` |  |
 | 66 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 67 | `register` | `regulation.js` | register(pack) → the pack — |
+| 68 | `register` | `regulation.js` | register(pack) → the pack — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
@@ -108,7 +108,7 @@ of file each thing is; this says what already does the job.
 | 24 | `view` | `country-ready.js` |  |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 25 | `account` | `home-facts.js` | OMITTED: |
-| 24 | `group` | `identity.js` | again in a different costume. |
+| 25 | `group` | `identity.js` | again in a different costume. |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 23 | `call` | `cap-assist.js` |  |
