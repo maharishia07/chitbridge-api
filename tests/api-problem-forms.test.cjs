@@ -24,6 +24,7 @@
 const path = require('path');
 const fs = require('fs');
 const { harness, OWNER, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
 const S = require('./lib/forms-scenes.cjs');
 
@@ -361,6 +362,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 40, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -369,7 +371,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/forms.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }
