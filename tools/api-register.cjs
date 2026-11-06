@@ -318,7 +318,7 @@ function rowOf(leaf, context) {
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key]), reportedRow(leaf, source, fileText, context.evidence[key]));
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
 }
 
 /** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
@@ -328,7 +328,10 @@ const reportedRow = (leaf, source, fileText, evidence) => {
 };
 
 /** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
-const basisOf = (columns, evidence) => (columns.output_allowlist && evidence && evidence.output_allowlist_basis === 'recordings' ? { output_allowlist_basis: 'recordings' } : {});
+const basisOf = (columns, evidence, operation) => (columns.output_allowlist && ((evidence && evidence.output_allowlist_basis === 'recordings') || closedByRecordings(operation)) ? { output_allowlist_basis: 'recordings' } : {});
+
+/** does a success schema of the operation hold a node tools/api-allowlist.cjs closed from recorded answers alone (x-closed-by recordings): the shape file is the one source of the basis, whichever test proved the route */
+const closedByRecordings = (operation) => !!operation && successSchemas(operation).some((schema) => JSON.stringify(schema).includes('"x-closed-by":"recordings"'));
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
 const testedStatuses = (context, key) => (context.errorTests[key] || []).concat((context.contract[key] && context.contract[key].statuses) || []);
