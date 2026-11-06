@@ -408,8 +408,18 @@
   "GET /api/folders/worklist": {
    "output_allowlist": true
   },
+  "GET /api/forms": {
+   "output_allowlist": true
+  },
+  "GET /api/forms/:key": {
+   "output_allowlist": true
+  },
   "GET /api/forms/instances/:id": {
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "output_allowlist": true
+  },
+  "GET /api/forms/instances/all": {
+   "output_allowlist": true
   },
   "GET /api/governance/ai-skills": {
    "output_allowlist": true
@@ -1140,15 +1150,21 @@
    "output_allowlist": true
   },
   "POST /api/forms/:key/issue": {
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
+  },
+  "POST /api/forms/:key/resolve": {
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/attach": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/forms/instances/:id/sign": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/governance/ai-draft": {
    "output_allowlist": true

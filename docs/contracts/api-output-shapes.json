@@ -9002,15 +9002,74 @@
     "GET /api/forms/:key": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "key"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "label",
+                "required",
+                "auto"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "auto": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "from"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "fn": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 8,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a spread (...x) adds keys the text does not name"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/authority-application"
       }
@@ -9018,15 +9077,110 @@
     "GET /api/forms/instances/:id": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "form_id",
+          "entity_id",
+          "form_key",
+          "context_ref",
+          "title",
+          "fields",
+          "provenance",
+          "content_hash",
+          "ready",
+          "signed_at",
+          "signatory",
+          "transfers",
+          "created_at"
+        ],
+        "properties": {
+          "form_id": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": "string"
+          },
+          "form_key": {
+            "type": "string"
+          },
+          "context_ref": {},
+          "title": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "label",
+                "value",
+                "source",
+                "rung"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "rung": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "by_source"
+            ],
+            "properties": {
+              "by_source": {
+                "type": "object",
+                "required": [
+                  "manual"
+                ],
+                "properties": {
+                  "manual": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "content_hash": {
+            "type": "string"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "signed_at": {},
+          "signatory": {},
+          "transfers": {},
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 1,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/instances/22222222-2222-4222-8222-222222222222"
       }
@@ -9034,15 +9188,230 @@
     "GET /api/forms/instances/all": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "may"
+        ],
+        "properties": {
+          "instances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "form_id",
+                "entity_id",
+                "form_key",
+                "context_ref",
+                "title",
+                "fields",
+                "provenance",
+                "content_hash",
+                "ready",
+                "signed_at",
+                "signatory",
+                "transfers",
+                "created_at"
+              ],
+              "properties": {
+                "form_id": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "form_key": {
+                  "type": "string"
+                },
+                "context_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "fields": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "label",
+                      "value",
+                      "source",
+                      "rung"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "label": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      },
+                      "rung": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  }
+                },
+                "provenance": {
+                  "type": "object",
+                  "required": [
+                    "by_source"
+                  ],
+                  "properties": {
+                    "by_source": {
+                      "type": "object",
+                      "required": [
+                        "manual"
+                      ],
+                      "properties": {
+                        "manual": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "x-closed-by": "recordings"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                },
+                "content_hash": {
+                  "type": "string"
+                },
+                "ready": {
+                  "type": "boolean"
+                },
+                "signed_at": {},
+                "signatory": {},
+                "transfers": {},
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "context_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "issue",
+              "sign",
+              "attach"
+            ],
+            "properties": {
+              "issue": {
+                "type": "object",
+                "required": [
+                  "may",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "may": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "sign": {
+                "type": "object",
+                "required": [
+                  "may",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "may": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "attach": {
+                "type": "object",
+                "required": [
+                  "may",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "may": {
+                    "type": "boolean"
+                  },
+                  "code": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "why": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 8,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a spread (...x) adds keys the text does not name"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/instances/all?context_ref="
       }
@@ -16961,18 +17330,49 @@
     "POST /api/forms/:key/issue": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "form_id",
+          "form_key",
+          "title",
+          "content_hash",
+          "created_at",
+          "ready",
+          "note"
+        ],
+        "properties": {
+          "form_id": {
+            "type": "string"
+          },
+          "form_key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content_hash": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
-      "observed": 1,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/authority-application/issue",
         "body": {
+          "context_ref": "66666666-6666-4666-8666-666666666666",
           "manual": {
             "applicant": "Test shop",
             "address": "1 High Street",
@@ -16985,15 +17385,150 @@
     "POST /api/forms/:key/resolve": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "form_key",
+          "title",
+          "authority",
+          "context_ref",
+          "fields",
+          "completeness",
+          "provenance",
+          "ready",
+          "unresolved_required",
+          "note"
+        ],
+        "properties": {
+          "form_key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "authority": {
+            "type": "string"
+          },
+          "context_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "label",
+                "required",
+                "value",
+                "source",
+                "rung"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "required": {
+                  "type": "boolean"
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rung": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "completeness": {
+            "type": "object",
+            "required": [
+              "filled",
+              "total",
+              "pct"
+            ],
+            "properties": {
+              "filled": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "pct": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "provenance": {
+            "type": "object",
+            "properties": {
+              "derive": {
+                "type": "number"
+              },
+              "manual": {
+                "type": "number"
+              },
+              "order": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "unresolved_required": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "label"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 9,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/authority-application/resolve",
         "body": {}
@@ -17002,15 +17537,37 @@
     "POST /api/forms/instances/:id/attach": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "attachment_id",
+          "chit_id",
+          "name",
+          "participants",
+          "note"
+        ],
+        "properties": {
+          "attachment_id": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "participants": {
+            "type": "number"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 2,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/instances/22222222-2222-4222-8222-222222222222/attach",
         "body": {
@@ -17021,15 +17578,47 @@
     "POST /api/forms/instances/:id/sign": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "form_id",
+          "signed_at",
+          "signatory",
+          "note"
+        ],
+        "properties": {
+          "form_id": {
+            "type": "string"
+          },
+          "signed_at": {
+            "type": "string"
+          },
+          "signatory": {
+            "type": "object",
+            "required": [
+              "name",
+              "designation"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "designation": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 1,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/forms/instances/22222222-2222-4222-8222-222222222222/sign",
         "body": {
@@ -40064,10 +40653,6 @@
     "GET /api/folders/reconcile": "open at folders[] — a value passed through (an expression: its keys are not written in the handler); overall — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/folders/rules/vocabulary": "open at keys — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/folders/worklist": "open at people[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/forms": "open at forms[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/forms/:key": "open at (answer) — a spread (...x) adds keys the text does not name",
-    "GET /api/forms/instances/:id": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/forms/instances/all": "open at (answer) — a spread (...x) adds keys the text does not name",
     "GET /api/governance/ai-skills": "open at skills[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/governance/commerce-standards": "open at sources[] — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/governance/country-setup": "open at country — a value passed through (an expression: its keys are not written in the handler); tax — a value passed through (an expression: its keys are not written in the handler); constituted_by — a value passed through (an expression: its keys are not written in the handler); countries[] — a value passed through (an expression: its keys are not written in the handler); source — a value passed through (an expression: its keys are not written in the handler); pack — a value passed through (an expression: its keys are not written in the handler)",
@@ -40185,10 +40770,6 @@
     "POST /api/entities/register": "open at (answer) — never seen and not written in the handler",
     "POST /api/entities/verify": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "POST /api/folders/:id/rules": "open at when — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/forms/:key/issue": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/forms/:key/resolve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/forms/instances/:id/attach": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/forms/instances/:id/sign": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
@@ -40216,17 +40797,7 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/attachments": "open at name — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/assist/catalogue-sources": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/assist/penetration": "open at by_locality[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/assist/regions": "open at regions[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/assist/standards": "open at data[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/catalogue/:bridge_id/my-documents": "open at documents[] — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/catalogue/:bridge_id/my-orders": "open at orders[] — a value passed through (a name: its keys are not written in the handler)",
-    "GET /api/catalogue/enquiry": "open at enquiries[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler); clock — a value passed through (a name: its keys are not written in the handler)",
-    "POST /api/assist/catalogue-adopt": "open at resolved — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/forms": "open at forms[] — a value passed through (an expression: its keys are not written in the handler); may — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
