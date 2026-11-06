@@ -417,15 +417,15 @@
     "noHeader": 0
   },
   "lib/books-store.js": {
-    "score": 134,
+    "score": 0,
     "long40": 0,
     "long80": 0,
-    "complex10": 5,
-    "complex15": 1,
+    "complex10": 0,
+    "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 121,
-    "noWhatLine": 7,
+    "cryptic": 0,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
