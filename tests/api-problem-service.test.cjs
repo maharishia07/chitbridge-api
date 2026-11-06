@@ -19,9 +19,10 @@
 'use strict';
 const path = require('path');
 const fs = require('fs');
-const { harness, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
+const { harness, SECRET_SQL, sameValue, SHOP, OWNER, PARTY } = require('./lib/problem-world.cjs');
 const S = require('./lib/service-scenes.cjs');
 const allow = require('./lib/allowlist-world.cjs');
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -65,6 +66,39 @@ function checkJunkRefused(recording, scenes) {
   });
 }
 
+/* ── Slice 1b (critic 6 Nov, class C): the foreign-id world of the three service writes that open with mine() (a chit_header row of THIS shop): shop A holds the chit, shop B asks for it
+   → exactly the unknown id's 404, byte for byte; the owner's own id is not a 404 ── */
+const STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
+const FOREIGN_CASES = [
+  ['POST ' + MOUNT + '/:chit_id/pause', '/pause', { reason: 'waiting_on_counterparty', from: '2026-11-04T06:00:00Z' }],
+  ['POST ' + MOUNT + '/:chit_id/pause/:pause_id/answer', '/pause/' + PARTY + '/answer', { accepted: true }],
+  ['POST ' + MOUNT + '/:chit_id/resolve', '/resolve', { resolution_code: 'fixed', note: 'done' }]
+];
+/** the stand-in db: the chit is answered only to a statement that names shop A (as RLS and WHERE entity_id = $2 would); every other statement of the clock works */
+const heldByShopA = (planted) => (sql, params) => {
+  const text = String(sql);
+  if (/FROM chit_header/.test(text)) return planted && params.includes(SHOP) ? { rows: [{ role: 'buyer' }], rowCount: 1 } : { rows: [], rowCount: 0 };
+  if (/paused_to IS NULL/.test(text)) return { rows: [], rowCount: 0 };
+  if (/SET resolved_at/.test(text)) return { rows: [{ resolved_at: new Date(Date.UTC(2026, 10, 4, 6)), resolution_code: 'fixed' }], rowCount: 1 };
+  if (/chit_sla_pause_(start|end|answer)/.test(text)) return { rows: [{ copies: 2 }], rowCount: 1 };
+  return null;
+};
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign chit id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const cases = FOREIGN_CASES.map(([route, tail, body]) => ({
+    route,
+    play: async (who, planted) => {
+      Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', jsonThrows: false, noCustomer: false, sqlRows: heldByShopA(planted) });
+      return lab.send(port, 'POST', MOUNT + '/' + PARTY + tail, body);
+    }
+  }));
+  const failures = await FOREIGN.runCases(cases, recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: ' + FOREIGN_CASES.length + ' service writes answer a foreign chit id exactly as an unknown one (404, same body) and the own chit is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+
 (async () => {
   lab.installStubs();
   const router = require(path.join(HERE, 'routes', 'service.js'));
@@ -77,6 +111,7 @@ function checkJunkRefused(recording, scenes) {
   const scenes = S.extras();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes, {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, modules);
+  const foreignProved = await checkForeignIds(server.address().port);
   server.close();
   if (lab.flagValue('--capture')) {
     fs.writeFileSync(lab.flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -101,9 +136,11 @@ function checkJunkRefused(recording, scenes) {
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     allow.writeEvidence(EVIDENCE_FILE, lab.mine, closedHeld);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreignProved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/service.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the service routes whose success answers held closed here', sameValue(allow.evidenceOf(EVIDENCE_FILE, lab.mine), closedHeld), closedHeld);
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the service writes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreignProved), foreignProved);
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
