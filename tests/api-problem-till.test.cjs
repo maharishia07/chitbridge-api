@@ -197,6 +197,7 @@ const EXTRAS = [
   X('qk-state-no-date', 'POST /api/till/quick-keys/state', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
   X('qk-hide-no-counter', 'POST /api/till/quick-keys/hide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
   X('qk-hide-no-product', 'POST /api/till/quick-keys/hide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
+  X('qk-hide-by-not-uuid', 'POST /api/till/quick-keys/hide', 400, { setup: { key: ['till'] }, body: { product_id: ITEM, by: 'Asha' }, patch: [COUNTER_KEYS] }), /* CTR-200: a name for hidden_by (a uuid column) is refused at the door, not a 500 */
   X('qk-unhide-no-counter', 'POST /api/till/quick-keys/unhide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
   X('qk-unhide-no-product', 'POST /api/till/quick-keys/unhide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
   X('qk-screen-no-counter', 'POST /api/till/quick-keys/screen-config', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),

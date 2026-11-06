@@ -11874,6 +11874,18 @@
      }
     },
     {
+     "scenario": "qk-hide-by-not-uuid",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
+     }
+    },
+    {
      "scenario": "qk-hide-write-breaks",
      "status": 500,
      "body_keys": {

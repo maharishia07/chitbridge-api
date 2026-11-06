@@ -1511,8 +1511,8 @@
    "output_allowlist": true
   },
   "POST /api/till/enrol": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/till/flags": {
    "output_allowlist": true
