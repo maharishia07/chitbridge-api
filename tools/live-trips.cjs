@@ -1,7 +1,7 @@
 'use strict';
 /**
  * OWNS      measuring LIVE database round trips (X-DB-Trips) for the registered routes whose trips line is still a placeholder (SPD-39); the reason per route it cannot reach.
- * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --seed | --check. Tests/tooling only: no route handler is touched.
+ * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --seed | --check | --restore. Tests/tooling only: no route handler is touched.
  * FLOW      docs/api-register.json (trips_budgeted false) + the routes' own OpenAPI schemas ──▶ a request per route ──▶ sit-in (the load shop only) ──▶ docs/speed/live-trips-results.json
  *           ──▶ tools/live-trips-writer.cjs (the safe writer) ──▶ round-trips.live.json + round-trips.budget.json (only the lines measured).
  * CARD      speed · round trips
@@ -26,6 +26,8 @@ const LIVE_FILE = path.join(ROOT, 'round-trips.live.json');
 const RESULTS_FILE = path.join(ROOT, 'docs', 'speed', 'live-trips-results.json');
 const REGISTER_FILE = path.join(ROOT, 'docs', 'api-register.json');
 const TOKEN_FILE = process.env.CB_LT_TOKEN_FILE || path.join(os.tmpdir(), 'cb-live-trips-token.json');
+const STATE_FILE = process.env.CB_LT_STATE_FILE || path.join(os.tmpdir(), 'cb-live-trips-state.json'); /* what the run changed on sit-in and must undo (--restore reads it) */
+const PERSIST = ['registerOn', 'unclaimed', 'periods', 'counter', 'screens']; /* the seeds that are set-ups with a restore */
 const GAP_MS = 300; /* at most ~3 requests a second */
 const ID0 = '00000000-0000-4000-8000-000000000001';
 const readJson = (file, fallback) => { try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) { return fallback; } };
@@ -264,6 +266,10 @@ function sampleFor(key, op, hint) {
 }
 
 async function run(opts) {
+  const results = await guarded(() => runInner(opts), () => restoreAll(API));
+  return results;
+}
+async function runInner(opts) {
   const budget = readJson(BUDGET_FILE, { routes: {} });
   const register = readJson(REGISTER_FILE, { routes: [] });
   const previous = readJson(RESULTS_FILE, { routes: {} });
@@ -301,7 +307,6 @@ async function run(opts) {
     results[r.key] = out;
     console.log((out.state === 'measured' ? 'MEASURED ' + String(out.trips).padStart(3) : 'unreached   ') + '  ' + r.key.padEnd(62) + (out.state === 'measured' ? '' : out.group + ' · ' + out.reason));
   }
-  if (typeof HINTS.cleanup === 'function') { try { await HINTS.cleanup(API); } catch (e) { console.log('cleanup failed: ' + e.message.slice(0, 160)); } }
   return results;
 }
 let lastBody = null;
@@ -319,10 +324,39 @@ const API = {
   /** first element of a list answer that carries the lt- prefix (idempotent seeding: look before create) */
   async firstOurs(url) { const b = (await call('GET', url)).body; const arr = Array.isArray(b) ? b : Object.values(b || {}).filter(Array.isArray).flat(); return arr.find(ours) || null; },
   seeds: {}, /* ids found or made by seed() hooks in this run */
+  /** write the set-ups that need an undo to the state file (called BEFORE the change, so a crash still finds it) */
+  save() { const out = {}; PERSIST.forEach((k) => { if (API.seeds[k] !== undefined) out[k] = API.seeds[k]; }); fs.writeFileSync(STATE_FILE, JSON.stringify(out), { mode: 0o600 }); },
+  clearState() { try { fs.unlinkSync(STATE_FILE); } catch (_) { /* no state file: nothing was set up */ } },
   tokenFor
 };
 
-module.exports = { sampleOf, whyNot, failingRoutes };
+/** run the work, then ALWAYS the restore (a thrown error, a refusal or a Ctrl-C handler all pass through here); the work's own error is kept */
+async function guarded(work, restore) {
+  try { return await work(); } finally { await restore(); }
+}
+/** undo every set-up of the hints (register capability, claimed flag, locked periods, counter, screens); a failing step is told, never hides the error that caused the restore */
+async function restoreAll(api, hints) {
+  const h = hints || HINTS;
+  if (typeof h.cleanup !== 'function') return;
+  try { await h.cleanup(api); } catch (e) { console.log('RESTORE FAILED (run: node tools/live-trips.cjs --restore): ' + String(e.message).slice(0, 160)); }
+}
+/** --restore: load the saved state file and undo it, also when the run died (idempotent: every step is conditional) */
+async function restoreFromFile() {
+  const saved = readJson(STATE_FILE, null);
+  if (!saved) return console.log('nothing to restore (no ' + STATE_FILE + ')');
+  Object.assign(API.seeds, saved);
+  await signIn();
+  await restoreAll(API);
+  console.log('restored: ' + Object.keys(saved).join(', '));
+}
+/* a Ctrl-C or an uncaught error in a run: restore, then leave with a non-zero code */
+function guardProcess() {
+  const bail = (code) => (e) => { if (e) console.error('live-trips: ' + (e.message || e)); restoreAll(API).finally(() => process.exit(code)); };
+  process.on('SIGINT', bail(130)); process.on('SIGTERM', bail(143));
+  process.on('uncaughtException', bail(1)); process.on('unhandledRejection', bail(1));
+}
+
+module.exports = { sampleOf, whyNot, failingRoutes, guarded, restoreAll };
 if (require.main === module) {
   const args = process.argv.slice(2);
   const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };
@@ -355,7 +389,9 @@ function check() {
 
 async function main(args, opt) {
   if (args.includes('--check')) return check();
-  if (args.includes('--seed')) return seedAll();
+  if (args.includes('--restore')) return restoreFromFile();
+  guardProcess();
+  if (args.includes('--seed')) return guarded(seedAll, () => restoreAll(API));
   if (args.includes('--probe')) { await signIn(); console.log('host', state.host); const i = args.indexOf('--probe'); const r = await call(args[i + 1], args[i + 2], args[i + 3] ? JSON.parse(args[i + 3]) : undefined); console.log(r.status, 'trips', r.trips, JSON.stringify(r.body || r.text).slice(0, +(process.env.PROBE_LEN || 700))); return; }
   const dry = args.includes('--dry');
   const results = await run({ only: opt('--only'), retryAll: args.includes('--retry-all') });
@@ -369,7 +405,7 @@ async function main(args, opt) {
     const live = readJson(LIVE_FILE, null);
     const next = writer.applyMeasured(budget, live, rows, today());
     const bad = writer.problems({ budget, live }, next);
-    if (bad.length) throw new Error('the writer would make things worse: ' + bad[0]);
+    if (bad.length) throw new Error('the writer would make things worse (nothing written to the budget): ' + bad.join('; '));
     fs.writeFileSync(BUDGET_FILE, writer.serialiseBudget(next.budget));
     fs.writeFileSync(LIVE_FILE, writer.serialiseLive(next.live));
     console.log('lines written: ' + next.changed.length + ' · not accepted as measurements: ' + next.refused.length);

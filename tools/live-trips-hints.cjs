@@ -36,9 +36,10 @@ async function counterKey(api, fresh) {
   const list = (await must(api, 'GET', '/api/counters')).counters || [];
   let c = list.find((x) => String(x.name || '').startsWith('lt-'));
   if (!c) c = (await must(api, 'POST', '/api/counters', { name: 'lt-counter' })).counter;
+  api.seeds.counter = c.id; api.save && api.save();
   if (c.state !== 'closed') await api.call('POST', '/api/counters/' + c.id + '/release', {});
   const opened = await must(api, 'POST', '/api/counters/' + c.id + '/open', {});
-  api.seeds.ckey = opened.key; api.seeds.counter = c.id;
+  api.seeds.ckey = opened.key;
   return opened.key;
 }
 const asCounter = async (api, fresh) => ({ authorization: 'Bearer ' + await counterKey(api, fresh) });
@@ -53,7 +54,7 @@ async function newScreen(api) {
   const claimed = await must(api, 'POST', '/api/till/pair/claim', { code });
   const jwt = String(claimed.key || claimed.token || '');
   const jti = JSON.parse(Buffer.from(jwt.split('.')[1] || 'e30', 'base64url').toString()).jti;
-  (api.seeds.screens = api.seeds.screens || []).push(jti);
+  (api.seeds.screens = api.seeds.screens || []).push(jti); api.save && api.save();
   return { code, jti };
 }
 /** an lt- chit of the load shop (a self receipt with one line; the fixed client_ref makes a second seed answer the same chit) */
@@ -87,8 +88,8 @@ const LOAD_NODE = '2ba7df12-486c-437c-b4b5-1acd99b2f350'; /* its cb_entity row *
 /** the register capability on for the load shop only (its capabilities column was NULL; cleanup puts NULL back) */
 function registerOn(api) {
   if (api.seeds.registerOn) return;
+  api.seeds.registerOn = true; api.save && api.save(); /* state first: a crash after the SQL still finds it to undo */
   api.sql("update identities set capabilities = '[\"register\"]'::jsonb where identity_id = '" + LOAD_ID + "' and capabilities is null");
-  api.seeds.registerOn = true;
 }
 /** a pool shop (cbt-in-*) with no connection to the load shop, its identity id and handle */
 function freePoolShop(api, skip) {
@@ -98,13 +99,14 @@ function freePoolShop(api, skip) {
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
   params: {},
-  /** the run's end: switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
+  /** the run's end (or a crash, Ctrl-C, or node tools/live-trips.cjs --restore from the saved state file): switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
   cleanup: async (api) => {
     if (api.seeds.registerOn) api.sql("update identities set capabilities = null where identity_id = '" + LOAD_ID + "' and capabilities = '[\"register\"]'::jsonb");
     if (api.seeds.unclaimed) api.sql("update cb_entity set claimed = true where id = '" + LOAD_NODE + "'");
-    for (const p of [1, 2]) await api.call('POST', '/api/books/periods/' + OLD_FY + '/' + p + '/unlock', { reason: 'lt- live-trips: restore' });
+    if (api.seeds.periods) for (const p of [1, 2]) await api.call('POST', '/api/books/periods/' + OLD_FY + '/' + p + '/unlock', { reason: 'lt- live-trips: restore' });
     for (const jti of api.seeds.screens || []) await api.call('POST', '/api/till/screens/revoke', { jti });
     if (api.seeds.counter) await api.call('POST', '/api/counters/' + api.seeds.counter + '/release', {});
+    if (api.clearState) api.clearState(); /* restored: the saved state file has nothing left to undo */
   },
   routes: {
     'POST /api/channels/:id/approve': { skip: ['role', "platform role: answers only to the platform operator key (x-cb-admin-key = CB_ADMIN_KEY), which no shop token holds and sit-in must not expose; needs a platform token"] },
@@ -134,7 +136,7 @@ module.exports = {
     'POST /api/quick-keys/groups/:id/items': { make: async (api) => { const g = await must(api, 'POST', '/api/quick-keys/groups', { name: 'lt-group-' + u() }); return { params: { id: g.group_id || g.id || (g.group && (g.group.group_id || g.group.id)) }, body: { product_id: await itemId(api) } }; } },
     'POST /api/chits/register/templates': { make: async (api) => { registerOn(api); return { body: { kind: 'risk', title: 'lt-template-' + u() } }; } },
     'POST /api/chits/register/entries/:raida_id/accept': { make: async (api) => { registerOn(api); const e = await must(api, 'POST', '/api/chits/' + await chitId(api) + '/raida', { kind: 'risk', body: 'lt- risk ' + u() }); return { params: { raida_id: e.raida_id || e.id }, body: { rationale: 'lt- accepted for the live-trips run', authority_level: 'owner' } }; } },
-    'POST /api/network/entities/:id/claim': { fresh: true, make: async (api) => { api.sql("update cb_entity set claimed = false where id = '" + LOAD_NODE + "'"); api.seeds.unclaimed = true; return { params: { id: LOAD_NODE }, body: {} }; } },
+    'POST /api/network/entities/:id/claim': { fresh: true, make: async (api) => { api.seeds.unclaimed = true; api.save && api.save(); api.sql("update cb_entity set claimed = false where id = '" + LOAD_NODE + "'"); return { params: { id: LOAD_NODE }, body: {} }; } },
     'GET /api/network/entities/:id/connections': { make: async () => ({ params: { id: LOAD_NODE } }) },
     'GET /api/network/entities/:id/subtree': { make: async () => ({ params: { id: LOAD_NODE } }) },
     'POST /api/connections/request': { make: async (api) => { const p = freePoolShop(api); if (!p) return cannot('fixture', 'every pool shop is already connected to the load shop'); return { body: { to_entity_id: p[0], note: 'lt- live-trips' } }; } },
@@ -203,9 +205,9 @@ module.exports = {
     'POST /api/books/recurring/:id/post': { fresh: true, make: async (api) => { const t = await must(api, 'POST', '/api/books/recurring', { name: 'lt-rec-' + u(), event: { kind: 'expense', class: 'rent', amount: 100, how: 'cash' }, frequency: 'monthly', next_on: '2026-11-01' }); return { params: { id: t.recurring_id }, body: {} }; } },
     'POST /api/books/recurring/:id/skip': { fresh: true, make: async (api) => { const t = await must(api, 'POST', '/api/books/recurring', { name: 'lt-rec-' + u(), event: { kind: 'expense', class: 'rent', amount: 100, how: 'cash' }, frequency: 'monthly', next_on: '2026-11-01' }); return { params: { id: t.recurring_id }, body: {} }; } },
     'POST /api/books/write-off': { fresh: true, make: async (api) => ({ body: { party_id: await customerId(api), amount: 1, reason: 'lt- live-trips probe', client_ref: 'lt-wo-' + u() } }) },
-    'POST /api/books/gst/close': { make: async () => ({ body: { fy: OLD_FY, period: 1 } }) },
+    'POST /api/books/gst/close': { make: async (api) => { api.seeds.periods = true; api.save && api.save(); return ({ body: { fy: OLD_FY, period: 1 } }); } },
     'POST /api/books/gst/pay': { skip: ['precondition', 'a challan can only pay tax OWED (422: more than the tax owed - CGST owed 0); the old empty period 2026-27/1 owes nothing and a period with tax owed is not an empty one (no tax posted on the load shop before November)'] },
-    'POST /api/books/periods/:fy/:p/:act': { make: async () => ({ params: { fy: OLD_FY, p: '2', act: 'lock' }, body: { reason: 'lt- live-trips (unlocked again after the run)' } }) },
+    'POST /api/books/periods/:fy/:p/:act': { make: async (api) => { api.seeds.periods = true; api.save && api.save(); return { params: { fy: OLD_FY, p: '2', act: 'lock' }, body: { reason: 'lt- live-trips (unlocked again after the run)' } }; } },
     'GET /api/books/packs/:id/file': { make: async (api) => { if (!api.seeds.pack) api.seeds.pack = (await must(api, 'POST', '/api/books/packs', { kind: 'month', fiscal_year: OLD_FY, period: 1 })).pack.pack_id; return { params: { id: api.seeds.pack } }; } },
     'GET /api/assist/resolve': { query: '?region=IN' },
     'POST /api/books/accruals': { body: () => ({ ref: 'lt-ELEC-' + u(), kind: 'outstanding', class: 'electricity', amount: 100, date: day(), narration: 'lt- live-trips' }) },
