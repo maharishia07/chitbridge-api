@@ -243,14 +243,7 @@
   "GET /api/assist/catalogue-source/:key": {
    "state": "unreached",
    "group": "fixture",
-   "reason": "404 · NOT_FOUND · Unknown source.",
-   "url": "/api/assist/catalogue-source/royale-play@v1",
-   "calls": [
-    {
-     "status": 404,
-     "trips": null
-    }
-   ]
+   "reason": "404 Unknown source after 3 tries (royale-play@v1, %40-encoded, and after authoring it with PUT /assist/catalogue-source): the read answers only for a source in the built-in registry, which the load shop does not hold"
   },
   "GET /api/assist/container/:id": {
    "state": "unreached",
@@ -1832,23 +1825,23 @@
   },
   "POST /api/signin/ask": {
    "state": "unreached",
-   "group": "limiter",
-   "reason": "sign-in limiter is 30 per 15 min per IP and the harness signs in once; measure by hand with a spare budget"
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
   },
   "POST /api/signin/pin": {
    "state": "unreached",
-   "group": "limiter",
-   "reason": "sign-in limiter is 30 per 15 min per IP; one sign-in only"
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
   },
   "POST /api/signin/renew": {
    "state": "unreached",
-   "group": "limiter",
-   "reason": "sign-in limiter is 30 per 15 min per IP; it would also rotate the cached token"
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
   },
   "POST /api/signin/verify": {
    "state": "unreached",
-   "group": "limiter",
-   "reason": "sign-in limiter is 30 per 15 min per IP; one sign-in only"
+   "group": "no-header",
+   "reason": "pre-sign-in door: no identity yet, so the server never sends X-DB-Trips (checked on ask: 200, RateLimit-Remaining 27 of 30, no X-DB-Trips); the 30 per 15 min per IP limiter is a second reason, and running from inside the VM would not add the header"
   },
   "POST /api/simulator/feedback": {
    "state": "unreached",
