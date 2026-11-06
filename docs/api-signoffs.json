@@ -3731,6 +3731,342 @@
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#767 k13 output shape",
    "lifecycle": "stable"
+  },
+  "DELETE /api/channels/:id": {
+   "hash": "ef4450ed8ae9908d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "DELETE /api/quick-keys/groups/:id/items/:productId": {
+   "hash": "d25ee0c242aa26a6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/capture/pending": {
+   "hash": "6617cb1ca9a06c8a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/capture/stores": {
+   "hash": "99aa450700b1fb37",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/catalogue/:bridge_id/my-orders": {
+   "hash": "a2a86a8787fc122a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/catalogue/enquiry/:item_id": {
+   "hash": "6aa1a26163f26d86",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/channels": {
+   "hash": "ffc420af5b223424",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/channels/outbound": {
+   "hash": "e377fc98fa7cbaea",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/proposals": {
+   "hash": "23000a02d2175d9a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/connectors": {
+   "hash": "e7284e2a1727d98b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/definitions/:id": {
+   "hash": "0d4a94f7e4529cb9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/events/stats": {
+   "hash": "764175d6c376c803",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/forms/instances/all": {
+   "hash": "510b356c83f5abbc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/governance/supplier-acceptance/:handle": {
+   "hash": "f61bf679b70b755a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/identity/documents": {
+   "hash": "d07dcfc2b934bf94",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/kyb/risk": {
+   "hash": "a45d7fb9c9b70281",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/kyb/yourself": {
+   "hash": "e07b4c4feb40a728",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/network-offers": {
+   "hash": "86729110d085f141",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/notifications": {
+   "hash": "c3cc73e1b867722e",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/privacy/facts": {
+   "hash": "f36cba9b4e55b9fa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/privacy/me": {
+   "hash": "e1c0482aaafadf84",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/products/:id/schedule": {
+   "hash": "b60cfb49dec01200",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/quick-keys/screen-config/default": {
+   "hash": "89bb4938f0466843",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/relationships/customers/:id/rewards": {
+   "hash": "7c3134ca129680fe",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/relationships/suppliers": {
+   "hash": "de8640973f5b3504",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
+   "hash": "34ea3d3a80a87da1",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/supplies": {
+   "hash": "33e67c8520a5c1fa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/quick-keys/groups/:id/items": {
+   "hash": "328af0a0e03feeec",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "PATCH /api/relationships/suppliers/:id": {
+   "hash": "8f6477ebba0a8479",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/adopt/:chit_id": {
+   "hash": "ba9d3c0418ef50fa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/:id/convert": {
+   "hash": "fae0d72b43d1bf93",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/:id/dismiss": {
+   "hash": "6198a417da1c810c",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/capture/:id/structure": {
+   "hash": "316b36b697a0b6cf",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/channels": {
+   "hash": "2ea6d02c596ca56c",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/channels/:id/auto-raise": {
+   "hash": "ddea300d3efd73c4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/channels/:id/template": {
+   "hash": "bb6f9ec83871b2e4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/connectors/:actorId/erp-test": {
+   "hash": "f427329066062d46",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/kyb/field": {
+   "hash": "c7243483b6c92dfa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/notifications/dismiss": {
+   "hash": "e8e590e17a17c1da",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/notifications/seen": {
+   "hash": "2d4ccaf0dddfb510",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "POST /api/privacy/me/consent": {
+   "hash": "333df34f3741d77d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "PUT /api/quick-keys/screen-config/default": {
+   "hash": "7ff641dccc3e9005",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
   }
  }
 }
