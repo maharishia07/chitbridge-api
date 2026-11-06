@@ -21258,9 +21258,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e154f449feca36d9"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -21354,9 +21353,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4747f2c6ffbcb794"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [

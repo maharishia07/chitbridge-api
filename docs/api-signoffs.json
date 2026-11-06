@@ -1227,19 +1227,19 @@
    "lifecycle": "stable"
   },
   "GET /api/network/entities/lookup": {
-   "hash": "c253907b7767cfd8",
+   "hash": "e154f449feca36d9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
    "lifecycle": "stable"
   },
   "GET /api/network/place": {
-   "hash": "2193476ac8a98348",
+   "hash": "4747f2c6ffbcb794",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#835: SEC-138 reviewed on branch head 111037a0: a business of another network answers the 404 a missing one gets, an unknown bridge id answers 200 found:false because GET /entities/lookup already tells any signed-in business whether a bridge id exists (public card), so nothing new is learned; names and sentences plain; web (cap-network) reads found and nodes only",
    "lifecycle": "stable"
   },
   "GET /api/offers/kinds": {
