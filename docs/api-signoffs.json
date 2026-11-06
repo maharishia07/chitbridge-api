@@ -1731,11 +1731,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/exposure": {
-   "hash": "7d19b7065fef8cc8",
+   "hash": "efa0652b1d0f4de7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/locale": {
@@ -1763,11 +1763,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
-   "hash": "21b4715aa77e270e",
+   "hash": "bb90f2791c17bec0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "PATCH /api/folders/:id": {
@@ -1843,19 +1843,19 @@
    "lifecycle": "stable"
   },
   "POST /api/assist": {
-   "hash": "ea241c7a2519aa88",
+   "hash": "4d3d32ed0f02786e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-adopt": {
-   "hash": "4a5e560282faac94",
+   "hash": "89946324f32549b9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-structure": {
@@ -1883,11 +1883,11 @@
    "lifecycle": "stable"
   },
   "POST /api/assist/publish": {
-   "hash": "72ff17bb8418b3d7",
+   "hash": "e2ec4b3294857387",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/books/accounts": {
@@ -2283,11 +2283,11 @@
    "lifecycle": "stable"
   },
   "POST /api/catalogue/enquiry/:item_id": {
-   "hash": "8c67d9df0fb2f2fd",
+   "hash": "26a9b0367a693d59",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/network-store/:networkId/order": {
@@ -2363,11 +2363,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
-   "hash": "41730ff204ae5789",
+   "hash": "311169405940eae0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/reprice": {
@@ -2571,11 +2571,11 @@
    "lifecycle": "stable"
   },
   "POST /api/entities/populations": {
-   "hash": "c303d29a52083779",
+   "hash": "3c261678a79ac355",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/folders": {
@@ -2851,11 +2851,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products": {
-   "hash": "1e0b83ef1f6c57a2",
+   "hash": "914d6553a1cbbf4e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/products/:id/media": {
@@ -2867,11 +2867,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/:id/schedule": {
-   "hash": "670ad01c2c0b34da",
+   "hash": "ec834b16142998da",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/products/availability/bulk": {
@@ -2891,11 +2891,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/bulk-update": {
-   "hash": "fce1723e9819565b",
+   "hash": "366d97c351174a18",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/products/import": {
@@ -2923,19 +2923,19 @@
    "lifecycle": "stable"
   },
   "POST /api/products/starter-columns": {
-   "hash": "ea8cd5d6b378f465",
+   "hash": "2eaff1d170a6af28",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/products/status/bulk": {
-   "hash": "224a58ec6a2e8d00",
+   "hash": "b194b999878fae7b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "POST /api/repeat": {
@@ -3475,11 +3475,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/entities/routing": {
-   "hash": "21b29d7baf9e4c1e",
+   "hash": "b0e5f4d41975080d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#374",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
   "PUT /api/folders/inventory/:code": {
