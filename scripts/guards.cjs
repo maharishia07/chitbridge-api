@@ -589,7 +589,15 @@ const GUARDS = [
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
   'party-merge-guard-sql.test.cjs',
-  'r58-no-sales-offer-on-receipt.test.js'
+  'r58-no-sales-offer-on-receipt.test.js',
+  'books-payables.test.cjs', // MNT-47: CB FINANCE payables ageing, MSME day 45, early-pay offer
+  'move-in.test.cjs', // MNT-47: move in from Xero / QuickBooks - guessed columns, dry run, write through the doors
+  'parallel-run.test.cjs', // MNT-47: their Tally/Xero period beside ours, each difference with why
+  'fx-rates.test.cjs', // MNT-47: foreign-currency trade end to end, rates and revalue
+  'register-country-guess.test.cjs', // MNT-47: a new shop country is what the owner was shown
+  'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
+  'policy-set.test.js', // MNT-47: the units set policy flag
+  'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

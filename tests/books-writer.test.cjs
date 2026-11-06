@@ -12,6 +12,7 @@
  *   6. cb_app may DELETE the ledger's setup tables (or the server starts to), a SQL file stops saying who runs it
  *      (as postgres, WITHOUT RLS), or a file the shop downloads says "accounting".
  * Run: node tests/books-writer.test.cjs
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */

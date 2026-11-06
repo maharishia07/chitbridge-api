@@ -9,6 +9,7 @@
  *     (Dr Purchases + input GST · Cr Creditors · the shop); a second firing is a duplicate
  * Before the tax-copy fix the customer's copy read as the customer's own SALE.
  * Run: node tests/two-sided-books.test.cjs
+ * CARD      09-counter/two-sided-bill
  */
 'use strict';
 const path = require('path');

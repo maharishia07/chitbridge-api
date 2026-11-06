@@ -9,6 +9,8 @@
  * figure, the disposal.
  * Needs the books engines v1.16.0 (the sibling ../chitbridge-engines/src, or BOOKS_ENGINES_SRC).
  * Run: node tests/books-period.test.cjs
+ * CARD      14-accounting/periods-month-lock-year-close
+ * CARD      14-accounting/fixed-assets-and-depreciation
  */
 'use strict';
 const path = require('path');

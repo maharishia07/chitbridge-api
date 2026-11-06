@@ -3,6 +3,7 @@
  * MSME day 45 (incl. agreed days under 45), the 7-day risk window, the early-pay offer valid and expired, the India-only gate — then the ONE-CALCULATION
  * check (Payables total = F3's outgoing dues), then GET /dues?side=supplier&finance=1 and the discount journal (POST /entries + against_ref) through the
  * real router over the in-memory books. Every figure to the minor unit. Needs the books engines (../chitbridge-engines/src). Run: node tests/books-payables.test.cjs
+ * CARD      16-finance/payables
  */
 'use strict';
 const path = require('path');

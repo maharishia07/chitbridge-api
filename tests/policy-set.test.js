@@ -5,6 +5,7 @@
  * `CBCatalogue.UNITS` is the maximum the platform knows; `units` is the entity's slice of it, and every picker
  * downstream offers only that. So this coercion decides what appears in the product form — and a bad value here
  * becomes a unit someone can select and then trade in.
+ * CARD      20-settings-governance-and-plan/policy-flags
  */
 const { test } = require('node:test');
 const assert = require('node:assert');

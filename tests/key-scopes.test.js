@@ -18,6 +18,7 @@
  * route" — without ever sending the request that would prove it the hard way.
  *
  * Run: node tests/key-scopes.test.js
+ * CARD      18-identity-sign-in-and-access/api-keys-for-other-systems
  */
 'use strict';
 const assert = require('assert'), path = require('path');

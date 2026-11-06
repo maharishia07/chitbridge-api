@@ -15,6 +15,7 @@
  * `entity_kind = 'test'` precisely so a DELETE stops depending on a guess about an email domain. That only holds
  * while the column is trustworthy — and a column with a silent default is trustworthy exactly as long as
  * everybody remembers. This guard is what replaces remembering.
+ * CARD      19-onboarding-and-shop-setup/entity-kind-constitution-vertical-plan-type
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 

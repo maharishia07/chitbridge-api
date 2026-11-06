@@ -23,6 +23,7 @@
  * What caused the fault was a missing REFUSAL and a missing REGISTRATION, and both are visible in the text.
  *
  * Run: node tests/counter-claim.test.js   · no DB, no network.
+ * CARD      09-counter/counters-and-keys-pair-enrol-open-release
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 

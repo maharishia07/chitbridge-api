@@ -10,6 +10,7 @@
  * still not a guess: the shop declares a MASK and this decodes it, so no scale vendor is hard-wired anywhere.
  *
  * Run: node tests/scalecode.test.js   · no DB, no browser, no network.
+ * CARD      09-counter/scale-weigh-scan
  */
 const assert = require('assert');
 const S = require('../lib/scalecode');

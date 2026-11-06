@@ -6,6 +6,8 @@
  *   · equal ✅ · different (a bill on the rail they keyed later; a rounding rule; an entry only theirs) · a mapping gap · only ours
  *   · their party ledgers pooled under the group ours keeps on one control ledger · a snapshot part is never replaced (409) · who may (owner · auditor · not a viewer)
  * No database, no network.
+ * CARD      14-accounting/parallel-run
+ * CARD      23-connectors-and-integrations/xero-quickbooks-myob
  */
 const assert = require('assert');
 const fs = require('fs');

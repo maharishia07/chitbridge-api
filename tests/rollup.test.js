@@ -19,6 +19,8 @@
  * the figures that become the shop's permanent record.
  *
  * Run: node tests/rollup.test.js   · no DB, no network.
+ * CARD      26-reporting-mis-and-bi/rollups-and-summary-chits
+ * CARD      09-counter/day-open-day-close-summary-chits
  */
 const assert = require('assert');
 const R = require('../lib/rollup');

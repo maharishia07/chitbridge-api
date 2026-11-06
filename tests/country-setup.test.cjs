@@ -13,6 +13,7 @@
  *     country after setup 409 (a country change is a new entity) · the write is one transaction: identities + entity_governance
  *   · the gate's words are regulation.status()'s (engines v1.36.0; v1.35.0 lacked AU1 — do not adopt it) — the same sentence the Country setup screen shows
  * Run: node tests/country-setup.test.cjs
+ * CARD      15-tax-and-country-packs/country-setup-and-country-lab
  */
 'use strict';
 const path = require('path');
