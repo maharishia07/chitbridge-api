@@ -15,6 +15,7 @@
  * ⭐ Every rule below is one somebody could relax while changing something else, and NONE OF THEM FAILS LOUDLY
  * when broken: an incident resolved with nothing recorded still shows green, a stored duration still prints a
  * number, and a lifecycle word in the status column still saves. They are exactly the rules that need a guard.
+ * CARD      21-compliance-attestation-and-trade/incidents
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 
@@ -108,7 +109,8 @@ it('⭐⭐ a change is CITED from git, never re-typed into a second copy', () =>
 it('⭐ the board sorts by severity, then oldest', () => {
   /* Newest-first is right for a log and wrong for a board: the oldest Sev-1 is precisely the row that must not
      sink, and a date sort is what buries it. */
-  assert.ok(/RANK\[a\.severity\] - RANK\[b2\.severity\]/.test(SRC), 'the board no longer sorts by severity first');
+  /* the order lives in the SQL since the route was split: rankOrder(SV, INC_SEV) first, then when it happened (oldest first) */
+  assert.ok(/rankOrder\(SV, INC_SEV\)}, v\.rules->>'happened_at' NULLS LAST/.test(SRC), 'the board no longer sorts by severity first, then oldest');
   assert.ok(/open_by_severity/.test(SRC), 'the open-by-severity count a release gate asks for is gone');
 });
 
@@ -123,7 +125,7 @@ it('⭐⭐ where the person was standing, shape-checked', () => {
 
 it('⚠️ nothing is recorded without an account of what happened', () => {
   const inc = SRC.slice(SRC.indexOf("router.post('/incidents'"), SRC.indexOf("router.get('/incidents'"));
-  assert.ok(/if \(!observed\) return res\.status\(400\)/.test(inc),
+  assert.ok(/if \(!observed\) return problem\(req, res, \{ status: 400/.test(inc),
     'an empty incident can be filed, and only its author will ever understand it');
 });
 

@@ -8,6 +8,7 @@
  * Not here: R1 (chit_line rows are written by chit_deliver, SQL).
  *
  * ../db is stubbed: every statement is recorded and answers from `answer`, so nothing needs Postgres.
+ * CARD      01-rail-core-the-chit/line-model
  */
 const path = require('path');
 

@@ -17,6 +17,7 @@
  * ⚠️ It counts `withEntity` bodies too: each one is BEGIN + set_config + the query + COMMIT, so a transaction
  * opened to run a single SELECT costs four trips, not one. That is the measurement that matters, and counting
  * only `db.query` calls would have said this endpoint was cheap.
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 

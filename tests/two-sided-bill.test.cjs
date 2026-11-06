@@ -19,6 +19,7 @@
  * No database: db, auth and the delivery are stubbed; the route is the real one.
  * Run: node tests/two-sided-bill.test.cjs
  * CARD      09-counter/two-sided-bill
+ * CARD      28-platform-and-operations/worlds-regions-data-residency-test-vs-production
  */
 'use strict';
 const path = require('path');

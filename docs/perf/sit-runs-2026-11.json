@@ -1,0 +1,254 @@
+{
+ "_doc": "A RECORDED summary of the SIT load runs of 2026-11-06, not a live run. Each number was copied by tools from the junit files the runs wrote (C:/dev/PM/junit/sit-knee-*, sit-stress-*, sit-load-*) and the run notes (C:/dev/PM/SIT-KNEE-RUN-2026-11-06.md, SIT-STRESS-RUN-2026-11-06.md, SIT-LOAD-RUN-2026-11-06.md). tests/sit-load-evidence.test.cjs checks that this record agrees with itself and is not stale; it does NOT drive a server. To refresh: re-run the SIT ramp (toolset/sitload/ramp.cjs), update this file from the new junit, change run_date.",
+ "recorded_not_live": true,
+ "run_date": "2026-11-06",
+ "max_age_days": 90,
+ "target": {
+  "where": "sit-in",
+  "box": "8 GB / 2 CPU",
+  "api_commit": "9d22447d",
+  "driver": "sit-load (1 GB)",
+  "mix": "126 parameterless web GET routes, 40% hot list of 10"
+ },
+ "source_docs": [
+  "PM/SIT-KNEE-RUN-2026-11-06.md",
+  "PM/SIT-STRESS-RUN-2026-11-06.md",
+  "PM/SIT-LOAD-RUN-2026-11-06.md"
+ ],
+ "source_junit": [
+  "PM/junit/sit-knee-2026-11-06-steps.xml",
+  "PM/junit/sit-knee-2026-11-06-soak.xml",
+  "PM/junit/sit-stress-2026-11-06-steps.xml",
+  "PM/junit/sit-stress-2026-11-06-soak.xml",
+  "PM/junit/sit-stress-2026-11-06-spike.xml",
+  "PM/junit/sit-load-2026-11-06-routes.xml",
+  "PM/junit/sit-load-2026-11-06-trips.xml",
+  "PM/junit/sit-load-2026-11-06-latency.xml"
+ ],
+ "knee": {
+  "rate_per_s": 200,
+  "rule": "the first step whose p95 passes baseline_factor times the p95 of the lowest step",
+  "baseline_factor": 3,
+  "saturates_first": "the database (Postgres 92% of one core at 250/s), then the box CPU; not connections, not RAM, not the limiter (raised to 200000 for the run, restored to 20000)",
+  "limiter_restored": 20000
+ },
+ "steps": [
+  {
+   "rate_per_s": 20,
+   "seconds": 60,
+   "sent": 1200,
+   "p50_ms": 5,
+   "p95_ms": 20,
+   "p99_ms": 31,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 3.5
+  },
+  {
+   "rate_per_s": 40,
+   "seconds": 60,
+   "sent": 2400,
+   "p50_ms": 4,
+   "p95_ms": 19,
+   "p99_ms": 25,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 4.2
+  },
+  {
+   "rate_per_s": 60,
+   "seconds": 60,
+   "sent": 3600,
+   "p50_ms": 5,
+   "p95_ms": 21,
+   "p99_ms": 33,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 4.4
+  },
+  {
+   "rate_per_s": 80,
+   "seconds": 60,
+   "sent": 4800,
+   "p50_ms": 6,
+   "p95_ms": 22,
+   "p99_ms": 37,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 5.2
+  },
+  {
+   "rate_per_s": 120,
+   "seconds": 60,
+   "sent": 7200,
+   "p50_ms": 7,
+   "p95_ms": 28,
+   "p99_ms": 64,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 6.9
+  },
+  {
+   "rate_per_s": 160,
+   "seconds": 60,
+   "sent": 9600,
+   "p50_ms": 9,
+   "p95_ms": 40,
+   "p99_ms": 98,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 8.3
+  },
+  {
+   "rate_per_s": 200,
+   "seconds": 60,
+   "sent": 12000,
+   "p50_ms": 12,
+   "p95_ms": 62,
+   "p99_ms": 126,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 73,
+   "driver_cpu_pct": 10.5
+  },
+  {
+   "rate_per_s": 250,
+   "seconds": 60,
+   "sent": 15000,
+   "p50_ms": 17,
+   "p95_ms": 169,
+   "p99_ms": 476,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 88,
+   "driver_cpu_pct": 14.1
+  }
+ ],
+ "hold_below_knee": {
+  "rate_per_s": 160,
+  "seconds": 120,
+  "sent": 19200,
+  "p50_ms": 9,
+  "p95_ms": 44,
+  "p99_ms": 104,
+  "x5xx": 0,
+  "timeouts": 0,
+  "x429": 31,
+  "driver_cpu_pct": 9.7
+ },
+ "soak": {
+  "rate_per_s": 10,
+  "seconds": 600,
+  "sent": 6000,
+  "p50_ms": 6,
+  "p95_ms": 21,
+  "p99_ms": 38,
+  "x5xx": 0,
+  "timeouts": 0,
+  "x429": 0,
+  "driver_cpu_pct": 3.6
+ },
+ "spikes": [
+  {
+   "spike_to_per_s": 30,
+   "phase": "base-before",
+   "sent": 120,
+   "p50_ms": 7,
+   "p95_ms": 24,
+   "p99_ms": 46,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 2
+  },
+  {
+   "spike_to_per_s": 30,
+   "phase": "spike",
+   "sent": 900,
+   "p50_ms": 6,
+   "p95_ms": 21,
+   "p99_ms": 51,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 9.3
+  },
+  {
+   "spike_to_per_s": 30,
+   "phase": "recover",
+   "sent": 240,
+   "p50_ms": 7,
+   "p95_ms": 25,
+   "p99_ms": 45,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 1.4
+  },
+  {
+   "spike_to_per_s": 80,
+   "phase": "base-before",
+   "sent": 120,
+   "p50_ms": 8,
+   "p95_ms": 29,
+   "p99_ms": 72,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 2.5
+  },
+  {
+   "spike_to_per_s": 80,
+   "phase": "spike",
+   "sent": 2400,
+   "p50_ms": 7,
+   "p95_ms": 103,
+   "p99_ms": 417,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 26
+  },
+  {
+   "spike_to_per_s": 80,
+   "phase": "recover",
+   "sent": 240,
+   "p50_ms": 6,
+   "p95_ms": 29,
+   "p99_ms": 52,
+   "x5xx": 0,
+   "timeouts": 0,
+   "x429": 0,
+   "driver_cpu_pct": 1.4
+  }
+ ],
+ "load_routes": {
+  "routes_read": 184,
+  "answered_200": 173,
+  "answered_403": 8,
+  "answered_400": 2,
+  "answered_401": 1,
+  "x5xx": 0,
+  "timeouts": 0,
+  "p50_ms": 6.8,
+  "p95_ms": 35.4
+ },
+ "round_trips": {
+  "routes_with_header": 170,
+  "budgeted_total": 293,
+  "live_total": 376,
+  "over_budget_routes": 17,
+  "budget_file": "round-trips.budget.json",
+  "owner_of_the_gap": "cb-speed SPD-35"
+ },
+ "stress_notes": {
+  "sustained_one_ip_cap_per_s": 22.2,
+  "why": "RATE_LIMIT_MAX 20000 per 15 min per IP; the stress run found no knee because the limiter and the 1 GB driver bound it first; the knee run (driver capped, limiter raised) found it at 200 per s"
+ }
+}

@@ -11,6 +11,7 @@
  *   C  the events are shaped (a dispute event with no dispute id, reason or note is refused 400)
  *
  * Offline: database, address book, transport are stubs. Run: node tests/ctp-return-disputes.test.cjs
+ * CARD      05-ctp-and-cross-installation/ctp-return-path
  */
 'use strict';
 const assert = require('assert');

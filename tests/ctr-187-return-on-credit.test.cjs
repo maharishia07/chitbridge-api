@@ -8,6 +8,7 @@
  * The page functions are cut out of tools/tally-connector/till.html and run here against stand-ins for the few page globals they read.
  * Expectations are hand-computed: input -> expected -> actual (the asserts print both).
  * Run: node tests/ctr-187-return-on-credit.test.cjs
+ * CARD      09-counter/returns
  */
 'use strict';
 const fs = require('fs');

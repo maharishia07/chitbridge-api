@@ -9,6 +9,7 @@
  * the real schema enforces: the unique index on (entity, ref, line_ref, reason), and no UPDATE or DELETE on
  * stock_movement. So what is under test is the real post(), the real rebuild() and the real engine — everything
  * except the network.
+ * CARD      09-counter/stock-moves-at-the-till
  */
 'use strict';
 const assert = require('assert'), path = require('path');

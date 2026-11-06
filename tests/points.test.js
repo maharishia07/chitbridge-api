@@ -23,6 +23,7 @@
  * green while the actual hole stayed open.
  *
  * Run: node tests/points.test.js   · no network, no DB.
+ * CARD      08-rewards-and-loyalty/points-and-reward-ledger
  */
 'use strict';
 const assert = require('assert');

@@ -614,6 +614,20 @@ const GUARDS = [
   'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
   'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
+  'line-complete.test.cjs', // 1 line model (wave 3): a line that asked for nothing is not done; the roll-up counts only genuinely finished lines
+  'work-rows.test.cjs', // 1 line model (wave 3): GET /api/work list / row / sheet through the real router: folders, stage words, per-line delivery, truncation, RLS, one batch not a query per row
+  'worklist-unassigned.test.cjs', // 1 line model (wave 3): work nobody picked up still appears on the worklist (no assignment row is not invisible)
+  'docnumber.test.js', // 9 returns (wave 3): the numbering rules per jurisdiction, the credit-note series, no Indian rule escapes into a country not studied
+  'user-id-rule.test.cjs', // 18 user id (wave 3): the User ID rule through the real route handlers over a stubbed database
+  'round-trips.test.cjs', // 28 performance (wave 3): GET /me has a round-trip budget and it is enforced
+  'round-trips-chit.test.cjs', // 28 performance (wave 3): opening a chit has a round-trip budget too
+  'trips-headers.test.cjs', // 28 performance (wave 3): the round-trip counter answers the right people and nobody else
+  'may-trade.test.cjs', // 28 worlds (wave 3): mayTrade is the database rule asked at the door; the trigger clauses and the helper SQL agree
+  'sit-load-evidence.test.cjs', // 28 load simulation + performance (wave 3): the RECORDED SIT knee/stress/load runs agree with themselves and are not stale (a record, not a live run)
+  'books-cashflow.test.cjs', // 16 cash position (wave 3): lib/books-cashflow.project shortfall and no-shortfall to the minor unit, GET /cashflow and the cheques pdc_reminders over the in-memory books (repaired: payments need an Idempotency-Key)
+  'incidents.test.js', // 21 incidents (wave 3): an incident needs an account of what happened, is ordered severity-first then oldest, every move appended (repaired: two source patterns had moved)
+  'combo-templates.test.cjs', // 7 combo templates (wave 3): save / reopen / rename / delete a combo, push CREATES the product once then UPDATES, cross-entity isolation (repaired: the stub now states the shop currency)
+  'till-counter-doors.test.cjs', // 9 verify and reconcile + customer display (wave 3): POST /reconcile ok / absorbed / missing / unknown in one query, GET /verify spread sample, read-only; pair a screen by code, a screen key and nothing else, spent on first read, expiry, guess lock-out
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

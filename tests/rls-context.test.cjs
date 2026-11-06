@@ -29,6 +29,7 @@
  * added. Refreshed 2026-09-26 from `node scripts/rls-census.cjs --save`; tests/rls-guard-baseline.test.cjs now
  * checks this list and db/index.js's against db/rls-baseline.json on every run, so the next new FORCE-RLS table
  * fails a test instead of just aging quietly here.
+ * CARD      18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
  */
 const fs = require('fs');
 const path = require('path');

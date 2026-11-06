@@ -24,6 +24,8 @@
  * guard that needs credentials is a guard that does not run in CI.
  *
  * Run: node tests/migration-rls.test.js   · no DB, no network.
+ * CARD      18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
+ * CARD      28-platform-and-operations/migrations-and-schema
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const DIR = path.join(__dirname, '..', 'migrations');

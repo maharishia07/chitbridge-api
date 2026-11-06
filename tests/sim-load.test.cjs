@@ -10,6 +10,7 @@
  *      or b300 stops honouring it;
  *   5. the loader's schema step would run a dry-run, a verify or a data script.
  * Run: node tests/sim-load.test.cjs
+ * CARD      28-platform-and-operations/load-simulation
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */

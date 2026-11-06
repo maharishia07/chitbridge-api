@@ -22,6 +22,7 @@
  * There are hundreds of historical migrations and they are not going to be rewritten. Only files from b240 on
  * are held to this — the era in which every migration ends in a proof — and older ones are listed as inherited.
  * The line moves forward, never back.
+ * CARD      28-platform-and-operations/migrations-and-schema
  */
 const fs = require('fs');
 const path = require('path');

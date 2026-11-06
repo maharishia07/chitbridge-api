@@ -8,6 +8,7 @@
  * (Dates read back as a database hands them over are in tests/books-dates-tz.test.cjs — it runs itself under two zones.)
  *
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-fixes.test.cjs
+ * CARD      14-accounting/opening-balances
  */
 'use strict';
 const path = require('path');
