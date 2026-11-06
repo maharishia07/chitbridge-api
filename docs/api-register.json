@@ -45152,7 +45152,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
         "lifecycle": "stable"
       },
       "status": "partial",
@@ -45248,9 +45248,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "302cf707867f5001"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -45340,7 +45339,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
         "lifecycle": "stable"
       },
       "status": "partial",
@@ -57822,9 +57821,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "142a488a3c917511"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#768 k13 output shape",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [

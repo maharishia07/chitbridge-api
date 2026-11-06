@@ -1327,6 +1327,27 @@
   },
   "PUT /api/service/:chit_id": {
    "output_allowlist": true
+  },
+  "GET /api/network-design": {
+   "output_allowlist": true
+  },
+  "GET /api/network-design/availability": {
+   "output_allowlist": true
+  },
+  "GET /api/network-design/stores": {
+   "output_allowlist": true
+  },
+  "POST /api/network-design/build": {
+   "output_allowlist": true
+  },
+  "POST /api/network-design/reissue": {
+   "output_allowlist": true
+  },
+  "POST /api/network-design/validate": {
+   "output_allowlist": true
+  },
+  "PUT /api/network-design": {
+   "output_allowlist": true
   }
  }
 }
