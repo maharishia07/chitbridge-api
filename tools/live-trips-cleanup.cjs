@@ -26,7 +26,7 @@ async function kitKeys(api, days) {
 /** lt- write-offs still standing: event write_off, not reversed, not itself a reversal, carrying the lt- tag somewhere in the entry */
 async function writeOffs(api, from, to) {
   const body = (await api.call('GET', '/api/books/daybook?from=' + from + '&to=' + to)).body || {};
-  return (body.entries || []).filter((e) => e.event_type === 'write_off' && !e.reversed_by_id && !e.reverses_entry_id && /lt-/.test(JSON.stringify(e)) && UUID.test(String(e.entry_id)));
+  return (body.entries || []).filter((e) => e.event_type === 'write_off' && !e.reversed_by_id && !e.reverses_entry_id && /\blt-/.test(JSON.stringify(e)) && UUID.test(String(e.entry_id)));
 }
 
 /** plan (apply false) or do (apply true); returns the lines printed so a test can read them */
