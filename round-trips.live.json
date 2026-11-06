@@ -179,7 +179,27 @@
   "POST /api/network/connections/:id/suspend": 3,
   "POST /api/network/connections/:id/resume": 3,
   "POST /api/network/connections/:id/disconnect": 3,
-  "POST /api/network/connections/:id/decline": 3
+  "POST /api/network/connections/:id/decline": 3,
+  "GET /api/forms/:key": 0,
+  "POST /api/books/accruals": 4,
+  "POST /api/books/assets": 4,
+  "POST /api/books/check": 10,
+  "POST /api/books/contra": 4,
+  "POST /api/books/loans": 4,
+  "POST /api/capture/stores": 3,
+  "POST /api/combo-templates": 3,
+  "POST /api/integrations/profile": 11,
+  "POST /api/keys": 3,
+  "POST /api/kyb/credential": 3,
+  "POST /api/products/availability/bulk": 3,
+  "POST /api/quick-keys/groups": 3,
+  "POST /api/schemas/create-default": 4,
+  "PUT /api/assist/container": 5,
+  "PATCH /api/combo-templates/:id": 4,
+  "PATCH /api/quick-keys/groups/:id": 3,
+  "PATCH /api/schemas/visibility": 3,
+  "DELETE /api/combo-templates/:id": 3,
+  "DELETE /api/quick-keys/groups/:id": 3
  },
  "measured": {
   "POST /api/network/entities": {
@@ -219,6 +239,126 @@
    "at": "2026-11-06"
   },
   "POST /api/network/connections/:id/decline": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "GET /api/forms/:key": {
+   "trips": 0,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/accruals": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/assets": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/check": {
+   "trips": 10,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/contra": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/books/loans": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/capture/stores": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/combo-templates": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/integrations/profile": {
+   "trips": 11,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/keys": {
+   "trips": 3,
+   "status": 201,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/kyb/credential": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/products/availability/bulk": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/quick-keys/groups": {
+   "trips": 3,
+   "status": 201,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "POST /api/schemas/create-default": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PUT /api/assist/container": {
+   "trips": 5,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PATCH /api/combo-templates/:id": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "PATCH /api/schemas/visibility": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "DELETE /api/combo-templates/:id": {
+   "trips": 3,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-06",
+   "at": "2026-11-06"
+  },
+  "DELETE /api/quick-keys/groups/:id": {
    "trips": 3,
    "status": 200,
    "basis": "live from sit-in 2026-11-06",

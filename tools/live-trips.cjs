@@ -213,7 +213,7 @@ async function measure(key, route, ctx, sample) {
   let last = null;
   for (let i = 0; i < 4; i += 1) {
     const body = i === 0 ? sample.body : (typeof sample.again === 'function' ? sample.again() : sample.body);
-    last = await call(route.method, url.url, route.method === 'GET' || route.method === 'DELETE' ? undefined : body, sample.headers);
+    last = await call(route.method, url.url + (sample.query || ''), route.method === 'GET' || route.method === 'DELETE' ? undefined : body, sample.headers);
     calls.push({ status: last.status, trips: last.trips });
     if (last.status >= 200 && last.status < 300 && !lastBody) lastBody = last.body;
     if (last.status < 200 || last.status >= 300) break; /* it did not reach its work: stop firing a refused request */
@@ -243,7 +243,7 @@ function sampleFor(key, op, hint) {
   const v = require('../middleware/validate');
   const schema = op && v.bodySchemaOf(op);
   const again = hint && hint.body ? () => (typeof hint.body === 'function' ? hint.body() : hint.body) : () => (schema ? sampleOf(schema) : {});
-  return { body: again(), again, headers: hint && hint.headers };
+  return { body: again(), again, headers: hint && hint.headers, query: (hint && hint.query) || '' };
 }
 
 async function run(opts) {
@@ -262,7 +262,9 @@ async function run(opts) {
   console.log('signed in on ' + state.host);
   const results = { ...previous.routes };
   const drivenKeys = new Set();
-  if (!opts.only || /network/.test(opts.only)) {
+  const driven0 = ['approve', 'decline', 'disconnect', 'resume', 'suspend'].map((a) => 'POST /api/network/connections/:id/' + a).concat(['POST /api/network/connections', 'POST /api/network/entities']);
+  const alreadyDriven = !opts.retryAll && driven0.every((k) => previous.routes[k] && previous.routes[k].state === 'measured');
+  if ((!opts.only || /network/.test(opts.only)) && !alreadyDriven) {
     const driven = await require('./live-trips-network.cjs').run({ call, tokenFor, unique });
     Object.keys(driven).forEach((k) => { results[k] = driven[k]; drivenKeys.add(k); console.log((driven[k].state === 'measured' ? 'MEASURED ' + String(driven[k].trips).padStart(3) : 'unreached   ') + '  ' + k.padEnd(62) + (driven[k].state === 'measured' ? '' : driven[k].group + ' · ' + driven[k].reason)); });
   }

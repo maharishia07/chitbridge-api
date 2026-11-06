@@ -3,8 +3,8 @@
  "at": "2026-11-06",
  "server": "sit-in",
  "summary": {
-  "measured": 7,
-  "unreached": 3
+  "measured": 27,
+  "unreached": 114
  },
  "routes": {
   "POST /api/network/entities": {
@@ -56,7 +56,7 @@
   "POST /api/network/entities/:id/claim": {
    "state": "unreached",
    "group": "fixture",
-   "reason": "needs an UNCLAIMED cb_entity row whose bridge_id is the caller's own (answered 409 ALREADY_CLAIMED): register() mints a new bridge id and a claimed node, so it takes a SQL fixture"
+   "reason": "no lt- object to act on under /api/network/entities for :id"
   },
   "POST /api/network/connections/:id/approve": {
    "state": "measured",
@@ -182,6 +182,1345 @@
    "state": "unreached",
    "group": "fixture",
    "reason": "no object to read under /api/network/entities for :id"
+  },
+  "GET /api/assist/catalogue-source/:key": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/assist/catalogue-source for :key"
+  },
+  "GET /api/assist/container/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/assist/container for :id"
+  },
+  "GET /api/assist/resolve": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Unknown container or version.",
+   "url": "/api/assist/resolve",
+   "calls": [
+    {
+     "status": 404,
+     "trips": null
+    }
+   ]
+  },
+  "GET /api/attachments/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/attachments for :id"
+  },
+  "GET /api/books/packs/:id/file": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/books/packs for :id"
+  },
+  "GET /api/capture/webhook/whatsapp": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "the provider verification handshake (hub.verify_token), not a shop call"
+  },
+  "GET /api/catalogue/:bridge_id/capture-fields": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/catalogue for :bridge_id"
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/catalogue for :bridge_id"
+  },
+  "GET /api/catalogue/:bridge_id/support/preview": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/catalogue for :bridge_id"
+  },
+  "GET /api/catalogue/network-store/:networkId": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/catalogue/network-store for :networkId"
+  },
+  "GET /api/catalogue/network/:bridge_id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/catalogue/network for :bridge_id"
+  },
+  "GET /api/chits/:chit_id/diagnosis": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/chits for :chit_id"
+  },
+  "GET /api/chits/:chit_id/use": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/chits for :chit_id"
+  },
+  "GET /api/forms/:key": {
+   "state": "measured",
+   "trips": 0,
+   "status": 200,
+   "url": "/api/forms/certificate-of-origin",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    },
+    {
+     "status": 200,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/forms/instances/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/forms/instances for :id"
+  },
+  "GET /api/integrations/docs/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/integrations/docs for :id"
+  },
+  "GET /api/integrations/download/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/integrations/download for :id"
+  },
+  "GET /api/integrations/kit/*": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · We could not find that.",
+   "url": "/api/integrations/kit/x",
+   "calls": [
+    {
+     "status": 404,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/invoice/:chit_id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/invoice for :chit_id"
+  },
+  "GET /api/products/media/:item_id/:mid": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/products/media for :item_id"
+  },
+  "GET /api/tax/invoice/:chit_id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/tax/invoice for :chit_id"
+  },
+  "GET /api/testing/cmdb/:ci": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/testing/cmdb for :ci"
+  },
+  "GET /api/till/engine/:name": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no object to read under /api/till/engine for :name"
+  },
+  "GET /api/till/quick-keys/state": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "url": "/api/till/quick-keys/state",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /api/till/reward": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · scheme (identity|phone) and value required",
+   "url": "/api/till/reward",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 0
+    }
+   ]
+  },
+  "GET /health": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "answered 200 with no X-DB-Trips header (static or pre-database answer): 0 database trips by construction, needs a hand note",
+   "url": "/health",
+   "calls": [
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    },
+    {
+     "status": 200,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/assist/gap": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "422 · ASSIST_BAD_REQUEST · Ask a question.",
+   "url": "/api/assist/gap",
+   "calls": [
+    {
+     "status": 422,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/assist/resolve": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "410 · ASSIST_REVIEW_RETIRED · Gap review is superseded — answer the question on its chit (Task inbox), then Publish to t",
+   "url": "/api/assist/resolve",
+   "calls": [
+    {
+     "status": 410,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/books/accruals": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/accruals",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/accruals/:ref/reverse": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/accruals for :ref"
+  },
+  "POST /api/books/assets": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/assets",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/assets/:id/dispose": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/assets for :id"
+  },
+  "POST /api/books/check": {
+   "state": "measured",
+   "trips": 10,
+   "status": 200,
+   "url": "/api/books/check",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    },
+    {
+     "status": 200,
+     "trips": 10
+    }
+   ]
+  },
+  "POST /api/books/closing-stock": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "422 · BOOKS_REFUSED · The stock on the books (1000) already equals the closing value — nothing to post.",
+   "url": "/api/books/closing-stock",
+   "calls": [
+    {
+     "status": 422,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/contra": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/contra",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/depreciation/run": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "422 · BOOKS_REFUSED · Depreciation for 2026-27 runs at the year end (2027-03-31) or after — the year has not end",
+   "url": "/api/books/depreciation/run",
+   "calls": [
+    {
+     "status": 422,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/gst/close": {
+   "state": "unreached",
+   "group": "precondition",
+   "reason": "closes a GST period of the load shop (a one-way books act); needs Athi/cb-accounting to say which period may be closed on sit-in"
+  },
+  "POST /api/books/gst/pay": {
+   "state": "unreached",
+   "group": "precondition",
+   "reason": "posts a GST challan payment against a closed period; needs a closed period first (see gst/close)"
+  },
+  "POST /api/books/loans": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/loans",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/books/loans/:ref/emi": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/loans for :ref"
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/payments for :id"
+  },
+  "POST /api/books/payments/:id/propose": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/payments for :id"
+  },
+  "POST /api/books/periods/:fy/:p/:act": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/periods for :fy"
+  },
+  "POST /api/books/recurring/:id/post": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/recurring for :id"
+  },
+  "POST /api/books/recurring/:id/skip": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/books/recurring for :id"
+  },
+  "POST /api/books/write-off": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "needs a customer party with an open balance (a lt- credit sale) to write off"
+  },
+  "POST /api/capture/stores": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/capture/stores",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/catalogue/:bridge_id/order/confirm": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue for :bridge_id"
+  },
+  "POST /api/catalogue/:bridge_id/order/start": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue for :bridge_id"
+  },
+  "POST /api/catalogue/:bridge_id/support": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue for :bridge_id"
+  },
+  "POST /api/catalogue/:bridge_id/support/start": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue for :bridge_id"
+  },
+  "POST /api/catalogue/network-store/:networkId/order": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue/network-store for :networkId"
+  },
+  "POST /api/catalogue/photo-extract": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "calls the vision provider (paid, outside sit-in)"
+  },
+  "POST /api/channels/:id/approve": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/channels for :id"
+  },
+  "POST /api/channels/:id/provider-ref": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/channels for :id"
+  },
+  "POST /api/channels/:id/revoke": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/channels for :id"
+  },
+  "POST /api/channels/:id/template-approve": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/channels for :id"
+  },
+  "POST /api/chits/:chit_id/costs": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/chits for :chit_id"
+  },
+  "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/chits for :chit_id"
+  },
+  "POST /api/chits/register/entries/:raida_id/accept": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/chits/register/entries for :raida_id"
+  },
+  "POST /api/chits/register/templates": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · CAPABILITY_OFF · This shop has not switched the register on. Turn the register capability on to use it.",
+   "url": "/api/chits/register/templates",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/combo-templates": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/combo-templates",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/connections/request": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · Entity not found",
+   "url": "/api/connections/request",
+   "calls": [
+    {
+     "status": 404,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/counters/:id/assign": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/counters for :id"
+  },
+  "POST /api/ctp/deliver": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "needs a signed envelope from another installation (CTP crossing)"
+  },
+  "POST /api/ctp/query": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "needs a signed envelope from another installation (CTP crossing)"
+  },
+  "POST /api/forms/:key/issue": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/forms for :key"
+  },
+  "POST /api/forms/:key/resolve": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/forms for :key"
+  },
+  "POST /api/forms/instances/:id/attach": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/forms/instances for :id"
+  },
+  "POST /api/forms/instances/:id/sign": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/forms/instances for :id"
+  },
+  "POST /api/identity/documents/:scheme/code": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "sends a code through an outside provider"
+  },
+  "POST /api/identity/documents/:scheme/verify": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "checks a code from an outside provider"
+  },
+  "POST /api/integrations/books": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · NOT_FOUND · We could not find that.",
+   "url": "/api/integrations/books",
+   "calls": [
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/integrations/profile": {
+   "state": "measured",
+   "trips": 11,
+   "status": 200,
+   "url": "/api/integrations/profile",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    },
+    {
+     "status": 200,
+     "trips": 11
+    }
+   ]
+  },
+  "POST /api/invoice/build": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · INVOICE_BAD_REQUEST · lines[] required",
+   "url": "/api/invoice/build",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/keys": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/keys",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/kyb/credential": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/kyb/credential",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/offers/evaluate": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · INVALID_JSON · What was sent could not be read. It is cut off or is not a proper set of details.",
+   "url": "/api/offers/evaluate",
+   "calls": [
+    {
+     "status": 400,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/offers/explain": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · INVALID_JSON · What was sent could not be read. It is cut off or is not a proper set of details.",
+   "url": "/api/offers/explain",
+   "calls": [
+    {
+     "status": 400,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/pricing/price": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · NO_LINES · lines[] required: { item_id|code, qty, listPrice?, pricing? }",
+   "url": "/api/pricing/price",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/products/availability/bulk": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/products/availability/bulk",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/products/bulk": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · PRODUCT_INVALID · 1 item(s) were refused and nothing was written.",
+   "url": "/api/products/bulk",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 5
+    }
+   ]
+  },
+  "POST /api/products/lists/adopt": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · PRODUCT_BAD_REQUEST · There is no product list called \"lt-list-ddca92\".",
+   "url": "/api/products/lists/adopt",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/quick-keys/groups": {
+   "state": "measured",
+   "trips": 3,
+   "status": 201,
+   "url": "/api/quick-keys/groups",
+   "calls": [
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    },
+    {
+     "status": 201,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/quick-keys/groups/:id/items": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · QUICK_KEY_INVALID · product_id required",
+   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e/items",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/schemas/create-default": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/schemas/create-default",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/signin/ask": {
+   "state": "unreached",
+   "group": "limiter",
+   "reason": "sign-in limiter is 30 per 15 min per IP and the harness signs in once; measure by hand with a spare budget"
+  },
+  "POST /api/signin/pin": {
+   "state": "unreached",
+   "group": "limiter",
+   "reason": "sign-in limiter is 30 per 15 min per IP; one sign-in only"
+  },
+  "POST /api/signin/renew": {
+   "state": "unreached",
+   "group": "limiter",
+   "reason": "sign-in limiter is 30 per 15 min per IP; it would also rotate the cached token"
+  },
+  "POST /api/signin/verify": {
+   "state": "unreached",
+   "group": "limiter",
+   "reason": "sign-in limiter is 30 per 15 min per IP; one sign-in only"
+  },
+  "POST /api/simulator/feedback": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "public feedback door that may notify outside (e-mail)"
+  },
+  "POST /api/simulator/lead": {
+   "state": "unreached",
+   "group": "external",
+   "reason": "public lead door that may notify outside (e-mail)"
+  },
+  "POST /api/tax/rate": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · NO_LINES · Send at least one line.",
+   "url": "/api/tax/rate",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/testing/cases/gherkin": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · NOT_BOARD_WRITER · Cases and CMDB records are read by every shop, so only the board’s own account (or one nam",
+   "url": "/api/testing/cases/gherkin",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/testing/changes": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TESTING_BAD_REQUEST · Name the incident or requirement this answers. A change with no cause is either undocument",
+   "url": "/api/testing/changes",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/testing/cmdb/seed": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · NOT_BOARD_WRITER · Cases and CMDB records are read by every shop, so only the board’s own account (or one nam",
+   "url": "/api/testing/cmdb/seed",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/testing/releases": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "needs the id of a testing change (definition) to carry; the testing board is its own shop and the load shop holds none"
+  },
+  "POST /api/testing/results/junit": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TESTING_BAD_REQUEST · Send { xml: \"<testsuites>…\" }.",
+   "url": "/api/testing/results/junit",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/alias": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · an alias needs an item and the words the supplier uses",
+   "url": "/api/till/alias",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/catalogue": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "409 · CATALOGUE_NOT_EMPTY · This shop already has 12 products. Starting a catalogue again would add a second copy of e",
+   "url": "/api/till/catalogue",
+   "calls": [
+    {
+     "status": 409,
+     "trips": 3
+    }
+   ]
+  },
+  "POST /api/till/close": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · Only a paired counter can close itself.",
+   "url": "/api/till/close",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/diagnostic": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · Only a paired counter can report itself.",
+   "url": "/api/till/diagnostic",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/enrol": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · TILL_REFUSED · There is no counter C1 in this shop.",
+   "url": "/api/till/enrol",
+   "calls": [
+    {
+     "status": 404,
+     "trips": 4
+    }
+   ]
+  },
+  "POST /api/till/flags": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · item_id required",
+   "url": "/api/till/flags",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/offer-item": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · offer_id and item_id required",
+   "url": "/api/till/offer-item",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/pair/claim": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "404 · PAIR_CODE_UNKNOWN · That code is wrong or has expired. Ask ChitBridge for a new one.",
+   "url": "/api/till/pair/claim",
+   "calls": [
+    {
+     "status": 404,
+     "trips": null
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/hide": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "url": "/api/till/quick-keys/hide",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/screen-config": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "url": "/api/till/quick-keys/screen-config",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/state": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "url": "/api/till/quick-keys/state",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/quick-keys/unhide": {
+   "state": "unreached",
+   "group": "role",
+   "reason": "403 · TILL_NO_COUNTER · This key is not holding a counter.",
+   "url": "/api/till/quick-keys/unhide",
+   "calls": [
+    {
+     "status": 403,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/reward/claim": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · from and to holders required",
+   "url": "/api/till/reward/claim",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/screens/rename": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · Which screen?",
+   "url": "/api/till/screens/rename",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/screens/revoke": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · Which screen?",
+   "url": "/api/till/screens/revoke",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/stock": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · item_id required",
+   "url": "/api/till/stock",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "POST /api/till/stock/bulk": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "400 · TILL_BAD_REQUEST · item_ids required",
+   "url": "/api/till/stock/bulk",
+   "calls": [
+    {
+     "status": 400,
+     "trips": 2
+    }
+   ]
+  },
+  "PUT /api/assist/catalogue-source": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "422 · ASSIST_BAD_REQUEST · source_key is required (e.g. royale-play@v1)",
+   "url": "/api/assist/catalogue-source",
+   "calls": [
+    {
+     "status": 422,
+     "trips": 2
+    }
+   ]
+  },
+  "PUT /api/assist/container": {
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/assist/container",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
+  },
+  "PUT /api/assist/region-override": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "422 · ASSIST_BAD_REQUEST · container_id and region are required",
+   "url": "/api/assist/region-override",
+   "calls": [
+    {
+     "status": 422,
+     "trips": 2
+    }
+   ]
+  },
+  "PUT /api/connections/:id/respond": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/connections for :id"
+  },
+  "PUT /api/governance/profile/vault": {
+   "state": "unreached",
+   "group": "example-refused",
+   "reason": "409 · VAULT_VERSION_REQUIRED · This screen is older than the vault — reload it, then save.",
+   "url": "/api/governance/profile/vault",
+   "calls": [
+    {
+     "status": 409,
+     "trips": 3
+    }
+   ]
+  },
+  "PUT /api/identity/documents/:scheme": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/identity/documents for :scheme"
+  },
+  "PUT /api/testing/cmdb/:ci": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/testing/cmdb for :ci"
+  },
+  "PATCH /api/combo-templates/:id": {
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/combo-templates/be6425dd-4efb-434c-a386-68740b7aa463",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
+  },
+  "PATCH /api/entities/:id/erase": {
+   "state": "unreached",
+   "group": "destructive",
+   "reason": "erases the entity (the load shop itself); never fired"
+  },
+  "PATCH /api/quick-keys/groups/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "PATCH /api/schemas/visibility": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/schemas/visibility",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 200,
+     "trips": 3
+    }
+   ]
+  },
+  "PATCH /api/supplies/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/supplies for :id"
+  },
+  "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
+   "state": "unreached",
+   "group": "fixture",
+   "reason": "no lt- object to act on under /api/catalogue for :bridge_id"
+  },
+  "DELETE /api/combo-templates/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/combo-templates/be6425dd-4efb-434c-a386-68740b7aa463",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "DELETE /api/quick-keys/groups/:id": {
+   "state": "measured",
+   "trips": 3,
+   "status": 200,
+   "url": "/api/quick-keys/groups/e0dd8c1c-5521-4525-a02f-58fff61c480e",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 3
+    },
+    {
+     "status": 404,
+     "trips": 3
+    }
+   ]
+  },
+  "OPTIONS *": {
+   "state": "unreached",
+   "group": "no-header",
+   "reason": "the CORS preflight is answered by middleware before any database work; no X-DB-Trips header on it"
   }
  }
 }
