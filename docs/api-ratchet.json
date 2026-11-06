@@ -10,11 +10,11 @@
  "routes_without_does": 627,
  "columns_failing": {
   "strict_input": 75,
-  "output_allowlist": 150,
-  "foreign_id_404": 62,
+  "output_allowlist": 76,
+  "foreign_id_404": 28,
   "idempotent_money_write": 7,
   "inbound_validated": 2,
-  "trips_budgeted": 144
+  "trips_budgeted": 141
  },
  "reported_failing": {
   "bfla_role_check": 0,
