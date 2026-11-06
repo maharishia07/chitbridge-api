@@ -335,8 +335,7 @@
   },
   "POST /api/chits/:chit_id/reprice": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -347,8 +346,7 @@
   },
   "POST /api/chits/:chit_id/costs": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -380,8 +378,7 @@
   },
   "POST /api/chits/register/subjects": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -408,8 +405,7 @@
   },
   "POST /api/chits/register/templates": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -494,8 +490,7 @@
   },
   "POST /api/chits/:chit_id/raida": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -543,8 +538,7 @@
   },
   "PUT /api/chits/:chit_id/use": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -556,8 +550,7 @@
   },
   "POST /api/chits/:chit_id/deliver-lines": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -569,8 +562,7 @@
   },
   "POST /api/chits/:chit_id/assign-lines": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -632,8 +624,7 @@
   },
   "POST /api/chits/:chit_id/books-request": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -713,8 +704,7 @@
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -740,8 +730,7 @@
   },
   "PUT /api/chits/:chit_id/priority": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -752,8 +741,7 @@
   },
   "PUT /api/chits/:chit_id/priority-flag": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -765,8 +753,7 @@
   },
   "POST /api/chits/:chit_id/archive": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -778,8 +765,7 @@
   },
   "PUT /api/chits/:chit_id/star": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -790,8 +776,7 @@
   },
   "POST /api/chits/:chit_id/unread": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -802,8 +787,7 @@
   },
   "POST /api/chits/:chit_id/unarchive": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -814,8 +798,7 @@
   },
   "POST /api/chits/:chit_id/restore": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -835,8 +818,7 @@
   },
   "PUT /api/chits/:chit_id/void": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -848,8 +830,7 @@
   },
   "POST /api/chits/assign-bulk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true

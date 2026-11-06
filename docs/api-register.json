@@ -36444,9 +36444,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "cb34c7ed90a137a9"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -36543,9 +36542,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "4063fb6f59ac6ff8"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -36642,9 +36640,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "ee3617b9ff3ada02"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -36828,9 +36825,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "e275be90e73d1615"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -37576,9 +37572,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "479526d135d780a1"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -37843,9 +37838,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "2a3bed85e5eb4b08"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -37937,9 +37931,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "de599def3fd8151d"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -38032,9 +38025,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "a4bc9af3df307f6e"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -38127,9 +38119,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "4b88a41af9602e17"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -38224,9 +38215,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "75e5de25ab8a058b"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -38584,9 +38574,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "dc988275757c672d"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56138,9 +56127,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "9d26dd4d966ea939"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56236,9 +56224,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "7c91c6607d810af7"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56334,9 +56321,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "ac2768c0c89bd282"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56430,9 +56416,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "9641c194ec49396a"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56670,9 +56655,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "bf8d67dc430c628c"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -56771,9 +56755,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "c304eb6c18afe880"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
