@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 221
+    "failing": 204
    },
    "foreign_id_404": {
     "applies": 230,
@@ -2090,7 +2090,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12457,7 +12457,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 355,
-   "hash": "39b4dd0064f69ab7",
+   "hash": "b4f32940f2822490",
    "does": "",
    "errors": {
     "count": 0,
@@ -12487,7 +12487,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13275,7 +13275,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1418,
-   "hash": "d2915e172199d763",
+   "hash": "e155288025ed0727",
    "does": "",
    "errors": {
     "count": 0,
@@ -13306,7 +13306,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13452,7 +13452,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 400,
-   "hash": "01d70f4bd8eeb16d",
+   "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
     "count": 0,
@@ -13480,7 +13480,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -20852,7 +20852,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 740,
-   "hash": "dd816c613da54877",
+   "hash": "bbe85ce8e30c2d33",
    "does": "",
    "errors": {
     "count": 0,
@@ -20884,7 +20884,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -20943,7 +20943,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 801,
-   "hash": "283ad24d6c24e087",
+   "hash": "7c3134ca129680fe",
    "does": "",
    "errors": {
     "count": 0,
@@ -20973,7 +20973,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21283,7 +21283,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 319,
-   "hash": "16eb52f958eb6809",
+   "hash": "b8c9b96226cea310",
    "does": "",
    "errors": {
     "count": 0,
@@ -21318,7 +21318,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21381,7 +21381,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 673,
-   "hash": "dd765b9a6933027e",
+   "hash": "4dc19f0e3c1b5213",
    "does": "",
    "errors": {
     "count": 0,
@@ -21414,7 +21414,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26734,7 +26734,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1213,
-   "hash": "e0c040a82e4ebfc4",
+   "hash": "5981ef26fa1d7732",
    "does": "",
    "errors": {
     "count": 0,
@@ -26769,7 +26769,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26824,7 +26824,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 819,
-   "hash": "7d19b7065fef8cc8",
+   "hash": "b8ab2234faa60a0b",
    "does": "",
    "errors": {
     "count": 0,
@@ -26857,7 +26857,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -26884,8 +26884,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b8ab2234faa60a0b"
    },
    "status": "partial",
    "callers": [
@@ -27090,7 +27091,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 444,
-   "hash": "e190a37baf2cd8ee",
+   "hash": "8acfd347e88e2965",
    "does": "",
    "errors": {
     "count": 0,
@@ -27122,7 +27123,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -27150,8 +27151,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "8acfd347e88e2965"
    },
    "status": "partial",
    "callers": [
@@ -27188,7 +27190,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 892,
-   "hash": "21b4715aa77e270e",
+   "hash": "87e17429efa5a8de",
    "does": "",
    "errors": {
     "count": 0,
@@ -27224,7 +27226,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -27253,8 +27255,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "87e17429efa5a8de"
    },
    "status": "partial",
    "callers": [
@@ -41993,7 +41996,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1658,
-   "hash": "c303d29a52083779",
+   "hash": "168c35241375ac66",
    "does": "",
    "errors": {
     "count": 0,
@@ -42027,7 +42030,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -42057,8 +42060,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "168c35241375ac66"
    },
    "status": "partial",
    "callers": [
@@ -48571,7 +48575,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -48764,7 +48768,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -57029,7 +57033,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1625,
-   "hash": "b4af9ed6eee146e4",
+   "hash": "9d2daddf86173f11",
    "does": "",
    "errors": {
     "count": 0,
@@ -57065,7 +57069,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -57097,7 +57101,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b4af9ed6eee146e4"
+    "stale_since": "9d2daddf86173f11"
    },
    "status": "partial",
    "callers": [
@@ -57126,7 +57130,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1544,
-   "hash": "c36c30c620c32f6b",
+   "hash": "42542e770f86f7c1",
    "does": "",
    "errors": {
     "count": 0,
@@ -57162,7 +57166,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -57193,7 +57197,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "c36c30c620c32f6b"
+    "stale_since": "42542e770f86f7c1"
    },
    "status": "partial",
    "callers": [
