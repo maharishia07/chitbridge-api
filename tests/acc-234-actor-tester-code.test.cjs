@@ -1,7 +1,7 @@
 /**
  * tests/acc-234-actor-tester-code.test.cjs — ACC-234: an auditor (actor) seat signs in on SIT through the tester code.
  * TESTER_NAMES names the BUSINESS; an actor is typed key@business, so lib/identity-auth.js parentNames adds the parent's own names.
- * Proves: a listed business's actor signs in with the tester code · an unlisted business's actor does not · a wrong code is counted ·
+ * Proves: a listed business’s actor signs in with the tester code · an unlisted business’s actor does not · a wrong code is counted ·
  * TESTER_CODE unset → nothing · an entity is unchanged · no new door: the same testerGuess gate (name list, guess cap, account lock).
  * Run: node tests/acc-234-actor-tester-code.test.cjs · no network, no DB.
  */
@@ -46,6 +46,20 @@ const actor = (parent) => ({ identity_id: 'a1', identity_type: 'actor', parent_e
   env({ NODE_ENV: 'test', DATABASE_URL: LOCALDB, TESTER_NAMES: 'owner@au-trial.test' });
   ia = load();
   t('TESTER_CODE unset → the tester code opens nothing for an actor', (await ia.verifyCredential(q([]), actor('P1'), { otp: CODE, name: 'auditor@au trial' })).ok === false);
+  /* review 6 Nov (cb-security): production does NOT seal the door; only TESTER_CODE and the name list decide */
+  env({ NODE_ENV: 'production', DATABASE_URL: LOCALDB, TESTER_CODE: CODE, TESTER_NAMES: 'owner@au-trial.test' });
+  ia = load();
+  t('production with TESTER_CODE set: the listed business’s actor signs in (testing-phase door, DECISIONS 14 Oct)', (await ia.verifyCredential(q([]), actor('P1'), { otp: CODE, name: 'auditor@au trial' })).ok === true);
+  t('production with TESTER_CODE set: an unlisted business’s actor is refused', (await ia.verifyCredential(q([]), actor('P2'), { otp: CODE, name: 'auditor@else' })).ok === false);
+  env({ NODE_ENV: 'test', DATABASE_URL: LOCALDB, TESTER_CODE: CODE, TESTER_NAMES: '' });
+  ia = load();
+  t('an empty TESTER_NAMES lets nobody in with the tester code', (await ia.verifyCredential(q([]), actor('P1'), { otp: CODE, name: 'auditor@au trial' })).ok === false);
+  env({ NODE_ENV: 'test', DATABASE_URL: LOCALDB, TESTER_CODE: CODE, TESTER_NAMES: 'owner@au-trial.test' });
+  ia = load();
+  for (let n = 0; n < 4; n++) await ia.verifyCredential(q([]), seat('r' + (n % 2)), { otp: 'wrong-' + n, name: 'a@au trial' });
+  t('a seat’s own stored code still signs in mid-way', (await ia.verifyCredential(q([]), seat('r7'), { otp: '402917', name: 'a@au trial' })).ok === true);
+  for (let n = 4; n < 6; n++) await ia.verifyCredential(q([]), seat('r' + (n % 2) + 'b'), { otp: 'wrong-' + n, name: 'a@au trial' });
+  t('a stored-code success does not reset the business budget: 6 misses around it still shut the tester door', (await ia.verifyCredential(q([]), seat('r9'), { otp: CODE, name: 'a@au trial' })).ok === false);
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
