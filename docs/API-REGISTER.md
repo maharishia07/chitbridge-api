@@ -994,19 +994,19 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-compare.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, chit_header, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-compare.js · actions: -
+- reads (derived): books_compare_part, books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-compare.js · actions: -
 
 **GET /api/books/compare/:id/csv** · books · cb-accounting · partial
 - does: _not yet written_
 - errors: 3 code(s) [COMPARE_NOT_ALLOWED, LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_compare_part, books_setting, chit_header, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: - · actions: -
+- reads (derived): books_compare_part, books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: - · actions: -
 
 **GET /api/books/daybook** · books · cb-accounting · meets standard
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/26) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, chit_header, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): books_setting, chit_header, chit_status, customer_list, identities, journal_entry, journal_line, ledger_account, supplier_list · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/dues** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1042,7 +1042,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-bank.js 1/4, cap-books.js 1/26, cap-period.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, chit_header, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank.js, cap-books.js, cap-period.js · actions: -
+- reads (derived): books_setting, chit_header, chit_status, identities, journal_entry, journal_line, ledger_account · writes (derived): - · callers: cap-bank.js, cap-books.js, cap-period.js · actions: -
 
 **GET /api/books/move-in/imports** · books · cb-accounting · meets standard
 - does: _not yet written_

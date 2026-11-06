@@ -15,13 +15,13 @@ of file each thing is; this says what already does the job.
 | 110 | `withEntity` | `books-hooks.js` |  |
 | 110 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 102 | `read` | `books-cashflow.js` | Trips: |
-| 92 | `answer` | `availability.js` | from March; then nearest. |
+| 94 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 73 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 69 | `next` | `dayopen.js` | the next thing to do — |
+| 70 | `next` | `dayopen.js` | the next thing to do — |
 | 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 66 | `list` | `cap-settings.js` |  |
 | 66 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `host` | `chit-sheet.js` |  |
-| 37 | `facts` | `bill-steps.js` | MY state_log — |
+| 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 37 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 37 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 35 | `modal` | `app.html` |  |
@@ -100,7 +100,7 @@ of file each thing is; this says what already does the job.
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `owner` | `books.js` |  |
-| 26 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
+| 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
@@ -108,14 +108,14 @@ of file each thing is; this says what already does the job.
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
-| 24 | `account` | `home-facts.js` | OMITTED: |
+| 25 | `account` | `home-facts.js` | OMITTED: |
 | 24 | `group` | `identity.js` | again in a different costume. |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 23 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
-| 22 | `note` | `dbwatch.js` |  |
+| 23 | `note` | `dbwatch.js` |  |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `keep` | `signin.js` | see. |
@@ -152,7 +152,7 @@ of file each thing is; this says what already does the job.
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
-| 18 | `says` | `adopt.js` |  |
+| 19 | `says` | `adopt.js` |  |
 | 17 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `update` | `folder-rules.js` |  |
@@ -165,7 +165,7 @@ of file each thing is; this says what already does the job.
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
 | 16 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 16 | `connectors` | `home-facts.js` | declare (said in words — |
-| 16 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
+| 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 15 | `confirmAsk` | `app.html` | In-app confirm (replaces browser confirm()). |
 | 15 | `bkMoney` | `cap-books.js` |  |
 | 15 | `bkDate` | `cap-books.js` |  |
@@ -186,7 +186,7 @@ of file each thing is; this says what already does the job.
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |
 | 14 | `series` | `gst-returns.js` | `paid_on`: |
-| 14 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
+| 15 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
@@ -196,7 +196,7 @@ of file each thing is; this says what already does the job.
 | 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 13 | `post` | `books-manual.js` | POST /events — |
 | 13 | `setting` | `books-store.js` | const n = (v) => (v == null ? 0 : |
-| 13 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 13 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 13 | `heads` | `tax-lines.js` | The heads, summed. |
 | 12 | `units` | `cart.js` |  |
@@ -206,6 +206,6 @@ of file each thing is; this says what already does the job.
 | 12 | `migrated` | `country-setup.js` |  |
 | 12 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
-| 12 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
+| 13 | `decimals` | `money.js` | decimals(currency) → how many minor-unit digits it has: |
 | 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
