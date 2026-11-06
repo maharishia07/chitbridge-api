@@ -944,13 +944,8 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
-  "POST /api/channels": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
-  },
-  "POST /api/channels/:id/approve": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
+  "POST /api/catalogue/photo-extract": {
+   "output_allowlist": true
   },
   "POST /api/channels/:id/auto-raise": {
    "output_allowlist": true,
@@ -1186,9 +1181,11 @@
    "bfla_role_check": true
   },
   "POST /api/identity/documents/:scheme/code": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/identity/documents/:scheme/verify": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/invoice/build": {
@@ -1364,6 +1361,9 @@
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "output_allowlist": true
+  },
+  "POST /api/service/:chit_id/resolve": {
    "output_allowlist": true
   },
   "POST /api/service/:chit_id/respond": {
