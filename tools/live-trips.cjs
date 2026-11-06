@@ -1,7 +1,7 @@
 'use strict';
 /**
  * OWNS      measuring LIVE database round trips (X-DB-Trips) for the registered routes whose trips line is still a placeholder (SPD-39); the reason per route it cannot reach.
- * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --check. Tests/tooling only: no route handler is touched.
+ * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --seed | --check. Tests/tooling only: no route handler is touched.
  * FLOW      docs/api-register.json (trips_budgeted false) + the routes' own OpenAPI schemas ──▶ a request per route ──▶ sit-in (the load shop only) ──▶ docs/speed/live-trips-results.json
  *           ──▶ tools/live-trips-writer.cjs (the safe writer) ──▶ round-trips.live.json + round-trips.budget.json (only the lines measured).
  * CARD      speed · round trips
@@ -73,7 +73,7 @@ async function call(method, url, body, extra) {
     return { status: res.status, trips: h === null ? null : Number(h), ms: Date.now() - t0, body: parsed, text: parsed ? '' : text.slice(0, 120) };
   } catch (e) {
     if (/stopping/.test(String(e.message))) throw e;
-    return { status: 0, trips: null, ms: Date.now() - t0, body: null, text: String(e.message).slice(0, 100) };
+    return { status: 0, trips: null, ms: Date.now() - t0, body: null, text: String(e.message).slice(0, 100) + (e.cause ? ' ' + String(e.cause.code || e.cause.message).slice(0, 60) : '') };
   }
 }
 
@@ -205,15 +205,32 @@ function whyNot(res) {
 }
 
 /** the four fires of one route; the highest X-DB-Trips among the 2xx answers is its count */
-async function measure(key, route, ctx, sample) {
+/** the url of a route from a hint's make() answer: its params fill the path, the rest comes from urlOf */
+async function urlFromMade(key, route, ctx, made) {
+  const fixed = { ...((HINTS.params || {})[key] || {}), ...(made.params || {}) };
+  const saved = HINTS.params; HINTS.params = { ...(saved || {}), [key]: fixed };
+  try { return await urlOf(key, route, ctx); } finally { HINTS.params = saved; }
+}
+async function measure(key, route, ctx, sample, hint) {
   lastBody = null;
-  const url = await urlOf(key, route, ctx);
+  const make = hint && hint.make;
+  let url = make ? { url: null } : await urlOf(key, route, ctx);
   if (url.reason) return { state: 'unreached', group: url.reason[0], reason: url.reason[1] };
   const calls = [];
   let last = null;
+  let made = null;
   for (let i = 0; i < 4; i += 1) {
-    const body = i === 0 ? sample.body : (typeof sample.again === 'function' ? sample.again() : sample.body);
-    last = await call(route.method, url.url + (sample.query || ''), route.method === 'GET' || route.method === 'DELETE' ? undefined : body, sample.headers);
+    let body = i === 0 ? sample.body : (typeof sample.again === 'function' ? sample.again() : sample.body);
+    let query = sample.query || '';
+    let headers = sample.headers;
+    if (make && (i === 0 || hint.fresh)) {
+      made = await make(API, i);
+      if (made && made.unreached) return { state: 'unreached', group: made.unreached[0], reason: made.unreached[1] };
+      url = await urlFromMade(key, route, ctx, made || {});
+      if (url.reason) return { state: 'unreached', group: url.reason[0], reason: url.reason[1] };
+    }
+    if (made) { if (made.body !== undefined) body = made.body; if (made.query !== undefined) query = made.query; if (made.headers) headers = made.headers; }
+    last = await call(route.method, url.url + query, route.method === 'GET' || route.method === 'DELETE' ? undefined : body, headers);
     calls.push({ status: last.status, trips: last.trips });
     if (last.status >= 200 && last.status < 300 && !lastBody) lastBody = last.body;
     if (last.status < 200 || last.status >= 300) break; /* it did not reach its work: stop firing a refused request */
@@ -260,6 +277,7 @@ async function run(opts) {
   console.log('routes to try: ' + todo.length + ' (failing trips_budgeted, not yet measured)');
   await signIn();
   console.log('signed in on ' + state.host);
+  for (const h of Object.values(HINTS.routes || {})) { if (typeof h.seed === 'function' && !h.seeded) { h.seeded = true; try { await h.seed(API); } catch (e) { console.log('seed failed: ' + e.message.slice(0, 120)); } } }
   const results = { ...previous.routes };
   const drivenKeys = new Set();
   const driven0 = ['approve', 'decline', 'disconnect', 'resume', 'suspend'].map((a) => 'POST /api/network/connections/:id/' + a).concat(['POST /api/network/connections', 'POST /api/network/entities']);
@@ -275,7 +293,7 @@ async function run(opts) {
     if (DENY[r.key]) out = { state: 'unreached', group: DENY[r.key][0], reason: DENY[r.key][1] };
     else if (hint && hint.skip) out = { state: 'unreached', group: hint.skip[0], reason: hint.skip[1] };
     else if (r.key === 'OPTIONS *') out = { state: 'unreached', group: 'no-header', reason: 'the CORS preflight is answered by middleware before any database work; no X-DB-Trips header on it' };
-    else out = await measure(r.key, r, ctx, sampleFor(r.key, ops[r.key], hint));
+    else out = await measure(r.key, r, ctx, sampleFor(r.key, ops[r.key], hint), hint);
     if (out.state === 'measured' && r.method === 'POST' && !r.path.includes(':')) {
       const created = findId(lastBody, 'id');
       if (created) made[r.path] = created;
@@ -287,6 +305,22 @@ async function run(opts) {
 }
 let lastBody = null;
 
+/* ── what a hint's make()/seed() may use: the paced call, a unique word, today, and SQL on sit-in's own test database ── */
+const SQL_SSH = ['-i', path.join(os.homedir(), '.ssh', 'sit_oracle'), '-o', 'BatchMode=yes', 'ubuntu@129.225.85.65', 'docker exec -i cbnet-db-1 psql -U postgres -d chitbridge -At'];
+/** run SQL on sit-in's database (a TEST server) and return the rows as arrays of text; the SQL comes from the hints, never from outside */
+function sql(text) {
+  const r = require('child_process').spawnSync('ssh', SQL_SSH, { input: text, encoding: 'utf8', timeout: 60000 });
+  if (r.status !== 0) throw new Error('sit-in sql failed: ' + String(r.stderr || '').slice(0, 200));
+  return String(r.stdout).split('\n').filter(Boolean).map((l) => l.split('|'));
+}
+const API = {
+  call, sql, unique, day: today, prefix: PREFIX, handle: HANDLE,
+  /** first element of a list answer that carries the lt- prefix (idempotent seeding: look before create) */
+  async firstOurs(url) { const b = (await call('GET', url)).body; const arr = Array.isArray(b) ? b : Object.values(b || {}).filter(Array.isArray).flat(); return arr.find(ours) || null; },
+  seeds: {}, /* ids found or made by seed() hooks in this run */
+  tokenFor
+};
+
 module.exports = { sampleOf, whyNot, failingRoutes };
 if (require.main === module) {
   const args = process.argv.slice(2);
@@ -294,6 +328,16 @@ if (require.main === module) {
   main(args, opt).catch((e) => { console.error('live-trips: ' + e.message); process.exit(1); });
 }
 
+/** --seed: run every hint's seed(api) once (idempotent: each looks before it creates; objects are prefixed lt-); the ids stay in API.seeds for the same process only,
+ *  so a plain run seeds again by itself (hints call API.seed(name, fn) which is cached per run) */
+async function seedAll() {
+  await signIn();
+  for (const [k, h] of Object.entries(HINTS.routes || {})) {
+    if (typeof h.seed !== 'function') continue;
+    try { const out = await h.seed(API); console.log('seeded  ' + k.padEnd(60) + JSON.stringify(out === undefined ? 'ok' : out).slice(0, 80)); } catch (e) { console.log('SEED FAILED ' + k + ' ' + e.message.slice(0, 120)); }
+  }
+  console.log('requests ' + state.n);
+}
 /** --check: the writer must not lower or drop any line of the committed files */
 function check() {
   const budget = readJson(BUDGET_FILE, null);
@@ -310,6 +354,8 @@ function check() {
 
 async function main(args, opt) {
   if (args.includes('--check')) return check();
+  if (args.includes('--seed')) return seedAll();
+  if (args.includes('--probe')) { await signIn(); console.log('host', state.host); const i = args.indexOf('--probe'); const r = await call(args[i + 1], args[i + 2], args[i + 3] ? JSON.parse(args[i + 3]) : undefined); console.log(r.status, 'trips', r.trips, JSON.stringify(r.body || r.text).slice(0, +(process.env.PROBE_LEN || 700))); return; }
   const dry = args.includes('--dry');
   const results = await run({ only: opt('--only'), retryAll: args.includes('--retry-all') });
   const rows = Object.keys(results).filter((k) => results[k].state === 'measured').map((k) => ({ route: k, trips: results[k].trips, status: results[k].status }));
