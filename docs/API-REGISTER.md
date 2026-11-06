@@ -562,11 +562,11 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | no | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | no | no | yes | no | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause | service | routes/service.js:264 | yes | yes | no | no | yes | yes | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:346 | yes | yes | no | no | yes | yes | no | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:322 | yes | yes | no | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/resolve | service | routes/service.js:235 | yes | yes | no | no | yes | yes | no | yes | no | no | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/respond | service | routes/service.js:214 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/ask | signin | routes/signin.js:979 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/logout | signin | routes/signin.js:100 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/pin | signin | routes/signin.js:981 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
@@ -651,7 +651,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PUT | /api/products/:id/availability | products | routes/products.js:1716 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/products/:id/status | products | routes/products.js:1746 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:135 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/service/:chit_id | service | routes/service.js:168 | yes | yes | no | no | yes | no | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| PUT | /api/service/:chit_id | service | routes/service.js:168 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1136 | yes | yes | yes | yes | yes | no | yes | no | yes | no | yes | yes | no | partial | yes | yes | no |
 
 ## Endpoint cards
