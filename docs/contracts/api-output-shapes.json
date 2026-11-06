@@ -21672,15 +21672,84 @@
     "GET /api/capture/pending": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "captures"
+        ],
+        "properties": {
+          "captures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "entity_id",
+                "channel",
+                "sender_ref",
+                "sender_name",
+                "subject",
+                "raw_text",
+                "media_refs",
+                "status",
+                "structured",
+                "chit_id",
+                "to_ref",
+                "provider_msg_id",
+                "created_at"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "channel": {
+                  "type": "string"
+                },
+                "sender_ref": {
+                  "type": "string"
+                },
+                "sender_name": {
+                  "type": "string"
+                },
+                "subject": {},
+                "raw_text": {
+                  "type": "string"
+                },
+                "media_refs": {},
+                "status": {
+                  "type": "string"
+                },
+                "structured": {},
+                "chit_id": {},
+                "to_ref": {
+                  "type": "string"
+                },
+                "provider_msg_id": {
+                  "type": "string"
+                },
+                "created_at": {
+                  "type": "string"
+                },
+                "duplicate": {
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 7,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/pending"
       }
@@ -21688,15 +21757,61 @@
     "GET /api/capture/stores": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "stores",
+          "migrated"
+        ],
+        "properties": {
+          "stores": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "store_id",
+                "phone_key",
+                "display_name",
+                "address",
+                "provisional",
+                "created_at"
+              ],
+              "properties": {
+                "store_id": {
+                  "type": "string"
+                },
+                "phone_key": {
+                  "type": "string"
+                },
+                "display_name": {
+                  "type": "string"
+                },
+                "address": {
+                  "type": "string"
+                },
+                "provisional": {
+                  "type": "boolean"
+                },
+                "created_at": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 5,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/stores"
       }
@@ -21704,15 +21819,32 @@
     "POST /api/capture/:id/convert": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "chit_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "chit_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 4,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/22222222-2222-4222-8222-222222222222/convert",
         "body": {
@@ -21723,15 +21855,25 @@
     "POST /api/capture/:id/dismiss": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "id",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 3,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/22222222-2222-4222-8222-222222222222/dismiss"
       }
@@ -22006,15 +22148,90 @@
     "POST /api/capture/:id/structure": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "capture_id",
+          "structured",
+          "note",
+          "usage"
+        ],
+        "properties": {
+          "capture_id": {
+            "type": "string"
+          },
+          "structured": {
+            "type": "object",
+            "required": [
+              "subject",
+              "line_items",
+              "delivery_at"
+            ],
+            "properties": {
+              "subject": {
+                "type": "string"
+              },
+              "line_items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "particulars",
+                    "quantity",
+                    "unit",
+                    "raw_phrase"
+                  ],
+                  "properties": {
+                    "particulars": {
+                      "type": "string"
+                    },
+                    "quantity": {
+                      "type": "number"
+                    },
+                    "unit": {
+                      "type": "string"
+                    },
+                    "raw_phrase": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "delivery_at": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "note": {
+            "type": "string"
+          },
+          "usage": {
+            "type": "object",
+            "required": [
+              "input_tokens",
+              "output_tokens"
+            ],
+            "properties": {
+              "input_tokens": {
+                "type": "number"
+              },
+              "output_tokens": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 1,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/22222222-2222-4222-8222-222222222222/structure"
       }
@@ -22086,15 +22303,37 @@
     "POST /api/capture/stores": {
       "status": "200",
       "schema": {
-        "type": "object"
+        "type": "object",
+        "required": [
+          "store_id",
+          "phone_key",
+          "display_name",
+          "address",
+          "provisional"
+        ],
+        "properties": {
+          "store_id": {
+            "type": "string"
+          },
+          "phone_key": {
+            "type": "string"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "provisional": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
       },
       "observed": 1,
-      "open": [
-        {
-          "path": "(answer)",
-          "reason": "a value passed through (an expression: its keys are not written in the handler)"
-        }
-      ],
+      "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/capture/stores",
         "body": {
@@ -38716,9 +38955,6 @@
     "GET /api/books/status": "open at engines — a value passed through (an expression: its keys are not written in the handler); country — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/terms": "open at default — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/books/year/:fy/status": "open at refusals[] — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/capture/consolidate": "open at flags — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/capture/pending": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "GET /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/capture/webhook/whatsapp": "not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial",
     "GET /api/catalogue-face": "open at face — a value passed through (an expression: its keys are not written in the handler)",
     "GET /api/catalogue/:bridge_id/my-documents": "open at documents[] — a value passed through (a name: its keys are not written in the handler)",
@@ -38868,10 +39104,13 @@
     "POST /api/books/recurring/:id/skip": "open at template — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/terms": "open at terms — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/books/year/:fy/close": "open at opening — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/capture/:id/convert": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/capture/:id/dismiss": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/capture/:id/structure": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/capture/stores": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/auto-raise": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/provider-ref": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/revoke": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/template": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/channels/:id/template-approve": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/amend": "open at amendments[] — a value passed through (an expression: its keys are not written in the handler); synonym_candidates[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/assign-lines": "open at assignments[] — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/chits/:chit_id/costs": "open at costs[] — a value passed through (an expression: its keys are not written in the handler)",
@@ -38932,8 +39171,6 @@
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)",
-    "PATCH /api/connectors/:actorId/connections/:connId": "open at connection — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/connectors": "open at connector.connector_config — a value passed through (an expression: its keys are not written in the handler)",
-    "POST /api/connectors/:actorId/connections": "open at connection — a value passed through (an expression: its keys are not written in the handler)"
+    "GET /api/capture/consolidate": "open at flags — a value passed through (an expression: its keys are not written in the handler)"
   }
 }
