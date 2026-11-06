@@ -36,6 +36,13 @@ const actor = (parent) => ({ identity_id: 'a1', identity_type: 'actor', parent_e
   await ia.verifyCredential(q(log), { identity_id: 'e1', identity_type: 'entity', email: 'owner@au-trial.test', otp_code: '1', otp_expires_at: new Date(Date.now() + 3600e3), otp_attempts: 0 }, { otp: CODE, name: 'owner@au-trial.test' });
   t('an entity asks no parent (unchanged)', !log.some((s) => /identity_id = \$1/.test(s) && /email, user_id, bridge_id/.test(s)));
 
+  env({ NODE_ENV: 'test', DATABASE_URL: LOCALDB, TESTER_CODE: CODE, TESTER_NAMES: 'owner@au-trial.test' });
+  ia = load();
+  const seat = (id) => Object.assign(actor('P1'), { identity_id: id });
+  for (let n = 0; n < 6; n++) await ia.verifyCredential(q([]), seat('s' + (n % 3)), { otp: 'wrong-' + n, name: 'a@au trial' });
+  const sixth = await ia.verifyCredential(q([]), seat('s9'), { otp: CODE, name: 'a@au trial' });
+  t('6 wrong guesses over 3 actors of one listed business shut the business: the right code is then refused', sixth.ok === false && sixth.reason === 'OTP_WRONG');
+  t('a business with a spent budget still signs in with the stored code', (await ia.verifyCredential(q([]), seat('s8'), { otp: '402917', name: 'a@au trial' })).ok === true);
   env({ NODE_ENV: 'test', DATABASE_URL: LOCALDB, TESTER_NAMES: 'owner@au-trial.test' });
   ia = load();
   t('TESTER_CODE unset → the tester code opens nothing for an actor', (await ia.verifyCredential(q([]), actor('P1'), { otp: CODE, name: 'auditor@au trial' })).ok === false);
