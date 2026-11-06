@@ -444,6 +444,8 @@
   "PUT /api/integrations/streams": {"hash":"1d8791f0df7ece41","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#332","lifecycle":"stable"},
   "PUT /api/network-design": {"hash":"0a0f0647d76be8ad","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#364","lifecycle":"stable"},
   "PUT /api/products/:id/availability": {"hash":"61175630388e5785","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#358","lifecycle":"stable"},
-  "PUT /api/products/:id/status": {"hash":"19e06763d0d328ee","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#358","lifecycle":"stable"}
+  "PUT /api/products/:id/status": {"hash":"19e06763d0d328ee","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (laptop1, non-builder) 2026-10-23 PR#358","lifecycle":"stable"},
+ "POST /api/ctp/deliver": {"hash":"374e2017ff89d22c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader","lifecycle":"stable"},
+ "POST /api/ctp/query": {"hash":"b02259273a2c78c8","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader","lifecycle":"stable"}
  }
 }

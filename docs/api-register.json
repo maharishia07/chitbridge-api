@@ -41671,11 +41671,11 @@
     "/deliver"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -41770,11 +41770,11 @@
     "/query"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
