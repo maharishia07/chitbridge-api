@@ -630,6 +630,7 @@ const GUARDS = [
   'books-cashflow.test.cjs', // 16 cash position (wave 3): lib/books-cashflow.project shortfall and no-shortfall to the minor unit, GET /cashflow and the cheques pdc_reminders over the in-memory books (repaired: payments need an Idempotency-Key)
   'combo-templates.test.cjs', // 7 combo templates (wave 3): save / reopen / rename / delete a combo, push CREATES the product once then UPDATES, cross-entity isolation (repaired: the stub now states the shop currency)
   'till-counter-doors.test.cjs', // 9 verify and reconcile + customer display (wave 3): POST /reconcile ok / absorbed / missing / unknown in one query, GET /verify spread sample, read-only; pair a screen by code, a screen key and nothing else, spent on first read, expiry, guess lock-out
+  'live-trips-network.test.cjs', // SPD-42: the driven network scenario counts the highest 2xx trips and reports every route unreached when the load shop has no node (fake client, offline)
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
