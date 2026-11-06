@@ -703,7 +703,11 @@
   "POST /api/catalogue/:bridge_id/login/verify": {
    "strict_input": true
   },
+  "POST /api/catalogue/photo-extract": {
+   "strict_input": true
+  },
   "POST /api/catalogue/enquiry/:item_id": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/products/status/bulk": {

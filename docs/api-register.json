@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 137
+    "failing": 135
    },
    "output_allowlist": {
     "applies": 637,
@@ -35388,7 +35388,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 2100,
-   "hash": "7eff92ae5ad2f657",
+   "hash": "26a9b0367a693d59",
    "does": "",
    "errors": {
     "count": 0,
@@ -35421,7 +35421,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -35453,7 +35453,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "7eff92ae5ad2f657"
+    "stale_since": "26a9b0367a693d59"
    },
    "status": "partial",
    "callers": [
@@ -35581,7 +35581,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 2007,
-   "hash": "c64265079935b335",
+   "hash": "41d0abf601bfcf6f",
    "does": "",
    "errors": {
     "count": 0,
@@ -35609,7 +35609,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -35637,8 +35637,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "41d0abf601bfcf6f"
    },
    "status": "partial",
    "callers": [],
