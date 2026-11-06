@@ -208,8 +208,9 @@ async function checkReadsAreScoped(port) {
       Object.assign(world, { who: OWNER });
       const own = await lab.send(port, item.method, item.url);
       const same = FOREIGN.comparable(foreignAnswer).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID') === FOREIGN.comparable(unknown).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID');
-      held.push([item.route, foreignAnswer.status, unknown.status, own.status, same]);
-      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', same && foreignAnswer.status === (item.unknown || 200) && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer), [foreignAnswer.status, unknown.status, own.status]);
+      const holds = same && foreignAnswer.status === (item.unknown || 200) && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer);
+      held.push([item.route, foreignAnswer.status, unknown.status, own.status, same, holds]);
+      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', holds, [foreignAnswer.status, unknown.status, own.status]);
     } finally {
       [sources2.rewardStore.balance, sources2.select.rows, sources2.policy.get] = kept;
     }
@@ -242,7 +243,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   const foreign = await checkForeignIds(port);
-  await checkReadsAreScoped(port);
+  const scoped = await checkReadsAreScoped(port);
+  /* Slice 1 (critic 6 Nov, class C): a scoped read whose foreign id answered exactly as the unknown id and whose own id differs is that route's foreign_id_404 evidence */
+  scoped.filter((item) => item[5]).forEach((item) => (foreign.proved[item[0]] = { foreign_id_404: true }));
+  foreign.proved = Object.fromEntries(Object.keys(foreign.proved).sort().map((route) => [route, foreign.proved[route]]));
   server.close();
   checkWords();
   checkCodesRegistered(contractModule());

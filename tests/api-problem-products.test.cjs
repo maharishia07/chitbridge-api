@@ -202,6 +202,31 @@ async function checkScheduleIds(port) {
   }
 }
 const scheduleEvidenceOnDisk = () => FOREIGN.evidenceOf(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE);
+/* ── Slice 1 (critic 6 Nov, class C): the foreign-id world of the three item-id writes whose store call is entity-scoped (catwrite.patchItems / the media read): shop A holds the item,
+   shop B asks for it (the stand-in answers the row only to a statement that names shop A) → exactly the unknown id's 404 ── */
+const WRITE_STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
+const HELD_ROUTES = [
+  ['PUT ' + MOUNT + '/:id/status', 'PUT', '/status', { status: 'unavailable' }],
+  ['PUT ' + MOUNT + '/:id/availability', 'PUT', '/availability', { qty: 3 }],
+  ['POST ' + MOUNT + '/:id/media', 'POST', '/media', { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }]
+];
+const heldItem = () => ({ item_id: PARTY, entity_id: OWNER.identity_id, is_active: true, schema_id: null, item_data: { name: 'Tea', unit: 'kg', price: { amount: 10, currency: 'INR' } } });
+async function checkForeignIds(port) {
+  console.log('-- signed in as another shop: a foreign item id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const cases = HELD_ROUTES.map(([route, method, tail, body]) => ({
+    route,
+    play: async (who, planted) => {
+      Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : WRITE_STRANGER, asKey: false, db: 'ok', jsonThrows: false, noCustomer: false, sqlRows: (sql, params) => (planted && /catalogue_items/.test(sql) && params.includes(OWNER.identity_id) ? { rows: [heldItem()], rowCount: 1 } : null) });
+      return lab.send(port, method, MOUNT + '/' + PARTY + tail, body);
+    }
+  }));
+  const failures = await FOREIGN.runCases(cases, recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: ' + HELD_ROUTES.length + ' item-id writes answer a foreign id exactly as an unknown id (404, same body) and the own id is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+const heldByThisWorld = (route) => HELD_ROUTES.some((one) => one[0] === route);
 
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
@@ -216,6 +241,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.extras({ PARTY, OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }), {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
   const scheduleProved = await checkScheduleIds(server.address().port);
+  const foreignProved = await checkForeignIds(server.address().port);
   server.close();
   const allowed200 = checkAllowList(recording);
   if (lab.flagValue('--capture')) {
@@ -246,7 +272,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     writeAllowList(allowed200);
     FOREIGN.writeEvidence(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE, scheduleProved);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, heldByThisWorld, foreignProved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the item-id writes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, heldByThisWorld), foreignProved), foreignProved);
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the products routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for the schedule list exactly when it held here', sameValue(scheduleEvidenceOnDisk(), scheduleProved), { onDisk: scheduleEvidenceOnDisk(), held: scheduleProved });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/products.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });

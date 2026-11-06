@@ -70,7 +70,8 @@
   },
   "DELETE /api/quick-keys/groups/:id/items/:productId": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "DELETE /api/relationships/suppliers/:id": {
    "output_allowlist": true,
@@ -569,14 +570,16 @@
   },
   "GET /api/relationships/customers/:id/rewards": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/relationships/suppliers": {
    "output_allowlist_basis": "recordings",
@@ -1340,7 +1343,8 @@
    "output_allowlist": true
   },
   "POST /api/products/:id/media": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/products/:id/schedule": {
    "output_allowlist": true
@@ -1635,10 +1639,12 @@
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PUT /api/products/:id/status": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "PUT /api/quick-keys/screen-config/default": {
    "output_allowlist_basis": "recordings",
