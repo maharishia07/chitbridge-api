@@ -5,7 +5,7 @@
  * FLOW      measured rows ──▶ applyMeasured(budget, live, rows, day) ──▶ { budget, live, changed } ──▶ serialise() (the files' own format)
  * CARD      speed · round trips
  *
- * Rules (the file headers say them, this code keeps them): a line is never lowered; a placeholder (fired:false) becomes fired:true ONLY by a real 2xx;
+ * Rules (the file headers say them, this code keeps them): a line is never lowered and never raised here (a live count above a fired ceiling is reported by problems() and the harness exits non-zero; raising is a hand edit with a reason); a placeholder (fired:false) becomes fired:true ONLY by a real 2xx;
  * a 4xx is never a measurement; a line the harness did not measure is returned untouched (same object), so the file stays byte-identical there.
  * tests/round-trips-all.test.cjs --write is lossy (SPD-41) and is NOT used.
  */
@@ -18,9 +18,8 @@ const basisOf = (day) => 'live from sit-in ' + day;
 /** a measurement counts only when it is a real answer of the route's own work: a number of trips and a 2xx */
 const isMeasurement = (row) => !!row && typeof row.trips === 'number' && Number.isFinite(row.trips) && row.trips >= 0 && row.status >= 200 && row.status < 300;
 
-/** the budget line after a real measurement: a fired line is only RAISED to what a live shop costs; a placeholder becomes a fired line with its basis */
+/** the budget line after a real measurement: a placeholder becomes a fired line with its basis (a fired line is never touched here: see applyMeasured) */
 function lineAfter(line, row, day) {
-  if (line && line.fired === true) return row.trips > line.trips ? Object.assign({}, line, { trips: row.trips, basis: basisOf(day) }) : line;
   const kept = line || {};
   const next = { file: kept.file, trips: row.trips, wire: null, fired: true, status: row.status, basis: basisOf(day) };
   if (kept.registered_only) next.registered_only = true;
@@ -36,24 +35,27 @@ function applyMeasured(budget, live, rows, day) {
   if (rows.length) nextLive.measured = { ...(live.measured || {}) };
   const changed = [];
   const refused = [];
+  const exceeded = []; /* a live count above a FIRED ceiling: a raise is a human edit with a reason, so it is reported and nothing is written for the route */
   rows.forEach((row) => {
     if (!isMeasurement(row)) return refused.push(row.route);
     if (!nextBudget.routes[row.route]) return refused.push(row.route); /* a route with no budget line is the I19 test's to report, not ours to invent */
+    const ceiling = nextBudget.routes[row.route];
+    if (ceiling.fired === true && row.trips > ceiling.trips) return exceeded.push({ route: row.route, ceiling: ceiling.trips, live: row.trips });
     const old = typeof nextLive.routes[row.route] === 'number' ? nextLive.routes[row.route] : null;
     const trips = old === null ? row.trips : Math.max(old, row.trips); /* never lower */
     nextLive.routes[row.route] = trips;
     nextLive.measured[row.route] = { trips, status: row.status, basis: basisOf(day), at: day };
-    const line = lineAfter(nextBudget.routes[row.route], { ...row, trips }, day);
-    if (line !== nextBudget.routes[row.route]) nextBudget.routes[row.route] = line;
+    if (ceiling.fired !== true) nextBudget.routes[row.route] = lineAfter(ceiling, { ...row, trips }, day);
     changed.push(row.route);
   });
   if (changed.length) nextLive._about = LIVE_ABOUT;
-  return { budget: nextBudget, live: nextLive, changed, refused };
+  return { budget: nextBudget, live: nextLive, changed, refused, exceeded };
 }
 
 /** sentences naming every way `after` is worse than `before`: a lowered or dropped trips line, a fired line turned unfired, a line lost; empty = safe */
 function problems(before, after) {
   const found = [];
+  (after.exceeded || []).forEach((x) => found.push('live above ceiling: ' + x.route + ' ' + x.ceiling + ' to ' + x.live + ' (a raise is a hand edit with a reason)'));
   Object.keys(before.budget.routes).forEach((key) => {
     const was = before.budget.routes[key];
     const now = after.budget.routes[key];

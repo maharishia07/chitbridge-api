@@ -32,9 +32,34 @@ t('a lower count never lowers a fired line or a live line', () => {
   assert.strictEqual(r.live.routes['POST /b'], 9);
   assert.deepStrictEqual(w.problems({ budget, live }, r), []);
 });
-t('a higher live count raises a fired line (the live shop is the cost)', () => {
+t('a live count above a fired ceiling is a failure naming the route, the old ceiling and the live number; nothing is raised', () => {
   const r = w.applyMeasured(budget, live, [{ route: 'POST /b', trips: 12, status: 200 }], day);
-  assert.strictEqual(r.budget.routes['POST /b'].trips, 12);
+  assert.deepStrictEqual(r.exceeded, [{ route: 'POST /b', ceiling: 9, live: 12 }]);
+  assert.strictEqual(r.budget.routes['POST /b'], budget.routes['POST /b']);
+  assert.strictEqual(r.live.routes['POST /b'], 9);
+  const found = w.problems({ budget, live }, r);
+  assert.ok(found.length === 1 && found[0].startsWith('live above ceiling: POST /b 9 to 12'), found.join('|'));
+});
+t('a route with NO budget line is refused, never invented', () => {
+  const r = w.applyMeasured(budget, live, [{ route: 'GET /nowhere', trips: 3, status: 200 }], day);
+  assert.deepStrictEqual(r.refused, ['GET /nowhere']);
+  assert.strictEqual(r.changed.length, 0);
+  assert.strictEqual(r.budget.routes['GET /nowhere'], undefined);
+});
+t('registered_only, extra and awaiting_client survive a firing and every other key of the file is byte-identical', () => {
+  const b2 = { _doc: 'x', routes: {
+    'GET /r': { file: 'r.js', trips: 50, wire: null, fired: false, registered_only: true },
+    'GET /e': { file: 'e.js', trips: 50, wire: null, fired: false, extra: true },
+    'GET /w': { file: 'w.js', trips: 50, wire: null, fired: false, awaiting_client: 'MKT-24' },
+    'GET /k': { file: 'k.js', trips: 7, wire: 2, fired: true, status: 200, basis: 'by hand' } } };
+  const rows = ['GET /r', 'GET /e', 'GET /w'].map((route) => ({ route, trips: 4, status: 200 }));
+  const r = w.applyMeasured(b2, live, rows, day);
+  assert.strictEqual(r.budget.routes['GET /r'].registered_only, true);
+  assert.strictEqual(r.budget.routes['GET /e'].extra, true);
+  assert.strictEqual(r.budget.routes['GET /w'].awaiting_client, 'MKT-24');
+  assert.strictEqual(JSON.stringify(r.budget.routes['GET /k']), JSON.stringify(b2.routes['GET /k']));
+  assert.strictEqual(r.budget._doc, 'x');
+  assert.deepStrictEqual(w.problems({ budget: b2, live }, r), []);
 });
 t('an empty run changes nothing and leaves the live file without a measured key', () => {
   const r = w.applyMeasured(budget, live, [], day);
