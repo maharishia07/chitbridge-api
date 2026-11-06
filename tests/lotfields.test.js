@@ -6,6 +6,8 @@
  * types none of it — the pack's own barcode carries the batch and the expiry.
  *
  * Run: node tests/lotfields.test.js   · no DB, no browser, no network.
+ * CARD      13-inventory-stock-and-traceability/stock-by-batch-lots-expiry
+ * UNIT      13/Stock by batch / lots / expiry
  */
 'use strict';
 const assert = require('assert'), path = require('path'), fs = require('fs');
