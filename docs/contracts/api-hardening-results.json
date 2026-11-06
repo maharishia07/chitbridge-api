@@ -139,8 +139,7 @@
   },
   "PATCH /api/entities/me/exposure": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -162,8 +161,7 @@
   },
   "PATCH /api/entities/profile": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -171,8 +169,7 @@
   },
   "PATCH /api/entities/:id/erase": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -202,8 +199,7 @@
   },
   "PUT /api/entities/routing": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -217,8 +213,7 @@
   },
   "PUT /api/entities/populations/:code/desk": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -231,8 +226,7 @@
   },
   "POST /api/entities/populations": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2409,8 +2403,7 @@
   },
   "POST /api/relationships/suppliers": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2425,8 +2418,7 @@
   },
   "PATCH /api/relationships/suppliers/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2482,8 +2474,7 @@
   },
   "POST /api/relationships/customers": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2492,8 +2483,7 @@
   },
   "POST /api/relationships/customers/:id/groups": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -2504,8 +2494,7 @@
   },
   "PATCH /api/relationships/customers/:id": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
