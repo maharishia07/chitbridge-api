@@ -996,8 +996,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/invoice/:chit_id": {
@@ -3180,8 +3179,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/network-design/validate": {
@@ -3206,8 +3204,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/network-design/stores": {
@@ -4215,7 +4212,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    },
    "foreign_id_404": {
     "pass": false,
@@ -4227,8 +4224,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 409"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": true
@@ -4239,8 +4235,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    },
    "foreign_id_404": {
     "pass": false,
@@ -4327,8 +4322,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/tax/compute": {
@@ -4337,8 +4331,7 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "GET /api/books/status": {
