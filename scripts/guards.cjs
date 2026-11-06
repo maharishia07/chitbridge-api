@@ -323,6 +323,7 @@ const GUARDS = [
   'platform-strict-input.test.cjs', // S33: channels platform doors and POST /api/keys refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'chits-b-strict-input.test.cjs', // S33: the rest of the chits write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'entities-strict-input.test.cjs', // S33: entities and relationships write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each

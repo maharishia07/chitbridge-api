@@ -978,7 +978,11 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/assist": {
+   "strict_input": true
+  },
   "POST /api/assist/conform": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/assist/standards": {
@@ -988,18 +992,22 @@
    "output_allowlist": true
   },
   "POST /api/assist/catalogue-structure": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/assist/catalogue-adopt": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/assist/catalogue-mine": {
    "output_allowlist": true
   },
   "PUT /api/assist/catalogue-source": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PUT /api/assist/container": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/assist/container/:id": {
@@ -1009,6 +1017,7 @@
    "output_allowlist": true
   },
   "PUT /api/assist/region-override": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/assist/regions": {
@@ -1027,9 +1036,11 @@
    "output_allowlist": true
   },
   "POST /api/assist/gap": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/assist/publish": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/assist/gaps": {
