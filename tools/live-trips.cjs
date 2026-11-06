@@ -1,7 +1,7 @@
 'use strict';
 /**
  * OWNS      measuring LIVE database round trips (X-DB-Trips) for the registered routes whose trips line is still a placeholder (SPD-39); the reason per route it cannot reach.
- * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --seed | --check | --restore. Tests/tooling only: no route handler is touched.
+ * CALLED BY a person: node tools/live-trips.cjs [--dry] [--only <regex>] [--retry-all] [--out <file>] | --seed | --check | --restore | --cleanup [--apply]. Tests/tooling only: no route handler is touched.
  * FLOW      docs/api-register.json (trips_budgeted false) + the routes' own OpenAPI schemas ──▶ a request per route ──▶ sit-in (the load shop only) ──▶ docs/speed/live-trips-results.json
  *           ──▶ tools/live-trips-writer.cjs (the safe writer) ──▶ round-trips.live.json + round-trips.budget.json (only the lines measured).
  * CARD      speed · round trips
@@ -304,6 +304,11 @@ async function runInner(opts) {
       const created = findId(lastBody, 'id');
       if (created) made[r.path] = created;
     }
+    const earlier = previous.routes[r.key];
+    if (out.state !== 'measured' && earlier && earlier.state === 'measured') { /* a re-run that finds its fixture used up (pool shops connected, period closed) keeps the earlier live number */
+      console.log('kept earlier measurement  ' + r.key + ' (now: ' + out.group + ' · ' + out.reason.slice(0, 80) + ')');
+      continue;
+    }
     results[r.key] = out;
     console.log((out.state === 'measured' ? 'MEASURED ' + String(out.trips).padStart(3) : 'unreached   ') + '  ' + r.key.padEnd(62) + (out.state === 'measured' ? '' : out.group + ' · ' + out.reason));
   }
@@ -349,6 +354,12 @@ async function restoreFromFile() {
   await restoreAll(API);
   console.log('restored: ' + Object.keys(saved).join(', '));
 }
+/** --cleanup [--apply]: take back what the harness left by its lt- tag (see tools/live-trips-cleanup.cjs); the plan only, unless --apply */
+async function cleanupMode(apply) {
+  await signIn();
+  const at = (readJson(RESULTS_FILE, {}) || {}).at;
+  await guarded(() => require('./live-trips-cleanup.cjs').cleanup(API, { apply, at, day: today(), loadId: HINTS.LOAD_ID }), () => restoreAll(API));
+}
 /* a Ctrl-C or an uncaught error in a run: restore, then leave with a non-zero code */
 function guardProcess() {
   const bail = (code) => (e) => { if (e) console.error('live-trips: ' + (e.message || e)); restoreAll(API).finally(() => process.exit(code)); };
@@ -390,6 +401,7 @@ function check() {
 async function main(args, opt) {
   if (args.includes('--check')) return check();
   if (args.includes('--restore')) return restoreFromFile();
+  if (args.includes('--cleanup')) return cleanupMode(args.includes('--apply'));
   guardProcess();
   if (args.includes('--seed')) return guarded(seedAll, () => restoreAll(API));
   if (args.includes('--probe')) { await signIn(); console.log('host', state.host); const i = args.indexOf('--probe'); const r = await call(args[i + 1], args[i + 2], args[i + 3] ? JSON.parse(args[i + 3]) : undefined); console.log(r.status, 'trips', r.trips, JSON.stringify(r.body || r.text).slice(0, +(process.env.PROBE_LEN || 700))); return; }

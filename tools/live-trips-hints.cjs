@@ -98,6 +98,7 @@ function freePoolShop(api, skip) {
 }
 const OLD_FY = '2026-27'; /* the load shop's first document is in November 2026; April 2026 (period 1) holds no entry: the old empty month the tool may lock and close */
 module.exports = {
+  LOAD_ID,
   params: {},
   /** the run's end (or a crash, Ctrl-C, or node tools/live-trips.cjs --restore from the saved state file): switch off the screens it paired and give the counter back (the load shop is left as it was, minus the lt- counter row) */
   cleanup: async (api) => {
