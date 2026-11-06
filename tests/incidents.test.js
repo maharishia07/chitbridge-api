@@ -108,7 +108,8 @@ it('⭐⭐ a change is CITED from git, never re-typed into a second copy', () =>
 it('⭐ the board sorts by severity, then oldest', () => {
   /* Newest-first is right for a log and wrong for a board: the oldest Sev-1 is precisely the row that must not
      sink, and a date sort is what buries it. */
-  assert.ok(/RANK\[a\.severity\] - RANK\[b2\.severity\]/.test(SRC), 'the board no longer sorts by severity first');
+  /* the sort is the database's now (T2-PAGING): severity rank first, then the day it happened, oldest first */
+  assert.ok(/rankOrder\(SV, INC_SEV\)\}, v\.rules->>'happened_at' NULLS LAST/.test(SRC), 'the board no longer sorts by severity first');
   assert.ok(/open_by_severity/.test(SRC), 'the open-by-severity count a release gate asks for is gone');
 });
 
@@ -123,8 +124,10 @@ it('⭐⭐ where the person was standing, shape-checked', () => {
 
 it('⚠️ nothing is recorded without an account of what happened', () => {
   const inc = SRC.slice(SRC.indexOf("router.post('/incidents'"), SRC.indexOf("router.get('/incidents'"));
-  assert.ok(/if \(!observed\) return res\.status\(400\)/.test(inc),
-    'an empty incident can be filed, and only its author will ever understand it');
+  /* the refusal is a 400 in problem details, in words, and it comes BEFORE the first write */
+  const refusal = inc.search(/if \(!observed\) return problem\(req, res, \{ status: 400, \.\.\.badRequest\('Nothing recorded', 'Say what happened\.'\) \}\)/);
+  assert.ok(refusal > 0, 'an empty incident can be filed, and only its author will ever understand it');
+  assert.ok(refusal < inc.indexOf('INSERT INTO'), 'the account of what happened is checked after the incident is written');
 });
 
 it('⚠️⚠️ every move is APPENDED, never overwritten', () => {

@@ -36,6 +36,8 @@ const ROUTE_FILE = 'routes/entities.js';
 /** sign-in and sign-up: recorded byte for byte, never judged (their refusals are routes/signin.js's, an area of its own) */
 const SIGN_IN = ['POST ' + MOUNT + '/register', 'POST ' + MOUNT + '/verify'];
 const ANY_STATUS = [400, 401, 403, 404, 409, 422, 429, 500, 503];
+/** CMP-30: an erasure that matched no entity now answers 404 where it answered 200 "done", so the worlds that reach an empty store (staff-asks, nothing-found) meet a refusal the sweep adds: nothing was frozen */
+const ERASE_NOW_404 = (route, scenario) => route === 'PATCH ' + MOUNT + '/:id/erase' && ['staff-asks', 'nothing-found'].includes(scenario);
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -43,7 +45,8 @@ const lab = harness({
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
   before: () => require(path.join(HERE, 'lib', 'schema'))._reset(), /* every scenario meets the column probes (lib/schema.js caches a yes for good) as the first read of a fresh process does */
   inherited: (scenario, answer) => (answer.status === 401 && scenario.id === 'signed-out') || SIGN_IN.includes(scenario.route),
-  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || SIGN_IN.includes(one.route),
+  added: ERASE_NOW_404,
+  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out') || AFTER.has(scenario) || ERASE_NOW_404(one.route, scenario) || SIGN_IN.includes(one.route),
   cannotRide: (route, scenario) => (HINT_SCENES.includes(scenario) && route.endsWith('/routing') ? ['hint'] : HINT_SCENES.includes(scenario) && route.endsWith('/desk') ? ['hint'] : []) /* the Problem owns `hint`: a null hint cannot ride */
 });
 const { check, world } = lab;

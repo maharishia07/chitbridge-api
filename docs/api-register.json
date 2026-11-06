@@ -13936,7 +13936,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2369,
+   "line": 2371,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14344,7 +14344,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1684,
+   "line": 1686,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14551,7 +14551,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1570,
+   "line": 1572,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14652,7 +14652,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1434,
+   "line": 1436,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14751,7 +14751,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1418,
+   "line": 1420,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -15132,7 +15132,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1241,
+   "line": 1243,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -29754,10 +29754,10 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 1213,
-   "hash": "f36e0256f27116e7",
+   "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
@@ -29765,7 +29765,9 @@
      404,
      500
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND"
+    ]
    },
    "reads": [
     "identities"
@@ -46675,7 +46677,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1658,
+   "line": 1660,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -63446,7 +63448,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1625,
+   "line": 1627,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63552,7 +63554,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1544,
+   "line": 1546,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {

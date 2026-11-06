@@ -169,7 +169,10 @@ function extras(tools) {
   const platform = [
     X('erase-not-platform', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { who: STRANGER } }),
     X('erase-sealed', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { sqlRows: row(/SELECT sealed FROM identities/, { sealed: true }) } }),
-    X('erase-done', 'PATCH ' + at('/:id/erase'), 200, { url: at('/' + OTHER + '/erase'), body: {} }),
+    X('erase-done', 'PATCH ' + at('/:id/erase'), 200, { url: at('/' + OTHER + '/erase'), body: {}, setup: { sqlRows: row(/UPDATE identities SET is_erased/, { identity_id: OTHER }) } }),
+    /* CMP-30: an erasure that matched no entity is never reported done (GDPR Art. 17 · DPDP s.12); a non-uuid id names none either (router.param, K-1) */
+    N('erase-unknown-id', 'PATCH ' + at('/:id/erase'), 404, { url: at('/' + OTHER + '/erase'), body: {} }),
+    N('erase-id-not-a-uuid', 'PATCH ' + at('/:id/erase'), 404, { url: at('/not-a-uuid/erase'), body: {} }),
     N('erase-body-a-list', 'PATCH ' + at('/:id/erase'), 400, { url: at('/' + OTHER + '/erase'), body: [] }),
     X('erase-db-fails', 'PATCH ' + at('/:id/erase'), 500, { url: at('/' + OTHER + '/erase'), body: {}, setup: failing }),
     X('populations-not-root', 'GET ' + at('/populations'), 403, { setup: { who: STRANGER } }),
