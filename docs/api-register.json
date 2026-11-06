@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 204
+    "failing": 205
    },
    "foreign_id_404": {
     "applies": 230,
@@ -20852,7 +20852,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 740,
-   "hash": "bbe85ce8e30c2d33",
+   "hash": "3d0219748849a008",
    "does": "",
    "errors": {
     "count": 0,
@@ -21283,7 +21283,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 319,
-   "hash": "b8c9b96226cea310",
+   "hash": "55c0ce37d3f03aea",
    "does": "",
    "errors": {
     "count": 0,
@@ -21381,7 +21381,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 673,
-   "hash": "4dc19f0e3c1b5213",
+   "hash": "717be2df4643719a",
    "does": "",
    "errors": {
     "count": 0,
@@ -21414,7 +21414,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": true,
+    "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,

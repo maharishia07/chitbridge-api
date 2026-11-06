@@ -19053,7 +19053,10 @@
                   "type": "number"
                 },
                 "last_txn_at": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "groups": {
                   "type": "array",
@@ -19516,10 +19519,16 @@
                   "type": "string"
                 },
                 "category": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "nickname": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "preferred": {
                   "type": "boolean"
@@ -19588,7 +19597,19 @@
                 "credit_limit_minor": {},
                 "state_code": {},
                 "merged_into": {},
-                "tax_ids": {}
+                "tax_ids": {},
+                "installation_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "installation_label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
@@ -19612,96 +19633,6 @@
       "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/suppliers"
-      }
-    },
-    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
-      "status": "200",
-      "schema": {
-        "type": "object",
-        "required": [
-          "supplier",
-          "items"
-        ],
-        "properties": {
-          "supplier": {
-            "type": "object",
-            "required": [
-              "identity_id",
-              "display_name",
-              "bridge_id",
-              "currency_code",
-              "business_status"
-            ],
-            "properties": {
-              "identity_id": {
-                "type": "string"
-              },
-              "display_name": {
-                "type": "string"
-              },
-              "bridge_id": {
-                "type": "string"
-              },
-              "currency_code": {
-                "type": "string"
-              },
-              "business_status": {
-                "type": "string"
-              }
-            },
-            "additionalProperties": false,
-            "x-closed-by": "recordings"
-          },
-          "schema": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "required": [
-              "fields"
-            ],
-            "properties": {
-              "fields": {}
-            },
-            "additionalProperties": false,
-            "x-closed-by": "recordings"
-          },
-          "fields": {},
-          "items": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": [
-                "item_id"
-              ],
-              "properties": {
-                "item_id": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "additionalProperties": false,
-              "x-closed-by": "recordings"
-            }
-          },
-          "groups": {},
-          "finishes": {},
-          "available": {
-            "type": "boolean"
-          },
-          "offers": {},
-          "categories": {}
-        },
-        "additionalProperties": false,
-        "x-closed-by": "recordings"
-      },
-      "observed": 3,
-      "open": [],
-      "closed_by": "recordings",
-      "example": {
-        "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
     "GET /api/relationships/suppliers/availability": {
@@ -34542,6 +34473,7 @@
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
-    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)"
+    "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": "not closed: the answer is the remote seller's object (lib/remote-catalogue) or the whole catalogue view passed through, so its root keys are not written in the handler"
   }
 }
