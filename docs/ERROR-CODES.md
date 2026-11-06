@@ -91,6 +91,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
 | COUNTER_NOT_MIGRATED | 503 | Counter update pending | Counters cannot be changed yet: a database update is still to arrive. | Try again after the next update. | counters | 2026-10-23 |
 | COUNTER_SESSION_ONLY | 403 | Counters need a person | Counters are managed by a signed-in person, not by a key. | Sign in as the owner to change a counter. | counters | 2026-10-23 |
+| COUNTRY_SETUP_BAD | 400 | Country setup answer not accepted | That answer cannot be saved: the country, money, year start, tax number or tax scheme is missing or not one we offer. | Fix the field named in the message and save again. | country-setup | 2026-11-06 |
 | COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | 400 | Cover conflict | Going off would leave someone without cover. | Wait until the other person is back, or change who covers. | actors | 2026-10-22 |
@@ -124,6 +125,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_NO_SENDER | 400 | No sender named | The chit does not say which business sent it. | The sending installation must name its sender. | ctp | 2026-10-23 |
 | CTP_NOT_A_QUERY | 400 | Not a CTP query | This is not a question this door understands. | Send a CTP/1 query. | ctp | 2026-10-23 |
 | CTP_NOT_AN_ENVELOPE | 400 | Not a CTP envelope | This is not a chit this door understands. | Send a CTP/1 envelope. | ctp | 2026-10-23 |
+| CTP_VERSION_UNSUPPORTED | 400 | Version not read | This installation reads CTP/1, any minor version; the message is of another major version. | The sending installation must send a CTP/1 message (minor versions and extra fields are fine). | ctp | 2026-11-06 |
 | CTP_ADDRESS_CLASH | 409 | Id already used here | A different business here already uses that id, so the one you typed cannot be added under it. | Ask them to share their link, and tell us. | ctp | 2026-10-25 |
 | CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |

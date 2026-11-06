@@ -71,6 +71,7 @@ const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owne
 const deliverline = require('../lib/deliverline');
 const cost = require('../lib/cost');
 const raida = require('../lib/raida'); // b182 — the register on a line
+const { requireRegister } = require('../lib/register-gate'); // RAIL-90 — the register is a per-shop capability: off for a shop that never used it
 const reprice = require('../lib/reprice'); // pull catalogue prices onto a chit — as AMENDMENTS, never a silent edit // ⚠️ b145 — PRIVATE + write-without-read; the gate is here, RLS cannot express it // ⚠️ b144 — per-line delivery. SHARED: replicated into every copy // ⚠️ b143 — who is doing which line. PRIVATE; never crosses to a counterparty
 const itemmatch = require('../lib/itemmatch'); // ⚠️ THE one matcher — same resolution the raise path used
 /* TAX ON THE CHIT (STUDY-gst-structure §6, 2026-09-04): the shelf that rates a line at send, the line rater, the freeze at completed. */
@@ -3956,7 +3957,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
 // answer EMPTY rather than 404 — a silent wrong answer, which is the worse failure.
 
 /** What a register may be attached to. A registry, so a new kind is data. */
-router.get('/register/attachables', auth, async (req, res) => {
+router.get('/register/attachables', auth, requireRegister('Failed'), async (req, res) => {
   try {
     const found = await raida.attachables();
     /* S34: an attachable is the three columns lib/raida selects (register_attachable); degraded names why the list is empty (absent · no-grant · rls-no-policy · empty), else null */
@@ -3966,7 +3967,7 @@ router.get('/register/attachables', auth, async (req, res) => {
   }
 });
 
-router.get('/register/subjects', auth, ...checked('GET /register/subjects'), async (req, res) => {
+router.get('/register/subjects', auth, requireRegister('Failed to list registers'), ...checked('GET /register/subjects'), async (req, res) => {
   try {
     const found = await raida.listSubjects(entityId(req), {
       type_key: req.query.type_key || undefined,
@@ -3980,7 +3981,7 @@ router.get('/register/subjects', auth, ...checked('GET /register/subjects'), asy
   }
 });
 
-router.post('/register/subjects', auth, ...checked('POST /register/subjects'), async (req, res) => {
+router.post('/register/subjects', auth, requireRegister('Failed to open the register'), ...checked('POST /register/subjects'), async (req, res) => {
   try {
     const subject = await raida.subjectFor(entityId(req), {
       type_key: req.body.type_key,
@@ -3998,7 +3999,7 @@ router.post('/register/subjects', auth, ...checked('POST /register/subjects'), a
  * ⭐⭐ THE GATE. A register may not close while any entry is undispositioned — and the refusal is a 409 that
  * NAMES what is outstanding, because "4 still open" without the four sends someone hunting.
  */
-router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
+router.post('/register/subjects/:subject_id/close', auth, requireRegister('Cannot close yet'), ...checked('POST /register/subjects/:subject_id/close'), async (req, res) => {
   try {
     const closed = await raida.closeSubject(entityId(req), req.params.subject_id, { by_name: req.identity.display_name });
     res.json({ closed: closed.closed, at: closed.at, migrated: closed.migrated });
@@ -4008,7 +4009,7 @@ router.post('/register/subjects/:subject_id/close', auth, ...checked('POST /regi
 });
 
 /** The library — the same risk turns up everywhere, worded slightly differently. */
-router.get('/register/templates', auth, async (req, res) => {
+router.get('/register/templates', auth, requireRegister('Failed to read the library'), async (req, res) => {
   try {
     const found = await raida.templates(entityId(req));
     /* S34: a template is the columns lib/raida templates selects (register_template; raised and closed are COUNTs: text; standards an array_agg, NULL when none) */
@@ -4019,7 +4020,7 @@ router.get('/register/templates', auth, async (req, res) => {
   }
 });
 
-router.post('/register/templates', auth, ...checked('POST /register/templates'), async (req, res) => {
+router.post('/register/templates', auth, requireRegister('Failed to save it'), ...checked('POST /register/templates'), async (req, res) => {
   try {
     const added = await raida.addTemplate(entityId(req), req.body || {});
     res.json({ template_id: added.template_id, migrated: added.migrated });
@@ -4040,7 +4041,7 @@ router.post('/register/templates', auth, ...checked('POST /register/templates'),
  * ⚠️ chit_id is NULL here, which b185 made legal by dropping the NOT NULL. That is the whole point of the
  * subject: the register is attached to the THING, and an order is only one kind of thing.
  */
-router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
+router.post('/register/subjects/:subject_id/entries', auth, requireRegister('Failed to record it'), ...checked('POST /register/subjects/:subject_id/entries'), async (req, res) => {
   try {
     const made = await raida.add(
       entityId(req),
@@ -4063,7 +4064,7 @@ router.post('/register/subjects/:subject_id/entries', auth, ...checked('POST /re
  * and an entry that cannot be ended is what makes the closure gate unpassable. close() locates the row by
  * raida_id and reads chit_id back off it, so null here is correct rather than a shortcut.
  */
-router.post('/register/entries/:raida_id/close', auth, ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
+router.post('/register/entries/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /register/entries/:raida_id/close'), async (req, res) => {
   try {
     const ended = await raida.close(entityId(req), null, req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
     /* S34: an ending as lib/raida close() answers it; disposition only on a b185 register */
@@ -4073,7 +4074,7 @@ router.post('/register/entries/:raida_id/close', auth, ...checked('POST /registe
   }
 });
 
-router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'), async (req, res) => {
+router.get('/register/walk/:from', auth, requireRegister('Failed to walk it'), ...checked('GET /register/walk/:from'), async (req, res) => {
   try {
     const walked = await raida.walk(entityId(req), req.params.from, { backwards: req.query.backwards === '1', depth: req.query.depth });
     /* S34: lib/impact walk() answers hops · depth_reached · truncated · backwards; a register not on this environment answers hops [] and migrated false */
@@ -4084,7 +4085,7 @@ router.get('/register/walk/:from', auth, ...checked('GET /register/walk/:from'),
 });
 
 /** Revise a field without destroying what it said before — an appended row, never an UPDATE. */
-router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
+router.post('/register/entries/:raida_id/revise', auth, requireRegister('Failed to revise it'), ...checked('POST /register/entries/:raida_id/revise'), async (req, res) => {
   try {
     const revised = await raida.revise(entityId(req), req.params.raida_id, Object.assign({}, req.body, { by_name: req.identity.display_name }));
     res.json({ revised: revised.revised, revision: revised.revision, changed: revised.changed, migrated: revised.migrated });
@@ -4094,7 +4095,7 @@ router.post('/register/entries/:raida_id/revise', auth, ...checked('POST /regist
 });
 
 /** ⭐⭐ Accept a residual risk. A signature, at a level the severity demands, with a date it comes back. */
-router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
+router.post('/register/entries/:raida_id/accept', auth, requireRegister('Failed to record the acceptance'), ...checked('POST /register/entries/:raida_id/accept'), async (req, res) => {
   try {
     const accepted = await raida.accept(entityId(req), req.params.raida_id, {
       accepted_by_name: req.body.accepted_by_name || req.identity.display_name,
@@ -4116,7 +4117,7 @@ router.post('/register/entries/:raida_id/accept', auth, ...checked('POST /regist
  * :chit_id — put this second and every call to it would be read as a request for the register of a chit named
  * 'report', which exists for nobody and answers empty. A silent empty answer, not a 404.
  */
-router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, res) => {
+router.get('/raida/report', auth, requireRegister('Failed to read the register'), ...checked('GET /raida/report'), async (req, res) => {
   try {
     /* ⭐⭐ FILTERABLE BY STANDARD — the whole point of the mapping. ISO 9001 and ISO 27001 become two READINGS
        of one set of facts instead of two registers a company keeps rewriting to survive two audits. */
@@ -4134,7 +4135,7 @@ router.get('/raida/report', auth, ...checked('GET /raida/report'), async (req, r
   }
 });
 
-router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (req, res) => {
+router.get('/:chit_id/raida', auth, requireRegister('Failed to read the register'), ...checked('GET /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     /* line_id absent = the whole chit; a uuid = that line PLUS the order-level entries it inherits. */
@@ -4148,7 +4149,7 @@ router.get('/:chit_id/raida', auth, ...checked('GET /:chit_id/raida'), async (re
   }
 });
 
-router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (req, res) => {
+router.post('/:chit_id/raida', auth, requireRegister('Failed to record it'), ...checked('POST /:chit_id/raida'), async (req, res) => {
   try {
     const entity_id = entityId(req);
     const chit_id = req.params.chit_id;
@@ -4204,7 +4205,7 @@ router.post('/:chit_id/raida', auth, ...checked('POST /:chit_id/raida'), async (
 /* ⭐ CLOSING IS A POST, NOT A DELETE OR A PATCH, and the verb is the design. A close APPENDS the row that
    closes — it carries who ended it and why, because "we booked the slot" and "the customer withdrew it" are
    different endings and a flag cannot tell them apart. */
-router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/close', auth, requireRegister('Failed to close it'), ...checked('POST /:chit_id/raida/:raida_id/close'), async (req, res) => {
   try {
     /* RAIL-93: the ending's disposition (and where a carried-forward one goes, and its evidence) reach raida.close — without
        them every close of a full register answered 400 "An ending needs a disposition" (cap-worklist sends { body, disposition }) */
@@ -4224,7 +4225,7 @@ router.post('/:chit_id/raida/:raida_id/close', auth, ...checked('POST /:chit_id/
  * disputes are raised, then posts the id back so the register can say it was escalated. Reimplementing any part
  * of that lifecycle here would be a second answer to a question that already has one.
  */
-router.post('/:chit_id/raida/:raida_id/dispute', auth, ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
+router.post('/:chit_id/raida/:raida_id/dispute', auth, requireRegister('Failed to link the dispute'), ...checked('POST /:chit_id/raida/:raida_id/dispute'), async (req, res) => {
   try {
     const linked = await raida.linkDispute(entityId(req), req.params.chit_id, req.params.raida_id, req.body.dispute_id);
     res.json({ raida_id: linked.raida_id, dispute_id: linked.dispute_id, migrated: linked.migrated });

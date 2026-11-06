@@ -85,10 +85,12 @@ const GUARDS = [
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
   'fn-size-adopted.test.cjs', // fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
+  'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
+  'ctp-tolerant-reader.test.cjs', // RAIL-126 b: CTP inbound is a tolerant reader — a higher minor of our major is read, unknown fields ignored, another major refused CTP_VERSION_UNSUPPORTED
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
   'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
@@ -390,6 +392,7 @@ const GUARDS = [
   'api-problem-crm.test.cjs', // API-4 sweep, the CRM: every refusal of routes/crm.js (24 routes) is a Problem with its old keys frozen (consent, privacy requests, the send gate unchanged); no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-relationships.test.cjs', // API-4 sweep, the relationships: every refusal of routes/relationships.js (14 routes) is a Problem with its old keys frozen; no answer carries a thrown error's text; another shop's list row answers as an unknown one
   'api-problem-schemas.test.cjs', // API-4 sweep, the schema engine: every refusal of the 7 routes of routes/schemas.js is a Problem with its old keys frozen; no success answer moved; no answer of any status carries a thrown text bar the one listed relay; every body is closed (an unknown key is refused by name) and the web's keys are accepted; another shop's column key answers as an unknown one
+  'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
   'api-problem-storefront.test.cjs', // API-1 slice 1e: the 11 public storefront doors of routes/catalogue.js — a Problem that keeps the old body, strict input, closed 200s, one 404
@@ -493,6 +496,7 @@ const GUARDS = [
   'iddocs-verify.test.cjs', // M18: phone/e-mail identity documents verified by a code (lib/otp.js engine); 5 wrong -> locked; PUT clears; an unverified contact is never used for recovery
   'sec101-iddoc-hash.test.cjs', // SEC-101: Aadhaar (store:false) stored with a KEYED hash (HKDF of VAULT_ENC_KEY), legacy sha256 still recognised, no key = 503; PHONE/EMAIL hashes byte for byte unchanged, sign-in + device-key match still find the person
   'sec106-staff-code-hash.test.cjs', // SEC-106: a staff first code is kept as a KEYED hash (HKDF of VAULT_ENC_KEY, otp_code_hash), never plain; verifyOtp compares the hash, every issue zeroes the attempts and writes a code_issued trail row; an idempotent answer carrying a code is never stored; b781 written, not run
+  'register-gate.test.cjs', // RAIL-90: the register is a per-shop capability — off (403 CAPABILITY_OFF) for a shop with no key and no rows; on with the key; on with existing rows and no key
   'raida-close-route.test.cjs', // RAIL-93: POST /api/chits/:chit_id/raida/:raida_id/close passes the worklist's disposition (and carried-forward register, evidence) to raida.close; a full register's ending writes its closing row
   'sides.test.cjs', // CB Sides: driftOf (resolver) + the impact walk (lib/impact, shared with raida.walk) + GET /api/entities/sides is ONE read; a source with no data is a 'not yet' row, never a number
   'entities-header.test.cjs', // N19: GET /api/entities/header is ONE read (<= 3 trips); planted compliance rows -> bands from lib/licence-rules.js; unverified PHONE -> check false; no rule -> days only; no fee amount hard-coded
@@ -531,6 +535,7 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',
   'country-registry-callers.test.cjs',
@@ -579,8 +584,8 @@ const GUARDS = [
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
 function countChecks(out) {
-  const m = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
-  return m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
+  const countMatches = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
+  return countMatches ? Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]) : 0;
 }
 
 const all = process.argv.indexOf('--all') >= 0;
@@ -608,6 +613,7 @@ const files = all
 const NEEDS_ENGINES = [
   'books-close-country.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'pay-fix.test.cjs',
   'rcm-post.test.cjs',
   'engines-pinned.test.js',
@@ -638,8 +644,8 @@ const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
  * data/test-cases.json spells it (`chitbridge-api/tests/<file>`), so the post uses key_from 'name' and nothing is guessed.
  * A skip is written as a skip, never a pass; a failure carries the lines this script already prints for it.
  */
-const ji = process.argv.indexOf('--junit');
-const JUNIT = ji >= 0 ? path.resolve(process.argv[ji + 1] || 'test-results/guards.xml') : null;
+const junitAt = process.argv.indexOf('--junit');
+const JUNIT = junitAt >= 0 ? path.resolve(process.argv[junitAt + 1] || 'test-results/guards.xml') : null;
 const KEY = (f) => 'chitbridge-api/tests/' + f;
 const report = [];
 
@@ -655,31 +661,31 @@ for (const text of files) {
     report.push({ name: KEY(text), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
     continue;
   }
-  const t0 = Date.now();
-  const r = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
-  const out = (r.stdout || '') + (r.stderr || '');
+  const startedAt = Date.now();
+  const spawned = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
+  const out = (spawned.stdout || '') + (spawned.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
-  const n = countChecks(out);
+  const checkCount = countChecks(out);
   /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
-  const bad = r.status !== 0 || /\bFAIL\b/.test(out) || n === 0;
-  total += n;
-  if (bad) failed.push(text);
-  console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks');
-  const list = bad
+  const broken = spawned.status !== 0 || /\bFAIL\b/.test(out) || checkCount === 0;
+  total += checkCount;
+  if (broken) failed.push(text);
+  console.log('  ' + (broken ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(checkCount).padStart(4) + ' checks');
+  const list = broken
     ? out
         .split('\n')
         .filter((item) => /FAIL|Error|expected/i.test(item))
         .slice(0, 5)
         .map((item) => item.trim())
     : [];
-  if (bad) console.log(list.map((item) => '          ' + item).join('\n'));
+  if (broken) console.log(list.map((item) => '          ' + item).join('\n'));
   report.push({
     name: KEY(text),
-    status: bad ? 'fail' : 'pass',
-    time: (Date.now() - t0) / 1000,
+    status: broken ? 'fail' : 'pass',
+    time: (Date.now() - startedAt) / 1000,
     /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
-    message: bad ? (list.length ? list.join('\n') : n === 0 ? 'counted no checks' : 'exit ' + r.status) : '',
-    output: bad ? out.split('\n').slice(-40).join('\n') : ''
+    message: broken ? (list.length ? list.join('\n') : checkCount === 0 ? 'counted no checks' : 'exit ' + spawned.status) : '',
+    output: broken ? out.split('\n').slice(-40).join('\n') : ''
   });
 }
 

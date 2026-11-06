@@ -595,8 +595,8 @@
     },
     "GET /api/chits/:chit_id/raida": {
       "file": "chits.js",
-      "trips": 3,
-      "wire": 6,
+      "trips": 4,
+      "wire": 7,
       "fired": true,
       "status": 200
     },
@@ -646,8 +646,8 @@
     },
     "GET /api/chits/raida/report": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200
     },
@@ -660,8 +660,8 @@
     },
     "GET /api/chits/register/subjects": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200
     },
@@ -675,8 +675,8 @@
     },
     "GET /api/chits/register/walk/:from": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200
     },
@@ -2517,15 +2517,15 @@
     },
     "POST /api/chits/:chit_id/raida": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 404
     },
     "POST /api/chits/:chit_id/raida/:raida_id/close": {
       "file": "chits.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 400
     },
@@ -2567,36 +2567,36 @@
     },
     "POST /api/chits/register/entries/:raida_id/close": {
       "file": "chits.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 400
     },
     "POST /api/chits/register/entries/:raida_id/revise": {
       "file": "chits.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 400
     },
     "POST /api/chits/register/subjects": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 200
     },
     "POST /api/chits/register/subjects/:subject_id/close": {
       "file": "chits.js",
-      "trips": 1,
-      "wire": 4,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 400
     },
     "POST /api/chits/register/subjects/:subject_id/entries": {
       "file": "chits.js",
-      "trips": 0,
-      "wire": 0,
+      "trips": 2,
+      "wire": 5,
       "fired": true,
       "status": 400
     },
