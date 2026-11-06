@@ -3641,15 +3641,15 @@
     "noHeader": 0
   },
   "routes/books.js": {
-    "score": 313,
+    "score": 221,
     "long40": 18,
     "long80": 4,
-    "complex10": 15,
-    "complex15": 10,
+    "complex10": 14,
+    "complex15": 8,
     "deep3": 1,
     "deep4": 0,
-    "cryptic": 262,
-    "noWhatLine": 3,
+    "cryptic": 176,
+    "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0
   },
