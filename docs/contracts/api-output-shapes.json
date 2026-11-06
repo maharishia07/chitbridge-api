@@ -20668,10 +20668,16 @@
                   ]
                 },
                 "created_by": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "rules": {
-                  "type": "object",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
                   "properties": {
                     "percent": {
                       "type": "number"
@@ -20687,9 +20693,7 @@
                       "type": "string"
                     },
                     "hsn": {}
-                  },
-                  "additionalProperties": false,
-                  "x-closed-by": "recordings"
+                  }
                 },
                 "version_at": {
                   "type": "string"
