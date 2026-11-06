@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 422,
-  "meets": 205,
+  "partial": 413,
+  "meets": 214,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -28392,11 +28392,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "df4e141b1b0c06bd"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -28484,11 +28483,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "237a83a8f39b813c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51630,11 +51628,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5e677f9daa7e3d25"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51816,11 +51813,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dbae295a7dccf73c"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -51908,11 +51904,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "06758e59faf0376d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52178,11 +52173,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "df76c8bae9c24aa4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52264,13 +52258,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -52447,13 +52441,13 @@
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -52718,11 +52712,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "19d16db3910377c1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
