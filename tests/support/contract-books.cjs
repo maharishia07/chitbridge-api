@@ -121,6 +121,7 @@ async function captureBooks() {
       : /FROM supplier_list WHERE owner_entity_id/.test(String(t)) ? { rows: [{ party_id: SUPP, credit_days: 30, terms: { early: { pct: 2, within_days: 3650 } } }] } : qd(t, p);
     await q('GET', '/dues?side=supplier&finance=1', null, '/dues');
     X.db.query = qd;
+    await q('GET', '/dues?finance=1&side=customer', null, '/dues');   /* FIN-72: + follow_up per customer row and follow_up_total (days past due, Not due yet apart) */
     await q('GET', '/terms', null, '/terms');   /* F2: before b298 runs — terms_migrated false, the shop default empty */
     await q('GET', '/cashflow?days=7', null, '/cashflow');   /* F3: the cash position — a 7-day run from the shop's today: the September sale and purchase overdue, GST beyond it */
     await q('GET', '/cheques', null, '/cheques');   /* F3: + pdc_reminders beside the held cheques (none held in this scenario) */
