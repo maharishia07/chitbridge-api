@@ -94,6 +94,7 @@
   "GET /api/crm/parties/:id/timeline": {"hash":"6cbf9daf9774ff55","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
   "GET /api/crm/privacy-requests": {"hash":"136ea55e4853f93d","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
   "GET /api/crm/segments": {"hash":"1f991ac5f33714b8","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
+  "GET /api/definitions": {"hash":"48582059120182f1","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-06 PR#765 k13 round 2","lifecycle":"stable"},
   "GET /api/entities/entitlements": {"hash":"30f43a715550a15a","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)","lifecycle":"stable"},
   "GET /api/entities/header": {"hash":"1ecf5a03e800a3af","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)","lifecycle":"stable"},
   "GET /api/entities/me": {"hash":"40a973d6ac8196e4","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-05 independent re-sign, batch k4 (PR#710)","lifecycle":"stable"},
