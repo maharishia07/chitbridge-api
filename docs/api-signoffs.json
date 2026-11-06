@@ -2578,19 +2578,19 @@
    "lifecycle": "stable"
   },
   "POST /api/ctp/deliver": {
-   "hash": "374e2017ff89d22c",
+   "hash": "5c520fe73951ec52",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader",
+   "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
    "lifecycle": "stable"
   },
   "POST /api/ctp/query": {
-   "hash": "b02259273a2c78c8",
+   "hash": "1e7ffefe0fa6a348",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-signer, non-builder) 2026-11-06 PR#777 RAIL-126b tolerant reader",
+   "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
    "lifecycle": "stable"
   },
   "POST /api/entities/populations": {

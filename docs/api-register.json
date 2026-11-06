@@ -41648,9 +41648,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5c520fe73951ec52"
+    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -41748,9 +41747,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1e7ffefe0fa6a348"
+    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
