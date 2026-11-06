@@ -896,6 +896,7 @@
  ],
  "GET /api/governance/boilerplate/:key": [
   401,
+  403,
   404,
   500
  ],
@@ -2685,6 +2686,7 @@
  ],
  "POST /api/governance/boilerplate/:key/adopt": [
   401,
+  403,
   404,
   500
  ],
@@ -2696,6 +2698,7 @@
  ],
  "POST /api/governance/conformance": [
   401,
+  403,
   422,
   500
  ],

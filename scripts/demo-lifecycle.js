@@ -1,7 +1,15 @@
+/**
+ * scripts/demo-lifecycle.js: the repeatable live demo of an entity lifecycle: define the mould (DDL), then operate it (DML).
+ * OWNS       the repeatable live demo of an entity lifecycle: define the mould (DDL), then operate it (DML).
+ * CALLED BY  by hand (node scripts/demo-lifecycle.js); never by CI. The mould and conformance steps are PLATFORM-ONLY (SEC-133): set CB_PLATFORM_TOKEN to a platform login's token or they answer 403 NOT_PLATFORM.
+ * FLOW       register a presenter, register sources, read and adopt the mould (as the platform), then run the chit steps
+ * CARD       21-compliance-attestation-and-trade/governance
+ */
 // demo-lifecycle.js — THE REPEATABLE LIVE DEMO. Runs the entity lifecycle end-to-end and NARRATES each step so you can
 // present it on a screen: define the mould (DDL) → operate it (DML). Provisions fresh demo rows each run (repeatable).
 //   node scripts/demo-lifecycle.js
 // Status per step:  ✅ live   ◐ exists/surfaced here   🔨 pending (later increment)
+const PLATFORM_TOKEN = process.env.CB_PLATFORM_TOKEN;
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 const BP = 'royaleplay-bp-india';
 let P = 0,
@@ -85,7 +93,7 @@ const S = (o) => JSON.stringify(o || '');
   line('brand source exists → beta-royale-play@v1');
 
   step(4, 'RoyalePlay BP — India: the mould that DECLARES its sources', '✅');
-  const bpr = await api('GET', '/api/governance/boilerplate/' + BP, { token });
+  const bpr = await api('GET', '/api/governance/boilerplate/' + BP, { token: PLATFORM_TOKEN || token });
   const bpj = bpr.j || {};
   chk(bpr.status === 200, 'the mould resolves  → ' + (bpj.label || '—'));
   line('declares: ' + (bpj.sources || []).map((item) => (item.source_name || item.source_key) + (item.facet ? ' (' + item.facet + ')' : '')).join('  ·  '));
@@ -98,7 +106,7 @@ const S = (o) => JSON.stringify(o || '');
   console.log('\n── MINT · resolve the declared sources → seal into the entity ──');
 
   step(5, 'Mint a shop FROM the boilerplate', '✅');
-  const adopt = await api('POST', '/api/governance/boilerplate/' + BP + '/adopt', { token });
+  const adopt = await api('POST', '/api/governance/boilerplate/' + BP + '/adopt', { token: PLATFORM_TOKEN || token });
   chk(adopt.status === 200, 'shop minted from the mould  → boilerplate ' + (adopt.j && adopt.j.boilerplate));
   line('inherited standards: ' + S(adopt.j && adopt.j.standards) + '  locale: ' + S(adopt.j && adopt.j.locale));
 

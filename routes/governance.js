@@ -238,11 +238,11 @@ function assertPublicAllowed() {
   throw new Error('assertPublicAllowed is superseded — use lib/visibility-cap.js (capOf + check), wired in routes/entities.js PATCH /profile');
 }
 
-// POST /api/governance/conformance — ADVISORY: check a process/chit's data against the ACTIVE canonical standards
+// POST /api/governance/conformance — PLATFORM ONLY (SEC-133, OWASP API5) — ADVISORY: check a process/chit's data against the ACTIVE canonical standards
 // (ISO 9000 quality + EXIM trade + …) assimilated into the boilerplate, and report contradictions (missing required
 // items). Read-only: computes a verdict, never mutates or blocks anything. This is the runtime "the standard actually
 // governs" surface — the light, deterministic form; an AI co-assist adds semantic judgement on top later.
-router.post('/conformance', auth, ...checked('POST /conformance'), async (req, res) => {
+router.post('/conformance', auth, platformGate, ...checked('POST /conformance'), async (req, res) => {
   try {
     const data = req.body && typeof req.body.data === 'object' && req.body.data ? req.body.data : req.body || {};
     const scope = req.body && typeof req.body.scope === 'string' ? req.body.scope : 'chit';
@@ -254,8 +254,8 @@ router.post('/conformance', auth, ...checked('POST /conformance'), async (req, r
   }
 });
 
-// GET /api/governance/boilerplate/:key — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
-router.get('/boilerplate/:key', auth, ...checked('GET /boilerplate/:key'), async (req, res) => {
+// GET /api/governance/boilerplate/:key — PLATFORM ONLY (SEC-133) — read the sealed MOULD: its DECLARED sources + bound locale ("see the mould").
+router.get('/boilerplate/:key', auth, platformGate, ...checked('GET /boilerplate/:key'), async (req, res) => {
   try {
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);
     if (!bp) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such boilerplate'));
@@ -267,9 +267,9 @@ router.get('/boilerplate/:key', auth, ...checked('GET /boilerplate/:key'), async
   }
 });
 
-// POST /api/governance/boilerplate/:key/adopt — the minted-path binding: stamp the caller's entity with this mould so
+// POST /api/governance/boilerplate/:key/adopt — PLATFORM ONLY (SEC-133; stamps the platform caller's own entity) — the minted-path binding: stamp the caller's entity with this mould so
 // it resolves the mould's DECLARED sources (bounded, not global). Upsert; preserves any existing constitution.
-router.post('/boilerplate/:key/adopt', auth, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
+router.post('/boilerplate/:key/adopt', auth, platformGate, ...checked('POST /boilerplate/:key/adopt'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const bp = await require('../lib/boilerplate').resolveBoilerplate(req.params.key);

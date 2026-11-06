@@ -955,11 +955,11 @@
    "lifecycle": "stable"
   },
   "GET /api/governance/boilerplate/:key": {
-   "hash": "1499c1ae138a93e9",
+   "hash": "8df62bfce68a955b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
    "lifecycle": "stable"
   },
   "GET /api/governance/commerce-standards": {
@@ -2627,11 +2627,11 @@
    "lifecycle": "stable"
   },
   "POST /api/governance/boilerplate/:key/adopt": {
-   "hash": "db7df182b93c138f",
+   "hash": "1e62a3126825dff1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
    "lifecycle": "stable"
   },
   "POST /api/governance/compliance": {
