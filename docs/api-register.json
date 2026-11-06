@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 422,
-  "meets": 205,
+  "partial": 423,
+  "meets": 204,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 221
+    "failing": 206
    },
    "foreign_id_404": {
     "applies": 230,
@@ -261,7 +261,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1985,
-   "hash": "596e2ebefe22fd4f",
+   "hash": "a60976f3208018cd",
    "does": "",
    "errors": {
     "count": 0,
@@ -295,7 +295,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -324,7 +324,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "596e2ebefe22fd4f"
+    "stale_since": "a60976f3208018cd"
    },
    "status": "partial",
    "callers": [],
@@ -1209,7 +1209,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
    "line": 487,
-   "hash": "2f1f2eb1c5052ee7",
+   "hash": "e89a80ebaeec0b45",
    "does": "",
    "errors": {
     "count": 0,
@@ -1278,10 +1278,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e89a80ebaeec0b45"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-categories.js",
     "cap-definitions.js"
@@ -2191,7 +2192,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7490,7 +7491,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1964,
-   "hash": "f8822ac8bc7414af",
+   "hash": "fd244df69e65d2b2",
    "does": "",
    "errors": {
     "count": 0,
@@ -7522,7 +7523,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7575,7 +7576,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1938,
-   "hash": "32bc5eb8888ad730",
+   "hash": "a2a86a8787fc122a",
    "does": "",
    "errors": {
     "count": 0,
@@ -7605,7 +7606,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7748,7 +7749,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 1105,
-   "hash": "b199ff993db515f6",
+   "hash": "cbf7f5d3471e11a7",
    "does": "",
    "errors": {
     "count": 0,
@@ -7780,7 +7781,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7807,8 +7808,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cbf7f5d3471e11a7"
    },
    "status": "partial",
    "callers": [],
@@ -7833,7 +7835,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 2075,
-   "hash": "313368b61b12e0dc",
+   "hash": "6aa1a26163f26d86",
    "does": "",
    "errors": {
     "count": 0,
@@ -7865,7 +7867,7 @@
     "error_tests": false,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": false,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -12265,7 +12267,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/definitions.js",
    "line": 81,
-   "hash": "9f1facaf7a219650",
+   "hash": "a92f7e7b4a5d162d",
    "does": "",
    "errors": {
     "count": 0,
@@ -12299,7 +12301,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21736,7 +21738,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 93,
-   "hash": "6323a87fc0aa5778",
+   "hash": "1b9b89daa7151131",
    "does": "",
    "errors": {
     "count": 0,
@@ -21767,7 +21769,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21827,7 +21829,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 32,
-   "hash": "677bfce89941aa2e",
+   "hash": "b15cb6ab536ce729",
    "does": "",
    "errors": {
     "count": 0,
@@ -21858,7 +21860,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -27963,7 +27965,7 @@
    "owner_agent": "cb-capability",
    "file": "routes/schemas.js",
    "line": 308,
-   "hash": "a5de8807e0b9826d",
+   "hash": "f592129d9f9cb22b",
    "does": "",
    "errors": {
     "count": 0,
@@ -28000,7 +28002,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -28095,7 +28097,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -35403,7 +35405,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/catalogue.js",
    "line": 2100,
-   "hash": "8c67d9df0fb2f2fd",
+   "hash": "7eff92ae5ad2f657",
    "does": "",
    "errors": {
     "count": 0,
@@ -35437,7 +35439,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -35466,8 +35468,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7eff92ae5ad2f657"
    },
    "status": "partial",
    "callers": [
@@ -41838,7 +41841,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -49903,7 +49906,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -56961,7 +56964,7 @@
     "error_tests": true,
     "status_codes": false,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
