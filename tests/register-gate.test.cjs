@@ -82,6 +82,24 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok(`shop with register rows, no key: ${m} ${p.replace(CHIT, ':chit_id')} works (${r.status})`, r.body.code !== 'CAPABILITY_OFF', r);
   }
   gate.KNOWN_USERS.clear(); /* the yes of the rows case is remembered per process */
+  /* the four cases of the decision (Athi 6 Nov): explicit off wins over rows and over the key; rows alone on; a new shop off */
+  const status = async () => (await call('GET', '/raida/report')).status;
+  gate.KNOWN_USERS.clear();
+  world.caps = ['-register']; world.rows = true;
+  ok('explicit off beats existing register rows: 403', (await status()) === 403);
+  world.caps = ['register', '-register']; world.rows = false;
+  ok('explicit off beats the key: 403', (await status()) === 403);
+  gate.KNOWN_USERS.add(SHOP); world.caps = ['-register'];
+  ok('explicit off beats a shop already remembered as holding rows: 403', (await status()) === 403);
+  gate.KNOWN_USERS.clear();
+  world.caps = []; world.rows = true;
+  ok('rows and no explicit off: on', (await status()) !== 403);
+  gate.KNOWN_USERS.clear();
+  world.caps = ['connector']; world.rows = false;
+  ok('a new shop with no rows and no key: off', (await status()) === 403);
+  world.caps = ['register']; world.rows = false;
+  ok('the key alone (no rows): on', (await status()) !== 403);
+  gate.KNOWN_USERS.clear();
   /* a null capability list is off */
   world.caps = null; world.rows = false;
   ok('a shop whose capability list is null is off', (await call('GET', '/raida/report')).status === 403);
@@ -94,6 +112,6 @@ const srv = app.listen(0, '127.0.0.1', async () => {
   world.caps = []; world.rows = false;
   ok('a chit route outside the register is not gated', (await call('GET', '/pulse')).body.code !== 'CAPABILITY_OFF');
 
-  console.log(`\n  ${pass} passed, ${fail} failed`);
+  console.log(`\n  ${pass} checks passed, ${fail} failed`);
   srv.close(); process.exit(fail ? 1 : 0);
 });
