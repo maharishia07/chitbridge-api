@@ -20696,7 +20696,10 @@
                   }
                 },
                 "version_at": {
-                  "type": "string"
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "governance": {
                   "type": "object",
@@ -20733,7 +20736,10 @@
                       "type": "boolean"
                     },
                     "at": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     },
                     "changed": {
                       "type": "boolean"
