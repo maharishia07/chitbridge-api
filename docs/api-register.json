@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 423,
-  "meets": 204,
+  "partial": 421,
+  "meets": 206,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -15691,11 +15691,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8df62bfce68a955b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43316,11 +43315,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1e62a3126825dff1"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#771 SEC-133 platform gate",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
