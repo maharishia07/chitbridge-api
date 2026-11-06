@@ -674,7 +674,7 @@ function checkAllowList(recording, routes) {
     check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return proved;
+  return FOREIGN.ownedBy(proved, (route) => [RS, WK].includes(mountOf(route))); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the work reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {

@@ -156,7 +156,7 @@ function checkAllowList(recording) {
     check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return proved;
+  return FOREIGN.ownedBy(proved, (route) => SWEPT.includes(route)); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the swept routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
