@@ -143,10 +143,13 @@ const INVOICE = { currency: 'INR', ItemList: [{ GstRt: 5, AssAmt: 47.62, CgstAmt
       return body.split(/\r?\n/).slice(1).map((line) => (line.trim().match(/^([a-z_]+) /) || [])[1]).filter((word) => word && !/^(CONSTRAINT|PRIMARY|UNIQUE|CHECK)$/i.test(word));
     };
     const cols = { h: columnsOf('chit_header'), d: columnsOf('chit_detail') };
-    const real = require(path.join(H.API, 'lib', 'books-store.js')), sent = [];
+    const storeFile = require.resolve(path.join(H.API, 'lib', 'books-store.js')), twin = require.cache[storeFile];
+    delete require.cache[storeFile]; /* the harness put the in-memory twin there: this check needs the REAL statements */
+    const real = require(storeFile), sent = [];
+    require.cache[storeFile] = twin;
     const spy = { query: async (text) => { sent.push(text); return { rows: [] }; } };
     await real.chitForFlip(spy, SHOP, 'c1'); await real.stampConfirmed(spy, SHOP, 'c1', 0, '2026-11-07T00:00:00Z');
-    const used = []; sent.forEach((text) => text.replace(/([hd]).([a-z_]+)/g, (all, alias, col) => used.push([alias, col])));
+    const used = []; sent.forEach((text) => text.replace(/\b([hd])\.([a-z_]+)/g, (all, alias, col) => used.push([alias, col])));
     ok('(h) the baseline tables were read (chit_header and chit_detail have columns)', cols.h.length > 5 && cols.d.length > 3, JSON.stringify([cols.h.length, cols.d.length]));
     const missing = used.filter(([alias, col]) => cols[alias].indexOf(col) < 0).map((x) => x.join('.'));
     eq('(h) every h.* / d.* column in the flip statements exists in the baseline', missing, []);
