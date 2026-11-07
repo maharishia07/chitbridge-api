@@ -1086,7 +1086,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 2 (wire 3; share cap-books.js 2/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_setting, fiscal_period, identities, journal_entry · writes (derived): - · callers: cap-books.js · actions: -
+- reads (derived): books_change_log, books_setting, fiscal_period, identities, journal_entry · writes (derived): - · callers: cap-books.js · actions: -
 
 **GET /api/books/pl** · books · cb-accounting · meets standard
 - does: _not yet written_
