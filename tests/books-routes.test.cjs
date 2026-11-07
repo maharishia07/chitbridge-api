@@ -279,7 +279,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const DAY = ['d0000000-0000-4000-8000-000000000001', 'd0000000-0000-4000-8000-000000000002', 'd0000000-0000-4000-8000-000000000003'];
   const day = X.E.posting().daySummary([{ currency: 'INR', pay: { cash: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 },
     { currency: 'INR', pay: { cash: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 },
-    { currency: 'INR', pay: { upi: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 }], { ref: 'walkin C2 2026-09-28', date: '2026-09-28', counter: 'C2' });
+    { currency: 'INR', pay: { upi: 118 }, taxes: [{ rate: 18, taxable: 100, cgst: 9, sgst: 9, igst: 0 }], round_off: 0 }], { ref: 'walkin C2 2026-09-28', date: '2026-09-28', counter: 'C2' }, { country: 'IN' }); /* CTRY-94: the day names its country */
   await B.postEntry(X.db, SHOP, Object.assign(day, { source_ref: 'walkin:C2:2026-09-28', source_chit_ids: DAY, counter: 'C2', by: SHOP, narration: 'Walk-in sales, counter C2, 2026-09-28 (3 bills)' }));
   const sb = await q('GET', '/daybook?from=2026-09-01&to=2026-09-30');
   const ents = sb.body.entries || [];
