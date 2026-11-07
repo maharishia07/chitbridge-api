@@ -633,6 +633,8 @@ const GUARDS = [
   'till-counter-doors.test.cjs', // 9 verify and reconcile + customer display (wave 3): POST /reconcile ok / absorbed / missing / unknown in one query, GET /verify spread sample, read-only; pair a screen by code, a screen key and nothing else, spent on first read, expiry, guess lock-out
   'live-trips-network.test.cjs', // SPD-42: the driven network scenario counts the highest 2xx trips and reports every route unreached when the load shop has no node (fake client, offline)
   'api-card-helpers.test.cjs', // API-1 (MNT-12): the register's derived reads/writes follow a function split into private same-file helpers; a shared helper beyond the depth does not leak
+  'channels.test.js', // b123 channel map; the webhook gets the RAW body (a probe in the real app: Buffer, not an object)
+  'whatsapp-out.test.js', // b126 outbound: every refusal with a recipient leaves a receipt (fake handle), one bare exception; the window, templates
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
