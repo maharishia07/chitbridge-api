@@ -20009,7 +20009,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 128,
+   "line": 134,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -49967,8 +49967,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 35,
-   "hash": "6fdfcdefd5d16420",
+   "line": 54,
+   "hash": "ac61e44ef9ea81f0",
    "does": "",
    "errors": {
     "count": 1,
@@ -50047,7 +50047,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "6fdfcdefd5d16420"
+    "stale_since": "ac61e44ef9ea81f0"
    },
    "status": "partial",
    "callers": [],

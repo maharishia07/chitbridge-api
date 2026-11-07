@@ -213,7 +213,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/integrations/status | integrations | routes/integrations.js:718 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/integrations/stock/:handle | integrations | routes/integrations.js:961 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/integrations/streams | integrations | routes/integrations.js:751 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/invoice/:chit_id | invoice | routes/invoice.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/invoice/:chit_id | invoice | routes/invoice.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/keys | keys | routes/keys.js:124 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/kyb/position | kyb | routes/kyb.js:35 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/kyb/risk | kyb | routes/kyb.js:43 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -505,7 +505,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/integrations/books/skip | integrations | routes/integrations.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/integrations/heartbeat | integrations | routes/integrations.js:459 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | no | yes |
 | POST | /api/integrations/profile | integrations | routes/integrations.js:1019 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/invoice/build | invoice | routes/invoice.js:35 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/invoice/build | invoice | routes/invoice.js:54 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/keys | keys | routes/keys.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/kyb/field | kyb | routes/kyb.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
