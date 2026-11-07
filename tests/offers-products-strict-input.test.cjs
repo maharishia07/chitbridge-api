@@ -8,7 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the app is loaded offline and the route's schema check (middleware/validate.js schemaValidate) runs alone.
  * FLOW      tools/load-app.cjs → the route's operation (its own schema check, with its own refusal words) → a body → accepted, or refused with the field named
  * CARD      28-platform-and-operations/api-standard
- * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): POST /api/products/bulk · /availability/bulk · /import · /import/preflight and PATCH /api/products/:id (API-43: the connector and till key scopes in middleware/auth.js KEY_ROUTES; they keep unknown body keys ignored until /v2)
+ * Pass 2 (7 Nov 2026) closed the routes API-30 left open for their keyed callers (products bulk · availability/bulk · import · preflight · PATCH /:id) and the two books ＋ Entry doors (POST /events · /preview); the bodies each real caller sends are replayed below.
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys.
  *
  *   node tests/offers-products-strict-input.test.cjs
@@ -34,6 +34,28 @@ const CASES = [
   ['PUT /api/products/:id/status', 'routes/products.js', [{ status: 'available' }, { status: 'unavailable', until: '2026-12-01', note: 'n' }, { status: 'redundant', replaced_by: UUID }]],
   ['POST /api/products/:id/media', 'routes/products.js', [{ name: 'a.png', mime: 'image/png', data_base64: 'AAAA' }, { url: 'https://youtu.be/x' }]],
   ['POST /api/products/lists/adopt', 'routes/products.js', [{ list: 'kirana', names: [], languages: ['en'], status: 'unavailable' }, { list: 'k', categories: [], skip_existing: true }]],
+  /* pass 2 (7 Nov): the five keyed routes that stayed open, closed after every caller's keys were read — web cap-catalogue (_cfBody, prodImport, prodEdit), cap-categories, app.html prodEdit, till.html upBody + commit,
+     the Tally connector (core.js addProducts/stock/editProduct), tools/seed/load.cjs, e2e specs (items; csv + decisions + confirm) */
+  ['POST /api/products/bulk', 'routes/products.js', [{ items: [{ name: 'Tea', price: 5 }] }]],
+  ['POST /api/products/availability/bulk', 'routes/products.js', [{ items: [{ code: 'BAS-25', qty: 3, source: 'erp', as_of: '2026-11-07T00:00:00Z' }] }]],
+  ['POST /api/products/import/preflight', 'routes/products.js', [{ csv: 'name,price\nTea,5' }, { xlsx: 'AAAA' }, { csv: 'a', header_row: 2 }, { xlsx: 'AAAA', sheet: 'Products', header_row: 3 }]],
+  ['POST /api/products/import', 'routes/products.js', [{ csv: 'name,price\nTea,5', decisions: [], confirm: true }, { xlsx: 'AAAA', header_row: 2, decisions: [{ incoming: 'price', use: 'price' }], confirm: true }]],
+  ['PATCH /api/products/:id', 'routes/products.js', [{ item_data: { name: 'x' } }, { item_data: { exposure: null }, merge: true }]],
+  /* pass 2, books: the ＋ Entry door's bodies, as cap-entry enBody builds them (expense · other_income · contra · debit note · journal) */
+  ['POST /api/books/preview', 'routes/books.js', [
+    { event: 'expense', class: 'rent', amount_minor: 5000, paid_from: 'cash', date: '2026-11-07', narration: 'Rent' },
+    { event: 'expense', class: 'rent', amount_minor: 5000, paid_by: 'cheque', cheque_no: '12', cheque_date: '2026-11-08', paid_from: 'bank' },
+    { event: 'other_income', class: 'interest', amount_minor: 100, into: 'bank', date: '2026-11-07', narration: 'Bank statement' },
+    { event: 'contra', from: 'cash', to: 'bank', amount_minor: 100 },
+    { event: 'debit_note', supplier: UUID, against_ref: 'B1', reason: 'rate', lines: [{ name: 'x', qty: 1, rate: 5 }], party: UUID },
+    { event: 'journal', lines: [{ code: '1000', dr_minor: 1 }, { code: '2000', cr_minor: 1 }], narration: 'adj', date: '2026-11-07' },
+    { event: { kind: 'expense', class: 'rent', amount: 50 }, how: 'cash' }
+  ]],
+  ['POST /api/books/events', 'routes/books.js', [
+    { event: 'expense', class: 'rent', amount_minor: 5000, paid_from: 'cash', client_ref: 'r1', attachment: { name: 'a.jpg' } },
+    { event: 'debit_note', supplier: UUID, against_ref: 'B1', lines: [{ gst_rate: 5 }], supplier_gstin: '29ABCDE1234F1Z5', my_gstin: '27ABCDE1234F1Z5', place_of_supply: '27', client_ref: 'r2' },
+    { event: 'journal', lines: [], narration: 'x', client_ref: 'r3' }
+  ]],
   ['PUT /api/network-offers/policy', 'routes/network-offers.js', [{ policy: 'opt_in' }]],
   ['POST /api/network-offers/catalogue/publish', 'routes/network-offers.js', [{ source_key: 'k', at: 'now', add: ['a'], withdraw: [], withdraw_at: 'x', restore_at: 'y' }]],
   ['POST /api/network-offers/catalogue/cancel', 'routes/network-offers.js', [{ source_key: 'k' }]],

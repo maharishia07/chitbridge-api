@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 72
+    "failing": 65
    },
    "output_allowlist": {
     "applies": 637,
@@ -30640,7 +30640,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1528,
-   "hash": "2b44e4f050d7693b",
+   "hash": "f5b055bcef3c8daa",
    "does": "",
    "errors": {
     "count": 0,
@@ -30678,7 +30678,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30720,7 +30720,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2b44e4f050d7693b"
+    "stale_since": "f5b055bcef3c8daa"
    },
    "status": "partial",
    "callers": [
@@ -34940,7 +34940,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1747,
-   "hash": "71c4986dbd23d28a",
+   "hash": "7d637baaefe37588",
    "does": "",
    "errors": {
     "count": 3,
@@ -34977,7 +34977,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -35019,7 +35019,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "71c4986dbd23d28a"
+    "stale_since": "7d637baaefe37588"
    },
    "status": "partial",
    "callers": [
@@ -37333,7 +37333,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1738,
-   "hash": "ab2939544aa33907",
+   "hash": "36eb5b5b5a062279",
    "does": "",
    "errors": {
     "count": 2,
@@ -37369,7 +37369,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -37411,7 +37411,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ab2939544aa33907"
+    "stale_since": "36eb5b5b5a062279"
    },
    "status": "partial",
    "callers": [
@@ -53192,7 +53192,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1672,
-   "hash": "a768421e9f8b3239",
+   "hash": "47aaa48ecdd428b6",
    "does": "",
    "errors": {
     "count": 0,
@@ -53224,7 +53224,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53264,7 +53264,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a768421e9f8b3239"
+    "stale_since": "47aaa48ecdd428b6"
    },
    "status": "partial",
    "callers": [
@@ -53293,7 +53293,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 489,
-   "hash": "d01d6bef91d31044",
+   "hash": "e370f51264ba899f",
    "does": "",
    "errors": {
     "count": 0,
@@ -53326,7 +53326,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53367,7 +53367,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d01d6bef91d31044"
+    "stale_since": "e370f51264ba899f"
    },
    "status": "partial",
    "callers": [
@@ -53502,7 +53502,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1181,
-   "hash": "666b6537800e318e",
+   "hash": "dbbed5e13f97455c",
    "does": "",
    "errors": {
     "count": 0,
@@ -53541,7 +53541,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53584,7 +53584,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "666b6537800e318e"
+    "stale_since": "dbbed5e13f97455c"
    },
    "status": "partial",
    "callers": [
@@ -53617,7 +53617,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1108,
-   "hash": "39622ebf11654c79",
+   "hash": "2ba277db83278879",
    "does": "",
    "errors": {
     "count": 0,
@@ -53649,7 +53649,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -53689,7 +53689,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "39622ebf11654c79"
+    "stale_since": "2ba277db83278879"
    },
    "status": "partial",
    "callers": [
