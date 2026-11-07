@@ -725,6 +725,16 @@
     }
    },
    {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.purpose, h.business_json, h.created_at, d.line_items FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id WHERE h.entity_id = $1 AND h.sender_entity_id = h.entity_id AND h.role <> 'Draft' AND h.created_at >= now() - ($2::int * interval '1 day') AND h.created_at < now() - ($3::int * interval '1 second') AND ((h.purpose = 'order' AND h.business_json ? 'bill_no') OR h.purpose = 'credit_note') AND NOT EXISTS (SELECT 1 FROM stock_movement m WHERE m.entity_id = h.entity_id AND m.ref = left(COALESCE(NULLIF(h.business_json ->> 'client_ref', ''), NULLIF(h.business_json ->> 'bill_no', ''), NULLIF(h.business_json ->> 'doc_no', ''), h.chit_id::text), 64)) AND NOT EXISTS (SELECT 1 FROM chit_status cs WHERE cs.chit_id = h.chit_id AND cs.entity_id = h.entity_id AND cs.current_status IN ('cancelled', 'rejected')) ORDER BY h.created_at LIMIT $4",
+    "params": [
+     "SHOP",
+     3,
+     60,
+     50
+    ]
+   },
+   {
     "via": "books.afterChit",
     "payload": {
      "eid": "SHOP",
@@ -8832,6 +8842,16 @@
      "SHOP",
      "C1/26-27/0041"
     ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.purpose, h.business_json, h.created_at, d.line_items FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id WHERE h.entity_id = $1 AND h.sender_entity_id = h.entity_id AND h.role <> 'Draft' AND h.created_at >= now() - ($2::int * interval '1 day') AND h.created_at < now() - ($3::int * interval '1 second') AND ((h.purpose = 'order' AND h.business_json ? 'bill_no') OR h.purpose = 'credit_note') AND NOT EXISTS (SELECT 1 FROM stock_movement m WHERE m.entity_id = h.entity_id AND m.ref = left(COALESCE(NULLIF(h.business_json ->> 'client_ref', ''), NULLIF(h.business_json ->> 'bill_no', ''), NULLIF(h.business_json ->> 'doc_no', ''), h.chit_id::text), 64)) AND NOT EXISTS (SELECT 1 FROM chit_status cs WHERE cs.chit_id = h.chit_id AND cs.entity_id = h.entity_id AND cs.current_status IN ('cancelled', 'rejected')) ORDER BY h.created_at LIMIT $4",
+    "params": [
+     "SHOP",
+     3,
+     0,
+     50
+    ]
    }
   ]
  },
@@ -8865,6 +8885,16 @@
     "params": [
      "SHOP",
      "C1/26-27/0041"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.purpose, h.business_json, h.created_at, d.line_items FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id WHERE h.entity_id = $1 AND h.sender_entity_id = h.entity_id AND h.role <> 'Draft' AND h.created_at >= now() - ($2::int * interval '1 day') AND h.created_at < now() - ($3::int * interval '1 second') AND ((h.purpose = 'order' AND h.business_json ? 'bill_no') OR h.purpose = 'credit_note') AND NOT EXISTS (SELECT 1 FROM stock_movement m WHERE m.entity_id = h.entity_id AND m.ref = left(COALESCE(NULLIF(h.business_json ->> 'client_ref', ''), NULLIF(h.business_json ->> 'bill_no', ''), NULLIF(h.business_json ->> 'doc_no', ''), h.chit_id::text), 64)) AND NOT EXISTS (SELECT 1 FROM chit_status cs WHERE cs.chit_id = h.chit_id AND cs.entity_id = h.entity_id AND cs.current_status IN ('cancelled', 'rejected')) ORDER BY h.created_at LIMIT $4",
+    "params": [
+     "SHOP",
+     3,
+     0,
+     50
     ]
    }
   ]

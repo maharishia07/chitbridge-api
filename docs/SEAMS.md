@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 151 | `list` | `amend.js` |  |
 | 123 | `rows` | `crm.js` | still in them: |
 | 113 | `words` | `variant.browser.js` |  |
-| 111 | `withEntity` | `books-hooks.js` |  |
+| 112 | `withEntity` | `books-hooks.js` |  |
 | 111 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 104 | `read` | `books-cashflow.js` | Trips: |
 | 96 | `answer` | `availability.js` | from March; then nearest. |
@@ -42,9 +42,9 @@ of file each thing is; this says what already does the job.
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 50 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
-| 49 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 49 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 47 | `again` | `signin-ui.js` |  |
 | 46 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
@@ -129,6 +129,7 @@ of file each thing is; this says what already does the job.
 | 20 | `note` | `device-id.js` | note(where, problem) — |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `says` | `adopt.js` |  |
+| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `governance` | `home-facts.js` |  |
@@ -140,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 18 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |
@@ -178,6 +178,7 @@ of file each thing is; this says what already does the job.
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
 | 15 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 14 | `cols` | `cap-catalogue.js` |  |
@@ -187,7 +188,6 @@ of file each thing is; this says what already does the job.
 | 14 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 14 | `refuse_` | `bookpack.js` | function M_() { return MONEY_ ·· (MONEY_ = req_('CBMoney', 'decimals', './money')); } |
-| 14 | `post` | `books-manual.js` | POST /events — |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
 | 14 | `payload` | `govcontext.browser.js` | what actually goes to the server — |

@@ -11,8 +11,10 @@
  * Run: node tests/ctr-178-stock-repost.test.cjs
  */
 'use strict';
-const assert = require('assert'),
+const real = require('assert'),
   path = require('path');
+let checks = 0;
+const assert = new Proxy(real, { get: (target, name) => (typeof target[name] === 'function' ? (...args) => (checks++, target[name](...args)) : target[name]) });
 const API = path.join(__dirname, '..');
 const files = require(path.join(API, 'tools', 'chits-files.cjs'));
 const store = require(path.join(API, 'lib', 'stock-store'));
@@ -134,7 +136,7 @@ logger.info = (what, data) => said.push(['info', what, data]);
 
   logger.warn = realWarn;
   logger.info = realInfo;
-  console.log('ctr-178-stock-repost: all passed');
+  console.log(checks + ' checks');
   process.exit(0);
 })().catch((e) => {
   console.error(e);
