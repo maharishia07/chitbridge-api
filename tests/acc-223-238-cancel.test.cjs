@@ -44,6 +44,8 @@ const COUNTRY = {
 (async () => {
   console.log('\n══ ACC-223 + ACC-238 · a cancelled own sale leaves the books, once, through one path ══\n');
   const X = H.load();
+  /* the mutation test (rail-173-mutation) swaps in a copy of lib/rail-status.js WITHOUT the RAIL-173 guard, before anything requires it */
+  if (process.env.RAIL173_RAIL_STATUS) { const real = require.resolve(path.join(H.API, 'lib', 'rail-status')); require.cache[real] = { id: real, filename: real, loaded: true, exports: require(path.join(H.API, process.env.RAIL173_RAIL_STATUS)) }; }
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why + '\n\n0 checks'); return; }
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   /* the one chit_header read a credit note makes (the bill it is against): the twin has no chit table, so it answers no row */
@@ -343,7 +345,7 @@ const COUNTRY = {
     const tx = { query: q };
     Object.assign(X.dbStub, { query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) }, withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx), readBatch: async () => ({}) });
     const sc = require(path.join(H.API, 'lib', 'schema')); sc.hasColumn = async () => false; sc.hasTable = async () => false;
-    const { moveStatus } = require(path.join(H.API, process.env.RAIL173_CHIT_MOVE || 'lib/chit-move'));   /* the mutation test points this at a copy without the RAIL-173 guard */
+    const { moveStatus } = require(path.join(H.API, 'lib', 'chit-move'));
     const viewer = { level: 'editor', holder: null }, by = { id: 'u1', name: 'Owner' };
     const origErr = console.error; console.error = () => {};
     /* ── RAIL-173 · a bill the buyer cancelled / rejected AFTER it posted (the books hold its reversal) is never moved back; the sender sends it again as a NEW chit ── */

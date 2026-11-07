@@ -395,7 +395,7 @@ const EXTRAS = [
   X('status-level-refused', 'PUT ' + C + '/:chit_id/status', 403, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'read_only', from: 'pending' }) } } }),
   X('status-moved-under-you', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => { throw Object.assign(new Error('Someone else just changed this.'), { code: 'status_conflict' }); } }) } } }),
   /* RAIL-173: a bill the books already took back (cancelled / rejected after it posted) is not moved on — the sender sends it again */
-  X('status-taken-back', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'cancelled', write: async () => undefined }) }, 'books-hooks': { wasTakenBack: async () => true } } }),
+  X('status-taken-back', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } } }),
   X('status-reject-needs-a-reason', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'rejected' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'folder-inventory': { docOf: () => 'bill_received' } } }),
   /* ── payment ── */
   X('payment-chit-not-found', 'POST ' + C + '/:chit_id/payment', 404, { body: { method: 'cash', amount: '12.50', ref: ' R1 ' } }),

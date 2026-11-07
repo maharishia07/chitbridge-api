@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 222,
+  "meets": 415,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -2614,7 +2614,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1645,
+   "line": 1646,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2712,7 +2712,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1834,
+   "line": 1835,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2898,7 +2898,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1515,
+   "line": 1516,
    "hash": "67ab400b5c2716dc",
    "does": "",
    "errors": {
@@ -61516,7 +61516,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1608,
+   "line": 1609,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61735,7 +61735,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1743,
+   "line": 1744,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61838,7 +61838,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1342,
-   "hash": "f54854bfb3bb4ac1",
+   "hash": "f3511ebd94056129",
    "does": "",
    "errors": {
     "count": 0,
@@ -61846,6 +61846,7 @@
      400,
      401,
      404,
+     409,
      500
     ],
     "codes": []
@@ -61889,6 +61890,7 @@
     400,
     401,
     404,
+    409,
     500
    ],
    "notes": [
@@ -61909,10 +61911,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f3511ebd94056129"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -62155,7 +62158,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1540,
+   "line": 1541,
    "hash": "89e1e089d74a0296",
    "does": "",
    "errors": {
