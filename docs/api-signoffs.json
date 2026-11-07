@@ -708,11 +708,11 @@
    "lifecycle": "stable"
   },
   "GET /api/crm/parties/:id/timeline": {
-   "hash": "6cbf9daf9774ff55",
+   "hash": "8ae395fe8be4696d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#744",
    "lifecycle": "stable"
   },
   "GET /api/crm/privacy-requests": {
