@@ -33,7 +33,7 @@ const BODY_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const ANSWER_WAIT_MS = 4000;
 const OWNED_BY_PROBLEM = ['type', 'title', 'status', 'detail', 'request_id', 'errors'];
 const GENERIC_SENTENCE = /^Something went wrong( — please try again\.| on our side\.)$/; /* lib/respond SAFE_SENTENCE · lib/problem INTERNAL_DETAIL: the words of a fault, never of a refusal */
-const FRESH = { realAuth: false, who: OWNER, asKey: false, db: 'ok', sqlRows: null, jsonThrows: false, noCustomer: false };
+const FRESH = { realAuth: false, who: OWNER, session: null, asKey: false, db: 'ok', sqlRows: null, jsonThrows: false, noCustomer: false };
 
 const sameValue = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const sha = (buffer) => crypto.createHash('sha256').update(buffer).digest('hex');
@@ -110,6 +110,7 @@ function harness(options) {
     const stubAuth = (req, res, next) => {
       if (world.realAuth) return realAuth(req, res, next);
       req.identity = world.who;
+      if (world.session) req.session = world.session; /* a listed session (device_id, jti), as the real auth sets one from a token that names its device */
       if (world.asKey) req.api_key = { jti: 'j1', scopes: ['till'] };
       return next();
     };

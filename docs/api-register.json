@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 281,
+    "applies": 282,
     "failing": 39
    },
    "rate_limited": {
@@ -24541,14 +24541,12 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 138,
-   "hash": "44b050cddc91b9e8",
+   "hash": "f53ed6b7d04efa0c",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -24565,7 +24563,7 @@
     "schema_in": false,
     "schema_out": false,
     "missing_input_answer": false,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
@@ -24632,14 +24630,12 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 111,
-   "hash": "3d96a78c38ea06b5",
+   "hash": "15cacd36218bf9a1",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -32193,18 +32189,16 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 703,
-   "hash": "27b5bfc3930f25ad",
+   "hash": "f2986ed556baa6a3",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": [
-     "PIN_ACTORS_ONLY"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [
@@ -46956,7 +46950,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 379,
-   "hash": "94f20cef49065688",
+   "hash": "9841086ca70c50b5",
    "does": "",
    "errors": {
     "count": 0,
@@ -47026,7 +47020,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "94f20cef49065688"
+    "stale_since": "9841086ca70c50b5"
    },
    "status": "partial",
    "callers": [
@@ -56314,8 +56308,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 956,
-   "hash": "0af4e64dcee2b644",
+   "line": 957,
+   "hash": "57fa3237159ed111",
    "does": "",
    "errors": {
     "count": 0,
@@ -56325,8 +56319,12 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
+   "reads": [
+    "identities"
+   ],
+   "writes": [
+    "identities"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -56338,8 +56336,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -56369,7 +56367,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
@@ -56378,7 +56376,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0af4e64dcee2b644"
+    "stale_since": "57fa3237159ed111"
    },
    "status": "partial",
    "callers": [
@@ -56407,19 +56405,17 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 101,
-   "hash": "e98b8fae7a2b5f81",
+   "hash": "28e1fee605a143d4",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      403,
      500
     ],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -56434,9 +56430,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
@@ -56501,19 +56497,17 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 958,
-   "hash": "57ad2b7dd646b872",
+   "line": 959,
+   "hash": "72a9eff6dcbdd722",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": [
-     "PIN_ACTORS_ONLY"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [
@@ -56530,7 +56524,7 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
@@ -56600,21 +56594,18 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 77,
-   "hash": "2942e85bacdbeddc",
+   "line": 75,
+   "hash": "f5e438728da7984d",
    "does": "",
    "errors": {
-    "count": 2,
+    "count": 0,
     "statuses": [
      400,
      401,
      403,
      500
     ],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN",
-     "NO_DEVICE"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -56629,9 +56620,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
@@ -56701,10 +56692,10 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 160,
-   "hash": "da83b0abc3e7c047",
+   "hash": "b20908a1dcb72216",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
@@ -56712,9 +56703,7 @@
      404,
      500
     ],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -56731,7 +56720,7 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
@@ -56803,7 +56792,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 957,
+   "line": 958,
    "hash": "627cc129f2130eeb",
    "does": "",
    "errors": {
@@ -56841,8 +56830,8 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,

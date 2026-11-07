@@ -3292,8 +3292,10 @@
   500
  ],
  "POST /api/signin/logout": [
+  400,
   401,
-  403
+  403,
+  500
  ],
  "POST /api/signin/pin": [
   400,
@@ -3303,7 +3305,8 @@
  "POST /api/signin/renew": [
   400,
   401,
-  403
+  403,
+  500
  ],
  "POST /api/signin/sessions/revoke": [
   400,
@@ -3315,6 +3318,7 @@
  "POST /api/signin/verify": [
   400,
   403,
+  409,
   500,
   503
  ],
