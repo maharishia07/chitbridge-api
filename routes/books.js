@@ -668,7 +668,7 @@ router.get('/ledger/:account', auth, on, ...checked('GET /ledger/:account'), asy
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
-    res.json(await forReader(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals }, { account: out.chart_account }));
+    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals }, { account: out.chart_account }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -747,7 +747,7 @@ router.get('/party/:id/statement', auth, noKey, on, ...checked('GET /party/:id/s
       };
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    res.json(await forReader(req, e, 'statement', { currency: curOf(req), party_id: id, from, to, code: out.code, opening_minor: out.opening_minor, closing_minor: out.closing_minor, lines: out.lines }, { roles: out.roles }));
+    res.json(await forBooksDoor(req, e, 'statement', { currency: curOf(req), party_id: id, from, to, code: out.code, opening_minor: out.opening_minor, closing_minor: out.closing_minor, lines: out.lines }, { roles: out.roles }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -1155,7 +1155,7 @@ async function forPayer(req, e, kind, direction, answer) {
   return blind ? require('../lib/dues-view').blindPayment(kind, answer, direction) : answer;
 }
 /** RAIL-146n: the statement / ledger / cheques answer for THIS reader: ONE can_see_costs read (fail-closed), then lib/dues-view R9; the owner and a cost-seeing actor get their bytes untouched */
-async function forReader(req, e, kind, answer, opt) {
+async function forBooksDoor(req, e, kind, answer, opt) {
   return (await require('../lib/cost').isCostBlind(req, e)) ? require('../lib/dues-view').blindBooks(kind, answer, opt) : answer;
 }
 /** POST /payments/preview — W1–W4 and the 409 share one shape: { code: 'ALREADY_PAID', error, message: words, warnings } */
@@ -1649,7 +1649,7 @@ router.get('/cheques', auth, noKey, on, ...checked('GET /cheques'), async (req, 
       }
       return { list, pdc, remind, day };
     });
-    res.json(await forReader(req, e, 'cheques', {
+    res.json(await forBooksDoor(req, e, 'cheques', {
       currency: curOf(req),
       asOf: out.day,
       cheques: out.list,

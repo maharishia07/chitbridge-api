@@ -4874,7 +4874,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1573,
-   "hash": "cd0b6a3418ae63d7",
+   "hash": "29ab15b5384fcbde",
    "does": "",
    "errors": {
     "count": 2,
@@ -4957,7 +4957,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cd0b6a3418ae63d7"
+    "stale_since": "29ab15b5384fcbde"
    },
    "status": "partial",
    "callers": [
@@ -5984,7 +5984,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 605,
-   "hash": "5eb29f500b230457",
+   "hash": "66409c311c5aabfc",
    "does": "",
    "errors": {
     "count": 1,
@@ -6064,7 +6064,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5eb29f500b230457"
+    "stale_since": "66409c311c5aabfc"
    },
    "status": "partial",
    "callers": [
@@ -6514,7 +6514,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 683,
-   "hash": "ece129e9740d41d8",
+   "hash": "3562c34153943e3a",
    "does": "",
    "errors": {
     "count": 2,
@@ -6604,7 +6604,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ece129e9740d41d8"
+    "stale_since": "3562c34153943e3a"
    },
    "status": "partial",
    "callers": [
