@@ -56,7 +56,7 @@ function extras(tools) {
     X('register-made', 'POST ' + at('/register'), 200, { body: { email: 'new@example.com', display_name: 'Brand New Shop' } }),
     X('register-made-with-a-chosen-id', 'POST ' + at('/register'), 200, { body: { email: 'new2@example.com', display_name: 'Brand New Shop', user_id: 'chosen-id' } }),
     X('register-insert-fails', 'POST ' + at('/register'), 500, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: raising(/INSERT INTO identities/, '23505') } }),
-    X('register-login-of-unknown', 'POST ' + at('/register'), 400, { body: { email: 'ghost@example.com', mode: 'login' } }),
+    X('register-login-of-unknown', 'POST ' + at('/register'), 200, { body: { email: 'ghost@example.com', mode: 'login' } }),
     X('verify-needs-an-id', 'POST ' + at('/verify'), 400, { body: {} }),
     X('verify-short-code', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '12' } }),
     X('verify-unknown-account', 'POST ' + at('/verify'), 400, { body: { email: 'ghost@example.com', otp: '123456' } }),

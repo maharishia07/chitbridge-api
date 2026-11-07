@@ -222,7 +222,7 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
       world.reset();
       await askId('nobody@shopone.br'); await askId(id);
       const rk = await pairedRatio(async () => (await askId(id)).ms, async () => (await askId('nobody@shopone.br')).ms, 9);
-      t('ask time: ' + label + ' takes about as long as an unknown person (paired ratio ' + rk.toFixed(2) + ')', rk > 0.4 && rk < 2.5 && (await tAsk(id)) > 5, String(rk));
+      t('ask time: ' + label + ' takes about as long as an unknown person (paired ratio ' + rk.toFixed(2) + ')', rk > 0.75 && rk < 1.35 && (await tAsk(id)) > 5, String(rk));
     }
     devOtp.mayExposeOtp = devNow;
     world.reset();

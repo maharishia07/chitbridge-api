@@ -56339,14 +56339,13 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 908,
-   "hash": "3d0ebb59eb342e31",
+   "line": 946,
+   "hash": "08511a0cb859c596",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
-     409,
      500
     ],
     "codes": []
@@ -56366,7 +56365,7 @@
     "missing_input_answer": true,
     "error_shape": false,
     "codes_registered": false,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": false,
     "output_allowlist": false,
@@ -56385,7 +56384,6 @@
    },
    "declared": [
     400,
-    409,
     500
    ],
    "notes": [],
@@ -56517,7 +56515,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 910,
+   "line": 948,
    "hash": "bc129aaa67f2fc10",
    "does": "",
    "errors": {
@@ -56819,7 +56817,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 909,
+   "line": 947,
    "hash": "cde422507cabe5ec",
    "does": "",
    "errors": {
