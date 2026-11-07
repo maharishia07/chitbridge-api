@@ -7508,6 +7508,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "built-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -7649,6 +7675,32 @@
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
       "message": "Set the shop country first. The books never open on a guess."
+     }
+    },
+    {
+     "scenario": "computed-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
      }
     }
    ]
