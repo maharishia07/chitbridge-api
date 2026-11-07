@@ -257,6 +257,7 @@ const refused = (req, res, reason) => {
 /** no such account: refuse like a wrong secret, after spending the time a secret check spends */
 const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
+  await identityAuth.padHashes(req.contactPad || 0);
   return refused(req, res, 'NO_ACCOUNT');
 };
 /**
@@ -293,6 +294,7 @@ const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED|REQUIRED)$/.test(S
  */
 const secretRefused = async (req, res, check) => {
   if (!(check.method === 'pin' && 'left' in check)) await identityAuth.spendCheckTime(); /* a PIN just counted (wrong, or the try that locked) was hashed; every other refusal was not */
+  await identityAuth.padHashes(req.contactPad || 0); /* SEC-143: a contact door costs the same hash times whoever is behind it */
   return refused(req, res, check.reason);
 };
 
@@ -548,6 +550,7 @@ const jtiOf = (token) => {
  */
 async function identityOnContact(req, res, found, secret) {
   const proof = await identityAuth.proveOnContact(query, found.candidates, found.contact, secret);
+  req.contactPad = Math.max(0, identityAuth.CONTACT_HASHES - proof.hashes);
   if (proof.opens.length === 1) return proof.opens[0];
   if (proof.opens.length > 1) await chooseWhich(req, res, proof.opens);
   else await secretRefused(req, res, proof.refusal);
@@ -564,6 +567,8 @@ async function accountsOfTypedId(req, res, secret) {
   const chosen = await identityOnContact(req, res, f, secret);
   return chosen ? [chosen] : null;
 }
+/** is this typed value a contact (an e-mail, a mobile, key@business): the doors that take one pad their refusals to the same hash time */
+const contactShaped = (typed) => typed.includes('@') || !!identityAuth.mobileOf(typed);
 const methodOf = (identity) => (identityAuth.needsPin(identity) ? 'pin' : 'otp');
 
 async function verify(req, res) {
@@ -942,7 +947,12 @@ async function pin(req, res) {
 }
 
 const askDoor = junkAsUnknown(ask, typedByAsk, (req, res) => askAnswered(req, res, 'NO_ACCOUNT'));
-const verifyDoor = junkAsUnknown(verify, typedByVerify);
+/** SEC-143: the doors that take a contact pad their refusals to CONTACT_HASHES hash times, found or not (a refusal spends the first itself) */
+const padded = (handler) => (req, res, next) => {
+  req.contactPad = contactShaped(typedByVerify(req)) ? identityAuth.CONTACT_HASHES - 1 : 0;
+  return handler(req, res, next);
+};
+const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
 router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
 router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
 router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);

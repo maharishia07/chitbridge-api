@@ -32093,7 +32093,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 809,
-   "hash": "d1293cb54cbd31a4",
+   "hash": "4a792d6a3f9ffc26",
    "does": "",
    "errors": {
     "count": 0,
@@ -47088,7 +47088,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 347,
-   "hash": "541381b76eb9e688",
+   "hash": "fe7072cdd634a673",
    "does": "",
    "errors": {
     "count": 0,
@@ -56339,7 +56339,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 946,
+   "line": 956,
    "hash": "08511a0cb859c596",
    "does": "",
    "errors": {
@@ -56515,7 +56515,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 948,
+   "line": 958,
    "hash": "bc129aaa67f2fc10",
    "does": "",
    "errors": {
@@ -56817,8 +56817,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 947,
-   "hash": "cde422507cabe5ec",
+   "line": 957,
+   "hash": "8638009db812fb3e",
    "does": "",
    "errors": {
     "count": 0,
@@ -56831,8 +56831,17 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
+   "reads": [
+    "constitution",
+    "entity_governance",
+    "identities",
+    "installation"
+   ],
+   "writes": [
+    "entity_governance",
+    "identities",
+    "signup_context"
+   ],
    "money": false,
    "actions": [],
    "derived": [

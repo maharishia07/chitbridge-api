@@ -198,6 +198,37 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     reset();
     v = await verify('athi@alpha-timers.br', { pin: '2580' });
     t('   …and the chosen id signs him in at Alpha (the stored-id door has its own budget)', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
+    /* SEC-143 round 2: the contact's misses start again after a proven secret (4 misses, a sign-in, 4 misses: still open) */
+    const dev = require(path.join(API, 'lib', 'dev-otp'));
+    await dev.contactGuessReset('9876543210'); reset();
+    for (let i = 0; i < 4; i++) await verify('9876543210', { pin: '1111' });
+    v = await verify('9876543210', { pin: '2580' });
+    t('   4 misses, then the right PIN: signed in', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
+    for (let i = 0; i < 4; i++) await verify('9876543210', { pin: '1111' });
+    v = await verify('9876543210', { pin: '2580' });
+    t('   ⭐ then 4 more misses and the contact still opens (the success reset the budget; 8 in a row would have shut it)', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
+    await dev.contactGuessReset('9876543210');
+
+    /* SEC-143 round 2: a wrong PIN costs the same time with no account, 1, 2 or 3 PIN holders behind the contact (and for a code) */
+    const median = (xs) => xs.slice().sort((p, q) => p - q)[Math.floor(xs.length / 2)];
+    const timed = async (id, cred) => { const t0 = process.hrtime.bigint(); await verify(id, cred); return Number(process.hrtime.bigint() - t0) / 1e6; };
+    const pairedRatio = async (x, y, n) => { const r = []; for (let k = 0; k < n; k++) { const a1 = await x(), b1 = await y(); r.push(a1 / Math.max(b1, 0.01)); } return median(r); };
+    const holder = (k, n) => { DB[k] = { identity_type: 'actor', parent_entity_id: 'alpha', actor_key: k, user_id: k + '@alpha-timers.br', display_name: k, bridge_id: 'B-' + k, actor_role: 'staff', actor_type: 'human', break_status: 'active', status: 'active', pin_hash: bcrypt.hashSync('2580', 10), pin_attempts: 0, identity_id: k }; DOCS.push({ identity_id: k, scheme: 'PHONE', value_hash: docHash('PHONE', '9876543210'), status: 'verified', verified_at: 'NOW' }); };
+    reset(); DB.athiAtAlpha.pin_hash = bcrypt.hashSync('2580', 10);
+    const cases = [['1 PIN holder', 0], ['2 PIN holders', 1], ['3 PIN holders', 2]];
+    await verify('9999999999', { pin: '1111' });
+    for (const [label, extra] of cases) {
+      for (let k = 0; k < extra; k++) holder('pp' + k);
+      await dev.contactGuessReset('9876543210');
+      const wrong = () => timed('9876543210', { pin: '1111' }).then(async (ms) => { await dev.contactGuessReset('9876543210'); return ms; });
+      const rr = await pairedRatio(wrong, () => timed('9999999999', { pin: '1111' }), 7);
+      t('   ⭐ timing: a wrong PIN at a contact shared with the owner, with ' + label + ' takes as long as an unknown contact (paired ratio ' + rr.toFixed(2) + ')', rr > 0.8 && rr < 1.25, String(rr));
+    }
+    await dev.contactGuessReset('9876543210');
+    const rc = await pairedRatio(() => timed('9876543210', { otp: '000000' }), () => timed('9999999999', { pin: '1111' }), 7);
+    await dev.contactGuessReset('9876543210');
+    t('   …and a wrong code at that contact takes the same (paired ratio ' + rc.toFixed(2) + ')', rc > 0.8 && rc < 1.25, String(rc));
+    reset();
     DB.athiAtAlpha.break_status = 'removed';
     a = await ask('9876543210');
     t('   a removed employee is not offered: the number is the owner\'s alone again (the owner gets the code)', ONE(a) && !!DB.mayur.otp_code, a.status + ' ' + JSON.stringify(a.body).slice(0, 120));
