@@ -903,6 +903,8 @@ const ENGINE_OTHER = [
   /* T3-DISPUTES-ASSIST (2026-10-14; classified at INT6b) — dispute-may.js: may I raise / resolve a dispute, the rail's verdict plus the two
      words resolve adds (not_raiser · already_resolved) until the rail carries resolve_dispute. CB's own rule about a chit holder. */
   'dispute-may.js',
+  /* RAIL-187 (2026-11-08) — dispute-audience.js: who receives a dispute's message (roster or chit-wide), read once for the message route and the file route. CB's own rail rule. */
+  'dispute-audience.js',
   /* ⭐ TO1 (2026-10-10) — Tasks & Orders. workflow.js is ADOPTED from chitbridge-engines (engines.lock.json): which folder an order is in, its stage word,
      and every action with a verdict (wraps rail). work-rows.js is the one row builder behind GET /api/work/* — SQL over select · open-orders · assign · deliverline, no rule of its own. */
   'workflow.js', 'work-rows.js',

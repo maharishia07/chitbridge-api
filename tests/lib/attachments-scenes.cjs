@@ -51,7 +51,7 @@ function attRows(world, sqlError) {
       const held = (world.headers || []).find((one) => one.chit === params[0] && one.entity === params[1]);
       return { rows: held ? [{ all_recipients: held.roster }] : [], rowCount: held ? 1 : 0 };
     }
-    if (/SELECT visibility_entity_id FROM chit_messages/.test(text)) {
+    if (/SELECT visibility_entity_id(, is_dispute, dispute_id)? FROM chit_messages/.test(text)) {
       if (!UUID_SHAPE.test(String(params[0]))) throw sqlError('22P02'); /* message_id is a uuid column */
       const held = (world.messages || []).find((one) => one.id === params[0] && one.entity === world.caller);
       return { rows: held ? [{ visibility_entity_id: held.visibility }] : [], rowCount: held ? 1 : 0 };
