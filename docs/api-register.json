@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 215,
-  "meets": 422,
+  "partial": 210,
+  "meets": 427,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -51444,7 +51444,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 165,
+   "line": 164,
    "hash": "cf94b2f1ecb4b050",
    "does": "",
    "errors": {
@@ -51516,11 +51516,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cf94b2f1ecb4b050"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51548,7 +51547,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 173,
+   "line": 172,
    "hash": "0fc9c8e13510c1f5",
    "does": "",
    "errors": {
@@ -51620,11 +51619,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0fc9c8e13510c1f5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51652,7 +51650,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 197,
+   "line": 196,
    "hash": "f2723d9cbe44782d",
    "does": "",
    "errors": {
@@ -51724,11 +51722,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f2723d9cbe44782d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51756,7 +51753,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 189,
+   "line": 188,
    "hash": "3816956041ef4601",
    "does": "",
    "errors": {
@@ -51828,11 +51825,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3816956041ef4601"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51860,7 +51856,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 181,
+   "line": 180,
    "hash": "53cbc22c6326a455",
    "does": "",
    "errors": {
@@ -51932,11 +51928,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "53cbc22c6326a455"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"

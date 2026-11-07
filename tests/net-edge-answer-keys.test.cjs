@@ -38,7 +38,7 @@ const WHOLE_ROW = { id: EDGE, parent_id: 'p1', child_id: 'c1', type: 'commercial
   approved_by: 'c1', decided_at: '2026-11-07T01:00:00Z', archived_at: null, alias_name: 'x', assign_to: null, legacy_id: null, planted: 'secret' };
 const real = require(path.join(ROOT, 'src', 'services', 'network.js'));
 const wholeRow = async () => ({ ...WHOLE_ROW });
-const standIn = { ...real, nodeOf: async () => ({ id: 'p1' }), approve: wholeRow, decline: wholeRow, suspend: wholeRow, resume: wholeRow, disconnect: wholeRow };
+const standIn = { ...real, nodeOf: async () => ({ id: 'p1' }), approve: wholeRow, decline: wholeRow, suspend: wholeRow, resume: wholeRow, disconnect: wholeRow, requestConnect: wholeRow };
 stub('src/services/network.js', standIn);
 
 let failed = 0;
@@ -67,6 +67,18 @@ function post(server, verb) {
       check(verb + ': 200 and exactly the 8 keys', r.status === 200 && keys === ALLOWED.slice().sort().join(), r.status + ' ' + r.text);
       check(verb + ': the values are the row\'s', r.body.id === EDGE && r.body.state === 'active' && r.body.in_flight === false, r.text);
     }
+    /* the sixth: POST /connections answers its own 6 keys */
+    const asked = await new Promise((resolve, reject) => {
+      const req = http.request({ port: server.address().port, path: '/api/network/connections', method: 'POST', headers: { 'content-type': 'application/json', 'content-length': 2 } }, (res) => {
+        let text = '';
+        res.on('data', (c) => (text += c));
+        res.on('end', () => resolve({ status: res.statusCode, text, body: text ? JSON.parse(text) : {} }));
+      });
+      req.on('error', reject);
+      req.end('{}');
+    });
+    check('connect: the 6 asked keys are named', (real.EDGE_ASKED_KEYS || []).join() === 'id,parent_id,child_id,type,state,requested_by', String(real.EDGE_ASKED_KEYS));
+    check('connect: exactly the 6 keys, none of the rest', asked.status === 200 && Object.keys(asked.body).sort().join() === ['id', 'parent_id', 'child_id', 'type', 'state', 'requested_by'].sort().join(), asked.status + ' ' + asked.text);
   } finally { server.close(); }
   say(failed ? failed + ' FAILED' : 'all ok');
   process.exit(failed ? 1 : 0);

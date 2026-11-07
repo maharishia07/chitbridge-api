@@ -158,8 +158,7 @@ router.post(
       { parentId: b.parentId, parentHandle: b.parentHandle, childId: b.childId, childBridgeId: b.childBridgeId, childHandle: b.childHandle, type: b.type },
       await actorOf(req)
     );
-    _told(out);
-    return out;
+    return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
 );
 router.post(

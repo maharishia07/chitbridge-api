@@ -266,7 +266,8 @@ async function approve({ edgeId }, actor) {
 }
 /** NET-EDGE: the keys an edge answer names (docs/contracts/api-output-shapes.json, the five connections/:id routes) - a column added to cb_edge never reaches the answer unasked */
 const EDGE_KEYS = ['id', 'parent_id', 'child_id', 'type', 'state', 'requested_by', 'in_flight', 'created_at'];
-const edgeView = (row) => (row ? Object.fromEntries(EDGE_KEYS.map((key) => [key, row[key]])) : row);
+const EDGE_ASKED_KEYS = ['id', 'parent_id', 'child_id', 'type', 'state', 'requested_by'];
+const edgeView = (row, keys = EDGE_KEYS) => (row ? Object.fromEntries(keys.map((key) => [key, row[key]])) : row);
 async function _edge(edgeId) {
   const {
     rows: [edge]
@@ -421,6 +422,7 @@ async function claim(entityId, actorEntityId) {
 }
 module.exports = {
   EDGE_KEYS,
+  EDGE_ASKED_KEYS,
   edgeView,
   register,
   lookup,
