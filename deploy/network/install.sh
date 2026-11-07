@@ -87,9 +87,11 @@ fi
 
 # ---- 5. the existing kit brings the stack up -----------------------------------------------------------------------------------------------
 say "up.sh $SPIN_KIT (the existing SIT kit)"
-export SIT_ROOT=$NET SIT_HOST_AS=$SPIN_HOST API_REF=$REF GIT_TOKEN="${GIT_TOKEN:-}"
+# INSTALL_KEY: the key the master registers is the key the installation states (a successor such as sit-ae2 on kit ae); same as the kit's key for the others
+export SIT_ROOT=$NET SIT_HOST_AS=$SPIN_HOST API_REF=$REF GIT_TOKEN="${GIT_TOKEN:-}" INSTALL_KEY=$SPIN_KEY
 sh "$SIT/up.sh" "$SPIN_KIT"
-DC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml --env-file .env"
+EXTRA=$(get_kv SIT_COMPOSE_EXTRA)   # PLT-64: the same extra compose file up.sh uses, if any
+DC="$DOCKER compose -p $PROJECT -f ../compose.yml -f docker-compose.yml${EXTRA:+ -f $EXTRA} --env-file .env"
 cd "$SIT"
 
 # ---- 6. mark the installation (the role is DATA) and pin the master as a peer, BEFORE the root exists so the root is mirrored ---------------------

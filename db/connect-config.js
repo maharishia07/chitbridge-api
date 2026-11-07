@@ -46,4 +46,15 @@ function connectPlan(env) {
   return plan;
 }
 
-module.exports = { connectPlan, sslFor, where };
+/** the pool size: DB_POOL_MAX (a whole number 1-100), else 10. PLT-64: a 1 GB server runs Postgres with max_connections 20, so its api asks for fewer.
+ *  A value that is not a whole number in range is refused at boot, never quietly replaced. */
+function poolMax(env) {
+  env = env || process.env;
+  const raw = String(env.DB_POOL_MAX == null ? '' : env.DB_POOL_MAX).trim();
+  if (!raw) return 10;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1 || n > 100) throw new Error('Invalid DB_POOL_MAX (a whole number from 1 to 100): ' + raw);
+  return n;
+}
+
+module.exports = { connectPlan, sslFor, where, poolMax };
