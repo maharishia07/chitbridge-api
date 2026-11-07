@@ -204,13 +204,10 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
       const prod = sh && sh.productOf(l);
       if (!prod) return refuse(req, res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
       const p = S.priceLine(l, prod);
-      if (p.unit_price == null)
-        return refuse(req, res,
-          422,
-          'NO_PRICE',
-          (prod.name ? '"' + String(prod.name).slice(0, 60) + '"' : 'Line ' + nameOf(l)) + ' has no price on the shelf. Set its price, or send one.',
-          { line: l.key }
-        );
+      if (p.unit_price == null) {
+        const [code, words] = S.unpricedSaid(l, prod, nameOf);
+        return refuse(req, res, 422, code, words, { line: l.key });
+      }
       l.listPrice = p.unit_price;
       l.name = l.name || p.name;
       l.item_id = l.item_id || sh.idOf(l);
