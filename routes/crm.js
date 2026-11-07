@@ -244,9 +244,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
                                     WHERE chit_id = ANY($1::uuid[]) AND thread_type = 'external' AND created_at < $2 ORDER BY chit_id, created_at DESC`,
             [ids, beforeIso]
           );
-          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[])`, [
-            ids
-          ]);
+          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`, [ids, owner]);
           return { m: m.rows, d: d.rows };
         });
         for (const x of extra.m)

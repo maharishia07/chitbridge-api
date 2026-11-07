@@ -796,7 +796,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -10692,7 +10692,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -11380,7 +11380,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -11489,7 +11489,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -13330,7 +13330,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#744",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -40739,7 +40739,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
@@ -62753,7 +62753,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
         "lifecycle": "stable"
       },
       "status": "meets standard",
