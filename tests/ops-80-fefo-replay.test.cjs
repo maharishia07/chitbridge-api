@@ -28,11 +28,11 @@ async function lockRow(held, k) {
   LOCKS.set(k, held);
 }
 
-/** the movement INSERT: the real unique index, ON CONFLICT DO NOTHING */
+/** the movement INSERT: the real unique index (a NULL ref or line_ref is never a duplicate), ON CONFLICT DO NOTHING */
 function insertMovement(a) {
-  const [ent, item_id, location, qty, , , , reason, ref, line_ref, lot] = a;
-  if (ref != null && MOVES.some((m) => m.ent === ent && m.ref === ref && m.line_ref === line_ref && m.reason === reason && m.lot === (lot || ''))) return { rows: [] };
-  MOVES.push({ ent, item_id, location, qty: Number(qty), reason, ref, line_ref, lot: lot || '' });
+  const [ent, item_id, location, qty, rate, , , reason, ref, line_ref, lot] = a;
+  if (ref != null && line_ref != null && MOVES.some((m) => m.ent === ent && m.ref === ref && m.line_ref === line_ref && m.reason === reason && m.lot === (lot || ''))) return { rows: [] };
+  MOVES.push({ ent, item_id, location, qty: Number(qty), rate: rate == null ? null : Number(rate), reason, ref, line_ref, lot: lot || '' });
   return { rows: [{ movement_id: 'mv-' + MOVES.length, at: new Date().toISOString() }] };
 }
 
@@ -64,9 +64,16 @@ async function answer(sql, a, held) {
   }
   if (/SELECT COALESCE\(lot, ''\) AS lot, qty FROM stock_movement/.test(sql)) {
     const [ent, item_id, location, ref, line_ref, reason] = a;
-    return { rows: MOVES.filter((m) => m.ent === ent && m.item_id === item_id && m.location === location && m.ref === ref && m.line_ref === line_ref && m.reason === reason) };
+    /* SQL semantics: `line_ref = $5` is never true for NULL; `IS NOT DISTINCT FROM` is (what the first version of this query used) */
+    const nullSafe = /IS NOT DISTINCT FROM/.test(sql);
+    const sameLine = (m) => (nullSafe ? (m.line_ref ?? null) === (line_ref ?? null) : line_ref != null && m.line_ref === line_ref) || (line_ref != null && (m.line_ref || '').startsWith(line_ref + '#top-up')); /* position(...) = 1 */
+    return { rows: MOVES.filter((m) => m.ent === ent && m.item_id === item_id && m.location === location && m.ref === ref && sameLine(m) && m.reason === reason) };
   }
   if (/SELECT [\s\S]*FROM stock_balance/.test(sql)) return { rows: BAL.filter((b) => balKey(b) === bkey(...a)) };
+  if (/SELECT rate FROM stock_movement/.test(sql)) {
+    const [ent, item_id, location] = a; /* the item latest receipt cost */
+    return { rows: MOVES.filter((m) => m.ent === ent && m.item_id === item_id && m.location === location && m.qty > 0 && m.rate != null).slice(-1) };
+  }
   return { rows: [] };
 }
 
@@ -177,6 +184,57 @@ const AB = () => shelf([['A', 5, '2026-12-01'], ['B', 3, '2027-01-01']]);
     await store.issue(SHOP, sale(item, 4, { line_ref: '2' }), withEntity);
     assert.deepStrictEqual([await level(item, 'A'), await level(item, 'B')], [0, 0]);
     assert.strictEqual(outs(), 'A:-1,A:-4,B:-3');
+  });
+
+  await it('a short sale is valued at the LAST KNOWN COST (the emptied batch average), not the pool average of 0', async () => {
+    const item = await shelf([['A', 5, '2026-12-01']]); /* A costs 10 */
+    await store.issue(SHOP, sale(item, 8), withEntity);
+    const pool = await store.balanceOf(SHOP, item, withEntity, null, '');
+    assert.deepStrictEqual([pool.qty, pool.value], [-3, -30], 'the 3 short units go out at 10, not 0');
+    assert.strictEqual(MOVES.find((m) => m.lot === '' && m.reason === 'sale').rate, 10, 'the cost rides on the stored row, so a replay values it the same');
+  });
+
+  await it('a short with NO batch ever emptied falls back to the last receipt cost', async () => {
+    const item = await shelf([['A', 5, '2026-12-01']]);
+    await store.issue(SHOP, sale(item, 5, { ref: 'EMPTY-IT' }), withEntity); /* A is empty and gone from the FEFO read */
+    await store.issue(SHOP, sale(item, 2, { ref: 'NEXT' }), withEntity); /* nothing on this sale to average: the last receipt rate (10) */
+    assert.strictEqual((await store.balanceOf(SHOP, item, withEntity, null, '')).value, -20);
+  });
+
+  await it('a line with no line_ref is not read as a replay: two issues on one ref both take stock', async () => {
+    const item = await shelf([['A', 10, '2026-12-01']]);
+    const noLine = { item_id: item, reason: 'sale', qty: 3, tracked: true, ref: 'BILL-NL' };
+    await store.issue(SHOP, noLine, withEntity);
+    const second = await store.issue(SHOP, noLine, withEntity);
+    assert.strictEqual(second.moved, 1, 'the second issue was swallowed as a replay');
+    assert.strictEqual(await level(item, 'A'), 4);
+  });
+
+  await it('a replay asking for MORE (9 then 12, A holds 5) issues only the difference and records the extra short', async () => {
+    const item = await shelf([['A', 5, '2026-12-01']]);
+    const first = await store.issue(SHOP, sale(item, 9), withEntity);
+    assert.strictEqual(first.short, 4);
+    const again = await store.issue(SHOP, sale(item, 12), withEntity);
+    assert.strictEqual(again.short, 3, 'the 3 extra units were dropped in silence');
+    assert.strictEqual(again.moved, 1);
+    assert.deepStrictEqual([await level(item, 'A'), await level(item, '')], [0, -7]);
+    assert.strictEqual((await store.balanceOf(SHOP, item, withEntity, null, '')).value, -70, 'the extra short is valued at the last cost too');
+    const third = await store.issue(SHOP, sale(item, 12), withEntity); /* and 12 again is now a plain replay */
+    assert.deepStrictEqual([third.moved, third.short, third.note], [0, 0, null]);
+    const fourth = await store.issue(SHOP, sale(item, 15), withEntity); /* a second revision up, a second top-up key */
+    assert.deepStrictEqual([fourth.moved, fourth.short, await level(item, '')], [1, 3, -10]);
+  });
+
+  await it('a replay asking for the same or LESS is a no-op; less says so in a note, nothing is reversed', async () => {
+    const item = await shelf([['A', 5, '2026-12-01']]);
+    await store.issue(SHOP, sale(item, 9), withEntity);
+    const same = await store.issue(SHOP, sale(item, 9), withEntity);
+    assert.deepStrictEqual([same.moved, same.short, same.note], [0, 0, null]);
+    const less = await store.issue(SHOP, sale(item, 6), withEntity);
+    assert.strictEqual(less.moved, 0);
+    assert.strictEqual(less.ok, true);
+    assert.match(less.note, /already took 9.*6.*nothing was reversed/);
+    assert.deepStrictEqual([await level(item, 'A'), await level(item, '')], [0, -4]);
   });
 
   console.log(pass + ' passed');
