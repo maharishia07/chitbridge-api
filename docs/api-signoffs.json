@@ -1390,11 +1390,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/gstr": {
-   "hash": "c5a40c1567d877bd",
+   "hash": "dbe67c282f6983e0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1406,11 +1406,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "be22b8f5a8198528",
+   "hash": "8c9251a891a20a4a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {
@@ -1695,7 +1695,7 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
    "lifecycle": "stable"
   },
-  "GET /health": {"hash":"0e48a0105a3e73d4","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: public uptime probe; 200 whatever the database says; no input; no internal text in any answer; only a 500 Problem from the one handler; summary plain","lifecycle":"stable"},
+  "GET /health": {"hash":"a1fcb628914fc8e6","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#879","lifecycle":"stable"},
   "OPTIONS *": {"hash":"935cfbf551c234cf","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: cors answers 204 or the app 403 ORIGIN_NOT_ALLOWED (documented, fixed words); no body read, no internal text; 500 via the one handler","lifecycle":"stable"},
   "PATCH /api/actors/:id": {
    "hash": "8374bddd65efb2b4",
