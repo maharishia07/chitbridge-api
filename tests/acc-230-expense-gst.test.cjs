@@ -46,6 +46,14 @@ const S_AU = { enabled: true, walkin_grain: 'day', country: 'AU', functional_cur
   ok('tax equal to the amount paid WAITS', big.kind === 'queue' && /not less than/.test(big.why), JSON.stringify(big));
   const bad = run(S_AU, 'AUD', { what: 'x', mode: 'Cash', amount: 15, input_tax: 15 });
   ok('a bare number instead of heads WAITS', bad.kind === 'queue' && /tax heads/.test(bad.why), JSON.stringify(bad));
+  for (const [label, val] of [['non-numeric "abc"', 'abc'], ['negative', -5], ['blank', ''], ['null', null], ['true', true], ['NaN', NaN]]) {
+    const r = run(S_AU, 'AUD', { what: 'x', mode: 'Cash', amount: 110, input_tax: { gst: val } });
+    ok('a ' + label + ' tax WAITS in words, never read as 0 or flipped', r.kind === 'queue' && /zero or more/.test(r.why), JSON.stringify(r));
+  }
+  const both = run(S_IN, 'INR', { what: 'x', mode: 'Cash', amount: 128, input_tax: { cgst: 9, sgst: 9, igst: 10 } });
+  ok('IN · igst together with cgst/sgst WAITS in words', both.kind === 'queue' && /together/.test(both.why), JSON.stringify(both));
+  const numText = run(S_AU, 'AUD', { what: 'x', mode: 'Cash', amount: 110, input_tax: { gst: '10' } });
+  eq('a tax typed as text "10" is still read as 10', [numText.kind, numText.event.amount], ['post', 100]);
   const credit = run(S_AU, 'AUD', { what: 'x', mode: 'On credit', supplier: 'S1', amount: 110, input_tax: { gst: 10 } });
   eq('on credit to a supplier → same split, supplier carried', [credit.event.amount, credit.event.input_tax, credit.event.supplier], [100, { gst: 10 }, 'S1']);
 
