@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 58
+    "failing": 50
    },
    "foreign_id_404": {
     "applies": 203,
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 120
+  "output_allowlist_from_recordings": 128
  },
  "machine_columns": [
   "schema_in",
@@ -21044,7 +21044,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21068,6 +21068,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -21139,7 +21140,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21163,6 +21164,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -50789,7 +50791,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 360,
-   "hash": "119c9b2336edaf9b",
+   "hash": "541db4f71e91011d",
    "does": "",
    "errors": {
     "count": 4,
@@ -50830,7 +50832,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -50857,6 +50859,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -50901,7 +50904,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 382,
-   "hash": "124bca4861c9e758",
+   "hash": "82ef9190340340a4",
    "does": "",
    "errors": {
     "count": 3,
@@ -50940,7 +50943,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -50966,6 +50969,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -51010,7 +51014,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 311,
-   "hash": "a8c24c8c06001e7c",
+   "hash": "cf6a90fd7197dad6",
    "does": "",
    "errors": {
     "count": 1,
@@ -51046,7 +51050,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51070,6 +51074,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -51114,7 +51119,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 321,
-   "hash": "b32d98aa24818ba6",
+   "hash": "a15d2437c4075e3a",
    "does": "",
    "errors": {
     "count": 1,
@@ -51148,7 +51153,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51172,6 +51177,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -51216,7 +51222,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 293,
-   "hash": "3e06c9dd5558a92c",
+   "hash": "64fec31269d20501",
    "does": "",
    "errors": {
     "count": 1,
@@ -51253,7 +51259,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -51277,6 +51283,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -64640,7 +64647,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 274,
-   "hash": "63680e549970c2eb",
+   "hash": "a63f82874ea89e8f",
    "does": "",
    "errors": {
     "count": 2,
@@ -64674,7 +64681,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -64699,6 +64706,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,

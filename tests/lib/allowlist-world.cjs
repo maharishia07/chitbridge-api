@@ -12,6 +12,7 @@ const path = require('path');
 
 const HERE = path.join(__dirname, '..', '..');
 const COLUMN = 'output_allowlist';
+const { refusesUnknownKeys } = require(path.join(HERE, 'tools', 'api-register.cjs')); /* the register's own rule for a closed answer: one definition */
 
 /** the first 2xx status an operation declares, and its JSON schema */
 function successOf(operation) {
@@ -27,7 +28,7 @@ function checkAllowList(recording, operations, report) {
   const proved = {};
   Object.keys(operations).sort().forEach((route) => {
     const { status, schema } = successOf(operations[route]);
-    if (!schema || schema.additionalProperties !== false) return;
+    if (!refusesUnknownKeys(schema)) return;
     const answers = Object.values(recording).filter((one) => one.route === route && String(one.status) === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
