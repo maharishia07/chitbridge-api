@@ -72,4 +72,14 @@ it('PLT-86: the driver\'s own "Connection terminated unexpectedly" (message only
   assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', 'a killed pg socket must answer 503');
   assert.strictEqual(K.known(new Error('Connection terminated unexpectedly')), null, 'not from pg: left alone');
 });
+it('PLT-86 follow-up: a query on a client whose socket already died ("not queryable", message only, stack from pg) answers 503, not 500', () => {
+  for (const words of ['Client has encountered a connection error and is not queryable', 'Client was closed and is not queryable']) {
+    const dead = new Error(words);
+    dead.stack = 'Error: ' + words + '\n    at Client.query (/app/node_modules/pg/lib/client.js:702:45)';
+    const r = K.known(dead);
+    assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', '"' + words + '" must answer 503 DB_CONNECTION_LOST');
+    assert.ok(!/queryable/.test(r.body.message), 'the driver words never go back');
+    assert.strictEqual(K.known(new Error(words)), null, 'not from pg: left alone');
+  }
+});
 console.log(pass + ' checks');

@@ -222,7 +222,7 @@ function runAndRecord(req, res, next, store, claim) {
   res.json = (body) => {
     if (captured) return origJson(body);
     captured = true;
-    const status = res.statusCode;
+    const status = require('../lib/limits').answerStatus(res); /* not res.statusCode: past the deadline that is our 503 */
     store
       .finalize(claim.entity, claim.key, status, body)
       .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
