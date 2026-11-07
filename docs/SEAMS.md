@@ -207,5 +207,5 @@ of file each thing is; this says what already does the job.
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `start` | `books-nightly.js` | in-process, every 6 hours (first run 10 minutes after start); BOOKS_NIGHTLY=0 turns it off |
 | 12 | `payment` | `books-store.js` |  |
+| 12 | `decide` | `chit-proposal.js` | answered by pricing it, not accepting it. |
 | 12 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
-| 12 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |

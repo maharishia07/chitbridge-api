@@ -26,7 +26,7 @@ const invc = (st) => ({ chit_id: 'inv-1', purpose: 'invoice', sender_entity_id: 
   if (!X.src.dir) { console.log('   SKIP ' + X.src.why); process.exit(0); }
   const TC = require(path.join(H.API, 'lib', 'tax-copy'));
   let copies = {}, rcptRows = [], invRows = [];
-  TC.copyOf = async (id) => copies[id] || null; TC.entryFor = async () => ENTRY;
+  TC.copyOf = async (id) => copies[id] || null; TC.entryFor = async (c) => { const t = c.summary_json && c.summary_json.money && c.summary_json.money.total; return t ? Object.assign({}, ENTRY, { invoice: Object.assign({}, ENTRY.invoice, { ItemList: [{ GstRt: 12, AssAmt: t / 1.12, CgstAmt: t * 0.06 / 1.12, SgstAmt: t * 0.06 / 1.12, IgstAmt: 0, CesAmt: 0 }], ValDtls: { TotInvVal: t } }) }) : ENTRY; };
   const q0 = X.db.query;
   X.db.query = async (t, v) => {
     const s = String(t);
@@ -40,7 +40,7 @@ const invc = (st) => ({ chit_id: 'inv-1', purpose: 'invoice', sender_entity_id: 
     X.T.entries.length = 0; X.T.lines.length = 0; X.T.outbox.length = 0; X.T.parties = X.T.parties.filter((p) => p.owner !== SHOP);
     X.T.parties.push({ owner: SHOP, party_id: KT, name: 'Kumar Traders', party_no: 'P-1', supplier: true });
     await X.store.saveSetting(X.db, SHOP, { enabled: true }); await X.B.enable(X.db, SHOP, { by: SHOP, today: '2026-10-01' }).catch(() => {}); K.forget(SHOP);
-    rcptRows = [{ on: 'ord-1', chit_id: 'rcpt-1', no: 'KT/77' }];
+    rcptRows = [{ on: 'ord-1', chit_id: 'rcpt-1', no: 'KT/77', total: '1120' }];
     invRows = [];
   };
 const theirInvoiceArrives = () => { invRows = [{ on: 'ord-1', chit_id: 'inv-1', no: 'KT/77' }]; };
@@ -82,10 +82,27 @@ const theirInvoiceArrives = () => { invRows = [{ on: 'ord-1', chit_id: 'inv-1', 
 
   /* the same bill typed with other spacing and case (and an 's' in it) is still the same bill */
   await fresh(); copies = { 'rcpt-1': Object.assign(rcpt('accepted'), { business_json: Object.assign(rcpt('accepted').business_json, { their_bill: { no: 'ks / 77', date: '2026-10-13', total: 1120 } }) }), 'inv-1': Object.assign(invc('accepted'), { business_json: { invoice_no: 'KS/77', order: { from: 'ord-1' } } }) };
-  rcptRows = [{ on: 'ord-1', chit_id: 'rcpt-1', no: 'ks / 77' }];
+  rcptRows = [{ on: 'ord-1', chit_id: 'rcpt-1', no: 'ks / 77', total: '1120' }];
   await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i6 = await K.postChit(SHOP, 'inv-1', {});
   eq('KS/77 typed as "ks / 77" → the same bill: no-op', [i6.none, bills().length], [true, 1]);
 
+  /* ── 7 · NO BILL NUMBER on the invoice: only an EQUAL total makes it the receipt's bill; otherwise it posts, with the doubt on the posting's note ── */
+  const unnumbered = (total) => Object.assign(invc('accepted'), { business_json: { order: { from: 'ord-1' } }, summary_json: { money: { total } } });
+  const Books = X.B, realPost = Books.postEntry, sent = [];
+  Books.postEntry = async (db, e, ev) => { sent.push(ev); return realPost(db, e, ev); };
+  await fresh(); copies = { 'rcpt-1': rcpt('accepted'), 'inv-1': unnumbered(560) };
+  await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i7 = await K.postChit(SHOP, 'inv-1', {});
+  const own = sent.filter((ev) => ev.source_ref === 'chit:inv-1')[0];
+  eq('part 2 with NO number, 560 against the receipt total 1,120 → posts its own bill (payable 168000), the doubt on its Payables note',
+    [i7.ok, bills().length, payable(), !!own && /no bill number .* check it is not a duplicate/.test(own.note || '') && own.note === own.narration], [true, 2, 168000, true]);
+  await fresh(); copies = { 'rcpt-1': rcpt('accepted'), 'inv-1': unnumbered(1120) };
+  await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i8 = await K.postChit(SHOP, 'inv-1', {});
+  eq('NO number but the SAME total 1,120 → the same bill: no-op', [i8.none, bills().length, payable()], [true, 1, 112000]);
+  await fresh(); copies = { 'rcpt-1': rcpt('accepted'), 'inv-1': invc('accepted') };
+  await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i9 = await K.postChit(SHOP, 'inv-1', {});
+  eq('both papers numbered KT/77 (no total needed) → no-op still', [i9.none, bills().length], [true, 1]);
+
+  Books.postEntry = realPost;
   K._mover.fn = null; X.db.query = q0;
   console.log('\n  ' + (fail ? '✗ ' + fail + ' FAILED · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
