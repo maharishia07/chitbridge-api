@@ -65,4 +65,11 @@ it('PLT-86: a connection lost in flight (class 08, 57P01-03, socket codes) answe
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '23505' })), null);
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '57014' })).body.code, 'STATEMENT_TIMEOUT');
 });
+it('PLT-86: the driver\'s own "Connection terminated unexpectedly" (message only, no code, stack from pg) answers 503; the same words from elsewhere do not', () => {
+  const fromPg = new Error('Connection terminated unexpectedly');
+  fromPg.stack = 'Error: Connection terminated unexpectedly\n    at Connection.<anonymous> (C:\\app\\node_modules\\pg\\lib\\client.js:136:73)';
+  const r = K.known(fromPg);
+  assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', 'a killed pg socket must answer 503');
+  assert.strictEqual(K.known(new Error('Connection terminated unexpectedly')), null, 'not from pg: left alone');
+});
 console.log(pass + ' checks');
