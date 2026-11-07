@@ -12,8 +12,9 @@
 const fs = require('fs');
 const path = require('path');
 const read = (rel) => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8');
-let failed = 0;
-const check = (name, pass) => { console.log((pass ? '  ok    ' : '  FAIL  ') + name); if (!pass) failed++; };
+let failed = 0,
+  total = 0;
+const check = (name, pass) => { total++; console.log((pass ? '  ok    ' : '  FAIL  ') + name); if (!pass) failed++; };
 
 const register = JSON.parse(read('docs/api-register.json'));
 check('the register holds no GET /api/entities/lookup', !register.routes.some((r) => r.key === 'GET /api/entities/lookup'));
@@ -24,5 +25,5 @@ const proof = read('scripts/prove-network-mint.js');
 check('the proof script no longer calls the retired route', !/api\/entities\/lookup/.test(proof));
 check('the proof script asks search for the handle and expects 200 with count 0', /api\/entities\/search\?q=/.test(proof) && /before\.json\.count === 0/.test(proof));
 
-console.log(failed ? failed + ' failed' : 'all passed');
+console.log(failed ? failed + ' failed' : 'all passed (' + total + ' checks)');
 process.exit(failed ? 1 : 0);

@@ -95,7 +95,8 @@ const wants = [
   [handler, "err.code === '" + CODE + "'",
     'the error handler does not branch on ' + CODE + ' - the code is set and nobody reads it, so a refused '
     + 'origin still answers 500'],
-  [handler, 'status(403)',
+  /* problem(req, res, { status: 403, code }) is how the handler answers since API-1: the status is a field, not a status(403) call */
+  [handler, "status: 403, code: '" + CODE + "'",
     'the ' + CODE + ' branch does not answer 403 - an allowlist decision must not read as a server fault'],
   [handler, "log.warn('origin refused'",
     "a refused origin is not logged as 'origin refused' - filed under log.error('unhandled') it teaches you "
@@ -107,5 +108,5 @@ for (const [where, want, why] of wants) {
 if (!fails.length) console.log('  OK - a refused origin answers 403, named, and is logged as a decision');
 
 fails.forEach((f) => console.error('  x ' + f));
-if (!fails.length) console.log(`  OK — ${pass} header(s) declared on both sides\n`);
+if (!fails.length) console.log(`  OK — headers declared on both sides (${pass} checks)\n`);
 process.exit(fails.length ? 1 : 0);
