@@ -13,9 +13,9 @@ of file each thing is; this says what already does the job.
 | 124 | `rows` | `crm.js` | still in them: |
 | 116 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 113 | `withEntity` | `books-hooks.js` |  |
+| 114 | `withEntity` | `books-hooks.js` |  |
 | 109 | `read` | `books-cashflow.js` | Trips: |
-| 99 | `answer` | `availability.js` | from March; then nearest. |
+| 100 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 81 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
@@ -25,25 +25,25 @@ of file each thing is; this says what already does the job.
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 67 | `list` | `cap-settings.js` |  |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 67 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 66 | `entry` | `books-store.js` |  |
 | 64 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
-| 64 | `failed` | `service.js` | what every catch answers: |
+| 65 | `failed` | `service.js` | what every catch answers: |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `items` | `books-store.js` | PERF1: |
 | 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 56 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 53 | `pack` | `books-store.js` |  |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
-| 50 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
 | 47 | `again` | `signin-ui.js` |  |
@@ -70,7 +70,7 @@ of file each thing is; this says what already does the job.
 | 37 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
 | 35 | `rate` | `convert.js` | A rate, with its evidence. |
-| 36 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 33 | `closeModal` | `app.html` |  |
@@ -88,7 +88,7 @@ of file each thing is; this says what already does the job.
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
 | 31 | `refuse` | `books-pack.js` | const sha = (text) => |
-| 30 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
+| 31 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `hold` | `orders.js` |  |
