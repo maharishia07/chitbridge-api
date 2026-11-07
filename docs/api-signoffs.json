@@ -2459,11 +2459,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
-   "hash": "e01c8002cbcabc9c",
+   "hash": "10046b55f800d3dc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#886 re-sign, 13 columns checked",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals": {
@@ -3019,11 +3019,11 @@
    "lifecycle": "stable"
   },
   "POST /api/network/connections": {
-   "hash": "a148db102e19064e",
+   "hash": "7543f5f939e71d88",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; write switch 503, 401 NO_ACTOR, 403 NOT_ALLOWED, 404/409 codes all declared and registered; a repeat request answers EXISTS 409, never a second edge",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#882: handler read at the hash; new 409 NETWORK_REMOTE_NOT_YET declared in the contract refusals and registered (ERROR-CODES.md + error-codes.json), answered in the one problem shape, in a plain sentence; local asks unchanged; other columns untouched. Behaviour findings (node insert before refusal, unresolved read passes) are in the PR comment, not the contract",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/approve": {

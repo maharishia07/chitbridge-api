@@ -5037,9 +5037,18 @@ function payFailure(req, res, err) {
   if (err && (err.refused || err.status === 409 || err.status === 422 || /^(BOOKS_|PERIOD_|YEAR_)/.test(String(err.code || '')))) return booksRoutes.fail(res, err);
   return problem(req, res, failed(err, req, 'Payment failed'));
 }
+/**
+ * ⭐ FIN-51 (7 Nov): "MARK PAID" TAKES ONE KEY PER ATTEMPT, the same gate as the books' money doors (FIN-63, routes/books.js onceOnly).
+ * client_ref stops a second press of the sheet, but a retry that lost its answer and carried no client_ref booked the payment again.
+ * Now no Idempotency-Key → 422 IDEMPOTENCY_KEY_REQUIRED; the same key and body → the first answer (X-Idempotent-Replay), recorded once;
+ * the same key and another body → 422 IDEMPOTENCY_CONFLICT; two at once → one runs (the other 409 IDEMPOTENCY_IN_PROGRESS).
+ * The web already sends it (app.html EP chitPay idem:'attempt').
+ */
+const payOnce = require('../middleware/idempotency').requireKey();
 router.post(
   '/:chit_id/payment',
   auth,
+  payOnce,
   ...checked('POST /:chit_id/payment'),
   trimmedBody(['ref', 'note', 'client_ref']),
   async (req, res) => {
