@@ -24,6 +24,7 @@ console.log('\n══ ACC-221 · a figure that is not a number is named, never 0
 /* 1 · normLines names it (every figure, every spelling) */
 for (const field of [['qty', 'qty'], ['quantity', 'qty'], ['price', 'price'], ['unitPrice', 'price'], ['listPrice', 'price'], ['discount', 'discount'], ['gst_rate', 'gst_rate'], ['cess_rate', 'cess_rate']]) {
   for (const v of BAD) {
+    if (['discount', 'gst_rate', 'cess_rate'].includes(field[0]) && typeof v === 'string' && v.trim() === '') continue; /* a blank optional field is absent (checked below) */
     const l = S.normLines({ lines: [line({ qty: undefined, price: undefined, gst_rate: undefined, [field[0]]: v })] })[0];
     const got = l.unread.map((u) => u.field);
     ok('normLines names ' + field[0] + ' = ' + String(typeof v === 'object' ? '{}' : v), got.includes(field[1]), JSON.stringify(l.unread));
@@ -67,9 +68,23 @@ ok('routes/invoice.js reaches computeTax with the normLines lines (the throw is 
 /* 6 · ACC-222 (folded): a rate below 0 or above 100 would answer a negative tax with bridge ok - refused, named, for every caller */
 for (const [field, v] of [['gst_rate', -5], ['gst_rate', 101], ['cess_rate', -1]]) {
   const e = call(mapped({ [field]: v }));
-  ok('computeTax refuses ' + field + ' = ' + v + ' (outside 0-100%)', e instanceof Error && e.code === 'line_unreadable' && e.said[0] === 'BAD_RATE' && e.said[1].includes('outside 0'), String(e && e.message));
+  ok('computeTax refuses ' + field + ' = ' + v + ' (outside 0-100%)', e instanceof Error && e.code === 'line_unreadable' && e.said[0] === 'BAD_RATE' && (e.said[1].includes('outside 0') || e.said[1].includes('below 0')), String(e && e.message));
 }
 ok('rates 0 and 100 are still priced', [0, 100].every((v) => !(call(mapped({ gst_rate: v })) instanceof Error)));
+
+/* 7 · review of #919: cess is uncapped (tobacco cess was above 100% to Jan 2026); a blank optional field is absent; a blank qty / price is not */
+const cess160 = call(mapped({ cess_rate: 160 }));
+ok('cess 160 passes (never refused above 100)', !(cess160 instanceof Error), String(cess160 && cess160.message));
+const cessAbc = call(mapped({ cess_rate: NaN }));
+ok('cess NaN is refused, BAD_RATE', cessAbc instanceof Error && cessAbc.said[0] === 'BAD_RATE');
+const cessNeg = call(mapped({ cess_rate: -1 }));
+ok('cess -1 says "below 0"', cessNeg instanceof Error && cessNeg.said[1].includes('below 0'), String(cessNeg && cessNeg.message));
+const blankOk = S.normLines({ lines: [line({ discount: '', cess_rate: ' ', gst_rate: '' }), line({ discount: null })] });
+ok('a blank or null discount / cess / rate means absent (no unread)', blankOk.every((l) => l.unread.length === 0), JSON.stringify(blankOk.map((l) => l.unread)));
+const blankQty = S.normLines({ lines: [line({ qty: '' }), line({ price: '  ' })] });
+ok('a blank qty or price is still refused', blankQty[0].unread[0].field === 'qty' && blankQty[1].unread[0].field === 'price', JSON.stringify(blankQty.map((l) => l.unread)));
+const disc = S.normLines({ lines: [line({ discount: 'abc' })] })[0];
+ok('discount "abc" is refused (BAD_PRICE)', disc.unread[0].field === 'discount' && S.unreadSaid([disc], () => 'x')[0] === 'BAD_PRICE');
 
 console.log('' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
