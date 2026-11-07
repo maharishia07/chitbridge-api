@@ -216,16 +216,7 @@ function answerExisting(req, res, held, hash, isVerified) {
  */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
-  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and the route's late answer comes here (lib/limits answerTimedOut): the claim stays
-     in_progress meanwhile (a retry gets 409), and the late answer is recorded so the next retry replays it. A late 5xx drops the claim as ever. */
-  const locals = res.locals || (res.locals = {}); /* a bare test double has no locals */
-  locals.settleLateAnswer = (status, body) => {
-    if (captured) return;
-    captured = true;
-    store
-      .finalize(claim.entity, claim.key, status, body)
-      .catch((e) => log.warn('idempotency: recording the late answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }));
-  };
+  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and lib/limits leaves res.json alive, so this wrapper still records a late answer (even a key claimed after the deadline) */
   const origJson = res.json.bind(res);
   res.json = (body) => {
     if (captured) return origJson(body);
