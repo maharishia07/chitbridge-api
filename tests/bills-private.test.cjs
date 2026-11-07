@@ -41,7 +41,7 @@ function rowsFor(sql, p) {
   if (/UPDATE identities SET policy_flags/.test(s)) { FLAGS = Object.assign({}, FLAGS, JSON.parse(p[0])); return []; }
   if (/FROM chit_status cs JOIN chit_header ch/.test(s) && /AS doc_kind/.test(s)) return ROWS;
   if (/FROM state_log sl LEFT JOIN identities i/.test(s)) return LOG.filter((l) => (p[1] || []).indexOf(l.chit_id) >= 0);
-  if (/FROM chit_disputes WHERE chit_id = ANY/.test(s)) return DISP;
+  if (/FROM chit_disputes WHERE entity_id = [$]2 AND chit_id = ANY/.test(s)) return DISP;
   if (/FROM party_item i LEFT JOIN books_payment p/.test(s)) return PI;
   if (/FROM party_item WHERE entity_id = \$1 AND against_ref = \$2/.test(s)) return [{ open_minor: -18165, bill_minor: -48165 }];
   if (/SELECT identity_id, user_id, display_name FROM identities/.test(s)) return (p[0] || []).map((id) => PEOPLE[id]).filter(Boolean);

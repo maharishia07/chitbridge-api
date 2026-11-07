@@ -168,6 +168,38 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
   }
 });
 
+/** a timeline chit entry from a select row; `sides` (a blind reader's chit_id → buy | sell | unknown, lib/cost-view) nulls a cost-side value (RAIL-146h) */
+function chitEntry(chitRow, sides) {
+  const entry = {
+    kind: 'chit',
+    at: crm.iso(chitRow.created_at),
+    chit_id: chitRow.chit_id,
+    direction: chitRow.direction,
+    status: chitRow.current_status,
+    purpose: chitRow.purpose,
+    doc_kind: chitRow.doc_kind || null,
+    bill_no: chitRow.bill_no || null,
+    title: chitRow.manual_subject || chitRow.auto_subject || null,
+    value: crm.num(chitRow.value),
+    currency: chitRow.currency || null,
+    open_disputes: Number(chitRow.open_disputes) || 0
+  };
+  return sides ? require('../lib/cost-view').hideTimelineChit(entry, sides.get(String(chitRow.chit_id)) || 'unknown') : entry;
+}
+/** a timeline ledger entry from a party_item row; a blind reader's supplier-side amount is null (lib/dues-view R8, RAIL-146h) */
+function ledgerEntry(ledgerRow, blind, roles) {
+  const entry = {
+    kind: 'ledger',
+    at: crm.iso(ledgerRow.created_at),
+    ref: ledgerRow.ref,
+    ledger_kind: ledgerRow.ref_kind === 'bill' ? 'bill' : 'receipt',
+    source: ledgerRow.kind || null,
+    amount_minor: Number(ledgerRow.amount_minor),
+    currency: ledgerRow.currency,
+    doc_date: ledgerRow.doc_date ? String(ledgerRow.doc_date).slice(0, 10) : null
+  };
+  return blind ? require('../lib/dues-view').blindLedgerEntry(entry, roles) : entry;
+}
 /**
  * the timeline: every source asked for `limit` rows older than `before`, merged newest-first, cut to `limit`.
  * { entries: [{ kind, at, … }], next_before, migrated }. kinds: chit · message · dispute · ledger · interaction · followup · followup_done · change · stage.
@@ -193,28 +225,18 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
     const beforeIso = new Date(before).toISOString();
     const entries = [];
     let migrated = true;
+    const costView = require('../lib/cost-view'),
+      blind = await costView.blindOf(req, owner); /* RAIL-146h: ONE can_see_costs read (the owner pays none); a blind reader's cost-side money is null */
+    let sides = null;
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */
     if (found.party.kind !== 'local') {
       const select = require('../lib/select');
       const list = (await select.rows(owner, { counterparty_id: party, limit: 2000 }))
         .filter((item) => new Date(item.created_at).getTime() < before)
         .slice(0, limit);
+      sides = await costView.sidesFor(req, owner, list);
       const ids = list.map((item) => item.chit_id);
-      for (const r of list)
-        entries.push({
-          kind: 'chit',
-          at: crm.iso(r.created_at),
-          chit_id: r.chit_id,
-          direction: r.direction,
-          status: r.current_status,
-          purpose: r.purpose,
-          doc_kind: r.doc_kind || null,
-          bill_no: r.bill_no || null,
-          title: r.manual_subject || r.auto_subject || null,
-          value: crm.num(r.value),
-          currency: r.currency || null,
-          open_disputes: Number(r.open_disputes) || 0
-        });
+      for (const r of list) entries.push(chitEntry(r, sides));
       if (ids.length) {
         const extra = await withEntity(owner, async (h) => {
           const m = await h.query(
@@ -222,9 +244,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
                                     WHERE chit_id = ANY($1::uuid[]) AND thread_type = 'external' AND created_at < $2 ORDER BY chit_id, created_at DESC`,
             [ids, beforeIso]
           );
-          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[])`, [
-            ids
-          ]);
+          const d = await h.query(`SELECT dispute_id, chit_id, status, category, created_at, resolved_at FROM chit_disputes WHERE chit_id = ANY($1::uuid[]) AND entity_id = $2`, [ids, owner]);
           return { m: m.rows, d: d.rows };
         });
         for (const x of extra.m)
@@ -253,17 +273,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
           [owner, party, beforeIso, limit]
         )
       );
-      for (const x of led.rows)
-        entries.push({
-          kind: 'ledger',
-          at: crm.iso(x.created_at),
-          ref: x.ref,
-          ledger_kind: x.ref_kind === 'bill' ? 'bill' : 'receipt',
-          source: x.kind || null,
-          amount_minor: Number(x.amount_minor),
-          currency: x.currency,
-          doc_date: x.doc_date ? String(x.doc_date).slice(0, 10) : null
-        });
+      for (const x of led.rows) entries.push(ledgerEntry(x, blind, found.party.roles));
       if (isOwner(req)) {
         const ch = await soft(() =>
           h.query(

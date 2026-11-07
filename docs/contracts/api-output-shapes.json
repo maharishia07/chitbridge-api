@@ -7982,7 +7982,8 @@
         "required": [
           "can_see_costs",
           "is_owner",
-          "may_set_rate"
+          "may_set_rate",
+          "may_set_tax_id"
         ],
         "properties": {
           "can_see_costs": {
@@ -7992,6 +7993,9 @@
             "type": "boolean"
           },
           "may_set_rate": {
+            "type": "boolean"
+          },
+          "may_set_tax_id": {
             "type": "boolean"
           }
         },

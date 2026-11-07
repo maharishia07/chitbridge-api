@@ -17,6 +17,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { said, faultOf, thrownAs, vaultFault, countrySetupFault, conformanceRefusal, contract } = require('../lib/governance-contract'); // each route's operation (S9) and the words of its refusals
 const { query, withTransaction, withEntity } = require('../db');
 const auth = require('../middleware/auth');
+const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: only the owner changes the shop's tax number */
 const { writeGate } = require('../lib/access'); /* TRADE-SRV1 G8: a trade write is the owner's or an editor's — the server says why not */
 const { memo } = require('../lib/confcache'); // the active constitution is read once a minute, not once a call
 const platformroot = require('../lib/platformroot'); /* W1-SET: the ONE platform-role door (create · re-attest · register a source) */
@@ -468,7 +469,7 @@ async function writeVaultBody(entity_id, body) {
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
  *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
-router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), async (req, res) => {
+router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), taxIdDoor.gate((req) => require('../lib/profile').vaultChangesTaxId(auth.entityOf(req), req.body || {})) /* CTR-182: the Business identity tax number is the owner's */,  async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};

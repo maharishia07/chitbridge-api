@@ -12,9 +12,6 @@
 const express = require('express');
 const cbLog = require('../lib/logger');
 const { waiting } = require('../lib/not-migrated');
-const {
-  round: roundMoney
-} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
@@ -1798,8 +1795,8 @@ function sendBillCopyFor(sendState, receiver) {
   const { counterBill, is_draft, sender_id, sender_display_name } = sendState;
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const copyBusiness = Object.assign({}, sendBjFor(sendState, receiver.entity_id), { counter_bill: true });
-  const parts = copyBusiness.payment && Array.isArray(copyBusiness.payment.parts) ? copyBusiness.payment.parts : [];
-  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
+  /* ACC-252: what the bill comes to is the bill's own engine figure, picked by the ONE reader (counter-bill.pickOf: the carried invoice's TotInvVal, else summary_json.money.total), never what was paid (the parts) */
+  const total = ownBill.pickOf({ summary_json: sendState.summary_json, business_json: copyBusiness }).total;
   return {
     purpose: 'invoice',
     business_json: copyBusiness,
@@ -2914,7 +2911,7 @@ function chitFilters(req, where, params) {
   }
   where += abroadFilter(req, params) + priorityFilter(req, params) + statusBucketFilter(req, params) + assignmentFilter(req, params);
   if (req.query.dispute === 'open' || req.query.dispute === 'active') {
-    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`; /* D4: chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies) */
+    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open')`; /* SEC-127: my copies named in the SQL, not RLS alone. D4: chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies) */
   }
   return where;
 }
@@ -3080,9 +3077,9 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
@@ -3248,7 +3245,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open')`,
+          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.entity_id = cs.entity_id AND cd.status = 'open')`,
           params
         )
         .catch(() => ({ rows: [{ n: 0 }] }));
@@ -3415,9 +3412,9 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
           WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
@@ -5347,7 +5344,7 @@ router.post(
       let disputeRoster = null;
       if (isDispute && disputeId) {
         const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
+          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3 LIMIT 1`, [disputeId, chit_id, entity_id])
         );
         if (party.rows.length === 0) {
           return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
@@ -5729,7 +5726,7 @@ router.post(
       const dup = await withEntity(entity_id, (db) =>
         db.query(
           `SELECT dispute_id FROM chit_disputes
-          WHERE chit_id=$1 AND raised_by_entity_id=$2 AND status='open' AND category=$3
+          WHERE chit_id=$1 AND entity_id=$2 AND raised_by_entity_id=$2 AND status='open' AND category=$3
             AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
           [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]
         )
@@ -5752,7 +5749,7 @@ router.post(
         db.query(
           `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
            FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
-          WHERE ch.chit_id=$1`,
+          WHERE ch.chit_id=$1 AND ch.entity_id=$2`,
           [chit_id, entity_id]
         )
       );
@@ -5868,7 +5865,7 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const access = await db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (access.rows.length === 0) return null;
       // B3.10 + D4 — scoped: per-copy (b68): RLS returns MY OWN dispute copies for this chit
-      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]);
+      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 AND entity_id = $2 ORDER BY created_at ASC`, [chit_id, entity_id]);
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
@@ -5942,9 +5939,9 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
               target_display_name, scope, mode, answerable, parity_state, via,
               (evidence_snapshot IS NOT NULL) AS has_evidence
          FROM chit_disputes
-        WHERE chit_id=$1
+        WHERE chit_id=$1 AND entity_id=$2
         ORDER BY created_at ASC`,
-        [chit_id]
+        [chit_id, entity_id]
       )
     );
 
@@ -6006,7 +6003,7 @@ router.put(
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
       const dispute = await withEntity(entity_id, (db) =>
-        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id])
+        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3`, [dispute_id, chit_id, entity_id])
       );
       if (dispute.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Dispute not found' }, 'NOT_FOUND') });
 
@@ -6162,7 +6159,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
     [chit_id, entity_id]
   );
   if (copy.rows.length === 0) return null;
-  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
+  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) };
 }
 router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
@@ -6323,7 +6320,7 @@ router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), asy
       chit_id = req.params.chit_id;
     // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
     await withEntity(entity_id, async (db) => {
-      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       const r = await db.query(
         `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
@@ -6434,7 +6431,7 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (chk.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Draft not found' }, 'NOT_FOUND') });
       /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
-      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id)
         return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'You can only delete drafts you created.' }, 'CHIT_NOT_PERMITTED') });
