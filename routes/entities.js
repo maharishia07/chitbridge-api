@@ -902,8 +902,8 @@ async function sendsOtherTaxId(req) {
 router.patch(
   '/profile',
   auth,
-  taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the shop's tax number is the owner's — a person who sends a DIFFERENT one is refused 403, nothing written */,
   require('../lib/access').writeGate /* SEC-71: the shop's own details are the owner's or an editor's to change */,
+  taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the shop's tax number is the owner's — a person who sends a DIFFERENT one is refused 403, nothing written */,
   /**
    * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
    * to have explanation so people understand and update accordingly."*
