@@ -51,7 +51,7 @@ const SECRET_SQL = 'relation "chit_copy" does not exist -- INSERT INTO vault';
 const PEER = { installation_key: 'mx-1', domain: 'mx.example.com', hosted_locally: false, active: true };
 const LIVE_TO = { identity_id: 'e-to', population: 'live' };
 const SHOP = { identity_id: 'e-to', bridge_id: 'CBRECV0001', display_name: 'Recv', user_id: 'recv' };
-const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, storeFails: false, keysFail: false, catalogueFails: false };
+const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, event: null, storeFails: false, keysFail: false, catalogueFails: false };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: the peer, the recipient, the crossing rule, the live world */
@@ -97,6 +97,8 @@ function installStubs() {
     open: () =>
       world.openWhy
         ? { ok: false, why: world.openWhy }
+        : world.event
+        ? { ok: true, kind: 'event', chit_id: 'chit-1', event: { type: 'status' } }
         : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: '22222222-2222-4222-8222-222222222222', sender_entity_bridge_id: 'CBSEND0001' }), header: {} }
   });
   /* RAIL-96/97: the route reads which questions are the network's (NETWORK_WANTS) from the real module; the stand-in keeps those lists and replaces only the opener */
@@ -108,6 +110,8 @@ function installStubs() {
       return { ok: true };
     }
   });
+  /* RAIL-106: the return path (an event, not a copy): applied, or ignored as older, with the words a peer may read */
+  mock('lib/ctpreturn', { apply: async () => world.event, onChitArrived: () => {} });
   mock('lib/govresolve', { resolveInstallationGovernance: async () => null });
   mock('routes/catalogue', {
     resolveEntity: async () => {
@@ -143,6 +147,8 @@ const SCENARIOS = [
   { id: 'deliver-no-sender', door: 'deliver', status: 400, body: env(), setup: { noSender: true } },
   { id: 'deliver-store-fails', door: 'deliver', status: 500, body: env(), setup: { storeFails: true } },
   { id: 'deliver-accepted', door: 'deliver', status: 200, body: env() },
+  { id: 'deliver-event-applied', door: 'deliver', status: 200, body: env(), setup: { event: { ok: true, applied: true, why: null } } },
+  { id: 'deliver-event-ignored', door: 'deliver', status: 200, body: env(), setup: { event: { ok: true, applied: false, why: 'an older event: already applied' } } },
   { id: 'query-not-query', door: 'query', status: 400, body: { ctp: '1', kind: 'deliver' } },
   { id: 'query-no-installation', door: 'query', status: 400, body: { ctp: '1', kind: 'query', from: {} } },
   { id: 'query-stranger', door: 'query', status: 403, body: ASK({ want: 'resolve', handle: 'recv' }), setup: { peer: null } },
@@ -202,7 +208,8 @@ function checkLegacy(label, answer, frozen) {
 /** a success: the old body, and what a peer reads from it */
 function checkSuccess(label, scenario, answer) {
   check(label + ': answers JSON, as before', /application\/json/.test(answer.type), answer.type);
-  if (scenario.door === 'deliver') check(label + ': accepted, so lib/ctptransport counts it delivered', answer.json && answer.json.accepted === true && answer.json.chit_id === 'chit-1');
+  if (scenario.id.startsWith('deliver-event')) check(label + ': accepted, and says whether it applied (a peer reads applied)', answer.json && answer.json.accepted === true && answer.json.applied === scenario.setup.event.applied && answer.json.chit_id === 'chit-1');
+  else if (scenario.door === 'deliver') check(label + ': accepted, so lib/ctptransport counts it delivered', answer.json && answer.json.accepted === true && answer.json.chit_id === 'chit-1');
   if (scenario.door === 'query') check(label + ': ok and found', answer.json && answer.json.ok === true && answer.json.found === true);
   if (scenario.door === 'manifest') check(label + ': says CTP/1 and the key', answer.json && answer.json.ctp === '1' && answer.json.public_key === 'PK-here');
 }
