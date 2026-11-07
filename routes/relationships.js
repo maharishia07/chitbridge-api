@@ -745,13 +745,14 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
     /* the groups column may not be migrated yet: ask with it, and once more without on 42703 */
     let _g = true,
       _seg = customerGroups.SEGMENT_SQL;
+    const _email = require('../lib/party-contact').emailSql('i', '$1', await require('../lib/party-contact').ready());
     const _run = () =>
       withEntity(owner, (db) =>
         db.query(
           `SELECT cl.customer_list_id, cl.customer_type, cl.added_via,
               cl.txn_count, cl.last_txn_at, ${_g ? 'cl.groups,' : ''}
               i.identity_id AS customer_identity_id, i.bridge_id, i.user_id, i.display_name,
-              i.email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
+              ${_email} AS email, i.phone, i.otp_contact, i.created_at AS customer_since, i.identity_type, i.owner_scope,
               ${_seg} AS segment,
               /* ⭐ can bills reach them (lib/istest mayTradeSql, b249's rule) — the CRM table's "one-sided" mark */
               ${require('../lib/istest').mayTradeSql('i', '$1')} AS on_rail

@@ -1,6 +1,6 @@
 /**
  * R14 (24 Oct walk): a party's phone and e-mail sent to PATCH /api/relationships/customers|suppliers/:id are KEPT (identities.otp_contact / identities.email
- * of the party this shop minted) or REFUSED in words - never a 200 "Customer updated" with changed: []. An unknown key on the customer PATCH is refused naming it.
+ * of the party this shop minted; the e-mail in party_contact since SEC-130, b839) or REFUSED in words - never a 200 "Customer updated" with changed: []. An unknown key on the customer PATCH is refused naming it.
  * No database: db and auth are stubbed with a one-row identities store; the route and lib/party-fields are the real ones.
  * Run: node tests/party-contact-patch.test.cjs
  */
@@ -14,16 +14,19 @@ const SHOP = '11111111-1111-4111-8111-111111111111',
   PRIYA = '22222222-2222-4222-8222-222222222222',
   OTHER = '33333333-3333-4333-8333-333333333333';
 const ids = { [PRIYA]: { otp_contact: null, email: null, parent_entity_id: SHOP }, [OTHER]: { otp_contact: '+919000000009', email: 'x@y.com', parent_entity_id: null } };
-const TAKEN = 'taken@local.test';
+const TAKEN = 'taken@local.test'; /* an address another account signs in with: it saves like any other (SEC-130 residual) */
+const pcon = {}; /* party_contact for this shop: party id → e-mail */
 const tx = {
   query: async (sql, args) => {
     const s = String(sql);
     if (/FROM customer_list WHERE customer_list_id/.test(s)) return { rows: [{ customer_identity_id: args[0] === 'cccccccc-cccc-4ccc-8ccc-0000000000ff' ? OTHER : PRIYA }] };
     if (/FROM supplier_list WHERE supplier_list_id/.test(s)) return { rows: [{ supplier_entity_id: PRIYA }] };
-    if (/SELECT otp_contact, email, parent_entity_id FROM identities/.test(s)) return { rows: [ids[args[0]] ? Object.assign({}, ids[args[0]]) : undefined].filter(Boolean) };
+    if (/SELECT i\.otp_contact, .* AS email, i\.parent_entity_id FROM identities i/.test(s)) return { rows: [ids[args[0]] ? Object.assign({}, ids[args[0]], { email: pcon[args[0]] || ids[args[0]].email }) : undefined].filter(Boolean) };
+    if (/FROM identities i\s+WHERE i\.parent_entity_id/.test(s)) return { rows: [] };
+    if (/^\s*INSERT INTO party_contact/.test(s)) { pcon[args[1]] = args[2]; return { rows: [] }; }
+    if (/^\s*DELETE FROM party_contact/.test(s)) { delete pcon[args[1]]; return { rows: [] }; }
     const set = /UPDATE identities SET (otp_contact|email) = \$2/.exec(s);
     if (set) {
-      if (set[1] === 'email' && args[1] === TAKEN) throw Object.assign(new Error('duplicate key identities_email_key'), { code: '23505' });
       ids[args[0]][set[1]] = args[1];
     }
     return { rows: [] };
@@ -41,6 +44,8 @@ require.cache[authPath] = {
   exports: Object.assign((req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity' }; next(); },
     { entityOf: (req) => req.identity.identity_id, requireScope: () => (q, s, n) => n(), userOf: (req) => req.identity })
 };
+const schemaPath = require.resolve(path.join(API, 'lib', 'schema'));
+require.cache[schemaPath] = { id: schemaPath, filename: schemaPath, loaded: true, exports: { hasTable: async () => true, hasColumn: async () => true, hasColumns: async () => true, has: async () => true } };
 const pf = require(path.join(API, 'lib', 'party-fields'));
 pf.ensureNo = async () => 'P-0042';
 
@@ -63,13 +68,13 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   const a = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { phone: '9000000001', email: 'Priya@Local.test' });
   ok('phone and e-mail: 200 and both named as changed', a.status === 200 && a.body.party && a.body.party.changed.join() === 'phone,email', JSON.stringify(a));
   ok('phone kept in identities.otp_contact (the reader lib/crm.js uses)', ids[PRIYA].otp_contact === '9000000001' || /9000000001$/.test(ids[PRIYA].otp_contact || ''), String(ids[PRIYA].otp_contact));
-  ok('e-mail kept lower-case in identities.email', ids[PRIYA].email === 'priya@local.test', String(ids[PRIYA].email));
+  ok('e-mail kept lower-case in party_contact, none on identities', pcon[PRIYA] === 'priya@local.test' && ids[PRIYA].email === null, String(pcon[PRIYA]));
 
   const same = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: 'priya@local.test' });
   ok('the same value again: 200, nothing to change, not an error', same.status === 200 && same.body.party.changed.length === 0, JSON.stringify(same));
 
   const clear = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: null });
-  ok('null clears the e-mail', clear.status === 200 && ids[PRIYA].email === null && clear.body.party.changed.join() === 'email', JSON.stringify(clear));
+  ok('null clears the e-mail', clear.status === 200 && pcon[PRIYA] === undefined && clear.body.party.changed.join() === 'email', JSON.stringify(clear));
 
   const unk = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { phone_number: '9000000002', mobile: 'x' });
   ok('unknown keys: 400 UNKNOWN_FIELD naming both, nothing 200', unk.status === 400 && unk.body.code === 'UNKNOWN_FIELD' && unk.body.fields.join() === 'phone_number,mobile' && /phone_number/.test(unk.body.message), JSON.stringify(unk));
@@ -83,7 +88,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   /* CRM-42: the shape check once lost its escapes and refused any address with an "s" */
   for (const good of ['sam@shop.com', 'sam+orders@shop.com', 'sales@mail.shop.co.in', 's.s@ss.ss', 'first.last@sub.domain.example']) {
     const r = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: good });
-    ok('a real address is kept: ' + good, r.status === 200 && ids[PRIYA].email === good, JSON.stringify(r));
+    ok('a real address is kept: ' + good, r.status === 200 && pcon[PRIYA] === good, JSON.stringify(r));
   }
   for (const wrong of ['a b@x.yz', 'sam@shop', 'sam@@shop.com', 'sam@shop..com', 'sam@.shop.com', 'sam@shop.com.', '@shop.com', 'sam@shop com.in']) {
     const r = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: wrong });
@@ -94,7 +99,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('a real ChitBridge business: 403 in words, contact untouched', real.status === 403 && ids[OTHER].otp_contact === '+919000000009', JSON.stringify(real));
 
   const taken = await patch('/customers/cccccccc-cccc-4ccc-8ccc-000000000001', { email: TAKEN });
-  ok('an e-mail another account holds: 409, words never name the holder', taken.status === 409 && !/taken@|identities/.test(JSON.stringify(taken.body)), JSON.stringify(taken));
+  ok('an e-mail another account signs in with: saved like any other, nothing said about who else has it', taken.status === 200 && pcon[PRIYA] === TAKEN && !/another account|identities/.test(JSON.stringify(taken.body)), JSON.stringify(taken));
 
   const sup = await patch('/suppliers/5555cccc-cccc-4ccc-8ccc-000000000001', { phone: '9000000004' });
   ok('a supplier keeps a phone the same way', sup.status === 200 && /9000000004$/.test(ids[PRIYA].otp_contact || ''), JSON.stringify(sup));
