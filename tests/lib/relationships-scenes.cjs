@@ -176,7 +176,7 @@ function extras(tools) {
 
   /* ── GET /customers/groups · GET /customers ── */
   const groups = [
-    X('groups-named', 'GET ' + at('/customers/groups'), 200, { patch: { customerGroups: { namesOf: async () => [{ name: 'dealers', count: 2 }] } } }),
+    X('groups-named', 'GET ' + at('/customers/groups'), 200, { patch: { customerGroups: { namesOf: async () => ({ names: ['dealers'], migrated: true }) } } }),
     X('groups-none', 'GET ' + at('/customers/groups'), 200, {}),
     X('groups-fail', 'GET ' + at('/customers/groups'), 500, { patch: { customerGroups: { namesOf: async () => boom() } } })
   ];
