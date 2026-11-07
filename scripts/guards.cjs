@@ -746,7 +746,8 @@ const GUARDS = [
   'till-shop-move.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'till-t2f.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'trend-reads-books.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
-  'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline,
+  'vertical-readers-characterisation.test.cjs' // P1-14: the 21 trade-reader answers pinned; the 7 that change under the one resolver are listed
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */

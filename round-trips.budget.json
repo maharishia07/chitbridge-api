@@ -1556,8 +1556,8 @@
     },
     "GET /api/kyb/yourself": {
       "file": "kyb.js",
-      "trips": 16,
-      "wire": 34,
+      "trips": 17,
+      "wire": 35,
       "fired": true,
       "status": 200,
       "basis": "live from sit-in 2026-11-06",
