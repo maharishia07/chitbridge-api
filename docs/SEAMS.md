@@ -33,7 +33,7 @@ of file each thing is; this says what already does the job.
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 61 | `failed` | `service.js` | what every catch answers: |
-| 59 | `entry` | `books-store.js` |  |
+| 60 | `entry` | `books-store.js` |  |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 57 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -129,6 +129,7 @@ of file each thing is; this says what already does the job.
 | 20 | `note` | `device-id.js` | note(where, problem) — |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `says` | `adopt.js` |  |
+| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `governance` | `home-facts.js` |  |
@@ -140,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 18 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |

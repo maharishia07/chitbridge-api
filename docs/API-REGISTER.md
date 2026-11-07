@@ -578,8 +578,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:127 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:114 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/compute | tax | routes/tax.js:176 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/rate | tax | routes/tax.js:139 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/compute | tax | routes/tax.js:178 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/rate | tax | routes/tax.js:141 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/testing/cases/close | testing | routes/testing.js:286 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/testing/cases/gherkin | testing | routes/testing.js:1752 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/testing/cases/import | testing | routes/testing.js:865 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |

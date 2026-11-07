@@ -1,0 +1,68 @@
+/**
+ * acc-221-unreadable-number.test.cjs — ACC-221 (+ ACC-222): A FIGURE THAT IS NOT A NUMBER IS NAMED, NEVER PRICED AT 0 AND SAID OK.
+ *
+ *   The engine (adopted lib/tax.js, num()) reads "abc", NaN, Infinity and null as 0 with bridge.ok true — fixed in chitbridge-engines (follow-up);
+ *   the api never hands it one. services.normLines marks every figure the caller sent that is not a number (`unread`, with the field and the
+ *   text), routes/tax.js badLine and routes/invoice.js refuse it by name BEFORE any tax runs, and services.computeTax (the one call to the
+ *   engine) throws line_unreadable for any line it would hand the engine with a non-finite figure. A valid line is byte-identical.
+ *   No database, no server. Run: node tests/acc-221-unreadable-number.test.cjs
+ */
+'use strict';
+const fs = require('fs');
+const path = require('path');
+process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgres://x:x@127.0.0.1:1/x';
+const S = require('../lib/services');
+
+let pass = 0, fail = 0;
+const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
+const seller = { State: '27', Country: 'IN', Gstin: '27AAAAA0000A1Z5' }, buyer = { State: '27', Country: 'IN', Gstin: '27BBBBB0000B1Z5' };
+const line = (over) => Object.assign({ name: 'Tea', qty: 2, price: 100, gst_rate: 18 }, over);
+const BAD = ['abc', NaN, Infinity, '', ' ', true, {}];
+
+console.log('\n══ ACC-221 · a figure that is not a number is named, never 0 and ok ══\n');
+
+/* 1 · normLines names it (every figure, every spelling) */
+for (const field of [['qty', 'qty'], ['quantity', 'qty'], ['price', 'price'], ['unitPrice', 'price'], ['listPrice', 'price'], ['discount', 'discount'], ['gst_rate', 'gst_rate'], ['cess_rate', 'cess_rate']]) {
+  for (const v of BAD) {
+    const l = S.normLines({ lines: [line({ qty: undefined, price: undefined, gst_rate: undefined, [field[0]]: v })] })[0];
+    const got = l.unread.map((u) => u.field);
+    ok('normLines names ' + field[0] + ' = ' + String(typeof v === 'object' ? '{}' : v), got.includes(field[1]), JSON.stringify(l.unread));
+  }
+}
+ok('a valid line has nothing unread', S.normLines({ lines: [line(), line({ qty: '3', price: '99.5', discount: 0, cess_rate: null })] }).every((l) => l.unread.length === 0));
+ok('null and absent mean not sent (the shelf may answer)', S.normLines({ lines: [{ name: 'x', qty: 1, price: null }] })[0].unread.length === 0);
+
+/* 2 · the refusal sentence names the line and the text */
+const said = S.unreadSaid(S.normLines({ lines: [line(), line({ name: 'Rice', price: 'abc' })] }), (l) => '"' + l.name + '"');
+ok('unreadSaid -> BAD_PRICE naming the line, the field and the text', !!said && said[0] === 'BAD_PRICE' && /"Rice"/.test(said[1]) && /price/.test(said[1]) && /"abc"/.test(said[1]), JSON.stringify(said));
+ok('no unread -> null', S.unreadSaid(S.normLines({ lines: [line()] }), (l) => l.name) === null);
+
+/* 3 · the one call to the engine refuses what it would price at 0 */
+const call = (l) => { try { return S.computeTax({ seller, buyer, lines: [l] }); } catch (e) { return e; } };
+const mapped = (over) => Object.assign({ key: '0', name: 'Tea', qty: 2, unit_price: 100, gst_rate: 18, discount: 0, cess_rate: 0, unread: [] }, over);
+for (const f of ['qty', 'unit_price', 'gst_rate']) for (const v of ['abc', NaN, Infinity, null]) {
+  if (f === 'gst_rate' && v === null) continue; /* a null rate is "not given" -> 0 by the caller's own default, as before */
+  const e = call(mapped({ [f]: v, listPrice: undefined }));
+  ok('computeTax refuses ' + f + ' = ' + v, e instanceof Error && e.code === 'line_unreadable' && e.unread[0].fields.length > 0, String(e && e.message));
+}
+const e1 = call(mapped({ unit_price: 0, unread: [{ field: 'price', value: 'abc' }] }));
+ok('computeTax refuses a line marked unread even though its mapped figure is a number', e1 instanceof Error && e1.unread[0].fields[0] === 'price');
+const good = call(mapped({}));
+ok('a valid line still prices: 2 x 100 + 18% = 236', good.ValDtls.TotInvVal === 236 && good._cb.bridge.ok === true, JSON.stringify(good.ValDtls));
+
+/* 4 · the engine itself (adopted lib/tax.js num()) still reads "abc" as 0 and says ok: that is the engines follow-up, NOT asserted here, so the
+   next adopt of a fixed engine does not turn this file red; the api guard above stands in front of it either way */
+
+/* 5 · the routes use the guard (a source read, so a deleted call goes red) */
+const rt = fs.readFileSync(path.join(__dirname, '..', 'routes', 'tax.js'), 'utf8'), ri = fs.readFileSync(path.join(__dirname, '..', 'routes', 'invoice.js'), 'utf8');
+ok('routes/tax.js badLine asks unreadSaid, and returns it, before any other check', /function badLine\(lines\) \{\s*const unread = S\.unreadSaid\(lines, nameOf\)[^\n]*\n\s*if \(unread\) return unread;/.test(rt));
+/* the invoice route has no check of its own: normLines marks the line, computeTax throws, and readFault answers the throw as a named 400 (a handler that already runs at its size limit gets no new branch) */
+const TC = require('../lib/tax-contract');
+const thrown = call(mapped({ unit_price: null, listPrice: null }));
+const spec = TC.readFault(thrown, {});
+ok('a line with no price at all -> computeTax throws, readFault answers a named 400 BAD_PRICE', spec.status === 400 && spec.code === 'BAD_PRICE' && /Tea/.test(spec.detail) && /price/.test(spec.detail), JSON.stringify(spec));
+ok('readFault on an ordinary error is still the 500 that says nothing of its cause', TC.readFault(new Error('x'), {}).status === 500);
+ok('routes/invoice.js reaches computeTax with the normLines lines (the throw is its guard)', ri.includes('S.normLines(req.body)') && ri.includes('S.computeTax(') && ri.includes('readFault(e, req)'));
+
+console.log('' + pass + ' passed, ' + fail + ' failed');
+process.exit(fail ? 1 : 0);

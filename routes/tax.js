@@ -127,6 +127,8 @@ function refuse(req, res, status, code, message, extra) {
 const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
 /** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
 function badLine(lines) {
+  const unread = S.unreadSaid(lines, nameOf); /* ACC-221: a figure that is not a number is named first — never read as 0 */
+  if (unread) return unread;
   for (const l of lines) {
     if (!(l.qty > 0)) return ['BAD_QTY', 'Line ' + nameOf(l) + ' needs a quantity above 0.'];
     if (l.listPrice != null && l.listPrice < 0) return ['BAD_PRICE', 'Line ' + nameOf(l) + ' has a price below 0.'];
