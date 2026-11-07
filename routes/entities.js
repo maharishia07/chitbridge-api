@@ -20,6 +20,7 @@ const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an 
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const { VERIFY_REFUSALS } = require('../lib/signin-contract');
+const taxIdDoor = require('../lib/tax-id-door'); // CTR-182: only the owner changes the shop's tax number
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -85,6 +86,38 @@ function userIdVerdict(wanted, display_name) {
 }
 
 /**
+ * ⭐ SEC-130 (A) · mailAlreadyOnFile(email): the held address gets ONE mail through the same mailer, awaited like a new address's code, so the two paths do the same
+ * work and take the same time (a faster refusal would be the timing signal). It carries no code and no shop name: it says the address is already on file, how to sign
+ * in, and where to get help. Both paths sit behind the same app-level per-IP authLimiter (signin.askChecks is field validation, not a limit; no per-address cap yet, SEC-148). Best effort: sendEmail never throws.
+ */
+function mailAlreadyOnFile(email) {
+  const html =
+    '<div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;"><h2 style="color: #0D47A1;">Chit and Bridge</h2>' +
+    '<p>Someone asked to register with this e-mail address, which is already on file with us.</p>' +
+    '<p>If that was you, go to the sign-in page and sign in with this address; we send a code there. No new account was made.</p>' +
+    '<p>If you need help, use Help in the app or reply to this e-mail. If this was not you, ignore it.</p></div>';
+  return require('../lib/notify').sendEmail(email, 'Chit and Bridge: this e-mail is already on file', html);
+}
+
+/**
+ * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
+ * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
+ * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
+ */
+async function emailHeldByNoAccount(sql, args) {
+  try {
+    await query(sql, args);
+    return false;
+  } catch (e) {
+    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) {
+      await mailAlreadyOnFile(args[3]);
+      return true;
+    }
+    throw e;
+  }
+}
+
+/**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
  * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19: *"through the registration page, only the
@@ -129,14 +162,14 @@ async function registerNew(req, res) {
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && (await schema.hasColumn('identities', 'timezone'))) more.push(['timezone', guess.timezone]);
-    await query(
+    const sql =
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country` +
-        more.map(([c]) => ', ' + c).join('') +
-        `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
-        more.map((_, index) => ', $' + (index + 8)).join('') +
-        ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
-    );
+      more.map(([c]) => ', ' + c).join('') +
+      `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
+      more.map((_, index) => ', $' + (index + 8)).join('') +
+      ')';
+    const args = [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, guess?.country || null].concat(more.map(([, v]) => v));
+    if (await emailHeldByNoAccount(sql, args)) return res.json({ message: 'Verification code sent to your email', email });
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try {
@@ -343,7 +376,7 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
-router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+router.post('/register', signin.door('register'), ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
@@ -849,7 +882,7 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const cost = require('../lib/cost');
-    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req) });
+    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req), may_set_tax_id: taxIdDoor.mayChangeTaxId(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Read failed'));
   }
@@ -891,10 +924,21 @@ async function visibilityCapFor(entityId) {
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
+/** CTR-182: the tax_id field to write: none when the number is only the stored one echoed back, so the column is skipped and a different case can never rewrite it */
+const taxIdToWrite = (stored, sent) => (taxIdDoor.taxIdDiffers(stored && stored.gstn, sent) ? { tax_id: sent } : {});
+
+/** CTR-182: does this PATCH send a tax number that differs from the shop's stored one? (one read, only on the path of a person who is not the owner) */
+async function sendsOtherTaxId(req) {
+  if (!req.body || !req.body.gstn) return false;
+  const stored = await query('SELECT gstn FROM identities WHERE identity_id = $1', [auth.entityOf(req)]);
+  return taxIdDoor.taxIdDiffers(stored.rows[0] && stored.rows[0].gstn, req.body.gstn);
+}
+
 router.patch(
   '/profile',
   auth,
   require('../lib/access').writeGate /* SEC-71: the shop's own details are the owner's or an editor's to change */,
+  taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the shop's tax number is the owner's — a person who sends a DIFFERENT one is refused 403, nothing written */,
   /**
    * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
    * to have explanation so people understand and update accordingly."*
@@ -917,7 +961,7 @@ router.patch(
      */
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('A business name is 2 characters or more.'),
     /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
-    body('gstn').optional().trim(),
+    body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open', 'closed', 'away']),
@@ -1056,10 +1100,10 @@ router.patch(
       const P = require('../lib/profile');
       const idFields = {};
       if (req.body.gstn) {
-        const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
+        const c = await query('SELECT country, gstn FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
         if (bad) return problem(req, res, { status: 400, ...contract.words.taxNumberRefused(bad) });
-        idFields.tax_id = req.body.gstn;
+        Object.assign(idFields, taxIdToWrite(c.rows[0], req.body.gstn));
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);

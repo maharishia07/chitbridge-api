@@ -479,6 +479,9 @@
   "PUT /api/quick-keys/screen-config/default": {
    "strict_input": true
   },
+  "GET /api/network-offers": {
+   "output_allowlist": true
+  },
   "PUT /api/network-offers/policy": {
    "strict_input": true
   },

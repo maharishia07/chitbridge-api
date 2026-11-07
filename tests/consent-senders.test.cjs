@@ -24,6 +24,7 @@ const EXEMPT = {
   'routes/simulator.js': 'the /tour page mails OUR OWN leads inbox (LEADS_EMAIL), never a shop’s party',
   /* wrapper callers — each sends to the PERSON WHO ASKED (a code), or to the shop's own address */
   'routes/signin.js': 'sign-in codes to the e-mail or phone the person just typed; the magic-link mail to the same',
+  'routes/entities.js': 'SEC-130 (A): the one "already on file" notice to the address a person just typed at sign-up (no code, no marketing); it exists so a held and a free address do the same work',
   'routes/identity-docs.js': 'a code to the person whose own document is being verified',
   'routes/catalogue.js': 'the order code to the shopper placing the order right now (their own phone or e-mail; the code IS the sign-in)',
   'routes/connectors.js': 'sendOtpEmail: the connector claim code to the shop owner\u2019s own e-mail; sendEmail: the connector notice to the address the SHOP configured',

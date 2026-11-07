@@ -107,7 +107,7 @@ async function firstDay(name, { ask, verify, pin, setPin, asksForPin = true }) {
   t('set-pin with that token: 200', s.status === 200, s.status + ' ' + JSON.stringify(s.body));
   t('   …and the row holds the PIN', !!DB.bala.pin_hash && bcrypt.compareSync('4321', DB.bala.pin_hash));
   const again = await ask();
-  t('next time, ask wants the PIN (use_pin is exactly ' + asksForPin + '; the actor door check-login says has_pin false to everyone since SEC-139), issues no code', again.status === 200 && again.body.use_pin === asksForPin && DB.bala.otp_code === null, JSON.stringify(again.body));
+  t('next time, ask gives a PIN holder the one answer (no use_pin) and issues no code; the actor door check-login says has_pin false to everyone (SEC-139)', again.status === 200 && (asksForPin ? again.body.need === 'pin_or_code' && !('use_pin' in again.body) : again.body.use_pin === false) && DB.bala.otp_code === null, JSON.stringify(again.body));
   const p = await pin('4321');
   t('the PIN signs in (200) and does not ask to set one again', p.status === 200 && isBala(p.body.token) && !p.body.requires_pin_setup, p.status + ' ' + JSON.stringify(p.body).slice(0, 160));
   if (!asksForPin) {

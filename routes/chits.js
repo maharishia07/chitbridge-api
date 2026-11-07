@@ -12,9 +12,6 @@
 const express = require('express');
 const cbLog = require('../lib/logger');
 const { waiting } = require('../lib/not-migrated');
-const {
-  round: roundMoney
-} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
@@ -81,6 +78,7 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const services = require('../lib/services'); // ACC-271: rateOrNull, the one reading of a blank rate
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
@@ -799,6 +797,8 @@ async function sendReplay(sendState, req, res) {
   if (!client_ref) return;
   try {
     const seen = await sameRefLook(sender_id, client_ref);
+    /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
+    if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
     if (seen) return answerReplay(req, res, seen, client_ref);
   } catch (e) {
     cbLog.fellBack(
@@ -1356,6 +1356,23 @@ async function sellerMoney(sellerId) {
  * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
  */
 /**
+ * ⭐ ACC-271: a BLANK tax rate is no rate (null, services.rateOrNull), so the shelf may answer — decorate asks it only of undefined / null, and a blank would reach invoiceFor as 0%.
+ * → { lines, at } : the lines with each blank rate / cess made null, and the indexes that sent a blank gst_rate or rate. A blank-rated line the shelf does not rate stays refused (BAD_RATE, in sendMoney).
+ */
+function blankRatesToNone(lines) {
+  const at = [];
+  const keys = ['gst_rate', 'rate', 'cess_rate'];
+  const out = lines.map((item, index) => {
+    const blank = (key) => !!item && typeof item === 'object' && typeof item[key] === 'string' && item[key].trim() === '';
+    if (!keys.some(blank)) return item;
+    if (blank('gst_rate') || blank('rate')) at.push(index);
+    const next = { ...item };
+    for (const key of keys) if (blank(key)) next[key] = services.rateOrNull(item[key]);
+    return next;
+  });
+  return { lines: out, at };
+}
+/**
  * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
  * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
  * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
@@ -1379,6 +1396,8 @@ async function sendSeller(sendState, req, res) {
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
   if (sellerId !== sender_id) sendState.currency_code = (await sellerMoney(sellerId)) || sendState.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
+  const blankRated = blankRatesToNone(line_items);
+  line_items = blankRated.lines;
   try {
     const shelf = await taxShelf.readShelf(
       sellerId,
@@ -1395,7 +1414,8 @@ async function sendSeller(sendState, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
-  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId });
+  const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
+  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId, unratedBlank });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
@@ -1482,12 +1502,12 @@ async function sendMoney(sendState, req, res) {
   sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
   const scope = sendMoneyScope.scopeOf(sendState);
   sendState.moneyScope = scope;
+  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items, sendState.unratedBlank); /* ahead of the scope split (ACC-271): whatever the chit is, a text figure is refused, not saved */
+  if (unreadable) {
+    return problem(req, res, { status: 400, ...said({ code: unreadable.code, error: 'A line could not be read', message: unreadable.message, line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') }); /* ACC-271: the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE) */
+  }
   if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
   if (scope.kind !== 'engine') return;
-  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items);
-  if (unreadable) {
-    return problem(req, res, { status: 422, ...said({ code: 'MONEY_INPUT_UNREADABLE', error: 'A line could not be read', message: 'Line ' + (unreadable.line + 1) + ' has a ' + unreadable.field + ' that is not a number, so the money could not be worked out. Fix that line and send again.', line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') });
-  }
   let invoice;
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
@@ -1796,8 +1816,8 @@ function sendBillCopyFor(sendState, receiver) {
   const { counterBill, is_draft, sender_id, sender_display_name } = sendState;
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const copyBusiness = Object.assign({}, sendBjFor(sendState, receiver.entity_id), { counter_bill: true });
-  const parts = copyBusiness.payment && Array.isArray(copyBusiness.payment.parts) ? copyBusiness.payment.parts : [];
-  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
+  /* ACC-252: what the bill comes to is the bill's own engine figure, picked by the ONE reader (counter-bill.pickOf: the carried invoice's TotInvVal, else summary_json.money.total), never what was paid (the parts) */
+  const total = ownBill.pickOf({ summary_json: sendState.summary_json, business_json: copyBusiness }).total;
   return {
     purpose: 'invoice',
     business_json: copyBusiness,
@@ -2752,9 +2772,8 @@ async function sendMeter(sendState, req, res) {
  *
  * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
  * is the hottest path in the product and a sale that has already happened must not fail because a stock
- * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
- * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
- * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+ * row could not be written. The trade is real and worth naming: a failure here is posted again by lib/stock-sweep
+ * (CTR-178: derived from the chit at any time, with the same ref and the same idempotency — retried, healed by the shop's next sale or the till's replay, SAID if it still fails) — and because the balance is a cache that
  * rebuild() can check against the log.
  *
  * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
@@ -2768,6 +2787,9 @@ async function sendStock(sendState, req, res) {
           actor_id: req.identity && req.identity.identity_id
         })
         .then((reply) => {
+          /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
+          if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
+          require('../lib/stock-sweep').healSoon(sender_id, withEntity);
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
@@ -2910,7 +2932,7 @@ function chitFilters(req, where, params) {
   }
   where += abroadFilter(req, params) + priorityFilter(req, params) + statusBucketFilter(req, params) + assignmentFilter(req, params);
   if (req.query.dispute === 'open' || req.query.dispute === 'active') {
-    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.status = 'open')`; /* D4: chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies) */
+    where += ` AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open')`; /* SEC-127: my copies named in the SQL, not RLS alone. D4: chits with an OPEN dispute THIS entity holds a copy of (per-copy: RLS scopes to my own copies) */
   }
   return where;
 }
@@ -3076,9 +3098,9 @@ router.get('/sent', auth, ...checked('GET /sent'), async (req, res) => {
               /* b195 cancel-request flag, named only when the column exists — see the note above the query. */
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
               (SELECT COUNT(*) FROM chit_disputes cd
-                WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+                WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
               ${keyCol('ch')}${costView.sideColsSql('ch', blind)}
          ${joinFrom}
         WHERE ${where}
@@ -3157,7 +3179,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
-                WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+                WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count
            ${joinFrom}
           WHERE ${where}
           ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
@@ -3244,7 +3266,7 @@ router.get('/rollup', auth, ...checked('GET /rollup'), async (req, res) => {
          FROM chit_status cs
          JOIN chit_header ch ON ch.chit_id = cs.chit_id AND ch.entity_id = cs.entity_id AND ch.direction = cs.direction
         WHERE ${where}
-          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.status = 'open')`,
+          AND EXISTS (SELECT 1 FROM chit_disputes cd WHERE cd.chit_id = cs.chit_id AND cd.entity_id = cs.entity_id AND cd.status = 'open')`,
           params
         )
         .catch(() => ({ rows: [{ n: 0 }] }));
@@ -3411,13 +3433,13 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
          cs.assigned_to_actor_id,
          cs.assigned_to_actor_display_name,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'open') AS open_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'open') AS open_dispute_count,
          (SELECT COUNT(*) FROM chit_disputes cd
-          WHERE cd.chit_id = ch.chit_id AND cd.status = 'resolved') AS resolved_dispute_count,
+          WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
-          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
+          WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
-          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
+          WHERE cm2.chit_id = ch.chit_id AND cm2.entity_id = ch.entity_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
          (SELECT sl.action_by_display_name FROM state_log sl
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_name,
@@ -5352,7 +5374,7 @@ router.post(
       let disputeRoster = null;
       if (isDispute && disputeId) {
         const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 LIMIT 1`, [disputeId, chit_id])
+          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3 LIMIT 1`, [disputeId, chit_id, entity_id])
         );
         if (party.rows.length === 0) {
           return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
@@ -5454,7 +5476,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
          raises 42703 and would take the whole message panel down before the migration runs. */
-      const params = [chit_id];
+      const params = [chit_id, entity_id]; /* SEC-127c: $2 = my shop, named in the SQL below (not row security alone) */
       /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
          `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
          rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
@@ -5462,7 +5484,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
         params.push(req.query.line_id);
         cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
       }
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
     if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
 
@@ -5734,7 +5756,7 @@ router.post(
       const dup = await withEntity(entity_id, (db) =>
         db.query(
           `SELECT dispute_id FROM chit_disputes
-          WHERE chit_id=$1 AND raised_by_entity_id=$2 AND status='open' AND category=$3
+          WHERE chit_id=$1 AND entity_id=$2 AND raised_by_entity_id=$2 AND status='open' AND category=$3
             AND COALESCE(target_entity_id::text,'') = COALESCE($4::text,'')`,
           [chit_id, entity_id, category, scope === 'targeted' ? target_entity_id : null]
         )
@@ -5757,7 +5779,7 @@ router.post(
         db.query(
           `SELECT ch.auto_subject, ch.summary_json, cs.current_status AS my_status
            FROM chit_header ch JOIN chit_status cs ON cs.chit_id=ch.chit_id AND cs.entity_id=$2
-          WHERE ch.chit_id=$1`,
+          WHERE ch.chit_id=$1 AND ch.entity_id=$2`,
           [chit_id, entity_id]
         )
       );
@@ -5873,7 +5895,7 @@ router.get('/:chit_id/disputes', auth, ...checked('GET /:chit_id/disputes'), asy
       const access = await db.query(`SELECT entity_id FROM chit_status WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (access.rows.length === 0) return null;
       // B3.10 + D4 — scoped: per-copy (b68): RLS returns MY OWN dispute copies for this chit
-      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 ORDER BY created_at ASC`, [chit_id]);
+      const result = await db.query(`SELECT * FROM chit_disputes WHERE chit_id = $1 AND entity_id = $2 ORDER BY created_at ASC`, [chit_id, entity_id]);
       const hdr = await db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]);
       return { rows: result.rows, recipients: (hdr.rows[0] && hdr.rows[0].all_recipients) || [] };
     });
@@ -5947,9 +5969,9 @@ router.get('/:chit_id/diagnosis', auth, ...checked('GET /:chit_id/diagnosis'), a
               target_display_name, scope, mode, answerable, parity_state, via,
               (evidence_snapshot IS NOT NULL) AS has_evidence
          FROM chit_disputes
-        WHERE chit_id=$1
+        WHERE chit_id=$1 AND entity_id=$2
         ORDER BY created_at ASC`,
-        [chit_id]
+        [chit_id, entity_id]
       )
     );
 
@@ -6011,7 +6033,7 @@ router.put(
     try {
       // b68 — per-copy: read the raiser's OWN dispute copy (RLS), then resolve across copies via the definer.
       const dispute = await withEntity(entity_id, (db) =>
-        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2`, [dispute_id, chit_id])
+        db.query(`SELECT * FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3`, [dispute_id, chit_id, entity_id])
       );
       if (dispute.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Dispute not found' }, 'NOT_FOUND') });
 
@@ -6167,7 +6189,7 @@ async function housekeepFacts(db, chit_id, entity_id) {
     [chit_id, entity_id]
   );
   if (copy.rows.length === 0) return null;
-  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) };
+  return { current_status: copy.rows[0].current_status, role: copy.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) };
 }
 router.delete('/:chit_id', auth, ...checked('DELETE /:chit_id'), async (req, res) => {
   try {
@@ -6328,7 +6350,7 @@ router.post('/:chit_id/archive', auth, ...checked('POST /:chit_id/archive'), asy
       chit_id = req.params.chit_id;
     // B1 RLS: caller archives only its own copy -> withEntity(me). Per-copy: my own open dispute copies.
     await withEntity(entity_id, async (db) => {
-      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('archive', { open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       const r = await db.query(
         `UPDATE chit_status SET archived_at = NOW(), updated_at = NOW()
@@ -6439,7 +6461,7 @@ router.delete('/:chit_id/purge', auth, ...checked('DELETE /:chit_id/purge'), asy
       const chk = await db.query(`SELECT role, created_by_actor_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id]);
       if (chk.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Draft not found' }, 'NOT_FOUND') });
       /* W2-RAIL R2: the same draft rule the trash door now enforces (canHousekeep: a sent/received copy → 409 co_held_record) */
-      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id) });
+      const verdict = railActions.canHousekeep('purge', { role: chk.rows[0].role, open_disputes: await disputeMay.openOn(db, chit_id, entity_id) });
       if (!verdict.ok) return problem(req, res, railSaid(railActions.housekeepRefusalOf(verdict)));
       if (chk.rows[0].created_by_actor_id !== req.identity.identity_id)
         return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'You can only delete drafts you created.' }, 'CHIT_NOT_PERMITTED') });

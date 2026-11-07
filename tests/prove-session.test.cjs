@@ -5,6 +5,12 @@
  * REQUIRE a key, so the script's session() now sends a fresh one on every write and none on a read. Held here with fetch stubbed:
  * no network, no api. Hand-computed: 4 writes (POST, POST, PATCH, DELETE) -> 4 keys, all different; 1 GET -> 0 keys.
  *
+ * Layer minimums (tools/graph/trace.cjs classes tools/tally-connector/* as `counter`, written for the till screen; prove.js is not a screen):
+ *   MIN walk · prove.js IS the one-machine walk of the connector loop; this test holds only its Idempotency-Key line.
+ *   MIN offline-sync-once · N/A: no queue here; the catch-up runs against a live api and fake Tally in the script, never in this test.
+ *   MIN country-bill · N/A: the script bills the signed-in account's own country; it computes no tax.
+ *   MIN vendored-byte-equal · N/A: prove.js is not vendored into any other repo.
+ *
  * Run: node tests/prove-session.test.cjs
  */
 'use strict';

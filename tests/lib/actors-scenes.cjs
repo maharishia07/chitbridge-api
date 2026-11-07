@@ -331,6 +331,8 @@ function extras(tools) {
     X('assign-chit-not-found', 'PUT ' + at('/assign/:chit_id'), 404, { body: { action: 'pull' } }),
     X('assign-pull-already-held', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'pull' }, setup: { sqlRows: CHIT_ROW({ assigned_to_actor_id: OTHER, actor_name: 'Meena' }) } }),
     X('assign-pull-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'pull' }, setup: { who: STAFF, sqlRows: CHIT_ROW({ assigned_to_actor_id: null }) } }),
+    /* RAIL-173: the bill was cancelled / rejected after it posted — the rail's gate says taken_back, nothing is written, the answer is the 409 */
+    X('assign-pull-bill-taken-back', 'PUT ' + at('/assign/:chit_id'), 409, { body: { action: 'pull' }, patch: { railStatus: { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } }, setup: { who: STAFF, sqlRows: CHIT_ROW({ assigned_to_actor_id: null }) } }),
     X('assign-push-needs-a-target', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push' }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-push-target-not-active', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-push-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, CHIT_ROW({})) } }),

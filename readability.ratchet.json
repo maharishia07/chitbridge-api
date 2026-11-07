@@ -1209,6 +1209,19 @@
     "emptyCatch": 0,
     "noHeader": 0
   },
+  "lib/dues-view.js": {
+    "score": 0,
+    "long40": 0,
+    "long80": 0,
+    "complex10": 0,
+    "complex15": 0,
+    "deep3": 0,
+    "deep4": 0,
+    "cryptic": 0,
+    "noWhatLine": 0,
+    "emptyCatch": 0,
+    "noHeader": 0
+  },
   "lib/employee-code.js": {
     "score": 0,
     "long40": 0,
@@ -3095,9 +3108,9 @@
     "noHeader": 0
   },
   "lib/supply-store.js": {
-    "score": 23,
+    "score": 22,
     "long40": 2,
-    "long80": 1,
+    "long80": 0,
     "complex10": 1,
     "complex15": 1,
     "deep3": 0,
@@ -3784,11 +3797,11 @@
     "noHeader": 0
   },
   "routes/crm.js": {
-    "score": 76,
+    "score": 74,
     "long40": 4,
     "long80": 1,
-    "complex10": 4,
-    "complex15": 1,
+    "complex10": 3,
+    "complex15": 0,
     "deep3": 2,
     "deep4": 1,
     "cryptic": 63,
@@ -4200,14 +4213,14 @@
     "noHeader": 0
   },
   "routes/supplies.js": {
-    "score": 4,
+    "score": 2,
     "long40": 0,
     "long80": 0,
-    "complex10": 1,
+    "complex10": 0,
     "complex15": 0,
     "deep3": 0,
     "deep4": 0,
-    "cryptic": 3,
+    "cryptic": 2,
     "noWhatLine": 0,
     "emptyCatch": 0,
     "noHeader": 0

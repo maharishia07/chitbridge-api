@@ -77,7 +77,7 @@ const WORLDS = [
   { id: 'nothing-found', setup: {} }
 ];
 const lib = (name) => require(path.join(HERE, 'lib', name));
-const sources = () => ({ schema: lib('schema'), empcode: lib('employee-code'), devotp: lib('dev-otp'), notify: lib('notify'), identityAuth: lib('identity-auth') });
+const sources = () => ({ schema: lib('schema'), empcode: lib('employee-code'), devotp: lib('dev-otp'), notify: lib('notify'), identityAuth: lib('identity-auth'), railStatus: lib('rail-status') });
 const contractModule = () => lib('actors-contract.js');
 
 /** the first-code and the bridge id are random in life: the test puts fixed ones in the require cache so a success answer is the same bytes on every run (the real modules are otherwise untouched) */
