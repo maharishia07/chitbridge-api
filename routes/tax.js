@@ -59,6 +59,7 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       net: ledger.net,
       count: ledger.count,
       provisional: ledger.provisional,
+      prior_period: T.priorPeriodOf(ledger), // ACC-224: late bills of an earlier month the books hold in this one, each with its words
       dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
