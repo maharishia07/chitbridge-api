@@ -35005,9 +35005,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "71c4986dbd23d28a"
+        "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -37394,9 +37393,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "ab2939544aa33907"
+        "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [

@@ -2123,11 +2123,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/events": {
-   "hash": "494300b4ee1d7346",
+   "hash": "7d637baaefe37588",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
    "lifecycle": "stable"
   },
   "POST /api/books/fx-rates": {
@@ -2291,11 +2291,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/preview": {
-   "hash": "5642f28d53e53ef9",
+   "hash": "36eb5b5b5a062279",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
    "lifecycle": "stable"
   },
   "POST /api/books/recurring": {
