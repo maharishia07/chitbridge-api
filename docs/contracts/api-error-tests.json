@@ -2637,6 +2637,11 @@
   409,
   500
  ],
+ "POST /api/entities/register": [
+  400,
+  409,
+  500
+ ],
  "POST /api/entities/verify": [
   400,
   403,
@@ -3618,6 +3623,7 @@
   400,
   401,
   404,
+  409,
   500
  ],
  "PUT /api/actors/break": [

@@ -555,19 +555,19 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/folder": {
-   "hash": "55d4d0593ffb2a8c",
+   "hash": "54b00476fd18ef9d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/inbox": {
-   "hash": "b29d0408daaea305",
+   "hash": "130ced1d0eda9241",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/raida/report": {
@@ -2763,11 +2763,11 @@
    "lifecycle": "stable"
   },
   "POST /api/entities/register": {
-   "hash": "6f33e5526ce8ba8e",
+   "hash": "0684924c4d8ce659",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#917",
    "lifecycle": "stable"
   },
   "POST /api/entities/verify": {
@@ -3651,11 +3651,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/assign/:chit_id": {
-   "hash": "f54854bfb3bb4ac1",
+   "hash": "f3511ebd94056129",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#903",
    "lifecycle": "stable"
   },
   "PUT /api/actors/break": {
@@ -3739,11 +3739,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/status": {
-   "hash": "dbf1814d4f83fa55",
+   "hash": "bca557ce84285e48",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#903",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/use": {

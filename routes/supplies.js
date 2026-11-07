@@ -97,6 +97,8 @@ function purchaseSays(out) {
   if (out.already) parts.push(out.already + ' already recorded');
   if (out.stocked || out.already) parts.push(out.stocked + ' counted');
   if (out.expensed) parts.push(out.expensed + ' expensed — not in your books yet');
+  const free = out.recorded.filter((line) => !line.cost).length; /* OPS-70: no cost typed, or 0 — said, never a silent 0 */
+  if (free) parts.push(free + ' at no cost');
   if (out.failed && out.failed.length) parts.push(out.failed.length + ' not recorded');
   return parts.join(' · ');
 }
