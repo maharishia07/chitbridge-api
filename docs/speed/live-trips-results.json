@@ -757,11 +757,6 @@
     }
    ]
   },
-  "POST /api/assist/resolve": {
-   "state": "unreached",
-   "group": "precondition",
-   "reason": "the route is retired on purpose: it answers 410 ASSIST_REVIEW_RETIRED (gap review superseded), so it has no database work to measure"
-  },
   "POST /api/books/accruals": {
    "state": "measured",
    "trips": 4,

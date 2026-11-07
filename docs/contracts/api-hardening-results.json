@@ -3477,16 +3477,6 @@
     "pass": true
    }
   },
-  "POST /api/assist/resolve": {
-   "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 410"
-   }
-  },
   "GET /api/assist/whoami": {
    "output_allowlist": {
     "pass": true

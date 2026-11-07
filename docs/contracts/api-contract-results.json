@@ -1882,14 +1882,6 @@
     422
    ]
   },
-  "POST /api/assist/resolve": {
-   "cases": 2,
-   "failed": 0,
-   "missing_input_ok": true,
-   "statuses": [
-    422
-   ]
-  },
   "POST /api/attachments": {
    "cases": 2,
    "failed": 0,

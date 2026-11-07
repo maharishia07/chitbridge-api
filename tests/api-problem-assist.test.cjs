@@ -35,7 +35,7 @@ const MOUNT = '/api/assist';
 const ROUTE_FILE = 'routes/assist.js';
 const ASSISTANT = 'POST ' + MOUNT;
 /** the routes behind the real sign-in (middleware/auth); the assistant's other routes are open or take a soft sign-in */
-const SIGNED_IN = ['POST /catalogue-adopt', 'GET /catalogue-mine', 'PUT /catalogue-source', 'PUT /container', 'GET /erp-handoffs', 'PUT /region-override', 'GET /penetration', 'POST /publish', 'GET /gaps', 'POST /resolve', 'GET /whoami'].map((key) => key.replace(' ', ' ' + MOUNT));
+const SIGNED_IN = ['POST /catalogue-adopt', 'GET /catalogue-mine', 'PUT /catalogue-source', 'PUT /container', 'GET /erp-handoffs', 'PUT /region-override', 'GET /penetration', 'POST /publish', 'GET /gaps', 'GET /whoami'].map((key) => key.replace(' ', ' ' + MOUNT));
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -110,7 +110,7 @@ function checkContractShape(routes) {
   const contract = contractModule();
   const operations = Object.keys(contract.OPERATIONS);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 22 operations', operations.length === 22 && Object.keys(routes).length === 22, [operations.length, Object.keys(routes).length]);
+  check('the contract holds 21 operations', operations.length === 21 && Object.keys(routes).length === 21, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('no write refuses a body for its shape: a list is taken as it always was', bodies.every((key) => [].concat(contract.OPERATIONS[key].requestBody.content['application/json'].schema.type).includes('array')), bodies);
   check('no body field is required and none is typed: the handlers answer a missing value in their own sentences', bodies.every((key) => !(contract.OPERATIONS[key].requestBody.content['application/json'].schema.required || []).length));

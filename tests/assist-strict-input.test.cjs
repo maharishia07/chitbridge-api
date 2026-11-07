@@ -8,7 +8,6 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the app is loaded offline and the route's schema check (middleware/validate.js schemaValidate) runs alone.
  * FLOW      tools/load-app.cjs → the route's operation (its own schema check, with its own refusal words) → a body → accepted, or refused with the field named
  * CARD      28-platform-and-operations/api-standard
- * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): POST /api/assist/resolve (retired: always 410, so an old body must still meet the 410 and not a 422)
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys.
  *
  *   node tests/assist-strict-input.test.cjs
