@@ -22,7 +22,8 @@ if (!API) { console.error('say which api: node prove.js https://<your ChitBridge
 const TOKEN = process.env.CB_TOKEN; if (!TOKEN) { console.error('CB_TOKEN (a session token) is required'); process.exit(2); }
 let pass = 0, fail = 0;
 const ok = (c, m) => { if (c) { pass++; console.log('PASS ' + m); } else { fail++; console.log('FAIL ' + m); } };
-async function session(method, p, body) { const r = await fetch(API + p, { method, headers: { Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const t = await r.text(); let j; try { j = JSON.parse(t); } catch (_) { j = { raw: t }; } return { status: r.status, j }; }
+/* FIN-51: every write is one attempt with its own Idempotency-Key (Mark paid and the books' money doors REQUIRE it) */
+async function session(method, p, body) { const r = await fetch(API + p, { method, headers: Object.assign({ Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, method === 'GET' ? {} : { 'Idempotency-Key': require('crypto').randomUUID() }), body: body ? JSON.stringify(body) : undefined }); const t = await r.text(); let j; try { j = JSON.parse(t); } catch (_) { j = { raw: t }; } return { status: r.status, j }; }
 async function pub(method, p, body) { const r = await fetch(API + p, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined }); const t = await r.text(); let j; try { j = JSON.parse(t); } catch (_) { j = { raw: t }; } return { status: r.status, j }; }
 
 (async () => {
@@ -82,7 +83,7 @@ async function pub(method, p, body) { const r = await fetch(API + p, { method, h
 
     /* 5b · the payment loop: Mark paid (session) → the Receipt voucher, once; above the quote → refused */
     const over = await session('POST', '/api/chits/' + chitId + '/payment', { method: 'upi', ref: 'PROVE-OVER', amount: 999999 });
-    ok(over.status === 422, 'a payment far above the quote is refused (' + over.status + ')');
+    ok(over.status === 409 && over.j.code === 'ALREADY_PAID', 'a payment far above the quote is refused as ALREADY_PAID, not for a missing key (' + over.status + ' ' + (over.j.code || '') + ')');
     const paid = await session('POST', '/api/chits/' + chitId + '/payment', { method: 'upi', ref: 'PROVE-UPI-1' });
     ok(paid.status === 200 && paid.j.payment && paid.j.payment.method === 'upi', 'marked paid (' + paid.status + ')');
     const r1 = await core.pushReceipt({ cb, adapter, receipts, log, chit_id: chitId });

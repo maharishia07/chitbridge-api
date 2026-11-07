@@ -12,6 +12,7 @@
  *   3  key K1, another body (₹600)                422 IDEMPOTENCY_CONFLICT     · payments 1 · paid 50,000  · owed 68,000
  *   4  key K2, ₹100, two calls AT ONCE            one 200, one 409 IDEMPOTENCY_IN_PROGRESS · payments 2 · paid 60,000 · owed 58,000
  *   5  key K2 after both finished, same body      the first answer again       · payments 2 · paid 60,000  · owed 58,000
+ *   6  key K1 from ANOTHER shop, same body        its own answer (404), no replay of the first shop answer · figures unchanged
  *
  * Offline. Run: node tests/fin51-payment-safe-repeat.test.cjs
  */
@@ -27,7 +28,9 @@ const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(
 const SHOP = '11111111-1111-4111-8111-111111111111', MALA = '22222222-2222-4222-8222-222222222222';
 const BILL = 'c0000000-0000-4000-8000-00000000000f';
 const BILL_TOTAL = 118000;
-const authStub = Object.assign((req, res, next) => { req.identity = { identity_id: SHOP, identity_type: 'entity', display_name: 'Chola Auto Care' }; next(); }, {
+const OTHER_SHOP = '44444444-4444-4444-8444-444444444444';
+let caller = SHOP; /* who signs in: the shop, or another shop sending the same key */
+const authStub = Object.assign((req, res, next) => { req.identity = { identity_id: caller, identity_type: 'entity', display_name: 'Chola Auto Care' }; next(); }, {
   entityOf: (req) => req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
@@ -77,7 +80,7 @@ function idempotencyTable(X) {
   const TaxCopy = require(path.join(H.API, 'lib', 'tax-copy'));
   TaxCopy.entryFor = async () => ({ sells: true, buyer: { entity_id: MALA }, seller: { entity_id: SHOP }, me: { entity_id: SHOP } });
   let lagMs = 0; /* the route takes this long to read the chit, so a second call lands while the first is still running */
-  TaxCopy.copyOn = async (db, chit_id) => (await new Promise((r) => setTimeout(r, lagMs)), chit_id === BILL ? { chit_id: BILL, purpose: 'order', sender_entity_id: MALA, created_at: '2026-09-25T06:00:00Z', currency_code: 'INR',
+  TaxCopy.copyOn = async (db, chit_id, entity_id) => (await new Promise((r) => setTimeout(r, lagMs)), chit_id === BILL && entity_id === SHOP ? { chit_id: BILL, purpose: 'order', sender_entity_id: MALA, created_at: '2026-09-25T06:00:00Z', currency_code: 'INR',
     summary_json: { total_value: 1180, money: { net: 1000, tax: 180, total: 1180 } }, business_json: {} } : null);
 
   const express = require('express');
@@ -130,7 +133,12 @@ function idempotencyTable(X) {
     const late = await call(port, URL, body2, 'K2');
     ok('5 · K2 sent again after both finished → the first answer', late.status === 200 && JSON.stringify(late.body) === JSON.stringify(winner.body), JSON.stringify(late.body).slice(0, 300));
     eq('5 · still 2 payments, paid 60,000, owed 58,000', await figures(), { payments: 2, paid: 60000, owed: 58000 });
-    ok('the store holds one row per key: K1 and K2 (and the keyless call took none)', keyRows.size === 2, 'rows ' + keyRows.size);
+    caller = OTHER_SHOP;
+    const foreign = await call(port, URL, body1, 'K1');
+    caller = SHOP;
+    ok('6 · another shop sending the same key K1 and body gets its own answer (404, the bill is not its), never the first shop recorded answer', foreign.status === 404 && foreign.headers['x-idempotent-replay'] !== 'true' && JSON.stringify(foreign.body) !== JSON.stringify(first.body), foreign.status + ' ' + JSON.stringify(foreign.body).slice(0, 200));
+    eq('6 · …and the first shop figures did not move: 2 payments, paid 60,000, owed 58,000', await figures(), { payments: 2, paid: 60000, owed: 58000 });
+    ok('the store holds one row per key: K1 and K2 (and the keyless call took none; the other shop try is its own row)', keyRows.size === 3, 'rows ' + keyRows.size);
   } finally { srv.close(); }
 
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
