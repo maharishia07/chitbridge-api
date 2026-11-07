@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 220,
+  "meets": 417,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -43504,11 +43504,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f066453f5d1ddaf5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#893",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",

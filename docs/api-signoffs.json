@@ -2423,11 +2423,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/send": {
-   "hash": "0deba8ed2fed4a3e",
+   "hash": "f066453f5d1ddaf5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#893",
    "lifecycle": "stable"
   },
   "POST /api/connections/request": {"hash":"3d6ff5c3055c8d28","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
