@@ -37,6 +37,14 @@ for (const [method, url, bodyOf] of DOORS) {
       assert.equal(r.body.invoice, undefined, 'nothing is priced');
     });
   }
+  for (const seller of [{}, { name: 'x' }, { country: 'IN' }, { Gstin: '  ' }]) {
+    test(url + ' · body.seller ' + JSON.stringify(seller) + ' carries no tax number of its own: still the shop, still asked (409)', async () => {
+      as('IN', 'unknown');
+      const r = await X.call(method, url, bodyOf({ seller }));
+      assert.equal(r.status, 409, JSON.stringify(r.body));
+      assert.equal(r.body.code, 'TAX_REGISTRATION_UNKNOWN');
+    });
+  }
   test(url + ' · the owner confirmed NOT registered: "no GSTIN, no GST" holds, priced at no tax (200)', async () => {
     as('IN', 'unregistered');
     const r = await X.call(method, url, bodyOf());
@@ -50,7 +58,7 @@ for (const [method, url, bodyOf] of DOORS) {
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.equal(r.body.invoice.ValDtls.TotInvVal, 236, '18% charged');
   });
-  test(url + ' · a caller that names its own seller prices that seller, nothing is asked of the shop', async () => {
+  test(url + ' · a caller that names its own seller with its own tax number is priced as that seller, nothing is asked of the shop', async () => {
     as('IN', 'unknown');
     const r = await X.call(method, url, bodyOf({ seller: { Gstin: GSTIN.IN, State: '33', Country: 'IN', RegType: 'regular' } }));
     assert.equal(r.status, 200, JSON.stringify(r.body));
