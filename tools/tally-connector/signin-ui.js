@@ -325,8 +325,7 @@
     /* the secret typed before a choice of account, kept in this closure only until the person picks (never in S, never painted) */
     var held = null;
 
-    /** ask the server about an id. `typedId` is what the person typed, or (stored) the id a "Send a new code" repeats — sent as
-     *  `id` whole, so a .br / .cr handle is never split by the e-mail shape it happens to have. The answer is the same for everyone (SEC-143). */
+    /** ask about an id (typed, or repeated by "Send a new code", sent whole so a .br / .cr handle is never split). One answer for everyone (SEC-143). */
     function askFor(typedId, stored) {
       var a = stored ? { ok: true, body: { mode: 'login', id: String(typedId) }, say: W.either } : E.ask(typedId);
       if (!a.ok) {
@@ -378,7 +377,7 @@
     /** the person picked an account from the list the server gave AFTER a correct secret: verify again with the STORED id and the same secret */
     function choose(i) {
       var ch = S.choices[i];
-      if (!ch || !held) return Promise.resolve(S);
+      if (S.busy || !ch || !held) return Promise.resolve(S); /* a second tap while the first verify is out must not repost the one-time code */
       return sendVerify(String(ch.id), held);
     }
     /* SEC1 · a TESTER code (the api's TESTER_CODE: 8+ characters, any kind) is sent as typed — the engine's code() knows only a
@@ -544,6 +543,7 @@
       },
       go: go,
       choose: choose,
+      close: () => (held = null), // the window is torn down: the held secret goes with it
       verify: verify,
       setPin: setPin,
       again: again,
@@ -785,6 +785,7 @@
     paint(host, m, c);
     return {
       destroy: function () {
+        m.close();
         off();
         doc.removeEventListener('submit', onSubmit);
         doc.removeEventListener('click', onClick);
