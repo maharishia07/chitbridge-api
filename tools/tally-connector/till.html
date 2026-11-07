@@ -5243,7 +5243,7 @@ var CloudHost = {
   idemKey: function(route, written){
     var given = written || {};
     if (route === '/api/till/reward' && given.ref) return 'till-reward:' + String(given.ref).slice(0, 120);
-    if (route === '/api/till/reward/claim') return 'till-claim:' + JSON.stringify([given.from, given.to, given.ref || '']).slice(0, 180);
+    if (route === '/api/till/reward/claim' && given.ref) return 'till-claim:' + JSON.stringify([given.from, given.to, given.ref || '']).slice(0, 180);
     return null;
   },
   idemHeaders: function(route, written, headers){ var idem = this.idemKey(route, written); if (idem) headers['Idempotency-Key'] = idem; return headers; },
@@ -6150,7 +6150,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-07.sec143';
+var TILL_BUILD = '2026-11-07.idem3';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
