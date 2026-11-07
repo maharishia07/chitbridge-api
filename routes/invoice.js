@@ -32,6 +32,25 @@ function checked(route) {
   return operation.parameters || operation.requestBody ? [schemaValidate(operation)] : [];
 }
 
+/** a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
+function withShelfFacts(item, shelf) {
+  const prod = shelf.productOf(item);
+  return Object.assign({}, item, {
+    item_id: item.item_id || shelf.idOf(item),
+    name: item.name || (prod && prod.name) || '',
+    categories: item.categories.length ? item.categories : prod && Array.isArray(prod.categories) ? prod.categories.map(String) : [],
+    excluded: item.excluded.length ? item.excluded : prod && Array.isArray(prod.offers_excluded) ? prod.offers_excluded.map(String) : []
+  });
+}
+/** ⭐ CAT-258: a line nobody priced is asked about by name (422 NO_PRICE, the words tax/compute uses), never billed at 0; null when every line has a price */
+function unpricedRefusal(priced, shelf) {
+  const unpriced = priced.find((item) => item.unit_price == null);
+  if (!unpriced) return null;
+  const nameOf = (line) => '"' + String(line.name || line.item_id || line.code || 'line ' + line.key).slice(0, 60) + '"';
+  const [code, words] = S.unpricedSaid(unpriced, shelf.productOf(unpriced), nameOf);
+  return taxSaid(422, code, words, { line: unpriced.key });
+}
+
 router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /build'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
@@ -39,24 +58,11 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     if (!lines0.length) return problem(req, res, { status: 400, code: 'INVOICE_BAD_REQUEST', detail: 'lines[] required', legacy: { error: 'validation', message: 'lines[] required' } });
     const body = req.body || {};
     const sh = await S.shelfOf(entity_id);
-    /* a line named by CODE is the product: its id (offers aim at ids), its categories (category offers reach it), its opt-outs */
-    const lines = lines0.map((item) => {
-      const prod = sh.productOf(item);
-      return Object.assign({}, item, {
-        item_id: item.item_id || sh.idOf(item),
-        name: item.name || (prod && prod.name) || '',
-        categories: item.categories.length ? item.categories : prod && Array.isArray(prod.categories) ? prod.categories.map(String) : [],
-        excluded: item.excluded.length ? item.excluded : prod && Array.isArray(prod.offers_excluded) ? prod.offers_excluded.map(String) : []
-      });
-    });
+    const lines = lines0.map((item) => withShelfFacts(item, sh));
     /* 1 · pricing structure */
     const priced = lines.map((item) => Object.assign({}, item, S.priceLine(item, sh.productOf(item))));
-    /* ⭐ CAT-258: a line nobody priced is asked about by name (422 NO_PRICE, the words tax/compute uses), never billed at 0 */
-    const unpriced = priced.find((item) => item.unit_price == null);
-    if (unpriced) {
-      const [code, words] = S.unpricedSaid(unpriced, sh.productOf(unpriced), (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"');
-      return problem(req, res, taxSaid(422, code, words, { line: unpriced.key }));
-    }
+    const noPrice = unpricedRefusal(priced, sh);
+    if (noPrice) return problem(req, res, noPrice);
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
