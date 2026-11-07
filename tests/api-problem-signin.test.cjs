@@ -85,6 +85,10 @@ function checkJunkAsUnknown(recording, scenes) {
   checkContract(routes);
   checkJunkAsUnknown(recording, scenes);
   check('a caller who is not signed in is refused with 401 on every route that asks for it', ['POST /api/signin/renew', 'POST /api/signin/logout', 'GET /api/signin/sessions', 'GET /api/signin/devices', 'POST /api/signin/sessions/revoke', 'POST /api/signin/pin'].every((key) => recording[key + '|signed-out'].status === 401));
+  /* the shape, which the sweep above leaves to the doors (inherited): every refusal is a Problem naming its own status, with a code and the old error word beside it. The express-validator 400s of ask, verify and pin (middleware/validate.js validate; bodies frozen byte for byte by tests/signin-routes.test.cjs) are the one open gap: skipped here, not judged */
+  const refusals = Object.entries(recording).filter(([, one]) => one.status >= 400 && one.body && !Array.isArray(one.body.details));
+  const notProblems = refusals.filter(([, one]) => !(one.body.type && one.body.title && one.body.status === one.status && one.body.detail && one.body.code && one.body.error !== undefined));
+  check('every refusal of every scene is a Problem that names its own status and carries a code and the old error word (' + refusals.length + ' answers, S1-S2)', notProblems.length === 0, notProblems.map(([name, one]) => name + ' ' + JSON.stringify(one.body).slice(0, 120)));
   check('no 5xx of any scene carries a failure\'s cause', Object.values(recording).filter((one) => one.status >= 500).every((one) => !JSON.stringify(one.body).includes(SECRET_SQL) && !/SELECT|vault|relation "/.test(JSON.stringify(one.body))));
   const coverage = Object.fromEntries(Object.entries(lab.coverageOf(tested)).filter(([route]) => lab.mine(route))); /* the register door's rows are entities.js's own sweep's */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
