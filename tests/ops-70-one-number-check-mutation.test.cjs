@@ -48,4 +48,5 @@ cases.forEach(([label, red]) => {
   if (red !== true) bad++;
   console.log((red === true ? 'ok   ' : 'FAIL ') + label + (red === null ? ' (the mutation did not apply)' : ' makes ops-70-one-number-check.test.cjs go red'));
 });
+console.log(cases.length + ' checks' + (bad ? ', ' + bad + ' FAILED' : ''));
 process.exit(bad ? 1 : 0);
