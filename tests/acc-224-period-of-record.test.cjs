@@ -75,7 +75,7 @@ const minor = (rupees) => Math.round(rupees * 100);
         to = Date.parse(params[2]),
         withDays = params.length > 4; /* the window's second arm: the day the books hold it in [params[3], params[4]) */
       const found = rows.filter((r) => r.role !== 'Draft' && bookedDay(r) && ((momentOf(r) >= from && momentOf(r) < to) || (withDays && bookedDay(r) >= params[3] && bookedDay(r) < params[4])));
-      return { rows: found.map((r) => Object.assign({}, r, /books_posting_date/.test(sql) ? { books_posting_date: bookedDay(r) } : {})) };
+      return { rows: found.map((r) => Object.assign({}, r, /books_posting_date/.test(sql) ? { books_posting_date: bookedDay(r), books_locked_starts: X.T.periods.filter((p) => p.status !== 'open').map((p) => String(p.start_date).slice(0, 10)) } : {})) };
     }
     return ask(text, params);
   };
@@ -129,6 +129,11 @@ const minor = (rupees) => Math.round(rupees * 100);
   const g1 = TL.gstr1(oct.ledger, oct.me, oct.bounds.period);
   eq('GSTR-1 for October carries both bills in its tables and names the late one in _cb.prior_period', [g1.ok === false ? g1.why : (g1.b2b || []).reduce((n, c) => n + c.inv.length, 0), g1._cb.prior_period.length], [2, 1]);
   eq('GSTR-3B for October names it too', TL.gstr3b(oct.ledger, oct.me, oct.bounds.period)._cb.prior_period.length, 1);
+
+  /* the pre-ledger move has its own words (not "closed"): same shape, no locked month under the invoice's month */
+  const early = TC.monthOfRecord({ chit_id: uuid(9), books_posting_date: '2026-04-01', books_locked_starts: [] }, '2026-03-15').prior;
+  ok('a chit dated before the ledger began: its own words and cause, never "closed"', early && early.cause === 'before_ledger' && /dated before this ledger began/.test(early.words) && !/closed/.test(early.words), early && early.words);
+  eq('the locked-month move says so', oct.prior_period[0].cause, 'month_closed');
 
   /* ── 4. the totals per month equal the books ── */
   eq('September: GSTR-3B output CGST/SGST = the books\' September balance', [minor(sep3b.camt), minor(sep3b.samt)], [sepBooks.output.cgst, sepBooks.output.sgst]);
