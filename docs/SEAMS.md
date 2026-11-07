@@ -9,14 +9,14 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 151 | `list` | `amend.js` |  |
+| 152 | `list` | `amend.js` |  |
 | 123 | `rows` | `crm.js` | still in them: |
 | 113 | `words` | `variant.browser.js` |  |
 | 111 | `withEntity` | `books-hooks.js` |  |
 | 111 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 104 | `read` | `books-cashflow.js` | Trips: |
 | 96 | `answer` | `availability.js` | from March; then nearest. |
-| 87 | `money` | `bill-privacy.js` |  |
+| 88 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `next` | `dayopen.js` | the next thing to do — |
@@ -29,15 +29,15 @@ of file each thing is; this says what already does the job.
 | 64 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
+| 62 | `failed` | `service.js` | what every catch answers: |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 61 | `failed` | `service.js` | what every catch answers: |
 | 59 | `entry` | `books-store.js` |  |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 57 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 55 | `record` | `access-events.js` |  |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
-| 54 | `record` | `access-events.js` |  |
 | 51 | `pack` | `books-store.js` |  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -70,8 +70,8 @@ of file each thing is; this says what already does the job.
 | 36 | `live` | `receivables.js` | the allocations that still count: |
 | 35 | `modal` | `app.html` |  |
 | 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
@@ -110,10 +110,10 @@ of file each thing is; this says what already does the job.
 | 25 | `account` | `home-facts.js` | OMITTED: |
 | 25 | `group` | `identity.js` | again in a different costume. |
 | 24 | `call` | `cap-assist.js` |  |
+| 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
-| 23 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 23 | `note` | `dbwatch.js` |  |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -122,6 +122,7 @@ of file each thing is; this says what already does the job.
 | 22 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `keep` | `signin.js` | see. |
+| 21 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 21 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -129,7 +130,7 @@ of file each thing is; this says what already does the job.
 | 20 | `note` | `device-id.js` | note(where, problem) — |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `says` | `adopt.js` |  |
-| 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `governance` | `home-facts.js` |  |
 | 20 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
@@ -140,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 18 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |

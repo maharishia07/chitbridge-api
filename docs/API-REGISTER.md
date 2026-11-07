@@ -263,7 +263,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/signin/sessions | signin | routes/signin.js:111 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/simulator/content | simulator | routes/simulator.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/supplies | supplies | routes/supplies.js:40 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/tax/gstr | tax | routes/tax.js:94 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/tax/gstr | tax | routes/tax.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:35 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/tax/ledger | tax | routes/tax.js:48 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/testing/cases | testing | routes/testing.js:433 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
@@ -578,8 +578,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:127 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:114 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/compute | tax | routes/tax.js:177 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/rate | tax | routes/tax.js:140 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/compute | tax | routes/tax.js:178 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/rate | tax | routes/tax.js:141 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/testing/cases/close | testing | routes/testing.js:286 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/testing/cases/gherkin | testing | routes/testing.js:1752 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/testing/cases/import | testing | routes/testing.js:865 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
