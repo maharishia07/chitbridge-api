@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 113 | `words` | `variant.browser.js` |  |
 | 111 | `withEntity` | `books-hooks.js` |  |
 | 111 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 104 | `read` | `books-cashflow.js` | Trips: |
+| 105 | `read` | `books-cashflow.js` | Trips: |
 | 96 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -93,21 +93,21 @@ of file each thing is; this says what already does the job.
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 28 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 27 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 27 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 27 | `sheet` | `cap-employees.js` |  |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 26 | `money` | `cart.js` |  |
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 26 | `account` | `home-facts.js` | OMITTED: |
 | 26 | `owner` | `books.js` |  |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
 | 25 | `view` | `country-ready.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
-| 25 | `account` | `home-facts.js` | OMITTED: |
 | 25 | `group` | `identity.js` | again in a different costume. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
@@ -129,6 +129,7 @@ of file each thing is; this says what already does the job.
 | 20 | `note` | `device-id.js` | note(where, problem) — |
 | 20 | `reason` | `lab-kit.js` | W9: |
 | 20 | `says` | `adopt.js` |  |
+| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `governance` | `home-facts.js` |  |
@@ -140,7 +141,6 @@ of file each thing is; this says what already does the job.
 | 19 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 19 | `entries` | `books-store.js` |  |
 | 19 | `summary` | `catalogue-read.js` | A count a person can act on: |
-| 20 | `plan` | `crm-leads.js` | `existing`: |
 | 18 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 18 | `next` | `cap-stock.js` | the next level: |
 | 18 | `model` | `chit-sheet.js` |  |

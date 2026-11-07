@@ -85,6 +85,21 @@ function userIdVerdict(wanted, display_name) {
 }
 
 /**
+ * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
+ * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
+ * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
+ */
+async function emailHeldByNoAccount(sql, args) {
+  try {
+    await query(sql, args);
+    return false;
+  } catch (e) {
+    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) return true;
+    throw e;
+  }
+}
+
+/**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
  * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19: *"through the registration page, only the
@@ -129,14 +144,14 @@ async function registerNew(req, res) {
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && (await schema.hasColumn('identities', 'timezone'))) more.push(['timezone', guess.timezone]);
-    await query(
+    const sql =
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country` +
-        more.map(([c]) => ', ' + c).join('') +
-        `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
-        more.map((_, index) => ', $' + (index + 8)).join('') +
-        ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
-    );
+      more.map(([c]) => ', ' + c).join('') +
+      `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
+      more.map((_, index) => ', $' + (index + 8)).join('') +
+      ')';
+    const args = [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, guess?.country || null].concat(more.map(([, v]) => v));
+    if (await emailHeldByNoAccount(sql, args)) return res.json({ message: 'Verification code sent to your email', email });
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try {
