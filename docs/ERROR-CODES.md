@@ -169,6 +169,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
 | DB_CONNECTION_LOST | 503 | Database unavailable | The connection to the database was lost while this was being done. Nothing was saved. | Try again in a moment. | platform | 2026-11-07 |
+| DATE_INVALID | 400 | Date not valid | That date is not a real day. | Use the day as YYYY-MM-DD, for example 2026-10-03. | books | 2026-11-08 |
 | DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Definitions arrive after the next update. Nothing was saved. | Try again after the next update. | definitions | 2026-11-07 |
 | DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
