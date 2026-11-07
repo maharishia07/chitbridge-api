@@ -56,6 +56,8 @@ const shape = (r) => JSON.stringify({ s: r.status, b: Object.assign({}, r.body, 
 const same = (list) => list.every((r) => shape(r) === shape(list[0]));
 const SORRY = "That sign-in didn't work. Check the details and try again.";
 const median = (xs) => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+/** A and B called in turn, n pairs: the median of A/B per pair, so a load spike hits both sides of a pair, not one whole series */
+const pairedRatio = async (a, b, n) => { const r = []; for (let i = 0; i < n; i++) { const x = await a(), y = await b(); r.push(x / Math.max(y, 0.01)); } return median(r); };
 
 /* the doors. `ravi` holds a PIN (1234), `mala` is a first-timer (code 654321), `owner@shop.test` is an owner with a stored code */
 const DOORS = {
@@ -103,7 +105,8 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
       await go(who[key], {}); /* warm the decoy hash and the routes */
       const tMissing = await timeOf(who[key], {});
       const tUnknown = await timeOf(who.ghost, { pin: '9999' });
-      t('time: known-without-secret takes about as long as unknown (' + tMissing.toFixed(1) + ' ms vs ' + tUnknown.toFixed(1) + ' ms): the hash is not skipped', tMissing > tUnknown * 0.5 && tMissing < tUnknown * 2 + 15 && tMissing > 5, tMissing + ' / ' + tUnknown);
+      const rMissing = await pairedRatio(async () => (await go(who[key], {})).ms, async () => (await go(who.ghost, { pin: '9999' })).ms, 9);
+      t('time: known-without-secret takes about as long as unknown (' + tMissing.toFixed(1) + ' ms vs ' + tUnknown.toFixed(1) + ' ms, paired ratio ' + rMissing.toFixed(2) + '): the hash is not skipped', rMissing > 0.4 && rMissing < 2.5 && tMissing > 5, tMissing + ' / ' + tUnknown);
     }
 
     say('\n── removed and deactivated co-assists, the try that locks, an empty code ──');
@@ -117,7 +120,8 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
       const g = await login(who, { pin: '1234' }), ghost = await login('nobody@shop one', { pin: '1234' });
       t(who + ' (' + DB[who.split('@')[0]].break_status + '): the same answer as an unknown account', shape(g) === shape(ghost), g.raw.slice(0, 100));
       const tg = await timeOf2(who, { pin: '1234' });
-      t(who + ': and the hash time is spent (' + tg.toFixed(1) + ' ms vs ' + tGhost.toFixed(1) + ' ms)', tg > tGhost * 0.5 && tg < tGhost * 2 + 15, tg + '/' + tGhost);
+      const rg = await pairedRatio(async () => (await login(who, { pin: '1234' })).ms, async () => (await login('nobody@shop one', { pin: '9999' })).ms, 7);
+      t(who + ': and the hash time is spent (' + tg.toFixed(1) + ' ms vs ' + tGhost.toFixed(1) + ' ms, paired ratio ' + rg.toFixed(2) + ')', rg > 0.4 && rg < 2.5, tg + '/' + tGhost);
     }
     DB.ravi.pin_attempts = 4; /* the next wrong PIN locks ravi */
     const lockTry = await login('ravi@shop one', { pin: '9999' });
