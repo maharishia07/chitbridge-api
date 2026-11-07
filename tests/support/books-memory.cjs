@@ -79,6 +79,11 @@ function create() {
       return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
     },
+    /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
+    async receiptBillsAgainst(db, e, ids) {
+      const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
+      return (T.receiptBills || []).filter((r) => (ids || []).indexOf(r.on) >= 0 && live(r)).map((r) => ({ chit_id: r.chit_id, no: r.no, total: r.total, entry_id: live(r).entry_id, entry_no: live(r).entry_no }));
+    },
     async unreversedForChit(db, e, chit_id) {
       const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
       return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
