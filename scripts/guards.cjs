@@ -802,6 +802,8 @@ const NEEDS_ENGINES = [
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
   'change-pin-lock.test.cjs', // PPL-30: change-pin counts a wrong current PIN and honours the lock like sign-in (verifyCredential, 5 tries, ASVS V2.2.1)
   'change-pin-lock-mutation.test.cjs', // PPL-30: with the count-and-lock removed the test above goes red
+  'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS
+  'itemmatch-corpus-mutation.test.cjs', // CAT-75: the corpus goes red under exact-match and under the old per-token tolerance on numbers and sizes
   'db-error-survives.test.cjs', // PLT-86: a pool error and a held-client error are logged, the process lives, the next query gets a fresh connection
   'db-error-survives-mutation.test.cjs' // PLT-86: with each handler removed the test above goes red
 ];
