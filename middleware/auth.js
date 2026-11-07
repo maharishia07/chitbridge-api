@@ -25,104 +25,197 @@ const refusedWith = (req, res, status, code, legacy) => problem(req, res, { stat
  */
 const DECIDED = new WeakSet();
 
+/**
+ * judge(req, res) — THE ONE CREDENTIAL DECISION (SEC-149). Everything that decides whether a token is still a live credential —
+ * signature, key listing, closed counter, connector approval, key scope, auto-raise life, device binding and session listing (jti),
+ * the actor's removed/deactivated status and its current access — lives here, once. The auth middleware turns a refusal into the
+ * Problem answer; softIdentity (below) turns it into "a stranger". Neither keeps a second copy of any check.
+ * → { refusal: { status, code, legacy } } or { decoded, rotated, keyRec, sessRec, actor } (actor = the identities row of a co-assist, else null).
+ * Throws the JWT errors verifyJwt throws, and database errors, exactly as the inline code did.
+ */
+async function judge(req, res) {
+  const refuse = (status, code, legacy) => ({ refusal: { status, code, legacy } });
+  let actor = null;
+  // Get token from Authorization header
+  /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
+  const authHeader = req.headers.authorization || (req.headers['x-api-key'] ? 'Bearer ' + String(req.headers['x-api-key']).trim() : '');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return refuse(401, 'TOKEN_MISSING', { error: 'Unauthorised', message: 'No token provided' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  // Verify token
+  // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
+  // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
+  const { claims: decoded, rotated } = verifyJwt(token); // E10 — the ONE verifier (lib/jwt-verify.js)
+
+  // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
+  // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
+  // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
+  if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
+    return refuse(401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
+  }
+  /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
+     the token's own expiry says. One read per request, cached a minute per jti. */
+  let keyRec = null;
+  if (decoded.kind === 'api_key') {
+    const rec = (keyRec = await keyListed(decoded.identity_id, decoded.jti, req));
+    if (!rec) return refuse(401, 'KEY_REVOKED', { error: 'Unauthorised', message: 'API key revoked or unknown' });
+    /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
+       key behind it no longer opens anything */
+    if (rec.till && rec.till.closed_at)
+      return refuse(401, 'COUNTER_CLOSED', {
+        error: 'Unauthorised',
+        code: 'COUNTER_CLOSED',
+        message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.'
+      });
+    req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
+    const url = String(req.originalUrl || req.url || '').split('?')[0],
+      m = req.method;
+    /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
+       a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
+       approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
+    if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
+      return refuse(403, 'CONNECTOR_NOT_APPROVED', {
+        error: 'Forbidden',
+        pending: true,
+        message:
+          'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' +
+          (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') +
+          (rec.enrol.reason ? ' · ' + rec.enrol.reason : '')
+      });
+    /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
+    const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
+    if (!allowed) return refuse(403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
+  }
+  /**
+   * ⭐⭐ M05 — A PERSON SESSION IS AS ALIVE AS ITS LISTING, AND ONLY ON ITS OWN DEVICE (SPEC-iam-build §4.1, D3).
+   * A person token that carries a jti (issued by lib/identity-auth.js issueToken to a page that named its device):
+   *   · X-Device-Id must equal the token's device_id  → else 401 DEVICE_MISMATCH (a lifted token is useless elsewhere)
+   *   · the device must not be revoked                → else 401 DEVICE_REVOKED
+   *   · the jti must be listed under that device      → else 401 SESSION_EXPIRED (logout, revoke, renew)
+   * One read of the shop's policy_flags per jti per 60 s (lib/person-session.js deviceListed) — so a revoke reaches every
+   * server within 60 s.
+   * ⚠️⚠️ A TOKEN WITHOUT A jti IS LEGACY AND PASSES EXACTLY AS BEFORE — every token issued before M05, and every sign-in
+   * from a page that does not yet name its device. Unlisted, not revocable, honoured until its own exp (≤ 7 d). The
+   * request log marks it kind:'legacy' so the day nobody holds one is visible. K-SEC PR A: tokenRefusal (below the module).
+   */
+  const refusal = tokenRefusal(decoded, res);
+  if (refusal) return refuse(401, refusal.code, refusal);
+  let sessRec = null;
+  if (isPersonSession(decoded)) {
+    const sent = String(req.headers['x-device-id'] || '').trim();
+    if (!decoded.device_id || sent !== String(decoded.device_id)) {
+      mark(res, 'code', 'DEVICE_MISMATCH');
+      return refuse(401, 'DEVICE_MISMATCH', {
+        error: 'Unauthorised',
+        code: 'DEVICE_MISMATCH',
+        message: 'This sign-in belongs to another device. Sign in on this one.'
+      });
+    }
+    const v = (sessRec = await require('../lib/person-session').deviceListed(
+      query,
+      decoded.parent_entity_id || decoded.identity_id,
+      String(decoded.device_id),
+      decoded.jti
+    ));
+    const renewing = v.renewed_to && req.method === 'POST' && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
+    if (!v.ok && !renewing) {
+      mark(res, 'code', v.code);
+      return refuse(401, v.code, {
+        error: 'Unauthorised',
+        code: v.code,
+        message: v.code === 'DEVICE_REVOKED' ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.'
+      });
+    }
+    mark(res, 'kind', 'person');
+  }
+  /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
+  if (decoded.identity_type === 'actor') {
+    /**
+     * ⚠️ THE HAT COMES FROM THE DATABASE, NEVER FROM THE TOKEN — and it rides on the query that was already
+     * here, so it costs no extra round trip.
+     *
+     * A hat in the JWT would mean an owner demoting someone to view_only has NO EFFECT until that token
+     * expires. The person keeps the access the owner just took away, for hours, with nothing to show it. That
+     * is the same reasoning the break_status revocation below already rests on: a permission you cannot
+     * withdraw immediately is not a permission you control.
+     */
+    /**
+     * ⚠️⚠️ THE COLUMN LIST IS BUILT FROM WHAT THE DATABASE ACTUALLY HAS. I previously named access_level and
+     * whole_entity unconditionally and left a comment saying that was safe because they "can be undefined".
+     * That is not how Postgres answers a missing column — it raises 42703 and THE WHOLE QUERY THROWS. This is
+     * the revocation check every authenticated actor request runs, so the real effect was that NO CO-ASSIST
+     * COULD SIGN IN until a hand-run migration landed. The comment described a JavaScript failure mode for a
+     * SQL problem, and that gap is exactly what made it read as handled.
+     */
+    const lvlCols = await schema.hasColumn('identities', 'access_level');
+    const costCol = await schema.hasColumn('identities', 'can_see_costs'); // b145 — absent = the reader is cost-blind (fail closed)
+    const r = await query(
+      `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''}${costCol ? ', can_see_costs' : ''} FROM identities
+       WHERE identity_id = $1 AND identity_type = 'actor'`,
+      [decoded.identity_id]
+    );
+    const status = r.rows[0]?.break_status;
+    if (!r.rows.length || status === 'removed' || status === 'deactivated') {
+      return refuse(401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'Your access has been revoked. Contact your admin.' });
+    }
+    /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
+       column existed behaves exactly as it does today rather than being locked out by an absent value. */
+    /**
+     * ⭐⭐ THE SAME QUERY THAT ALREADY RAN FOR REVOCATION NOW CARRIES ACCESS. It reads the row on every
+     * request to check break_status, so the level and the reach flag are free — no extra round trip in an
+     * app whose main complaint is round trips.
+     *
+     * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always. When the columns are
+     * absent they are not SELECTed at all (see above), so they arrive here as undefined and lib/access.js
+     * derives the level from the old `hat` — answering identically either side of the migration. Passing
+     * undefined through is correct: it is what tells access.js to fall back.
+     */
+    actor = r.rows[0];
+  }
+  return { decoded, rotated, keyRec, sessRec, actor };
+}
+/**
+ * softIdentity(req) → who the bearer token proves RIGHT NOW, or null (a stranger) — SEC-149. For a public door that serves more to its
+ * owner (catalogue ?preview=1, the sign-in-first gate, CB Assist grounding). A valid SIGNATURE is not enough: this runs judge(), the
+ * same decision auth runs, so a signed-out (revoked jti) session, a switched-off co-assist or a removed key is a stranger here too.
+ * Never throws and never answers a request: a refusal, a bad token or a database fault all read as null (fail closed).
+ * The identity carries the CURRENT hat / access_level / whole_entity and can_see_costs from the database, never from the token.
+ */
+async function softIdentity(req) {
+  try {
+    const authHeader = req.headers.authorization || '';
+    if (!authHeader.startsWith('Bearer ')) return null;
+    const j = await judge(req, { locals: {} });
+    if (j.refusal) return null;
+    const d = j.decoded;
+    const id = {
+      identity_id: d.identity_id,
+      bridge_id: d.bridge_id,
+      display_name: d.display_name,
+      identity_type: d.identity_type,
+      email: d.email,
+      parent_entity_id: d.parent_entity_id || null,
+      owner_scope: d.owner_scope || null,
+      access_level: d.access_level, // an entity token's own level (identity-auth FX-L2C); a co-assist's is overwritten below from the database
+      can_see_costs: d.identity_type !== 'actor' || (!!j.actor && j.actor.can_see_costs === true)
+    };
+    if (j.actor) Object.assign(id, { hat: j.actor.hat || 'act', access_level: j.actor.access_level, whole_entity: j.actor.whole_entity === true });
+    return id;
+  } catch (e) {
+    require('../lib/logger').fellBack('auth softIdentity: the token did not prove an identity — read as a stranger', e, 'debug');
+    return null;
+  }
+}
+
 const auth = async (req, res, next) => {
   if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
-    // Get token from Authorization header
-    /* ⭐ AN API KEY FOR ANOTHER SYSTEM travels as X-Api-Key or as a Bearer — same verification, then the listing check below */
-    const authHeader = req.headers.authorization || (req.headers['x-api-key'] ? 'Bearer ' + String(req.headers['x-api-key']).trim() : '');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return refusedWith(req, res, 401, 'TOKEN_MISSING', { error: 'Unauthorised', message: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-
-    // Verify token
-    // Pin the algorithm: tokens are signed HS256, so only accept HS256 — closes any
-    // algorithm-confusion ambiguity (e.g. a token claiming a different alg).
-    const { claims: decoded, rotated } = verifyJwt(token); // E10 — the ONE verifier (lib/jwt-verify.js)
-
-    // S1 (reviewer 2026-07-13) — FAIL CLOSED on any token that is not a REAL identity. The signature being valid is not
-    // enough: a non-identity token (e.g. a marketing `sim_lead` token that happened to be signed with JWT_SECRET) must NOT
-    // be accepted as a platform credential. A token without an identity_id, or not of type entity/actor, is not a credential.
-    if (!decoded.identity_id || !['entity', 'actor'].includes(decoded.identity_type)) {
-      return refusedWith(req, res, 401, 'TOKEN_INVALID', { error: 'Unauthorised', message: 'Invalid token' });
-    }
-    /* ⚠️ A KEY IS ONLY AS ALIVE AS ITS LISTING (routes/keys.js): revoked = not in identities.policy_flags.api_keys, whatever
-       the token's own expiry says. One read per request, cached a minute per jti. */
-    let keyRec = null;
-    if (decoded.kind === 'api_key') {
-      const rec = (keyRec = await keyListed(decoded.identity_id, decoded.jti, req));
-      if (!rec) return refusedWith(req, res, 401, 'KEY_REVOKED', { error: 'Unauthorised', message: 'API key revoked or unknown' });
-      /* ⚠️ A CLOSED COUNTER IS HISTORY (POST /api/till/close) — its record stays so its series can be explained, but the
-         key behind it no longer opens anything */
-      if (rec.till && rec.till.closed_at)
-        return refusedWith(req, res, 401, 'COUNTER_CLOSED', {
-          error: 'Unauthorised',
-          code: 'COUNTER_CLOSED',
-          message: 'This counter was closed on ' + String(rec.till.closed_at).slice(0, 10) + '. Open a new counter from ChitBridge to bill again.'
-        });
-      req.api_key = { jti: decoded.jti, scopes: Array.isArray(decoded.scopes) ? decoded.scopes : [], enrol: (rec && rec.enrol) || null };
-      const url = String(req.originalUrl || req.url || '').split('?')[0],
-        m = req.method;
-      /* ⭐ ENROLMENT (Athi, 2026-09-06: "how does the handshake happen that this is the right store and the right installation?"):
-         a connector key whose kit has NOT been approved for its PC may only heartbeat (routes/integrations.js decides; the owner
-         approves on Settings › Integrations). Everything else answers 403 with `pending:true` so the kit can say why it waits. */
-      if (rec && rec.enrol && rec.enrol.approved === false && !/^\/api\/integrations\/heartbeat$/.test(url))
-        return refusedWith(req, res, 403, 'CONNECTOR_NOT_APPROVED', {
-          error: 'Forbidden',
-          pending: true,
-          message:
-            'This connector is waiting for approval — ChitBridge › Settings › Integrations › Running connectors › Approve this PC' +
-            (rec.enrol.host ? ' (' + rec.enrol.host + ')' : '') +
-            (rec.enrol.reason ? ' · ' + rec.enrol.reason : '')
-        });
-      /* ⚠️ A KEY REACHES ONLY THE ROUTES ITS SCOPES NAME — never the session's whole surface */
-      const allowed = req.api_key.scopes.some((item) => (KEY_ROUTES[item] || []).some(([meth, re]) => (meth === '*' || meth === m) && re.test(url)));
-      if (!allowed) return refusedWith(req, res, 403, 'KEY_NOT_SCOPED', { error: 'Forbidden', message: 'This key is not scoped for ' + m + ' ' + url });
-    }
-    /**
-     * ⭐⭐ M05 — A PERSON SESSION IS AS ALIVE AS ITS LISTING, AND ONLY ON ITS OWN DEVICE (SPEC-iam-build §4.1, D3).
-     * A person token that carries a jti (issued by lib/identity-auth.js issueToken to a page that named its device):
-     *   · X-Device-Id must equal the token's device_id  → else 401 DEVICE_MISMATCH (a lifted token is useless elsewhere)
-     *   · the device must not be revoked                → else 401 DEVICE_REVOKED
-     *   · the jti must be listed under that device      → else 401 SESSION_EXPIRED (logout, revoke, renew)
-     * One read of the shop's policy_flags per jti per 60 s (lib/person-session.js deviceListed) — so a revoke reaches every
-     * server within 60 s.
-     * ⚠️⚠️ A TOKEN WITHOUT A jti IS LEGACY AND PASSES EXACTLY AS BEFORE — every token issued before M05, and every sign-in
-     * from a page that does not yet name its device. Unlisted, not revocable, honoured until its own exp (≤ 7 d). The
-     * request log marks it kind:'legacy' so the day nobody holds one is visible. K-SEC PR A: tokenRefusal (below the module).
-     */
-    const refusal = tokenRefusal(decoded, res);
-    if (refusal) return refusedWith(req, res, 401, refusal.code, refusal);
-    let sessRec = null;
-    if (isPersonSession(decoded)) {
-      const sent = String(req.headers['x-device-id'] || '').trim();
-      if (!decoded.device_id || sent !== String(decoded.device_id)) {
-        mark(res, 'code', 'DEVICE_MISMATCH');
-        return refusedWith(req, res, 401, 'DEVICE_MISMATCH', {
-          error: 'Unauthorised',
-          code: 'DEVICE_MISMATCH',
-          message: 'This sign-in belongs to another device. Sign in on this one.'
-        });
-      }
-      const v = (sessRec = await require('../lib/person-session').deviceListed(
-        query,
-        decoded.parent_entity_id || decoded.identity_id,
-        String(decoded.device_id),
-        decoded.jti
-      ));
-      const renewing = v.renewed_to && req.method === 'POST' && /^\/api\/signin\/renew\/?$/.test(String(req.originalUrl || req.url || '').split('?')[0]);
-      if (!v.ok && !renewing) {
-        mark(res, 'code', v.code);
-        return refusedWith(req, res, 401, v.code, {
-          error: 'Unauthorised',
-          code: v.code,
-          message: v.code === 'DEVICE_REVOKED' ? 'The shop removed this device. Your bills are kept here; ask the owner.' : 'Sign in to continue.'
-        });
-      }
-      mark(res, 'kind', 'person');
-    }
+    const j = await judge(req, res);
+    if (j.refusal) return refusedWith(req, res, j.refusal.status, j.refusal.code, j.refusal.legacy);
+    const { decoded, rotated, keyRec, sessRec } = j;
     /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
     if (rotated) mark(res, 'kind', 'rotated');
 
@@ -144,50 +237,11 @@ const auth = async (req, res, next) => {
 
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
-    // (Stateless JWTs can't be deleted server-side; this is the standard revocation.)
-    if (decoded.identity_type === 'actor') {
-      /**
-       * ⚠️ THE HAT COMES FROM THE DATABASE, NEVER FROM THE TOKEN — and it rides on the query that was already
-       * here, so it costs no extra round trip.
-       *
-       * A hat in the JWT would mean an owner demoting someone to view_only has NO EFFECT until that token
-       * expires. The person keeps the access the owner just took away, for hours, with nothing to show it. That
-       * is the same reasoning the break_status revocation below already rests on: a permission you cannot
-       * withdraw immediately is not a permission you control.
-       */
-      /**
-       * ⚠️⚠️ THE COLUMN LIST IS BUILT FROM WHAT THE DATABASE ACTUALLY HAS. I previously named access_level and
-       * whole_entity unconditionally and left a comment saying that was safe because they "can be undefined".
-       * That is not how Postgres answers a missing column — it raises 42703 and THE WHOLE QUERY THROWS. This is
-       * the revocation check every authenticated actor request runs, so the real effect was that NO CO-ASSIST
-       * COULD SIGN IN until a hand-run migration landed. The comment described a JavaScript failure mode for a
-       * SQL problem, and that gap is exactly what made it read as handled.
-       */
-      const lvlCols = await schema.hasColumn('identities', 'access_level');
-      const r = await query(
-        `SELECT break_status, hat${lvlCols ? ', access_level, whole_entity' : ''} FROM identities
-         WHERE identity_id = $1 AND identity_type = 'actor'`,
-        [decoded.identity_id]
-      );
-      const status = r.rows[0]?.break_status;
-      if (!r.rows.length || status === 'removed' || status === 'deactivated') {
-        return refusedWith(req, res, 401, 'ACCESS_REVOKED', { error: 'Unauthorised', message: 'Your access has been revoked. Contact your admin.' });
-      }
-      /* Default 'act', matching what POST /actors writes when no hat is given — so an actor created before the
-         column existed behaves exactly as it does today rather than being locked out by an absent value. */
-      /**
-       * ⭐⭐ THE SAME QUERY THAT ALREADY RAN FOR REVOCATION NOW CARRIES ACCESS. It reads the row on every
-       * request to check break_status, so the level and the reach flag are free — no extra round trip in an
-       * app whose main complaint is round trips.
-       *
-       * ⚠️ b173 MAY NOT BE APPLIED YET. Code deploys before Athi runs migrations, always. When the columns are
-       * absent they are not SELECTed at all (see above), so they arrive here as undefined and lib/access.js
-       * derives the level from the old `hat` — answering identically either side of the migration. Passing
-       * undefined through is correct: it is what tells access.js to fall back.
-       */
-      req.identity.hat = r.rows[0].hat || 'act';
-      req.identity.access_level = r.rows[0].access_level;
-      req.identity.whole_entity = r.rows[0].whole_entity === true;
+    /* the hat, level and reach come from the database row judge() already read (never the token) — default 'act' for a row older than the hat column */
+    if (j.actor) {
+      req.identity.hat = j.actor.hat || 'act';
+      req.identity.access_level = j.actor.access_level;
+      req.identity.whole_entity = j.actor.whole_entity === true;
     }
 
     /**
@@ -248,6 +302,7 @@ const auth = async (req, res, next) => {
   }
 };
 
+auth.softIdentity = softIdentity;
 module.exports = auth;
 /** a listed person session: a person token that carries a jti (not a key, not the shop's auto-raise token) */
 const isPersonSession = (claims) => claims.kind !== 'api_key' && claims.kind !== 'auto' && !!claims.jti;

@@ -12,7 +12,6 @@ const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); 
 const storefront = require('../lib/storefront-contract'); // the public doors' OpenAPI operations and the old answers the storefront reads
 const { oldBody } = storefront; // { error, message }: the old body shop.html reads
 const membership = require('../lib/network-membership'); // who is in the network — one reader, fails loudly (T2-HONEST)
-const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape (K-1: the enquiry thread read)
 const crypto = require('crypto'); // 6b: hash the ERP handoff payload (receipt, not raw payload)
@@ -801,14 +800,7 @@ const networkOrdersOn = () =>
 /** shopperOf(req) → the storefront customer the Bearer token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null —
  *  the same claims test as customerOf (SEC4) / middleware/customer-auth, without naming the shop up front (the network decides) */
 function shopperOf(req) {
-  const claims = claimsOf(req);
-  if (!claims || !claims.identity_id || claims.identity_type !== 'customer') return null;
-  return {
-    identity_id: claims.identity_id,
-    bridge_id: claims.bridge_id || null,
-    shop_entity_id: claims.parent_entity_id || null,
-    display_name: claims.display_name || null
-  };
+  return customerAuth.soft(req);
 }
 router.post('/network-store/:networkId/order', doorCheck('POST /network-store/:networkId/order'), async (req, res) => {
   try {
@@ -990,30 +982,23 @@ router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (r
  * owner is not a stranger: with a valid session for THIS entity, the read bypasses the visibility gate and answers
  * with `preview: true`. Nothing changes for anyone else — a bad or foreign token is simply anonymous.
  */
-/** the bearer's verified claims, or null — a missing, bad or expired token is simply anonymous on a public read */
-function claimsOf(req) {
-  try {
-    const text = req.headers.authorization || '';
-    if (!text.startsWith('Bearer ')) return null;
-    return require('../lib/jwt-verify').verifyJwt(text.slice(7)).claims || null; // E10 — the ONE verifier
-  } catch (e) {
-    logger.fellBack('catalogue claimsOf: the token did not verify — read as a stranger', e, 'debug');
-    return null;
-  }
-}
-function ownerOf(req, entity) {
-  const d = claimsOf(req);
-  if (!d || !d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return false;
-  const mine = d.parent_entity_id || d.identity_id;
-  return String(mine) === String(entity.identity_id);
+/**
+ * ownerOf(req, entity) → the live identity of THIS shop's owner or staff, or null (a stranger) — SEC-149. A signature-valid token is not
+ * enough: middleware/auth.softIdentity runs the same decision auth runs (session listing/jti, key listing, co-assist status), so a
+ * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
+ */
+async function ownerOf(req, entity) {
+  const who = await auth.softIdentity(req);
+  if (!who || String(who.parent_entity_id || who.identity_id) !== String(entity.identity_id)) return null;
+  return who;
 }
 /**
  * ⭐ SEC4 · A CUSTOMER SIGNED IN TO THIS SHOP — the token /login/verify (or /order/confirm) issued: identity_type 'customer' and
  * parent_entity_id = THIS shop (storefront identities are per shop, crHandle). The same test middleware/customer-auth.js applies.
  */
 function customerOf(req, entity) {
-  const d = claimsOf(req);
-  return !!(d && d.identity_id && d.identity_type === 'customer' && String(d.parent_entity_id || '') === String(entity.identity_id));
+  const shopper = customerAuth.soft(req);
+  return !!(shopper && String(shopper.shop_entity_id || '') === String(entity.identity_id));
 }
 /**
  * ⭐⭐ SEC4 · A SIGN-IN-FIRST SHOP ANSWERS A STRANGER WITH ITS CARD ONLY. Before SEC4 `storefront_access: 'login'` was only SENT, and
@@ -1151,12 +1136,15 @@ router.get('/:bridge_id', doorCheck('GET /:bridge_id'), async (req, res) => {
   try {
     const entity = await resolveEntity(req.params.bridge_id);
     if (!entity) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    const asOwner = req.query.preview === '1' && ownerOf(req, entity);
+    const owner = await ownerOf(req, entity);
+    const asOwner = req.query.preview === '1' && !!owner;
     // ONE catalogue read, shared with the B2B/supplier view (lib/catalogue-view.js). The payload is unchanged.
     /* SEC4: this shop's signed-in customer (or its own owner/staff) passes a sign-in-first shop's gate; anyone else gets the card */
-    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || ownerOf(req, entity) });
+    const view = await publicViewFor(entity, { asOwner, signedIn: customerOf(req, entity) || !!owner });
     if (!view.available) return refuseAs(req, res, { status: 404, code: 'NOT_FOUND', legacy: storefront.NO_SHOP });
-    res.json(publicResponseFor(view, asOwner));
+    const body = publicResponseFor(view, asOwner);
+    /* SEC-149: a cost-blind co-assist previews the shop without the buying side — the same strip every cost-blind answer uses (lib/cost.js) */
+    res.json(asOwner && owner.can_see_costs === false ? require('../lib/cost').dropCostKeys(structuredClone(body)) : body);
   } catch (err) {
     return fromError(req, res, err, storefront.FAILED.CATALOGUE);
   }
