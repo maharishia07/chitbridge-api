@@ -9,12 +9,12 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 155 | `list` | `amend.js` |  |
+| 156 | `list` | `amend.js` |  |
 | 123 | `rows` | `crm.js` | still in them: |
 | 115 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 112 | `withEntity` | `books-hooks.js` |  |
-| 108 | `read` | `books-cashflow.js` | Trips: |
+| 109 | `read` | `books-cashflow.js` | Trips: |
 | 97 | `answer` | `availability.js` | from March; then nearest. |
 | 89 | `money` | `bill-privacy.js` |  |
 | 80 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 64 | `failed` | `service.js` | what every catch answers: |
 | 62 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `entry` | `books-store.js` |  |
+| 62 | `entry` | `books-store.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 58 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
@@ -67,7 +67,7 @@ of file each thing is; this says what already does the job.
 | 38 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `host` | `chit-sheet.js` |  |
-| 36 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 37 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
 | 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -75,7 +75,7 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
-| 33 | `rate` | `convert.js` | A rate, with its evidence. |
+| 34 | `rate` | `convert.js` | A rate, with its evidence. |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
@@ -120,11 +120,11 @@ of file each thing is; this says what already does the job.
 | 22 | `update` | `folder-rules.js` |  |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `governance` | `home-facts.js` |  |
-| 22 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
+| 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 22 | `keep` | `signin.js` | see. |
-| 21 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 22 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 21 | `chart` | `fx-rates.js` |  |
 | 21 | `match` | `itemmatch.js` | actually state. |
 | 20 | `card` | `cap-shop.js` |  |
@@ -134,7 +134,7 @@ of file each thing is; this says what already does the job.
 | 20 | `entries` | `books-store.js` |  |
 | 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
-| 20 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
+| 21 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 20 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 19 | `renderApp` | `app.html` |  |
 | 19 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
