@@ -25,7 +25,7 @@ function lift(name) {
   throw new Error('unbalanced ' + name);
 }
 
-const NAMES = ['dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck'];
+const NAMES = ['dayKeyOf', 'isDocRow', 'isExpenseRow', 'isReturnRow', 'withdrawnNos', 'dayMarkWithdrawn', 'dayServerCheck', 'dayCheckThenRefresh'];
 const today = new Date().toISOString();
 
 /** a fresh page context: a local store, a server answer, the lifted functions */
@@ -35,6 +35,7 @@ function scene(local, serverAnswer) {
     window: {}, Date, Object, Array, String, Number, isNaN, Promise,
     DB: { all: async () => store, put: async (name, row) => { const at = store.findIndex((b) => b.no === row.no); if (at >= 0) store[at] = row; } },
     HOST: { history: async () => serverAnswer, cred: () => true },
+    dayClose: () => { ctx.reopened = (ctx.reopened || 0) + 1; },
     tillId: () => 'C1', cbQuiet: (where, e) => { throw e; },
     r2: (n) => Math.round((Number(n) || 0) * 100) / 100
   };
@@ -65,6 +66,13 @@ const rowsOf = (store, ctx) => store.filter((b) => !ctx.isDocRow(b));
       assert.deepStrictEqual([again.state, again.marked], ['agree', 0], 'the second pass marks nothing, so the report settles');
     });
   }
+  await ok('the report is read again when a cancelled bill left the day, and only then', async () => {
+    const first = scene([bill('S1', 1000), bill('S2', 1180)], { bills: [bill('S1', 1000)], withdrawn: [{ no: 'S2' }] });
+    await first.ctx.dayCheckThenRefresh(rowsOf(first.store, first.ctx));
+    assert.strictEqual(first.ctx.reopened, 1);
+    await first.ctx.dayCheckThenRefresh(rowsOf(first.store, first.ctx));
+    assert.strictEqual(first.ctx.reopened, 1, 'the second pass marks none, so it does not read again');
+  });
   await ok('a bill the server does not know and did not withdraw is still unsent: the check differs', async () => {
     const { ctx, store } = scene([bill('S1', 1000), bill('S3', 250)], { bills: [bill('S1', 1000)], withdrawn: [] });
     const chk = await ctx.dayServerCheck(rowsOf(store, ctx));

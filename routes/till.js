@@ -3487,7 +3487,7 @@ const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_item
         ORDER BY h.created_at DESC LIMIT $3)
       UNION ALL
        /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. */
-       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb AS line_items, NULL::jsonb AS summary_json, true AS withdrawn
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no'
