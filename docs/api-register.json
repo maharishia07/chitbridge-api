@@ -5759,7 +5759,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2565,
-   "hash": "5172d3be2858de0d",
+   "hash": "dc47d5ce7ab5a294",
    "does": "",
    "errors": {
     "count": 3,
@@ -5845,7 +5845,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "5172d3be2858de0d"
+    "stale_since": "dc47d5ce7ab5a294"
    },
    "status": "partial",
    "callers": [

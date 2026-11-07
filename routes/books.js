@@ -2568,7 +2568,7 @@ router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'),
       { fy, p } = fxPeriod(req.query || {});
     const v = await withEntity(e, (h) => FXR.revaluation(h, e, req.books, fy, p));
     const why = !v.ready
-      ? FXR.WAITS.balances
+      ? FXR.WAITS.balancesView
       : v.posted
         ? 'Revalued — ' + v.posted.entry_no + '.'
         : v.missing[0] || (v.event ? null : 'Nothing to revalue.');
