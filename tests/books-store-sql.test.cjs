@@ -34,7 +34,7 @@ const CALLS = {
   /* CS2: a never-posted ledger re-charted in place (no DELETE on the setup tables) */
   parkChart: [E], rechart: [E, [{ code: '2200', name: 'GST collected', is_group: false, nature: 'liability', role: 'gst_collected', parent_code: '2200', tally_group: 'GST and Statutory Liabilities', sch3_line: 'x', saft_grouping: 'LIABILITY:x' }], { pack_code: 'AU', pack_version: null }],
   relabelPeriods: [E, '2026-27', [{ period: 1, fiscal_year: '2026', start_date: '2026-01-01', end_date: '2026-01-31' }]],
-  nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], unreversedForChit: [E, U], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
+  nextNo: [E, 'JV', '2026-27'], entryBySource: [E, 'chit:x'], unreversedForChit: [E, U], inputTaxOfChits: [E, [U], ['input_cgst', 'input_sgst', 'input_igst', 'input_cess'], '2026-04-01', '2026-05-01'], receiptBillsAgainst: [E, ['x']], postedSources: [E, ['bill:x', 'walkin-late:x']], entry: [E, U], entryLines: [E, '2026-04-01', '2026-04-30', U, U, { limit: 50, after: { date: '2026-04-03', no: 'SV/2026-27/000009' }, noOpening: true }], entries: [E, '2026-04-01', '2026-04-30'], taxEntryLines: [E, '2026-04-01', '2026-04-30', ['tax_setoff', 'tax_payment']],
   /* PERF1: a keyset page and the figures it stands on */
   entryPage: [E, '2026-04-01', '2026-04-30', U, null, { limit: 100, after: null }], pageSums: [E, '2026-04-01', '2026-04-30', U, null, { date: '2026-04-03', no: 'SV/2026-27/000009' }, true],
   yearRows: [E, '2026-27'], ledgerLines: [E, '2026-04-01', '2026-04-30', U], years: [E],
@@ -103,6 +103,18 @@ const CALLS = {
     ok('STD1 · exactly one exact → the party, no near list; two exact → nobody, the near list (≤ 3, names + party_no only)',
       JSON.stringify([r1, r2]) === JSON.stringify([{ one: { party_id: U, name: 'Sri Ganesh Provisions', party_no: 'P-1' }, near: [] },
         { one: null, near: [{ name: 'Sri Ganesh', party_no: 'P-1' }, { name: 'Sri Ganesh', party_no: 'P-2' }, { name: 'Sri Ganesh Provisions', party_no: null }] }]), JSON.stringify([r1, r2]));
+  }
+  /* ── ACC-269: the expense chits' input tax is ONE statement for the month, bounded by posting date, reversal-aware ── */
+  {
+    seen.length = 0;
+    await S.inputTaxOfChits(db, E, [U, E, 'a0000000-0000-4000-8000-000000000003'], ['input_cgst', 'input_sgst'], '2026-04-01', '2026-05-01');
+    const q = seen[0];
+    ok('ACC-269 · inputTaxOfChits: ONE statement for every expense chit of the month (no per-chit read)', seen.length === 1 && Array.isArray(q.params[1]) && q.params[1].length === 3, JSON.stringify(q.params));
+    ok('ACC-269 · bounded to the month by posting date: [from, to)', q.params[3] === '2026-04-01' && q.params[4] === '2026-05-01' && /posting_date, 'YYYY-MM-DD'\) >= \$4/.test(q.text) && /posting_date, 'YYYY-MM-DD'\) < \$5/.test(q.text), q.text);
+    ok('ACC-269 · a reversal posted before the month end takes the entry away; a reversal entry is never summed', /NOT EXISTS \(SELECT 1 FROM journal_entry r WHERE r\.entity_id = x\.entity_id AND r\.reverses_entry_id = x\.entry_id AND to_char\(r\.posting_date, 'YYYY-MM-DD'\) < \$5\)/.test(q.text) && /x\.reverses_entry_id IS NULL/.test(q.text), q.text);
+    ok('ACC-269 · only the pack input roles, the shop fenced on the entry and the line', /a\.role = ANY\(\$3::text\[\]\)/.test(q.text) && /x\.entity_id = \$1/.test(q.text) && /l\.entity_id = x\.entity_id/.test(q.text), q.text);
+    const grouped = await S.inputTaxOfChits({ query: async () => ({ rows: [{ chit_id: U, role: 'input_cgst', minor: '900' }, { chit_id: U, role: 'input_sgst', minor: '900' }, { chit_id: E, role: 'input_cgst', minor: '0' }] }) }, E, [U, E], ['input_cgst', 'input_sgst'], '2026-04-01', '2026-05-01');
+    ok('ACC-269 · the rows come back by chit and role; a role that nets to 0 is absent', JSON.stringify(grouped) === JSON.stringify({ [U]: { input_cgst: 900, input_sgst: 900 } }), JSON.stringify(grouped));
   }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks (' + seen.length + ' statements)\n');
   process.exit(fail ? 1 : 0);
