@@ -39,9 +39,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
-| BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
-| BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
-| BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
+| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number. | Send a price of 0 or more, as a number. | tax | 2026-10-23 |
+| BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
+| BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
@@ -49,14 +49,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_BAD_REQUEST | 400 | Ledger needs an answer | The ledger needs one more answer before it can do that. | Read the question shown and answer it. | books | 2026-10-22 |
 | BOOKS_CONFLICT | 409 | Ledger cannot take that | The ledger cannot take that as it stands. | Read the sentence shown, fix it and try again. | books | 2026-10-23 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
-| BOOKS_NOT_MIGRATED | 503 | Ledger update pending | This cannot be saved yet: a database update is still to arrive. | Try again after the next update. | books | 2026-10-22 |
+| BOOKS_NOT_MIGRATED | 503 | Ledger update pending | Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update. | Try again after the next update. | books | 2026-11-07 |
 | BOOKS_REFUSED | 422 | Ledger refused | The ledger refused that, and the sentence says why. | Fix what the sentence says and try again. | books | 2026-10-23 |
 | B_CAPABILITY | 422 | More than the plan allows | That is more than this shop's plan allows. | Choose from what the plan grants. | governance | 2026-10-23 |
 | CAPTURE_REFUSED | varies | Message not handled | That message could not be handled as asked. | Read the line shown, then try again. | capture | 2026-10-23 |
-| CAPTURE_STORE_MISSING | 503 | Inbox not ready | The inbox is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
+| CAPTURE_STORE_MISSING | 503 | Inbox not ready | Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update. | Ask your administrator to finish the update. | capture | 2026-11-07 |
 | CAPABILITY_OFF | 403 | Capability off | This shop has switched its connector capability off, so devices and connectors are refused. | Turn the connector capability back on to resume. | connectors | 2026-10-22 |
 | CATALOGUE_NOT_EMPTY | 409 | Shop already has products | This shop already has products. | Start a starter list only on an empty shop. | till | 2026-10-23 |
-| CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Saved catalogues are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| CATALOGUE_STORE_MISSING | 503 | Saved catalogues not ready | Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is. | Try again after the next update. | assist | 2026-11-07 |
 | CATEGORIES_NOT_SET_UP | 500 | Categories not set up | Your categories could not be set up, so nothing was added. | Try again in a moment. | till | 2026-10-23 |
 | CHILD_NOT_FOUND | 404 | Business not found | We could not find that business. | Check its handle and try again. | network | 2026-10-23 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |
@@ -84,21 +84,26 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CONNECTOR_NO_EMAIL | 400 | No email to send to | The business has no email address to send the code to. | Add an email address in Settings, then ask again. | connectors | 2026-10-23 |
 | CONNECTOR_WRONG_TYPE | 409 | Wrong kind of connector | This door is only for ERP connectors. | Devices send their readings to the device door. | connectors | 2026-10-23 |
 | CONSENT_UNREADABLE | varies | Consent unreadable | We could not read their consent, so nothing was sent. | Try again in a moment. | whatsapp-out | 2026-10-22 |
-| CONTAINER_STORE_MISSING | 503 | Product containers not ready | Product containers are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| CONTAINER_STORE_MISSING | 503 | Product containers not ready | The container model arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |
 | COST_BLIND | varies | Cost blind | Your access does not include cost or price. | Ask the owner to give you Sees costs, or change availability only. | cost | 2026-10-22 |
 | COUNTER_BAD_REQUEST | 400 | Counter request not valid | That counter request is missing something or is not right. | Check the name and try again. | counters | 2026-10-23 |
 | COUNTER_CLOSED | 401 | Counter closed | This counter was closed or taken by another device, so it cannot bill. | Sign in here to take it back, or open a new counter. | auth | 2026-10-22 |
 | COUNTER_HELD | varies | Counter held | That counter is open on another PC. | Close it there first, or take it over when asked. | counters | 2026-10-22 |
 | COUNTER_NOT_MIGRATED | 503 | Counter update pending | Counters cannot be changed yet: a database update is still to arrive. | Try again after the next update. | counters | 2026-10-23 |
 | COUNTER_SESSION_ONLY | 403 | Counters need a person | Counters are managed by a signed-in person, not by a key. | Sign in as the owner to change a counter. | counters | 2026-10-23 |
+| COUNTRY_SETUP_BAD | 400 | Country setup answer not accepted | That answer cannot be saved: the country, money, year start, tax number or tax scheme is missing or not one we offer. | Fix the field named in the message and save again. | country-setup | 2026-11-06 |
 | COUNTRY_SETUP_NOT_MIGRATED | 503 | Country setup not ready | Country setup arrives after the next update. Selling and the rail work meanwhile. | Carry on selling; come back after the update. | governance | 2026-10-23 |
 | COUNTRY_SETUP_PENDING | 422 | Country setup pending | Finish the country setup before using the ledger. | Open Country setup and complete it. | country-setup | 2026-10-22 |
 | COVER_CONFLICT | 400 | Cover conflict | Going off would leave someone without cover. | Wait until the other person is back, or change who covers. | actors | 2026-10-22 |
-| CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes are not set up here yet. | Try again after the next update. | crm | 2026-10-22 |
+| CRM_NOT_MIGRATED | 503 | Crm not migrated | Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update. | Try again after the next update. | crm | 2026-11-07 |
 | CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| LOGIN_FAILED | 400 | Sign-in failed | That sign-in code could not be used. | Ask your admin for a new code and try again. | signin | 2026-11-07 |
+| LOGIN_FORMAT_INVALID | 400 | Sign-in name not in the right form | Type your sign-in as yourname@business. | Type your key, an @ sign and your business, then try again. | signin | 2026-11-07 |
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
+| OTP_REQUIRED | 400 | Code needed | Enter the code your admin shared with you. | Type the code and sign in again. | signin | 2026-11-07 |
+| PIN_REQUIRED | 400 | PIN needed | Enter your 4 digit PIN to sign in. | Type your PIN and sign in again. | signin | 2026-11-07 |
 | PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
 | PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
 | PROPOSAL_DOMESTIC | 409 | Not an RFQ | Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote. | Change this chit directly, or ask for a quote when you compose it. | rail | 2026-10-25 |
@@ -124,6 +129,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_NO_SENDER | 400 | No sender named | The chit does not say which business sent it. | The sending installation must name its sender. | ctp | 2026-10-23 |
 | CTP_NOT_A_QUERY | 400 | Not a CTP query | This is not a question this door understands. | Send a CTP/1 query. | ctp | 2026-10-23 |
 | CTP_NOT_AN_ENVELOPE | 400 | Not a CTP envelope | This is not a chit this door understands. | Send a CTP/1 envelope. | ctp | 2026-10-23 |
+| CTP_VERSION_UNSUPPORTED | 400 | Version not read | This installation reads CTP/1, any minor version; the message is of another major version. | The sending installation must send a CTP/1 message (minor versions and extra fields are fine). | ctp | 2026-11-06 |
 | CTP_ADDRESS_CLASH | 409 | Id already used here | A different business here already uses that id, so the one you typed cannot be added under it. | Ask them to share their link, and tell us. | ctp | 2026-10-25 |
 | CTP_ADDRESS_INVALID | 400 | Address not readable | That is not an address we can read. | Type it as id@domain, or paste the business's link. | ctp | 2026-10-25 |
 | CTP_ADDRESS_UNKNOWN | 404 | No such business there | We do not deal with that domain, or nobody there has that id. | Check the address, or paste their shared link. | ctp | 2026-10-25 |
@@ -159,7 +165,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
-| DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Your saved offers, slabs and models are not set up here yet. | Try again after the next update. | definitions | 2026-10-23 |
+| DB_CONNECTION_LOST | 503 | Database unavailable | The connection to the database was lost while this was being done. Nothing was saved. | Try again in a moment. | platform | 2026-11-07 |
+| DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Definitions arrive after the next update. Nothing was saved. | Try again after the next update. | definitions | 2026-11-07 |
 | DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
 | DEFINITION_INCOMPLETE | 422 | Rule has no value | This rule has no value yet, so it would do nothing. | Fill in the value, then save again. | definitions | 2026-10-23 |
@@ -207,7 +214,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | FORMS_NOT_FOUND | 404 | Form not found | We could not find that form. | Go back to the list of forms and pick again. | forms | 2026-10-23 |
 | FORMS_NOT_PARTICIPANT | 403 | Not on this chit | Your shop is not on that chit, so the form cannot be filed there. | Pick a chit your shop is on. | forms | 2026-10-23 |
 | FORMS_REFUSED | varies | Form refused | The form could not be done. | Try again, or ask the person who set it up. | forms | 2026-10-23 |
-| FORMS_STORE_MISSING | 503 | Forms not set up | Forms are not available here yet. | Ask the platform operator to set them up. | forms | 2026-10-23 |
+| FORMS_STORE_MISSING | 503 | Forms not set up | Forms arrive after the next update. No form can be issued or read yet. | Ask the platform operator to set them up. | forms | 2026-11-07 |
 | FORM_NOT_READY | 400 | Form not ready | The form is missing some details it needs. | Fill in the fields listed, then try again. | forms | 2026-10-23 |
 | FX_RATE_MISSING | 422 | Exchange rate missing | There is no exchange rate for that day. | Add the rate for that day, then try again. | forms | 2026-10-22 |
 | FX_RATE_OF_DAY | varies | Fx rate of day | Not an error. This note shows the exchange rate used for that day. | Nothing to do. | forms | 2026-10-22 |
@@ -216,7 +223,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | GOV_NOT_AVAILABLE | 503 | Not available yet | That is not available on this installation yet. | Try again after the next update. | governance | 2026-10-23 |
 | GOV_REFUSED | 422 | Could not be done as sent | That could not be done as it was sent. | Check what was sent and try again. | governance | 2026-10-23 |
 | GSTR_REFUSED | 422 | Return cannot be built | The GST return could not be built from this shop's facts, and the sentence says why. | Check the shop's GSTIN in Country setup, then try again. | tax | 2026-11-05 |
-| HANDOFF_STORE_MISSING | 503 | ERP handoffs not ready | ERP handoffs are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| HANDOFF_STORE_MISSING | 503 | ERP handoffs not ready | The ERP handoff arrives after the next update. Nothing was sent. | Try again after the next update. | assist | 2026-11-07 |
 | HAS_PARENT | 409 | Already in a network | That business is already in a network, and a business can be in one at a time. | Remove it from that network first. | network | 2026-10-23 |
 | IDEMPOTENCY_CONFLICT | 422 | Idempotency conflict | This was already sent once, with different details. | Start it again; the new try goes as its own. | idempotency | 2026-10-22 |
 | IDEMPOTENCY_IN_PROGRESS | 409 | Idempotency in progress | The same request is still being handled. | Wait a moment and look before sending it again. | idempotency | 2026-10-22 |
@@ -225,7 +232,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | IDOC_INVALID_VALUE | 400 | Document number not valid | That does not look like the document you chose. | Check the number and try again. | identity-docs | 2026-10-24 |
 | IDOC_NOT_CODE_VERIFIED | varies | Idoc not code verified | Only a mobile number or an e-mail is confirmed by a code. | Your employer checks the other documents. | iddoc-verify | 2026-10-22 |
 | IDOC_NOT_FOUND | 404 | Idoc not found | That document is not on file yet. | Add it first, then ask for a code. | identity-docs | 2026-10-22 |
-| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | Identity records are not switched on yet. | Try again later. | identity-docs | 2026-10-22 |
+| IDOC_NOT_MIGRATED | 503 | Idoc not migrated | Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail. | Try again later. | identity-docs | 2026-11-07 |
 | IDOC_NO_CODE | 400 | Idoc no code | No code has been asked for yet. | Ask for a code first. | iddoc-verify | 2026-10-22 |
 | IDOC_REFUSED | varies | Document request refused | That could not be done. | Read the message shown: it says why. | identity-docs | 2026-10-24 |
 | IDOC_SUBJECT_FORBIDDEN | 403 | Not your co-assist | That person is not one of your co-assists. | Only the account owner can record a document for their own co-assists. | identity-docs | 2026-10-24 |
@@ -260,10 +267,10 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | LOCKED | 409 | Locked | This column is one every catalogue keeps, so it cannot be changed that way. | Leave it as it is. | schemas | 2026-10-22 |
 | MAX_TASKS_OVER_ENTITY | 400 | Max tasks over entity | That is more tasks than the shop allows one person. | Raise the limit in Settings first, or give fewer. | actors | 2026-10-22 |
 | MEMBERSHIP_SUSPENDED | 403 | Membership suspended | The network has suspended your membership, so you cannot send to it. | Ask the network to resume it, then send again. | network | 2026-10-24 |
-| MIGRATION | 409 | Not switched on yet | Unit and source are not switched on for your account yet. | Type, label and required still work; try again after the next update. | schemas | 2026-10-22 |
+| MIGRATION | 409 | Not switched on yet | Unit and source arrive after the next update. Type, label and required still work. | Type, label and required still work; try again after the next update. | schemas | 2026-11-07 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
-| MONEY_INPUT_UNREADABLE | 422 | A line could not be read | A line has a price or quantity that is not a number, so the money could not be worked out. | Fix that line and send again. | chits | 2026-10-30 |
+| MONEY_INPUT_UNREADABLE | 422 | Retired: a line could not be read | Retired 2026-11-07 (ACC-271): a chit line with a figure that is not a number is now answered BAD_QTY, BAD_PRICE or BAD_RATE (400). | Fix that line and send again. | chits | 2026-10-30 |
 | MONEY_NOT_COMPUTED | 503 | The money could not be worked out | The money could not be worked out. | Try again; if it repeats, tell us. | chits | 2026-10-30 |
 | MONEY_UNBALANCED | 409 | The money does not add up | The bill does not add up, so it was not sent. | Check the bill, or the owner can let it through and say why. | chits | 2026-10-30 |
 | R132 (re-walk) | Counter › F7 › Asha Devi, 16:50 | Picking a name asks that person's PIN | HALF: once Asha has a counter PIN, re-picking her opens "Counter PIN" and 2468 signs her in ✅. Still open: (1) her mobile 9000000004 is still refused ("That sign-in didn't work"); (2) a first pick asks to TYPE the user ID although her name was just picked; (3) first sign-in asks for a PIN twice ("Choose a PIN", then "Counter PIN"); (4) the signed-in box also says "Sign in to connect this counter to a shop", contradicting itself. | w741-w746 | P1 (1,2) · P2 (3) · P3 (4) | cb-counter (api kit till master) |
@@ -283,13 +290,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NETWORK_OWNER_ONLY | 403 | Owner only | Only the business owner can do this. | Sign in as the business itself. | network | 2026-10-23 |
 | NETWORK_PRICE_MISSING | 409 | No brand price | The brand has no price for that product. | Ask the brand to suggest a price. | network-offers | 2026-10-23 |
 | NETWORK_REFUSED | 409 | Network step refused | The network cannot take that step as it stands. | Read the sentence shown and fix it. | network-offers | 2026-10-23 |
+| NETWORK_REMOTE_NOT_YET | 409 | Business on another installation | That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved. | Add them as a supplier for now; connecting across installations is coming. | network | 2026-11-07 |
 | NETWORK_REQUEST_INVALID | 400 | Network request not valid | That request is not valid: the sentence says what to change. | Fix what the sentence says and send again. | network-offers | 2026-10-23 |
 | NETWORK_TOO_LARGE | 413 | Drawing too large | The drawing is too big to save. | Take some of it out and save again. | network | 2026-10-23 |
 | NET_WRITE_DISABLED | 503 | Network editing is off | Network changes aren't available yet. | Try again later. | network | 2026-10-23 |
 | NOTHING_TO_UPDATE | 400 | Nothing to update | Nothing was sent to change. | Fill in at least one field. | actors | 2026-10-23 |
-| NOTIF_DISMISS_NOT_MIGRATED | 503 | Activity clearing update pending | Activity cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-22 |
+| NOTIF_DISMISS_NOT_MIGRATED | 503 | Activity clearing update pending | The Activity clear-out arrives after the next update. Activity stays as it is. | Try again after the next update. | notifications | 2026-11-07 |
 | NOTIF_NOTHING_TO_CLEAR | 400 | Nothing to clear | There is nothing chosen to clear. | Pick an item to clear, or choose clear all. | notifications | 2026-10-23 |
-| NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The unread count cannot be cleared yet: a database update is still to arrive. | Try again after the next update. | notifications | 2026-10-23 |
+| NOTIF_SEEN_NOT_MIGRATED | 503 | Unread count update pending | The notification badge reset arrives after the next update. The badge stays as it is. | Try again after the next update. | notifications | 2026-11-07 |
 | NOT_ALLOWED | 403 | Not allowed | Only the two businesses on a connection, or the network above it, can do that. | Ask the other business or the network. | network | 2026-10-23 |
 | NOT_BOARD_READER | 403 | Not board reader | The test board is for builders. | Use your own incidents and requirements, or ask a builder. | testing | 2026-10-31 |
 | NOT_BOARD_WRITER | 403 | Not board writer | Only the board’s own account can change the shared cases and records. | Ask the board’s owner, or record your result instead. | testing | 2026-10-22 |
@@ -342,13 +350,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PAIR_CODE_UNKNOWN | 404 | Pairing code not known | That code is wrong or has expired. | Ask ChitBridge for a new code. | till | 2026-10-23 |
 | PAIR_TOO_MANY_TRIES | 429 | Too many wrong codes | Too many wrong codes were tried. | Wait a minute, then ask for a new code. | till | 2026-10-23 |
 | PARENT_NOT_FOUND | 404 | Network not found | We could not find that network. | Check its handle and try again. | network | 2026-10-23 |
-| PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Reach figures are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| PENETRATION_STORE_MISSING | 503 | Reach figures not ready | Penetration figures arrive after the next update. No penetration figures are shown meanwhile. | Try again after the next update. | assist | 2026-11-07 |
 | PERIOD_LOCKED | 409 | Month locked | That month is locked. | Use a date in an open month, or ask the owner to unlock it. | books | 2026-10-22 |
 | PERIOD_RETURN_OPEN | 422 | Tax period not closed | A tax period of that year has not been closed yet. | Close each period named under Tax close, then close the year. | books | 2026-10-30 |
 | PHONE_DELIVERY_NOT_CONFIGURED | varies | Phone delivery not configured | Codes cannot be sent to a mobile number yet, so nothing was changed. | Try again when text messages are set up. | iddoc-verify | 2026-10-22 |
 | PIN | varies | Pin | Not an error. PIN is the postcode label used in India. | Nothing to do. | country | 2026-10-22 |
 | PIN_ACTORS_ONLY | 400 | Only a person can change a PIN | Only a person with their own login can change a PIN. | Sign in as that person. | actors | 2026-10-23 |
 | PIN_INCORRECT | 400 | Current PIN is wrong | The current PIN is not right. | Try again with your current PIN. | actors | 2026-10-23 |
+| PIN_LOCKED | 400 | PIN is locked | Your PIN is locked after too many wrong tries. | Ask your owner to reset it. | actors | 2026-11-06 |
 | PLATFORM_BOUND | varies | Set by the platform | The platform sets this for every shop. | It cannot be changed here. | entities | 2026-10-22 |
 | POLICY_NOT_VALID | 400 | Policy not known | The policy must be opt_in or opt_out. | Pick one of the two. | network-offers | 2026-10-23 |
 | POPULATION_BOUNDARY | 409 | Test and live cannot mix | A test business cannot trade with a real one. | Use a test counterparty. | rail | 2026-10-22 |
@@ -367,7 +376,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
-| REGION_STORE_MISSING | 503 | Regions not ready | Regional overrides are not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| REGION_STORE_MISSING | 503 | Regions not ready | Regional scatter arrives after the next update. No regional figures are shown meanwhile. | Try again after the next update. | assist | 2026-11-07 |
 | REG_KIND_NOT_OFFERED | 400 | Registration kind not offered | That kind of tax registration is not offered in your country. | Pick one of the kinds listed. | policy | 2026-10-23 |
 | REPEAT_BAD_REQUEST | 400 | Repeat needs an answer | Repeat supply needs one more answer before it can do that. | Read the question shown and answer it. | repeat-supply | 2026-10-23 |
 | REPEAT_ENDED | 422 | Agreement ended | This agreement has ended. | Start a new agreement from a bill. | repeat-supply | 2026-10-23 |
@@ -404,14 +413,14 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SIM_FEEDBACK_MESSAGE_MISSING | 400 | Feedback message missing | The feedback has no message in it. | Write what you thought, then send. | simulator | 2026-10-24 |
 | SIM_FEEDBACK_RATING_NOT_WHOLE | 400 | Rating not whole | The rating is not a whole number of stars. | Pick the stars again, then send. | simulator | 2026-11-05 |
 | SIM_LEAD_FIELDS_MISSING | 400 | Name or e-mail missing | A name and a valid e-mail are needed to start the tour. | Type your name and an e-mail address, then try again. | simulator | 2026-10-24 |
-| SOURCE_STORE_MISSING | 503 | Source authoring not ready | Catalogue source authoring is not ready on this server yet. | Try again after the next update. | assist | 2026-10-22 |
+| SOURCE_STORE_MISSING | 503 | Source authoring not ready | Source authoring arrives after the next update. Nothing was saved. | Try again after the next update. | assist | 2026-11-07 |
 | SRA_NOT_MIGRATED | 503 | Acceptance not switched on | Acceptance is not switched on yet. | Try again after the next update. | governance | 2026-10-22 |
 | STATEMENT_TIMEOUT | 503 | Took too long | This took too long and was stopped. | Try again; if it keeps happening, tell us. | platform | 2026-10-22 |
 | STORAGE_FULL | varies | Storage full | This counter is nearly out of space, so new bills may not save. | Free up space on this device now. | verdict | 2026-10-22 |
-| SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies are not switched on yet. | Ask the operator to run the update, then try again. | supplies | 2026-10-24 |
+| SUPPLIES_NOT_MIGRATED | 503 | Supplies not switched on | Supplies arrive after the next update. Supplies cannot be recorded or listed yet. | Ask the operator to run the update, then try again. | supplies | 2026-11-07 |
 | SUPPLY_BILL_DIFFERS | 409 | Bill already recorded | This bill number is already recorded for that supplier with different lines. | Record a correction, or use a new bill number. | supplies | 2026-10-31 |
 | SUPPLY_INVALID | 400 | Supply not accepted | This supply, purchase or use could not be recorded as sent. | Read the sentence shown, fix it and send it again. | supplies | 2026-10-24 |
-| STORES_NOT_MIGRATED | 503 | Shop list not ready | The shop list is not set up on this system yet. | Ask your administrator to finish the update. | capture | 2026-10-23 |
+| STORES_NOT_MIGRATED | 503 | Shop list not ready | Stores arrive after the next update. Nothing was changed. | Ask your administrator to finish the update. | capture | 2026-11-07 |
 | SUSPENSE_NOT_NIL | 409 | Suspense not nil | The suspense account must be nil before the year can close. | Clear the difference in the opening balances. | books | 2026-10-22 |
 | SWITCHED_OFF | 400/404 | Switched off | This person is switched off. | Switch them on first. | actors | 2026-10-22 |
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |
@@ -449,7 +458,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VERIFICATION_FAILED | 422 | Registry check failed | That registry number could not be confirmed. | Check the number and try again. | governance | 2026-10-23 |
 | VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_CAPPED | 403 | Catalogue visibility closed | The catalogue cannot be that open for this business. | The sentence names who closed it; ask them. | entities | 2026-10-23 |
-| VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
+| VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility. | Apply the pending database update, then build again. | entities | 2026-11-07 |
+| WEBHOOK_BAD_SIGNATURE | 401 | Delivery not signed | A message sent to this shop was not taken, because we could not check who sent it. | The sender must sign the delivery with the shared secret; nothing is needed from the shopkeeper. | capture | 2026-11-07 |
+| WEBHOOK_VERIFY_REFUSED | 403 | Connection check refused | The messaging provider asked to connect, but its check did not match what this shop set up. | Check the verify token set in the provider and in this shop, then connect again. | capture | 2026-11-07 |
 | WITHDRAWN | 403 | They withdrew consent | They withdrew their consent to offers on that channel. | Do not send offers there. | crm | 2026-10-23 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |
@@ -498,6 +509,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |
@@ -514,7 +526,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHANNEL_NOT_SENDABLE | 400 | Channel not sendable | Only WhatsApp can be sent from here today. | Use WhatsApp. | crm | 2026-10-23 |
 | CONSENT_WITHDRAWN | 403 | Consent withdrawn | They took back their consent. | Do not message them on this channel. | crm | 2026-10-23 |
 | CRM_BAD_REQUEST | 400 | Bad request | What was sent is not in the form CRM expects. | Send the fields as one JSON object, each once. | crm | 2026-10-23 |
-| GROUPS_NOT_MIGRATED | 409 | Groups not set up | Named groups are not set up here yet. | Try again after the next update. | crm | 2026-10-23 |
+| GROUPS_NOT_MIGRATED | 409 | Groups not set up | Named groups arrive after the next update. Groups cannot be named or listed yet. | Try again after the next update. | crm | 2026-11-07 |
 | HAS_DUES | 409 | Open dues | There are open dues on this party. | Settle the dues first, then remove them. | crm | 2026-10-23 |
 | IS_CUSTOMER | 409 | Already a customer | They are a customer now, so there is no lead stage to move. | Nothing to do. | crm | 2026-10-23 |
 | MINT_REFUSED | varies | Could not add | They could not be added. | Check the name and phone and try again. | crm | 2026-10-23 |
@@ -524,7 +536,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | NO_ROWS | 400 | No rows | There are no rows to import. | Choose a file with at least one lead. | crm | 2026-10-23 |
 | NO_TEXT | 400 | No message | Write the message. | Type the message and send again. | crm | 2026-10-23 |
 | OPTED_OUT | 403 | Opted out | They asked not to be messaged on this channel. | Use another way, or leave them. | crm | 2026-10-23 |
-| PRIVACY_NOT_MIGRATED | 503 | Privacy not set up | Consent and privacy requests are not set up here yet. | Try again after the next update. | crm | 2026-10-23 |
+| PRIVACY_NOT_MIGRATED | 503 | Privacy not set up | Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update. | Try again after the next update. | crm | 2026-11-07 |
 | PURPOSE_FIXED | 400 | Offers only | A message to a group is an offer, so it needs their consent for offers. | Send only to people who agreed to offers. | crm | 2026-10-23 |
 | REFUSED | varies | Refused | That could not be done as asked. | Read the line shown, change what you sent and try again. | crm | 2026-10-23 |
 | SAID_NO | 403 | Said no | They said no to this. | Leave them be, unless they say yes later. | crm | 2026-10-23 |
@@ -542,7 +554,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CHANNEL_BAD_REQUEST | 400 | Channel details not valid | Something in the channel details is missing or not one we know. | Check the details and try again. | channels | 2026-10-23 |
 | CHANNEL_PLATFORM_ONLY | 403 | Only the platform can approve | Only the platform can mark a template approved. | Mark it as waiting; the platform will approve it. | channels | 2026-10-23 |
 | CHANNEL_REFUSED | varies | Channel request refused | The channel request was refused. | Check the details and try again. | channels | 2026-10-23 |
-| CHANNEL_STORE_MISSING | 503 | Channels not ready | Channels are not ready on this system yet. | Try again after the next update. | channels | 2026-10-23 |
+| CHANNEL_STORE_MISSING | 503 | Channels not ready | Channels arrive after the next update. Nothing was changed. | Try again after the next update. | channels | 2026-11-07 |
 | REL_NEED_PARTY | 400 | Say who to add | Say who to add: a ChitBridge User ID or email, or a name. | Type a User ID, an email or a name and try again. | relationships | 2026-10-23 |
 | REL_NO_BUSINESS | 404 | No such business | We could not find a business with that User ID, bridge ID or email. | Check what you typed, or add them by name instead. | relationships | 2026-10-23 |
 | REL_SELF | 400 | Cannot add yourself | You cannot add your own business to your list. | Choose another business. | relationships | 2026-10-23 |
@@ -555,5 +567,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REL_PARTY_CONFLICT | 409 | Party details not set up | The party details are not set up here yet. | Try again after the next update. | relationships | 2026-10-23 |
 | REL_PARTY_INVALID | 400 | Party detail not accepted | One of the party details was not accepted. | Read the line shown, correct it and try again. | relationships | 2026-10-23 |
 | BUYER_TAX_ID_BAD | 400 | Buyer tax number not accepted | The buyer's tax number on this bill does not check out for your country. | Check the buyer's number and send the bill again. | chits | 2026-10-30 |
+| CASH_ROUNDING_STEP | 400 | Cash amount not accepted | This cash amount cannot be paid in coins in your country. | Take the nearest amount named in cash, or pay that part by card, and send the bill again. | chits | 2026-11-07 |
 | INVOICE_HELD_BUYER | 200 | Bill is not a tax invoice yet | The sale is saved as a bill, not a tax invoice: over the limit the buyer must be named. | Name the buyer or add their tax number to issue the tax invoice. | chits | 2026-10-30 |
 <!-- codes:end -->

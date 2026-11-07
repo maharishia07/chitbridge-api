@@ -27,8 +27,8 @@ const issued = fnBody(chits, 'async function sendIssued(');
 
 ok('the sender\'s invoice travels with the chit (business_json.invoice), unless one is already carried or it is a draft', () => {
   assert.ok(/originInvoice: invoice/.test(money) && /await sendMoneyScope\.invoiceAtSend\(/.test(money), 'sendMoney must hand over the invoice the engine answered at send (lib/send-money)');
-  assert.ok(/business_json\.invoice = st\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
-  assert.ok(/!business_json\.invoice && st\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
+  assert.ok(/business_json\.invoice = sendState\.originInvoice/.test(issued), 'sendIssued must carry it with the chit');
+  assert.ok(/!business_json\.invoice && sendState\.originInvoice && !is_draft/.test(issued), 'never over a carried invoice, never on a draft');
 });
 ok('ONE calculation on every path: a send and a change order (RAIL-106) both ask lib/send-money invoiceOfLines; no route keeps a second one', () => {
   assert.ok(/return invoiceOfLines\(/.test(fnBody(sendMoneyLib, 'async function invoiceAtSend(')), 'invoiceAtSend must be the send door of invoiceOfLines');

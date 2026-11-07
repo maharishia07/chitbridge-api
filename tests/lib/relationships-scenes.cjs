@@ -136,7 +136,7 @@ function extras(tools) {
     X('supplier-remove-has-dues', 'DELETE ' + at('/suppliers/:id'), 409, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: refusal('There are open dues on this party.', 409, 'HAS_DUES') } } }),
     X('supplier-remove-not-your-party', 'DELETE ' + at('/suppliers/:id'), 404, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: refusal('Not your party.', 404, 'NOT_FOUND') } } }),
     X('supplier-remove-refused-without-a-code', 'DELETE ' + at('/suppliers/:id'), 400, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: refusal('Not allowed.', 400) } } }),
-    X('supplier-remove-not-migrated', 'DELETE ' + at('/suppliers/:id'), 500, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: refusal('CRM needs migration b276 (migrations/b276_crm_party.sql) — Athi runs it in the Supabase SQL editor.', 503, 'CRM_NOT_MIGRATED') } } }),
+    X('supplier-remove-not-migrated', 'DELETE ' + at('/suppliers/:id'), 500, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: refusal('Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.', 503, 'CRM_NOT_MIGRATED') } } }),
     X('supplier-remove-library-throws-the-database', 'DELETE ' + at('/suppliers/:id'), 500, { url: sUrl, setup: { sqlRows: heldBy(SHOP, LIST_S) }, patch: { crm: { removeParty: async () => boom() } } }),
     X('supplier-remove-lookup-fails', 'DELETE ' + at('/suppliers/:id'), 500, { url: sUrl, setup: failing })
   ];
@@ -176,7 +176,7 @@ function extras(tools) {
 
   /* ── GET /customers/groups · GET /customers ── */
   const groups = [
-    X('groups-named', 'GET ' + at('/customers/groups'), 200, { patch: { customerGroups: { namesOf: async () => [{ name: 'dealers', count: 2 }] } } }),
+    X('groups-named', 'GET ' + at('/customers/groups'), 200, { patch: { customerGroups: { namesOf: async () => ({ names: ['dealers'], migrated: true }) } } }),
     X('groups-none', 'GET ' + at('/customers/groups'), 200, {}),
     X('groups-fail', 'GET ' + at('/customers/groups'), 500, { patch: { customerGroups: { namesOf: async () => boom() } } })
   ];

@@ -17,6 +17,7 @@
  *   5 · a row does not fit the shape (lib/cmdb.js refuses it, by name).
  *
  * Run: node tests/field-ledger.test.cjs   · no DB, no network.
+ * CARD      20-settings-governance-and-plan/field-ledger-fields-dictionary
  */
 const assert = require('assert'), fs = require('fs'), path = require('path');
 const API = path.join(__dirname, '..');

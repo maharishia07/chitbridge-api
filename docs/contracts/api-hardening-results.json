@@ -60,7 +60,7 @@
   "POST /api/entities/register": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -69,8 +69,7 @@
   },
   "POST /api/entities/verify": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -131,10 +130,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "PATCH /api/entities/me/exposure": {
@@ -174,10 +169,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
    }
   },
   "GET /api/entities/usage": {
@@ -218,10 +209,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/entities/populations": {
@@ -250,7 +237,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 404"
+    "why": "not reached: answered 400"
    }
   },
   "GET /api/connections/pending": {
@@ -590,8 +577,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -1005,10 +991,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/integrations/catalogue": {
@@ -1020,10 +1002,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/integrations/heartbeat": {
@@ -1449,10 +1427,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/openapi.json": {
@@ -1479,7 +1453,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 404"
    },
    "foreign_id_404": {
     "pass": false,
@@ -1614,8 +1588,7 @@
   },
   "GET /api/network-offers": {
    "output_allowlist": {
-    "pass": false,
-    "why": "the answer holds leak_canary, a column the answer schema does not list"
+    "pass": true
    }
   },
   "PUT /api/network-offers/policy": {
@@ -1884,8 +1857,7 @@
   },
   "POST /api/actors/set-pin": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1911,8 +1883,7 @@
   },
   "POST /api/actors/login": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -2030,10 +2001,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 400"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
    }
   },
   "POST /api/identity/documents/:scheme/code": {
@@ -2595,7 +2562,7 @@
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -2615,20 +2582,12 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 401"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 401, not 404"
    }
   },
   "GET /api/catalogue/:bridge_id/my-documents": {
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 401"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 401, not 404"
    }
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
@@ -2647,17 +2606,13 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 503"
    }
   },
   "GET /api/catalogue/enquiry/:item_id": {
    "output_allowlist": {
     "pass": false,
     "why": "the answer holds leak_canary, a column the answer schema does not list"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
    }
   },
   "POST /api/catalogue/enquiry/:item_id": {
@@ -2845,10 +2800,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/products/:id/media": {
@@ -2920,10 +2871,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 403"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 403, not 404"
    }
   },
   "POST /api/governance/conformance": {
@@ -3098,10 +3045,6 @@
   "GET /api/governance/supplier-acceptance/:handle": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
    }
   },
   "POST /api/attachments": {
@@ -3236,7 +3179,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/network/entities/lookup": {
@@ -3504,10 +3447,6 @@
   "GET /api/assist/catalogue-source/:key": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/assist/questions": {
@@ -3624,10 +3563,6 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
    }
   },
   "POST /api/testing/cmdb/seed": {
@@ -3855,7 +3790,7 @@
   "POST /api/capture/webhook/whatsapp": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -3864,7 +3799,7 @@
   "POST /api/capture/webhook/email": {
    "strict_input": {
     "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -3954,10 +3889,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 503"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 503, not 404"
    }
   },
   "POST /api/channels/:id/template-approve": {
@@ -3967,10 +3898,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 503"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 503, not 404"
    }
   },
   "POST /api/channels/:id/revoke": {
@@ -3980,10 +3907,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 503"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 503, not 404"
    }
   },
   "DELETE /api/channels/:id": {
@@ -4033,10 +3956,6 @@
   "GET /api/forms/:key": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/forms/:key/resolve": {
@@ -4045,10 +3964,6 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "POST /api/forms/:key/issue": {
@@ -4057,10 +3972,6 @@
    },
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/forms/instances/all": {
@@ -4140,7 +4051,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
     "pass": false,
@@ -4988,10 +4899,6 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "not reached: the caller's own id answered 404 too"
    }
   },
   "GET /api/work/list": {

@@ -35,13 +35,14 @@ const { problem } = require('../lib/problem');
 
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
+const { intFromEnv } = require('../lib/limits');
 const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
-const IN_PROGRESS_STALE_MINUTES = Number(process.env.IDEMPOTENCY_STALE_MINUTES || 10);
+const IN_PROGRESS_STALE_MINUTES = intFromEnv('IDEMPOTENCY_STALE_MINUTES', 10);
 /* SEC (laptop1, 23 Oct): a recorded answer that carries a token (order/confirm signs the shopper in) is a session if it is kept.
    It replays for this many minutes, long enough for a retry after a lost answer; recording a new one sweeps the shop's older ones. */
-const TOKEN_REPLAY_MINUTES = Number(process.env.IDEMPOTENCY_TOKEN_MINUTES || 15);
+const TOKEN_REPLAY_MINUTES = intFromEnv('IDEMPOTENCY_TOKEN_MINUTES', 15);
 const MINUTE_MS = 60 * 1000;
 const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
@@ -216,11 +217,12 @@ function answerExisting(req, res, held, hash, isVerified) {
  */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
+  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and lib/limits leaves res.json alive, so this wrapper still records a late answer (even a key claimed after the deadline) */
   const origJson = res.json.bind(res);
   res.json = (body) => {
     if (captured) return origJson(body);
     captured = true;
-    const status = res.statusCode;
+    const status = require('../lib/limits').answerStatus(res); /* not res.statusCode: past the deadline that is our 503 */
     store
       .finalize(claim.entity, claim.key, status, body)
       .catch((e) => log.warn('idempotency: recording the answer failed — a replay may run again', { id: req.id, path: req.path, err: e && e.message }))
@@ -254,7 +256,7 @@ function holdKey(req, res, next, claim) {
     .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
 }
 /** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
-const windowHours = () => Number(process.env.IDEMPOTENCY_WINDOW_HOURS || DEFAULT_WINDOW_HOURS);
+const windowHours = () => intFromEnv('IDEMPOTENCY_WINDOW_HOURS', DEFAULT_WINDOW_HOURS);
 
 const storeWhy = (e) => (e && STORE_MISSING_CODES.includes(e.code) ? 'idempotency_key is not migrated (b109)' : 'store error: ' + (e && e.message));
 

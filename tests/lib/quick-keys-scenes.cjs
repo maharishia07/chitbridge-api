@@ -115,6 +115,12 @@ function extras() {
     X('group-change-fails', R('PATCH', '/groups/:id'), 500, Object.assign({ body: { name: 'Evening' } }, failing)),
     X('group-change-unknown-key', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { name: 'Evening', colour: 'red' } }, at('/groups/' + GROUP), planted())),
     N('group-change-name-with-a-nul-byte', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { name: 'a\u0000b' } }, at('/groups/' + GROUP), planted())),
+    N('group-change-sort-order-is-text', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { sort_order: 'abc', version: 1 } }, at('/groups/' + GROUP), planted())), /* CTR-198: a number column is told a number, at the door */
+    N('group-change-window-from-is-text', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { window_from: 'garbage', version: 1 } }, at('/groups/' + GROUP), planted())),
+    N('group-change-window-to-is-not-a-time', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { window_to: '25:99' } }, at('/groups/' + GROUP), planted())),
+    N('group-change-sort-order-past-the-column', R('PATCH', '/groups/:id'), 400, Object.assign({ body: { sort_order: 99999999999 } }, at('/groups/' + GROUP), planted())),
+    N('group-change-times-and-order-valid', R('PATCH', '/groups/:id'), 200, Object.assign({ body: { sort_order: 3, window_from: '07:30', window_to: '11:00:00', version: 1 } }, at('/groups/' + GROUP), planted())),
+    N('group-change-times-cleared', R('PATCH', '/groups/:id'), 200, Object.assign({ body: { window_from: null, window_to: null } }, at('/groups/' + GROUP), planted())),
     N('group-change-body-a-list', R('PATCH', '/groups/:id'), 400, Object.assign({ body: [] }, at('/groups/' + GROUP), planted())),
     X('group-drop', R('DELETE', '/groups/:id'), 200, Object.assign({ body: { version: 1 } }, at('/groups/' + GROUP), planted())),
     X('group-drop-stale', R('DELETE', '/groups/:id'), 409, Object.assign({ body: { version: 3 } }, at('/groups/' + GROUP), planted())),

@@ -8,6 +8,7 @@
  * (Dates read back as a database hands them over are in tests/books-dates-tz.test.cjs — it runs itself under two zones.)
  *
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-fixes.test.cjs
+ * CARD      14-accounting/opening-balances
  */
 'use strict';
 const path = require('path');
@@ -67,7 +68,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const st2 = await q('GET', '/status');
     ok('the table missing (42P01) → migrated: false', st2.status === 200 && st2.body.migrated === false && st2.body.enabled === false, JSON.stringify(st2.body));
     const en2 = await q('POST', '/enable', {});
-    ok('…and POST /enable says to run the SQL first (503)', en2.status === 503 && /b272/.test(en2.body.error || ''), en2.status + ' ' + JSON.stringify(en2.body));
+    ok('…and POST /enable says the ledger waits for the update, without a migration id (503)', en2.status === 503 && !/b27/.test(en2.body.error || '') && /after the next update/.test(en2.body.error || ''), en2.status + ' ' + JSON.stringify(en2.body));
     X.store.setting = real; srv.close();
   });
 

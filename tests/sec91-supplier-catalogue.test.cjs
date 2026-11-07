@@ -14,12 +14,13 @@ const path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'relationships.js'), 'utf8');
 const at = src.indexOf("router.get('/suppliers/:supplier_entity_id/catalogue'");
 const body = src.slice(at, src.indexOf('// ── CUSTOMERS', at));
-let failed = 0;
-const check = (name, ok) => (ok ? null : (failed++, console.log('  FAIL  ' + name)));
+let failed = 0,
+  total = 0;
+const check = (name, ok) => (total++, ok ? null : (failed++, console.log('  FAIL  ' + name)));
 const gate = body.indexOf('FROM supplier_list WHERE owner_entity_id');
 const read = body.indexOf('FROM identities');
 check('the supplier list is asked before identities are read', gate > 0 && read > gate);
 check('a stranger is refused with the 404 sentence, before any name is read', /if \(!linked\) return problem\(req, res, \{ status: 404, \.\.\.words\.notOnYourList\(\)/.test(body));
 check('an unknown id gets the same refusal as a stranger (no {supplier:null} 200)', !/supplier: null/.test(body.split('buildPublicView')[0]));
-console.log(failed ? failed + ' failed' : 'sec91: ok');
+console.log(failed ? failed + ' failed' : 'sec91: ok (' + total + ' checks)');
 process.exit(failed ? 1 : 0);

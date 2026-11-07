@@ -13,6 +13,7 @@
  *     country after setup 409 (a country change is a new entity) · the write is one transaction: identities + entity_governance
  *   · the gate's words are regulation.status()'s (engines v1.36.0; v1.35.0 lacked AU1 — do not adopt it) — the same sentence the Country setup screen shows
  * Run: node tests/country-setup.test.cjs
+ * CARD      15-tax-and-country-packs/country-setup-and-country-lab
  */
 'use strict';
 const path = require('path');
@@ -116,6 +117,15 @@ const call = (port, method, p, body) => new Promise((done) => {
     && r.body.pack.id === 'AE' && r.body.rederived && r.body.rederived.from === 'IN' && r.body.rederived.to === 'AE' && r.body.rederived.by === SHOP && /T/.test(r.body.rederived.at) && ID.currency_code === 'AED' && ID.timezone === 'Asia/Dubai' && ID.policy_flags.gst_registration === 'regular',
     JSON.stringify(r.body));
   ok('…the EXISTS read is a read: the same two writes, in the same transaction; no products, chits or entries were touched (nothing exists to convert)', WRITES.join(',') === 'identities,entity_governance', WRITES.join(','));
+  /* P1-7 CTRY-87 (b): a tax scheme SENT that we do not offer ("cash") is refused in words, never stored as "regular"; a scheme not sent behaves as before */
+  WRITES = [];
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51824753556', scheme: 'cash' }, timezone: 'Australia/Sydney' });
+  ok('P1-7: AU, scheme "cash" → 400 COUNTRY_SETUP_BAD in the pack words (GST basis · BAS · non-cash accrual), nothing written', r.status === 400 && r.body.code === 'COUNTRY_SETUP_BAD' && r.body.message === 'GST basis is not set here yet; the BAS is read on the non-cash (accrual) basis.' && WRITES.length === 0, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'AED', fy_start_month: 1, tax: { registered: true, number: '100123456700003', scheme: ' Cash ' } });
+  ok('P1-7: AE, scheme " Cash " → 400 in the UAE pack words (VAT basis · VAT return), nothing written', r.status === 400 && r.body.code === 'COUNTRY_SETUP_BAD' && /^VAT basis is not set here yet; the VAT return is read on the non-cash/.test(r.body.message) && WRITES.length === 0, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AE', currency: 'AED', fy_start_month: 1, tax: { registered: true, number: '100123456700003' } });
+  ok('P1-7: AE, no scheme sent → 200 as before, stored "regular"', r.status === 200 && r.body.tax.scheme === 'regular', JSON.stringify(r.body));
+  WRITES = [];
   CONST = { products: true, chits: false, entries: false }; WRITES = [];
   r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, timezone: 'Australia/Sydney' });
   ok('ONE PRODUCT → fixed: AE → AU is refused 409 with the sentence + "Register a new business for Australia"; nothing written', r.status === 409 && r.body.code === 'COUNTRY_CHANGE_IS_NEW_ENTITY' && /already has products/.test(r.body.message) && /Register a new business for Australia\./.test(r.body.message) && WRITES.length === 0, JSON.stringify(r.body));

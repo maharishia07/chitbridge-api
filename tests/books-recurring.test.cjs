@@ -8,6 +8,7 @@
  * template + date) · an `auto` template is posted by the sweep, catching up month by month and keeping the 31st · a locked month is NAMED
  * and the template stays put · the sweep posts a due accrual reversal ONCE, on its day, and not before.
  * Run: node tests/books-recurring.test.cjs
+ * CARD      14-accounting/recurring-entries
  */
 'use strict';
 const path = require('path');

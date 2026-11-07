@@ -1,6 +1,12 @@
-/* CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
+/**
+ * OWNS      the network tree and the edges between businesses: look up, register, request/approve/decline/suspend/resume/disconnect, claim, subtree, connections (who may do what is mayAct, one pure table)
+ * CALLED BY lib/network-build-run.js, lib/network-membership.js, routes/assist.js, src/routes/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
+ * FLOW      signed-in business → nodeOf (its place on the tree) → mayAct / same-network test → cb_entity · cb_edge → a row, or the 404 a missing id gets (SEC-138)
+ * CARD      04-network/connections-and-invitations
+ */
 const { pool, withTx } = require('../db');
 const bridge = require('../lib/bridgeId');
+const ctpaddress = require('../../lib/ctpaddress'); // NET-77: the one reader of "is this business on another installation"
 const chit = require('./chit'); // NET-02 §F: real in-flight check
 const err = (status, message, code) => Object.assign(new Error(message), { status, code });
 /**
@@ -85,8 +91,8 @@ async function nodeOf(entity_id, { ensure = false } = {}, client = pool) {
   } = await client.query(`select * from cb_entity where bridge_id = $1`, [me.bridge_id]);
   return made || null;
 }
-/** a business named by its handle or bridge id → its node (made a root if it has none) */
-async function nodeOfHandle(ref, client = pool) {
+/** the identity a handle or bridge id names (a read, nothing written), or null */
+async function identityOfHandle(ref, client = pool) {
   const {
     rows: [i]
   } = await client.query(
@@ -94,7 +100,12 @@ async function nodeOfHandle(ref, client = pool) {
       where (lower(user_id) = lower($1) or upper(bridge_id) = upper($1)) and identity_type = 'entity' and status = 'active'`,
     [String(ref || '')]
   );
-  return i ? nodeOf(i.identity_id, { ensure: true }, client) : null;
+  return i ? i.identity_id : null;
+}
+/** a business named by its handle or bridge id → its node (made a root if it has none) */
+async function nodeOfHandle(ref, client = pool) {
+  const identityId = await identityOfHandle(ref, client);
+  return identityId ? nodeOf(identityId, { ensure: true }, client) : null;
 }
 async function hasLiveParent(childId, client = pool) {
   const { rows } = await client.query(`select 1 from cb_edge where child_id=$1 and type = $2 and state in ('active','suspended') limit 1`, [childId, TREE]);
@@ -125,8 +136,64 @@ const _check = (op, ctx) => {
   const ok = mayAct(op, ctx);
   if (ok !== true) throw err(403, ok, 'NOT_ALLOWED');
 };
+/**
+ * SEC-138 (K-1): an edge the caller is not a party to is answered EXACTLY as an edge that does not exist (404 EDGE_NOT_FOUND, the same words),
+ * so the id tells a stranger nothing. A party still gets the rule's own 403 (asked it yourself, only the network may suspend): it already knows the edge.
+ * A caller with no actor (no place on the tree) is a stranger too: the same 404, never the 403 "sign in as a business" an existing edge would give (residual A).
+ */
+const _edgeGone = () => err(404, 'edge not found', 'EDGE_NOT_FOUND');
+const _checkEdge = (operation, edge, actor) => {
+  const actorId = String((actor && actor.id) || '');
+  if (!actorId || (actorId !== String(edge.parent_id) && actorId !== String(edge.child_id))) throw _edgeGone();
+  _check(operation, { edge, actorId });
+};
 
 // ---- LINK ----
+/**
+ * NET-77 · a business on ANOTHER installation is only a stub row here. An edge to it would live on this server alone (the far server answers
+ * EDGE_NOT_FOUND; this one would list it as asked forever, the RAIL-112 pattern). So the ask is refused in words and nothing is saved.
+ * ⚠️ TEMPORARY: NET-79 is the real fix (the ask travels as a CTP event and the far side holds its copy). When it lands, delete this refusal.
+ * The remote test is the one reader ctpaddress.resolve (the stamp, inactive installations included); a local business answers local.
+ */
+async function refuseRemote(identityIds) {
+  for (const identityId of identityIds) {
+    if (!identityId) throw err(409, 'We could not tell where that business is hosted, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    const place = await ctpaddress.resolve(identityId);
+    if (place.local === false) throw err(409, 'That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    /* the same rule as lib/mint.refuseUnresolved: a business whose installation could not be read may belong to a remote one, so it is not asked either */
+    if (place.resolved === false) throw err(409, 'We could not read where that business is hosted just now, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+  }
+}
+/** refuseRemoteNodes(nodes) — the same refusal for nodes already read: each node's identity is looked up by its bridge id (none found = refused, fail closed) */
+async function refuseRemoteNodes(nodes) {
+  const ids = [];
+  for (const node of nodes) {
+    const {
+      rows: [identityRow]
+    } = await pool.query(`select identity_id from identities where upper(bridge_id) = upper($1) and identity_type = 'entity'`, [node.bridge_id]);
+    ids.push(identityRow && identityRow.identity_id);
+  }
+  await refuseRemote(ids);
+}
+/** a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null */
+async function askableNodeOfHandle(handle) {
+  const identityId = await identityOfHandle(handle);
+  if (!identityId) return null;
+  await refuseRemote([identityId]);
+  return nodeOf(identityId, { ensure: true });
+}
+/** the network end of an ask: named by node id or handle, else the actor itself */
+async function _askedParent({ parentId, parentHandle }, actor) {
+  if (parentId) return getById(parentId);
+  return parentHandle ? askableNodeOfHandle(parentHandle) : actor;
+}
+/** the business end of an ask: named by node id, handle or bridge id, else the actor when the actor is not the parent */
+async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor) {
+  if (childId) return getById(childId);
+  if (childHandle) return askableNodeOfHandle(childHandle);
+  if (childBridgeId) return _full(childBridgeId);
+  return String(parent.id) !== String(actor.id) ? actor : null;
+}
 /**
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
  * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
@@ -134,20 +201,13 @@ const _check = (op, ctx) => {
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
-  const parent = parentId ? await getById(parentId) : parentHandle ? await nodeOfHandle(parentHandle) : actor;
+  const parent = await _askedParent({ parentId, parentHandle }, actor);
   if (!parent) throw err(404, 'network not found', 'PARENT_NOT_FOUND');
-  const child = childId
-    ? await getById(childId)
-    : childHandle
-      ? await nodeOfHandle(childHandle)
-      : childBridgeId
-        ? await _full(childBridgeId)
-        : String(parent.id) !== String(actor.id)
-          ? actor
-          : null;
+  const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor);
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
+  await refuseRemoteNodes([parent, child]);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   const {
     rows: [open]
@@ -169,8 +229,8 @@ async function approve({ edgeId }, actor) {
     const {
       rows: [edge]
     } = await c.query(`select * from cb_edge where id=$1 for update`, [edgeId]);
-    if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
-    _check('approve', { edge, actorId: actor && actor.id });
+    if (!edge) throw _edgeGone();
+    _checkEdge('approve', edge, actor);
     if (edge.state !== 'requested') throw err(409, `cannot approve from ${edge.state}`, 'BAD_STATE');
     if (edge.type === TREE) {
       const parent = await getById(edge.parent_id, c);
@@ -208,11 +268,11 @@ async function _edge(edgeId) {
   const {
     rows: [edge]
   } = await pool.query(`select * from cb_edge where id=$1`, [edgeId]);
-  if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
+  if (!edge) throw _edgeGone();
   return edge;
 }
 async function decline({ edgeId }, actor) {
-  _check('decline', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('decline', await _edge(edgeId), actor);
   const {
     rows: [edge]
   } = await pool.query(
@@ -231,11 +291,11 @@ async function _move(edgeId, from, to) {
   return edge;
 }
 async function suspend(edgeId, actor) {
-  _check('suspend', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('suspend', await _edge(edgeId), actor);
   return _move(edgeId, 'active', 'suspended');
 }
 async function resume(edgeId, actor) {
-  _check('resume', { edge: await _edge(edgeId), actorId: actor && actor.id });
+  _checkEdge('resume', await _edge(edgeId), actor);
   return _move(edgeId, 'suspended', 'active');
 }
 // ---- UNLINK ----
@@ -244,8 +304,8 @@ async function disconnect({ edgeId, settle = false }, actor) {
     const {
       rows: [edge]
     } = await c.query(`select * from cb_edge where id=$1 for update`, [edgeId]);
-    if (!edge) throw err(404, 'edge not found', 'EDGE_NOT_FOUND');
-    _check('disconnect', { edge, actorId: actor && actor.id });
+    if (!edge) throw _edgeGone();
+    _checkEdge('disconnect', edge, actor);
     if (!['active', 'suspended'].includes(edge.state)) throw err(409, `cannot disconnect from ${edge.state}`, 'BAD_STATE');
     // NET-02 §F: truth is the open-chit query; in_flight flag kept as an optional cache (so NET-01 T6 still blocks).
     const open = (await chit.edgeHasOpenChit(edge.id, c)) || edge.in_flight;
@@ -292,9 +352,14 @@ async function _sameRoot(nodeId, actor) {
   ]);
   return !!(r && r.same);
 }
+const _nodeGone = () => err(404, 'not found', 'NOT_FOUND');
+const _rootOf = (path) => String(path || '').split('.')[0];
 async function subtree(entityId, actor) {
   const e = await getById(entityId);
-  if (!e) throw err(404, 'not found', 'NOT_FOUND');
+  if (!e) throw _nodeGone();
+  /* SEC-138: a node of ANOTHER network is answered as a node that does not exist (no second query: the root is the first label of the path).
+     Only an id inside the caller's own network may say "suspended". */
+  if (!actor || _rootOf(e.path) !== _rootOf(actor.path)) throw _nodeGone(); // no actor: a stranger too (residual A)
   if (!(await _sameRoot(e.id, actor)))
     throw err(403, 'that is not your network — or your membership is suspended; ask the network to resume it', 'NOT_ALLOWED');
   // b117: the PURPOSE joined in, so a member reading the tree sees why each branch exists rather than a list of
@@ -312,12 +377,11 @@ async function subtree(entityId, actor) {
 }
 async function connections(entityId, actor) {
   const e = await getById(entityId);
-  if (!e) throw err(404, 'not found', 'NOT_FOUND');
-  /* the node itself or one of its ancestors */
-  const {
-    rows: [ok]
-  } = await pool.query(`select ($1::ltree <@ $2::ltree) as ok`, [e.path, actor ? actor.path : '']).catch(() => ({ rows: [] }));
-  if (!ok || !ok.ok) throw err(403, 'those are not your connections', 'NOT_ALLOWED');
+  if (!e) throw _nodeGone();
+  /* the caller's own node or a node below it (the ltree test e.path <@ actor.path, done on the row already read: no second query).
+     SEC-138: any other node answers as one that does not exist. */
+  const mine = String((actor && actor.path) || ''); // no actor: nothing is below it, so the node answers as gone (residual A)
+  if (!mine || (String(e.path) !== mine && !String(e.path).startsWith(mine + '.'))) throw _nodeGone();
   const { rows } = await pool.query(
     `select e.*, pp.name as parent_name, cc.name as child_name
      from cb_edge e join cb_entity pp on pp.id=e.parent_id join cb_entity cc on cc.id=e.child_id
@@ -339,12 +403,18 @@ async function claim(entityId, actorEntityId) {
     [entityId, actorEntityId]
   );
   if (e) return e;
+  /* SEC-138: "already claimed" is told ONLY to the business whose bridge id the node carries (it holds the claim path and knows the node);
+     a missing node, a node of someone else and a node claimed by someone else all answer the one 404. One statement, so the work is the same for each. */
   const {
-    rows: [exists]
-  } = await pool.query(`select claimed from cb_entity where id=$1`, [entityId]);
-  if (!exists) throw err(404, 'not found', 'NOT_FOUND');
-  if (exists.claimed) throw err(409, 'already claimed', 'ALREADY_CLAIMED');
-  throw err(403, 'only the business this node belongs to can claim it', 'NOT_ALLOWED');
+    rows: [seen]
+  } = await pool.query(
+    `select c.claimed as claimed, (i.bridge_id = c.bridge_id) as mine
+       from cb_entity c left join identities i on i.identity_id=$2
+      where c.id=$1`,
+    [entityId, actorEntityId]
+  );
+  if (seen && seen.mine && seen.claimed) throw err(409, 'already claimed', 'ALREADY_CLAIMED');
+  throw _nodeGone();
 }
 module.exports = {
   register,

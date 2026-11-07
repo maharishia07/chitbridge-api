@@ -9,6 +9,7 @@
  * the real schema enforces: the unique index on (entity, ref, line_ref, reason), and no UPDATE or DELETE on
  * stock_movement. So what is under test is the real post(), the real rebuild() and the real engine — everything
  * except the network.
+ * CARD      09-counter/stock-moves-at-the-till
  */
 'use strict';
 const assert = require('assert'), path = require('path');
@@ -92,6 +93,12 @@ const withEntity = async (entity_id, fn) => fn({
       const [entity_id, refs] = args;
       return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.reason === 'sale'
                                       && (refs || []).indexOf(m.ref) >= 0).slice(0, 1) };
+    }
+    /* OPS-80: what one sale line already took, batch by batch — issue() asks before it plans */
+    if (/AS lot, qty FROM stock_movement/.test(sql)) {
+      const [entity_id, item_id, location, ref, line_ref, reason] = args;
+      return { rows: MOVES.filter((m) => m.entity_id === entity_id && m.item_id === item_id && m.location === location
+                                      && m.ref === ref && m.line_ref === line_ref && m.reason === reason).map((m) => ({ lot: m.lot || '', qty: m.qty })) };
     }
     if (/FROM stock_movement/.test(sql)) {
       const [entity_id, item_id, location] = args;

@@ -7,6 +7,8 @@
  * offers to the same keys at checkout. Same key on both sides, or the promise and the invoice disagree.
  *
  * Run: node tests/network-storefront.test.cjs   · no DB (the readers are stubbed), no network.
+ * CARD      04-network/network-storefront-network-store
+ * UNIT      04/Network storefront / network store
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path');

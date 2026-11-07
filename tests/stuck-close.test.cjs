@@ -3,6 +3,7 @@
  *   closeDone(): moves only the shop's OWN, still-OPEN received copies, to 'completed', through moveStatus (the one status writer);
  *   a failed close never throws; nothing asked -> no read. The posting branches call it (walk-in covered / late / bill-grain,
  *   the day summary, a week/month summary). Offline: db stubbed, the mover stubbed. Run: node tests/stuck-close.test.cjs
+ * CARD      01-rail-core-the-chit/status-the-one-status-writer
  */
 'use strict';
 const path = require('path'), fs = require('fs');

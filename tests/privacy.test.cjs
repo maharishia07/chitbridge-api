@@ -83,16 +83,16 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
 
 (async () => {
   console.log('\n-- before the migrations --');
-  await ita('b306 not run: GET and POST contact-prefs answer 503 PRIVACY_NOT_MIGRATED, naming b306 — nothing written', async () => {
+  await ita('b306 not run: GET and POST contact-prefs answer 503 PRIVACY_NOT_MIGRATED, in plain words — nothing written', async () => {
     T.have.party_contact_pref = false; PV.forget();
     for (const r of [await t.get(prefs()), await t.post(prefs(), { channel: 'whatsapp', purpose: 'marketing', allowed: true })]) {
-      assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(/b306/.test(r.body.message));
+      assert.strictEqual(r.status, 503, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(!/b306/.test(r.body.message) && /after the next update/.test(r.body.message));
     }
     assert.strictEqual(T.prefs.length, 0); T.have.party_contact_pref = true; PV.forget();
   });
-  await ita('b307 not run: the register answers 503 PRIVACY_NOT_MIGRATED, naming b307', async () => {
+  await ita('b307 not run: the register answers 503 PRIVACY_NOT_MIGRATED, in plain words', async () => {
     T.have.privacy_request = false; PV.forget();
-    const r = await t.get('/privacy-requests'); assert.strictEqual(r.status, 503); assert.ok(/b307/.test(r.body.message));
+    const r = await t.get('/privacy-requests'); assert.strictEqual(r.status, 503); assert.ok(!/b307/.test(r.body.message) && /after the next update/.test(r.body.message));
     T.have.privacy_request = true; PV.forget();
   });
 
@@ -274,7 +274,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     assert.deepStrictEqual(f.figures, { agreed: 1, said_no: 1 }); assert.ok(/1 party agreed to offers/.test(f.lines[0].text)); assert.ok(/said no/.test(f.lines[1].text));
     T.have.party_contact_pref = false;
     const n = await H.BUILD.marketing({ entity: 'E1' }); T.have.party_contact_pref = true;
-    assert.deepStrictEqual(n.lines, []); assert.ok(/b306/.test(n.unavailable));
+    assert.deepStrictEqual(n.lines, []); assert.ok(!/b306/.test(n.unavailable) && /after the next update/.test(n.unavailable));
   });
 
   console.log('\n-- T3-P3-CONSENT · the law\u2019s words, the shopper\u2019s own answer --');
@@ -340,7 +340,7 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
     T.have.party_contact_pref = false; T.have.privacy_request = false; PV.forget();
     const r = await pcall('GET', '/api/privacy/me', null, shopperTok); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     assert.strictEqual(r.body.consent.migrated, false); assert.strictEqual(r.body.may_consent.code, 'PRIVACY_NOT_MIGRATED'); assert.ok(r.body.may_consent.why); assert.strictEqual(r.body.may_request.may, false);
-    const w = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: false }, shopperTok); assert.strictEqual(w.status, 503); assert.ok(/b306/.test(w.body.message));
+    const w = await pcall('POST', '/api/privacy/me/consent', { channel: 'email', purpose: 'marketing', allowed: false }, shopperTok); assert.strictEqual(w.status, 503); assert.ok(!/b306/.test(w.body.message) && /after the next update/.test(w.body.message));
     T.have.party_contact_pref = true; T.have.privacy_request = true; PV.forget();
   });
   psrv.close();

@@ -3347,6 +3347,8 @@
       <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
       <!-- ⭐ BOOKS v2 — money received from a KNOWN customer; hidden until exactly one customer matches (custKnown) -->
       <button class="pill" id="rcvpaybtn" data-testid="till-receive-pay" onclick="rcvPayOpen()" hidden>Received</button>
+      <!-- ⭐ CTR-186: where the goods go. Another state = IGST (s10(1)(a)); left alone, the bill is over the counter. Shown for a state-split pack only (paintDeliver). -->
+      <button class="pill" id="deliverbtn" data-testid="till-deliver-to" onclick="deliverPick()" title="goods sent to another state">Deliver to</button>
     </div>
     <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
          which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
@@ -5292,11 +5294,11 @@ var CloudHost = {
     var t = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(mine) : (function(){
       /* [till expenses] the identical fallback rule as the engine's own totals() — an expense is not counted
        * as a sale and leaves whatever tender it was paid from, same reasoning as a credit note two lines up. */
-      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, exp2 = 0;
+      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, red2 = 0, exp2 = 0;
       mine.forEach(function(b){
         total2 = r2(total2 + (b.total||0));
         if (b.kind === 'credit_note') {
-          back2 = r2(back2 + Math.abs(Number(b.total)||0));
+          var split2 = creditNoteSplit(b); back2 = r2(back2 + split2.refunded); red2 = r2(red2 + split2.reduced);
           (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else if (b.kind === 'expense') {
           exp2 = r2(exp2 + Math.abs(Number(b.total)||0));
@@ -5306,7 +5308,7 @@ var CloudHost = {
           (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
         }
       });
-      return { count: count2, total: total2, by: by2, refunds: back2, expenses: exp2 };
+      return { count: count2, total: total2, by: by2, refunds: back2, reduced: red2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
@@ -6139,7 +6141,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-06.ctr177';
+var TILL_BUILD = '2026-11-07.sec143';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -6560,7 +6562,7 @@ function chitOfSubscription(s){
       till: tillStamp(s.till, s.by),
       doc: 'subscription', slip: 'subscription',
       bill_no: s.no, billed_at: s.at,
-      payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
+      payment: { mode: s.mode, paid: s.total, parts: s.payments || [], cash_round: s.cash_round },
       /* ⭐ what was actually agreed — never classified into a scheme, per "we are not classifying... let it be
        * that way". `occurrences_total: null` means "runs until cancelled/paused", not a data gap. */
       subscription: { what: s.what, occurrences_total: s.occurrencesTotal, cadence_days: s.cadenceDays, starts_at: s.startsAt },
@@ -18917,10 +18919,46 @@ function rwEncash(){
 
 /**
  * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
- * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
- * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
+ * CTR-186: "Deliver to" (deliverbtn) and, for a registered buyer of another state, the finish() question "over the counter or despatched?"
+ * set it through deliverTo(); with none, every bill is over the counter. It travels on the bill (finish) and the chit (chitOf).
  */
-var BILL_DELIVERY = null;
+var BILL_DELIVERY = null, BILL_DELIVERY_ASKED = false;   /* ASKED: the despatch question is put once per bill */
+/** deliverTo(code) → records where the goods go (a 2-digit state code; nothing clears it). placeOfSupply is still the engine's: only the fact is recorded here. */
+function deliverTo(code){
+  var stateCode = String(code == null ? '' : code).trim();
+  BILL_DELIVERY = /^\d{2}$/.test(stateCode) ? { state_code: stateCode } : null;
+  paintTotals(); draftSave();   /* paintTotals repaints the button too */
+}
+/** the button says where the bill goes, once it goes somewhere */
+function paintDeliver(){
+  var button = document.getElementById('deliverbtn'); if (!button) return;
+  button.hidden = !packSplitsByState();   /* a border pack (AU, AE) has no state to deliver to */
+  var stateName = BILL_DELIVERY && ((window.CBProfileMap || {}).STATE_NAMES || {})[BILL_DELIVERY.state_code];
+  button.textContent = BILL_DELIVERY ? 'To ' + (stateName || BILL_DELIVERY.state_code) : 'Deliver to';
+  button.title = BILL_DELIVERY ? 'goods go to state ' + BILL_DELIVERY.state_code + ' — tap to change' : 'goods sent to another state';
+}
+/** the Deliver-to popup (the page's own ask): a state name or its 2-digit code; empty = over the counter again */
+async function deliverPick(){
+  var maps = window.CBProfileMap || {};
+  var typed = await ask('State name or code. Empty = over the counter.', BILL_DELIVERY ? BILL_DELIVERY.state_code : '', 'State', 'Deliver to');
+  if (typed == null) return;
+  typed = String(typed).trim();
+  if (!typed) { deliverTo(null); return; }
+  var code = maps.stateCodeOfName ? maps.stateCodeOfName(typed) : null;
+  if (!code || !(maps.STATE_NAMES || {})[code]) { say('That is not a state.'); return; }
+  deliverTo(code);
+}
+/** a registered buyer of ANOTHER state, no delivery chosen: over the counter or despatched? (asked once per bill; despatched = their state) */
+async function deliverAsk(){
+  if (BILL_DELIVERY || BILL_DELIVERY_ASKED || !packSplitsByState()) return true;
+  var cust = custKnown(), buyerTax = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
+  var shopRec = (S && S.shop) || {}, mine = String(shopRec.state_code || String(shopRec.gstin || '').trim().slice(0, 2) || '');
+  if (!/^\d{2}/.test(buyerTax) || buyerTax.slice(0, 2) === mine) return true;
+  BILL_DELIVERY_ASKED = true;
+  var sent = await sure('Taken over the counter, or despatched to their state?', 'Despatched', 'Delivery', 'Over the counter');
+  if (sent) deliverTo(buyerTax.slice(0, 2));
+  return true;
+}
 /**
  * ⭐⭐⭐ THE BILL IS COMPUTED ONCE, BY THE ENGINE — CBTax.determine(), the INV-01 invoice (Athi, 2026-10-02: "the computation
  * should happen in only one place like billing, rest all the places the value has to only read, no recomputation").
@@ -20884,7 +20922,7 @@ var SUMFOLD = (function(){ try { return localStorage.getItem('till_sumfold') !==
 function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfold', SUMFOLD ? '1' : '0'); } catch (e) { cbQuiet('toggleSum:1', e); } paintTotals(); }
 function paintTotals(){
   var m = billMoney();
-  try { paintStepBar(); } catch (e) { cbQuiet('paintTotals:1', e); }
+  try { paintStepBar(); paintDeliver(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
   /* ⭐ the Pay button carries the amount, so it has to move when the amount does */
   try { payGo(); } catch (e) { cbQuiet('paintTotals:2', e); }
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
@@ -20979,7 +21017,10 @@ function addPart(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
-  PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
+  var coinAmount = cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED));
+  if (!(coinAmount > 0)) { say('That rounds to nothing in ' + PICKED + ' - type at least the smallest coin.'); return; }   /* CTRY-77: never a Cash 0.00 part */
+  /* CTRY-77: a CASH part is TAKEN at the pack's coin step like the part that pays the rest (cashDue) — typed 10.02 on a 10.02 bill goes out 10.00, cash_round -0.02 follows from cashRoundOf */
+  PARTS.push({ how: PICKED, amount: coinAmount });
   PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals(); draftSave();          /* R1 · a part payment is part of the bill */
@@ -21692,7 +21733,7 @@ async function postRewardBehindBill(bill){
 async function finish(){
   if (!CART.length) return { ok: false };
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
-  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */
+  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */ await deliverAsk();   /* CTR-186: another state's registered buyer — over the counter or despatched? — before the tax */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
@@ -21806,7 +21847,7 @@ async function finish(){
   showSlip(r.bill, m);
   autoPrint(r.bill);
   if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; paintOrderBar(); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
-  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; BILL_DELIVERY_ASKED = false; paintDeliver(); paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
@@ -21893,17 +21934,17 @@ function dayCloseSheet(rows){
    * drawer count wants those two on separate lines.
    */
   var rt0 = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(rows || []) : null;
+  var returnFigures = returnedFigures(rt0, back);
   var d = { bills: rt0 ? rt0.count : (rows || []).filter(function(b){ return !isReturnRow(b) && !isExpenseRow(b); }).length,
             first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
             rate:{}, modes:{}, people:{}, items:{}, taxed:false,
             /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
-            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {},
+            returns: rt0 ? rt0.returns : back.length, returned: returnFigures.returned, reduced: returnFigures.reduced, refunded: {},
             /* ⭐ [till expenses] the identical treatment, one column over — a day with expenses in it is also
              * a different day, and pretending the drawer only ever loses money to refunds would be exactly
              * the bug this whole engine exists to prevent, just for a different cause. */
             expenses: rt0 ? rt0.expenseCount : spent.length, expensed: rt0 ? rt0.expenses : 0, spentby: {} };
   back.forEach(function(b){
-    if (!rt0) d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
     /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
     ((b.refunds) || []).forEach(function(x){
       d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
@@ -21964,11 +22005,34 @@ function dayCloseSheet(rows){
   d.expected_cash = r2(d.cash + d.float - d.cash_back - d.cash_out);
   return d;
 }
+/** CTR-196 — a credit note split into money handed back and money only taken off what is owed: the same rule as lib/rollup splitNote (a note with no refunds field counts wholly as a refund) */
+function creditNoteSplit(note){
+  var whole = Math.abs(Number(note.total) || 0);
+  if (!Array.isArray(note.refunds)) return { refunded: whole, reduced: 0 };
+  var paid = 0;
+  for (var at = 0; at < note.refunds.length; at++) paid += Number(note.refunds[at].amount) || 0;
+  var refunded = Math.min(r2(paid), whole);
+  return { refunded: refunded, reduced: r2(whole - refunded) };
+}
+/** the day's returned money and reduced money: the engine's figures, else the same split over the notes (CTR-196) */
+function returnedFigures(totals, notes){
+  if (totals) return { returned: totals.refunds, reduced: totals.reduced || 0 };
+  var out = { returned: 0, reduced: 0 };
+  for (var at = 0; at < notes.length; at++) {
+    var split = creditNoteSplit(notes[at]);
+    out.returned = r2(out.returned + split.refunded); out.reduced = r2(out.reduced + split.reduced);
+  }
+  return out;
+}
+/** the day slip's line for credit notes that only reduced what a customer owes — nothing when none did */
+function reducedRowHTML(closing){
+  return closing.reduced ? '<div>taken off what customers owe<span style="float:right">' + money(closing.reduced) + '</span></div>' : '';
+}
 function dayCloseHTML(d){
   /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
   var backBlock = d.returns
     ? '<hr><div><b>RETURNS</b></div>'
-      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(d.returned) + '</span></div>'
+      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(r2(d.returned + d.reduced)) + '</span></div>' + reducedRowHTML(d)
       + Object.keys(d.refunded).sort().map(function(how){
           return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
         }).join('')
@@ -22047,7 +22111,7 @@ async function dayClose(){
   var sd = document.getElementById('slipdlg'); if (sd.open) sd.close();   /* a bill slip still open: showModal on it would not repaint */
   sd.showModal();
   if (d.closed) return;
-  var chk = await dayServerCheck(rows);
+  var chk = await dayCheckThenRefresh(rows);
   if (tok !== DAY_TOK || DAY_D !== d) return;
   d.server = chk;
   dayCheckPaint(chk);
@@ -22063,13 +22127,43 @@ var DAY_D = null, DAY_ROWS = [];
  * ⚠️ Nothing here touches billing: only the close waits. Expenses never reach /bills, so they are left out of both sides.
  */
 function dayKeyOf(at){ var t = new Date(at); return isNaN(t) ? String(at || '').slice(0, 10) : t.toISOString().slice(0, 10); }
+/** CTR-197: the bill numbers the server names as withdrawn (cancelled or rejected) → { no: 1 }; anything else it sends is ignored */
+function withdrawnNos(list){
+  var out = {};
+  (Array.isArray(list) ? list : []).forEach(function(entry){ if (entry && entry.no) out[String(entry.no)] = 1; });
+  return out;
+}
+/** CTR-197: mark this device's own copy of each named bill withdrawn - kept for the record, out of every day sum (isDocRow). → how many were newly marked */
+async function dayMarkWithdrawn(gone){
+  var markedCount = 0;
+  if (!Object.keys(gone).length) return 0;
+  try {
+    var all = (await DB.all('bills')) || [];
+    for (var i = 0; i < all.length; i++) {
+      var row = all[i];
+      if (!row || !row.no || row._withdrawn || !gone[String(row.no)]) continue;
+      row._withdrawn = { at: Date.now() };
+      await DB.put('bills', row); markedCount++;
+    }
+  } catch (e) { cbQuiet('dayMarkWithdrawn:1', e); }
+  return markedCount;
+}
+/** CTR-197: the day check, and - when it just dropped a cancelled bill from this device's day - the report read again without it (dayClose starts by taking the newest turn, so the older pass ends; the second pass marks none) */
+async function dayCheckThenRefresh(rows){
+  var check = await dayServerCheck(rows);
+  if (check && check.marked) dayClose();
+  return check;
+}
 async function dayServerCheck(rows){
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
   var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
   if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
   var day = dayKeyOf(Date.now()), counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
+  /* ⭐ CTR-197: the server leaves a cancelled bill out of its list and NAMES it in `withdrawn`. A bill of this device that is named there is
+     known, not unsent: it is marked withdrawn in the store (out of the day's sums) and left out of both sides of the check. */
+  var gone = withdrawnNos(h.withdrawn), marked = await dayMarkWithdrawn(gone);
   var mine = {}, theirs = {};
-  (rows || []).filter(counted).forEach(function(b){ mine[String(b.no)] = b; });
+  (rows || []).filter(function(row){ return counted(row) && !gone[String(row.no)]; }).forEach(function(row){ mine[String(row.no)] = row; });
   h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
   var more = Object.keys(theirs).filter(function(k){ return !mine[k]; }).map(function(k){ return theirs[k]; });
   var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
@@ -22078,7 +22172,7 @@ async function dayServerCheck(rows){
   var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
   /* an old note stored no amount: when none of the refunds carries one the sum is null (the bare word), never ₹0.00 */
   var backSum = function(list){ var known = back(list).filter(function(bill){ return bill.total != null; }); return known.length ? sum(known) : null; };
-  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
+  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer, marked: marked,
            moreTotal: sum(sales(more)), fewerTotal: sum(sales(fewer)), moreBack: back(more).length, fewerBack: back(fewer).length,
            moreBackTotal: backSum(more), fewerBackTotal: backSum(fewer) };
 }
@@ -23255,7 +23349,7 @@ function tenderParts(parts, billNet, tendered){
     }
     return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
   }
-  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: Math.min(tendered, rest) });
+  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: cashDue(Math.min(tendered, rest), payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
   return parts;
 }
 function slipHeadHTML(kind){
@@ -23759,7 +23853,7 @@ async function resendBill(no){
  * a list of what it is NOT is wrong the moment anything new exists. [[feedback-whitelist-drops-silently]]
  */
 /** M128: a despatch (D/..) or goods-received (GRN/..) note is stored beside the bills but is NOT one - the day's count, the slip's From-To and the Day book count bills only */
-function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' || b.kind === 'receipt')); }
+function isDocRow(row){ return !!(row && (row.doc === true || row.kind === 'despatch' || row.kind === 'receipt' || row._withdrawn)); }   /* CTR-197: a bill the server says was cancelled stays in the store but is no sale of the day */
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
@@ -25736,6 +25830,11 @@ function subPaint(){
 }
 /** ⭐⭐ ISSUE IT. Same discipline as an expense: numbered from its own series, written locally, queued, sent
  *  when the line is there. Unlike an expense, this IS a sale — see chitOfSubscription()'s own comment. */
+/** CTRY-77: a CASH subscription is TAKEN at the pack's coin step like a bill (cashDue); cash_round is what the coin changed, as on a bill (absent when nothing rounds) */
+function subTaken(amount){
+  var taken = cashDue(amount, payWayId(SUB_HOW)), moved = r2(taken - amount);
+  return { payments: [{ how: SUB_HOW, amount: taken }], cash_round: moved ? moved : undefined };
+}
 async function subIssue(){
   var what = SUB_WHAT.trim(), amount = r2(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
   if (!what) { toastLine('Say what this subscription/AMC is for first.'); return; }
@@ -25749,7 +25848,7 @@ async function subIssue(){
     + (occ ? ', ' + occ + ' included' : ', ongoing') + ', every ' + cadence + ' day(s)?';
   if (!(await sure(confirmWords, 'Yes, sign them up', 'New subscription/AMC'))) return;
   var body = { what: what, customer: { name: custName }, price: amount, total: amount, mode: SUB_HOW,
-    payments: [{ how: SUB_HOW, amount: amount }],
+    payments: subTaken(amount).payments, cash_round: subTaken(amount).cash_round,
     occurrencesTotal: occ, cadenceDays: cadence, startsAt: new Date().toISOString(),
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
   var r = { ok: false };
@@ -26439,7 +26538,7 @@ function usignAnswer(path, reqBody, reply, name){
   var body = reply && reply.body, door = usignDoor(path);
   if (!body || typeof body !== 'object') return reply;
   if (name && usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);   /* the owner, or a typed ID, keeps the server's sentence */
-  else if (door === 'ask' && usignAskedFirstCode(reply)) body.message = 'Type the first code the owner gave you. Then choose a Counter PIN.';
+  else if (door === 'ask' && name && usignWasOk(reply)) body.message = 'Type your PIN, or the first code the owner gave you.';   /* SEC-143: ask answers everyone the same, so a picked worker is told both ways in, never which she has */
   else if (door === 'pin' && usignWasOk(reply) && reqBody && reqBody.pin) USIGN.newPin = String(reqBody.pin);
   return reply;
 }
@@ -26454,9 +26553,6 @@ function usignWasOk(reply){
 /** the server's one sentence for every hidden reason (lib/otp.js SIGNIN_REFUSED_SENTENCE) */
 function usignWasRefused(door, reply){
   return (door === 'ask' || door === 'verify') && reply.status === 400 && /^That sign-in didn.t work/.test(String(reply.body.message || ''));
-}
-function usignAskedFirstCode(reply){
-  return usignWasOk(reply) && reply.body.kind === 'actor' && reply.body.need === 'code';
 }
 
 /** the window, mounted fresh into #usignbody — the ONLY place this page calls CBSignin.mount */

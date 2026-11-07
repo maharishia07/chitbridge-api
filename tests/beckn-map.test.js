@@ -7,6 +7,7 @@
  *   · the supplier's currency is final, and a mismatch is refused rather than converted
  *   · an unknown state moves nothing
  * Those three are the difference between adopting a protocol and being absorbed by one.
+ * CARD      23-connectors-and-integrations/beckn-ondc-compatibility
  */
 const assert = require('assert');
 const M = require('../lib/beckn-map');

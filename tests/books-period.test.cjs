@@ -9,6 +9,10 @@
  * figure, the disposal.
  * Needs the books engines v1.16.0 (the sibling ../chitbridge-engines/src, or BOOKS_ENGINES_SRC).
  * Run: node tests/books-period.test.cjs
+ * CARD      14-accounting/periods-month-lock-year-close
+ * CARD      14-accounting/fixed-assets-and-depreciation
+ * CARD      13-inventory-stock-and-traceability/closing-stock-for-the-books
+ * UNIT      13/Closing stock for the books
  */
 'use strict';
 const path = require('path');
@@ -183,6 +187,23 @@ function memoryRegister() {
   const ds2 = await q('POST', '/assets/' + ASSET + '/dispose', dsB);
   ok('…a double tap answers the first (duplicate), one entry', ds2.body.duplicate === true && X.T.entries.filter((x) => x.source_ref === 'asset-dispose:' + ASSET).length === 1);
   eq('…an unknown asset is a 404', (await q('POST', '/assets/55555555-5555-4555-8555-0000000000ff/dispose', dsB)).status, 404);
+
+  /* ── ACC-260: a party id in the body is a party of THIS shop, or it is answered as an unknown id (404 NOT_FOUND, nothing written) ── */
+  {
+    const STRANGER = '99999999-9999-4999-8999-999999999999';   /* a valid uuid that is on no list of this shop: another shop's customer */
+    const OPEN = '55555555-5555-4555-8555-0000000000a1';
+    reg.rows.push({ entity: SHOP, asset_id: OPEN, name: 'Press', asset_class: 'computers', cost_minor: 1000000, currency: 'INR', put_to_use: '2026-04-18', source_entry_id: null, source_chit_id: null,
+      accumulated_minor: 0, last_dep_fy: null, disposed_on: null, disposal_entry_id: null, proceeds_minor: null, created_by: null });
+    const n0 = X.T.entries.length, items0 = X.T.items.length;
+    const sd = await q('POST', '/assets/' + OPEN + '/dispose', { date: '2027-04-05', proceeds_minor: 500000, party_id: STRANGER, client_ref: 'acc260-d' });
+    ok('ACC-260 · dispose with another shop\'s party_id → 404 NOT_FOUND "No such party."', sd.status === 404 && sd.body.code === 'NOT_FOUND' && /No such party/.test(JSON.stringify(sd.body)), sd.status + ' ' + JSON.stringify(sd.body).slice(0, 200));
+    ok('…nothing written: no entry, no party item, the asset still open', X.T.entries.length === n0 && X.T.items.length === items0 && reg.rows.find((x) => x.asset_id === OPEN).disposed_on === null);
+    const sn = await q('POST', '/assets/' + OPEN + '/dispose', { date: '2027-04-05', proceeds_minor: 500000, party_id: 'not-an-id', client_ref: 'acc260-n' });
+    ok('…a party_id that is not an id at all is the same 404', sn.status === 404 && X.T.entries.length === n0, sn.status + ' ' + JSON.stringify(sn.body).slice(0, 120));
+    const sp = await q('POST', '/assets', { name: 'Lathe', class: 'computers', cost: 9000, date: '2026-04-18', party_id: STRANGER, client_ref: 'acc260-p' });
+    ok('ACC-260 · buying an asset on credit from another shop\'s party → 404, no entry, no register row', sp.status === 404 && X.T.entries.length === n0 && !reg.rows.some((x) => x.name === 'Lathe'), sp.status + ' ' + JSON.stringify(sp.body).slice(0, 160));
+    reg.rows.splice(reg.rows.findIndex((x) => x.asset_id === OPEN), 1);   /* put the books back as the rest of this file found them */
+  }
 
   /* ── closing stock ── */
   /* M158: a chart with no 5050 gets the ledger on first use from the template — never a refusal in machine words */

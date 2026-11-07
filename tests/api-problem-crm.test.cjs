@@ -97,11 +97,11 @@ function checkWords() {
   const bare = words.crmFault(Object.assign(new Error('Because.'), { status: 400 }), req);
   check('crmFault: a refusal with no code is REFUSED', bare.code === 'REFUSED' && bare.legacy.code === 'REFUSED' && !('why' in bare.legacy), bare);
   const b276 = words.crmFault(Object.assign(new Error('long'), { code: 'CRM_NOT_MIGRATED', status: 503 }), req);
-  check('crmFault: b276 not run is the short 503', b276.status === 503 && sameValue(b276.legacy, { code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'CRM needs migration b276 — not run yet.' }), b276);
+  check('crmFault: b276 not run is the short 503', b276.status === 503 && sameValue(b276.legacy, { code: 'CRM_NOT_MIGRATED', error: 'Not migrated yet', message: 'Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.' }), b276);
   const tableGone = words.crmFault(Object.assign(new Error('relation "party_followup" does not exist'), { code: '42P01' }), req);
   check('crmFault: a missing table is the same 503', tableGone.status === 503 && tableGone.code === 'CRM_NOT_MIGRATED', tableGone);
-  const privacy = words.crmFault(Object.assign(new Error('Privacy records need migration b306 — not run yet.'), { code: 'PRIVACY_NOT_MIGRATED', status: 503 }), req);
-  check('crmFault: privacy not run keeps its sentence under "Not migrated yet"', privacy.status === 503 && privacy.legacy.error === 'Not migrated yet' && privacy.legacy.message.includes('b306'), privacy);
+  const privacy = words.crmFault(Object.assign(new Error('Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update.'), { code: 'PRIVACY_NOT_MIGRATED', status: 503 }), req);
+  check('crmFault: privacy not run keeps its sentence under "Not migrated yet"', privacy.status === 503 && privacy.legacy.error === 'Not migrated yet' && !/b30[67]/.test(privacy.legacy.message), privacy);
   const leads = words.crmFault(Object.assign(new Error('Lead stages arrive after the next update.'), { code: 'LEADS_NOT_MIGRATED', status: 503 }), req);
   check('crmFault: leads not run sends its sentence as error and message', leads.legacy.error === leads.legacy.message && leads.code === 'LEADS_NOT_MIGRATED', leads);
   const fault = words.crmFault(new Error(S.SECRET_SQL), req);

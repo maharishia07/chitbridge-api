@@ -48,6 +48,9 @@ const SECRET_SQL = 'relation "party_secret" does not exist -- SELECT secret FROM
 const FRESH = { realAuth: false, who: OWNER, key: null, db: 'ok', sqlRows: null };
 const world = Object.assign({}, FRESH);
 
+/** PLT-86c: the error pg throws when the backend is killed under a query (57P01, FATAL; its stack is inside node_modules/pg) */
+const lostConnection = () =>
+  Object.assign(new Error('terminating connection due to administrator command'), { severity: 'FATAL', code: '57P01', stack: 'error: terminating connection due to administrator command\n    at Client._handleErrorMessage (/x/node_modules/pg/lib/client.js:652:17)' });
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
 function rowsFor(sql) {
   if (world.sqlRows) {
@@ -55,6 +58,7 @@ function rowsFor(sql) {
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
+  if (world.db === 'lost') throw lostConnection();
   return { rows: [], rowCount: 0 };
 }
 const mock = (relative, exported) => {
@@ -83,6 +87,7 @@ function installStubs() {
     trySavepoint: async (handle, run, fallback) => run().catch(() => fallback),
     readBatch: async (entity, actor, statements) => {
       if (world.db === 'fail') throw new Error(SECRET_SQL);
+      if (world.db === 'lost') throw lostConnection();
       return statements.map(() => ({ rows: [], rowCount: 0 }));
     }
   };
@@ -104,6 +109,7 @@ const WORLDS = [
   { id: 'staff-asks', setup: { who: STAFF } },
   { id: 'bad-id', setup: {}, badId: true },
   { id: 'db-fails', setup: { db: 'fail' } },
+  { id: 'db-lost', setup: { db: 'lost' } },
   { id: 'nothing-found', setup: {} }
 ];
 const X = (id, route, status, extra) => Object.assign({ id, route, expect: status, setup: {} }, extra);
@@ -197,6 +203,7 @@ const EXTRAS = [
   X('qk-state-no-date', 'POST /api/till/quick-keys/state', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
   X('qk-hide-no-counter', 'POST /api/till/quick-keys/hide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
   X('qk-hide-no-product', 'POST /api/till/quick-keys/hide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
+  X('qk-hide-by-not-uuid', 'POST /api/till/quick-keys/hide', 400, { setup: { key: ['till'] }, body: { product_id: ITEM, by: 'Asha' }, patch: [COUNTER_KEYS] }), /* CTR-200: a name for hidden_by (a uuid column) is refused at the door, not a 500 */
   X('qk-unhide-no-counter', 'POST /api/till/quick-keys/unhide', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),
   X('qk-unhide-no-product', 'POST /api/till/quick-keys/unhide', 400, { setup: { key: ['till'] }, body: {}, patch: [COUNTER_KEYS] }),
   X('qk-screen-no-counter', 'POST /api/till/quick-keys/screen-config', 403, { setup: { key: ['till'] }, body: {}, patch: [KEYS_NOT_LISTED] }),

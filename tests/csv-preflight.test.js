@@ -4,6 +4,7 @@
  *
  * The load-bearing tests are the ones about what it REFUSES: a blocked column stays blocked at any confidence, an
  * unmatched column is reported rather than invented, and `ready` is false whenever a person still has to look.
+ * CARD      06-catalogue-pim/import-export-workbook-preflight
  */
 const assert = require('assert');
 const P = require('../lib/csv-preflight');

@@ -9,6 +9,7 @@
  *   AU 10% inclusive : sale 1000 = 909.09 + 90.91  · CN -272.73 / -27.27 / -300         · net 700 · 636.36 · 63.64
  *   AU 10% exclusive : sale 1100 = 1000 + 100      · CN on 300 = -300 / -30 / -330     · net 770 · 700 · 70
  * Run: node tests/till-bills-credit-note.test.cjs
+ * CARD      09-counter/returns
  */
 const assert = require('assert'), path = require('path');
 const API = path.join(__dirname, '..');

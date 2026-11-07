@@ -10,6 +10,7 @@
  *   · an unknown card is 404, a key is 403
  *
  * Run: node tests/home-facts.test.cjs
+ * CARD      26-reporting-mis-and-bi/home-facts
  */
 'use strict';
 const path = require('path');
@@ -123,7 +124,7 @@ function answer(text, params) {
     { entry_id: 'x1', event_type: 'reversal', covers: null, reverses_entry_id: 'b2', source_chit_id: 's2', account_role: 'debtors', dr_minor: 0, cr_minor: 4000, line_no: 1 }] : []) : [] };
   if (/FROM chit_status cs/.test(sql)) return { rows: chits() };
   /* T3-DISPUTES-ASSIST: the disputes card's one count (RLS = my copies) and CB Assist's library count */
-  if (/FROM chit_disputes WHERE status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
+  if (/FROM chit_disputes WHERE entity_id = [$]1 AND status = 'open'/.test(sql)) return { rows: [F.disputes || { mine: 0, against: 0 }] };
   if (/FROM assist_qa WHERE active = true/.test(sql)) return { rows: [{ n: F.answers == null ? 0 : F.answers }] };
   if (/SELECT catalogue_visibility/.test(sql)) return { rows: [{ catalogue_visibility: F.visibility || 'private', plan: null, params_override: {}, bridge_id: 'b1', business_status: 'open' }] };
   if (/FROM books_compare_part/.test(sql)) return { rows: F.snapshots || [] };

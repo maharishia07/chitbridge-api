@@ -84,6 +84,7 @@ function run(sql, p, ctx) {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   SQL.push({ s, p, ctx });
   p = p || [];
+  if (/^SELECT capabilities FROM identities/.test(s)) return [{ capabilities: ['register'] }]; /* RAIL-90: the register is on for these shops */
   /* the two reads whose text also names other tables — matched first */
   if (/FROM chit_disputes cd WHERE cd.status = 'open'/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.status === 'open');   // the queue (before T3)
   /* T3-DISPUTES-ASSIST: the widened queue — $2 status · $3 side · $4 ILIKE words · $5 limit · $6 offset, RLS = my copies; _total = count(*) OVER() */
@@ -174,14 +175,14 @@ function run(sql, p, ctx) {
     return [];
   }
   /* ── chit_disputes reads, RLS-scoped ── */
-  if (/^SELECT dispute_id FROM chit_disputes WHERE chit_id=\$1 AND raised_by_entity_id=\$2 AND status='open' AND category=\$3/.test(s))
+  if (/^SELECT dispute_id FROM chit_disputes WHERE chit_id=\$1 AND entity_id=\$2 AND raised_by_entity_id=\$2 AND status='open' AND category=\$3/.test(s))
     return mine(DISPUTES, ctx).filter((d) => d.chit_id === p[0] && d.raised_by_entity_id === p[1] && d.status === 'open' && d.category === p[2]
       && String(d.target_entity_id || '') === String(p[3] || '')).map((d) => ({ dispute_id: d.dispute_id }));
-  if (/FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2/.test(s))
+  if (/FROM chit_disputes WHERE dispute_id = \$1 AND chit_id = \$2( AND entity_id = \$3)?/.test(s))
     return mine(DISPUTES, ctx).filter((d) => d.dispute_id === p[0] && d.chit_id === p[1]);
   if (/COUNT\(\*\)::int AS n FROM chit_disputes WHERE entity_id = \$1 AND chit_id = \$2 AND status = 'open'/.test(s))   // books-store.openDisputes
     return [{ n: mine(DISPUTES, ctx).filter((d) => d.entity_id === p[0] && d.chit_id === p[1] && d.status === 'open').length }];
-  if (/FROM chit_disputes WHERE chit_id ?= ?\$1/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.chit_id === p[0]);           // GET + diagnosis
+  if (/FROM chit_disputes WHERE chit_id ?= ?\$1( AND entity_id ?= ?\$2)?/.test(s)) return mine(DISPUTES, ctx).filter((d) => d.chit_id === p[0]);           // GET + diagnosis
   /* ── messages ── */
   if (/^SELECT \* FROM chit_messages WHERE chit_id = \$1/.test(s))
     return mine(MSGS, ctx).filter((m) => m.chit_id === p[0] && (!/is_dispute = true/.test(s) || m.is_dispute));

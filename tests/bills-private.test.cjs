@@ -41,7 +41,7 @@ function rowsFor(sql, p) {
   if (/UPDATE identities SET policy_flags/.test(s)) { FLAGS = Object.assign({}, FLAGS, JSON.parse(p[0])); return []; }
   if (/FROM chit_status cs JOIN chit_header ch/.test(s) && /AS doc_kind/.test(s)) return ROWS;
   if (/FROM state_log sl LEFT JOIN identities i/.test(s)) return LOG.filter((l) => (p[1] || []).indexOf(l.chit_id) >= 0);
-  if (/FROM chit_disputes WHERE chit_id = ANY/.test(s)) return DISP;
+  if (/FROM chit_disputes WHERE entity_id = [$]2 AND chit_id = ANY/.test(s)) return DISP;
   if (/FROM party_item i LEFT JOIN books_payment p/.test(s)) return PI;
   if (/FROM party_item WHERE entity_id = \$1 AND against_ref = \$2/.test(s)) return [{ open_minor: -18165, bill_minor: -48165 }];
   if (/SELECT identity_id, user_id, display_name FROM identities/.test(s)) return (p[0] || []).map((id) => PEOPLE[id]).filter(Boolean);
@@ -165,7 +165,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('a payment against something that is not a bill writes no bill step', wrote(/state_log/).length === 0);
     const booksSrc = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8');
     /* FIN-63 step 2: confirmSteps (defined above the route) is the one place moneySteps runs for the confirm; the route calls it after the posting and after the replay answer */
-    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, pay, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
+    ok('the books confirm route writes the money steps after the posting', /async function confirmSteps\([^)]*\) \{[\s\S]*?moneySteps\(e, payment, pairs,[\s\S]*?\n\}[\s\S]*?router\.post\('\/payments\/:id\/confirm'[\s\S]*?B\.postEntry[\s\S]*?await confirmSteps\(req, e, id, read\.pairs\)[\s\S]*?\n\}\);/.test(booksSrc));
 
     console.log('\n══ D · THE SELLER\'S LIFECYCLE — never a buyer step; the dispute and the shared payment ══\n');
     reset(); ROWS = [sellerRow()];

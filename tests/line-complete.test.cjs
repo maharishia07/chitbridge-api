@@ -14,6 +14,7 @@
  *
  * ⭐ `progress()` takes pre-read rows, so this needs no database at all — the rule is arithmetic and is
  * tested as arithmetic.
+ * CARD      01-rail-core-the-chit/line-model
  */
 const deliverline = require('../lib/deliverline');
 

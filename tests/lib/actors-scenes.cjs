@@ -117,6 +117,9 @@ function extras(tools) {
   const failOn = (pattern, code, message, more) => when(pattern, sqlState(code, message, more));
   /* the shop's person, found by any of the reads that name a person of this shop */
   const SOMEONE = row(/FROM identities\s+WHERE identity_id = \$1/, PERSON_ROW);
+  /* the key@Display Name door, made to reach its answer: the shop is found, the first code is right, the person row has no PIN yet; issueToken is the one thing a scene changes */
+  const LOGIN_ROW = row(/FROM identities\s+WHERE actor_key = \$1/, Object.assign({}, PERSON_ROW, { pin_hash: null }));
+  const signedIn = (issueToken) => ({ identityAuth: { findEntityByNameOrHandle: async () => ({ ok: true, entity: { identity_id: SHOP, display_name: 'Shop A' } }), verifyCredential: async () => ({ ok: true }), issueToken } });
   const person = (more) => row(/FROM identities\s+WHERE identity_id = \$1/, Object.assign({}, PERSON_ROW, more));
   const own = (fn) => ({ sqlRows: fn });
   const T = (patchOf) => ({ patch: patchOf });
@@ -156,7 +159,18 @@ function extras(tools) {
     X('set-pin-made', 'POST ' + at('/set-pin'), 200, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: STAFF } }),
     X('login-needs-a-name', 'POST ' + at('/login'), 400, { body: {} }),
     X('login-unknown-account', 'POST ' + at('/login'), 400, { body: { username: 'ghost@shop-a', otp: '123456' } }),
-    X('login-short-code', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '12' } })
+    X('login-short-code', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '12' } }),
+    /* the 7 Nov contract pass: the three aliases are judged now. These are the answers the sweep ADDS or must reach to prove each declared status and the closed answer */
+    N('check-login-username-twice', 'GET ' + at('/check-login'), 400, { url: at('/check-login?username=a@shop-a&username=b@shop-a') }),
+    N('set-pin-unknown-key-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234', colour: 'red' }, setup: { who: STAFF } }),
+    N('set-pin-owner-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: OWNER } }),
+    N('set-pin-db-fails', 'POST ' + at('/set-pin'), 500, { body: { pin: '1234', confirm_pin: '1234' }, setup: Object.assign({ who: STAFF }, failing) }),
+    N('login-unknown-key-refused', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '123456', colour: 'red' } }),
+    N('login-ok', 'POST ' + at('/login'), 200, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => 'token-of-ravik'), setup: { sqlRows: LOGIN_ROW } }),
+    N('login-device-removed', 'POST ' + at('/login'), 403, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: LOGIN_ROW } }),
+    N('login-session-not-listed', 'POST ' + at('/login'), 503, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: LOGIN_ROW } }),
+    N('login-two-businesses-of-one-name', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: { identityAuth: { findEntityByNameOrHandle: async () => ({ ambiguous: true }) } } }),
+    N('login-db-fails', 'POST ' + at('/login'), 500, { body: { username: 'ghost@shop-a', otp: '123456' }, setup: failing })
   ];
 
   /* ── suggest-key and check-key ── */
@@ -217,9 +231,9 @@ function extras(tools) {
     X('change-pin-not-the-same', 'PUT ' + at('/change-pin'), 400, { body: { current_pin: PIN, new_pin: '7391', confirm_pin: '1111' } }),
     X('change-pin-by-the-shop', 'PUT ' + at('/change-pin'), 400, { body: NEW_PIN }),
     X('change-pin-person-gone', 'PUT ' + at('/change-pin'), 404, { body: NEW_PIN, setup: { who: STAFF } }),
-    X('change-pin-none-set', 'PUT ' + at('/change-pin'), 400, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_locked_at FROM identities/, { pin_hash: null, pin_locked_at: null }) } }),
-    X('change-pin-wrong-current', 'PUT ' + at('/change-pin'), 400, { body: Object.assign({}, NEW_PIN, { current_pin: '0000' }), setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
-    X('change-pin-made', 'PUT ' + at('/change-pin'), 200, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
+    X('change-pin-none-set', 'PUT ' + at('/change-pin'), 400, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_attempts, pin_locked_at FROM identities/, { pin_hash: null, pin_locked_at: null }) } }),
+    X('change-pin-wrong-current', 'PUT ' + at('/change-pin'), 400, { body: Object.assign({}, NEW_PIN, { current_pin: '0000' }), setup: { who: STAFF, sqlRows: firstOf(row(/SELECT pin_hash, pin_attempts, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }), row(/SET pin_attempts = pin_attempts \+ 1/, { pin_attempts: 1, pin_locked_at: null })) } }),
+    X('change-pin-made', 'PUT ' + at('/change-pin'), 200, { body: NEW_PIN, setup: { who: STAFF, sqlRows: row(/SELECT pin_hash, pin_attempts, pin_locked_at FROM identities/, { pin_hash: pinHash, pin_locked_at: null }) } }),
     X('change-pin-fails', 'PUT ' + at('/change-pin'), 500, { body: NEW_PIN, setup: { who: STAFF, sqlRows: failOn(/SELECT pin_hash/, 'XX000', SECRET_SQL) } }),
     X('pin-reset-made', 'DELETE ' + at('/:id/pin'), 200, { setup: { sqlRows: row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW) } }),
     X('pin-reset-made-and-mailed', 'DELETE ' + at('/:id/pin'), 200, { patch: mailed, setup: { sqlRows: firstOf(row(/SELECT email FROM identities/, { email: 'ravi@example.com' }), row(/SELECT identity_id, display_name, actor_key, break_status FROM identities/, PERSON_ROW)) } }),
@@ -317,6 +331,8 @@ function extras(tools) {
     X('assign-chit-not-found', 'PUT ' + at('/assign/:chit_id'), 404, { body: { action: 'pull' } }),
     X('assign-pull-already-held', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'pull' }, setup: { sqlRows: CHIT_ROW({ assigned_to_actor_id: OTHER, actor_name: 'Meena' }) } }),
     X('assign-pull-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'pull' }, setup: { who: STAFF, sqlRows: CHIT_ROW({ assigned_to_actor_id: null }) } }),
+    /* RAIL-173: the bill was cancelled / rejected after it posted — the rail's gate says taken_back, nothing is written, the answer is the 409 */
+    X('assign-pull-bill-taken-back', 'PUT ' + at('/assign/:chit_id'), 409, { body: { action: 'pull' }, patch: { railStatus: { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } }, setup: { who: STAFF, sqlRows: CHIT_ROW({ assigned_to_actor_id: null }) } }),
     X('assign-push-needs-a-target', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push' }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-push-target-not-active', 'PUT ' + at('/assign/:chit_id'), 400, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: CHIT_ROW({}) } }),
     X('assign-push-made', 'PUT ' + at('/assign/:chit_id'), 200, { body: { action: 'push', target_actor_id: OTHER }, setup: { sqlRows: firstOf(TARGET, CHIT_ROW({})) } }),

@@ -10,6 +10,7 @@
  * nothing here — the code was right everywhere except at the one boundary that serialises.
  *
  * Run: node tests/snapshot-wire.test.js   · no DB, no network.
+ * CARD      09-counter/billing-and-the-bill
  */
 'use strict';
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */

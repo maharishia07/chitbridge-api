@@ -28,6 +28,7 @@ const express = require('express');
 const { harness, PARTY, OWNER, STAFF, SECRET_SQL, sameValue, answering, raising, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/channels-scenes.cjs');
 const foreign = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -93,10 +94,10 @@ function checkWords() {
   check('faultOf: a refusal below 500 keeps its status and its sentence under the screen label', refused.status === 400 && refused.code === 'CHANNEL_BAD_REQUEST' && sameValue(refused.legacy, { error: 'Bind failed', message: 'Unknown channel' }), refused);
   const taken = words.faultOf(Object.assign(new Error('That business number is already in use.'), { status: 409 }), req, 'Bind failed', 'below500');
   check('faultOf: 409 is CHANNEL_ADDRESS_TAKEN', taken.status === 409 && taken.code === 'CHANNEL_ADDRESS_TAKEN', taken);
-  const missing = words.faultOf(Object.assign(new Error('Channels not migrated yet (b123).'), { status: 503, code: 'CHANNEL_STORE_MISSING' }), req, 'Revoke failed', 'any');
-  check('faultOf: relay "any" passes a 503 sentence on, with the library\'s own code', missing.status === 503 && missing.code === 'CHANNEL_STORE_MISSING' && missing.legacy.message === 'Channels not migrated yet (b123).', missing);
-  const held = words.faultOf(Object.assign(new Error('Channels not migrated yet (b123).'), { status: 503 }), req, 'Bind failed', 'below500');
-  check('faultOf: relay "below500" does NOT pass a 503 sentence on: the status stays, the words are the safe sentence', held.status === 503 && sameValue(held.legacy, { error: 'Bind failed', message: SAFE }) && held.detail !== 'Channels not migrated yet (b123).', held);
+  const missing = words.faultOf(Object.assign(new Error('Channels arrive after the next update. Nothing was changed.'), { status: 503, code: 'CHANNEL_STORE_MISSING' }), req, 'Revoke failed', 'any');
+  check('faultOf: relay "any" passes a 503 sentence on, with the library\'s own code', missing.status === 503 && missing.code === 'CHANNEL_STORE_MISSING' && missing.legacy.message === 'Channels arrive after the next update. Nothing was changed.', missing);
+  const held = words.faultOf(Object.assign(new Error('Channels arrive after the next update. Nothing was changed.'), { status: 503 }), req, 'Bind failed', 'below500');
+  check('faultOf: relay "below500" does NOT pass a 503 sentence on: the status stays, the words are the safe sentence', held.status === 503 && sameValue(held.legacy, { error: 'Bind failed', message: SAFE }) && held.detail !== 'Channels arrive after the next update. Nothing was changed.', held);
   const none = words.faultOf(Object.assign(new Error(SECRET_SQL), { status: 503 }), req, 'List failed', 'none');
   check('faultOf: relay "none" keeps the status and never the words', none.status === 503 && sameValue(none.legacy, { error: 'List failed', message: SAFE }) && !JSON.stringify(none).includes('vault'), none);
   const fault = words.faultOf(new Error(SECRET_SQL), req, 'Unbind failed', 'any');
@@ -250,6 +251,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 80, frozen);
   check('a caller who is not signed in is refused with 401 on every route that asks for a session', Object.keys(recording).filter((key) => key.endsWith('|signed-out') && !/\/(approve|revoke|template-approve)\|/.test(key)).every((key) => recording[key].status === 401));
   check('a 500 never says its cause: no 5xx answer of any route carries the database text', Object.values(recording).filter((one) => one.status >= 500).every((one) => !/SELECT|vault|relation "/.test(JSON.stringify(one.body || {}))));
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -257,8 +259,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/channels.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }

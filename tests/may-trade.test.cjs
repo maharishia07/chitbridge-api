@@ -6,6 +6,7 @@
  * two together: the trigger's four clauses must still be there, and the helper's SQL must carry each of them.
  * And mayTrade() itself, against a stubbed database: the reasons a shopkeeper reads.
  * Run: node tests/may-trade.test.cjs
+ * CARD      28-platform-and-operations/worlds-regions-data-residency-test-vs-production
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path');

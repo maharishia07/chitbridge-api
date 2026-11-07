@@ -13,6 +13,7 @@
  * And the STOP condition: a token issued before M05 (no jti / device_id) keeps working, unchanged, until its own exp.
  *
  * Run: node tests/person-session.test.cjs · no network beyond 127.0.0.1, no DB.
+ * CARD      18-identity-sign-in-and-access/sessions-and-devices
  */
 'use strict';
 const fs = require('fs');
@@ -276,7 +277,7 @@ const dec = (tok) => jwt.decode(tok);
     t('  …device A is untouched by another device\'s removal', r.status === 200);
     t('the doors answer a removed device 403 DEVICE_REVOKED in words (not a 500)',
       /* K-SEC PR A: both doors go through ONE helper (sessionRefused): DEVICE_REVOKED 403, SESSION_NOT_LISTED 503 */
-      (ent.match(/if \(sessionRefused\(err, req, res, /g) || []).length === 2 && /code === 'DEVICE_REVOKED'/.test(ent) && /status\(503\)/.test(ent));
+      (ent.match(/if \(sessionRefused\(err, req, res, /g) || []).length === 2 && /code === 'DEVICE_REVOKED'/.test(ent) && /status: 503/.test(ent));
 
     console.log('\n── one shape ──');
     t('auth builds the session holder in lib/holder.js (one builder)', auth.holderOf === require(path.join(API, 'lib', 'holder')).holderOf);

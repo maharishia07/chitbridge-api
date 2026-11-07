@@ -21,6 +21,7 @@
  *    tools/endpoint-usage.cjs --json); without it the budget file's own list is what is fired, and that is said.
  *
  * Run: node tests/round-trips-all.test.cjs [--write] · no DB, no network.
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 const path = require('path');
 const fs = require('fs');
@@ -29,6 +30,11 @@ const API = path.join(__dirname, '..');
 const BUDGET_FILE = path.join(API, 'round-trips.budget.json');
 const WRITE = process.argv.includes('--write');
 const UNFIRED_CEILING = 50;
+/* LIVE counts (sit-in, 2026-11-06): the stub is a floor, a real shop is the cost. A route's ceiling is max(stub, live); a line is never lowered by --write. */
+const LIVE_FILE = path.join(API, 'round-trips.live.json');
+let LIVE = { routes: {} };
+try { LIVE = JSON.parse(fs.readFileSync(LIVE_FILE, 'utf8')); } catch (_) { /* no live file: offline numbers only */ }
+const liveOf = (k) => (typeof LIVE.routes[k] === 'number' ? LIVE.routes[k] : null);
 
 process.env.CB_TRIPS = '1';
 process.env.RLS_GUARD = 'off';
@@ -80,7 +86,7 @@ class FakePool {
     return Promise.resolve(r);
   }
   connect(cb) {
-    const client = { query: (q, p) => Promise.resolve(answer(q, Array.isArray(p) ? p : undefined)), release() {} };
+    const client = { query: (q, p) => Promise.resolve(answer(q, Array.isArray(p) ? p : undefined)), release() {}, on() { return this; }, removeListener() { return this; } };   /* PLT-86: withTx / withTransaction listen for a dead connection */
     if (typeof cb === 'function') { cb(null, client, () => {}); return undefined; }
     return Promise.resolve(client);
   }
@@ -108,6 +114,10 @@ if (webHere) {
   const r = spawnSync(process.execPath, [path.join(API, 'tools', 'endpoint-usage.cjs'), '--json'], { encoding: 'utf8', maxBuffer: 64 << 20 });
   try { const j = JSON.parse(r.stdout); called = j.called; mounts = j.mounts; } catch (e) { called = null; }
 }
+{ /* every file the register names needs its mount, not only the files the web calls */
+  const found = require(path.join(API, 'tools', 'server-mounts.cjs')).serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'), path.join(API, 'routes'));
+  for (const f of Object.keys(found)) if (!mounts[f]) mounts[f] = found[f];
+}
 if (!called) {
   /* the web client is not beside us: fire the budget's own list, with the mounts server.js declares */
   const found = require(path.join(API, 'tools', 'server-mounts.cjs')).serverMounts(fs.readFileSync(path.join(API, 'server.js'), 'utf8'), path.join(API, 'routes'));   /* one helper with the scanner — inline AND variable mounts */
@@ -132,6 +142,7 @@ for (const k of Object.keys(budget.routes)) if (budget.routes[k].awaiting_client
 /* ⭐ W2 (30 Oct): ONE NAME PER ROUTE. The client's registry spells a route its own way (`/api/facts/account` for the code's `/:card`, `:id` for the code's `:chit_id`), so the budget
    held 26 rows no api-register route had and the register's trips_budgeted column read the route as unbudgeted. A called route that is not a register key is renamed to the register
    route that serves it (the one with the most literal segments; a `:param` matches any segment); EVERY client spelling is fired and the dearest one sets the ceiling (the facts cards cost 1 to 4 trips; the route is the dearest card). The register is read, never written. */
+const outsideRoutes = {};
 const REGISTER_FILE = path.join(API, 'docs', 'api-register.json');
 if (fs.existsSync(REGISTER_FILE)) {
   const regKeys = JSON.parse(fs.readFileSync(REGISTER_FILE, 'utf8')).routes.map((r) => r.key);
@@ -151,6 +162,10 @@ if (fs.existsSync(REGISTER_FILE)) {
   }
   called = [...renamed.values()];
   for (const r of called) webCalled.add(r.route);
+  /* ⭐ trips_budgeted for EVERY registered route (11-06): a route the web does not call is still a door; it is fired too and its line says registered_only */
+  const have = new Set(called.map((r) => r.route));
+  for (const rt of JSON.parse(fs.readFileSync(REGISTER_FILE, 'utf8')).routes) if (!have.has(rt.key)) called.push({ route: rt.key, file: path.basename(rt.file), registered_only: true });
+  for (const rt of JSON.parse(fs.readFileSync(REGISTER_FILE, 'utf8')).routes) if (!rt.file.startsWith('routes/')) outsideRoutes[path.basename(rt.file)] = rt.file;   /* src/routes/network.js is mounted by server.js too */
 }
 
 const express = require('express');
@@ -162,9 +177,11 @@ const mountErr = {};
 for (const f of [...new Set(called.map((r) => r.file))].sort()) {
   const base = mounts[f];
   if (base === undefined) { mountErr[f] = 'no mount in server.js'; continue; }
-  try { app.use(base, require(path.join(API, 'routes', f))); mountedFiles.add(f); }
+  try { app.use(base, require(path.join(API, outsideRoutes[f] || path.join('routes', f)))); mountedFiles.add(f); }
   catch (e) { mountErr[f] = 'would not load: ' + String(e && e.message).slice(0, 60); }
 }
+/* server.js mounts ctp.js TWICE (server.js:386-387): at / for the bare-domain manifest AND at /api/ctp for deliver/query; the harness does the same */
+if (mountedFiles.has('ctp.js')) app.use('/api/ctp', require(path.join(API, 'routes', 'ctp.js')));
 
 /* A route the client calls WITHOUT the registry (the shell's direct get('/api/entities/header'), N19) is invisible to the scanner. Its budget line
    says `extra: true` and it is added to the list here, so it is still fired / checked and the "no longer called" check does not drop it. */
@@ -173,7 +190,7 @@ for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !calle
 const ID = '00000000-0000-4000-8000-000000000001';
 async function fire(port, route) {
   const sp = route.indexOf(' ');
-  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID);
+  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
   wire = 0;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
@@ -202,6 +219,12 @@ const srv = app.listen(0, '127.0.0.1', async () => {
         else if (!m.error && m.status >= 500) m = { error: 'answered ' + m.status + ' on the stub' };
       }
       const b = budget.routes[r.route];
+      const live = liveOf(r.route);
+      /* a registered-only route the stub answers with a 4xx has only a floor: with no live count it stays a placeholder that says so */
+      if (!m.error && r.registered_only && m.status >= 400 && live === null && !(b && b.floor_is_cost)) m = { error: 'stub answered ' + m.status + ' (a floor); needs a live measure on sit-in', status: m.status };
+      /* the live count is the cost: it wins over a stub that could not fire, and raises a floor */
+      let basis = null;
+      if (live !== null && (m.error || m.status >= 400 || live > m.trips)) { m = { status: m.error ? 200 : m.status, trips: Math.max(live, m.error ? 0 : m.trips), wire: m.error ? null : m.wire }; basis = 'live from sit-in ' + LIVE.at.slice(0, 10); }
       const row = { route: r.route, file: r.file, status: m.status, trips: m.trips, wire: m.wire };
       if (m.error) {
         notFired.push(Object.assign(row, { why: m.error }));
@@ -213,7 +236,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       }
       (m.status >= 400 ? shallow : fired).push(row);
       /* a measured row: the number is the harness's; a hand `why` is kept beside it (a note is not lost by being measured) */
-      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
+      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(basis ? { basis } : {}), ...(r.registered_only || (b && b.registered_only) ? { registered_only: true } : {}), ...(b && b.extra ? { extra: true } : {}), ...(b && b.floor_is_cost ? { floor_is_cost: b.floor_is_cost } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {

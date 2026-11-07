@@ -6,6 +6,7 @@
  * nothing · owner-only (a co-assist 403) · the numbers are gap-free (a preview takes none) · a shop's own ledger takes the next free code and refuses a typed one
  * · the grid lists every event, its fields and the pack's classes, and names what could not be composed.
  * Run: node tests/books-manual-events.test.cjs   (BOOKS_ENGINES_SRC=<lib/ or chitbridge-engines/src>)
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  */
 'use strict';
 const { rig, addStaffLedger, counter, SUPP } = require('./support/books-manual-rig.cjs');
@@ -146,5 +147,25 @@ const { ok, eq, done } = counter();
   const dnGrid = g.body.events.find((e) => e.kind === 'debit_note');
   ok('R106 · the grid offers the debit note (Debit note voucher, supplier + bill + lines required) and its reasons as a pick', dnGrid && dnGrid.voucher === 'Debit note' && dnGrid.fields.filter((f) => f.required).map((f) => f.key).join() === 'supplier,against_ref,lines' && g.body.picks.debit_reason.join() === 'rate,returned,other', JSON.stringify(dnGrid));
   R.asStaff(); ok('a co-assist may read the grid', (await q('GET', '/events')).status === 200); R.asOwner();
+
+  /* ── ACC-260: every party id an owner's door carries in its body is a party of THIS shop; a stranger's is answered as an unknown id (404 NOT_FOUND, nothing written) ── */
+  {
+    const STRANGER = '99999999-9999-4999-8999-999999999999';   /* a valid uuid on no list of this shop */
+    T.parties.push({ owner: R.SHOP, party_id: R.CUST, party_no: 'P-00001', name: 'Ravi Stores', customer: true, credit_days: 10 });
+    const n0 = T.entries.length, i0 = T.items.length;
+    const quiet = (what, r) => ok(what + ' → 404 NOT_FOUND "No such party."', r.status === 404 && r.body.code === 'NOT_FOUND' && /No such party/.test(JSON.stringify(r.body)) && T.entries.length === n0 && T.items.length === i0, r.status + ' ' + JSON.stringify(r.body).slice(0, 160));
+    const dr = (party_id) => ({ narration: 'Billed to a party', date: D, client_ref: 'p-' + party_id.slice(0, 4), lines: [{ code: '1300', dr_minor: 500, party_id }, { code: '4000', cr_minor: 500 }] });
+    quiet('POST /entries · a line party_id that is another shop\'s', await q('POST', '/entries', dr(STRANGER)));
+    const junk = await q('POST', '/entries', dr('not-an-id'));
+    ok('POST /entries · a line party_id that is not an id is dropped by the one lines reader, so the debtors line names no party → 422, nothing written', junk.status === 422 && T.entries.length === n0 && T.items.length === i0, junk.status + ' ' + JSON.stringify(junk.body).slice(0, 120));
+    const pv = await q('POST', '/preview', { event: { kind: 'journal', date: D, narration: 'x', lines: dr(STRANGER).lines } });
+    ok('POST /preview · the same journal previewed answers its own refusal: ok false, "No such party.", code BOOKS_NOT_FOUND', pv.status === 200 && pv.body.ok === false && (pv.body.refusals || []).join() === 'No such party.' && pv.body.code === 'BOOKS_NOT_FOUND', JSON.stringify(pv.body).slice(0, 200));
+    quiet('POST /write-off · another shop\'s party_id', await q('POST', '/write-off', { party_id: STRANGER, amount_minor: 500, reason: 'bad debt', client_ref: 'wo-x' }));
+    quiet('POST /events · an expense on credit to another shop\'s supplier', await q('POST', '/events', { event: { kind: 'expense', class: 'repairs', supplier: STRANGER, amount: 100, date: D, client_ref: 'x-sup' } }));
+    quiet('POST /events · a debit note to another shop\'s supplier', await q('POST', '/events', { event: Object.assign({}, DN, { supplier: STRANGER, client_ref: 'x-dn' }) }));
+    quiet('POST /opening · a row party_id of another shop', await q('POST', '/opening', { date: D, rows: [{ code: '1300', party_id: STRANGER, dr_minor: 500, bill_ref: 'OB-1' }, { code: '3000', cr_minor: 500 }] }));
+    const mine = await q('POST', '/entries', dr(R.CUST));
+    ok('…and the shop\'s OWN customer on the same journal is accepted (200, one entry)', mine.status === 200 && mine.body.ok === true && T.entries.length === n0 + 1, mine.status + ' ' + JSON.stringify(mine.body).slice(0, 160));
+  }
   R.close(); done();
 })().catch((e) => { console.error(e); process.exit(1); });

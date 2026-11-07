@@ -25,6 +25,8 @@ const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const ALLOW = require('./lib/allowlist-world.cjs');
 /* this file's rows: the three doors on both mounts */
 const MINE = (route) => / (\/api\/ctp)?\/(deliver|query|\.well-known\/ctp\.json)$/.test(route);
 const argv = process.argv.slice(2);
@@ -49,7 +51,7 @@ const SECRET_SQL = 'relation "chit_copy" does not exist -- INSERT INTO vault';
 const PEER = { installation_key: 'mx-1', domain: 'mx.example.com', hosted_locally: false, active: true };
 const LIVE_TO = { identity_id: 'e-to', population: 'live' };
 const SHOP = { identity_id: 'e-to', bridge_id: 'CBRECV0001', display_name: 'Recv', user_id: 'recv' };
-const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, storeFails: false, keysFail: false, catalogueFails: false };
+const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, event: null, storeFails: false, keysFail: false, catalogueFails: false };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: the peer, the recipient, the crossing rule, the live world */
@@ -87,11 +89,16 @@ function installStubs() {
     },
     verifyWith: () => true
   });
+  const realEnvelope = require(path.join(API, 'lib', 'ctpenvelope')); /* RAIL-126 b: the version rule is the real one; the stand-in replaces only the opener */
   mock('lib/ctpenvelope', {
+    speaks: realEnvelope.speaks,
+    versionRefusal: realEnvelope.versionRefusal,
     digest: () => 'H-1',
     open: () =>
       world.openWhy
         ? { ok: false, why: world.openWhy }
+        : world.event
+        ? { ok: true, kind: 'event', chit_id: 'chit-1', event: { type: 'status' } }
         : { ok: true, chit_id: 'chit-1', copy: Object.assign({ entity_id: 'THEIRS', business_json: {} }, world.noSender ? {} : { sender_entity_id: '22222222-2222-4222-8222-222222222222', sender_entity_bridge_id: 'CBSEND0001' }), header: {} }
   });
   /* RAIL-96/97: the route reads which questions are the network's (NETWORK_WANTS) from the real module; the stand-in keeps those lists and replaces only the opener */
@@ -103,6 +110,8 @@ function installStubs() {
       return { ok: true };
     }
   });
+  /* RAIL-106: the return path (an event, not a copy): applied, or ignored as older, with the words a peer may read */
+  mock('lib/ctpreturn', { apply: async () => world.event, onChitArrived: () => {} });
   mock('lib/govresolve', { resolveInstallationGovernance: async () => null });
   mock('routes/catalogue', {
     resolveEntity: async () => {
@@ -123,7 +132,7 @@ const DOORS = { manifest: 'GET /.well-known/ctp.json', deliver: 'POST /deliver',
 const SCENARIOS = [
   { id: 'manifest-ok', door: 'manifest', status: 200 },
   { id: 'manifest-keys-fail', door: 'manifest', status: 500, setup: { keysFail: true } },
-  { id: 'deliver-not-envelope', door: 'deliver', status: 400, body: { ctp: '2' } },
+  { id: 'deliver-not-envelope', door: 'deliver', status: 400, body: { ctp: 2 } },
   { id: 'deliver-no-body', door: 'deliver', status: 400 },
   { id: 'deliver-no-recipient', door: 'deliver', status: 400, body: env({ to: {} }) },
   { id: 'deliver-no-installation', door: 'deliver', status: 400, body: env({ from: {} }) },
@@ -138,6 +147,8 @@ const SCENARIOS = [
   { id: 'deliver-no-sender', door: 'deliver', status: 400, body: env(), setup: { noSender: true } },
   { id: 'deliver-store-fails', door: 'deliver', status: 500, body: env(), setup: { storeFails: true } },
   { id: 'deliver-accepted', door: 'deliver', status: 200, body: env() },
+  { id: 'deliver-event-applied', door: 'deliver', status: 200, body: env(), setup: { event: { ok: true, applied: true, why: null } } },
+  { id: 'deliver-event-ignored', door: 'deliver', status: 200, body: env(), setup: { event: { ok: true, applied: false, why: 'an older event: already applied' } } },
   { id: 'query-not-query', door: 'query', status: 400, body: { ctp: '1', kind: 'deliver' } },
   { id: 'query-no-installation', door: 'query', status: 400, body: { ctp: '1', kind: 'query', from: {} } },
   { id: 'query-stranger', door: 'query', status: 403, body: ASK({ want: 'resolve', handle: 'recv' }), setup: { peer: null } },
@@ -197,7 +208,8 @@ function checkLegacy(label, answer, frozen) {
 /** a success: the old body, and what a peer reads from it */
 function checkSuccess(label, scenario, answer) {
   check(label + ': answers JSON, as before', /application\/json/.test(answer.type), answer.type);
-  if (scenario.door === 'deliver') check(label + ': accepted, so lib/ctptransport counts it delivered', answer.json && answer.json.accepted === true && answer.json.chit_id === 'chit-1');
+  if (scenario.id.startsWith('deliver-event')) check(label + ': accepted, and says whether it applied (a peer reads applied)', answer.json && answer.json.accepted === true && answer.json.applied === scenario.setup.event.applied && answer.json.chit_id === 'chit-1');
+  else if (scenario.door === 'deliver') check(label + ': accepted, so lib/ctptransport counts it delivered', answer.json && answer.json.accepted === true && answer.json.chit_id === 'chit-1');
   if (scenario.door === 'query') check(label + ': ok and found', answer.json && answer.json.ok === true && answer.json.found === true);
   if (scenario.door === 'manifest') check(label + ': says CTP/1 and the key', answer.json && answer.json.ctp === '1' && answer.json.public_key === 'PK-here');
 }
@@ -265,6 +277,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
+  /* output_allowlist (S34): the two doors whose success schema is closed (the manifest, the receiving door) have every recorded 200 fit it; the query door's answer is one of eight questions' and stays open (its owner: cb-rail) */
+  const contract = require(path.join(HERE, 'lib', 'ctp-contract.js'));
+  const operationOf = (route) => (route.endsWith('ctp.json') ? contract.MANIFEST_OPERATION : route.endsWith('/deliver') ? contract.DELIVER_OPERATION : contract.QUERY_OPERATION);
+  const flat = {};
+  Object.keys(recording).forEach((route) => Object.keys(recording[route]).forEach((id) => (flat[route + '|' + id] = Object.assign({ route }, recording[route][id]))));
+  const allowHeld = ALLOW.checkAllowList(flat, Object.fromEntries(Object.keys(recording).map((route) => [route, operationOf(route)])), check);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -272,7 +290,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/ctp.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, MINE, allowHeld);
+  } else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the ctp routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, MINE), allowHeld), allowHeld);
+  if (!argv.includes('--write')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/ctp.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();

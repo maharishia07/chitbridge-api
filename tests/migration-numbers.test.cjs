@@ -7,6 +7,7 @@
  * ONE topic. Variants of one migration share the number on purpose — _apply / _dryrun / _verify (any case), and a bare bNNN_VERIFY —
  * so the topic is the name with the number and those words taken out. Two different topics under one number fail, naming both files.
  * Offline: reads the folder only.
+ * CARD      28-platform-and-operations/migrations-and-schema
  */
 'use strict';
 const fs = require('fs');

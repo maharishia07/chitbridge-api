@@ -2,6 +2,7 @@
  * books-collections.test.cjs — CB FINANCE · COLLECTIONS (F1; FIN-R1 terms): GET /dues?finance=1 adds credit_limit_minor · over_limit · interest_minor ·
  * last_remind; owner only (the server decides); the plain /dues is untouched; interest is SHOWN, never posted.
  * Needs the books engines. Run: node tests/books-collections.test.cjs
+ * CARD      16-finance/collections-and-dues
  */
 'use strict';
 const path = require('path');

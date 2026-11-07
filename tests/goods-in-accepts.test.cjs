@@ -11,6 +11,8 @@
  *   · the SELLER recording a despatch against its own bill moves nothing; nor does any chit that is not a bill I received
  *   · PUT /:chit_id/status still answers exactly as before (moveStatus is its body, lifted)
  * No database. Run: node tests/goods-in-accepts.test.cjs
+ * CARD      12-suppliers-and-procurement/purchase-order-and-goods-receipt
+ * UNIT      12/Purchase order & goods receipt
  */
 'use strict';
 const path = require('path');

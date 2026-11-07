@@ -3,7 +3,8 @@
  * CALLED BY web Inbox · WhatsApp / email webhooks.
  * FLOW      channel → capture → AI structure → human confirm → chit   (a WhatsApp STOP reply: capture → lib/optout withdraws consent, never a chit)
  *           the nine signed-in routes: auth → checked(route) → handler → res.json | problem(req, res, faultOf(...) | storesFault(...) | failed(...)); the words and the contract are lib/capture-contract.js.
- *           the three webhooks (an outside contract: Meta, the e-mail provider) are NOT in that contract and answer exactly as they always did.
+ *           the three webhooks (an outside contract: Meta, the e-mail provider): the provider's own SUCCESS replies are untouched (the verify echo as plain text, always 200 once signed);
+ *           a refusal (403 handshake, 401 signature, 400 a body the schema refuses) is a Problem, and the signed POSTs run signature, parse, schema, handler (webhookGate, inboundBody).
  * CARD      11-crm-and-marketing/capture
  */
 // routes/capture.js — the intake inbox + channel adapters. Pipeline: channel → capture → AI structure → human confirm
@@ -34,6 +35,43 @@ function hmacOk(rawBuf, secret, header, prefix) {
     return false;
   }
 }
+
+/**
+ * webhookGate - the provider's door, step one: the SIGNATURE (inbound_validated, S37). Inert with no secret set (200, as before: a missing secret cannot become an open door);
+ * an unsigned or wrongly signed body is 401 and nothing is read from it. The body must still be the raw bytes the signature was made over.
+ */
+const webhookGate = (secretName, signatureOf, prefix, notConfigured) =>
+  /** the signature step: inert with no secret, 401 on a bad signature, else on to the parser */
+  function webhookSigned(req, res, next) {
+    try {
+      const secret = process.env[secretName];
+      if (!secret) return res.status(200).json({ ok: true, note: notConfigured });
+      if (!Buffer.isBuffer(req.body) || !hmacOk(req.body, secret, signatureOf(req), prefix)) {
+        return problem(req, res, { status: 401, code: 'WEBHOOK_BAD_SIGNATURE', detail: 'The signature on this delivery is missing or does not match.', legacy: { error: 'bad signature' } });
+      }
+      return next();
+    } catch (err) {
+      return next(err);
+    }
+  };
+/**
+ * inboundBody - step two, after the signature: the raw bytes become the body the schema reads. Only a SIGNED body gets here.
+ * A body that cannot be read answers the 200 a signed delivery always got (the provider must not retry it); an e-mail provider that posts form fields is read as a form.
+ */
+const inboundBody = (asForm) =>
+  /** the parse step: the signed raw bytes become the body the schema reads */
+  function inboundParsed(req, res, next) {
+    const text = req.body.toString('utf8');
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch (_) {
+      if (!asForm) return res.status(200).json({ ok: true });
+      body = Object.fromEntries(new URLSearchParams(text));
+    }
+    req.body = body; /* a signed body that is not an object (or a list, for e-mail) is refused by the schema that follows: 400 */
+    return next();
+  };
 
 const entityId = (req) => auth.entityOf(req);
 
@@ -136,10 +174,15 @@ router.post('/:id/dismiss', auth, ...checked('POST /:id/dismiss'), async (req, r
 // formats, not from a live delivery. First real message should be watched, not assumed.
 
 // Meta WhatsApp webhook verification handshake (GET) — returns the challenge when the verify token matches.
-router.get('/webhook/whatsapp', (req, res) => {
-  const vt = process.env.WHATSAPP_VERIFY_TOKEN;
-  if (vt && req.query['hub.verify_token'] === vt && req.query['hub.mode'] === 'subscribe') return res.status(200).send(req.query['hub.challenge']);
-  return res.status(403).send('forbidden');
+// The provider sets this reply: the challenge, as plain text. A refusal is 403 (a Problem; Meta reads the status only).
+router.get('/webhook/whatsapp', (req, res, next) => {
+  try {
+    const vt = process.env.WHATSAPP_VERIFY_TOKEN;
+    if (vt && req.query['hub.verify_token'] === vt && req.query['hub.mode'] === 'subscribe') return res.status(200).type('text/plain').send(String(req.query['hub.challenge'] === undefined ? '' : req.query['hub.challenge']));
+    return problem(req, res, { status: 403, code: 'WEBHOOK_VERIFY_REFUSED', detail: 'The verify token or mode does not match.' });
+  } catch (err) {
+    return next(err);
+  }
 });
 /** the capture row for one inbound message, or null for a delivery receipt / status (no text, no media) */
 async function captureOf(entity, to, names, message) {
@@ -205,13 +248,16 @@ async function takeChange(change, afterAnswer) {
   return placed;
 }
 // RAW body on the webhook POSTs (needed for HMAC — the parsed JSON can't be re-signed byte-for-byte).
-router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, res) => {
+router.post(
+  '/webhook/whatsapp',
+  express.raw({ type: () => true }),
+  // reviewer capture #1 - verify the HMAC signature on EVERY POST (a verify-token guards only the GET handshake). Inert until a secret exists (200, as before).
+  webhookGate('WHATSAPP_APP_SECRET', (req) => req.headers['x-hub-signature-256'], 'sha256=', 'whatsapp not configured'),
+  inboundBody(false),
+  ...checked('POST /webhook/whatsapp'),
+  async (req, res) => {
   // Inert until BOTH an app secret AND a number→entity binding exist. Meta expects a fast 200 (no retry-storm).
   try {
-    const secret = process.env.WHATSAPP_APP_SECRET;
-    if (!secret) return res.status(200).json({ ok: true, note: 'whatsapp not configured' });
-    // reviewer capture #1 — verify the HMAC signature on EVERY POST (a verify-token guards only the GET handshake).
-    if (!hmacOk(req.body, secret, req.headers['x-hub-signature-256'], 'sha256=')) return res.status(401).json({ error: 'bad signature' });
     /**
      * reviewer capture #2, now IMPLEMENTED (b123). The entity comes from the number→entity MAP and never from the
      * payload — anything in the body is a stranger's assertion, and trusting it on a public endpoint would let
@@ -221,7 +267,7 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
      * is theirs. The binding is looked up on OURS. Getting those two the wrong way round is the whole bug this
      * comment exists to prevent.
      */
-    const parsed = JSON.parse(req.body.toString('utf8'));
+    const parsed = req.body; // read from the raw bytes after the signature was checked (inboundBody)
     let placed = 0;
     const afterAnswer = []; /* CON-2: the STOP confirmations, sent once Meta has its 200 */
     for (const entry of parsed.entry || []) for (const change of entry.changes || []) placed += await takeChange(change, afterAnswer);
@@ -232,28 +278,26 @@ router.post('/webhook/whatsapp', express.raw({ type: () => true }), async (req, 
     log.error('capture: a signed WhatsApp delivery could not be handled - Meta still gets its 200', { why: String(e && e.message) });
     return res.status(200).json({ ok: true });
   }
-});
+  }
+);
 
 /** the bare address of a header value: "Anna <anna@example.com>" gives "anna@example.com" */
 const addressOf = (value) => String(value || '').replace(/.*</, '').replace(/>.*/, '').trim();
 // Inbound email (SendGrid Inbound Parse / Mailgun route). Inert until a signing secret AND an address→entity map exist.
-router.post('/webhook/email', express.raw({ type: () => true }), async (req, res) => {
+router.post(
+  '/webhook/email',
+  express.raw({ type: () => true }),
+  webhookGate('EMAIL_INBOUND_SECRET', (req) => req.headers['x-mailgun-signature-256'] || req.headers['x-inbound-signature'], '', 'email inbound not configured'),
+  inboundBody(true),
+  ...checked('POST /webhook/email'),
+  async (req, res) => {
   try {
-    const secret = process.env.EMAIL_INBOUND_SECRET;
-    if (!secret) return res.status(200).json({ ok: true, note: 'email inbound not configured' });
-    if (!hmacOk(req.body, secret, req.headers['x-mailgun-signature-256'] || req.headers['x-inbound-signature'], ''))
-      return res.status(401).json({ error: 'bad signature' });
     /**
      * Entity from the To: address MAP, never the body (b123). Inbound-parse providers differ in casing and in
      * whether they send JSON or form fields, so read tolerantly — but only ever to find WHICH ADDRESS IT WAS SENT
      * TO. Who sent it is data on the capture; who receives it is a decision, and decisions come from the map.
      */
-    let body = {};
-    try {
-      body = JSON.parse(req.body.toString('utf8'));
-    } catch (_) {
-      body = Object.fromEntries(new URLSearchParams(req.body.toString('utf8')));
-    }
+    const body = req.body; // JSON or form fields, read after the signature was checked (inboundBody)
     const to = addressOf(body.to || body.To || body.recipient);
     const entity = await channels.ownerOf('email', to);
     if (!entity) return res.status(200).json({ ok: true, note: 'no binding for that address' });
@@ -269,7 +313,8 @@ router.post('/webhook/email', express.raw({ type: () => true }), async (req, res
   } catch (_) {
     return res.status(200).json({ ok: true });
   }
-});
+  }
+);
 
 /* ══════════════════════════════════════════════════════════════════════════════════════════════════════════════
  *  WHOLESALER CONSOLIDATION — the two outputs (directive 2026-08-10).

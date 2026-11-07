@@ -89,6 +89,8 @@ const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
+const { VERIFY_REFUSALS } = require('../lib/signin-contract');
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
@@ -695,10 +697,10 @@ router.patch(
 
 // ── GET /api/actors/check-login — MOVED to routes/signin.js (checkLogin), answering exactly as before (M06) ─────────
 // ⚠️ NOT 410 YET: app.html#/login reads it before every key@Display Name sign-in, and app.html is untouched until PR 14.
-router.get('/check-login', signin.handlers.checkLogin);
+router.get('/check-login', ...checked('GET /check-login'), signin.handlers.checkLogin);
 
 // ── POST /api/actors/set-pin — ALIAS (M06): the SAME handler as POST /api/signin/pin ───────────────────────────────
-router.post('/set-pin', auth, signin.pinChecks, validate, signin.handlers.pin);
+router.post('/set-pin', auth, ...checked('POST /set-pin'), signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
@@ -721,7 +723,7 @@ router.put(
       if (req.identity.identity_type !== 'actor') {
         return problem(req, res, { status: 400, ...words.onlyActorsChangePin() });
       }
-      const actor = await db(`SELECT pin_hash, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
+      const actor = await db(`SELECT pin_hash, pin_attempts, pin_locked_at FROM identities WHERE identity_id = $1`, [identity_id]);
       if (actor.rows.length === 0) {
         return problem(req, res, { status: 404, ...words.actorGone() });
       }
@@ -729,10 +731,10 @@ router.put(
       if (!a.pin_hash) {
         return problem(req, res, { status: 400, ...words.noPinSet() });
       }
-      // Verify current PIN
-      const match = await identityAuth.pinMatches(req.body.current_pin, a.pin_hash); // the one PIN engine
-      if (!match) {
-        return problem(req, res, { status: 400, ...words.pinIncorrect() });
+      // PPL-30: the sign-in door's own check (ONE PIN engine) — a locked person is turned away, a wrong PIN is counted and locks at MAX_PIN_ATTEMPTS (ASVS V2.2.1)
+      const check = await identityAuth.verifyCredential(db, { ...a, identity_id, identity_type: 'actor' }, { pin: req.body.current_pin });
+      if (!check.ok) {
+        return problem(req, res, { status: 400, ...(check.reason === 'PIN_LOCKED' ? words.pinLocked() : words.pinIncorrect()) });
       }
       const new_pin_hash = await identityAuth.hashPin(req.body.new_pin);
       await db(
@@ -804,7 +806,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
 // key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
-router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate, signin.handlers.verify);
+router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters
@@ -1397,6 +1399,7 @@ async function pullChit(work) {
   const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
     me: railActions.meOf(req)
   });
+  if (movedOnPull.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPull.from) }); /* RAIL-173: nothing was written */
   await taskCount(handle, action_by_id, 'take');
   // Log assignment event
   await handle(
@@ -1447,12 +1450,12 @@ async function pushChit(work) {
   // Warning if overloaded
   const overloaded = t.current_task_count >= t.max_tasks;
 
+  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
+  if (movedOnPush.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPush.from) }); /* RAIL-173: nothing was written, no count moved */
   // Reduce previous assignee count
   if (chitRow.assigned_to_actor_id) {
     await taskCount(handle, chitRow.assigned_to_actor_id, 'release');
   }
-
-  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
   await taskCount(handle, t.identity_id, 'take');
   // Log assignment — differentiate initial push from actor-to-actor transfer
   const isTransfer = !!chitRow.assigned_to_actor_id;

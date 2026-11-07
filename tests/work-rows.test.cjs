@@ -12,6 +12,7 @@
  *   7  trips: the list is select (4) + ONE batch (1); facts is select only; one is select + the batch — never a query per row
  *   8  RLS: another shop sees nothing and gets 404 for this shop's chit; every statement names the entity; customer role and API keys refused
  *   9  static: reads only (no INSERT/UPDATE/DELETE), no copied rail table, the one marks statement is open-orders'
+ * CARD      01-rail-core-the-chit/line-model
  */
 'use strict';
 const path = require('path'), fs = require('fs');

@@ -119,6 +119,8 @@ async function q(sql, params) {
       const o = {}; cols.forEach((c) => { o[c] = c === '1' ? 1 : (r[c] === undefined ? null : r[c]); }); return o; });
     return { rows, rowCount: rows.length };
   }
+  const counted = require(path.join(API, 'tests', 'lib', 'pin-count-stub.cjs')).answer(s, params, (id) => Object.values(DB).find((r) => r.identity_id === id), 'NOW');
+  if (counted) return counted;
   if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) {
     const sets = splitTop(m[1], ',');
     const hit = where(m[2], params);
@@ -273,7 +275,9 @@ async function run(sc, door) {
 /* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
    is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
 const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id'];
-const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED'];
+const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED',
+  /* the 7 Nov contract pass of the sign-in aliases: the refusals that had no code gained one (the old keys are all still there) */
+  'VALIDATION_FAILED', 'VERIFICATION_FAILED', 'PIN_REQUIRED', 'OTP_REQUIRED', 'LOGIN_FAILED', 'LOGIN_FORMAT_INVALID', 'PIN_ACTORS_ONLY'];
 const frozenBody = (b) => {
   if (!b || typeof b.type !== 'string' || b.type.indexOf('https://chitbridge.com/problems/') !== 0) return b;
   const o = Object.assign({}, b);
@@ -307,7 +311,7 @@ const firstDiff = (a, b) => {
       const out = {};
       for (const sc of S) out[sc.id] = strip(await run(sc, 'old'));
       fs.mkdirSync(path.dirname(GOLDEN_FILE), { recursive: true });
-      fs.writeFileSync(GOLDEN_FILE, JSON.stringify({ recorded_from: 'pre-move api (origin/main cf349d2)', scenarios: out }, null, 1) + '\n');
+      fs.writeFileSync(GOLDEN_FILE, JSON.stringify({ recorded_from: 'pre-move api (origin/main cf349d2); ask scenarios re-recorded for SEC-143', scenarios: out }, null, 1) + '\n');
       say('golden written: ' + Object.keys(out).length + ' scenarios → ' + GOLDEN_FILE);
       return;
     }
@@ -323,7 +327,7 @@ const firstDiff = (a, b) => {
     }
 
     say('\n-- 1b - SEC-81: an unknown account, a wrong secret and a locked account get ONE answer (same status, same body, no count, no "locked") --');
-    const REFUSED_IDS = ['ask.unknown.email', 'ask.unknown.name', 'verify.unknown', 'verify.entity.wrong', 'verify.entity.wrong.x6', 'verify.actor.pin.wrong.x5',
+    const REFUSED_IDS = ['verify.unknown', 'verify.entity.wrong', 'verify.entity.wrong.x6', 'verify.actor.pin.wrong.x5',
       'verify.actor.locked', 'login.noentity', 'login.noactor', 'login.pin.wrong.x6', 'login.otp.wrong', 'login.locked', 'login.removed'];
     const last = (id) => OLD[id].responses[OLD[id].responses.length - 1];
     const safeAnswer = JSON.stringify(last('verify.unknown'));
@@ -351,13 +355,14 @@ const firstDiff = (a, b) => {
     say('\n── 3 · what the new door adds, and what it never does ──');
     reset();
     let r = await call('POST', '/api/signin/ask', { body: { email: 'nobody@x.test' } });
-    t('ask never creates: an unknown e-mail with no mode → 400 SIGNIN_REFUSED, no INSERT', r.status === 400 && r.body.code === 'SIGNIN_REFUSED' && INSERTS.length === 0);
+    const ONE = (x) => x.status === 200 && x.body.need === 'pin_or_code' && Object.keys(x.body).every((k) => ['message', 'need', 'dev_otp'].includes(k)); /* SEC-143 */
+    t('ask never creates: an unknown e-mail with no mode → the one ask answer (200), no INSERT', ONE(r) && INSERTS.length === 0);
     r = await call('POST', '/api/signin/ask', { body: { id: 'shopone' } });
-    t('ask takes a user id as { id }: entity → need code', r.status === 200 && r.body.need === 'code' && r.body.kind === 'entity');
+    t('ask takes a user id as { id }: entity → the one ask answer, no kind', ONE(r));
     r = await call('POST', '/api/signin/ask', { body: { id: 'ravi@shopone.br' } });
-    t('  actor with a PIN → need pin', r.status === 200 && r.body.need === 'pin' && r.body.kind === 'actor' && r.body.use_pin === true);
+    t('  actor with a PIN → the same answer (no need, no use_pin, no kind)', ONE(r) && !('use_pin' in r.body));
     r = await call('POST', '/api/signin/ask', { body: { id: 'ravi@Shop One' } });
-    t('  key@Display Name resolves too (I5)', r.status === 200 && r.body.need === 'pin' && r.body.user_id === 'ravi@shopone.br');
+    t('  key@Display Name: the same answer, no user_id told', ONE(r) && !('user_id' in r.body));
     r = await call('POST', '/api/signin/verify', { body: { id: 'ravi@shopone.br', pin: '1234' } });
     t('verify takes { id } (a stored user id)', r.status === 200 && jwt.decode(r.body.token).identity_id === 'ravi');
     reset();

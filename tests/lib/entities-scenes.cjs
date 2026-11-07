@@ -43,7 +43,11 @@ function extras(tools) {
   const ME_ROW = { identity_id: SHOP, bridge_id: 'AAAA2222', display_name: 'Shop A', email: 'a@example.com', user_id: 'shop-a', country: 'IN', currency_code: 'INR', capabilities: ['x'], policy_flags: {} };
   const meRow = row(/SELECT identity_id, bridge_id, display_name, email, user_id, self_copy_pref/, ME_ROW);
 
-  /* ── sign-in and sign-up (recorded, never judged: routes/signin.js owns their refusals) ── */
+  /* a person (a co-assist, so the shop's onboarding steps are not run) found by the User ID typed, with a PIN; issueToken is the one thing a scene changes */
+  const PERSON_BY_HANDLE = answering(/LOWER\(user_id\) = LOWER/, [{ identity_id: '22222222-2222-4222-8222-222222222222', bridge_id: 'AAAA1111', display_name: 'Ravi Kumar', email: null, user_id: 'ravik.shop-a.br', identity_type: 'actor', pin_hash: 'x', parent_entity_id: SHOP, break_status: 'active' }]);
+  const verifying = (issueToken) => ({ identityAuth: { verifyCredential: async () => ({ ok: true }), issueToken } });
+  const TWO_SHOPS = answering(/LOWER\(display_name\) = LOWER/, [{ identity_id: 'a', bridge_id: 'A', email: 'a@x.com', display_name: 'Tea Shop' }, { identity_id: 'b', bridge_id: 'B', email: 'b@x.com', display_name: 'Tea Shop' }]);
+  /* ── sign-in and sign-up (POST /register is recorded, never judged; POST /verify is judged) ── */
   const signin = [
     X('register-needs-an-id', 'POST ' + at('/register'), 400, { body: {} }),
     X('register-name-too-short', 'POST ' + at('/register'), 400, { body: { email: 'new@example.com', display_name: 'Z' } }),
@@ -52,10 +56,19 @@ function extras(tools) {
     X('register-made', 'POST ' + at('/register'), 200, { body: { email: 'new@example.com', display_name: 'Brand New Shop' } }),
     X('register-made-with-a-chosen-id', 'POST ' + at('/register'), 200, { body: { email: 'new2@example.com', display_name: 'Brand New Shop', user_id: 'chosen-id' } }),
     X('register-insert-fails', 'POST ' + at('/register'), 500, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: raising(/INSERT INTO identities/, '23505') } }),
-    X('register-login-of-unknown', 'POST ' + at('/register'), 400, { body: { email: 'ghost@example.com', mode: 'login' } }),
+    /* SEC-130 (A): an e-mail a shop's party holds (no account): the same words as a free address, one notice mail, nothing made */
+    N('register-email-held-by-a-party', 'POST ' + at('/register'), 200, { body: { email: 'held@example.com', display_name: 'Held Probe Shop', user_id: 'held-probe-shop' }, setup: { sqlRows: (sql) => { if (/INSERT INTO identities/.test(sql)) throw Object.assign(new Error('duplicate key'), { code: '23505', constraint: 'identities_email_key' }); return null; } } }),
+    X('register-login-of-unknown', 'POST ' + at('/register'), 200, { body: { email: 'ghost@example.com', mode: 'login' } }),
     X('verify-needs-an-id', 'POST ' + at('/verify'), 400, { body: {} }),
     X('verify-short-code', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '12' } }),
-    X('verify-unknown-account', 'POST ' + at('/verify'), 400, { body: { email: 'ghost@example.com', otp: '123456' } })
+    X('verify-unknown-account', 'POST ' + at('/verify'), 400, { body: { email: 'ghost@example.com', otp: '123456' } }),
+    /* the 7 Nov contract pass: POST /verify is judged. These reach each declared status and the closed answer (new answers: not frozen) */
+    N('verify-unknown-key-refused', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '123456', colour: 'red' } }),
+    N('verify-ok', 'POST ' + at('/verify'), 200, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => 'token-of-ravik'), setup: { sqlRows: PERSON_BY_HANDLE } }),
+    N('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 400, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
+    N('verify-device-removed', 'POST ' + at('/verify'), 403, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
+    N('verify-session-not-listed', 'POST ' + at('/verify'), 503, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
+    N('verify-db-fails', 'POST ' + at('/verify'), 500, { body: { email: 'ghost@example.com', otp: '123456' }, setup: failing })
   ];
 
   /* ── the public door and the reads ── */
@@ -153,7 +166,7 @@ function extras(tools) {
     X('profile-handler-not-yours', 'PATCH ' + at('/profile'), 400, { body: { dispute_handler_actor_id: HANDLER } }),
     X('profile-staff-currency', 'PATCH ' + at('/profile'), 403, { body: { currency_code: 'USD' }, setup: { who: STAFF } }),
     X('profile-currency-malformed', 'PATCH ' + at('/profile'), 400, { body: { currency_code: 'U$D' } }),
-    X('profile-tax-number-refused', 'PATCH ' + at('/profile'), 400, { body: { gstn: 'bad' }, setup: { sqlRows: row(/SELECT country FROM identities/, { country: 'IN' }) } }),
+    X('profile-tax-number-refused', 'PATCH ' + at('/profile'), 400, { body: { gstn: 'bad' }, setup: { sqlRows: row(/SELECT country, gstn FROM identities/, { country: 'IN' }) } }),
     X('profile-visibility-capped', 'PATCH ' + at('/profile'), 403, { body: { catalogue_visibility: 'public' }, setup: { sqlRows: row(/SELECT plan, params_override FROM identities/, { plan: null, params_override: { caps: { catalogue_visibility: 'private' } } }) } }),
     X('profile-visibility-not-migrated', 'PATCH ' + at('/profile'), 409, { body: { catalogue_visibility: 'network' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, '23514') } }),
     X('profile-visibility-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, 'XX000') } }),
@@ -169,7 +182,10 @@ function extras(tools) {
   const platform = [
     X('erase-not-platform', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { who: STRANGER } }),
     X('erase-sealed', 'PATCH ' + at('/:id/erase'), 403, { url: at('/' + OTHER + '/erase'), body: {}, setup: { sqlRows: row(/SELECT sealed FROM identities/, { sealed: true }) } }),
-    X('erase-done', 'PATCH ' + at('/:id/erase'), 200, { url: at('/' + OTHER + '/erase'), body: {} }),
+    X('erase-done', 'PATCH ' + at('/:id/erase'), 200, { url: at('/' + OTHER + '/erase'), body: {}, setup: { sqlRows: row(/UPDATE identities SET is_erased/, { identity_id: OTHER }) } }),
+    /* CMP-30: an erasure that matched no entity is never reported done (GDPR Art. 17 · DPDP s.12); a non-uuid id names none either (router.param, K-1) */
+    N('erase-unknown-id', 'PATCH ' + at('/:id/erase'), 404, { url: at('/' + OTHER + '/erase'), body: {} }),
+    N('erase-id-not-a-uuid', 'PATCH ' + at('/:id/erase'), 404, { url: at('/not-a-uuid/erase'), body: {} }),
     N('erase-body-a-list', 'PATCH ' + at('/:id/erase'), 400, { url: at('/' + OTHER + '/erase'), body: [] }),
     X('erase-db-fails', 'PATCH ' + at('/:id/erase'), 500, { url: at('/' + OTHER + '/erase'), body: {}, setup: failing }),
     X('populations-not-root', 'GET ' + at('/populations'), 403, { setup: { who: STRANGER } }),

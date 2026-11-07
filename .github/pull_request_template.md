@@ -6,3 +6,4 @@
 - [ ] Pass 2 · humanify: cryptic names `<before → after>` · functions with a what-line `<before → after>` · empty catches `<before → after>`
 - [ ] Pass 3 · structure: module header present · CARD line · TRACE row: spec `<doc>` · design `<doc>` · unit `<file>` · walks `<files>`
 - [ ] Guard green: `readability --changed --ratchet`
+- [ ] Touch rule (report, warn mode until the switch date in the web tool): `node tools/touched-routes.cjs --md` and the Touch line of the readability checklist: touched files at 0 failures, touched routes at 13/13

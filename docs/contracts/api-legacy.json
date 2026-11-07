@@ -1708,13 +1708,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -1796,13 +1796,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -3495,13 +3495,13 @@
      "scenario": "advice-not-ready",
      "status": 503,
      "body_keys": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
      },
      "fixture": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
      }
     },
@@ -4932,13 +4932,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -5008,13 +5008,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -7508,6 +7508,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "built-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -7649,6 +7675,32 @@
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
       "message": "Set the shop country first. The books never open on a guess."
+     }
+    },
+    {
+     "scenario": "computed-registration-never-said",
+     "status": 409,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -7862,11 +7914,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -8740,11 +8792,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -9078,11 +9130,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     }
    ]
@@ -9818,11 +9870,11 @@
      "status": 503,
      "body_keys": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     }
    ]
@@ -9839,6 +9891,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -9896,6 +9974,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9938,6 +10042,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9965,6 +10095,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10021,6 +10177,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10122,6 +10304,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10210,6 +10418,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10237,6 +10471,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10266,6 +10526,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10293,6 +10579,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10336,6 +10648,32 @@
       "code": "NO_COUNTRY",
       "message": "Set the shop country first. The books never open on a guess."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10351,6 +10689,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10380,6 +10744,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10407,6 +10797,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10513,6 +10929,30 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10772,6 +11212,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10872,6 +11338,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10971,6 +11463,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11128,6 +11646,32 @@
       "error": "Failed",
       "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11237,6 +11781,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11360,6 +11930,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11411,6 +12007,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11535,6 +12157,32 @@
      "fixture": {
       "error": "Too many",
       "message": "Too many wrong codes. Wait a minute and try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11784,6 +12432,32 @@
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11874,6 +12548,18 @@
      }
     },
     {
+     "scenario": "qk-hide-by-not-uuid",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
+     }
+    },
+    {
      "scenario": "qk-hide-write-breaks",
      "status": 500,
      "body_keys": {
@@ -11883,6 +12569,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11971,6 +12683,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12072,6 +12810,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12171,6 +12935,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12302,6 +13092,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12428,6 +13244,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12539,6 +13381,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12652,6 +13520,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12750,6 +13644,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12777,6 +13697,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12887,6 +13833,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12999,6 +13971,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -14824,11 +15822,11 @@
      "status": 503,
      "body_keys": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -17386,11 +18384,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      }
     }
    ]
@@ -17992,11 +18990,11 @@
      "status": 503,
      "body_keys": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      },
      "fixture": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      }
     },
     {
@@ -20204,11 +21202,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      }
     },
     {
@@ -20892,11 +21890,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      }
     }
    ]
@@ -26016,6 +27014,22 @@
      }
     },
     {
+     "scenario": "status-taken-back",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     },
+     "fixture": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     }
+    },
+    {
      "scenario": "status-reject-needs-a-reason",
      "status": 400,
      "body_keys": {
@@ -26611,14 +27625,14 @@
     },
     {
      "scenario": "connections-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     }
    ]
@@ -26675,14 +27689,14 @@
     },
     {
      "scenario": "subtree-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {
@@ -27089,12 +28103,12 @@
      "body_keys": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      },
      "fixture": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      }
     },
     {
@@ -27611,14 +28625,14 @@
     },
     {
      "scenario": "approve-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27781,14 +28795,14 @@
     },
     {
      "scenario": "decline-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27927,14 +28941,14 @@
     },
     {
      "scenario": "disconnect-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -28503,14 +29517,14 @@
     },
     {
      "scenario": "claim-not-yours",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {
@@ -33429,12 +34443,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -33473,12 +34487,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -33675,12 +34689,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -33805,12 +34819,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -34107,12 +35121,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -34248,13 +35262,13 @@
      "status": 409,
      "body_keys": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      },
      "fixture": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      }
     },
     {
@@ -34715,12 +35729,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -34887,12 +35901,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -35031,12 +36045,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -35341,12 +36355,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -35497,12 +36511,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -36706,11 +37720,11 @@
      "status": 503,
      "body_keys": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -36960,12 +37974,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      }
     },
@@ -37152,11 +38166,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37282,11 +38296,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37410,11 +38424,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37538,11 +38552,11 @@
      "status": 503,
      "body_keys": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -37996,11 +39010,11 @@
      "status": 503,
      "body_keys": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38096,11 +39110,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      }
     },
     {
@@ -38108,11 +39122,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38260,11 +39274,11 @@
      "status": 503,
      "body_keys": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38458,11 +39472,11 @@
      "status": 503,
      "body_keys": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -40836,6 +41850,22 @@
      }
     },
     {
+     "scenario": "assign-pull-bill-taken-back",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     },
+     "fixture": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be reopened. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     }
+    },
+    {
      "scenario": "assign-push-needs-a-target",
      "status": 400,
      "body_keys": {
@@ -41715,12 +42745,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -41729,12 +42759,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -41959,12 +42989,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -41973,12 +43003,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -42003,12 +43033,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -42017,12 +43047,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -42419,12 +43449,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -42445,12 +43475,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -43061,12 +44091,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43075,12 +44105,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43177,12 +44207,12 @@
      "body_keys": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43291,12 +44321,12 @@
      "body_keys": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      }
     },
     {
@@ -43805,6 +44835,58 @@
       "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
       "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
       "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
      }
     }
    ]
@@ -44457,12 +45539,12 @@
      "body_keys": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      },
      "fixture": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      }
     },
     {
@@ -48258,12 +49340,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48272,12 +49354,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48376,11 +49458,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      }
     },
     {
@@ -48718,11 +49800,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -49098,11 +50180,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -49467,12 +50549,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -49635,12 +50717,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -49991,12 +51073,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -50103,12 +51185,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -51173,12 +52255,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -51187,12 +52269,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -51373,12 +52455,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -52886,11 +53968,11 @@
      "status": 503,
      "body_keys": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      },
      "fixture": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      }
     },
     {
@@ -53026,11 +54108,11 @@
      "status": 503,
      "body_keys": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -53676,11 +54758,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -53902,11 +54984,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -57160,11 +58242,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57234,11 +58316,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57294,11 +58376,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57772,11 +58854,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57968,11 +59050,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -58128,11 +59210,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -61596,6 +62678,100 @@
      },
      "fixture": {
       "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "answers": [
+    {
+     "scenario": "wa-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-not-hex",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-of-another-body",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
+  },
+  "POST /api/capture/webhook/email": {
+   "answers": [
+    {
+     "scenario": "email-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "email-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
+  },
+  "POST /api/actors/set-pin": {
+   "answers": [
+    {
+     "scenario": "set-pin-owner-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Only actors can set PIN"
+     },
+     "fixture": {
+      "error": "Only actors can set PIN"
+     }
+    },
+    {
+     "scenario": "set-pin-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Set PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Set PIN failed",
       "message": "Something went wrong — please try again."
      }
     }

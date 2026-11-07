@@ -7,6 +7,7 @@
  *   · an ACT/MANAGER actor being gated → every working co-assist stops working
  *   · a GET being gated → the product becomes unreadable for the hats that exist to read
  * Those are tested first and hardest.
+ * CARD      18-identity-sign-in-and-access/access-levels-and-roles
  */
 const gate = require('../middleware/hat-gate');
 

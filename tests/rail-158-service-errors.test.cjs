@@ -51,8 +51,10 @@ app.use((req, res, next) => {
 });
 app.use('/api/service', require(path.join(ROOT, 'routes', 'service.js')));
 
-let failed = 0;
+let failed = 0,
+  total = 0;
 const check = (ok, label) => {
+  total++;
   if (!ok) failed++;
   console.log((ok ? 'ok   ' : 'FAIL ') + label);
 };
@@ -92,12 +94,12 @@ const ask = (server, method, url, body) =>
   check(okEnd.status === 200, 'a real chit and pause still end (200, got ' + okEnd.status + ')');
   const okResp = await ask(server, 'POST', '/api/service/' + GOOD + '/respond', {});
   check(okResp.status === 200, 'a real chit still responds (200, got ' + okResp.status + ')');
-  fault = Object.assign(new Error('connection to server at "10.0.0.5" refused SELECT secret'), { code: '08006' });
+  fault = Object.assign(new Error('connection to server at "10.0.0.5" refused SELECT secret'), { code: 'XX000' }); /* not a lost connection (that is 503, PLT-86): a plain internal fault stays 500 */
   for (const [method, url] of [['PUT', '/api/service/' + GOOD], ['POST', '/api/service/' + GOOD + '/respond'], ['POST', '/api/service/' + GOOD + '/pause/' + GOOD + '/end']]) {
     const a = await ask(server, method, url, {});
     check(a.status === 500 && a.body.code === 'INTERNAL' && !/10\.0\.0\.5|SELECT|refused/.test(a.text), method + ' ' + url.replace(GOOD, ':id') + ' on a database fault → 500 INTERNAL, none of the thrown text (got ' + a.status + ')');
   }
   server.close();
-  console.log(failed ? failed + ' FAILED' : 'all passed');
+  console.log(failed ? failed + ' FAILED' : 'all passed (' + total + ' checks)');
   process.exit(failed ? 1 : 0);
 })();

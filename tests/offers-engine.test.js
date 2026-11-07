@@ -302,7 +302,7 @@ it('a quantity break and a buy-X-get-Y on one product: the break re-prices first
 });
 
 console.log('— who, when, where: the gates —');
-it('customer-only offers FAIL CLOSED: no groups in the context → not applied; the group → applied; the customer by id → applied', () => {
+it('customer-only offers fail closed: no groups in the context → not applied; the group → applied; the customer by id → applied', () => {
   const o = { id: 'g', label: 'Regulars', kind: 'percent_off', percent: 10, scope: 'line', customer_group: 'regular', customer_name: 'Regulars' };
   assert.strictEqual(ev([L('a', 100, 1)], [o]).adjustments.length, 0);
   assert.strictEqual(ev([L('a', 100, 1)], [o], { customer_groups: [] }).adjustments.length, 0);

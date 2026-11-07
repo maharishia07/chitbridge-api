@@ -9,6 +9,7 @@
 const express = require('express');
 const router = express.Router();
 const { PROBLEM_SCHEMA } = require('../lib/problem');
+const { OPENAPI } = require('../lib/plumbing-contract'); // the operation of this door (S9)
 
 /** the one OpenAPI document: the openapi part of six route files joined, served from PUBLIC_API_BASE or the request host */
 function assemble(req) {
@@ -32,6 +33,13 @@ function assemble(req) {
     paths
   };
 }
-router.get('/openapi.json', (req, res) => res.json(assemble(req)));
+router.get('/openapi.json', ...OPENAPI.checked('GET /openapi.json'), (req, res, next) => {
+  try {
+    res.json(assemble(req));
+  } catch (err) {
+    next(err); // a fault of ours: the app's one error handler answers the Problem 500
+  }
+});
+router.openapi = { paths: OPENAPI.pathsOf(), schemas: {} }; // this door describes itself to the register; assemble() above joins only the six service fragments, so the document is unchanged
 module.exports = router;
 module.exports.assemble = assemble;

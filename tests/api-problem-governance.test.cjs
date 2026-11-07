@@ -455,6 +455,23 @@ function compareWith(file, recording) {
   return different.length;
 }
 
+/* Slice 1b (critic 6 Nov, class C): GET /entities/:id in the foreign-id world. Shop B asks for shop A's id: the handler refuses before it reads (a shop reads its own entity only), so a foreign id and an
+   unknown id are the same 404, byte for byte, and shop A's own id is not a 404. POST /entities/:id/reattest is NOT here: a shop gets 403 NOT_PLATFORM for ANY id (the platform gate speaks first, by design)
+   and the platform can reach every id, so no signed-in caller can be "another shop" there: it needs the public_ids / cannot_answer exemption. */
+const STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a foreign entity id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const route = 'GET ' + MOUNT + '/entities/:id';
+  const failures = await FOREIGN.runCases([{ route, play: async (who, planted) => {
+    Object.assign(world, FRESH, { who: who === 'owner' ? OWNER : STRANGER, sqlRows: planted ? ANSWERS(ENTITY, ACTIVE) : null });
+    return kit.send(port, 'GET', MOUNT + '/entities/' + SHOP);
+  } }], recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: GET /entities/:id answers shop A\'s id to shop B exactly as an unknown id (404, same body) and the own id is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+
 /** the whole sweep in a few sentences: who is refused, the foreign id, and that every recorded refusal was replayed */
 function checkAnswers(recording) {
   const answers = Object.values(recording);
@@ -491,6 +508,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const server = app.listen(0);
   const recording = {};
   const tested = await checkRoutes(server.address().port, kit.scenariosOf(routes, WORLDS, EXTRAS, VALUES), recording);
+  const foreignProved = flagValue('--capture') || flagValue('--compare') ? {} : await checkForeignIds(server.address().port);
   server.close();
   if (flagValue('--compare')) process.exit(compareWith(flagValue('--compare'), recording) ? 1 : 0);
   if (flagValue('--capture')) {
@@ -504,8 +522,13 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkAnswers(recording);
   const proved = checkAllowList(recording);
   kit.settleCoverage(tested, MINE);
-  if (argv.includes('--write')) writeAllowList(proved);
-  else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the governance reads whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, proved: Object.keys(proved).length });
+  if (argv.includes('--write')) {
+    writeAllowList(proved);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, foreignProved);
+  } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the governance routes that held here', kit.sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), foreignProved), foreignProved);
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the governance reads whose 200 held closed here', kit.sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, proved: Object.keys(proved).length });
+  }
   console.log('\n  ' + counts.passed + ' checks, ' + counts.failed + ' failed');
   process.exit(counts.failed ? 1 : 0);
 })();

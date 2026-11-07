@@ -3,6 +3,7 @@
  *
  * ⚠️ Not a unit test of checkRoot — that would pass while the routes ignored it, which is exactly the failure
  * the hat gate had (20/20 green while the gate read the wrong property). This drives express.
+ * CARD      18-identity-sign-in-and-access/user-id
  */
 const path = require('path');
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');

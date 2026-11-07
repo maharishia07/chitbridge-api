@@ -226,7 +226,7 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
     const fs = require('fs');
     const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8'), booksSrc = fs.readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
     ok('the real store reads fiscal_period FOR SHARE when a posting asks (periods(db, e, fy, lock)); postingDateFor asks it for every non-preview read',
-      /async function periods\(db, e, fy, lock\)[\s\S]{0,400}\(lock \? ' FOR SHARE' : ''\)/.test(storeSrc) && /S\.periods\(db, entity, fy, !readOnly\)/.test(booksSrc) && /S\.periods\(db, entity, y, !readOnly\)/.test(booksSrc));
+      /async function periods\(db, e, fiscalYear, lock\)[\s\S]{0,400}\(lock \? ' FOR SHARE' : ''\)/.test(storeSrc) && /S\.periods\(db, entity, fy, !readOnly\)/.test(booksSrc) && /S\.periods\(db, entity, y, !readOnly\)/.test(booksSrc));
   });
 
   /* ═══ M2 ═══ */
@@ -248,8 +248,8 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
       ok('POST /assets: the purchase entry and the register row are written on the SAME handle (one transaction — a failure after the entry takes the entry back too)',
         r.ok === true && seen.entry != null && seen.entry === seen.register, JSON.stringify([r.ok, seen]));
       const srcPeriod = require('fs').readFileSync(path.join(H.API, 'lib', 'books-period.js'), 'utf8');
-      ok('postOwn(h, …) hands the caller\'s handle to postEntry; every in-transaction caller passes h (assets · dispose · depreciation · closing stock · tax close · tax pay · instalment · accrual reversal)',
-        /function postOwn\(handle, entity, ev, by, system\) \{\s*return B\.postEntry\(handle, entity/.test(srcPeriod) && (srcPeriod.match(/postOwn\(\s*h,\s*entity/g) || []).length >= 8 && !/postOwn\(entity,/.test(srcPeriod));
+      ok('postOwn(handle, …) hands the caller\'s handle to postEntry; every in-transaction caller passes its handle (assets · dispose · depreciation · closing stock · tax close · tax pay · instalment · accrual reversal)',
+        /function postOwn\(handle, entity, event, by, system\) \{\s*return B\.postEntry\(handle, entity/.test(srcPeriod) && (srcPeriod.match(/postOwn\(\s*handle,\s*entity/g) || []).length >= 8 && !/postOwn\(entity,/.test(srcPeriod));
     } finally { Assets.use(null); X.store.insertEntry = wasInsert; }
   });
 

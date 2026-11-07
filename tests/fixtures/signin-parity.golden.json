@@ -1,13 +1,13 @@
 {
- "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged",
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged · amended 2026-11-07 (SEC-139): the three missing-secret scenarios now answer the one SIGNIN_REFUSED sentence; check.pin says has_pin false like everyone · login.ambiguous now the one refusal (SEC-139)",
  "scenarios": {
   "ask.entity.email": {
    "responses": [
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -58,8 +58,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -110,8 +110,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -162,8 +162,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -212,17 +212,10 @@
   "ask.unknown.email": {
    "responses": [
     {
-     "status": 400,
+     "status": 200,
      "body": {
-      "error": "Sign-in failed",
-      "message": "That sign-in didn't work. Check the details and try again.",
-      "type": "https://chitbridge.com/problems/signin_refused",
-      "title": "Sign-in refused",
-      "status": 400,
-      "code": "SIGNIN_REFUSED",
-      "detail": "That sign-in didn't work. Check the details and try again.",
-      "hint": "Check the details and try again.",
-      "request_id": null
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -270,17 +263,10 @@
   "ask.unknown.name": {
    "responses": [
     {
-     "status": 400,
+     "status": 200,
      "body": {
-      "error": "Sign-in failed",
-      "message": "That sign-in didn't work. Check the details and try again.",
-      "type": "https://chitbridge.com/problems/signin_refused",
-      "title": "Sign-in refused",
-      "status": 400,
-      "code": "SIGNIN_REFUSED",
-      "detail": "That sign-in didn't work. Check the details and try again.",
-      "hint": "Check the details and try again.",
-      "request_id": null
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -328,11 +314,10 @@
   "ask.ambiguous": {
    "responses": [
     {
-     "status": 409,
+     "status": 200,
      "body": {
-      "error": "Ambiguous name",
-      "message": "More than one business is called \"Twin\". Sign in with your email address or your User ID instead.",
-      "code": "AMBIGUOUS_NAME"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -382,9 +367,9 @@
     {
      "status": 200,
      "body": {
-      "message": "This store signs in with the code its network operator issued.",
-      "handle": "net.store",
-      "operator_issued": true
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
      }
     }
    ],
@@ -437,9 +422,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Enter your PIN.",
-      "use_pin": true,
-      "user_id": "ravi@shopone.br"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -489,9 +473,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Enter your PIN.",
-      "use_pin": true,
-      "user_id": "ravi@shopone.br"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -541,8 +524,8 @@
     {
      "status": 200,
      "body": {
-      "message": "First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.",
-      "user_id": "mala@shopone.br",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "654321"
      }
     }
@@ -1402,9 +1385,9 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Enter your PIN.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -1938,9 +1921,9 @@
     {
      "status": 400,
      "body": {
-      "error": "PIN required",
-      "message": "Enter your 4 digit PIN to login",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -2239,9 +2222,9 @@
     {
      "status": 400,
      "body": {
-      "error": "OTP required",
-      "message": "Enter the OTP your admin shared with you",
-      "use_otp": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -2456,11 +2439,11 @@
   "login.ambiguous": {
    "responses": [
     {
-     "status": 409,
+     "status": 400,
      "body": {
-      "error": "Ambiguous business",
-      "message": "More than one business is called \"twin\". Sign in with the business User ID after the @ instead — ask your admin for it.",
-      "code": "AMBIGUOUS_NAME"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -2683,7 +2666,7 @@
      "status": 200,
      "body": {
       "valid": true,
-      "has_pin": true
+      "has_pin": false
      }
     }
    ],

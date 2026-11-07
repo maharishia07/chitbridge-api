@@ -137,7 +137,7 @@ ok('buyerNamed: a name or a tax id names the buyer', BP.buyerNamed({ name: 'Acme
   ok('sendPaper refuses with BUYER_TAX_ID_BAD (400) and holds under the counter\'s not_invoice slot', /status: 400/.test(fn) && /business_json\.not_invoice = paper\.held\.reason/.test(fn) && /INVOICE_HELD_BUYER/.test(fn));
   ok('sendPaper never writes over a reason the counter wrote', /if \(!business_json\.not_invoice\)/.test(fn));
   const answer = src.slice(src.indexOf('async function sendAnswer('), src.indexOf('async function sendAnswer(') + 1600);
-  ok('the send answer carries not_invoice only when held (absent = silence, like number_check)', /not_invoice: st\.paper \|\| undefined/.test(answer));
+  ok('the send answer carries not_invoice only when held (absent = silence, like number_check)', /not_invoice: sendState\.paper \|\| undefined/.test(answer));
 }
 
 console.log('\n  ' + (fail ? '✗ ' : '✓ ') + pass + ' passed' + (fail ? ', ' + fail + ' failed' : '') + ' · ' + (pass + fail) + ' checks');

@@ -91,9 +91,9 @@ console.log('\n── the exact reproduction: Monday\'s plain line, Tuesday\'s n
   console.log('\n── routes/chits.js\'s OWN call site must keep asking alreadyBilled() before offers-live runs ──\n');
   const chitsSrc = CF.read(path.join(__dirname, '..'));
   ok('the send route calls offers-live.alreadyBilled(business_json)',
-    /alreadyBilled\s*\(\s*bj\s*\)/.test(chitsSrc) && /offers-live['"]\)\.alreadyBilled/.test(chitsSrc));
+    /alreadyBilled\s*\(\s*businessJson\s*\)/.test(chitsSrc) && /offers-live['"]\)\.alreadyBilled/.test(chitsSrc));
   ok('the applyLiveOffers guard is gated on !alreadyBilled',
-    /if\s*\(\s*!alreadyBilled\s*&&\s*\(bj\.customer/.test(chitsSrc));
+    /if\s*\(\s*!alreadyBilled\s*&&\s*\(businessJson\.customer/.test(chitsSrc));
   ok('the invoice summary\'s document date prefers billed_at over "now"',
     /invAt\s*=\s*\(business_json\s*&&\s*business_json\.billed_at\)\s*\|\|\s*new Date/.test(chitsSrc));
 

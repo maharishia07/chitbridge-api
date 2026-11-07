@@ -1,8 +1,8 @@
 {
   "limit": 80,
-  "long_functions": 155,
-  "worst_complexity": 176,
-  "worst_at": "lib/books-hooks.js classify",
+  "long_functions": 143,
+  "worst_complexity": 98,
+  "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
     "lib/adopt.js": [
       "consider"
@@ -21,10 +21,6 @@
       "datedSide",
       "project"
     ],
-    "lib/books-hooks.js": [
-      "classify",
-      "postChit"
-    ],
     "lib/books-nightly.js": [
       "check"
     ],
@@ -34,18 +30,11 @@
     "lib/books-payables.js": [
       "view"
     ],
-    "lib/books-period.js": [
-      "runDepreciation",
-      "taxReturn"
-    ],
     "lib/books-tally.js": [
       "build"
     ],
     "lib/books-todo.js": [
       "todo"
-    ],
-    "lib/books.js": [
-      "enable"
     ],
     "lib/capture.js": [
       "(anonymous)",
@@ -122,9 +111,6 @@
     "lib/offers-live.js": [
       "(anonymous)",
       "applyLiveOffers"
-    ],
-    "lib/parallel-run.js": [
-      "compareStatement"
     ],
     "lib/policy.js": [
       "coerce"
@@ -215,12 +201,7 @@
       "POST /:chit_id/messages",
       "POST /assign-bulk",
       "PUT /:chit_id/status",
-      "PUT /:chit_id/void",
-      "chitFilters",
-      "sendCopies",
-      "sendCopyPolicy",
-      "sendLegacyReceiverRows",
-      "sendLegacySenderRows"
+      "PUT /:chit_id/void"
     ],
     "routes/connectors.js": [
       "POST /ingest",
@@ -250,9 +231,6 @@
     "routes/integrations.js": [
       "GET /reconcile",
       "POST /heartbeat"
-    ],
-    "routes/invoice.js": [
-      "POST /build"
     ],
     "routes/network-design.js": [
       "GET /availability",

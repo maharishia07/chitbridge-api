@@ -3,6 +3,7 @@
  * at least 3 bills, the shop can change it, the owner's override wins). Offline: the SQL's shape, and the callers' fall-back
  * when party_item is not there yet (42P01) — offers and the customer list must never fail because the Ledger tables are absent.
  * Run: node tests/crm-segment.test.cjs
+ * CARD      07-offers-pricing-and-combos/customer-groups-and-customer-only-offers
  */
 'use strict';
 const assert = require('assert'), path = require('path');

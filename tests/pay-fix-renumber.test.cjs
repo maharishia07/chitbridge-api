@@ -3,6 +3,7 @@
  * The new number is stamped on the old rows (`renumber_to`) before the four writes; a retry reuses it. No browser, no network:
  * renumberBill and rememberRenumber are lifted from till.html into a vm with an in-memory DB that can "reload" after N writes.
  * Run: node tests/pay-fix-renumber.test.cjs
+ * CARD      09-counter/offline-queue-and-replay
  */
 'use strict';
 const assert = require('assert'), path = require('path'), vm = require('vm'), fs = require('fs');

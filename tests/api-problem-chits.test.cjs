@@ -71,6 +71,7 @@ function rowsFor(sql) {
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
   if (world.migrated && /information_schema/.test(sql)) return { rows: [{ '?column?': 1 }], rowCount: 1 }; /* lib/schema: every table and column is there */
+  if (/SELECT capabilities FROM identities/.test(sql)) return { rows: [{ capabilities: ['register'] }], rowCount: 1 }; /* RAIL-90: the register is on for the test shop */
   if (/SELECT COUNT\(/i.test(sql)) return { rows: [{ count: '0' }], rowCount: 1 }; /* a count of nothing is 0, not no row */
   return { rows: [], rowCount: 0 };
 }
@@ -393,6 +394,8 @@ const EXTRAS = [
   X('status-step-not-allowed', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'completed' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'wrong_step', from: 'pending', allowed: ['accepted'] }) } } }),
   X('status-level-refused', 'PUT ' + C + '/:chit_id/status', 403, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'read_only', from: 'pending' }) } } }),
   X('status-moved-under-you', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => { throw Object.assign(new Error('Someone else just changed this.'), { code: 'status_conflict' }); } }) } } }),
+  /* RAIL-173: a bill the books already took back (cancelled / rejected after it posted) is not moved on — the sender sends it again */
+  X('status-taken-back', 'PUT ' + C + '/:chit_id/status', 409, { body: { status: 'accepted' }, patch: { 'rail-status': { statusGate: async () => ({ ok: false, why: 'taken_back', from: 'cancelled', write: async () => undefined }) } } }),
   X('status-reject-needs-a-reason', 'PUT ' + C + '/:chit_id/status', 400, { body: { status: 'rejected' }, patch: { 'rail-status': { statusGate: async () => ({ ok: true, from: 'pending', write: async () => undefined }) }, 'folder-inventory': { docOf: () => 'bill_received' } } }),
   /* ── payment ── */
   X('payment-chit-not-found', 'POST ' + C + '/:chit_id/payment', 404, { body: { method: 'cash', amount: '12.50', ref: ' R1 ' } }),
@@ -596,10 +599,13 @@ const EXTRAS = [
   X('trace-a-value-asked-twice', 'GET ' + C + '/:id/trace', 422, { url: C + '/' + PARTY + '/trace?dir=a&dir=b' })
 ];
 
+/** FIN-51: Mark paid is a money write and REQUIRES an Idempotency-Key; every scenario that reaches it carries a fresh one (a shared key would replay the first answer) */
+let keySeed = 0;
+const keyOf = (method, urlPath) => (method === 'POST' && /\/payment$/.test(urlPath.split('?')[0]) ? { 'idempotency-key': 'scenario-' + (++keySeed) } : {});
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const options = { port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, keyOf(method, urlPath)) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));

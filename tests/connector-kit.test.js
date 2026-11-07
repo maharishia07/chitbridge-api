@@ -3,6 +3,7 @@
  * connector.json used to ship zoho.org = "YOUR ORGANISATION ID". A placeholder is truthy, so setup's "which organisation?" question
  * never ran and every Zoho call came back `Invalid value passed for organization_id` — the connector read nothing, wrote nothing, and
  * could not even auto-approve (no organisation → no GSTIN → no facts to match). Source-level, no DB, no network.
+ * CARD      23-connectors-and-integrations/tally-connector
  */
 'use strict';
 const assert = require('assert'), fs = require('fs'), path = require('path');

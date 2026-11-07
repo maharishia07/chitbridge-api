@@ -27,6 +27,7 @@ const fs = require('fs');
 const http = require('http');
 const crypto = require('crypto');
 const { harness, OWNER, STAFF, SECRET_SQL, SHOP, sameValue, raising, answering, firstOf, sqlError } = require('./lib/problem-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 const scenes = require('./lib/bell-scenes.cjs');
 
 const HERE = path.join(__dirname, '..');
@@ -60,6 +61,7 @@ const lab = harness({
   }
 });
 const { check, world } = lab;
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const STRANGER = { identity_id: scenes.STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' };
@@ -112,9 +114,9 @@ function checkWords(contract) {
   const nothing = words.nothingToClear();
   check('nothingToClear: the old two keys, word for word', sameValue(nothing.legacy, { error: 'Nothing to clear', message: 'Send log_ids, or all:true.' }) && nothing.code === 'NOTIF_NOTHING_TO_CLEAR', nothing);
   const seen = words.seenNotMigrated();
-  check('seenNotMigrated: Not migrated, b157, as before', sameValue(seen.legacy, { error: 'Not migrated', message: 'Clearing the badge needs b157 on this environment.' }) && seen.code === 'NOTIF_SEEN_NOT_MIGRATED', seen);
+  check('seenNotMigrated: Not migrated, b157, as before', sameValue(seen.legacy, { error: 'Not migrated', message: 'The notification badge reset arrives after the next update. The badge stays as it is.' }) && seen.code === 'NOTIF_SEEN_NOT_MIGRATED', seen);
   const dismiss = words.dismissNotMigrated();
-  check('dismissNotMigrated: Not migrated, b164, with its own code key, as before', sameValue(dismiss.legacy, { error: 'Not migrated', message: 'Clearing Activity needs b164 on this environment.', code: 'NOTIF_DISMISS_NOT_MIGRATED' }) && dismiss.code === 'NOTIF_DISMISS_NOT_MIGRATED', dismiss);
+  check('dismissNotMigrated: Not migrated, b164, with its own code key, as before', sameValue(dismiss.legacy, { error: 'Not migrated', message: 'The Activity clear-out arrives after the next update. Activity stays as it is.', code: 'NOTIF_DISMISS_NOT_MIGRATED' }) && dismiss.code === 'NOTIF_DISMISS_NOT_MIGRATED', dismiss);
   const lost = faultOf(new Error(SECRET_SQL), req, 'Failed to get notifications');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && sameValue(lost.legacy, { error: 'Failed to get notifications', message: 'Something went wrong — please try again.' }) && !THROWN.test(JSON.stringify(lost)), lost);
   const last = contract.lastResort(new Error(SECRET_SQL), req);
@@ -377,6 +379,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = JSON.parse(fs.readFileSync(lab.legacyFile, 'utf8')).routes;
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 20, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -384,7 +387,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the bell routes', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');

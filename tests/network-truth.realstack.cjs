@@ -37,6 +37,9 @@ const offers = async (shop) => (await j('/api/network-offers', { token: shop.tok
 const NOT_ALLOWED = 'NOT_ALLOWED', EDGE_OPS = ['suspend', 'resume', 'disconnect', 'approve', 'decline'];
 const edgeOp = (shop, edgeId, op) => j('/api/network/connections/' + edgeId + '/' + op, { method: 'POST', token: shop.token });
 const refusedAs403 = (r) => r.status === 403 && r.b.code === NOT_ALLOWED;
+/** SEC-138: a business with no part in an edge is answered as for an edge that does not exist */
+const edgeGone = (r) => r.status === 404 && r.b.code === 'EDGE_NOT_FOUND';
+const RANDOM_EDGE = '0b9d6c52-4a1e-4c1e-9d3b-5f0a7e2c9a11';
 /** asking the network about A makes the asker a node, with no edge (src/routes/network.js actorOf ensure) — unlike joinNetwork's failed ask, which would
  *  make a real request once A is itself a node */
 const makeNode = (shop, A) => j('/api/network/place?bridgeId=' + A.bridge, { token: shop.token });
@@ -102,14 +105,18 @@ const orderTo = (from, to, ref) => ({ recipients: [{ display_name: to.name, brid
       expect(leaks.length === 0, 'B\'s owned data appears in what the brand reads: ' + leaks.join(', '));
     });
 
-    await kase('NW-08', 'a business with no part in an edge, and the store (which is not the network), cannot suspend, resume, disconnect, approve or decline it: 403 NOT_ALLOWED, the edge stays active', async () => {
+    await kase('NW-08', 'a business with no part in an edge, and the store (which is not the network), cannot suspend, resume, disconnect, approve or decline it: 404 EDGE_NOT_FOUND, the same as for a random id (SEC-138); the store suspending itself is a party case, 403 NOT_ALLOWED; the edge stays active', async () => {
       const C = await strangerNode(A, 'c');
       const strangerAnswers = [];
       for (const op of EDGE_OPS) strangerAnswers.push([op, await edgeOp(C, edge.id, op)]);
       const storeSuspends = await edgeOp(B, edge.id, 'suspend');
       const still = memberRow(await offers(A), edge.id);
-      const notAllowed = strangerAnswers.filter(([, r]) => !refusedAs403(r)).map(([op, r]) => op + ' ' + r.status + ' ' + JSON.stringify(r.b));
-      expect(notAllowed.length === 0, 'a stranger was not refused 403 NOT_ALLOWED: ' + notAllowed.join(' | '));
+      const randomAnswers = [];
+      for (const op of EDGE_OPS) randomAnswers.push([op, await edgeOp(C, RANDOM_EDGE, op)]);
+      const differ = strangerAnswers.filter(([op, r], i) => r.status !== randomAnswers[i][1].status || JSON.stringify({ ...r.b, request_id: 0 }) !== JSON.stringify({ ...randomAnswers[i][1].b, request_id: 0 })).map(([op]) => op);
+      expect(differ.length === 0, 'a real foreign edge answered differently from a random uuid for: ' + differ.join(', '));
+      const notAllowed = strangerAnswers.filter(([, r]) => !edgeGone(r)).map(([op, r]) => op + ' ' + r.status + ' ' + JSON.stringify(r.b));
+      expect(notAllowed.length === 0, 'a stranger was not answered 404 EDGE_NOT_FOUND: ' + notAllowed.join(' | '));
       expect(refusedAs403(storeSuspends), 'the store suspending itself answered ' + storeSuspends.status + ' ' + JSON.stringify(storeSuspends.b));
       expect(still && still.state === 'active', 'after the refusals the edge reads ' + (still && still.state));
     });
