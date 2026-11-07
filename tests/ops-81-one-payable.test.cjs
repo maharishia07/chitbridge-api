@@ -80,6 +80,12 @@ const theirInvoiceArrives = () => { invRows = [{ on: 'ord-1', chit_id: 'inv-1', 
   await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i5 = await K.postChit(SHOP, 'inv-1', {});
   eq('same order, second partial bill KT/78 → posts its own bill (the receipt booked KT/77 only)', [i5.ok, bills().length, payable()], [true, 2, 224000]);
 
+  /* the same bill typed with other spacing and case (and an 's' in it) is still the same bill */
+  await fresh(); copies = { 'rcpt-1': Object.assign(rcpt('accepted'), { business_json: Object.assign(rcpt('accepted').business_json, { their_bill: { no: 'ks / 77', date: '2026-10-13', total: 1120 } }) }), 'inv-1': Object.assign(invc('accepted'), { business_json: { invoice_no: 'KS/77', order: { from: 'ord-1' } } }) };
+  rcptRows = [{ on: 'ord-1', chit_id: 'rcpt-1', no: 'ks / 77' }];
+  await K.postChit(SHOP, 'rcpt-1', {}); theirInvoiceArrives(); const i6 = await K.postChit(SHOP, 'inv-1', {});
+  eq('KS/77 typed as "ks / 77" → the same bill: no-op', [i6.none, bills().length], [true, 1]);
+
   K._mover.fn = null; X.db.query = q0;
   console.log('\n  ' + (fail ? '✗ ' + fail + ' FAILED · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
