@@ -16,6 +16,7 @@
 const path = require('path');
 const http = require('http');
 const H = require('./support/books-harness.cjs');
+const IN_PACK = require(path.join(H.API, 'lib', 'regulation')).packFor('IN');   /* CTRY-94: the ageing is the shop's pack */
 
 let pass = 0, fail = 0;
 const t = (label, got, want) => {
@@ -87,9 +88,9 @@ function partOne() {
   t('and a bill dated 16 Sep is 50 days old', days(BILL_DATE_50), 50);
 
   const items = commonItems().filter((x) => x.side === 'receivable');
-  const no = E.dues(items, ASOF, 'receivable');
+  const no = E.dues(items, ASOF, 'receivable', { pack: IN_PACK });
   t('no creditDaysOf → no `follow` (the Schedule III answer is all a caller gets)', no.follow, undefined);
-  const d = E.dues(items, ASOF, 'receivable', { creditDaysOf: () => null });
+  const d = E.dues(items, ASOF, 'receivable', { pack: IN_PACK, creditDaysOf: () => null });
   Object.keys(COMMON).forEach((pid) => {
     const name = Object.keys(P).find((key) => P[key] === pid);
     t('follow_up · ' + name.padEnd(5) + ' · ' + JSON.stringify(COMMON[pid]).slice(0, 110), E.followRow(d.follow, pid), COMMON[pid]);
@@ -105,14 +106,14 @@ function partOne() {
   /* no due date: the party's days, else the shop's, else none (aged from the bill date and flagged) */
   const nodue = [bill(P.NODUE_SHOP, 'b:ns', TEN, null, BILL_DATE_50), bill(P.NODUE_OWN, 'b:no', TEN, null, BILL_DATE_50), bill(P.NODUE_NONE, 'b:nn', TEN, null, BILL_DATE_50)];
   const credit = { [P.NODUE_SHOP]: 15, [P.NODUE_OWN]: 45 }; /* the resolver's answer: the shop's 15, the party's own 45 over it, nothing for the third */
-  const n = E.dues(nodue, ASOF, 'receivable', { creditDaysOf: (pid) => (credit[pid] === undefined ? null : credit[pid]) });
+  const n = E.dues(nodue, ASOF, 'receivable', { pack: IN_PACK, creditDaysOf: (pid) => (credit[pid] === undefined ? null : credit[pid]) });
   t('no due date · the SHOP\'s 15 days: 16 Sep + 15 = 1 Oct, 35 late → d31_60', E.followRow(n.follow, P.NODUE_SHOP), fu({ d31_60: TEN }, 'd31_60'));
   t('no due date · the PARTY\'s own 45 days over the shop\'s: 16 Sep + 45 = 31 Oct, 5 late → d0_30', E.followRow(n.follow, P.NODUE_OWN), fu({ d0_30: TEN }, 'd0_30'));
   t('no due date · no credit days anywhere: aged from the bill date (50 late → d31_60), the amount flagged, terms not_set', E.followRow(n.follow, P.NODUE_NONE), fu({ d31_60: TEN }, 'd31_60', TEN));
   t('the bills\' own objects were not changed (no due_date written into the engine\'s answer)', Object.values(n.open.by_ref).every((x) => !x.due_date && !x.no_terms), true);
   /* the books writer stores due = bill date when it knows no terms (lib/books.js, credit_days 0): no days anywhere → still flagged; a party with 0 days SET → not flagged (SIT 6 Nov) */
   const sameDay = [bill(P.NODUE_NONE, 'b:sd', TEN, BILL_DATE_50, BILL_DATE_50), bill(P.NODUE_OWN, 'b:s0', TEN, BILL_DATE_50, BILL_DATE_50)];
-  const s = E.dues(sameDay, ASOF, 'receivable', { creditDaysOf: (pid) => (pid === P.NODUE_OWN ? 0 : null) });
+  const s = E.dues(sameDay, ASOF, 'receivable', { pack: IN_PACK, creditDaysOf: (pid) => (pid === P.NODUE_OWN ? 0 : null) });
   t('due = bill date as the writer stores it · no credit days anywhere: 50 late → d31_60, flagged, terms not_set', E.followRow(s.follow, P.NODUE_NONE), fu({ d31_60: TEN }, 'd31_60', TEN));
   t('due = bill date · the party\'s own 0 days (cash, set on purpose): 50 late → d31_60, NOT flagged', E.followRow(s.follow, P.NODUE_OWN), fu({ d31_60: TEN }, 'd31_60'));
   t('page total of those three: 5 keys 100000 + 100000 + 100000, no_terms 100000, terms not_set', E.followTotal([{ follow_up: E.followRow(n.follow, P.NODUE_SHOP) }, { follow_up: E.followRow(n.follow, P.NODUE_OWN) }, { follow_up: E.followRow(n.follow, P.NODUE_NONE) }]),
@@ -120,11 +121,11 @@ function partOne() {
 
   /* a foreign-currency party: the keys still add up (the books' own money is one currency; a party's USD bills are in that carried figure) */
   const usd = [Object.assign(bill(P.FOUR, 'b:usd', 8325000, DUE.late40), { currency: 'USD' })];
-  const f = E.dues(usd, ASOF, 'receivable', { creditDaysOf: () => null }), fr = E.followRow(f.follow, P.FOUR);
+  const f = E.dues(usd, ASOF, 'receivable', { pack: IN_PACK, creditDaysOf: () => null }), fr = E.followRow(f.follow, P.FOUR);
   t('a USD-only party: d31_60 holds the whole 8325000 and the keys add to its balance', [fr.d31_60, Object.keys(ZERO).reduce((total, key) => total + fr[key], 0) === f.outstanding.by_party[P.FOUR]], [8325000, true]);
 
   /* the supplier side answers no follow-up */
-  const pay = E.dues(commonItems().filter((x) => x.side === 'payable'), ASOF, 'payable', { creditDaysOf: () => null });
+  const pay = E.dues(commonItems().filter((x) => x.side === 'payable'), ASOF, 'payable', { pack: IN_PACK, creditDaysOf: () => null });
   t('the supplier side: no `follow`, however it is called', pay.follow, undefined);
 
   /* the page total */
@@ -142,8 +143,9 @@ function partTwo() {
   console.log('\n== FIN-72 part 2 · the default months set is unchanged · the follow-up set is pack-free ==\n');
   const docs = commonItems().filter((x) => x.side === 'receivable' && x.ref_kind === 'bill' && [P.E0, P.E30, P.E31, P.E61, P.E91, P.NOT].includes(x.party))
     .map((x) => ({ ref: x.ref, party: x.party, date: x.date, due_date: x.due_date, outstanding_minor: x.amount_minor }));
-  const unset = L.ageing(docs, ASOF, 'receivable'), inPack = L.ageing(docs, ASOF, 'receivable', { country: 'IN' });
-  t('the default call equals the IN pack call byte for byte (one reader, no drift)', JSON.stringify(unset), JSON.stringify(inPack));
+  let unset = 'no throw'; try { L.ageing(docs, ASOF, 'receivable'); } catch (e) { unset = 'refused'; }   /* CTRY-94: no country → the engine refuses, it never ages as India */
+  const inPack = L.ageing(docs, ASOF, 'receivable', { country: 'IN' });
+  t('CTRY-94: a call with no country is refused (never India by default), and the IN pack call still answers', [unset, inPack.length > 0 || typeof inPack === 'object'], ['refused', true]);
   const au = L.ageing(docs, ASOF, 'receivable', { country: 'AU' });
   t('AU months columns exist and differ from the day buckets (0-30 days is not "<1 month")', [au.bucket_keys.includes('d0_30'), Object.keys(au.buckets.undisputed).join()], [false, au.bucket_keys.join()]);
   const follow = L.ageing(docs, ASOF, 'receivable', { set: 'followup' });

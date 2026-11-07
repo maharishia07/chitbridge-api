@@ -35,11 +35,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id/payment": {
-   "hash": "f1e5c5ac7a0e6422",
+   "hash": "42d31fa87e8d8a95",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (reviewer, non-builder) 2026-11-07 PR#954",
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id/purge": {
@@ -291,11 +291,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/dues": {
-   "hash": "17d02ebb850fc623",
+   "hash": "e118d9e7968db836",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#754 FIN-72",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#946 CTRY-94",
    "lifecycle": "stable"
   },
   "GET /api/books/events": {

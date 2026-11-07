@@ -41,7 +41,7 @@ const ok = (name, cond, why) => {
 };
 const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
 
-const ME = { Gstin: '33AAAAA0000A1Z5', State: '33', RegType: 'regular' };
+const ME = { Gstin: '33AAAAA0000A1Z5', State: '33', RegType: 'regular', Country: 'IN' };
 /** one frozen invoice through the engine (tax-lines.invoiceFor → tax.determine): one line at `rate`, unit 'pcs' (the seller's word) */
 const invoice = (buyer, rate, price, no, at) =>
   T.invoiceFor({ lines: [{ name: 'Pump', quantity: 1, price, gst_rate: rate, hsn: '8413', unit: 'pcs' }], seller: ME, buyer, chit_id: no, at }).invoice;

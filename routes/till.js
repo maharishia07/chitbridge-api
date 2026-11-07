@@ -2337,6 +2337,8 @@ router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
  * decides what a counter may do.
  */
 const store = require('../lib/reward-store');
+/** idem3 (7 Nov): both points writes take ONE key per attempt, the ONE gate (middleware/idempotency requireKey, bearer form); the counter sends it (tools/tally-connector/till.html CloudHost.idemKey) so a retry that lost its answer never moves points twice */
+const pointsOnce = require('../middleware/idempotency').requireKey();
 const progOf = (entity_id) => store.programme(entity_id, withEntity);
 const holderFrom = store.holderFrom;
 
@@ -2387,7 +2389,7 @@ function rewardHeld(holder, prog, balance) {
  * → 409 { code: 'BILL_NOT_RECORDED', message } when the server holds no such bill yet — the shop-PC queue retries it after
  *   the bill lands; the web counter had the bill answered before it asked. Nothing is written on a refusal.
  */
-router.post('/reward', auth, auth.requireScope('till'), ...checked('POST /reward'), async (req, res) => {
+router.post('/reward', auth, auth.requireScope('till'), pointsOnce, ...checked('POST /reward'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const { ref, holder, spend, billedAt } = rewardInput(req.body);
@@ -2459,7 +2461,7 @@ function rewardSettled(holder, prog, spend, settled) {
  * ⚠️ SOMEBODY AT THE COUNTER HAS TO ASK FOR IT. A phone number is not proof of identity, and an automatic merge
  * on a matching number would hand one person's balance to another who typed the same digits.
  */
-router.post('/reward/claim', auth, auth.requireScope('till'), ...checked('POST /reward/claim'), async (req, res) => {
+router.post('/reward/claim', auth, auth.requireScope('till'), pointsOnce, ...checked('POST /reward/claim'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const body = req.body || {};

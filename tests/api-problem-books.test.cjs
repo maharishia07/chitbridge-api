@@ -78,6 +78,8 @@ function rowsFor(sql, params) {
     if (given) return given;
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
+  /* CTRY-94: the engines no longer read India for a party with no country, so the generic world's shop says it is in India (a shop that never said is a 422 on every tax read) */
+  if (/FROM identities WHERE identity_id = ANY/.test(sql)) return { rows: [{ identity_id: SHOP, gstn: null, display_name: null, policy_flags: {}, country: 'IN' }], rowCount: 1 };
   return { rows: [], rowCount: 0 };
 }
 const mock = (relative, exported) => {
