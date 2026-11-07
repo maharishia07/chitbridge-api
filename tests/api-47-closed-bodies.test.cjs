@@ -26,7 +26,7 @@ const DEV = { device_id: 'dev-1', surface: 'web' }; /* what app/signin-ui.js htt
 /** [label, operation, options, [web bodies]] */
 const DOORS = [
   ['POST /api/signin/ask', signin.contract.operationFor('POST /ask'), signin.schemaOptions, [{ mode: 'login', email: 'a@b.in', ...DEV }, { mode: 'login', user_id: 'shop', ...DEV }, { mode: 'login', id: '9876543210', ...DEV }, { mode: 'login', email: 'a@b.in' }]],
-  ['POST /api/signin/verify', signin.contract.operationFor('POST /verify'), signin.schemaOptions, [{ id: 'a@b.in', otp: '123456', ...DEV }, { id: 'x', pin: '1234', ...DEV }, { id: 'x', otp: '123456' }]],
+  ['POST /api/signin/verify', signin.contract.operationFor('POST /verify'), signin.schemaOptions, [{ id: 'a@b.in', otp: '123456', ...DEV }, { id: 'x', pin: '1234', ...DEV }, { id: 'x', otp: '123456' }, { mode: 'login', user_id: 'shop', otp: '123456' }]],
   ['POST /api/signin/pin', signin.contract.operationFor('POST /pin'), signin.schemaOptions, [{ pin: '1234', confirm_pin: '1234', ...DEV }, { pin: '1234', confirm_pin: '1234' }]],
   ['POST /api/signin/renew', signin.contract.operationFor('POST /renew'), signin.schemaOptions, [{ surface: 'till' }, {}]],
   ['POST /api/signin/logout', signin.contract.operationFor('POST /logout'), signin.schemaOptions, [{}, undefined]],
