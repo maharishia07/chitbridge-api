@@ -178,6 +178,8 @@ const NOT_MONEY = [
   ['till.html', 'left / Math.max(1, w - left)', 'a layout RATIO'],
   /* the ADOPTED gst-returns engine (v1.20.0, written only by adopt.cjs): s.50 interest calls money.round first; the Math.round is its own fallback for a host with no money engine, which the API always has. Fix upstream, not here. */
   ['gst-returns.js', 'M && M.round ? M.round(raw) : Math.round(raw * 100) / 100', 'the released engine fallback when money.round is absent'],
+  /* engines v1.79.0 reworded the same s.50 interest fallback (money.round first; Math.round only when no money engine, which the API always has). Fix upstream, not here. */
+  ['gst-returns.js', 'money && money.round ? money.round(rawInterest) : Math.round(rawInterest * 100)', 'the released engine fallback when money.round is absent (v1.79.0 wording)'],
 ];
 it('⭐⭐⭐ no hand-written money rounding outside money.js', () => {
   const WEB = path.join(API, '..', 'chitbridge-web', 'public');
