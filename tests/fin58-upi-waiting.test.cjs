@@ -75,6 +75,10 @@ const INVOICE = { currency: 'INR', ItemList: [{ GstRt: 5, AssAmt: 47.62, CgstAmt
   const gb = classify(bill('g1', [{ how: 'UPI', amount: 50, confirmed: false }]), Object.assign({}, SETTING, { walkin_grain: 'bill' }));
   eq('(a) at BILL grain too: a sale_bill to the system party, not a walkin_day with Dr UPI (red on main)', [gb.kind, gb.event && gb.event.type, gb.event && gb.event.modes], ['post', 'sale_bill', undefined]);
 
+  eq('(b) a QR-paid part with confirmed:false waits too (the SQL mirror reads it as UPI)', classify(bill('q1', [{ how: 'QR', amount: 50, confirmed: false }])).event.party, require(path.join(H.API, 'lib', 'upi-waiting')).partyIdOf(SHOP));
+  const wp = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8').split(/\r?\n/).find((l) => l.startsWith('const WAITING_PART'));
+  ok('(b) WAITING_PART escapes its word edges as a template (two backslashes before y), like TENDER_FOUR', wp.indexOf('\\\\yqr\\\\y') > 0, wp);
+
   /* ── (c) split: cash 20 + waiting UPI 30 ── */
   use(bill('w2', [{ how: 'Cash', amount: 20 }, { how: 'UPI', amount: 30, confirmed: false }]));
   await K.postChit(SHOP, 'w2', {});
