@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { taxSaid, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
+const { taxSaid, countryWords, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
@@ -193,7 +193,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
-    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, st.code === 'NO_COUNTRY' ? require('../lib/country-setup').COUNTRY_FIRST : st.why); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
+    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, countryWords(st.code, st.why)); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
     const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];
