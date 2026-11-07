@@ -2387,6 +2387,15 @@
    "since": "2026-10-30"
   },
   {
+   "code": "INVOICE_MONEY_LOCKED",
+   "status": "409",
+   "title": "Already invoiced",
+   "shopkeeper": "This bill is already invoiced. A change in price needs a credit or debit note.",
+   "hint": "Ask for a credit or debit note instead of changing the bill.",
+   "owner_area": "accounting",
+   "since": "2026-11-07"
+  },
+  {
    "code": "IN_FLIGHT",
    "status": "409",
    "title": "Open chit on the connection",
