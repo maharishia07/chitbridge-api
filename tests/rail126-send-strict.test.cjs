@@ -94,6 +94,12 @@ function post(port, body) {
     server.close();
   }
 
+  /* 4b · the live proof scripts (they need a running server, so they are read, not run) send no key the closed body refuses */
+  for (const file of ['scripts/prove-line-events.js', 'scripts/prove-line-threads.js', 'scripts/prove-partial.js', 'scripts/prove-three-party-messaging.js', 'scripts/prove-usecases.js']) {
+    const src = require('fs').readFileSync(require('path').join(__dirname, '..', file), 'utf8');
+    ok(file + ' sends no send_to_self (the closed POST /send refuses it)', !/send_to_selfs*:/.test(src), file);
+  }
+
   /* 5 · part (b) is untouched: the CTP inbound reader still ignores a field it does not know */
   const FROM = { installation_key: 'platform-0', population: 'live', bridge_id: 'CBAAAAAAAA', display_name: 'A Shop' };
   const TO = { bridge_id: 'CBBBBBBBBB' };

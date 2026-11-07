@@ -1,4 +1,8 @@
 'use strict';
+// OWNS      the live proof of partial delivery and the unit fix behind it
+// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-partial.js
+// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/line-model
 /**
  * prove-partial.js — PARTIAL DELIVERY, and the unit bug that made it lie.
  *
