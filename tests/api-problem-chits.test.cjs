@@ -599,10 +599,13 @@ const EXTRAS = [
   X('trace-a-value-asked-twice', 'GET ' + C + '/:id/trace', 422, { url: C + '/' + PARTY + '/trace?dir=a&dir=b' })
 ];
 
+/** FIN-51: Mark paid is a money write and REQUIRES an Idempotency-Key; every scenario that reaches it carries a fresh one (a shared key would replay the first answer) */
+let keySeed = 0;
+const keyOf = (method, urlPath) => (method === 'POST' && /\/payment$/.test(urlPath.split('?')[0]) ? { 'idempotency-key': 'scenario-' + (++keySeed) } : {});
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const options = { port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, keyOf(method, urlPath)) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));
