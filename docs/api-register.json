@@ -3454,11 +3454,11 @@
         "rate_limited": true
       },
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -8610,9 +8610,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "de2a306c4f9ddd23"
+        "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -25698,9 +25697,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "cb27ce34e66cddf0"
+        "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -32977,9 +32975,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "f35cc44639c74477"
+        "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
