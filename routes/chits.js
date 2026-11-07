@@ -1479,12 +1479,12 @@ async function sendMoney(sendState, req, res) {
   sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
   const scope = sendMoneyScope.scopeOf(sendState);
   sendState.moneyScope = scope;
-  if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
-  if (scope.kind !== 'engine') return;
-  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items);
+  if (scope.kind !== 'engine' && scope.kind !== 'quotation') return;
+  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items); /* before either price: a quotation sends the same lines to the seller's installation */
   if (unreadable) {
-    return problem(req, res, { status: 422, ...said({ code: 'MONEY_INPUT_UNREADABLE', error: 'A line could not be read', message: 'Line ' + (unreadable.line + 1) + ' has a ' + unreadable.field + ' that is not a number, so the money could not be worked out. Fix that line and send again.', line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') });
+    return problem(req, res, { status: 400, ...said({ code: unreadable.code, error: 'A line could not be read', message: unreadable.message, line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') }); /* ACC-271: the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE) */
   }
+  if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
   let invoice;
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);

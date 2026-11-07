@@ -20,8 +20,8 @@ of file each thing is; this says what already does the job.
 | 78 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 75 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 74 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 67 | `list` | `cap-settings.js` |  |
 | 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |

@@ -11,7 +11,7 @@
  *   PATHS: no named buyer (walk-in of the shop's country) · self chit · several recipients (null) · a draft (provisional, no invoice) · captured sale
  *   THE STOP: a negative line breaks the engine's bridge at `gross` → 409 MONEY_UNBALANCED { step, unexplained_minor }; the owner's login or a counter key
  *             WITH a typed reason lets it through and the chit says so (money_override); a co-assist's, or no reason → 409; an override on a balanced bill is dropped
- *   THE REFUSALS: an unreadable line → 422 · the engine not read → 503 MONEY_NOT_COMPUTED, and nothing is delivered either time
+ *   THE REFUSALS: an unreadable line → 400 BAD_QTY · BAD_PRICE · BAD_RATE (ACC-271) · the engine not read → 503 MONEY_NOT_COMPUTED, and nothing is delivered either time
  *   READERS: owner · cost-blind (lib/cost-view) — a cost-blind reader sees no money, stamps, bridge or override
  * Run: node tests/money-paths.test.cjs
  */
@@ -152,7 +152,7 @@ const SM = require('../lib/send-money');
   ok('scopeOf: an invoice to one buyer → engine; a carried invoice → carried; a counter bill without one → none (unknown, never a sum)', kind({}) === 'engine' && kind({ business_json: { invoice: { ValDtls: {} } } }) === 'carried' && kind({ counterBill: true }) === 'none');
   ok('scopeOf: no lines · a removed line only · an expense · several recipients → none (not applicable)', kind({ line_items: [] }) === 'none' && kind({ line_items: [{ removed: true }] }) === 'none' && kind({ purpose: 'expense' }) === 'none' && kind({ toIds: ['a', 'b'] }) === 'none');
   ok('scopeOf: an order with several recipients is still billed (the walk-in); a captured sale (general via a channel) is billed', kind({ purpose: 'order', orderLike: true, toIds: ['a', 'b'] }) === 'engine' && kind({ purpose: 'general', business_json: { via: 'whatsapp' } }) === 'engine');
-  ok('unreadableLine: a blank is "no figure given" (fine); text where a number belongs is refused naming the line and the field', SM.unreadableLine([{ price: '' }, { price: null }, { price: '12.5' }]) === null && J(SM.unreadableLine([{ price: 1 }, { quantity: 'two' }])) === '{"line":1,"field":"quantity"}');
+  ok('unreadableLine: null and a blank discount are "no figure given" (fine); text where a number belongs is refused naming the line and the field', SM.unreadableLine([{ price: null }, { price: '12.5' }, { discount: '' }]) === null && J((({ line, field, code }) => ({ line, field, code }))(SM.unreadableLine([{ price: 1 }, { quantity: 'two' }]))) === '{"line":1,"field":"qty","code":"BAD_QTY"}');
   ok('stopOf: a bridge that balanced, or an invoice from before v1.74.0 (no bridge), is not a stop — nothing to refuse', SM.stopOf({ _cb: { bridge: { ok: true } } }) === null && SM.stopOf({ _cb: {} }) === null && SM.stopOf(null) === null);
   const stop = SM.stopOf({ _cb: { bridge: { ok: false, step: 'tax', unexplained_minor: 7, words: 'Does not add up at tax', steps: [{ name: 'gross', amount_minor: 100 }, { name: 'total', amount_minor: 107 }] } } });
   ok('stopOf: refused in the engine own words — step, amount, gross and total READ off its steps (nothing worked out here)', stop.step === 'tax' && stop.unexplained_minor === 7 && stop.gross_minor === 100 && stop.total_minor === 107, J(stop));
@@ -290,7 +290,26 @@ function agreeing(r) {
 
     /* ═══ 8 · THE REFUSALS: an unreadable line (422), an engine that could not be read (503) — nothing is delivered either time ═══ */
     const unreadable = await send(invoiceBody(BUYER, [{ ...line('Item A', 180, 1, 5), price: 'abc' }]));
-    ok('a price that is not a number: 422 MONEY_INPUT_UNREADABLE naming the line and field; nothing delivered', unreadable.status === 422 && unreadable.answer.code === 'MONEY_INPUT_UNREADABLE' && unreadable.answer.line === 0 && unreadable.answer.field === 'price' && unreadable.copies === null, J(unreadable.answer));
+    ok('a price that is not a number: 400 BAD_PRICE naming the line and field; nothing delivered', unreadable.status === 400 && unreadable.answer.code === 'BAD_PRICE' && unreadable.answer.line === 0 && unreadable.answer.field === 'price' && unreadable.copies === null, J(unreadable.answer));
+    /* ⭐ ACC-271: every key a chit line carries for a figure, refused by name with the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE); a draft is saved too, so it is refused too */
+    for (const [key, drop, code, field] of [['qty', 'quantity', 'BAD_QTY', 'qty'], ['quantity', null, 'BAD_QTY', 'qty'], ['unit_price', null, 'BAD_PRICE', 'price'], ['discount', null, 'BAD_PRICE', 'discount'], ['gst_rate', null, 'BAD_RATE', 'gst_rate'], ['rate', 'gst_rate', 'BAD_RATE', 'gst_rate'], ['cess_rate', null, 'BAD_RATE', 'cess_rate']]) {
+      for (const bad of ['abc', NaN, true]) {
+        const row = { ...line('Item A', 180, 1, 5), [key]: bad === bad ? bad : 'NaN' };
+        if (drop) delete row[drop];
+        for (const extra of [{}, { is_draft: true }]) {
+          const r = await send(invoiceBody(BUYER, [line('Item OK', 180, 1, 5), row], extra));
+          ok(`ACC-271 ${key}=${String(bad)}${extra.is_draft ? ' (draft)' : ''}: 400 ${code} naming line 1 and ${field}; nothing delivered`, r.status === 400 && r.answer.code === code && r.answer.line === 1 && r.answer.field === field && r.copies === null && /Item A/.test(r.answer.message || ''), J([r.status, r.answer]));
+        }
+      }
+    }
+    for (const [key, fieldCode] of [['quantity', 'BAD_QTY'], ['price', 'BAD_PRICE']]) {
+      const r = await send(invoiceBody(BUYER, [{ ...line('Item A', 180, 1, 5), [key]: '' }]));
+      ok(`ACC-271 a BLANK ${key} is sent and not a number: 400 ${fieldCode}, never a free line`, r.status === 400 && r.answer.code === fieldCode, J([r.status, r.answer]));
+    }
+    const blankOptional = await send(invoiceBody(BUYER, [{ ...line('Item A', 180, 1, 5), discount: '', cess_rate: '', list_price: '', total: '' }]));
+    ok('ACC-271 a blank discount / cess / list price / total is absent, the bill is made', blankOptional.status === 200, J([blankOptional.status, blankOptional.answer]));
+    const removedBad = await send(invoiceBody(BUYER, [line('Item A', 180, 1, 5), { ...line('Gone', 1, 1, 5), qty: 'abc', removed: true }]));
+    ok('ACC-271 a removed line is not on the bill, so its text figure does not stop the send', removedBad.status === 200, J([removedBad.status, removedBad.answer]));
     IDENTITIES_FAIL = true;
     const down = await send(invoiceBody(BUYER, [line('Item A', 180, 1, 5)]));
     IDENTITIES_FAIL = false;
