@@ -1271,3 +1271,10 @@ One mechanism on ONE chit for the seller's pro-forma, the buyer's counter, an am
 | `business_json.jurisdiction` | `{ document: 'quotation' \| 'pro_forma', buyer_country, buyer_installation, seller_country, seller_currency, seller_installation, buyer_duty_and_taxes: 'not_included' }` | Stamped at send when the seller is on another installation (document: quotation); the seller's side adds its half on each priced round; the accepted round sets `document: 'pro_forma'`. The wording on the screen is the web's ("Quotation · priced under <seller country> rules · <buyer country>'s import duty and taxes not included"). The buyer's duty is never computed. |
 | event `proposal` payload | `{ proposal_id, round, version: pro_forma \| change \| request \| terms, edits, request, terms, invoice, summary, currency_code, tax_note, base_hash, note, by_name, replaces, replaces_status }` | CTP return path (lib/ctpreturn onProposal / applyProposal). The receiver keeps it as issued. |
 | event `proposal_decide` payload | `{ proposal_id, decision: accept \| reject, by_name, note }` | CTP return path (onProposalDecided / applyProposalDecision): the receiver applies the SAME stored version, never recomputing. |
+
+## `business_json.delivery` on a composed chit · place of supply (CTRY-81, 2026-11-07)
+
+| Key | Shape | Meaning |
+|---|---|---|
+| `business_json.delivery.state_code` | 2-digit GST state code (the counter's existing key; `'7'` reads as `'07'`; a bad code is ignored) | Where the goods move to (IGST Act s.10(1)(a)). `lib/tax-copy.deliveredPos` hands it to the engine's `placeOfSupply`, so a composed chit is supplied there on ANY chit, not only a counter bill. Written by the counter today; the composer's writer is a follow-up (CTRY-82). Read by `partiesFor` only. |
+| `business_json.delivery.bill_to_ship_to` | `true` or absent | Bill-to-ship-to (s.10(1)(b)): the place of supply is the bill-to party's state, whatever `state_code` says. With neither key the engine's labelled buyer-GSTIN fallback stays ("Place of supply was not given, so the buyer's state was used"). A hard "undecided" is option B, only after a delivery writer exists. |
