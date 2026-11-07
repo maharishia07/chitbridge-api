@@ -122,6 +122,7 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "DELETE /api/quick-keys/groups/:id": {"hash":"a42d62986c2586aa","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "GET /api/actors": {
    "hash": "d244d298c4147b45",
    "names_clear": true,
@@ -1596,22 +1597,8 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
    "lifecycle": "stable"
   },
-  "GET /api/till/quick-keys/state": {
-   "hash": "07c6f23d46074c97",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-   "lifecycle": "stable"
-  },
-  "GET /api/till/reward": {
-   "hash": "e51972ce8a02f1cf",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
-   "lifecycle": "stable"
-  },
+  "GET /api/till/quick-keys/state": {"hash":"33abfecde62a9004","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
+  "GET /api/till/reward": {"hash":"aa600c76b31c1ee2","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "GET /api/till/screens": {
    "hash": "e3553ae3b95bfdec",
    "names_clear": true,
@@ -1797,7 +1784,10 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
    "lifecycle": "stable"
   },
+  "PATCH /api/quick-keys/groups/:id": {"hash":"aaef2bad2582262c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "PATCH /api/relationships/customers/:id": {"hash":"967b68cf080c3479","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
+  "PATCH /api/schemas/visibility": {"hash":"6a6e1ccd21d59062","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
+  "PATCH /api/supplies/:id": {"hash":"11c5de3b07e9af43","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "PATCH /api/testing/incidents/:id": {
    "hash": "df4e141b1b0c06bd",
    "names_clear": true,
@@ -2438,14 +2428,7 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
    "lifecycle": "stable"
   },
-  "POST /api/connections/request": {
-   "hash": "2b38a0f30ba3770d",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-   "lifecycle": "stable"
-  },
+  "POST /api/connections/request": {"hash":"3d6ff5c3055c8d28","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "POST /api/connectors": {"hash":"edcd006cf45aa22b","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/connectors/:actorId/connections": {"hash":"45c59297489b4a7c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/connectors/:actorId/ping": {"hash":"888a9edf8f9752b2","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
@@ -2776,6 +2759,7 @@
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#330",
    "lifecycle": "stable"
   },
+  "POST /api/kyb/credential": {"hash":"7aea49ad0b8bbbea","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "POST /api/network-design/build": {
    "hash": "12c06e6fce741a91",
    "names_clear": true,
@@ -2960,6 +2944,8 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
+  "POST /api/quick-keys/groups": {"hash":"1fec8f975fe8c6f9","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
+  "POST /api/quick-keys/groups/:id/items": {"hash":"918fb318cf8a3d1c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "POST /api/relationships/customers": {"hash":"3f50c6474a55bc42","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/relationships/customers/:id/groups": {"hash":"2e173065a6d44af7","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
   "POST /api/relationships/suppliers": {"hash":"61a8c3db14666976","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent first sign-off, not the builder; Athi approved) 2026-11-06 after k16: whole handler read (owner-scoped, stranger id answers 404, secrets shown once), 13 columns pass, body closed (API-30) and every key the web sends declared","lifecycle":"stable"},
@@ -3107,14 +3093,7 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
-  "POST /api/testing/changes": {
-   "hash": "0f79eb9f4d94192f",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-   "lifecycle": "stable"
-  },
+  "POST /api/testing/changes": {"hash":"c371fe538a9aa0d2","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "POST /api/testing/cmdb/seed": {
    "hash": "6bdb38a77ed94dd0",
    "names_clear": true,
@@ -3131,14 +3110,7 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#766 strict_input closed body checked against handler reads and web/toolset callers",
    "lifecycle": "stable"
   },
-  "POST /api/testing/releases": {
-   "hash": "ba6cd824f790bfb4",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
-   "lifecycle": "stable"
-  },
+  "POST /api/testing/releases": {"hash":"d09d4629cc3c54d0","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "POST /api/testing/results": {
    "hash": "b3371f3385d32089",
    "names_clear": true,
@@ -3483,14 +3455,7 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
    "lifecycle": "stable"
   },
-  "PUT /api/connections/:id/respond": {
-   "hash": "6470089e3312598d",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
-   "lifecycle": "stable"
-  },
+  "PUT /api/connections/:id/respond": {"hash":"dcfed7864c08486f","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)","lifecycle":"stable"},
   "PUT /api/entities/populations/:code/desk": {
    "hash": "1e6bdde2d70a0960",
    "names_clear": true,
