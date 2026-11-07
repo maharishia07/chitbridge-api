@@ -59,8 +59,7 @@
   },
   "POST /api/entities/register": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1662,8 +1661,7 @@
   },
   "POST /api/signin/renew": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1672,8 +1670,7 @@
   },
   "POST /api/signin/logout": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1691,8 +1688,7 @@
   },
   "POST /api/signin/sessions/revoke": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1701,8 +1697,7 @@
   },
   "POST /api/signin/ask": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1711,8 +1706,7 @@
   },
   "POST /api/signin/verify": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1721,8 +1715,7 @@
   },
   "POST /api/signin/pin": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -3306,8 +3299,7 @@
   },
   "POST /api/simulator/lead": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -3315,11 +3307,11 @@
   },
   "POST /api/simulator/feedback": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 400"
    }
   },
   "GET /api/notifications": {
@@ -4437,8 +4429,7 @@
   },
   "POST /api/books/preview": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -4447,8 +4438,7 @@
   },
   "POST /api/books/events": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,

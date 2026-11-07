@@ -27,8 +27,9 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/signin';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-/** the three routes that read no body, no query and no path value: no operation, so the refusals are the door's alone (a key 403, the owner's 403, a fault 500) */
-const NO_INPUT = { 'POST /api/signin/logout': [401, 403, 500], 'GET /api/signin/sessions': [401, 403, 500], 'GET /api/signin/devices': [401, 403, 500] };
+/** the two routes that read no body, no query and no path value: no operation, so the refusals are the door's alone (the owner's 403, a fault 500). POST /logout has a closed empty body since API-47 (LOGOUT, below) */
+const NO_INPUT = { 'GET /api/signin/sessions': [401, 403, 500], 'GET /api/signin/devices': [401, 403, 500] };
+const LOGOUT = { 'POST /api/signin/logout': [400, 401, 403, 500] }; /* the one write with no field: an empty closed body, an unknown key is a 400 */
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -52,7 +53,7 @@ function checkContract(routes) {
   const operations = Object.keys(contractModule().contract.OPERATIONS);
   const withInput = Object.keys(routes).filter((key) => !NO_INPUT[key]);
   check('every route that reads an input has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), withInput.sort()), { operations, withInput });
-  check('the three routes that read no input have none (' + Object.keys(NO_INPUT).length + ')', Object.keys(NO_INPUT).every((key) => routes[key] && !operations.includes(key)));
+  check('the two routes that read no input have none (' + Object.keys(NO_INPUT).length + ')', Object.keys(NO_INPUT).every((key) => routes[key] && !operations.includes(key)));
   const problems = operations.every((key) => Object.keys(contractModule().contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contractModule().contract.OPERATIONS[key].responses[status]).includes('Problem')));
   check('every refusal an operation declares is a Problem response', problems);
 }
@@ -76,7 +77,7 @@ function checkJunkAsUnknown(recording, scenes) {
   const server = lab.appOf([{ mount: MOUNT, router }, { mount: '/api/entities', router: entities }]).listen(0);
   const recording = {};
   const declared = contractModule().contract.allowedStatuses();
-  const allowed = (route) => NO_INPUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
+  const allowed = (route) => NO_INPUT[route] || LOGOUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
   const scenes = S.extras();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.filter((one) => routes[one.route]), {}).concat(lab.scenariosOf(registerRoutes, [], scenes.filter((one) => registerRoutes[one.route]), {}));
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, modules);
@@ -84,6 +85,10 @@ function checkJunkAsUnknown(recording, scenes) {
   checkContract(routes);
   checkJunkAsUnknown(recording, scenes);
   check('a caller who is not signed in is refused with 401 on every route that asks for it', ['POST /api/signin/renew', 'POST /api/signin/logout', 'GET /api/signin/sessions', 'GET /api/signin/devices', 'POST /api/signin/sessions/revoke', 'POST /api/signin/pin'].every((key) => recording[key + '|signed-out'].status === 401));
+  /* the shape, which the sweep above leaves to the doors (inherited): every refusal is a Problem naming its own status, with a code and the old error word beside it. The express-validator 400s of ask, verify and pin (middleware/validate.js validate; bodies frozen byte for byte by tests/signin-routes.test.cjs) are the one open gap: skipped here, not judged */
+  const refusals = Object.entries(recording).filter(([, one]) => one.status >= 400 && one.body && !Array.isArray(one.body.details));
+  const notProblems = refusals.filter(([, one]) => !(one.body.type && one.body.title && one.body.status === one.status && one.body.detail && one.body.code && one.body.error !== undefined));
+  check('every refusal of every scene is a Problem that names its own status and carries a code and the old error word (' + refusals.length + ' answers, S1-S2)', notProblems.length === 0, notProblems.map(([name, one]) => name + ' ' + JSON.stringify(one.body).slice(0, 120)));
   check('no 5xx of any scene carries a failure\'s cause', Object.values(recording).filter((one) => one.status >= 500).every((one) => !JSON.stringify(one.body).includes(SECRET_SQL) && !/SELECT|vault|relation "/.test(JSON.stringify(one.body))));
   const coverage = Object.fromEntries(Object.entries(lab.coverageOf(tested)).filter(([route]) => lab.mine(route))); /* the register door's rows are entities.js's own sweep's */
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));

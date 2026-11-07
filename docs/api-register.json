@@ -5,16 +5,16 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 214,
-  "meets": 423,
+  "partial": 186,
+  "meets": 451,
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 72
+    "failing": 61
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 60
+    "failing": 58
    },
    "foreign_id_404": {
     "applies": 203,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 637,
-    "failing": 46
+    "failing": 36
    }
   },
   "reported": {
@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 281,
+    "applies": 282,
     "failing": 39
    },
    "rate_limited": {
@@ -175,7 +175,7 @@
     "screens": [
      "cap-employees.js 1/5",
      "cap-workforce.js 1/19",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6225,
+   "line": 6236,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -589,7 +589,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107",
+     "core.js 1/57",
      "till.html 1/366"
     ]
    },
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5088,
+   "line": 5099,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6486,
+   "line": 6497,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -809,7 +809,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -1022,7 +1022,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -1549,7 +1549,7 @@
     "wire": 5,
     "screens": [
      "cap-folders.js 1/22",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -1867,7 +1867,7 @@
      "app.html 1/155",
      "catalogue-lines.js 1/136",
      "combo-mode.js 1/15",
-     "core.js 1/107",
+     "core.js 1/57",
      "till.html 1/366"
     ]
    },
@@ -2380,7 +2380,7 @@
     "screens": [
      "app.html 1/155",
      "cap-suppliers.js 1/5",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -2596,7 +2596,7 @@
      "cap-chit2.js 2/15",
      "cap-workforce.js 2/19",
      "cap-worklist.js 2/12",
-     "core.js 2/107"
+     "core.js 2/57"
     ]
    },
    "measured": {
@@ -3424,7 +3424,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -3454,18 +3454,18 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 2,
     "screens": []
    },
    "measured": {
@@ -5422,7 +5422,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 820,
-   "hash": "e118d9e7968db836",
+   "hash": "9ef6b60dac2b6391",
    "does": "",
    "errors": {
     "count": 3,
@@ -5507,10 +5507,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#946 CTRY-94",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9ef6b60dac2b6391"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-books.js",
     "cap-finance-pay.js",
@@ -8290,7 +8291,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8330,8 +8331,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 3,
+    "wire": 6,
     "screens": []
    },
    "measured": {
@@ -8578,7 +8579,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8610,16 +8611,15 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "de2a306c4f9ddd23"
+    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -9228,7 +9228,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3602,
+   "line": 3603,
    "hash": "6cba303a3817793d",
    "does": "",
    "errors": {
@@ -9354,7 +9354,7 @@
      "cap-register.js 1/23",
      "cap-worklist.js 1/12",
      "chit-sheet.js 1/2",
-     "core.js 1/107",
+     "core.js 1/57",
      "intake.html 1/5",
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
@@ -9376,7 +9376,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4904,
+   "line": 4915,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9478,7 +9478,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4153,
+   "line": 4154,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9578,7 +9578,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5965,
+   "line": 5976,
    "hash": "e1d82593a96de058",
    "does": "",
    "errors": {
@@ -9679,7 +9679,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5919,
+   "line": 5930,
    "hash": "f8f800ad89880f0c",
    "does": "",
    "errors": {
@@ -9791,7 +9791,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5492,
+   "line": 5503,
    "hash": "837d644d48e9aa1d",
    "does": "",
    "errors": {
@@ -9893,7 +9893,7 @@
      "cap-crm-record.js 1/8",
      "cap-dispute.js 1/5",
      "cap-intake.js 1/6",
-     "core.js 1/107",
+     "core.js 1/57",
      "rail-thread.js 1/2",
      "screens.js 1/6"
     ]
@@ -10008,7 +10008,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4360,
+   "line": 4361,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10108,7 +10108,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4471,
+   "line": 4472,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10407,7 +10407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6126,
+   "line": 6137,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10515,7 +10515,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3157,
+   "line": 3158,
    "hash": "54b00476fd18ef9d",
    "does": "",
    "errors": {
@@ -10618,7 +10618,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3353,
+   "line": 3354,
    "hash": "130ced1d0eda9241",
    "does": "",
    "errors": {
@@ -10725,7 +10725,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3540,
+   "line": 3541,
    "hash": "54cb3e4dc8ed64b1",
    "does": "",
    "errors": {
@@ -10822,7 +10822,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4342,
+   "line": 4343,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10920,7 +10920,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4182,
+   "line": 4183,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -11016,7 +11016,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4192,
+   "line": 4193,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11114,7 +11114,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4234,
+   "line": 4235,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11209,7 +11209,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4299,
+   "line": 4300,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11309,7 +11309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3252,
+   "line": 3253,
    "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
@@ -11411,7 +11411,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3090,
+   "line": 3091,
    "hash": "4fb72caa3f81d69c",
    "does": "",
    "errors": {
@@ -11831,7 +11831,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3567,
+   "line": 3568,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -13019,7 +13019,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 4,
-    "wire": 14,
+    "wire": 15,
     "screens": [
      "cap-crm-leads.js 4/4",
      "cap-crm.js 4/9",
@@ -13330,11 +13330,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1d3706ef33c106b7"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: whole handler re-read after RAIL-146h (cost-blind reader gets null money, same keys); caller-scoped 404 for a foreign party; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -13562,7 +13561,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 219,
+   "line": 222,
    "hash": "e581982c3c888b49",
    "does": "",
    "errors": {
@@ -13748,7 +13747,7 @@
      "app.html 1/155",
      "cap-categories.js 1/6",
      "cap-catsetup.js 1/14",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -15346,7 +15345,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/107",
+     "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/366"
@@ -15447,7 +15446,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/107",
+     "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/366"
@@ -19178,7 +19177,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -19217,8 +19216,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -23249,7 +23248,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 740,
-   "hash": "acc4288324db9478",
+   "hash": "2c73efd115705c67",
    "does": "",
    "errors": {
     "count": 0,
@@ -23320,10 +23319,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#764 k13 round 2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2c73efd115705c67"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -23351,7 +23351,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 801,
+   "line": 802,
    "hash": "7c3134ca129680fe",
    "does": "",
    "errors": {
@@ -23550,7 +23550,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1058,
+   "line": 1059,
    "hash": "afebf4d8f77fd1b3",
    "does": "",
    "errors": {
@@ -23643,7 +23643,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1070,
+   "line": 1071,
    "hash": "00f435ab5f1dde1d",
    "does": "",
    "errors": {
@@ -24541,14 +24541,12 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 138,
-   "hash": "44b050cddc91b9e8",
+   "hash": "f53ed6b7d04efa0c",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -24565,7 +24563,7 @@
     "schema_in": false,
     "schema_out": false,
     "missing_input_answer": false,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": false,
     "status_codes": false,
@@ -24632,14 +24630,12 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 111,
-   "hash": "3d96a78c38ea06b5",
+   "hash": "15cacd36218bf9a1",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -24914,7 +24910,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 97,
+   "line": 98,
    "hash": "13eb044abdeba057",
    "does": "",
    "errors": {
@@ -25117,7 +25113,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "b1e106d69398f827",
+   "hash": "8ab7064027271479",
    "does": "",
    "errors": {
     "count": 0,
@@ -25186,7 +25182,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#924",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#957 expense_no_tax added",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -25604,7 +25600,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "record.html 1/101"
+     "record.html 1/3"
     ]
    },
    "measured": {
@@ -25664,7 +25660,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -25699,20 +25695,19 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cb27ce34e66cddf0"
+    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "record.html"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": [
-     "record.html 50/101"
+     "record.html 1/3"
     ]
    },
    "measured": {
@@ -29153,7 +29148,7 @@
     "screens": [
      "cap-employees.js 2/5",
      "cap-workforce.js 2/19",
-     "core.js 2/107"
+     "core.js 2/57"
     ]
    },
    "measured": {
@@ -29593,7 +29588,7 @@
     "wire": 1,
     "screens": [
      "cap-connector.js 1/11",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -30195,7 +30190,7 @@
     "wire": 0,
     "screens": [
      "avatar.js 0/6",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -30419,7 +30414,7 @@
      "cap-country.js 1/12",
      "cap-network.js 1/3",
      "cap-shop.js 1/17",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -30523,7 +30518,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -30741,7 +30736,7 @@
      "cap-categories.js 0/6",
      "catalogue-lines.js 0/136",
      "combo-mode.js 0/15",
-     "core.js 0/107",
+     "core.js 0/57",
      "till.html 0/366"
     ]
    },
@@ -30961,7 +30956,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 984,
+   "line": 985,
    "hash": "967b68cf080c3479",
    "does": "",
    "errors": {
@@ -31166,7 +31161,7 @@
      "cap-books.js 0/43",
      "cap-crm-record.js 0/8",
      "cap-suppliers.js 0/5",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -32194,18 +32189,16 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 703,
-   "hash": "27b5bfc3930f25ad",
+   "hash": "f2986ed556baa6a3",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": [
-     "PIN_ACTORS_ONLY"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [
@@ -32947,7 +32940,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -32978,16 +32971,15 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f35cc44639c74477"
+    "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -33095,7 +33087,7 @@
      "app.html 0/155",
      "cap-admin.js 0/106",
      "cap-assist.js 0/2",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -33147,7 +33139,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -33190,10 +33182,10 @@
    ],
    "offline": "queueable",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": [
-     "core.js 50/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -33503,11 +33495,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8946badbc2fbfb0d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -33611,11 +33602,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c5804bdfe29a5772"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -33719,11 +33709,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "85ee4d9880bd3f5d"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -33827,11 +33816,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dd20f8b7ff039130"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -34149,11 +34137,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f7e474aa3f126a6f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -34478,11 +34465,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4791a685ccbf85d4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -34582,11 +34568,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7f566abeda51311f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -34939,7 +34924,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1747,
-   "hash": "71c4986dbd23d28a",
+   "hash": "7d637baaefe37588",
    "does": "",
    "errors": {
     "count": 3,
@@ -34976,7 +34961,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -35016,11 +35001,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "71c4986dbd23d28a"
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
@@ -35452,11 +35436,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e0e55c0fbac21845"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -35668,11 +35651,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1c90f5d4dea66b3f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -35772,11 +35754,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0f3772ca67a39e28"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -37332,7 +37313,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1738,
-   "hash": "ab2939544aa33907",
+   "hash": "36eb5b5b5a062279",
    "does": "",
    "errors": {
     "count": 2,
@@ -37368,7 +37349,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -37408,11 +37389,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ab2939544aa33907"
+    "signed_off_by_date": "cb-api (non-builder reviewer) 2026-11-07 PR#959",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
@@ -37621,11 +37601,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a9a8fedb79f55b44"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -37728,11 +37707,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c51214ebf2d96a82"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -38064,11 +38042,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a83f18d6fc594f8"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -40540,8 +40517,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4794,
-   "hash": "604864a3e8107a0d",
+   "line": 4829,
+   "hash": "cc87fa820d46eda1",
    "does": "",
    "errors": {
     "count": 0,
@@ -40619,7 +40596,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#961: handler re-read; 409 INVOICE_MONEY_LOCKED registered, one problem shape, shopkeeper sentence, error test in chit-proposals; non-money amends pass; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40650,7 +40627,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6378,
+   "line": 6389,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40740,7 +40717,7 @@
     "screens": [
      "app.html 1/155",
      "cap-chit2.js 1/15",
-     "core.js 1/107",
+     "core.js 1/57",
      "screens.js 1/6"
     ]
    },
@@ -40758,7 +40735,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4695,
+   "line": 4696,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40864,7 +40841,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5139,
+   "line": 5150,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40970,7 +40947,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4135,
+   "line": 4136,
    "hash": "f07c1d1194dee405",
    "does": "",
    "errors": {
@@ -41041,11 +41018,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f07c1d1194dee405"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41067,7 +41043,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4505,
+   "line": 4506,
    "hash": "4896e7d335ee37ca",
    "does": "",
    "errors": {
@@ -41179,7 +41155,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5735,
+   "line": 5746,
    "hash": "6d084a7304301f0c",
    "does": "",
    "errors": {
@@ -41301,7 +41277,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5340,
+   "line": 5351,
    "hash": "361ec7c5adc2da98",
    "does": "",
    "errors": {
@@ -41409,7 +41385,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5050,
+   "line": 5061,
    "hash": "10046b55f800d3dc",
    "does": "",
    "errors": {
@@ -41646,7 +41622,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41682,13 +41658,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#960: handler and 13 machine columns read; answer allow-list holds, no behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41908,7 +41884,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4374,
+   "line": 4375,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -42008,7 +41984,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4430,
+   "line": 4431,
    "hash": "19bcedf0e932c932",
    "does": "",
    "errors": {
@@ -42108,7 +42084,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4450,
+   "line": 4451,
    "hash": "9250618eaade5a10",
    "does": "",
    "errors": {
@@ -42204,7 +42180,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4096,
+   "line": 4097,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -42304,7 +42280,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6457,
+   "line": 6468,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -42392,7 +42368,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -42409,7 +42385,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6436,
+   "line": 6447,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -42496,7 +42472,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -42513,7 +42489,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6418,
+   "line": 6429,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -42600,7 +42576,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -42617,7 +42593,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6697,
+   "line": 6708,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -42706,7 +42682,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -42723,7 +42699,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4320,
+   "line": 4321,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42819,7 +42795,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4289,
+   "line": 4290,
    "hash": "90c66f0cfb0c470f",
    "does": "",
    "errors": {
@@ -42919,7 +42895,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4310,
+   "line": 4311,
    "hash": "d3bcaba8227c7630",
    "does": "",
    "errors": {
@@ -43019,7 +42995,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4206,
+   "line": 4207,
    "hash": "1899c9cfdf06ac32",
    "does": "",
    "errors": {
@@ -43120,7 +43096,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4224,
+   "line": 4225,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -43220,7 +43196,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4266,
+   "line": 4267,
    "hash": "9ce79b392b49494f",
    "does": "",
    "errors": {
@@ -43320,7 +43296,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4245,
+   "line": 4246,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -43389,11 +43365,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5342aa1379665464"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -43415,7 +43390,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 402,
+   "line": 403,
    "hash": "0f58eecaca6bb7d1",
    "does": "",
    "errors": {
@@ -46426,7 +46401,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 316,
+   "line": 319,
    "hash": "71a3e009f85ce3c7",
    "does": "",
    "errors": {
@@ -46541,8 +46516,8 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 557,
-   "hash": "1e7ffefe0fa6a348",
+   "line": 560,
+   "hash": "426c13a58af5ac69",
    "does": "",
    "errors": {
     "count": 6,
@@ -46588,7 +46563,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46628,8 +46603,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "426c13a58af5ac69"
    },
    "status": "partial",
    "callers": [],
@@ -46752,7 +46728,7 @@
      "cap-categories.js 0/6",
      "cap-catsetup.js 0/14",
      "cap-definitions.js 0/17",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -46975,7 +46951,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 379,
-   "hash": "0684924c4d8ce659",
+   "hash": "9841086ca70c50b5",
    "does": "",
    "errors": {
     "count": 0,
@@ -47008,7 +46984,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -47043,8 +47019,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#917",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9841086ca70c50b5"
    },
    "status": "partial",
    "callers": [
@@ -47267,7 +47244,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "core.js 0/107",
+     "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
      "till.html 0/366"
@@ -47676,7 +47653,7 @@
     "wire": 0,
     "screens": [
      "cap-folders.js 0/22",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -48484,7 +48461,7 @@
     "wire": 0,
     "screens": [
      "cap-readiness.js 0/25",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -49107,7 +49084,7 @@
     "wire": 0,
     "screens": [
      "cap-readiness.js 0/25",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -51443,7 +51420,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 165,
+   "line": 164,
    "hash": "cf94b2f1ecb4b050",
    "does": "",
    "errors": {
@@ -51515,11 +51492,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cf94b2f1ecb4b050"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51530,7 +51506,7 @@
     "wire": null,
     "screens": [
      "cap-admin.js 3/106",
-     "core.js 3/107"
+     "core.js 3/57"
     ]
    },
    "measured": {
@@ -51547,7 +51523,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 173,
+   "line": 172,
    "hash": "0fc9c8e13510c1f5",
    "does": "",
    "errors": {
@@ -51619,11 +51595,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0fc9c8e13510c1f5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51634,7 +51609,7 @@
     "wire": null,
     "screens": [
      "cap-admin.js 3/106",
-     "core.js 3/107"
+     "core.js 3/57"
     ]
    },
    "measured": {
@@ -51651,7 +51626,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 197,
+   "line": 196,
    "hash": "f2723d9cbe44782d",
    "does": "",
    "errors": {
@@ -51723,11 +51698,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f2723d9cbe44782d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51738,7 +51712,7 @@
     "wire": null,
     "screens": [
      "cap-admin.js 3/106",
-     "core.js 3/107"
+     "core.js 3/57"
     ]
    },
    "measured": {
@@ -51755,7 +51729,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 189,
+   "line": 188,
    "hash": "3816956041ef4601",
    "does": "",
    "errors": {
@@ -51827,11 +51801,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3816956041ef4601"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51842,7 +51815,7 @@
     "wire": null,
     "screens": [
      "cap-admin.js 3/106",
-     "core.js 3/107"
+     "core.js 3/57"
     ]
    },
    "measured": {
@@ -51859,7 +51832,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 181,
+   "line": 180,
    "hash": "53cbc22c6326a455",
    "does": "",
    "errors": {
@@ -51931,11 +51904,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "53cbc22c6326a455"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -51946,7 +51918,7 @@
     "wire": null,
     "screens": [
      "cap-admin.js 3/106",
-     "core.js 3/107"
+     "core.js 3/57"
     ]
    },
    "measured": {
@@ -54226,7 +54198,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 853,
+   "line": 854,
    "hash": "3f50c6474a55bc42",
    "does": "",
    "errors": {
@@ -54337,7 +54309,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 962,
+   "line": 963,
    "hash": "2e173065a6d44af7",
    "does": "",
    "errors": {
@@ -56337,8 +56309,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 956,
-   "hash": "08511a0cb859c596",
+   "line": 957,
+   "hash": "57fa3237159ed111",
    "does": "",
    "errors": {
     "count": 0,
@@ -56348,8 +56320,12 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
+   "reads": [
+    "identities"
+   ],
+   "writes": [
+    "identities"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -56361,11 +56337,11 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56392,15 +56368,16 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "57fa3237159ed111"
    },
    "status": "partial",
    "callers": [
@@ -56429,14 +56406,17 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 101,
-   "hash": "84b6041b552384e3",
+   "hash": "28e1fee605a143d4",
    "does": "",
    "errors": {
-    "count": 1,
-    "statuses": [],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     403,
+     500
+    ],
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -56448,14 +56428,14 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56470,7 +56450,12 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    403,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
@@ -56513,19 +56498,17 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 958,
-   "hash": "bc129aaa67f2fc10",
+   "line": 959,
+   "hash": "72a9eff6dcbdd722",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": [
-     "PIN_ACTORS_ONLY"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [
@@ -56542,11 +56525,11 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56612,21 +56595,18 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 77,
-   "hash": "b494fb71a9c4325d",
+   "line": 75,
+   "hash": "f5e438728da7984d",
    "does": "",
    "errors": {
-    "count": 2,
+    "count": 0,
     "statuses": [
      400,
      401,
      403,
      500
     ],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN",
-     "NO_DEVICE"
-    ]
+    "codes": []
    },
    "reads": [],
    "writes": [],
@@ -56641,11 +56621,11 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56713,10 +56693,10 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 160,
-   "hash": "c33c8228d107195e",
+   "hash": "b20908a1dcb72216",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 0,
     "statuses": [
      400,
      401,
@@ -56724,9 +56704,7 @@
      404,
      500
     ],
-    "codes": [
-     "KEY_CANNOT_SIGN_IN"
-    ]
+    "codes": []
    },
    "reads": [
     "identities"
@@ -56743,11 +56721,11 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56815,8 +56793,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 957,
-   "hash": "8638009db812fb3e",
+   "line": 958,
+   "hash": "627cc129f2130eeb",
    "does": "",
    "errors": {
     "count": 0,
@@ -56853,9 +56831,9 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -56892,8 +56870,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "627cc129f2130eeb"
    },
    "status": "partial",
    "callers": [
@@ -56922,7 +56901,7 @@
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
    "line": 107,
-   "hash": "3e8e43fc4a7acc4a",
+   "hash": "917f16e739ea6934",
    "does": "",
    "errors": {
     "count": 0,
@@ -56951,12 +56930,12 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -56994,8 +56973,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -57013,7 +56992,7 @@
    "owner_agent": "cb-demo",
    "file": "routes/simulator.js",
    "line": 82,
-   "hash": "ef1c1dc647a9ede5",
+   "hash": "874d66da6421b10f",
    "does": "",
    "errors": {
     "count": 0,
@@ -57042,12 +57021,12 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -57085,8 +57064,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -57417,8 +57396,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 182,
-   "hash": "89ef5c7405cbca28",
+   "line": 183,
+   "hash": "8230ec2ab65b6f9d",
    "does": "",
    "errors": {
     "count": 0,
@@ -57494,7 +57473,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "89ef5c7405cbca28"
+    "stale_since": "8230ec2ab65b6f9d"
    },
    "status": "partial",
    "callers": [
@@ -57522,7 +57501,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 145,
+   "line": 146,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {
@@ -61614,7 +61593,7 @@
     "screens": [
      "cap-employees.js 1/5",
      "cap-workforce.js 1/19",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -61725,7 +61704,7 @@
     "screens": [
      "cap-employees.js 0/5",
      "cap-workforce.js 0/19",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -61937,7 +61916,7 @@
      "app.html 0/155",
      "cap-admin.js 0/106",
      "cap-tasks.js 0/7",
-     "core.js 0/107",
+     "core.js 0/57",
      "workflow.js 0/1"
     ]
    },
@@ -62044,7 +62023,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -62252,7 +62231,7 @@
     "wire": 2,
     "screens": [
      "cap-admin.js 2/106",
-     "core.js 2/107"
+     "core.js 2/57"
     ]
    },
    "measured": {
@@ -62347,11 +62326,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e8f1198436967af4"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -62445,11 +62423,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0a70997c357d3b62"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -62681,7 +62658,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6044,
+   "line": 6055,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62776,7 +62753,7 @@
     "wire": 0,
     "screens": [
      "cap-dispute.js 0/5",
-     "core.js 0/107",
+     "core.js 0/57",
      "screens.js 0/6"
     ]
    },
@@ -62794,7 +62771,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6270,
+   "line": 6281,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62882,7 +62859,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -62899,7 +62876,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6326,
+   "line": 6337,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -62989,7 +62966,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -63006,7 +62983,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6401,
+   "line": 6412,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -63094,7 +63071,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -63111,7 +63088,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5183,
+   "line": 5194,
    "hash": "bca557ce84285e48",
    "does": "",
    "errors": {
@@ -63247,7 +63224,7 @@
      "cap-suppliers.js 0/5",
      "cap-tasks.js 0/7",
      "chit-sheet.js 0/2",
-     "core.js 0/107",
+     "core.js 0/57",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
      "till.html 0/366"
@@ -63267,7 +63244,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4494,
+   "line": 4495,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -63371,7 +63348,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6544,
+   "line": 6555,
    "hash": "66977b3f37bccaf4",
    "does": "",
    "errors": {
@@ -63462,7 +63439,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -63566,7 +63543,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "core.js 6/107"
+     "core.js 6/57"
     ]
    },
    "measured": {
@@ -63687,7 +63664,7 @@
      "app.html 1/155",
      "cap-categories.js 1/6",
      "cap-definitions.js 1/17",
-     "core.js 1/107"
+     "core.js 1/57"
     ]
    },
    "measured": {
@@ -64207,7 +64184,7 @@
     "wire": 14,
     "screens": [
      "cap-readiness.js 5/25",
-     "core.js 5/107"
+     "core.js 5/57"
     ]
    },
    "measured": {
@@ -64318,7 +64295,7 @@
     "screens": [
      "cap-print.js 6/16",
      "cap-shop.js 6/17",
-     "core.js 6/107"
+     "core.js 6/57"
     ]
    },
    "measured": {
@@ -64646,7 +64623,7 @@
     "wire": 0,
     "screens": [
      "cap-network.js 0/3",
-     "core.js 0/107"
+     "core.js 0/57"
     ]
    },
    "measured": {
@@ -65217,7 +65194,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -65261,10 +65238,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 6,
     "screens": [
-     "record.html 50/101"
+     "record.html 1/3"
     ]
    },
    "measured": {

@@ -21,7 +21,7 @@ let pass = 0, fail = 0;
 const t = (name, ok, extra) => { if (ok) { pass++; say('  ok  ' + name); } else { fail++; say('  FAIL ' + name + (extra ? '\n       ' + extra : '')); } };
 
 const E = 'held@elsewhere.test';
-let ROWS = [], BREAK = null, INSERTS = 0, MAILS = [];
+let ROWS = [], PCON = [], BREAK = null, INSERTS = 0, MAILS = [];
 const reset = () => {
   ROWS = [
     { identity_id: 'shopx', parent_entity_id: null, email: 'x@shopx.test', otp_contact: null, user_id: 'shopx', display_name: 'Shop X', identity_type: 'entity' },
@@ -31,6 +31,7 @@ const reset = () => {
     { identity_id: 'partyy2', parent_entity_id: 'shopy', email: 'own@y.test', otp_contact: null, user_id: '~shopy.cus-2', display_name: 'Y Second', identity_type: 'entity' }
   ];
   BREAK = null;
+  PCON = [];
   INSERTS = 0;
   MAILS = [];
 };
@@ -50,7 +51,12 @@ async function q(sql, p) {
   }
   if (/^SELECT 1 FROM identities WHERE LOWER\(user_id\)/i.test(s)) return { rows: ROWS.filter((r) => lc(r.user_id) === p[0]).map(() => ({})) };
   if (/^SELECT otp_contact, email, parent_entity_id FROM identities WHERE identity_id = \$1/i.test(s)) return { rows: ROWS.filter((r) => r.identity_id === p[0]) };
-  if (/FROM identities WHERE LOWER\(email\) = LOWER\(\$1\) AND identity_id <> \$2/i.test(s)) return { rows: ROWS.filter((r) => r.identity_id !== p[1] && lc(r.email) === lc(p[0])) };
+  /* SEC-130 residual: the e-mail lives in party_contact (not unique, per shop) */
+  if (/^INSERT INTO party_contact/i.test(s)) { const row = PCON.find((c) => c.owner === p[0] && c.party === p[1]); if (row) row.value = p[2]; else PCON.push({ owner: p[0], party: p[1], value: p[2] }); return { rows: [], rowCount: 1 }; }
+  if (/^DELETE FROM party_contact/i.test(s)) { PCON = PCON.filter((c) => !(c.owner === p[0] && c.party === p[1])); return { rows: [] }; }
+  if (/^UPDATE identities SET email = NULL/i.test(s)) { ROWS.filter((r) => r.identity_id === p[0] && r.parent_entity_id === p[1]).forEach((r) => { r.email = null; }); return { rows: [] }; }
+  if (/^SELECT i\.otp_contact, .* AS email, i\.parent_entity_id FROM identities i WHERE i\.identity_id = \$1/i.test(s)) return { rows: ROWS.filter((r) => r.identity_id === p[0]).map((r) => { const c = PCON.find((x) => x.owner === p[1] && x.party === r.identity_id); return Object.assign({}, r, { email: (c && c.value) || r.email }); }) };
+  if (/^SELECT i\.identity_id AS party_id, i\.display_name FROM identities i WHERE i\.parent_entity_id = \$1/i.test(s)) return { rows: ROWS.filter((r) => r.parent_entity_id === p[0] && r.identity_id !== p[2]).filter((r) => { const c = PCON.find((x) => x.owner === p[0] && x.party === r.identity_id); return lc((c && c.value) || r.email) === lc(p[1]); }).map((r) => ({ party_id: r.identity_id, display_name: r.display_name })) };
   if ((m = s.match(/^UPDATE identities SET (\w+) = \$2 WHERE identity_id = \$1/i))) {
     if (m[1] === 'email' && unique(p[1], p[0])) throw dup();
     ROWS.filter((r) => r.identity_id === p[0]).forEach((r) => { r[m[1]] = p[1]; });
@@ -111,16 +117,23 @@ const nameless = (s) => !/held traders|elsewhere|shop x|partyx|shopx/i.test(Stri
 
     say('\n── the party PATCH ──');
     reset();
+    PCON.push({ owner: 'shopx', party: 'partyx', value: E });
+    ROWS[1].email = null;
     const other = await patchEmail('shopy', 'row-y', E);
-    t('⭐ held by ANOTHER shop: 409 with the one fixed generic sentence', !other.ok && other.status === 409 && /cannot be saved on this record/.test(other.message), JSON.stringify(other));
-    t('⭐ …and it names nobody (not the party, the shop or the address)', !other.ok && nameless(other.message) && !/y customer|y second/i.test(other.message), other.message);
+    t('⭐ held by ANOTHER shop: it saves, the oracle is gone (SEC-130 residual: party_contact is per shop, not unique)', other.ok, JSON.stringify(other));
+    const freshAnswer = await patchEmail('shopy', 'row-y2', 'never-seen@y.test');
+    t('⭐ …the answer has the same shape as a fresh address, and shop X still holds its own', other.ok && freshAnswer.ok && JSON.stringify(Object.keys(other.r)) === JSON.stringify(Object.keys(freshAnswer.r)) && PCON.some((c) => c.owner === 'shopx' && c.value === E), JSON.stringify([other, freshAnswer]));
     reset();
+    PCON.push({ owner: 'shopy', party: 'partyy2', value: 'own@y.test' });
+    ROWS[4].email = null;
     const own = await patchEmail('shopy', 'row-y', 'own@y.test');
     t("⭐ held by the SAME shop's other party: the honest words, naming that party", !own.ok && own.status === 409 && /Y Second/.test(own.message) && /already/i.test(own.message), JSON.stringify(own));
     reset();
     const fine = await patchEmail('shopy', 'row-y', 'free@y.test');
-    t('a fresh e-mail still saves', fine.ok && ROWS.find((r) => r.identity_id === 'partyy').email === 'free@y.test', JSON.stringify(fine));
+    t('a fresh e-mail still saves (in party_contact)', fine.ok && PCON.some((c) => c.party === 'partyy' && c.value === 'free@y.test'), JSON.stringify(fine));
     reset();
+    PCON.push({ owner: 'shopy', party: 'partyy2', value: 'own@y.test' });
+    ROWS[4].email = null;
     const same = await patchEmail('shopy', 'row-y2', 'own@y.test');
     t("the party's own current e-mail is no conflict", same.ok, JSON.stringify(same));
     reset();

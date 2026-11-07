@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { taxSaid, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
+const { taxSaid, countryWords, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
@@ -62,6 +62,7 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       prior_period: T.priorPeriodOf(ledger), // ACC-224: late bills of an earlier month the books hold in this one, each with its words
       reversed: T.reversedOf(ledger), // ACC-270: bills reversed this month after an earlier month held them, with words
       not_in_books: T.notInBooksOf(ledger), // ACC-270: counter bills the books hold no entry for, with words
+      expense_no_tax: T.expenseNoTaxOf(ledger), // ACC-269: till expenses with no ITC claimed (GST not stated / not in the books), with words
       dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
@@ -192,7 +193,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
-    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, st.why); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
+    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, countryWords(st.code, st.why)); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
     const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];

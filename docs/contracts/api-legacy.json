@@ -7669,12 +7669,12 @@
      "body_keys": {
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
-      "message": "Set the shop country first. The books never open on a guess."
+      "message": "Set the shop’s country first (Country setup) — the books are kept by its law."
      },
      "fixture": {
       "error": "Cannot compute",
       "code": "NO_COUNTRY",
-      "message": "Set the shop country first. The books never open on a guess."
+      "message": "Set the shop’s country first (Country setup) — the books are kept by its law."
      }
     },
     {

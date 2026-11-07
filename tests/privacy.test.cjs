@@ -35,7 +35,7 @@ D.extra = async (sql, p) => {
   }
   if (/^SELECT country(, display_name)? FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ country: D.shopCountry || 'IN', display_name: 'Mayur Bhavan' }] };
   /* T3-P3-CONSENT: the shopper route's two identity rows at once, and the shopper's own name line */
-  if (/^SELECT identity_id, display_name, phone, email, otp_contact, country FROM identities WHERE identity_id = ANY/.test(sql)) {
+  if (/^SELECT identity_id, display_name, phone, email, otp_contact, country, user_id FROM identities WHERE identity_id = ANY/.test(sql)) {
     return { rows: p[0].map((id) => (id === 'E1' ? { identity_id: 'E1', display_name: 'Mayur Bhavan', phone: null, email: 'shop@x.in', otp_contact: null, country: D.shopCountry || 'IN' }
       : { identity_id: id, display_name: 'Chola', phone: '+91 98000 00002', email: null, otp_contact: '9800000002', country: null })) };
   }

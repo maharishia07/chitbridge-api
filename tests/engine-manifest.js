@@ -212,6 +212,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
+  'party-contact.js',
   /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
      the search Here and There (NET-39) and its local read, a far shop's catalogue read, the one message-size limit, and the repair of copies that arrived before RAIL-107.
      No money, no tax, no rule of the rail: each reads or carries what the rail already decided. */
@@ -767,6 +769,7 @@ const ENGINE_OTHER = [
      applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
   'ctpreturn.js',
   'chit-proposal.js',
+  'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
@@ -905,6 +908,9 @@ const ENGINE_OTHER = [
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
+     receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
+  'upi-waiting.js',
   /* @stage tested (see the file's own header) — no route reaches it yet. Offer Lab's own catalogue-read
      endpoint is the thing that will call it; that endpoint is designed and not built. (2026-09-24) */
   'item-cost.js',

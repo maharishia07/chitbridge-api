@@ -47,6 +47,9 @@ BEGIN
     EXECUTE format('DELETE FROM public.%I', tbl);
   END LOOP;
 
+  -- party_tax_id and party_contact reference identities with no cascade: clear them first
+  BEGIN DELETE FROM party_tax_id; DELETE FROM party_contact; EXCEPTION WHEN undefined_table THEN NULL; END;
+
   -- children first (actors + storefront customers hang off parent_entity_id), then everything
   DELETE FROM identities WHERE parent_entity_id IS NOT NULL;
   DELETE FROM identities;

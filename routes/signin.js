@@ -42,39 +42,37 @@ const identityAuth = require('../lib/identity-auth');
 const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a staff first code (a keyed hash is kept, never the code)
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { problem, internalSpec } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { failed } = require('../lib/products-contract'); // a fault of ours: a 500 that says nothing of its cause (the old body kept: the screen's label and the safe sentence)
-const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
+const { contract, schemaOptions, VERIFY_REFUSALS } = require('../lib/signin-contract'); // the operations of the routes that read an input
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const owner = require('../lib/owner');
 const { isOwner } = owner;
 
+/** the spec of a refusal in the old words: the old { error, message[, code] } beside the Problem fields (API-STANDARD S2). A route's handler passes it to problem(); the old body is frozen here, in one place */
+const said = (code, error, message, withCode) => ({ code, detail: message, legacy: Object.assign({ error }, withCode ? { code } : {}, { message }) });
 const personOnly = (req, res, next) => {
-  if (req.api_key) {
-    res.locals.code = 'KEY_CANNOT_SIGN_IN';
-    return res.status(403).json({ error: 'Forbidden', code: 'KEY_CANNOT_SIGN_IN', message: 'A key cannot sign in — sign in.' });
-  }
+  if (req.api_key) return problem(req, res, Object.assign({ status: 403 }, said('KEY_CANNOT_SIGN_IN', 'Forbidden', 'A key cannot sign in — sign in.', true)));
   next();
 };
 /* T3-P4-ACCOUNT: the ONE owner gate (lib/owner.gate = SEC2's ownerOnly, with the sentence) — the refusal carries code OWNER_ONLY and the sentence GET /sessions says in `may.devices`,
    so CB Settings › Account greys "Every device" and "Remove this device" with the words the server would refuse with (never a regex over prose). */
 const DEVICES_WHY = 'Only the owner may see or remove every device.';
 const ownerOnly = owner.gate(DEVICES_WHY);
-const fail = (res, e) => {
+/** a library's refusal (person-session: a device the owner removed, a session that is gone) keeps its status, its code and its sentence; anything else is a 500 that says nothing of its cause (S8) */
+const FAULT_WORDS = 'Could not change your session. This is our fault.';
+const fail = (req, res, e) => {
   const status = (e && e.status) || 500;
-  if (e && e.code) res.locals.code = e.code;
-  if (status >= 500) console.error('signin:', (e && e.message) || e);
-  res.status(status).json({
-    error: status >= 500 ? 'Server error' : 'Refused',
-    code: (e && e.code) || null,
-    message: status >= 500 ? 'Could not change your session. This is our fault.' : String(e.message)
-  });
+  if (status >= 500) return problem(req, res, internalSpec(req, e, { error: 'Server error', message: FAULT_WORDS }));
+  const code = (e && e.code) || (status === 404 ? 'NOT_FOUND' : 'VALIDATION_FAILED');
+  return problem(req, res, Object.assign({ status }, said(code, 'Refused', String(e.message), !!(e && e.code))));
 };
 /** the claims of the token this request came with — auth already verified it */
 const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')) || {};
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
-router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), async (req, res) => {
+router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schemaOptions), async (req, res) => {
   try {
     const shop = shopOf(req);
     let s;
@@ -83,7 +81,7 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), asyn
     } else {
       /* a legacy token: becomes a listed session on the device the request names — or stays as it is */
       const device_id = sessions.deviceIdOf(req.headers['x-device-id']);
-      if (!device_id) return res.status(400).json({ error: 'Refused', code: 'NO_DEVICE', message: 'Send X-Device-Id to renew.' });
+      if (!device_id) return problem(req, res, Object.assign({ status: 400 }, said('NO_DEVICE', 'Refused', 'Send X-Device-Id to renew.', true)));
       s = await sessions.open(withTransaction, shop, {
         device_id,
         surface: (req.body && req.body.surface) || 'web',
@@ -94,17 +92,19 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), asyn
     const token = identityAuth.signToken(claimsOf(req), s);
     res.json({ token, jti: s.jti, exp: s.exp, device_id: s.device_id, surface: s.surface });
   } catch (e) {
-    fail(res, e);
+    fail(req, res, e);
   }
 });
 
-router.post('/logout', auth, personOnly, async (req, res) => {
+/** a token from before M05 lists no session: nothing to remove, and the page clears itself (the 200 answer, frozen) */
+const LEGACY_TOKEN_LOGOUT = { ok: true, removed: false, legacy: true };
+router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', schemaOptions), async (req, res) => {
   try {
-    if (!req.session) return res.json({ ok: true, removed: false, legacy: true });
+    if (!req.session) return res.json(LEGACY_TOKEN_LOGOUT);
     const out = await sessions.close(withTransaction, shopOf(req), req.session.device_id, req.session.jti);
     res.json({ ok: true, removed: out.removed });
   } catch (e) {
-    fail(res, e);
+    fail(req, res, e);
   }
 });
 
@@ -131,7 +131,7 @@ router.get('/sessions', auth, personOnly, async (req, res) => {
     /* T3-P4-ACCOUNT: may.devices — whether THIS sign-in may read GET /devices and revoke a device (the owner); a co-assist sees the list greyed with this sentence */
     res.json({ sessions: out, legacy: !req.session, may: { devices: owner.may(req, DEVICES_WHY) } });
   } catch (e) {
-    fail(res, e);
+    fail(req, res, e);
   }
 });
 
@@ -153,34 +153,34 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
       }))
     });
   } catch (e) {
-    fail(res, e);
+    fail(req, res, e);
   }
 });
 
-router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke'), async (req, res) => {
+router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke', schemaOptions), async (req, res) => {
   try {
     const b = req.body || {},
       shop = shopOf(req);
     if (b.device_id) {
-      if (!isOwner(req)) return res.status(403).json({ error: 'Forbidden', code: owner.OWNER_ONLY, message: DEVICES_WHY });
+      if (!isOwner(req)) return problem(req, res, Object.assign({ status: 403 }, said(owner.OWNER_ONLY, 'Forbidden', DEVICES_WHY, true)));
       const device_id = sessions.deviceIdOf(b.device_id);
-      if (!device_id) return res.status(400).json({ error: 'Refused', message: 'device_id is not a device id.' });
+      if (!device_id) return problem(req, res, Object.assign({ status: 400 }, said('VALIDATION_FAILED', 'Refused', 'device_id is not a device id.')));
       const nestedOut = await sessions.revokeDevice(withTransaction, shop, device_id, me(req));
-      if (!nestedOut.revoked) return res.status(404).json({ error: 'Not found', message: 'No such device in this shop.' });
+      if (!nestedOut.revoked) return problem(req, res, Object.assign({ status: 404 }, said('NOT_FOUND', 'Not found', 'No such device in this shop.')));
       return res.json({ ok: true, revoked: 'device', device_id });
     }
-    if (!b.jti) return res.status(400).json({ error: 'Refused', message: 'Send { jti } or { device_id }.' });
+    if (!b.jti) return problem(req, res, Object.assign({ status: 400 }, said('VALIDATION_FAILED', 'Refused', 'Send { jti } or { device_id }.')));
     /* whose session is it? — a person may end their own; the owner may end anyone's */
     const devices = await sessions.devicesOf(query, shop);
     let found = null;
     for (const [device_id, d] of Object.entries(devices))
       for (const s of (d && d.sessions) || []) if (s && String(s.jti) === String(b.jti)) found = { device_id, by: s.by };
     if (!found) return res.json({ ok: true, removed: false });
-    if (found.by !== me(req) && !isOwner(req)) return res.status(403).json({ error: 'Forbidden', message: 'Only the owner may end another person’s session.' });
+    if (found.by !== me(req) && !isOwner(req)) return problem(req, res, Object.assign({ status: 403 }, said(owner.OWNER_ONLY, 'Forbidden', 'Only the owner may end another person’s session.')));
     const out = await sessions.close(withTransaction, shop, found.device_id, String(b.jti));
     res.json({ ok: true, revoked: 'session', removed: out.removed });
   } catch (e) {
-    fail(res, e);
+    fail(req, res, e);
   }
 });
 
@@ -205,7 +205,6 @@ router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /ses
  * ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 const { body } = require('express-validator');
 const { validate, sanitise } = require('../middleware/validate');
-const { safeErr } = require('../lib/respond');
 const devOtp = require('../lib/dev-otp');
 const { generateOTP } = require('../lib/otp');
 const { sendOtpEmail, sendOtp } = require('../lib/notify');
@@ -379,10 +378,7 @@ async function firstCodeFor(actor, toMail) {
 
 async function ask(req, res, next) {
   try {
-    const input = typedByAsk(req);
-    if (!input) {
-      return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
-    }
+    const input = typedByAsk(req); // never empty here: askDoor refused that
 
     /**
      * ⭐⭐⭐ A COASSIST TYPED INTO THE SAME BOX — answered FIRST, before anything splits on '@': a coassist's own user id
@@ -475,7 +471,7 @@ async function ask(req, res, next) {
     return await mailedCode(answer, { identity_id, email, display_name });
   } catch (err) {
     console.error('Register error:', err.message);
-    res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Registration failed'));
   }
 }
 /** ask for an owner: a fresh code on the account, mailed after the answer (a store with no inbox has the code its network operator issued) */
@@ -932,11 +928,12 @@ const pinChecks = [
  * widening it to owners (SPEC "widened to entities", I10) needs verifyCredential to ASK an owner for a PIN — a change to
  * how owners sign in, so not in this move.
  */
+const PIN_ACTORS_ONLY = { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } }; /* the body this refusal always had, frozen */
 async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
     if (req.identity.identity_type !== 'actor') {
-      return problem(req, res, { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } });
+      return problem(req, res, PIN_ACTORS_ONLY);
     }
     await identityAuth.setPin(query, identity_id, req.body.pin);
     note(req, { identity_id, parent_entity_id: auth.entityOf(req) }, 'link', 'pin');
@@ -946,16 +943,20 @@ async function pin(req, res) {
   }
 }
 
-const askDoor = junkAsUnknown(ask, typedByAsk, (req, res) => askAnswered(req, res, 'NO_ACCOUNT'));
+/** the ask door: nothing typed is a 400; a value with a NUL byte is answered as an unknown one (K-1); anything else goes to ask, whose faults are Problems too */
+function askDoor(req, res, next) {
+  if (!typedByAsk(req)) return problem(req, res, Object.assign({ status: 400 }, said('VALIDATION_FAILED', 'Validation failed', 'Type your mobile number, email or User ID.')));
+  return holdsNul(typedByAsk(req)) ? askAnswered(req, res, 'NO_ACCOUNT') : ask(req, res, next);
+}
 /** SEC-143: the doors that take a contact pad their refusals to CONTACT_HASHES hash times, found or not (a refusal spends the first itself) */
 const padded = (handler) => (req, res, next) => {
   req.contactPad = contactShaped(typedByVerify(req)) ? identityAuth.CONTACT_HASHES - 1 : 0;
   return handler(req, res, next);
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
-router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
-router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
-router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+router.post('/verify', door('signin'), declaresStatuses(VERIFY_REFUSALS), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
+router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinChecks, validate, pin);
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };

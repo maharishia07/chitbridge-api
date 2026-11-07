@@ -158,8 +158,7 @@ router.post(
       { parentId: b.parentId, parentHandle: b.parentHandle, childId: b.childId, childBridgeId: b.childBridgeId, childHandle: b.childHandle, type: b.type },
       await actorOf(req)
     );
-    _told(out);
-    return out;
+    return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
 );
 router.post(
@@ -168,7 +167,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/approve'),
-  h(async (req) => _told(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
+  h(async (req) => _answer(await net.approve({ edgeId: req.params.id }, await actorOf(req))))
 );
 router.post(
   '/connections/:id/decline',
@@ -176,7 +175,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/decline'),
-  h(async (req) => _told(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
+  h(async (req) => _answer(await net.decline({ edgeId: req.params.id }, await actorOf(req))))
 );
 router.post(
   '/connections/:id/suspend',
@@ -184,7 +183,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/suspend'),
-  h(async (req) => _told(await net.suspend(req.params.id, await actorOf(req))))
+  h(async (req) => _answer(await net.suspend(req.params.id, await actorOf(req))))
 );
 router.post(
   '/connections/:id/resume',
@@ -192,7 +191,7 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/resume'),
-  h(async (req) => _told(await net.resume(req.params.id, await actorOf(req))))
+  h(async (req) => _answer(await net.resume(req.params.id, await actorOf(req))))
 );
 router.post(
   '/connections/:id/disconnect',
@@ -200,8 +199,10 @@ router.post(
   ownerDecides,
   gateWrite,
   checked('POST /connections/:id/disconnect'),
-  h(async (req) => _told(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))
+  h(async (req) => _answer(await net.disconnect({ edgeId: req.params.id, settle: !!(req.body || {}).settle }, await actorOf(req))))
 );
+/** the answer of an edge route: both sides told, then the named keys only (net.edgeView) */
+const _answer = (edge) => net.edgeView(_told(edge));
 /** ⭐ both businesses on an edge hear that it moved — a store's counters re-read when it joins, is suspended or removed */
 function _told(edge) {
   if (!edge || !edge.parent_id) return edge;

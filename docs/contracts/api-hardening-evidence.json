@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "POST /api/entities/register": {
+   "strict_input": true
+  },
   "POST /api/entities/verify": {
    "strict_input": true
   },
@@ -509,7 +512,11 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/signin/renew": {
+   "strict_input": true
+  },
   "POST /api/signin/logout": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/signin/sessions": {
@@ -517,6 +524,18 @@
   },
   "GET /api/signin/devices": {
    "output_allowlist": true
+  },
+  "POST /api/signin/sessions/revoke": {
+   "strict_input": true
+  },
+  "POST /api/signin/ask": {
+   "strict_input": true
+  },
+  "POST /api/signin/verify": {
+   "strict_input": true
+  },
+  "POST /api/signin/pin": {
+   "strict_input": true
   },
   "GET /api/keys": {
    "output_allowlist": true
@@ -1038,10 +1057,11 @@
    "strict_input": true
   },
   "POST /api/simulator/lead": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/simulator/feedback": {
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/notifications/seen": {
    "strict_input": true,
@@ -1434,6 +1454,12 @@
    "strict_input": true
   },
   "POST /api/books/parties/:id/dispute": {
+   "strict_input": true
+  },
+  "POST /api/books/preview": {
+   "strict_input": true
+  },
+  "POST /api/books/events": {
    "strict_input": true
   },
   "POST /api/books/entries": {

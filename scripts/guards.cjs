@@ -249,6 +249,7 @@ const GUARDS = [
   'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
   'money-no-arithmetic.test.cjs', // ACC-206: no sum, difference, reduce or rounding on money between the engine and the chit (send-money, money-check, chit-proposal, the send steps); named exceptions carry a backlog id
   'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals
+  'fin58-upi-waiting.test.cjs', // FIN-58: an unconfirmed UPI part waits as a receivable from the system party "UPI waiting"; the flip is a payment
   'rollup-currency.test.cjs', // REP-50
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
   /* ⭐⭐ THE CONFORMANCE RULE. Athi: "the behaviour should be the same" whether a world is a row here or its
@@ -435,6 +436,7 @@ const GUARDS = [
   'ctp-return-door.test.cjs', // RAIL-106: the event kind at the one door (routes/ctp.js): same checks as a copy, applied to our rows only
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
   'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte)
+  'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
   'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
@@ -545,6 +547,7 @@ const GUARDS = [
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
   'signin-enumeration.test.cjs', // SEC-139: before a secret is proven an unknown account, a known one sent no secret and a wrong secret get ONE answer (and about the same time) on actors/login, entities/verify, signin/verify; no CHOOSE_IDENTITY list at verify; check-login one constant answer
   'sec-130a-duplicate-email.test.cjs', // ⭐ SEC-130 (A): a duplicate e-mail answers a stranger the same as a free one (register, party PATCH); the owner keeps honest words about their own list
+  'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing

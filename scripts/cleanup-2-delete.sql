@@ -77,6 +77,12 @@ BEGIN
     EXECUTE format('DELETE FROM public.%I WHERE entity_id = ANY($1)', tbl) USING eids;
   END LOOP;
 
+  -- party_tax_id and party_contact are keyed by owner_entity_id (not entity_id) and their FK to identities has no cascade: clear them before the identities
+  BEGIN
+    DELETE FROM party_tax_id WHERE owner_entity_id = ANY(eids) OR party_id = ANY(eids);
+    DELETE FROM party_contact WHERE owner_entity_id = ANY(eids) OR party_id = ANY(eids);
+  EXCEPTION WHEN undefined_table THEN NULL; END;
+
   DELETE FROM identities WHERE parent_entity_id = ANY(eids);   -- co-assists / actors under them
   DELETE FROM identities WHERE identity_id      = ANY(eids);
 

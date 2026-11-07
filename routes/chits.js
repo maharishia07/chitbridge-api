@@ -64,7 +64,8 @@ const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require
 const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
-const amend = require('../lib/amend'); // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
+const amend = require('../lib/amend');
+const invoiceIssued = require('../lib/invoice-issued'); // ACC-192 — an issued invoice's money is refused an amendment // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
 const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
@@ -4787,8 +4788,42 @@ function knownAmendSpec(err) {
   if (['LINE_DELIVERED', 'LINE_BELOW_DELIVERED', 'LINE_UNIT_LOCKED'].includes(err.code)) {
     return { status: 409, ...said({ error: 'Already delivered', message: err.message, code: err.code }, 'CHIT_CONFLICT') };
   }
+  if (err.code === 'INVOICE_MONEY_LOCKED') return { status: 409, ...said({ error: 'Already invoiced', message: err.message, code: err.code }, 'CHIT_CONFLICT') }; /* ACC-192: an issued invoice's money is changed by a credit or debit note */
   if (err.status === 400 && /^AMEND_/.test(String(err.code))) return { status: 400, ...said({ error: 'Failed to amend', message: err.message, code: err.code }, err.code) };
   return null;
+}
+
+/**
+ * logAmended(req, entity_id, chit_id, out) — the amendment's line in the chit's own history (state_log), beside every other action. Best-effort by design: a missing log must not lose a
+ * correction that already committed; the failure is logged. (Moved out of the amend handler unchanged, ACC-192, to keep the handler inside the readability limit.)
+ */
+async function logAmended(req, entity_id, chit_id, out) {
+  /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
+     every other action. Best-effort: a missing log must not lose a correction that already committed. */
+  try {
+    const detail = out.amendments
+      .map((item) =>
+        item.line === null
+          ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
+          : 'line ' +
+            (item.line_index + 1) +
+            ' → ' +
+            [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
+            ' (' +
+            item.reason_code +
+            ')'
+      )
+      .join('; ');
+    await withEntity(entity_id, (db) =>
+      db.query(
+        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+       VALUES ($1,$2,'amended',$3,$4,$5)`,
+        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
+      )
+    );
+  } catch (e) {
+    console.error('amend state_log skipped:', e.message);
+  }
 }
 
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
@@ -4806,37 +4841,13 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
 
     const edits = editsOf(req.body);
     if (await answeredAsProposal(req, res, { entity_id, chit_id, edits })) return;
+    await invoiceIssued.refuseMoneyAmend(entity_id, chit_id, edits); /* ACC-192: an issued invoice's money is never amended; a credit or debit note is the way */
     const out = await costWrite.recordAmend(req, entity_id, chit_id, edits, { /* RAIL-147: amend.record behind the cost door (lib/cost-write); the owner's call and answer as before */
       actor_id: req.identity.identity_id,
       actor_name: req.identity.display_name
     });
 
-    /* ⚠️ THE AMENDMENT IS THE RECORD; the state_log entry is only so it shows in the chit's own history beside
-       every other action. Best-effort: a missing log must not lose a correction that already committed. */
-    try {
-      const detail = out.amendments
-        .map((item) =>
-          item.line === null
-            ? 'line ' + (item.line_index + 1) + ' removed (' + item.reason_code + ')'
-            : 'line ' +
-              (item.line_index + 1) +
-              ' → ' +
-              [item.line.particulars, item.line.quantity, item.line.unit].filter(Boolean).join(' ') +
-              ' (' +
-              item.reason_code +
-              ')'
-        )
-        .join('; ');
-      await withEntity(entity_id, (db) =>
-        db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         VALUES ($1,$2,'amended',$3,$4,$5)`,
-          [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, detail]
-        )
-      );
-    } catch (e) {
-      console.error('amend state_log skipped:', e.message);
-    }
+    await logAmended(req, entity_id, chit_id, out);
 
     /* ⚠️ SYNONYM CANDIDATES ARE REPORTED, NOT WRITTEN. A correction that renames an item ("thakkali" → Tomato) is
        exactly the fact worth learning, but writing it into the catalogue unasked would permanently merge two words
