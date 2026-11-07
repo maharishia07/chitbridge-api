@@ -1367,7 +1367,8 @@
  ],
  "GET /api/till/bills": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/catalogue/blueprints": [
   401,
@@ -1377,7 +1378,8 @@
  "GET /api/till/counters": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/engine/:name": [
   401,
@@ -1386,12 +1388,14 @@
  ],
  "GET /api/till/match": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/groups": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/hidden": [
   401,
@@ -1401,7 +1405,8 @@
  "GET /api/till/quick-keys/screen-config": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/quick-keys/state": [
   400,
@@ -1418,36 +1423,43 @@
  "GET /api/till/screens": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/snapshot": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/stock": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/summary": [
   400,
   401,
   422,
-  500
+  500,
+  503
  ],
  "GET /api/till/tasks": [
   401,
-  500
+  500,
+  503
  ],
  "GET /api/till/verify": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/till/worth-an-offer": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "GET /api/work/:chit_id": [
   401,
@@ -3434,7 +3446,8 @@
   403,
   409,
   422,
-  500
+  500,
+  503
  ],
  "POST /api/till/close": [
   400,
@@ -3456,7 +3469,8 @@
   403,
   404,
   409,
-  500
+  500,
+  503
  ],
  "POST /api/till/flags": [
   400,
@@ -3478,7 +3492,8 @@
  "POST /api/till/pair": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/pair/claim": [
   404,
@@ -3561,12 +3576,14 @@
   400,
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/state": [
   401,
   403,
-  500
+  500,
+  503
  ],
  "POST /api/till/stock": [
   400,

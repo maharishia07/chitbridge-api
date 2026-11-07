@@ -9892,6 +9892,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9948,6 +9974,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -9990,6 +10042,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10017,6 +10095,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10073,6 +10177,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10174,6 +10304,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10262,6 +10418,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "scheme (identity|phone) and value required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "scheme (identity|phone) and value required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10289,6 +10471,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10318,6 +10526,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10345,6 +10579,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10388,6 +10648,32 @@
       "code": "NO_COUNTRY",
       "message": "Set the shop country first. The books never open on a guess."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10403,6 +10689,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10432,6 +10744,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10459,6 +10797,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10565,6 +10929,30 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "an alias needs an item and the words the supplier uses",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "an alias needs an item and the words the supplier uses",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -10824,6 +11212,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -10924,6 +11338,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can close itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can close itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11023,6 +11463,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Only a paired counter can report itself.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Only a paired counter can report itself.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11180,6 +11646,32 @@
       "error": "Failed",
       "message": "relation \"party_secret\" does not exist -- SELECT secret FROM vault"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11289,6 +11781,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11412,6 +11930,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "offer_id and item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "offer_id and item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11463,6 +12007,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11587,6 +12157,32 @@
      "fixture": {
       "error": "Too many",
       "message": "Too many wrong codes. Wait a minute and try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 404,
+     "body_keys": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "No such code",
+      "message": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "type": "https://chitbridge.com/problems/pair_code_unknown",
+      "title": "Pairing code not known",
+      "status": 404,
+      "code": "PAIR_CODE_UNKNOWN",
+      "detail": "That code is wrong or has expired. Ask ChitBridge for a new one.",
+      "hint": "Ask ChitBridge for a new code.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -11836,6 +12432,32 @@
       "hint": "Check what was entered and try again.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -11948,6 +12570,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12035,6 +12683,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12136,6 +12810,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12235,6 +12935,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "This key is not holding a counter.",
+      "type": "https://chitbridge.com/problems/till_no_counter",
+      "title": "Key holds no counter",
+      "status": 403,
+      "code": "TILL_NO_COUNTER",
+      "detail": "This key is not holding a counter.",
+      "hint": "Open the counter on this PC first.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12366,6 +13092,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "ref (the bill number) required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "ref (the bill number) required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12492,6 +13244,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "from and to holders required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "from and to holders required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12603,6 +13381,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12716,6 +13520,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "Which screen?",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Which screen?",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12814,6 +13644,32 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -12841,6 +13697,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 503,
+     "body_keys": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Database unavailable",
+      "message": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "code": "DB_CONNECTION_LOST",
+      "type": "https://chitbridge.com/problems/db_connection_lost",
+      "title": "Database unavailable",
+      "status": 503,
+      "detail": "The connection to the database was lost while this was being done. Nothing was saved. Try again in a moment.",
+      "hint": "Try again in a moment.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -12951,6 +13833,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_id required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -13063,6 +13971,32 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -43901,6 +44835,58 @@
       "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
       "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
       "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-lost",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_id is needed.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "item_id",
+      "errors": [
+       {
+        "field": "item_id",
+        "code": "MISSING_FIELD",
+        "detail": "item_id is needed."
+       },
+       {
+        "field": "slab_id",
+        "code": "MISSING_FIELD",
+        "detail": "slab_id is needed."
+       }
+      ]
      }
     }
    ]
