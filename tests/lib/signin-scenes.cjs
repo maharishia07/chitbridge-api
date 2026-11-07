@@ -37,10 +37,17 @@ function extras() {
   const at = (path) => '/api/signin' + path;
   const NUL_DB = { sqlRows: holdsNul };
   const refusing = (code) => ({ identityAuth: { verifyCredential: async () => ({ ok: true }), issueToken: async () => { throw Object.assign(new Error(code), { code }); } } });
+  /* one contact on two accounts that the same secret opens: the chooser (SEC-143, M14) */
+  const choosing = () => ({ identityAuth: { findLoginIdentity: async () => ({ ambiguous: true, via: 'contact', candidates: [{ identity_id: 'a' }, { identity_id: 'b' }], contact: 'tea@x.com' }), proveOnContact: async () => ({ opens: [{ identity_id: 'a' }, { identity_id: 'b' }], hashes: 1 }), choicesOf: async () => [{ id: 'a', label: 'Tea Shop' }, { id: 'b', label: 'Tea Shop' }] } });
   const KNOWN = { sqlRows: answering(/FROM identities WHERE email = \$1/, [{ identity_id: 'a', bridge_id: 'A', display_name: 'Tea Shop', email: 'a@x.com', identity_type: 'entity' }]) };
   return [
     /* renew */
     X('renew-legacy-token-names-no-device', 'POST ' + at('/renew'), 400, { body: {} }),
+    X('renew-db-fails', 'POST ' + at('/renew'), 500, { body: {}, headers: { 'x-device-id': DEVICE }, setup: FAILING }),
+    X('renew-unknown-key', 'POST ' + at('/renew'), 400, { body: { nope: 1 } }),
+    /* logout */
+    X('logout-unknown-key', 'POST ' + at('/logout'), 400, { body: { nope: 1 } }),
+    X('logout-db-fails', 'POST ' + at('/logout'), 500, { body: {}, setup: { session: { device_id: DEVICE, jti: 'jti-of-this-session' }, db: 'fail' } }),
     /* revoke */
     X('revoke-names-nothing', 'POST ' + at('/sessions/revoke'), 400, { body: {} }),
     X('revoke-device-id-is-not-one', 'POST ' + at('/sessions/revoke'), 400, { body: { device_id: 'x' } }),
@@ -67,6 +74,7 @@ function extras() {
     X('verify-unknown-user-id', 'POST ' + at('/verify'), 400, { body: { user_id: 'ghost', otp: '123456' } }),
     X('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 400, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
     X('verify-device-removed', 'POST ' + at('/verify'), 403, { body: { email: 'a@x.com', otp: '123456' }, patch: refusing('DEVICE_REVOKED'), setup: KNOWN }),
+    X('verify-contact-on-two-accounts', 'POST ' + at('/verify'), 409, { body: { id: 'tea@x.com', otp: '123456' }, patch: choosing(), setup: {} }),
     X('verify-session-not-listed', 'POST ' + at('/verify'), 503, { body: { email: 'a@x.com', otp: '123456' }, patch: refusing('SESSION_NOT_LISTED'), setup: KNOWN }),
     X('verify-db-fails', 'POST ' + at('/verify'), 500, { body: { id: 'ghost', otp: '123456' }, setup: FAILING }),
     X('verify-id-with-a-nul-byte', 'POST ' + at('/verify'), 400, { body: { id: 'gh' + NUL + 'ost', otp: '123456' }, setup: NUL_DB, like: 'verify-unknown-account' }),

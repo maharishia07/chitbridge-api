@@ -3,14 +3,14 @@
  "stage": "2",
  "updated": "2026-11-07",
  "total": 637,
- "not_meeting": 187,
- "codes_total": 558,
+ "not_meeting": 186,
+ "codes_total": 559,
  "codes_pending": 0,
- "raw_error_writes": 2,
+ "raw_error_writes": 1,
  "routes_without_does": 627,
  "columns_failing": {
   "strict_input": 61,
-  "output_allowlist": 60,
+  "output_allowlist": 58,
   "foreign_id_404": 20,
   "idempotent_money_write": 3,
   "inbound_validated": 0,
@@ -27,14 +27,14 @@
    "opened": "2026-11-07",
    "expires": "2026-11-21",
    "pr": "API-47",
-   "reason": "closed body (S33) changed the row hash of a route signed at PR#883 while these core columns were already red at base (error_shape, codes_registered); the cure is in routes/signin.js (a raw 400/500 write in ask; the verify refusals 403/409/503 named by a gate and tested), outside API-47 scope; not re-signed"
+   "reason": "2026-11-08: error_shape and codes_registered are cured (ask answers every refusal as a Problem; l2/signin-error-shape). Still red: output_allowlist and trips_budgeted (the speed and hardening-evidence areas). Not re-signed: a route is signed only when all 13 columns pass."
   },
   {
    "route": "POST /api/signin/verify",
    "opened": "2026-11-07",
    "expires": "2026-11-21",
    "pr": "API-47",
-   "reason": "closed body (S33) changed the row hash of a route signed at PR#883 while these core columns were already red at base (error_tests, status_codes); the cure is in routes/signin.js (a raw 400/500 write in ask; the verify refusals 403/409/503 named by a gate and tested), outside API-47 scope; not re-signed"
+   "reason": "2026-11-08: error_tests and status_codes are cured (the gate names 403/409/503, each tested; l2/signin-error-shape). Still red: output_allowlist and trips_budgeted (the speed and hardening-evidence areas). Not re-signed: a route is signed only when all 13 columns pass."
   }
  ]
 }

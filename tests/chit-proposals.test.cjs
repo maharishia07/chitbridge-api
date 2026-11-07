@@ -58,6 +58,15 @@ function rowsFor(sql, p) {
   const s = one(sql);
   p = p || [];
   if (/^SELECT sender_entity_id, purpose, business_json, summary_json, all_recipients FROM chit_header/.test(s)) return w.header[p[1]] ? [clone(w.header[p[1]])] : [];
+  /* ACC-192 (lib/invoice-issued): is the copy's invoice issued? w.posted = the entity ids whose books hold chit:<id> */
+  if (/AS has_invoice/.test(s)) {
+    const h = w.header[p[0]];
+    if (!h) return [];
+    const inv = (h.business_json || {}).invoice;
+    return [{ has_invoice: !!inv, frozen_at: (inv && inv.frozen_at) || null, document: ((h.business_json || {}).jurisdiction || {}).document || null, posted: (w.posted || []).includes(p[0]) }];
+  }
+  if (/^SELECT line_items FROM chit_detail WHERE entity_id = \$1 AND chit_id = \$2 LIMIT 1/.test(s)) return w.detail[p[0]] ? [{ line_items: clone(w.detail[p[0]].line_items) }] : [];
+  if (/^SELECT amendment_id, line_index, line_id, seq, line, reason_code, reason, actor_name, created_at FROM chit_line_amendment/.test(s)) return clone(w.amend.filter((a) => a.entity_id === p[0] && a.chit_id === p[1]));
   if (/^SELECT line_items, currency_code FROM chit_detail/.test(s)) return w.detail[p[1]] ? [clone(w.detail[p[1]])] : [];
   if (/^SELECT line_index, line_id, seq, line FROM chit_line_amendment WHERE entity_id = \$1 AND chit_id = \$2/.test(s)) return clone(w.amend.filter((a) => a.entity_id === p[0] && a.chit_id === p[1]));
   if (/^SELECT line_id FROM chit_line WHERE entity_id = \$1/.test(s)) return (w.lineIds[p[0]] || []).map((line_id) => ({ line_id }));
@@ -663,6 +672,78 @@ const call = (method, url, id, body) =>
     assert.ok(/already countered/.test(stale.body.message || stale.body.detail), JSON.stringify(stale.body));
     const missing = await call('POST', '/api/chits/' + CH + '/proposals/f0000000-0000-4000-8000-0000000000f0/reject', BUY, {});
     assert.strictEqual(missing.status, 404);
+  });
+
+  console.log('\n== I · ACC-192: an issued invoice is never rewritten by an amendment ==\n');
+  const WORDS = 'This bill is already invoiced. A change in price needs a credit or debit note.';
+  const sealed = (w) => JSON.stringify([w.header, w.detail, w.amend]);
+  await t('RED→GREEN: a change round accepted AFTER the books posted does not rewrite the invoice: refused in words, code INVOICE_MONEY_LOCKED, nothing moves on any copy', async () => {
+    const w = oneInstallation();
+    const r2 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await as(w, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER)); /* the pro-forma is agreed: an invoice sits on both copies, not yet in the books */
+    const issued = clone(w.header[SELL].business_json.invoice);
+    const r3 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER)); /* a change round, made while nothing is posted */
+    w.posted = [BUY, SELL]; /* then the books post the invoice */
+    const before = sealed(w);
+    await assert.rejects(as(w, () => proposals.decide(BUY, CH, r3.proposal_id, 'accept', BUYER)), (e) => e.status === 409 && e.code === 'INVOICE_MONEY_LOCKED' && e.message === WORDS);
+    assert.strictEqual(sealed(w), before, 'the invoice, the money, the total and the lines are exactly as they were');
+    assert.deepStrictEqual(w.header[SELL].business_json.invoice, issued);
+    assert.deepStrictEqual(w.header[BUY].business_json.invoice, issued);
+    assert.strictEqual(rowsOf(w, BUY).find((r) => r.proposal_id === r3.proposal_id).status, 'proposed', 'the round stays open, nothing half-applied');
+  });
+  await t('a seller cannot even put a priced round forward on an issued invoice: refused before it is priced (no tax call, no row)', async () => {
+    const w = oneInstallation();
+    w.header[SELL].business_json = Object.assign({}, w.header[SELL].business_json, { invoice: { ValDtls: { TotInvVal: 1298 } } }); /* sendIssued carried it: no pro_forma document */
+    const taxBefore = w.taxCalls.length;
+    await assert.rejects(as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER)), (e) => e.status === 409 && e.code === 'INVOICE_MONEY_LOCKED' && e.message === WORDS);
+    assert.strictEqual(w.props.length, 0);
+    assert.strictEqual(w.taxCalls.length, taxBefore);
+  });
+  await t('a decision that ARRIVES from another installation is refused on a copy whose books posted: the invoice there is untouched, the result says so', async () => {
+    const { A, B } = twoInstallations();
+    const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    const issued = { stamped_by: 'Sydney Spice', ValDtls: { TotInvVal: 1298 } };
+    B.header[SELL].business_json = Object.assign({}, B.header[SELL].business_json, { invoice: issued });
+    B.posted = [SELL];
+    const results = await ship(A, B);
+    assert.ok(results.some((x) => !x.ok), 'the decision is not applied silently: ' + JSON.stringify(results));
+    assert.deepStrictEqual(B.header[SELL].business_json.invoice, issued, 'the seller posted invoice is never rewritten');
+    assert.strictEqual(B.amend.length, 0);
+  });
+  await t('a QUOTATION and a pro-forma still re-price: an accepted pro-forma with no books is re-issued by a change round, as before', async () => {
+    const w = oneInstallation();
+    const r2 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+    await as(w, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+    assert.strictEqual(w.header[BUY].business_json.jurisdiction.document, 'pro_forma');
+    const first = clone(w.header[BUY].business_json.invoice);
+    const r3 = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    assert.strictEqual(r3.kind, 'change');
+    await as(w, () => proposals.decide(BUY, CH, r3.proposal_id, 'accept', BUYER));
+    assert.notDeepStrictEqual(w.header[BUY].business_json.invoice, first, 'the pro-forma was re-issued at the new price');
+    assert.deepStrictEqual(w.header[BUY].business_json.invoice, w.header[SELL].business_json.invoice);
+  });
+  await t('POST /amend (a default domestic chit) on an issued invoice: a price or quantity change or a removal is 409 INVOICE_MONEY_LOCKED, nothing recorded; a comment fix still passes; with no invoice a price change passes', async () => {
+    const w = oneInstallation(undefined, { domestic: true });
+    w.header[SELL].business_json = Object.assign({}, w.header[SELL].business_json, { invoice: { ValDtls: { TotInvVal: 1298 } } });
+    const edit = (line_index, line) => ({ edits: [{ line_index, line_id: line_index ? L2 : L1, line, reason_code: 'rate_agreed' }] });
+    const pump = (more) => Object.assign({ particulars: 'Pump seal', quantity: 10, unit: 'pc', price: 100 }, more);
+    for (const body of [edit(0, pump({ price: 96 })), edit(0, pump({ quantity: 9 })), edit(1, null)]) {
+      const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, body);
+      assert.strictEqual(r.status, 409, JSON.stringify(r.body));
+      assert.strictEqual(r.body.code, 'INVOICE_MONEY_LOCKED');
+      assert.ok(JSON.stringify(r.body).includes(WORDS), JSON.stringify(r.body));
+    }
+    assert.strictEqual(w.amend.length, 0, 'nothing was recorded');
+    for (const body of [edit(0, pump({ comment: 'deliver after 4pm' })), edit(0, pump({ particulars: 'Pump seal (steel)' }))]) {
+      const r = await call('POST', '/api/chits/' + CH + '/amend', SELL, body);
+      assert.strictEqual(r.status, 200, 'a non-money amendment still works: ' + JSON.stringify(r.body));
+    }
+    assert.strictEqual(w.amend.length, 2);
+    oneInstallation(undefined, { domestic: true }); /* no invoice at all: a quote / draft, amended as always */
+    const ok = await call('POST', '/api/chits/' + CH + '/amend', SELL, edit(0, pump({ price: 96 })));
+    assert.strictEqual(ok.status, 200, JSON.stringify(ok.body));
   });
 
   console.log('\n== E · the bell ==\n');

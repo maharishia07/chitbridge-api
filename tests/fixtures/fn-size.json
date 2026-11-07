@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 143,
+  "long_functions": 142,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -196,7 +196,6 @@
       "GET /:chit_id",
       "GET /:chit_id/catalogue-overlay",
       "GET /inbox",
-      "POST /:chit_id/amend",
       "POST /:chit_id/disputes",
       "POST /:chit_id/messages",
       "POST /assign-bulk",

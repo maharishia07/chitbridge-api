@@ -16,8 +16,8 @@ of file each thing is; this says what already does the job.
 | 112 | `withEntity` | `books-hooks.js` |  |
 | 109 | `read` | `books-cashflow.js` | Trips: |
 | 99 | `answer` | `availability.js` | from March; then nearest. |
-| 91 | `money` | `bill-privacy.js` |  |
-| 80 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 92 | `money` | `bill-privacy.js` |  |
+| 81 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -27,16 +27,16 @@ of file each thing is; this says what already does the job.
 | 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 67 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
-| 64 | `entry` | `books-store.js` |  |
+| 65 | `entry` | `books-store.js` |  |
 | 64 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `failed` | `service.js` | what every catch answers: |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 59 | `items` | `books-store.js` | PERF1: |
-| 58 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 60 | `items` | `books-store.js` | PERF1: |
+| 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 56 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 53 | `pack` | `books-store.js` |  |
@@ -70,13 +70,13 @@ of file each thing is; this says what already does the job.
 | 37 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
 | 35 | `rate` | `convert.js` | A rate, with its evidence. |
-| 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
+| 36 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
-| 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
+| 34 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
-| 30 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 31 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 30 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
@@ -112,7 +112,7 @@ of file each thing is; this says what already does the job.
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
-| 24 | `note` | `dbwatch.js` |  |
+| 25 | `note` | `dbwatch.js` |  |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
@@ -196,7 +196,7 @@ of file each thing is; this says what already does the job.
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 14 | `heads` | `tax-lines.js` | The heads, summed. |
-| 14 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
+| 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 13 | `save` | `app.html` |  |
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `confirm` | `lab-kit.js` | opts: |
