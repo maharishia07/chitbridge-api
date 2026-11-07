@@ -2521,13 +2521,6 @@
       "fired": true,
       "status": 422
     },
-    "POST /api/assist/resolve": {
-      "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 410 (a floor); needs a live measure on sit-in"
-    },
     "POST /api/attachments": {
       "file": "attachments.js",
       "trips": 0,
