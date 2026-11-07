@@ -91,8 +91,8 @@ async function nodeOf(entity_id, { ensure = false } = {}, client = pool) {
   } = await client.query(`select * from cb_entity where bridge_id = $1`, [me.bridge_id]);
   return made || null;
 }
-/** a business named by its handle or bridge id → its node (made a root if it has none) */
-async function nodeOfHandle(ref, client = pool) {
+/** the identity a handle or bridge id names (a read, nothing written), or null */
+async function identityOfHandle(ref, client = pool) {
   const {
     rows: [i]
   } = await client.query(
@@ -100,7 +100,12 @@ async function nodeOfHandle(ref, client = pool) {
       where (lower(user_id) = lower($1) or upper(bridge_id) = upper($1)) and identity_type = 'entity' and status = 'active'`,
     [String(ref || '')]
   );
-  return i ? nodeOf(i.identity_id, { ensure: true }, client) : null;
+  return i ? i.identity_id : null;
+}
+/** a business named by its handle or bridge id → its node (made a root if it has none) */
+async function nodeOfHandle(ref, client = pool) {
+  const identityId = await identityOfHandle(ref, client);
+  return identityId ? nodeOf(identityId, { ensure: true }, client) : null;
 }
 async function hasLiveParent(childId, client = pool) {
   const { rows } = await client.query(`select 1 from cb_edge where child_id=$1 and type = $2 and state in ('active','suspended') limit 1`, [childId, TREE]);
@@ -150,15 +155,44 @@ const _checkEdge = (operation, edge, actor) => {
  * ⚠️ TEMPORARY: NET-79 is the real fix (the ask travels as a CTP event and the far side holds its copy). When it lands, delete this refusal.
  * The remote test is the one reader ctpaddress.resolve (the stamp, inactive installations included); a local business answers local.
  */
-async function refuseRemote(nodes) {
+async function refuseRemote(identityIds) {
+  for (const identityId of identityIds) {
+    if (!identityId) throw err(409, 'We could not tell where that business is hosted, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    const place = await ctpaddress.resolve(identityId);
+    if (place.local === false) throw err(409, 'That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+    /* the same rule as lib/mint.refuseUnresolved: a business whose installation could not be read may belong to a remote one, so it is not asked either */
+    if (place.resolved === false) throw err(409, 'We could not read where that business is hosted just now, so the connection was not asked. Nothing was saved.', 'NETWORK_REMOTE_NOT_YET');
+  }
+}
+/** refuseRemoteNodes(nodes) — the same refusal for nodes already read: each node's identity is looked up by its bridge id (none found = refused, fail closed) */
+async function refuseRemoteNodes(nodes) {
+  const ids = [];
   for (const node of nodes) {
     const {
-      rows: [who]
+      rows: [identityRow]
     } = await pool.query(`select identity_id from identities where upper(bridge_id) = upper($1) and identity_type = 'entity'`, [node.bridge_id]);
-    if (who && !(await ctpaddress.resolve(who.identity_id)).local) {
-      throw err(409, `${node.name || 'That business'} is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.`, 'NETWORK_REMOTE_NOT_YET');
-    }
+    ids.push(identityRow && identityRow.identity_id);
   }
+  await refuseRemote(ids);
+}
+/** a business named by handle, refused if remote BEFORE any node is made for it (a refused ask writes nothing) → its node, or null */
+async function askableNodeOfHandle(handle) {
+  const identityId = await identityOfHandle(handle);
+  if (!identityId) return null;
+  await refuseRemote([identityId]);
+  return nodeOf(identityId, { ensure: true });
+}
+/** the network end of an ask: named by node id or handle, else the actor itself */
+async function _askedParent({ parentId, parentHandle }, actor) {
+  if (parentId) return getById(parentId);
+  return parentHandle ? askableNodeOfHandle(parentHandle) : actor;
+}
+/** the business end of an ask: named by node id, handle or bridge id, else the actor when the actor is not the parent */
+async function _askedChild({ childId, childHandle, childBridgeId }, parent, actor) {
+  if (childId) return getById(childId);
+  if (childHandle) return askableNodeOfHandle(childHandle);
+  if (childBridgeId) return _full(childBridgeId);
+  return String(parent.id) !== String(actor.id) ? actor : null;
 }
 /**
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
@@ -167,21 +201,13 @@ async function refuseRemote(nodes) {
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
-  const parent = parentId ? await getById(parentId) : parentHandle ? await nodeOfHandle(parentHandle) : actor;
+  const parent = await _askedParent({ parentId, parentHandle }, actor);
   if (!parent) throw err(404, 'network not found', 'PARENT_NOT_FOUND');
-  const child = childId
-    ? await getById(childId)
-    : childHandle
-      ? await nodeOfHandle(childHandle)
-      : childBridgeId
-        ? await _full(childBridgeId)
-        : String(parent.id) !== String(actor.id)
-          ? actor
-          : null;
+  const child = await _askedChild({ childId, childHandle, childBridgeId }, parent, actor);
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
-  await refuseRemote([parent, child]);
+  await refuseRemoteNodes([parent, child]);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   const {
     rows: [open]

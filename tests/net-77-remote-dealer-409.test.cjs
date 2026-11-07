@@ -25,13 +25,14 @@ const ROOT = path.join(__dirname, '..');
 const { memory, A, C } = require('./lib/network-memory.cjs');
 let world;
 let remote = new Set();
+let unresolved = new Set();
 const run = async (sql, params) => { const a = world.answer(sql, params); if (process.env.NET77_TRACE) process.stderr.write(String(sql).replace(/\s+/g, ' ').slice(0, 100) + ' => ' + (a ? a.rows.length : 'NULL') + '\n'); return a || { rows: [], rowCount: 0 }; };
 const stub = (file, exports) => { const id = require.resolve(path.join(ROOT, file)); require.cache[id] = { id, filename: id, loaded: true, exports }; };
 const dbExports = { query: run, pool: { query: run }, withTx: async (fn) => fn({ query: run }), withEntity: async (id, fn) => fn({ query: run }), withTransaction: async (fn) => fn({ query: run }) };
 stub('db', dbExports);
 stub('src/db', dbExports); // src/services/network.js reads src/db.js
 /* the real ctpaddress (its parse is the route's bridge-id guard); only the topology read is stood in for: which businesses are hosted elsewhere */
-stub('lib/ctpaddress', { ...require(path.join(ROOT, 'lib', 'ctpaddress')), resolve: async (entity_id) => (remote.has(entity_id) ? { entity_id, local: false, installation_key: 'sit-in' } : { entity_id, local: true }) });
+stub('lib/ctpaddress', { ...require(path.join(ROOT, 'lib', 'ctpaddress')), resolve: async (entity_id) => (unresolved.has(entity_id) ? { entity_id, local: true, resolved: false } : remote.has(entity_id) ? { entity_id, local: false, installation_key: 'sit-in' } : { entity_id, local: true }) });
 const authId = require.resolve(path.join(ROOT, 'middleware', 'auth'));
 const authStub = (req, res, next) => { req.identity = { identity_id: A, identity_type: 'entity' }; req.entityId = A; next(); };
 authStub.entityOf = () => A;
@@ -78,6 +79,28 @@ function ask(server, body) {
     remote = new Set();
     const local = await ask(server, { childHandle: 'CCCC4444', type: 'commercial' });
     check('control, the same business but local: still asked (200, requested)', local.status === 200 && world.data.edges.length === 1 && world.data.edges[0].state === 'requested', local.status + ' ' + JSON.stringify(world.data.edges));
+
+    /* a refused ask writes NOTHING: no edge and no cb_entity stub (C has an identity but no node; asking by handle used to make one before refusing) */
+    world = memory({ bare: true });
+    remote = new Set([C]);
+    const bare = await ask(server, { childHandle: 'shop-a.c', type: 'commercial' });
+    check('refused by handle, C without a node: 409', bare.status === 409 && bare.body.code === 'NETWORK_REMOTE_NOT_YET', bare.status + ' ' + JSON.stringify(bare.body));
+    check('zero cb_entity rows written by the refused ask', world.data.entityInserts === 0 && world.data.entities.length === 2, world.data.entityInserts + ' inserts, ' + world.data.entities.length + ' nodes');
+    check('zero edges after the refused ask', world.data.edges.length === 0, JSON.stringify(world.data.edges));
+
+    /* {local:true, resolved:false}: where it lives could not be read, so it may be remote: refused like lib/mint.refuseUnresolved */
+    world = memory({ childClaimed: false });
+    remote = new Set();
+    unresolved = new Set([C]);
+    const unread = await ask(server, { childHandle: 'CCCC4444', type: 'commercial' });
+    check('unresolved installation: 409, no edge', unread.status === 409 && unread.body.code === 'NETWORK_REMOTE_NOT_YET' && world.data.edges.length === 0, unread.status + ' ' + JSON.stringify(unread.body));
+    unresolved = new Set();
+
+    /* no identity row behind the node: fail closed */
+    world = memory({ childClaimed: false });
+    world.data.identities = world.data.identities.filter((one) => one.identity_id !== C);
+    const nobody = await ask(server, { childBridgeId: 'CCCC4444', type: 'commercial' });
+    check('a node with no identity row is refused (fail closed), no edge', nobody.status === 409 && nobody.body.code === 'NETWORK_REMOTE_NOT_YET' && world.data.edges.length === 0, nobody.status + ' ' + JSON.stringify(nobody.body));
   } finally {
     server.close();
   }
