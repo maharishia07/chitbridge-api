@@ -51,7 +51,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     });
     /* 1 · pricing structure */
     const priced = lines.map((item) => Object.assign({}, item, S.priceLine(item, sh.productOf(item))));
-    const shop = await S.shopOf(entity_id);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);

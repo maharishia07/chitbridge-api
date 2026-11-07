@@ -34,6 +34,7 @@ async function start() {
   const app = express(); app.use(express.json());
   app.use('/api/tax', require('../../routes/tax'));
   app.use('/api/facts', require('../../routes/facts'));
+  app.use('/api/invoice', require('../../routes/invoice'));
   server = http.createServer(app); await new Promise((r) => server.listen(0, '127.0.0.1', r));
   base = 'http://127.0.0.1:' + server.address().port;
 }
