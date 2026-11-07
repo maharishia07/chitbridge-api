@@ -114,9 +114,9 @@ function checkWords(contract) {
   const nothing = words.nothingToClear();
   check('nothingToClear: the old two keys, word for word', sameValue(nothing.legacy, { error: 'Nothing to clear', message: 'Send log_ids, or all:true.' }) && nothing.code === 'NOTIF_NOTHING_TO_CLEAR', nothing);
   const seen = words.seenNotMigrated();
-  check('seenNotMigrated: Not migrated, b157, as before', sameValue(seen.legacy, { error: 'Not migrated', message: 'Clearing the badge needs b157 on this environment.' }) && seen.code === 'NOTIF_SEEN_NOT_MIGRATED', seen);
+  check('seenNotMigrated: Not migrated, b157, as before', sameValue(seen.legacy, { error: 'Not migrated', message: 'The notification badge reset arrives after the next update. The badge stays as it is.' }) && seen.code === 'NOTIF_SEEN_NOT_MIGRATED', seen);
   const dismiss = words.dismissNotMigrated();
-  check('dismissNotMigrated: Not migrated, b164, with its own code key, as before', sameValue(dismiss.legacy, { error: 'Not migrated', message: 'Clearing Activity needs b164 on this environment.', code: 'NOTIF_DISMISS_NOT_MIGRATED' }) && dismiss.code === 'NOTIF_DISMISS_NOT_MIGRATED', dismiss);
+  check('dismissNotMigrated: Not migrated, b164, with its own code key, as before', sameValue(dismiss.legacy, { error: 'Not migrated', message: 'The Activity clear-out arrives after the next update. Activity stays as it is.', code: 'NOTIF_DISMISS_NOT_MIGRATED' }) && dismiss.code === 'NOTIF_DISMISS_NOT_MIGRATED', dismiss);
   const lost = faultOf(new Error(SECRET_SQL), req, 'Failed to get notifications');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && sameValue(lost.legacy, { error: 'Failed to get notifications', message: 'Something went wrong — please try again.' }) && !THROWN.test(JSON.stringify(lost)), lost);
   const last = contract.lastResort(new Error(SECRET_SQL), req);

@@ -627,7 +627,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       X.store.setAdvice = async () => { throw new Error('boom'); };
       const pb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
       console.error = elog; X.store.setAdvice = real;
-      ok('an UPDATE the database refuses (insert-only, no grant) → 503 in words, logged, never a bare 500', pd.status === 503 && pd.body.code === 'BOOKS_NOT_MIGRATED' && /b295/.test(pd.body.message) && logged.some((l) => /refused by the database/.test(l)), JSON.stringify(pd.body));
+      ok('an UPDATE the database refuses (insert-only, no grant) → 503 in words, logged, never a bare 500', pd.status === 503 && pd.body.code === 'BOOKS_NOT_MIGRATED' && !/b295/.test(pd.body.message) && /after the next update/.test(pd.body.message) && logged.some((l) => /refused by the database/.test(l)), JSON.stringify(pd.body));
       ok('any other failure → 500 in words (safeErr — T2-HONEST: the raw text never reaches the client), and the error is LOGGED', pb.status === 500 && !/boom/.test(pb.body.message) && /try again/i.test(pb.body.message) && logged.some((l) => /boom/.test(l)), JSON.stringify(pb.body) + ' ' + logged.join('|')); }
     { const sql = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'archive', 'b295_books_payment_advice_update.sql'), 'utf8');
       ok('b295 opens ONLY the two advice columns (column-level GRANT), keeps DELETE and every other column insert-only', /GRANT UPDATE \(advice_chit_id, advice_shared_at\) ON books_payment TO cb_app/.test(sql) && /TG_OP = 'UPDATE'/.test(sql) && /to_jsonb\(NEW\) - 'advice_chit_id' - 'advice_shared_at'/.test(sql) && !/GRANT UPDATE ON/.test(sql)); }
@@ -691,9 +691,9 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     X.T.adviceReady = false;
     const na = await q('GET', '/payments/' + payId + '/advice');
     eq('before b285: the read answers state none and may.*.why not_available with its words (no 42703, no 500)', [na.status, na.body.advice, na.body.may.send_advice.why, na.body.may.send_advice.say, na.body.body],
-      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Advice not available yet — the books need an update (b285).', null]);
+      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.', null]);
     const nb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
-    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Advice not available yet — the books need an update (b285).']);
+    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.']);
     const ns = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.filter((l) => l.payment_id);
     ok('…every statement payment line reads advice none (the shape is kept)', ns.length >= 2 && ns.every((l) => l.advice && l.advice.state === 'none' && l.advice.chit_id === null), JSON.stringify(ns.map((l) => l.advice)));
     const nr = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-na', acknowledge: ACK });

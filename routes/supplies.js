@@ -20,6 +20,7 @@
  * // CARD 16-finance/supplies-routes
  */
 'use strict';
+const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, notMigrated, faultOf } = require('../lib/supplies-contract'); // the contract (each route's operation), the words of a refusal and of a fault
@@ -44,7 +45,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     res.json({ supplies: list });
   } catch (e) {
     /* ⚠️ BEFORE b217 THE TABLE DOES NOT EXIST, and a screen must not break because a migration is pending */
-    if (e && e.code === '42P01') return res.json({ supplies: [], not_ready: 'supplies are not switched on yet (b217)' });
+    if (e && e.code === '42P01') return res.json({ supplies: [], not_ready: waiting('Supplies', true, 'Supplies cannot be recorded or listed yet.') });
     problem(req, res, faultOf(e, req, 'Could not read the supplies'));
   }
 });
