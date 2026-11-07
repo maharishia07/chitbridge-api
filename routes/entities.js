@@ -29,9 +29,9 @@ const populationCode = (req) => String(req.params.code || '').trim().toLowerCase
 router.param('code', textParam((req) => ({ status: 404, ...contract.words.noSuchPopulation(populationCode(req)) })));
 
 /** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
-const checked = (route) => {
+const checked = (route, options) => {
   const operation = contract.entities.operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, options || contract.schemaOptions)] : [];
 };
 /** the platform doors as gates in front of a handler (they answer a Problem themselves and say which statuses they add): the root of the deployment, and the platform role */
 const rootGate = Object.assign((req, res, next) => (require('../lib/platformroot').refuseUnlessRoot(req, res) ? next() : undefined), { addsStatuses: [403, 404] });
@@ -196,7 +196,7 @@ const PREF_SETS = {
      locale keywords, stored by their own subtag names so the column reads as the standard writes it. */
   locale: {
     column: 'locale_prefs',
-    keys: ['lang', 'langs', 'region', 'locale', 'nu', 'hc', 'ca', 'fw', 'tz', 'workdays'],
+    keys: contract.LOCALE_PREF_KEYS,
     /* ⚠️ `langs` IS A LIST, so it is the one key whose value may contain commas — RFC 4647 calls it a language
        priority list ("Tamil, then English, then Hindi"). Widening the generic pattern for every key to admit
        commas would have been the smaller edit and the wrong one: a comma has no business in a numbering system
@@ -244,16 +244,7 @@ const PREF_SETS = {
    */
   ui: {
     column: 'ui_prefs',
-    keys: [
-      'theme',
-      'fs',
-      'motion',
-      'stripes',
-      'edition',
-      'font',
-      'weight',
-      'kural'
-    ] /* kural (SET-WALK1 W7): the Thirukkural band — auto · on · off, the owner's choice */ /* stripes: row stripes off | light | strong (small-fixes round); edition: which showing of Home (web manifest `editions`, AX1) — open-ended like theme, it HIDES doors, never grants · font, weight: CU3 (were device-only) */,
+    keys: contract.UI_PREF_KEYS /* the contract closes the body against this list (API-48) */,
     check(prefs) {
       if (prefs.font && !['default', 'grotesk', 'serif', 'wide', 'mono'].includes(prefs.font)) return 'Unknown reading font'; /* avatar.js FONTS */
       if (prefs.weight && !['normal', 'bold'].includes(prefs.weight)) return 'Unknown text weight';
@@ -316,6 +307,9 @@ const prefSetRoute = (fixedKind) =>
     const kind = prefKindOf(fixedKind, req);
     const set = prefSetOf(kind);
     if (!set || !set.column) return problem(req, res, contract.words.unknownPrefSet());
+    /* API-48: the schema closes the body against the union of both lists; each kind is held to its OWN list here (a locale key on the ui kind, and the reverse, is refused by name) */
+    const foreign = Object.keys(req.body || {}).find((key) => !set.keys.includes(key));
+    if (foreign) return problem(req, res, contract.words.badPreference(`${foreign} is not a ${kind} preference`));
     try {
       const p = prefPatch(set, req.body || {});
       if (p.error) return problem(req, res, contract.words.badPreference(p.error));
@@ -443,7 +437,7 @@ router.get('/policy', auth, async (req, res) => {
   }
 });
 
-router.patch('/policy', auth, ...checked('PATCH /policy'), async (req, res) => {
+router.patch('/policy', auth, ...checked('PATCH /policy', contract.policySchemaOptions), async (req, res) => {
   /* ⚠️ who may change a flag is on the flag (policy.FLAGS[k].may — system_folders, books): the owner's, not a back door for a co-assist or a key.
      The code is the one owner code (OWNER_ONLY) — the same the GET's may[flag] carries, so a screen branches on one word. */
   const refused = policy.refusalFor(req.body, require('../lib/owner').isOwner(req));

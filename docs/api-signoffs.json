@@ -1731,27 +1731,27 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/locale": {
-   "hash": "e55ea05cc2141a4a",
+   "hash": "9716bc3da47becc9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/me/prefs/:kind": {
-   "hash": "3a7c9f99a608bfbf",
+   "hash": "3b6d30d04f8b7892",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/policy": {
-   "hash": "e190a37baf2cd8ee",
+   "hash": "19d19443442b003b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
@@ -3508,11 +3508,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/integrations/streams": {
-   "hash": "1d8791f0df7ece41",
+   "hash": "1298c3dcfb608c2a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
    "lifecycle": "stable"
   },
   "PUT /api/network-design": {

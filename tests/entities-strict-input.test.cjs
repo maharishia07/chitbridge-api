@@ -8,7 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the app is loaded offline and the route's schema check (middleware/validate.js schemaValidate) runs alone.
  * FLOW      tools/load-app.cjs → the route's operation (its own schema check, with its own refusal words) → a body → accepted, or refused with the field named
  * CARD      28-platform-and-operations/api-standard
- * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): PATCH /api/entities/policy (keys are the policy flags) · PATCH /api/entities/me/prefs/:kind and /me/locale (keys depend on the preference set) · POST /api/entities/register and /verify (public sign-up doors, no schema yet)
+ * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): (closed by API-48, tests/dynamic-key-bodies.test.cjs: policy · prefs · locale · streams)  was: PATCH /api/entities/policy · me/prefs/:kind and /me/locale (keys depend on the preference set) · POST /api/entities/register and /verify (public sign-up doors, no schema yet)
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys.
  *
  *   node tests/entities-strict-input.test.cjs

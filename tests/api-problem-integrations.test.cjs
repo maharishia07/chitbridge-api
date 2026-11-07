@@ -82,6 +82,7 @@ function installStubs() {
   mock('db', db);
   mock('db/index', db);
   mock('lib/policy', {
+    FLAGS: { trade_side: { type: 'enum' }, stream_owner: { type: 'map', keys: ['products', 'stock', 'profile', 'order', 'purchase', 'receipt', 'party'] } }, BOUND: { dispute_scope: 'per-party' }, 
     get: async () => {
       if (world.policyFails) throw new Error(SECRET_SQL);
       return Object.assign({}, world.flags);
@@ -160,7 +161,7 @@ const SCENARIOS = [
   { id: 'streams-policy-fails', route: 'GET /api/integrations/streams', status: 500, setup: { policyFails: true } },
   { id: 'putstreams-no-token', route: 'PUT /api/integrations/streams', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'putstreams-key-asks', route: 'PUT /api/integrations/streams', status: 403, setup: { asKey: true }, body: { order: 'kit@pc' } },
-  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: { colour: 'red' } },
+  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: {} }, /* API-48: an unknown key is now refused by the closed body (tests/dynamic-key-bodies.test.cjs); a body naming no stream at all still answers this */
   { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true }, body: { order: 'kit@pc' } },
   { id: 'putstreams-bad-body', route: 'PUT /api/integrations/streams', status: 422, body: { order: 12345 }, fresh: true },
   { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true }, body: { order: 'kit@pc' } },
