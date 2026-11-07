@@ -98,7 +98,7 @@ function extras(tools) {
     lead('lead-without-org', 200, { name: 'Test Lead', email: 'lead@example.invalid' }),
     lead('lead-org-blank', 200, { name: 'Test Lead', email: 'lead@example.invalid', org: '   ' }),
     lead('lead-trimmed-and-lowered', 200, { name: '  Test Lead  ', email: '  Lead@Example.INVALID ', org: ' Test Org ' }),
-    lead('lead-extra-keys-dropped', 200, Object.assign({ id: 'chosen-by-the-caller', leadId: UNKNOWN_LEAD, admin: true }, LEAD_BODY)),
+    lead('lead-extra-keys-refused', 400, Object.assign({ id: 'chosen-by-the-caller', leadId: UNKNOWN_LEAD, admin: true }, LEAD_BODY), { after: true }), /* API-47 (S33): refused by name, nothing written; nothing was frozen */
     lead('lead-name-a-number', 200, { name: 12, email: 'n@example.invalid' }),
     lead('lead-name-a-list', 200, { name: ['Te', 'st'], email: 'n@example.invalid' }),
     lead('lead-email-just-an-at-sign', 200, { name: 'Test Lead', email: '@' }),
@@ -127,7 +127,7 @@ function extras(tools) {
   const feedbacks = [
     feedback('feedback-recorded', 200, FEEDBACK_BODY),
     feedback('feedback-message-only', 200, { message: 'Test message' }),
-    feedback('feedback-extra-keys-dropped', 200, Object.assign({ id: 'chosen-by-the-caller', created_at: '2020-01-01', admin: true }, FEEDBACK_BODY)),
+    feedback('feedback-extra-keys-refused', 400, Object.assign({ id: 'chosen-by-the-caller', created_at: '2020-01-01', admin: true }, FEEDBACK_BODY), { after: true }),
     feedback('feedback-lead-uppercase', 200, withLead({ leadId: KNOWN_LEAD.toUpperCase() })),
     feedback('feedback-lead-hyphens-moved', 200, withLead({ leadId: canonical(KNOWN_LEAD).replace(/(.{4})(.{4})(.{4})(.{4})(.*)/, '$1-$2-$3-$4-$5') })),
     feedback('feedback-lead-too-short-ignored', 200, withLead({ leadId: 'abc' })),

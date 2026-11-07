@@ -476,7 +476,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/definitions | definitions | routes/definitions.js:302 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/definitions/freeze | definitions | routes/definitions.js:548 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/entities/populations | entities | routes/entities.js:1706 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/entities/register | entities | routes/entities.js:379 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/entities/register | entities | routes/entities.js:379 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/entities/verify | entities | routes/entities.js:380 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/events/ticket | events | routes/events.js:25 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/folders | folders | routes/folders.js:196 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -567,14 +567,14 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:323 | yes | yes | no | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/resolve | service | routes/service.js:236 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/respond | service | routes/service.js:215 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/ask | signin | routes/signin.js:956 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
-| POST | /api/signin/logout | signin | routes/signin.js:101 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/pin | signin | routes/signin.js:958 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
-| POST | /api/signin/renew | signin | routes/signin.js:77 | yes | yes | no | yes | yes | no | yes | no | no | yes | yes | yes | no | partial | yes | yes | no |
-| POST | /api/signin/sessions/revoke | signin | routes/signin.js:160 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/verify | signin | routes/signin.js:957 | yes | yes | yes | yes | yes | no | no | no | no | yes | yes | yes | no | partial | yes | yes | yes |
-| POST | /api/simulator/feedback | simulator | routes/simulator.js:107 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
-| POST | /api/simulator/lead | simulator | routes/simulator.js:82 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/ask | signin | routes/signin.js:956 | yes | yes | no | no | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/logout | signin | routes/signin.js:101 | yes | yes | no | yes | yes | no | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/signin/pin | signin | routes/signin.js:958 | yes | yes | no | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/renew | signin | routes/signin.js:77 | yes | yes | no | yes | yes | no | yes | yes | no | yes | yes | yes | no | partial | yes | yes | no |
+| POST | /api/signin/sessions/revoke | signin | routes/signin.js:160 | yes | yes | no | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/signin/verify | signin | routes/signin.js:957 | yes | yes | yes | yes | yes | no | no | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/simulator/feedback | simulator | routes/simulator.js:107 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/simulator/lead | simulator | routes/simulator.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:116 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
@@ -4004,7 +4004,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/signin/logout** · signin · cb-security · partial
 - does: _not yet written_
-- errors: 1 code(s) [KEY_CANNOT_SIGN_IN] · statuses - · money n (derived)
+- errors: 1 code(s) [KEY_CANNOT_SIGN_IN] · statuses 400, 401, 403, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
