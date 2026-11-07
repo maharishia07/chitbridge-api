@@ -892,6 +892,9 @@ async function visibilityCapFor(entityId) {
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
+/** CTR-182: the tax_id field to write: none when the number is only the stored one echoed back, so the column is skipped and a different case can never rewrite it */
+const taxIdToWrite = (stored, sent) => (taxIdDoor.taxIdDiffers(stored && stored.gstn, sent) ? { tax_id: sent } : {});
+
 /** CTR-182: does this PATCH send a tax number that differs from the shop's stored one? (one read, only on the path of a person who is not the owner) */
 async function sendsOtherTaxId(req) {
   if (!req.body || !req.body.gstn) return false;
@@ -926,7 +929,7 @@ router.patch(
      */
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('A business name is 2 characters or more.'),
     /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
-    body('gstn').optional().trim(),
+    body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open', 'closed', 'away']),
@@ -1065,10 +1068,10 @@ router.patch(
       const P = require('../lib/profile');
       const idFields = {};
       if (req.body.gstn) {
-        const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
+        const c = await query('SELECT country, gstn FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
         if (bad) return problem(req, res, { status: 400, ...contract.words.taxNumberRefused(bad) });
-        idFields.tax_id = req.body.gstn;
+        Object.assign(idFields, taxIdToWrite(c.rows[0], req.body.gstn));
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);

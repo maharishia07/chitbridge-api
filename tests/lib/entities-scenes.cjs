@@ -164,7 +164,7 @@ function extras(tools) {
     X('profile-handler-not-yours', 'PATCH ' + at('/profile'), 400, { body: { dispute_handler_actor_id: HANDLER } }),
     X('profile-staff-currency', 'PATCH ' + at('/profile'), 403, { body: { currency_code: 'USD' }, setup: { who: STAFF } }),
     X('profile-currency-malformed', 'PATCH ' + at('/profile'), 400, { body: { currency_code: 'U$D' } }),
-    X('profile-tax-number-refused', 'PATCH ' + at('/profile'), 400, { body: { gstn: 'bad' }, setup: { sqlRows: row(/SELECT country FROM identities/, { country: 'IN' }) } }),
+    X('profile-tax-number-refused', 'PATCH ' + at('/profile'), 400, { body: { gstn: 'bad' }, setup: { sqlRows: row(/SELECT country, gstn FROM identities/, { country: 'IN' }) } }),
     X('profile-visibility-capped', 'PATCH ' + at('/profile'), 403, { body: { catalogue_visibility: 'public' }, setup: { sqlRows: row(/SELECT plan, params_override FROM identities/, { plan: null, params_override: { caps: { catalogue_visibility: 'private' } } }) } }),
     X('profile-visibility-not-migrated', 'PATCH ' + at('/profile'), 409, { body: { catalogue_visibility: 'network' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, '23514') } }),
     X('profile-visibility-not-stored', 'PATCH ' + at('/profile'), 500, { body: { catalogue_visibility: 'private' }, setup: { sqlRows: raising(/UPDATE identities SET catalogue_visibility/, 'XX000') } }),

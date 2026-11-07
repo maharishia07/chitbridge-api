@@ -469,7 +469,7 @@ async function writeVaultBody(entity_id, body) {
  *     version too (409 VAULT_VERSION_REQUIRED otherwise) — a blind replace is exactly the lost update Athi saw.
  *   Who may: the owner or an editor (SEC-71: lib/access writeGate — a viewer/commenter gets 403 read_only/comment_only WITH the rail's sentence). Trips: 1 read + 1 conditional write (+ the mirror's).
  */
-router.put('/profile/vault', auth, writeGate, taxIdDoor.gate((req) => require('../lib/profile').vaultChangesTaxId(auth.entityOf(req), req.body || {})) /* CTR-182: the Business identity tax number is the owner's */, ...checked('PUT /profile/vault'), async (req, res) => {
+router.put('/profile/vault', auth, writeGate, ...checked('PUT /profile/vault'), taxIdDoor.gate((req) => require('../lib/profile').vaultChangesTaxId(auth.entityOf(req), req.body || {})) /* CTR-182: the Business identity tax number is the owner's */,  async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};

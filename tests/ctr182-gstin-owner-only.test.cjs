@@ -29,11 +29,11 @@ const MANAGER = { identity_id: '55555555-5555-4555-8555-555555555555', parent_en
 const AUDITOR = { identity_id: '66666666-6666-4666-8666-666666666666', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', hat: 'audit' };
 const PLAIN_WORDS = 'Ask the owner or a manager to change the shop’s tax number.';
 
-const world = { who: OWNER, key: null, writes: [] };
+const world = { who: OWNER, key: null, writes: [], sqls: [] };
 const isWrite = (sql) => /^\s*(UPDATE|INSERT|DELETE)/i.test(String(sql));
 function rowsFor(sql, params) {
   const text = String(sql);
-  if (isWrite(text)) { world.writes.push(text.replace(/\s+/g, ' ').slice(0, 60)); return { rows: [], rowCount: 1 }; }
+  if (isWrite(text)) { world.sqls.push(text); world.writes.push(text.replace(/\s+/g, ' ').slice(0, 60)); return { rows: [], rowCount: 1 }; }
   if (/FROM identities/.test(text)) return { rows: [{ display_name: 'Kaveri Mess', identity_id: SHOP, gstn: STORED, country: 'IN', address: '1 High St', policy_flags: { gst_registration: 'regular' } }] };
   return { rows: [], rowCount: 0 };
 }
@@ -83,7 +83,7 @@ function whole(number) { return { vault: { sections: [{ type: 'identity', label:
   app.use('/api/governance', require(path.join(HERE, 'routes', 'governance.js')));
   app.use('/api/integrations', require(path.join(HERE, 'routes', 'integrations.js')));
   const server = app.listen(0); const port = server.address().port;
-  const run = async (door, body, who, key) => { Object.assign(world, { who, key: key || null, writes: [] }); return call(port, door.method, door.url, body); };
+  const run = async (door, body, who, key) => { Object.assign(world, { who, key: key || null, writes: [], sqls: [] }); return call(port, door.method, door.url, body); };
   try {
     for (const door of DOORS) {
       for (const [who, label] of [[CLERK, 'a clerk (act, editor)'], [AUDITOR, 'an auditor (editor, hat audit)']]) {
@@ -106,11 +106,25 @@ function whole(number) { return { vault: { sections: [{ type: 'identity', label:
     const may = async (who) => { Object.assign(world, { who, key: null }); return (await call(port, 'GET', '/api/entities/me/can-see-costs')).body.may_set_tax_id; };
     ok('GET /entities/me/can-see-costs says may_set_tax_id: owner true, manager true, clerk false (the action stays shown, the server answers)',
       (await may(OWNER)) === true && (await may(MANAGER)) === true && (await may(CLERK)) === false);
+    /* CTR-182 review: a tax number that is not text is never an echo of the stored one */
+    for (const [kind, value] of [['an array', [STORED]], ['a number', 27], ['an object', { number: STORED }]]) {
+      const clerk = await run(DOORS[1], { gstn: value }, CLERK);
+      ok('PATCH /api/entities/profile — a clerk sending the GSTIN as ' + kind + ' is refused 403, nothing written', refused(clerk) && world.writes.length === 0, JSON.stringify(clerk) + ' writes=' + world.writes.length);
+      const owner = await run(DOORS[1], { gstn: value }, OWNER);
+      ok('PATCH /api/entities/profile — strict input: the owner sending the GSTIN as ' + kind + ' is refused 400, nothing written', owner.status === 400 && world.writes.length === 0, JSON.stringify(owner) + ' writes=' + world.writes.length);
+    }
+    const lower = await run(DOORS[1], { gstn: STORED.toLowerCase(), display_name: 'Kaveri Mess' }, OWNER);
+    ok('PATCH /api/entities/profile — the stored number sent back in lower case writes no gstn column', lower.status === 200 && world.sqls.length > 0 && world.sqls.every((s) => !/gstn\s*=/.test(s)), JSON.stringify(lower) + ' ' + world.sqls.join('|').slice(0, 200));
+    const changed = await run(DOORS[1], { gstn: NEW_ONE }, OWNER);
+    ok('PATCH /api/entities/profile — a different number from the owner does write the gstn column', changed.status === 200 && world.sqls.some((s) => /gstn\s*=/.test(s)), JSON.stringify(changed));
+    const badVault = await run(DOORS[2], { vault: 'not a vault', version: [] }, CLERK);
+    ok('PUT /api/governance/profile/vault — a malformed body gets its own 400/409 words before the tax-number gate', badVault.status !== 403, JSON.stringify(badVault));
     /* the door itself (lib/tax-id-door): one predicate per role, one comparison, one sentence, and it fails closed */
     const door = require(path.join(HERE, 'lib', 'tax-id-door'));
     ok('mayChangeTaxId: the owner and a key yes; a manager yes; a clerk and a viewer no', door.mayChangeTaxId({ identity: OWNER }) && door.mayChangeTaxId({ identity: CLERK, api_key: { jti: 'k' } })
       && door.mayChangeTaxId({ identity: MANAGER }) && !door.mayChangeTaxId({ identity: CLERK }) && !door.mayChangeTaxId({ identity: Object.assign({}, CLERK, { access_level: 'viewer' }) }));
-    ok('taxIdDiffers: case and spaces ignored; a blank sent is nobody saying anything', !door.taxIdDiffers(STORED, ' ' + STORED.toLowerCase() + ' ') && !door.taxIdDiffers(STORED, '') && !door.taxIdDiffers(STORED, null) && door.taxIdDiffers(STORED, NEW_ONE) && door.taxIdDiffers(null, NEW_ONE));
+    ok('taxIdDiffers: case and spaces ignored; a blank sent is nobody saying anything', !door.taxIdDiffers(STORED, ' ' + STORED.toLowerCase() + ' ') && !door.taxIdDiffers(STORED, '') && !door.taxIdDiffers(STORED, null) && door.taxIdDiffers(STORED, NEW_ONE) && door.taxIdDiffers(null, NEW_ONE)
+      && door.taxIdDiffers(STORED, [STORED]) && door.taxIdDiffers(STORED, 27) && door.taxIdDiffers(STORED, { number: STORED }) && door.taxIdDiffers(STORED, true));
     ok('refusal: 403 OWNER_ONLY in plain words, may false, why = the sentence', door.refusal().status === 403 && door.refusal().code === 'OWNER_ONLY' && door.refusal().legacy.may === false && door.refusal().detail === door.TAX_ID_ASK_OWNER);
     let nexted = 0, answered = null;
     const fakeRes = { status(code) { answered = code; return this; }, set() { return this; }, type() { return this; }, json() { return this; }, send() { return this; }, end() { return this; }, setHeader() {}, getHeader() {} };

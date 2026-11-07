@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 222,
-  "meets": 415,
+  "partial": 223,
+  "meets": 414,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -13964,7 +13964,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2382,
+   "line": 2385,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14373,7 +14373,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1697,
+   "line": 1700,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14580,7 +14580,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1583,
+   "line": 1586,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14681,7 +14681,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1447,
+   "line": 1450,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14780,7 +14780,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1431,
+   "line": 1434,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -15161,7 +15161,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1254,
+   "line": 1257,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -29811,7 +29811,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1224,
+   "line": 1227,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -30318,8 +30318,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 902,
-   "hash": "bb90f2791c17bec0",
+   "line": 905,
+   "hash": "a452dc1b95bd6bba",
    "does": "",
    "errors": {
     "count": 0,
@@ -30394,10 +30394,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a452dc1b95bd6bba"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -46884,7 +46885,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1671,
+   "line": 1674,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -63697,7 +63698,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1638,
+   "line": 1641,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63803,7 +63804,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1557,
+   "line": 1560,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
