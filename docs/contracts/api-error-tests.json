@@ -167,6 +167,10 @@
   401,
   500
  ],
+ "GET /api/actors/check-login": [
+  400,
+  500
+ ],
  "GET /api/actors/settings": [
   401,
   500
@@ -416,7 +420,8 @@
   500
  ],
  "GET /api/capture/webhook/whatsapp": [
-  403
+  403,
+  500
  ],
  "GET /api/catalogue-face": [
   401,
@@ -1104,6 +1109,9 @@
  "GET /api/offers/openapi.json": [
   500
  ],
+ "GET /api/openapi.json": [
+  500
+ ],
  "GET /api/people": [
   401,
   422,
@@ -1460,6 +1468,12 @@
   403,
   500
  ],
+ "GET /health": [
+  500
+ ],
+ "OPTIONS *": [
+  500
+ ],
  "PATCH /api/actors/:id": [
   400,
   401,
@@ -1653,6 +1667,18 @@
   503
  ],
  "POST /api/actors/check-key": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/actors/login": [
+  400,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/actors/set-pin": [
   400,
   401,
   500
@@ -2062,10 +2088,14 @@
   503
  ],
  "POST /api/capture/webhook/email": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/capture/webhook/whatsapp": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/catalogue/:bridge_id/login/verify": [
   400,
@@ -2608,6 +2638,13 @@
   404,
   409,
   500
+ ],
+ "POST /api/entities/verify": [
+  400,
+  403,
+  409,
+  500,
+  503
  ],
  "POST /api/events/ticket": [
   401,

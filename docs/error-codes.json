@@ -2567,6 +2567,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "LOGIN_FAILED",
+   "status": "400",
+   "title": "Sign-in failed",
+   "shopkeeper": "That sign-in code could not be used.",
+   "hint": "Ask your admin for a new code and try again.",
+   "owner_area": "signin",
+   "since": "2026-11-07"
+  },
+  {
+   "code": "LOGIN_FORMAT_INVALID",
+   "status": "400",
+   "title": "Sign-in name not in the right form",
+   "shopkeeper": "Type your sign-in as yourname@business.",
+   "hint": "Type your key, an @ sign and your business, then try again.",
+   "owner_area": "signin",
+   "since": "2026-11-07"
+  },
+  {
    "code": "MAX_TASKS_OVER_ENTITY",
    "status": "400",
    "title": "Max tasks over entity",
@@ -3359,6 +3377,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "OTP_REQUIRED",
+   "status": "400",
+   "title": "Code needed",
+   "shopkeeper": "Enter the code your admin shared with you.",
+   "hint": "Type the code and sign in again.",
+   "owner_area": "signin",
+   "since": "2026-11-07"
+  },
+  {
    "code": "OTP_WRONG",
    "status": "400",
    "title": "Wrong code",
@@ -3528,6 +3555,15 @@
    "hint": "Ask your owner to reset it.",
    "owner_area": "actors",
    "since": "2026-11-06"
+  },
+  {
+   "code": "PIN_REQUIRED",
+   "status": "400",
+   "title": "PIN needed",
+   "shopkeeper": "Enter your 4 digit PIN to sign in.",
+   "hint": "Type your PIN and sign in again.",
+   "owner_area": "signin",
+   "since": "2026-11-07"
   },
   {
    "code": "PLATFORM_BOUND",
@@ -4805,6 +4841,24 @@
    "shopkeeper": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
    "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
+   "since": "2026-11-07"
+  },
+  {
+   "code": "WEBHOOK_BAD_SIGNATURE",
+   "status": "401",
+   "title": "Delivery not signed",
+   "shopkeeper": "A message sent to this shop was not taken, because we could not check who sent it.",
+   "hint": "The sender must sign the delivery with the shared secret; nothing is needed from the shopkeeper.",
+   "owner_area": "capture",
+   "since": "2026-11-07"
+  },
+  {
+   "code": "WEBHOOK_VERIFY_REFUSED",
+   "status": "403",
+   "title": "Connection check refused",
+   "shopkeeper": "The messaging provider asked to connect, but its check did not match what this shop set up.",
+   "hint": "Check the verify token set in the provider and in this shop, then connect again.",
+   "owner_area": "capture",
    "since": "2026-11-07"
   },
   {

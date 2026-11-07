@@ -98887,6 +98887,31 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-plumbing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE PLUMBING DOORS ON THE REAL APP: GET /HEALTH IS 200 \"OK\" WHATEVER THE DATABASE SAYS, THE PREFLIGHT IS 204 OR 403, THE OPENAPI JSON IS 200, A FAULT IS A PROBLEM 500, NO AUTH ASKED.",
+   "claim": "THE PLUMBING DOORS ON THE REAL APP: GET /HEALTH IS 200 \"OK\" WHATEVER THE DATABASE SAYS, THE PREFLIGHT IS 204 OR 403, THE OPENAPI JSON IS 200, A FAULT IS A PROBLEM 500, NO AUTH ASKED.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 190 lines. Run: node chitbridge-api/tests/api-problem-plumbing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 190,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T00:00:00Z"
   }
  ]
 }

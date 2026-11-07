@@ -135,8 +135,23 @@ function chainRules(fn) {
 }
 
 /** the functions a route file defines for this route: found by their own text in the file (a middleware from another module is not in it) */
-function ownFunctions(handlers, fileText, shared) {
-  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && fileText.includes(fn.toString()));
+function ownFunctions(handlers, fileText, shared, otherTexts) {
+  const inFile = (fn) => fileText.includes(fn.toString());
+  /* an ALIAS (routes/actors.js POST /login runs routes/signin.js's handler): a function the route file does not hold is looked up in the other routes files, so the register judges the handler that really answers */
+  const inOther = (fn) => (otherTexts || []).some((text) => text.includes(fn.toString()));
+  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && (inFile(fn) || inOther(fn)));
+}
+
+/** the text of every routes file but this one, read once */
+const routeTexts = new Map();
+function readRouteTexts() {
+  const found = ROUTER_DIRS.filter((dir) => fs.existsSync(path.join(ROOT, dir)));
+  found.forEach((dir) => fs.readdirSync(path.join(ROOT, dir)).filter((name) => name.endsWith('.js')).forEach((name) => routeTexts.set(dir + '/' + name, fs.readFileSync(path.join(ROOT, dir, name), 'utf8'))));
+}
+function otherRouteTexts(file) {
+  if (file === 'unknown') return [];
+  if (!routeTexts.size) readRouteTexts();
+  return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
 }
 
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
@@ -239,7 +254,9 @@ function strictInputColumn(operation, leaf, facts, evidence) {
 function outputAllowlistColumn(operation, evidence) {
   const schemas = successSchemas(operation);
   if (!schemaOutColumn(operation)) return false;
-  return schemas.length === 0 || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
+  /* an operation that SAYS its answer is text with no keys (x-no-keys-to-leak, set by the route's contract row `noKeys`) and holds no JSON schema has nothing to allow-list; every other text or binary answer stays red until its owner says so and cb-api signs it again */
+  const textOnly = !!operation && operation['x-no-keys-to-leak'] === true && schemas.every((schema) => !schema);
+  return schemas.length === 0 || textOnly || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
 }
 
 /** foreign_id_404 (S35): a route addressed by an id needs its generated case to see another shop's id answered with the unknown id's 404; a route with no id in its path, or whose id is public by design (api-hardening-scope.json public_ids), is not addressed by a shop's own id */
@@ -340,7 +357,7 @@ function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
-  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared);
+  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, otherRouteTexts(info.file));
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
@@ -366,7 +383,7 @@ const reportedRow = (leaf, source, fileText, evidence) => {
 const basisOf = (columns, evidence, operation) => (columns.output_allowlist && ((evidence && evidence.output_allowlist_basis === 'recordings') || closedByRecordings(operation)) ? { output_allowlist_basis: 'recordings' } : {});
 
 /** does a success schema of the operation hold a node tools/api-allowlist.cjs closed from recorded answers alone (x-closed-by recordings): the shape file is the one source of the basis, whichever test proved the route */
-const closedByRecordings = (operation) => !!operation && successSchemas(operation).some((schema) => JSON.stringify(schema).includes('"x-closed-by":"recordings"'));
+const closedByRecordings = (operation) => !!operation && successSchemas(operation).some((schema) => JSON.stringify(schema || {}).includes('"x-closed-by":"recordings"'));
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
 const testedStatuses = (context, key) => (context.errorTests[key] || []).concat((context.contract[key] && context.contract[key].statuses) || []);

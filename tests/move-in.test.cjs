@@ -219,7 +219,7 @@ t('dates and money: the readers refuse rather than guess', () => {
     const pl = planAU('accounts', { source: 'xero', rows: rowsOf('accounts', 'xero-accounts.csv'), world: w });
     const out = await MI.apply(X.db, SHOP, pl, { world: w, setting, by: 'u1', as_at: '2026-07-01', currency: 'AUD' });
     assert.deepStrictEqual([out.added, out.merged, out.skipped], [6, 8, 1]);
-    assert.strictEqual(out.source_code_written, false); assert.ok(/b302/.test(out.notes.join(' ')), out.notes.join(' '));
+    assert.strictEqual(out.source_code_written, false); assert.ok(!/b302/.test(out.notes.join(' ')) && /after the next update/.test(out.notes.join(' ')), out.notes.join(' '));
     const chart = await X.store.accounts(X.db, SHOP);
     const bank = chart.find((a) => a.name === 'Business Savings Account'); assert.ok(bank && /^15\d\d$/.test(bank.code), 'a bank ledger under Bank Accounts (15xx): ' + (bank && bank.code));
     assert.ok(chart.some((a) => a.name === 'Cost of Goods Sold' && /^5[1-9]\d\d$/.test(a.code)));

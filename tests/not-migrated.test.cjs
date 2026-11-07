@@ -24,6 +24,8 @@ const ALLOW = {
   'routes/folders.js': 'POST /folders and POST /messages/:id/mark are signed; own PR + re-sign (b275, b156)',
   'routes/chits.js': 'POST /chits/:id/amend is signed; own PR + re-sign (b148 reason)',
   'routes/testing.js': 'the test-run tool answers the tester, not a shopkeeper (b292, b237)',
+  'lib/forms-contract.js': 'the 503 `when` text is part of the signed forms routes schema hash; own PR + re-sign (b108)',
+  'lib/workroute.js': 'no module header / CARD yet: own PR with the header (b250 in a routing reason)',
   'lib/reprice.js': 'no module header / CARD yet: own PR with the header (b142, internal error)',
   'lib/schedule.js': 'no module header / CARD yet: own PR with the header (b203)',
   'lib/signin-events.js': 'text goes to the log only (the CHECK that refused), never to a person (b282)'

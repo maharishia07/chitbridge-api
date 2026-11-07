@@ -2,9 +2,9 @@
  "about": "Evidence for the hardening columns proved by the area tests worlds (tests/api-problem-<area>.test.cjs --write, each writes only its own routes). The generator writes api-hardening-evidence.json; tools/api-register.cjs reads the union. Never by hand.",
  "routes": {
   "DELETE /api/actors/:id/pin": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "DELETE /api/books/recurring/:id": {
    "output_allowlist": true,
@@ -91,6 +91,9 @@
    "output_allowlist": true
   },
   "GET /api/actors/access-events": {
+   "output_allowlist": true
+  },
+  "GET /api/actors/check-login": {
    "output_allowlist": true
   },
   "GET /api/actors/settings": {
@@ -695,9 +698,9 @@
    "output_allowlist": true
   },
   "PATCH /api/actors/:id": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PATCH /api/books/payments/:id": {
    "output_allowlist": true,
@@ -784,15 +787,21 @@
    "foreign_id_404": true
   },
   "POST /api/actors": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "POST /api/actors/:id/otp": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "POST /api/actors/check-key": {
+   "output_allowlist": true
+  },
+  "POST /api/actors/login": {
+   "output_allowlist": true
+  },
+  "POST /api/actors/set-pin": {
    "output_allowlist": true
   },
   "POST /api/actors/suggest-key": {
@@ -976,6 +985,12 @@
   },
   "POST /api/capture/stores": {
    "output_allowlist_basis": "recordings",
+   "output_allowlist": true
+  },
+  "POST /api/capture/webhook/email": {
+   "output_allowlist": true
+  },
+  "POST /api/capture/webhook/whatsapp": {
    "output_allowlist": true
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
@@ -1195,6 +1210,9 @@
    "output_allowlist": true
   },
   "POST /api/entities/populations": {
+   "output_allowlist": true
+  },
+  "POST /api/entities/verify": {
    "output_allowlist": true
   },
   "POST /api/events/ticket": {
@@ -1575,19 +1593,19 @@
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PUT /api/actors/:id/status": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PUT /api/actors/:id/tasks/route": {
+   "bfla_role_check": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "output_allowlist": true
   },
   "PUT /api/actors/assign/:chit_id": {
    "foreign_id_404": true,
@@ -1600,8 +1618,8 @@
    "output_allowlist": true
   },
   "PUT /api/actors/settings": {
-   "output_allowlist": true,
-   "bfla_role_check": true
+   "bfla_role_check": true,
+   "output_allowlist": true
   },
   "PUT /api/assist/region-override": {
    "foreign_id_404": true

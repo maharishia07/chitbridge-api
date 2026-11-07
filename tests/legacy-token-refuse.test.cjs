@@ -138,9 +138,9 @@ const autoLong = sign(Object.assign({ auto: true, kind: 'auto', jti: 'auto-2' },
     assert.strictEqual(d.minted, c.minted);
   });
   await it('/health shows legacy_tokens; autoraise signs kind auto with a jti', async () => {
-    const server = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
+    const server = fs.readFileSync(path.join(API, 'routes', 'health.js'), 'utf8');
     const raise = fs.readFileSync(path.join(API, 'lib', 'autoraise.js'), 'utf8');
-    assert.ok(/legacy_tokens: require\('\.\/lib\/person-session'\)\.legacyCounts\(\)/.test(server));
+    assert.ok(/legacy_tokens: require\('\.\.\/lib\/person-session'\)\.legacyCounts\(\)/.test(server));
     assert.ok(/kind: 'auto',\s*jti: require\('crypto'\)\.randomUUID\(\)/.test(raise));
   });
 

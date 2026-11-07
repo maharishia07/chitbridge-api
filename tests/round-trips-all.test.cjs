@@ -190,7 +190,7 @@ for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !calle
 const ID = '00000000-0000-4000-8000-000000000001';
 async function fire(port, route) {
   const sp = route.indexOf(' ');
-  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID);
+  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
   wire = 0;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
@@ -221,7 +221,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const b = budget.routes[r.route];
       const live = liveOf(r.route);
       /* a registered-only route the stub answers with a 4xx has only a floor: with no live count it stays a placeholder that says so */
-      if (!m.error && r.registered_only && m.status >= 400 && live === null) m = { error: 'stub answered ' + m.status + ' (a floor); needs a live measure on sit-in', status: m.status };
+      if (!m.error && r.registered_only && m.status >= 400 && live === null && !(b && b.floor_is_cost)) m = { error: 'stub answered ' + m.status + ' (a floor); needs a live measure on sit-in', status: m.status };
       /* the live count is the cost: it wins over a stub that could not fire, and raises a floor */
       let basis = null;
       if (live !== null && (m.error || m.status >= 400 || live > m.trips)) { m = { status: m.error ? 200 : m.status, trips: Math.max(live, m.error ? 0 : m.trips), wire: m.error ? null : m.wire }; basis = 'live from sit-in ' + LIVE.at.slice(0, 10); }
@@ -236,7 +236,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       }
       (m.status >= 400 ? shallow : fired).push(row);
       /* a measured row: the number is the harness's; a hand `why` is kept beside it (a note is not lost by being measured) */
-      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(basis ? { basis } : {}), ...(r.registered_only || (b && b.registered_only) ? { registered_only: true } : {}), ...(b && b.extra ? { extra: true } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
+      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(basis ? { basis } : {}), ...(r.registered_only || (b && b.registered_only) ? { registered_only: true } : {}), ...(b && b.extra ? { extra: true } : {}), ...(b && b.floor_is_cost ? { floor_is_cost: b.floor_is_cost } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {
