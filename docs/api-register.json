@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 60
+    "failing": 58
    },
    "foreign_id_404": {
     "applies": 203,
@@ -13563,7 +13563,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 219,
+   "line": 222,
    "hash": "e581982c3c888b49",
    "does": "",
    "errors": {
@@ -41647,7 +41647,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46427,7 +46427,7 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 316,
+   "line": 319,
    "hash": "71a3e009f85ce3c7",
    "does": "",
    "errors": {
@@ -46542,8 +46542,8 @@
    "owner_area": "ctp",
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
-   "line": 557,
-   "hash": "1e7ffefe0fa6a348",
+   "line": 560,
+   "hash": "426c13a58af5ac69",
    "does": "",
    "errors": {
     "count": 6,
@@ -46589,7 +46589,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46629,8 +46629,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "426c13a58af5ac69"
    },
    "status": "partial",
    "callers": [],
