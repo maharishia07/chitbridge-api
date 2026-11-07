@@ -41,18 +41,21 @@ const FAMILIES = {
     narrow: { cat: cat([mk('Oil filter'), mk('Air filter'), mk('Fuel filter')]), no: [['ac filter']] }
   },
   grocery: {
-    cat: cat([mk('Tomato'), mk('Basmati rice'), mk('Toor dal'), mk('Urad dal'), mk('Sugar', ['cheeni']), mk('Orange', [], 'grade 1'), mk('Orange', [], 'grade 2')]),
-    yes: [['tomatto', 'Tomato'], ['tomatoes', 'Tomato'], ['basmathi rice', 'Basmati rice'], ['toor daal', 'Toor dal'], ['suger', 'Sugar'], ['cheeni', 'Sugar'], ['orange grade 2', 'Orange grade 2']],
+    cat: cat([mk('Tomato'), mk('Basmati rice'), mk('Toor dal'), mk('Urad dal'), mk('Sugar', ['cheeni']), mk('Orange', [], 'grade 1'), mk('Orange', [], 'grade 2'), mk('Milk 1l'), mk('Biscuit 10s'), mk('Rice 5kg')]),
+    yes: [['tomatto', 'Tomato'], ['tomatoes', 'Tomato'], ['basmathi rice', 'Basmati rice'], ['toor daal', 'Toor dal'], ['suger', 'Sugar'], ['cheeni', 'Sugar'], ['orange grade 2', 'Orange grade 2'], ['milk 1 ltr', 'Milk 1l'], ['milk 1 litre', 'Milk 1l'], ['biscuit x10', 'Biscuit 10s'], ['biscuit 10 s', 'Biscuit 10s'], ['rice 5 kilo', 'Rice 5kg'], ['rice 5 kgs', 'Rice 5kg']],
+    ask: [['milk 2 ltr', ['Milk 1l']], ['rice 50 kilo', ['Rice 5kg']]],
     no: [['moong dal'], ['salt'], ['orange'], ['orange grade 3']]
   },
   pharma: {
-    cat: cat([mk('Paracetamol 500mg'), mk('Paracetamol 650mg', ['dolo 650']), mk('Amoxicillin 250mg'), mk('Cetirizine 10mg'), mk('Metformin 500mg')]),
-    yes: [['paracetamol 500 mg', 'Paracetamol 500mg'], ['paracetmol 500mg', 'Paracetamol 500mg'], ['amoxicilin 250mg', 'Amoxicillin 250mg'], ['cetrizine 10mg', 'Cetirizine 10mg'], ['metphormin 500mg', 'Metformin 500mg'], ['dolo 650', 'Paracetamol 650mg']],
-    no: [['cetirizine 5mg'], ['diclofenac 50mg'], ['paracetamol 5000'], ['metformin 50']],
+    cat: cat([mk('Paracetamol 500mg'), mk('Paracetamol 650mg', ['dolo 650']), mk('Amoxicillin 250mg'), mk('Cetirizine 10mg'), mk('Metformin 500mg'), mk('Vitamin C'), mk('Folic 1000')]),
+    yes: [['paracetamol 500 mg', 'Paracetamol 500mg'], ['paracetmol 500mg', 'Paracetamol 500mg'], ['amoxicilin 250mg', 'Amoxicillin 250mg'], ['cetrizine 10mg', 'Cetirizine 10mg'], ['metphormin 500mg', 'Metformin 500mg'], ['dolo 650', 'Paracetamol 650mg'], ['paracetamol 500 mgs', 'Paracetamol 500mg']],
+    no: [['cetirizine 5mg'], ['diclofenac 50mg'], ['paracetamol 0.5g'], ['paracetamol 5000'], ['metformin 50']],
     never: [['paracetamol 500', 'Paracetamol 650mg'], ['paracetamol 650', 'Paracetamol 500mg'], ['paracetamol 650mg', 'Paracetamol 500mg'], ['metformin 500mg', 'Paracetamol 500mg']],
     ask: [
       ['paracetamol 600mg', ['Paracetamol 500mg', 'Paracetamol 650mg']],
-      ['amoxicillin 500mg', ['Amoxicillin 250mg']]
+      ['amoxicillin 500mg', ['Amoxicillin 250mg']],
+      ['vitamin cc', ['Vitamin C']],
+      ['folic 10000', ['Folic 1000']]
     ]
   },
   stationery: {
@@ -61,16 +64,18 @@ const FAMILIES = {
     no: [['ball pen red'], ['stapler']],
     ask: [
       ['pencil 2b', ['Pencil HB']],
+      ['pencil hbb', ['Pencil HB']],
       ['notebook 100 pages', ['Notebook 200 pages']]
     ]
   },
   textiles: {
-    cat: cat([mk('Cotton shirt M'), mk('Cotton shirt L'), mk('Silk saree'), mk('Cotton saree'), mk('Denim jeans'), mk('Bed sheet'), mk('Cotton towel')]),
-    yes: [['cotton sirt m', 'Cotton shirt M'], ['silk sari', 'Silk saree'], ['denim jeens', 'Denim jeans'], ['bedsheet', 'Bed sheet'], ['bed sheets', 'Bed sheet'], ['cotton towl', 'Cotton towel']],
-    no: [['silk shirt'], ['wool saree']],
+    cat: cat([mk('Cotton shirt M'), mk('Cotton shirt L'), mk('Silk saree'), mk('Cotton saree'), mk('Denim jeans'), mk('Bed sheet'), mk('Cotton towel'), mk("Men's shirt"), mk('Linen shirt XL')]),
+    yes: [['cotton sirt m', 'Cotton shirt M'], ['silk sari', 'Silk saree'], ['denim jeens', 'Denim jeans'], ['bedsheet', 'Bed sheet'], ['bed sheets', 'Bed sheet'], ['cotton towl', 'Cotton towel'], ['mens shirt', "Men's shirt"], ['mens shrt', "Men's shirt"]],
+    no: [['silk shirt'], ['wool saree'], ['cotton shirt medium']],
     ask: [
       ['cotton shirt s', ['Cotton shirt M', 'Cotton shirt L']],
-      ['cotton shirt xl', ['Cotton shirt M', 'Cotton shirt L']]
+      ['cotton shirt xl', ['Cotton shirt M', 'Cotton shirt L']],
+      ['linen shirt xll', ['Linen shirt XL']]
     ]
   }
 };
