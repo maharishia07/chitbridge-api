@@ -4291,7 +4291,7 @@
    ]
   },
   "PUT /api/integrations/streams": {
-   "cases": 2,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

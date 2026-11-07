@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 72
+    "failing": 68
    },
    "output_allowlist": {
     "applies": 637,
@@ -13870,7 +13870,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 357,
+   "line": 348,
    "hash": "b4f32940f2822490",
    "does": "",
    "errors": {
@@ -13964,7 +13964,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2373,
+   "line": 2364,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14060,7 +14060,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 464,
+   "line": 455,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -14154,7 +14154,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 491,
+   "line": 482,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -14274,7 +14274,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 848,
+   "line": 839,
    "hash": "b43d5b8b4da152b9",
    "does": "",
    "errors": {
@@ -14372,7 +14372,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1688,
+   "line": 1679,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14477,7 +14477,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 435,
+   "line": 426,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -14579,7 +14579,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1574,
+   "line": 1565,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14680,7 +14680,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1438,
+   "line": 1429,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14779,7 +14779,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1422,
+   "line": 1413,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -14877,7 +14877,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 385,
+   "line": 376,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14977,7 +14977,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 402,
+   "line": 393,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -15066,7 +15066,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 480,
+   "line": 471,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -15160,7 +15160,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1245,
+   "line": 1236,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -29810,7 +29810,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1215,
+   "line": 1206,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29912,7 +29912,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 821,
+   "line": 812,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -30012,8 +30012,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 861,
-   "hash": "e55ea05cc2141a4a",
+   "line": 852,
+   "hash": "b0abeef6ee3cfb4e",
    "does": "",
    "errors": {
     "count": 0,
@@ -30043,7 +30043,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30081,8 +30081,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b0abeef6ee3cfb4e"
    },
    "status": "partial",
    "callers": [],
@@ -30106,8 +30107,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 815,
-   "hash": "3a7c9f99a608bfbf",
+   "line": 806,
+   "hash": "a64400f15f3dd548",
    "does": "",
    "errors": {
     "count": 0,
@@ -30138,7 +30139,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30177,8 +30178,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a64400f15f3dd548"
    },
    "status": "partial",
    "callers": [
@@ -30208,8 +30210,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 446,
-   "hash": "e9d9068c4e8b13ae",
+   "line": 437,
+   "hash": "19d19443442b003b",
    "does": "",
    "errors": {
     "count": 0,
@@ -30240,7 +30242,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -30281,7 +30283,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "e9d9068c4e8b13ae"
+    "stale_since": "19d19443442b003b"
    },
    "status": "partial",
    "callers": [
@@ -30317,7 +30319,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 894,
+   "line": 885,
    "hash": "bb90f2791c17bec0",
    "does": "",
    "errors": {
@@ -46883,7 +46885,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1662,
+   "line": 1653,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -46987,7 +46989,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 346,
+   "line": 337,
    "hash": "dfcc09f3956e0bc2",
    "does": "",
    "errors": {
@@ -47087,7 +47089,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 347,
+   "line": 338,
    "hash": "1d7aab67142b501d",
    "does": "",
    "errors": {
@@ -63696,7 +63698,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1629,
+   "line": 1620,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63802,7 +63804,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1548,
+   "line": 1539,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
@@ -64446,7 +64448,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
    "line": 759,
-   "hash": "1d8791f0df7ece41",
+   "hash": "1298c3dcfb608c2a",
    "does": "",
    "errors": {
     "count": 3,
@@ -64482,7 +64484,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": false,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -64522,8 +64524,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1298c3dcfb608c2a"
    },
    "status": "partial",
    "callers": [

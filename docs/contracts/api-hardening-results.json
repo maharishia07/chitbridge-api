@@ -99,8 +99,7 @@
   },
   "PATCH /api/entities/policy": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -124,8 +123,7 @@
   },
   "PATCH /api/entities/me/prefs/:kind": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -147,8 +145,7 @@
   },
   "PATCH /api/entities/me/locale": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": true
@@ -1047,8 +1044,7 @@
   },
   "PUT /api/integrations/streams": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
