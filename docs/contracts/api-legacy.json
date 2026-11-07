@@ -61680,6 +61680,32 @@
      }
     }
    ]
+  },
+  "POST /api/actors/set-pin": {
+   "answers": [
+    {
+     "scenario": "set-pin-owner-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Only actors can set PIN"
+     },
+     "fixture": {
+      "error": "Only actors can set PIN"
+     }
+    },
+    {
+     "scenario": "set-pin-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Set PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Set PIN failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
   }
  },
  "global": {

@@ -167,6 +167,10 @@
   401,
   500
  ],
+ "GET /api/actors/check-login": [
+  400,
+  500
+ ],
  "GET /api/actors/settings": [
   401,
   500
@@ -1667,6 +1671,18 @@
   401,
   500
  ],
+ "POST /api/actors/login": [
+  400,
+  403,
+  409,
+  500,
+  503
+ ],
+ "POST /api/actors/set-pin": [
+  400,
+  401,
+  500
+ ],
  "POST /api/actors/suggest-key": [
   400,
   401,
@@ -2622,6 +2638,13 @@
   404,
   409,
   500
+ ],
+ "POST /api/entities/verify": [
+  400,
+  403,
+  409,
+  500,
+  503
  ],
  "POST /api/events/ticket": [
   401,

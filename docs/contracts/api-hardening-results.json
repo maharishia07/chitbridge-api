@@ -69,8 +69,7 @@
   },
   "POST /api/entities/verify": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1860,8 +1859,7 @@
   },
   "POST /api/actors/set-pin": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -1887,8 +1885,7 @@
   },
   "POST /api/actors/login": {
    "strict_input": {
-    "pass": false,
-    "why": "the route has no body schema check, so an unknown key is never looked at"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,

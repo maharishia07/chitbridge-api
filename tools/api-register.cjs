@@ -135,8 +135,18 @@ function chainRules(fn) {
 }
 
 /** the functions a route file defines for this route: found by their own text in the file (a middleware from another module is not in it) */
-function ownFunctions(handlers, fileText, shared) {
-  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && fileText.includes(fn.toString()));
+function ownFunctions(handlers, fileText, shared, otherTexts) {
+  const inFile = (fn) => fileText.includes(fn.toString());
+  /* an ALIAS (routes/actors.js POST /login runs routes/signin.js's handler): a function the route file does not hold is looked up in the other routes files, so the register judges the handler that really answers */
+  const inOther = (fn) => (otherTexts || []).some((text) => text.includes(fn.toString()));
+  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && (inFile(fn) || inOther(fn)));
+}
+
+/** the text of every routes file but this one, read once */
+const routeTexts = new Map();
+function otherRouteTexts(file) {
+  if (!routeTexts.size) ROUTER_DIRS.forEach((dir) => fs.existsSync(path.join(ROOT, dir)) && fs.readdirSync(path.join(ROOT, dir)).filter((name) => name.endsWith('.js')).forEach((name) => routeTexts.set(dir + '/' + name, fs.readFileSync(path.join(ROOT, dir, name), 'utf8'))));
+  return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
 }
 
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
@@ -342,7 +352,7 @@ function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
-  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared);
+  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, info.file === 'unknown' ? [] : otherRouteTexts(info.file));
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */

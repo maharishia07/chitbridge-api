@@ -10,6 +10,9 @@
   "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
+  "POST /api/entities/verify": {
+   "strict_input": true
+  },
   "GET /api/entities/search": {
    "output_allowlist": true
   },
@@ -551,12 +554,18 @@
   "GET /api/actors/check-login": {
    "output_allowlist": true
   },
+  "POST /api/actors/set-pin": {
+   "strict_input": true
+  },
   "PUT /api/actors/change-pin": {
    "strict_input": true
   },
   "DELETE /api/actors/:id/pin": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "POST /api/actors/login": {
+   "strict_input": true
   },
   "POST /api/actors/:id/otp": {
    "strict_input": true,

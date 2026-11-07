@@ -99,7 +99,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| LOGIN_FAILED | 400 | Sign-in failed | That sign-in code could not be used. | Ask your admin for a new code and try again. | signin | 2026-11-07 |
+| LOGIN_FORMAT_INVALID | 400 | Sign-in name not in the right form | Type your sign-in as yourname@business. | Type your key, an @ sign and your business, then try again. | signin | 2026-11-07 |
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |
+| OTP_REQUIRED | 400 | Code needed | Enter the code your admin shared with you. | Type the code and sign in again. | signin | 2026-11-07 |
+| PIN_REQUIRED | 400 | PIN needed | Enter your 4 digit PIN to sign in. | Type your PIN and sign in again. | signin | 2026-11-07 |
 | PROPOSAL_BAD | 400 | Proposal not usable | That proposal could not be used: a line, a price, a quantity or the terms were not in a form we can take. | Read the sentence shown, fix it and try again. | rail | 2026-10-25 |
 | PROPOSAL_CLOSED | 409 | Proposal already decided | That proposal is already decided, so it cannot be decided again. | Look at the newest round. | rail | 2026-10-25 |
 | PROPOSAL_DOMESTIC | 409 | Not an RFQ | Quotation rounds are for deals with a business on another installation, or a chit made as a request for a quote. | Change this chit directly, or ask for a quote when you compose it. | rail | 2026-10-25 |
