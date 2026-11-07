@@ -58,8 +58,7 @@ const EMAIL = 'cholaauto@email.com';
         purpose: 'order',
         manual_subject: subject,
         line_items: lines,
-        recipients: [{ entity_id: E.identity_id, role: 'to' }],
-        send_to_self: true
+        recipients: [{ entity_id: E.identity_id, role: 'to' }]
       }
     });
     const det = await P.j('/api/chits/' + s.b.chit_id, auth);

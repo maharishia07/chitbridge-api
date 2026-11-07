@@ -70,8 +70,7 @@ const actor = async (owner, label) => {
       recipients: [
         { entity_id: buyer.id, role: 'to' },
         { entity_id: carrier.id, role: 'cc' }
-      ],
-      send_to_self: false
+      ]
     }
   });
   const chit = sent.b.chit_id;

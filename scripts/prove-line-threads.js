@@ -37,8 +37,7 @@ const login = async (email, name) => {
         { particulars: 'Rice', quantity: 80, unit: 'kg', price: 60 },
         { particulars: 'Dal', quantity: 20, unit: 'kg', price: 140 }
       ],
-      recipients: [{ entity_id: buyer.id, role: 'to' }],
-      send_to_self: false
+      recipients: [{ entity_id: buyer.id, role: 'to' }]
     }
   });
   const id = s.b.chit_id;

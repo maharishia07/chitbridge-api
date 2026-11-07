@@ -45,8 +45,7 @@ const ok = (cond, msg, detail) => {
         purpose: 'order',
         manual_subject: subject,
         line_items: lines,
-        recipients: myId ? [{ entity_id: myId, role: 'to' }] : [],
-        send_to_self: true
+        recipients: myId ? [{ entity_id: myId, role: 'to' }] : []
       }
     });
     const det = await P.j('/api/chits/' + s.b.chit_id, auth);
