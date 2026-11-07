@@ -453,7 +453,8 @@
    "policies": 0,
    "app_reads": true,
    "class": "entity",
-   "why": "entity_id; read in actors, chits, workpattern, workroute (context-free sites to move first)"
+   "why": "entity_id; every reader and writer runs under withEntity (b842)",
+   "fix": "b842_rls_entity_actor_settings.sql"
   },
   "entity_compliance": {
    "rls": true,
