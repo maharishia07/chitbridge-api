@@ -218,6 +218,12 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     t('   ⭐ one wrong guess, one own sign-in, repeated: only the FIRST sign-in of the window pays a miss back, so the contact shuts within 6 misses (took ' + misses + ')', shut && misses <= 6, 'misses ' + misses);
     await dev.contactGuessReset('9876543210');
 
+    await dev.contactGuessReset('9876543210');
+    for (let k = 0; k < 8; k++) await dev.contactGuessMiss('9876543210');
+    await Promise.all(Array.from({ length: 10 }, () => dev.contactGuessRefund('9876543210')));
+    t('   ⭐ ten refunds at once on a shut contact (8 misses): at most one is paid, the contact stays shut', await dev.contactGuessShut('9876543210'), 'open after 10 concurrent refunds');
+    await dev.contactGuessReset('9876543210');
+
     /* SEC-143 round 2: a wrong PIN costs the same time with no account, 1, 2 or 3 PIN holders behind the contact (and for a code) */
     const median = (xs) => xs.slice().sort((p, q) => p - q)[Math.floor(xs.length / 2)];
     const timed = async (id, cred) => { const t0 = process.hrtime.bigint(); await verify(id, cred); return Number(process.hrtime.bigint() - t0) / 1e6; };
