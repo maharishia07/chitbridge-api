@@ -24,29 +24,42 @@
  */
 const { verifyJwt } = require('../lib/jwt-verify'); // E10 — the ONE verifier
 
+/** customerOf(token) → the customer a token proves ({ identity_id, bridge_id, shop_entity_id, display_name }), or null — the ONE reading of a customer token */
+function customerOf(token) {
+  const decoded = verifyJwt(token).claims;
+  // FAIL CLOSED: this surface is for customers ONLY. An entity or actor token is rejected on purpose, so the two surfaces can never be confused for one another.
+  if (!decoded.identity_id || decoded.identity_type !== 'customer') return null;
+  return {
+    identity_id: decoded.identity_id,
+    bridge_id: decoded.bridge_id || null,
+    // the SHOP this customer belongs to. Storefront identities are per-shop by design (crHandle), so this scopes every customer query to the one shop they transacted with.
+    shop_entity_id: decoded.parent_entity_id || null,
+    display_name: decoded.display_name || null
+  };
+}
 /** express middleware: verifies the storefront customer bearer token and sets req.customer, else a 401 */
-module.exports = function customerAuth(req, res, next) {
+function customerAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
   if (!token) return res.status(401).json({ error: 'Unauthorised', message: 'Sign in to view this' });
   try {
     // Same algorithm pin as auth.js — never trust the token's own `alg`.
-    const decoded = verifyJwt(token).claims;
-    // FAIL CLOSED: this surface is for customers ONLY. An entity or actor token is rejected here on purpose, so the
-    // two surfaces can never be confused for one another.
-    if (!decoded.identity_id || decoded.identity_type !== 'customer') {
-      return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
-    }
-    req.customer = {
-      identity_id: decoded.identity_id,
-      bridge_id: decoded.bridge_id || null,
-      // the SHOP this customer belongs to. Storefront identities are per-shop by design (crHandle), so this scopes
-      // every customer query to the one shop they transacted with.
-      shop_entity_id: decoded.parent_entity_id || null,
-      display_name: decoded.display_name || null
-    };
+    const customer = customerOf(token);
+    if (!customer) return res.status(401).json({ error: 'Unauthorised', message: 'Invalid token' });
+    req.customer = customer;
     next();
   } catch (_) {
     return res.status(401).json({ error: 'Unauthorised', message: 'Invalid or expired token' });
   }
+}
+/** customerAuth.soft(req) → the signed-in customer, or null (a stranger) — never throws, never answers; a public door's way to serve a customer more (SEC-149: the one soft reader of a customer token) */
+customerAuth.soft = (req) => {
+  const header = (req && req.headers && req.headers.authorization) || '';
+  try {
+    return header.startsWith('Bearer ') ? customerOf(header.slice(7).trim()) : null;
+  } catch (notOurToken) {
+    require('../lib/logger').fellBack('customer-auth soft: the token did not verify — read as a stranger', notOurToken, 'debug'); /* a missing, bad or expired token is simply anonymous on a public read */
+    return null;
+  }
 };
+module.exports = customerAuth;

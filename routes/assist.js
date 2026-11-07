@@ -60,19 +60,10 @@ const CONTEXT_HINTS = {
 // Optional auth: if a valid Bearer token is present, attach a minimal identity so the real model can ground on
 // the caller's own (tenant-scoped) context. Absent/invalid token → anonymous (the assistant is available
 // pre-auth on welcome/login/register), grounded on the public KB only. Never throws.
-function softIdentity(req) {
-  try {
-    const text = req.headers.authorization;
-    if (!text || !text.startsWith('Bearer ')) return null;
-    const d = require('../lib/jwt-verify').verifyJwt(text.split(' ')[1]).claims; // E10 — the ONE verifier
-    // S1b (reviewer 2026-07-13) — a valid signature is not an identity. Reject any token that isn't a real entity/actor
-    // (e.g. a sim_lead token). Return null → the caller treats it as anonymous (public-KB-only), never as an entity.
-    if (!d.identity_id || !['entity', 'actor'].includes(d.identity_type)) return null;
-    return { identity_id: d.identity_id, parent_entity_id: d.parent_entity_id || null, identity_type: d.identity_type, access_level: d.access_level }; // the level rides the token (identity-auth FX-L2C), so a draft that costs money can ask lib/access
-  } catch (e) {
-    log.fellBack('assist softIdentity: the helper failed — answered with nothing', e);
-    return null;
-  }
+async function softIdentity(req) {
+  const caller = await auth.softIdentity(req); // SEC-149: the SAME decision auth runs (session listing, status, current level) — a valid signature alone is a stranger
+  if (!caller) return null;
+  return { identity_id: caller.identity_id, parent_entity_id: caller.parent_entity_id, identity_type: caller.identity_type, access_level: caller.access_level }; // a draft that costs money asks lib/access with the CURRENT level
 }
 
 /** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */
@@ -85,7 +76,7 @@ router.post('/', ...contract.checked('POST /'), async (req, res) => {
     if (!q) return problem(req, res, { status: 422, ...words.askNothing() });
     if (q.length > 500) return problem(req, res, { status: 422, ...words.askTooLong() });
 
-    const identity = softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
+    const identity = await softIdentity(req); // null pre-auth → public-KB-only grounding (P0 isolation: never cross entities)
 
     // ── The model call. It MUST:
     //    1) run under the `assist-ask` skill (the no-oversell guardrail, lib/ai.js) through invokeSkill;
@@ -144,7 +135,7 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
     if (!tpl) return problem(req, res, { status: 404, ...words.unknownStandard(compliance.listTemplates()) });
 
     const verdict = compliance.evaluate(tpl, payload); // ← deterministic floor; ALWAYS the source of truth
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
 
     // The Crux-2 deputy stamp. delegator = the invoking human (invoked mode); grant per-act; NOT confirmed here
@@ -204,7 +195,7 @@ router.post('/catalogue-structure', ...contract.checked('POST /catalogue-structu
     const built = await catalogueBuild.build(source);
     if (!built) return problem(req, res, { status: 404, ...words.unknownCatalogueSource(await catalogueBuild.listSources()) });
 
-    const identity = softIdentity(req);
+    const identity = await softIdentity(req);
     const principal = identity ? 'entity:' + (identity.parent_entity_id || identity.identity_id) : 'anon';
     const acted_by = {
       deputy: 'ai:catalogue-structure@v1',

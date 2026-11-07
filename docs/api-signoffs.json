@@ -155,11 +155,11 @@
    "lifecycle": "stable"
   },
   "GET /api/actors/settings": {
-   "hash": "67ab400b5c2716dc",
+   "hash": "640e90743374e79a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: read and default-row insert now under withEntity; same answer shape); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/adopt/:chit_id": {
@@ -483,11 +483,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id": {
-   "hash": "57086e1ed0d15b39",
+   "hash": "09d3c11dea78f26b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-11-04 PR#706 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: owner preview via auth.softIdentity, cost keys stripped for a cost-blind co-assist; schema unchanged, foreign id still 404); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
@@ -1955,11 +1955,11 @@
    "lifecycle": "stable"
   },
   "POST /api/assist": {
-   "hash": "4d3d32ed0f02786e",
+   "hash": "0fed4ed7dae69c10",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-adopt": {
@@ -1971,19 +1971,19 @@
    "lifecycle": "stable"
   },
   "POST /api/assist/catalogue-structure": {
-   "hash": "a2ab588036b775b4",
+   "hash": "2cf1be4ee2eeae1f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/conform": {
-   "hash": "e4aa7fd270b2f08a",
+   "hash": "425efdd67b8c7b70",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/assist/gap": {
@@ -3691,11 +3691,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/actors/settings": {
-   "hash": "89e1e089d74a0296",
+   "hash": "a28cbf5d48a25637",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: upsert and read-back under withEntity; same body, 400 and answer); 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/assist/catalogue-source": {

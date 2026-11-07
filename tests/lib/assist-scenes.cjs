@@ -40,7 +40,7 @@ function extras(tools) {
   const failing = { db: 'fail' };
   const asStranger = { who: { identity_id: STRANGER_ID, identity_type: 'entity', display_name: 'Shop B' } };
   /** a signed-in caller for the assistant's soft sign-in, and a model that answers */
-  const signedIn = { jwt: { verifyJwt: () => ({ claims: { identity_id: SHOP, identity_type: 'entity' } }) } };
+  const signedIn = { auth: { softIdentity: async () => ({ identity_id: SHOP, identity_type: 'entity', parent_entity_id: null }) } }; /* SEC-149: the soft reader is middleware/auth.softIdentity */
   const model = (text) => ({ ai: { invokeSkill: async () => ({ draft: text, model: 'stand-in', usage: { input_tokens: 1, output_tokens: 2 } }) } });
   const modelRefuses = (status) => ({ ai: { invokeSkill: refusedWith(status) } });
   const live = (patch) => ({ env: MODEL_ON, headers: BEARER, patch: Object.assign({}, signedIn, patch) });

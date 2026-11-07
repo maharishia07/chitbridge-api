@@ -13,14 +13,14 @@ of file each thing is; this says what already does the job.
 | 124 | `rows` | `crm.js` | still in them: |
 | 116 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 114 | `withEntity` | `books-hooks.js` |  |
+| 115 | `withEntity` | `books-hooks.js` |  |
 | 109 | `read` | `books-cashflow.js` | Trips: |
 | 100 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 81 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 75 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 76 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 67 | `list` | `cap-settings.js` |  |
@@ -33,7 +33,7 @@ of file each thing is; this says what already does the job.
 | 65 | `failed` | `service.js` | what every catch answers: |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
+| 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `items` | `books-store.js` | PERF1: |
 | 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
@@ -87,7 +87,7 @@ of file each thing is; this says what already does the job.
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
-| 31 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 32 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 31 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |

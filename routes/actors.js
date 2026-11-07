@@ -117,7 +117,7 @@ const checked = (route) => {
  */
 async function entityTaskCap(entity_id) {
   if (!(await schema.hasTable('entity_actor_settings'))) return null;
-  const settingsRow = await db(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+  const settingsRow = await withEntity(entity_id, (shop) => shop.query(`SELECT default_max_tasks FROM entity_actor_settings WHERE entity_id = $1`, [entity_id])); /* SEC-75: RLS */
   return (settingsRow.rows[0] && settingsRow.rows[0].default_max_tasks) || null;
 }
 /**
@@ -1517,16 +1517,12 @@ router.get('/settings', auth, async (req, res) => {
   try {
     const entity_id = req.identity.identity_type === 'actor' ? req.identity.parent_entity_id : req.identity.identity_id;
 
-    let result = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
-
-    // Create default settings if not exist
-    if (result.rows.length === 0) {
-      result = await db(
-        `INSERT INTO entity_actor_settings (entity_id)
-         VALUES ($1) RETURNING *`,
-        [entity_id]
-      );
-    }
+    /* SEC-75: entity_actor_settings is under RLS (b842): read it, and create the default row, under the shop's own binding */
+    const result = await withEntity(entity_id, async (shop) => {
+      const found = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      if (found.rows.length) return found;
+      return shop.query(`INSERT INTO entity_actor_settings (entity_id) VALUES ($1) RETURNING *`, [entity_id]); // default settings if none
+    });
 
     const x = result.rows[0];
     /* S34: SELECT * of entity_actor_settings (migrations/000_baseline_2026-10-21.sql), named in the table's column order; no row at all answers {} as before */
@@ -1568,31 +1564,34 @@ router.put(
         if (chk.rows.length === 0) return problem(req, res, { status: 400, ...words.badDefaultAssignee() });
       }
 
-      await db(
-        `INSERT INTO entity_actor_settings
-           (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
-            auto_assign_mode, default_assignee_actor_id)
-         VALUES ($1, COALESCE($2,'both'), COALESCE($3,10), COALESCE($4,false), COALESCE($5,false), COALESCE($6,'off'), $7)
-         ON CONFLICT (entity_id) DO UPDATE SET
-           assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
-           default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
-           all_task_visible = COALESCE($4, entity_actor_settings.all_task_visible),
-           auto_return_on_short_break = COALESCE($5, entity_actor_settings.auto_return_on_short_break),
-           auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
-           default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
-           updated_at = NOW()`,
-        [
-          entity_id,
-          assignment_model,
-          default_max_tasks,
-          all_task_visible,
-          auto_return_on_short_break,
-          auto_assign_mode || null,
-          default_assignee_actor_id || null
-        ]
-      );
+      /* SEC-75: the upsert and the read-back run under the shop's own binding (RLS on entity_actor_settings) */
+      const updated = await withEntity(entity_id, async (shop) => {
+        await shop.query(
+          `INSERT INTO entity_actor_settings
+             (entity_id, assignment_model, default_max_tasks, all_task_visible, auto_return_on_short_break,
+              auto_assign_mode, default_assignee_actor_id)
+           VALUES ($1, COALESCE($2,'both'), COALESCE($3,10), COALESCE($4,false), COALESCE($5,false), COALESCE($6,'off'), $7)
+           ON CONFLICT (entity_id) DO UPDATE SET
+             assignment_model = COALESCE($2, entity_actor_settings.assignment_model),
+             default_max_tasks = COALESCE($3, entity_actor_settings.default_max_tasks),
+             all_task_visible = COALESCE($4, entity_actor_settings.all_task_visible),
+             auto_return_on_short_break = COALESCE($5, entity_actor_settings.auto_return_on_short_break),
+             auto_assign_mode = COALESCE($6, entity_actor_settings.auto_assign_mode),
+             default_assignee_actor_id = COALESCE($7, entity_actor_settings.default_assignee_actor_id),
+             updated_at = NOW()`,
+          [
+            entity_id,
+            assignment_model,
+            default_max_tasks,
+            all_task_visible,
+            auto_return_on_short_break,
+            auto_assign_mode || null,
+            default_assignee_actor_id || null
+          ]
+        );
 
-      const updated = await db(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      return shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
+      });
       const saved = updated.rows[0];
       /* S34: SELECT * of entity_actor_settings, named in the table's own column sequence, as GET /settings names it */
       // prettier-ignore
