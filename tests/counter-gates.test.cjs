@@ -415,7 +415,9 @@ it('the offline limit counts credit bills not yet confirmed sent, whatever the s
   assert.ok(/queue_kinds\.oldest/.test(u.text) && /!b\._sent/.test(u.text), 'unsent is no longer read from the program\'s queue / the _sent stamp');
 });
 it('over the limit, only the OWNER\'s counter PIN allows it', () => {
-  const o = body(PAGE, 'async function ownerApprove(');
+  /* CTR-191: ownerApprove asks the credit-limit question and hands the PIN check to ownerPinAsk (also used by the money stop) */
+  assert.ok(/return ownerPinAsk\(/.test(body(PAGE, 'async function ownerApprove(').text), 'the credit limit no longer goes through the one owner-PIN check');
+  const o = body(PAGE, 'async function ownerPinAsk(');
   assert.ok(/e\.kind === 'entity'/.test(o.text), 'the override is no longer limited to the owner');
   assert.ok(/SIGN\(\)\.pinAfter\(/.test(o.text), 'a wrong PIN no longer counts against the PIN');
 });
