@@ -323,7 +323,7 @@ const COUNTRY = {
     const sql = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
     const unposted = sql.slice(sql.indexOf('async function unpostedInWindow('), sql.indexOf('async function cancelledStillPosted('));
     ok('T8 · unpostedChits ALSO returns the cancelled-still-posted (cancelledStillPosted), bounded by the same limit', sql.includes('found.concat(await cancelledStillPosted(db, e, (limit || 200) - found.length))'));
-    ok('T8 · unpostedInWindow SQL leaves out a cancelled / rejected copy', /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(unposted));
+    ok('T8 · unpostedInWindow SQL leaves out a cancelled / rejected copy', unposted.includes('NOT_WITHDRAWN_SQL') && /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(require(path.join(H.API, 'lib', 'counter-bill')).NOT_WITHDRAWN_SQL));
   }
 
   /* ── the REAL status door (lib/chit-move moveStatus → cancelLegs): sender · a recipient · a self-sale, each keyed by the entity; the 200 carries `books` for all three ── */

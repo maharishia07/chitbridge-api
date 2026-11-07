@@ -217,6 +217,7 @@ function answerExisting(req, res, held, hash, isVerified) {
  */
 function runAndRecord(req, res, next, store, claim) {
   let captured = false;
+  /* PLT-69: past REQUEST_TIMEOUT_MS the client has its 503 and lib/limits leaves res.json alive, so this wrapper still records a late answer (even a key claimed after the deadline) */
   const origJson = res.json.bind(res);
   res.json = (body) => {
     if (captured) return origJson(body);

@@ -6743,7 +6743,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2214,
-   "hash": "a025e197a54c16cc",
+   "hash": "f996cd645019e1ca",
    "does": "",
    "errors": {
     "count": 1,
@@ -6758,6 +6758,7 @@
     ]
    },
    "reads": [
+    "books_change_log",
     "books_setting",
     "fiscal_period",
     "identities",
@@ -6818,7 +6819,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib; periods[].return additive and optional, form/period/label/closed read against books.periodAdvice and the contract) 2026-10-30 PR#599",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#910",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -24914,8 +24915,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 93,
-   "hash": "dbe67c282f6983e0",
+   "line": 95,
+   "hash": "13eb044abdeba057",
    "does": "",
    "errors": {
     "count": 0,
@@ -24983,7 +24984,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
     "lifecycle": "stable"
    },
    "status": "partial",
@@ -25116,7 +25117,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "8c9251a891a20a4a",
+   "hash": "6f9049f9c18bdb46",
    "does": "",
    "errors": {
     "count": 0,
@@ -25184,7 +25185,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#916",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26904,7 +26905,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3438,
-   "hash": "65e21f5bc15efa97",
+   "hash": "f2b71a82e07db13e",
    "does": "",
    "errors": {
     "count": 0,
@@ -26970,7 +26971,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -27191,7 +27192,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3995,
+   "line": 4016,
    "hash": "6300606e4b8b2243",
    "does": "",
    "errors": {
@@ -27290,7 +27291,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3633,
+   "line": 3654,
    "hash": "af2833a77603a9f8",
    "does": "",
    "errors": {
@@ -28297,7 +28298,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3603,
+   "line": 3624,
    "hash": "148bb0dcf8de88b9",
    "does": "",
    "errors": {
@@ -57405,7 +57406,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 176,
+   "line": 180,
    "hash": "cf1ed74ea06db463",
    "does": "",
    "errors": {
@@ -57508,7 +57509,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 139,
+   "line": 143,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {
@@ -58915,7 +58916,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3868,
+   "line": 3889,
    "hash": "7f57a63b3c02d9b5",
    "does": "",
    "errors": {
@@ -59539,7 +59540,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3929,
+   "line": 3950,
    "hash": "734d38d90b89c85f",
    "does": "",
    "errors": {

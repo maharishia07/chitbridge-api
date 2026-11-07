@@ -11,6 +11,9 @@
 const path = require('path');
 const fs = require('fs');
 const H = require('./support/books-harness.cjs');
+/* CTR-197 moved the cancelled/rejected clause to lib/counter-bill.js NOT_WITHDRAWN_SQL: read the store text with that constant written in, as the SQL is sent */
+const withClauses = (text) => { const cb = fs.readFileSync(path.join(H.API, 'lib', 'counter-bill.js'), 'utf8'); const test = (/const WITHDRAWN_TEST = `([^`]*)`/.exec(cb) || [])[1] || ''; return text.split("${require('./counter-bill').NOT_WITHDRAWN_SQL}").join('AND NOT ' + test); };
+
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
@@ -232,7 +235,7 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
 
   await section('T10 · the predicate (SQL): every clause the plan and the critic name, and the tender words equal modeOf', async () => {
     const src = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
-    const shared = src.slice(src.indexOf('const TENDER_FOUR'), src.indexOf('async function cancelledStillPosted')); /* the predicate only: the next function also says 'cancelled', 'rejected' and hid a deleted clause */
+    const shared = withClauses(src).slice(withClauses(src).indexOf('const TENDER_FOUR'), withClauses(src).indexOf('async function cancelledStillPosted')); /* the predicate only: the next function also says 'cancelled', 'rejected' and hid a deleted clause */
     ok('one predicate: unpostedInWindow and unpostedCount both select FROM the same UNPOSTED_FROM', (src.match(/\$\{UNPOSTED_FROM\}|\$\{UNPOSTED_FROM\}/g) || []).length >= 0 && /SELECT h\.chit_id \$\{UNPOSTED_FROM\}/.test(src) && /count\(\*\)::int AS count, min\(h\.created_at\) AS oldest \$\{UNPOSTED_FROM\}/.test(src));
     ok('the clauses: own entry · day listing · payment · OPEN outbox row · cancelled/rejected · skipIds · walk-in', ['j.source_ref IN', 'source_chit_ids @>', 'books_payment', 'o.done_at IS NULL', "'cancelled', 'rejected'", '<> ALL ($5::uuid[])', '$4::boolean AND h.sender_entity_id = h.entity_id'].every((x) => shared.indexOf(x) >= 0));
     /* the walk-in tender words, run as JS regexes (\y → \b), against modeOf: a part is "ok" iff modeOf says a known non-credit mode */
@@ -258,7 +261,7 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
 
   await section('T12 · C5 / ACC-268: ledgerFor names the copy it could not read, and the GSTR route and the pack say so', async () => {
     const src = fs.readFileSync(path.join(H.API, 'lib', 'tax-copy.js'), 'utf8');
-    ok('ledgerFor pushes the failed chit into `dropped` and returns it', /dropped\.push\(h\.chit_id\)/.test(src) && /ledger: T\.ledger\(entries, meParty\), dropped/.test(src));
+    ok('ledgerFor pushes the failed chit into `dropped` and returns it', /dropped\.push\(h\.chit_id\)/.test(src) && /ledger: monthLedger, dropped/.test(src));
     for (const [file, re, what] of [['routes/tax.js', /\(dropped \|\| \[\]\)\.length\) return problem/, 'GET /tax/gstr refuses a short month (422 GSTR_REFUSED)'], ['routes/tax.js', /dropped: dropped/, 'GET /tax/ledger carries `dropped`'], ['lib/books-pack.js', /led\.dropped && led\.dropped\.length\) pending\.push/, 'the pack puts a short GSTR-1 on `pending`, no half file'], ['routes/books.js', /ledgerCopy\.dropped \|\| \[\]/, 'the GSTR-3B comparison does not compare a short month']])
       ok(what, re.test(fs.readFileSync(path.join(H.API, file), 'utf8')));
     /* behaviour: the REAL ledgerFor on a fresh copy of the module, its db stubbed; copies the reader cannot build are named, not dropped in silence */
@@ -328,7 +331,7 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
   await section('T15a · review 4: the cancelled/rejected clause of the SQL, applied by a fake — a cancelled copy is never handed to postChit', async () => {
     const S = await shop(); const back = quiet();
     const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8'); /* the harness swaps the store module, so the predicate is read as written: the UNPOSTED_FROM template only */
-    const predicate = storeSrc.slice(storeSrc.indexOf('const UNPOSTED_FROM'), storeSrc.indexOf('async function cancelledStillPosted'));
+    const predicate = withClauses(storeSrc).slice(withClauses(storeSrc).indexOf('const UNPOSTED_FROM'), withClauses(storeSrc).indexOf('async function cancelledStillPosted'));
     const clause = /FROM chit_status cs WHERE[^)]*current_status IN \(([^)]*)\)/.exec(predicate); /* the status list the predicate ACTUALLY carries */
     const excluded = clause ? clause[1].split(',').map((x) => x.replace(/['\s]/g, '')) : [];
     const was = S.X.store.unpostedInWindow, wasCount = S.X.store.unpostedCount;

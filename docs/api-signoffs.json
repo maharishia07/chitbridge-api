@@ -387,11 +387,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/periods": {
-   "hash": "a025e197a54c16cc",
+   "hash": "f996cd645019e1ca",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib; periods[].return additive and optional, form/period/label/closed read against books.periodAdvice and the contract) 2026-10-30 PR#599",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#910",
    "lifecycle": "stable"
   },
   "GET /api/books/pl": {
@@ -1411,11 +1411,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/gstr": {
-   "hash": "dbe67c282f6983e0",
+   "hash": "13eb044abdeba057",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1427,11 +1427,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "8c9251a891a20a4a",
+   "hash": "6f9049f9c18bdb46",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#916",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {
@@ -1571,11 +1571,11 @@
    "lifecycle": "stable"
   },
   "GET /api/till/bills": {
-   "hash": "65e21f5bc15efa97",
+   "hash": "f2b71a82e07db13e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904",
    "lifecycle": "stable"
   },
   "GET /api/till/catalogue/blueprints": {
