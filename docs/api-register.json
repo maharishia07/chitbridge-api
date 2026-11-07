@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 216,
-  "meets": 421,
+  "partial": 217,
+  "meets": 420,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -24915,7 +24915,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 95,
+   "line": 97,
    "hash": "13eb044abdeba057",
    "does": "",
    "errors": {
@@ -24928,7 +24928,8 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "identities",
+    "journal_entry"
    ],
    "writes": [],
    "money": false,
@@ -25117,7 +25118,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "6f9049f9c18bdb46",
+   "hash": "9850a58619f9b58e",
    "does": "",
    "errors": {
     "count": 0,
@@ -25129,7 +25130,8 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "identities",
+    "journal_entry"
    ],
    "writes": [],
    "money": false,
@@ -25185,10 +25187,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#916",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "9850a58619f9b58e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -57406,7 +57409,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 180,
+   "line": 182,
    "hash": "cf1ed74ea06db463",
    "does": "",
    "errors": {
@@ -57509,7 +57512,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 143,
+   "line": 145,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {
