@@ -50,6 +50,14 @@ async function run(mode, entity, statements) {
   t('UNSCOPED + off: silent, runs (the mode switch is untouched)', r.warned === 0 && !r.threw && r.wired === 1);
   r = await run('warn', 'shop-1', [{ text: 'SELECT 1', params: [] }]);
   t('a statement with no tenant table never warned, scoped or not', r.warned === 0 && !r.threw);
+  r = await run('throw', 'shop-1', [{ text: 'SELECT * FROM stock_balance', entity: '' }]);
+  t('batch shop-1 + statement {entity:""} + throw: refused (it runs under NO shop), nothing sent', r.threw && /RLS-GUARD/.test(r.threw.message) && r.wired === 0, r.threw && r.threw.message);
+  r = await run('warn', 'shop-1', [{ text: 'SELECT * FROM stock_balance', entity: '' }]);
+  t('batch shop-1 + statement {entity:""} + warn: 1 warning, as on main', r.warned === 1 && !r.threw, String(r.warned));
+  r = await run('warn', 'shop-1', [{ text: 'SELECT * FROM stock_balance', entity: '' }, { text: 'SELECT * FROM stock_movement' }]);
+  t('the blank switch stays for the NEXT statement (no entity of its own): 2 warnings', r.warned === 2, String(r.warned));
+  r = await run('warn', null, [{ text: 'SELECT * FROM stock_balance', entity: 'brand-A' }, { text: 'SELECT * FROM stock_movement' }]);
+  t('a named switch stays for the next statement: 0 warnings', r.warned === 0, String(r.warned));
   console.log(`\n  ${pass} checks · ${fail} failed\n`);
   process.exit(fail ? 1 : 0);
 })();
