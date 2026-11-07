@@ -2938,6 +2938,14 @@
     400
    ]
   },
+  "POST /api/entities/register": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/entities/verify": {
    "cases": 2,
    "failed": 0,

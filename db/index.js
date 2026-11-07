@@ -224,6 +224,11 @@ const withTransaction = async (fn) => {
   /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
   try { require('../lib/trips').tick('tx'); } catch (_) {}
   const client = await pool.connect();
+  /* PLT-86: while a client is checked out pg-pool has no listener on it; a connection that dies now (database restart, killed backend) emits 'error' on the
+     CLIENT and, unhandled, kills the process. Log it once and release the client WITH the error so the pool destroys it; the running query rejects on its own. */
+  let clientDied = null;
+  const onClientError = (err) => { clientDied = err; require('../lib/logger').error('database client error: a connection died inside a transaction, it is discarded', { err: err.message, code: err.code || null }); };
+  client.on('error', onClientError);
   try {
     await client.query(beginSql());   /* E01: the statement deadline rides on BEGIN's own trip */
     const result = await fn(client);
@@ -233,7 +238,8 @@ const withTransaction = async (fn) => {
     try { await client.query('ROLLBACK'); } catch (rbErr) { console.error('Rollback failed:', rbErr.message); }
     throw err;
   } finally {
-    client.release();   // always return the connection to the pool
+    client.removeListener('error', onClientError);
+    client.release(clientDied || undefined);   // always return the connection to the pool; a dead one is destroyed, not reused (PLT-86)
   }
 };
 

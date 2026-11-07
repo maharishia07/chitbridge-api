@@ -86,7 +86,7 @@ class FakePool {
     return Promise.resolve(r);
   }
   connect(cb) {
-    const client = { query: (q, p) => Promise.resolve(answer(q, Array.isArray(p) ? p : undefined)), release() {} };
+    const client = { query: (q, p) => Promise.resolve(answer(q, Array.isArray(p) ? p : undefined)), release() {}, on() { return this; }, removeListener() { return this; } };   /* PLT-86: withTx / withTransaction listen for a dead connection */
     if (typeof cb === 'function') { cb(null, client, () => {}); return undefined; }
     return Promise.resolve(client);
   }

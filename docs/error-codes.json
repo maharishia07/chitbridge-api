@@ -1640,6 +1640,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "DB_CONNECTION_LOST",
+   "status": "503",
+   "title": "Database unavailable",
+   "shopkeeper": "The connection to the database was lost while this was being done. Nothing was saved.",
+   "hint": "Try again in a moment.",
+   "owner_area": "platform",
+   "since": "2026-11-07"
+  },
+  {
    "code": "DEFINITIONS_NOT_MIGRATED",
    "status": "503",
    "title": "Definitions not set up",
@@ -4995,6 +5004,15 @@
    "hint": "Look at it again, then try once more.",
    "owner_area": "chits",
    "since": "2026-10-23"
+  },
+  {
+   "code": "taken_back",
+   "status": "409",
+   "title": "Bill was taken back",
+   "shopkeeper": "This bill was cancelled or rejected after it was booked, so it cannot be reopened.",
+   "hint": "Ask the sender to send it again as a new bill.",
+   "owner_area": "chits",
+   "since": "2026-11-07"
   }
  ]
 }
