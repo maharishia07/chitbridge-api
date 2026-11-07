@@ -172,20 +172,21 @@ const post = (url, body, token) => call('POST', url, { body, token });
     /* ── ask ── */
     reset();
     r = await post('/api/signin/ask', { id: 'owner@shop.test' });
-    T('ask: a known shop e-mail is sent a code (200, kind entity, need code, the stored id back)', r.status === 200 && r.body.kind === 'entity' && r.body.need === 'code' && r.body.id === 'shopone', JSON.stringify(r.body));
+    const ONE = (x) => x.status === 200 && x.body.need === 'pin_or_code' && Object.keys(x.body).every((k) => ['message', 'need', 'dev_otp'].includes(k)); /* SEC-143: the same to everyone */
+    T('ask: a known shop e-mail gets the one ask answer (no kind, no id)', ONE(r), JSON.stringify(r.body));
     T('ask: the code is stored on the row with an expiry', DB.shop1.otp_code != null && DB.shop1.otp_expires_at instanceof Date && DB.shop1.otp_expires_at.getTime() > Date.now());
     reset();
     r = await post('/api/signin/ask', { id: 'ravi@shopone.br' });
-    T('ask: a co-assist with a PIN is told to use it (need pin, use_pin) and no code is made', r.status === 200 && r.body.need === 'pin' && r.body.use_pin === true && DB.ravi.otp_code == null, JSON.stringify(r.body));
+    T('ask: a co-assist with a PIN gets the same answer (no use_pin) and no code is made', ONE(r) && DB.ravi.otp_code == null, JSON.stringify(r.body));
     reset();
     r = await post('/api/signin/ask', { id: 'nobody@x.test' });
-    T('ask: an unknown id is refused 400 SIGNIN_REFUSED in one plain sentence (no hint that the account is absent)', r.status === 400 && r.body.code === 'SIGNIN_REFUSED' && !/exist|no account/i.test(r.body.message), JSON.stringify(r.body));
+    T('ask: an unknown id gets the same answer, nothing created', ONE(r) && !r.body.token, JSON.stringify(r.body));
     r = await post('/api/signin/ask', {});
     T('ask: an empty body is refused 400', r.status === 400 && !r.body.token, JSON.stringify(r.body));
     r = await post('/api/signin/ask', { id: 'net.store' });
-    T('ask: a network store with no inbox is told its operator issues the code (operator_issued, 200)', r.status === 200 && r.body.operator_issued === true && r.body.need === 'code' && !r.body.dev_otp, JSON.stringify(r.body));
+    T('ask: a network store with no inbox gets the same answer (no operator_issued, no handle)', ONE(r) && !('operator_issued' in r.body), JSON.stringify(r.body));
     r = await post('/api/signin/ask', { id: 'Twin' });
-    T('ask: a name two shops share is refused (4xx) AMBIGUOUS_NAME, never picks one', r.status >= 400 && r.status < 500 && r.body.code === 'AMBIGUOUS_NAME' && !r.body.token, JSON.stringify(r.body));
+    T('ask: a name two shops share gets the same answer, no choice picked, no list', ONE(r) && !r.body.token && !('choices' in r.body), JSON.stringify(r.body));
 
     /* ── entities/register ── */
     reset();
