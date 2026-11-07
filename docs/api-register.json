@@ -24983,7 +24983,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
         "lifecycle": "stable"
       },
       "status": "partial",
