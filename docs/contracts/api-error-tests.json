@@ -168,8 +168,7 @@
   500
  ],
  "GET /api/actors/check-login": [
-  400,
-  500
+  400
  ],
  "GET /api/actors/settings": [
   401,
@@ -1674,7 +1673,6 @@
  "POST /api/actors/login": [
   400,
   403,
-  409,
   500,
   503
  ],
@@ -2642,7 +2640,6 @@
  "POST /api/entities/verify": [
   400,
   403,
-  409,
   500,
   503
  ],
@@ -3301,7 +3298,6 @@
  "POST /api/signin/verify": [
   400,
   403,
-  409,
   500,
   503
  ],

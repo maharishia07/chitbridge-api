@@ -162,7 +162,6 @@ function extras(tools) {
     X('login-short-code', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '12' } }),
     /* the 7 Nov contract pass: the three aliases are judged now. These are the answers the sweep ADDS or must reach to prove each declared status and the closed answer */
     N('check-login-username-twice', 'GET ' + at('/check-login'), 400, { url: at('/check-login?username=a@shop-a&username=b@shop-a') }),
-    N('check-login-db-fails', 'GET ' + at('/check-login'), 500, { url: at('/check-login?username=ravik@shop-a'), setup: failing }),
     N('set-pin-unknown-key-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234', colour: 'red' }, setup: { who: STAFF } }),
     N('set-pin-owner-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: OWNER } }),
     N('set-pin-db-fails', 'POST ' + at('/set-pin'), 500, { body: { pin: '1234', confirm_pin: '1234' }, setup: Object.assign({ who: STAFF }, failing) }),
@@ -170,7 +169,7 @@ function extras(tools) {
     N('login-ok', 'POST ' + at('/login'), 200, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => 'token-of-ravik'), setup: { sqlRows: LOGIN_ROW } }),
     N('login-device-removed', 'POST ' + at('/login'), 403, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: LOGIN_ROW } }),
     N('login-session-not-listed', 'POST ' + at('/login'), 503, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: LOGIN_ROW } }),
-    N('login-two-businesses-of-one-name', 'POST ' + at('/login'), 409, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: { identityAuth: { findEntityByNameOrHandle: async () => ({ ambiguous: true }) } } }),
+    N('login-two-businesses-of-one-name', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: { identityAuth: { findEntityByNameOrHandle: async () => ({ ambiguous: true }) } } }),
     N('login-db-fails', 'POST ' + at('/login'), 500, { body: { username: 'ghost@shop-a', otp: '123456' }, setup: failing })
   ];
 

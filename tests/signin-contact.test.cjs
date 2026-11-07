@@ -170,7 +170,7 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     a = await ask('athi@alpha-timers.br');
     t('   the page re-asks with the chosen stored id → the employee door (need pin)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'pin', JSON.stringify(a.body));
     v = await verify('9876543210', { pin: '2580' });
-    t('   verifying by the shared number is also asked to choose (409), not guessed', v.status === 409 && v.body.code === 'CHOOSE_IDENTITY', v.status);
+    t('   SEC-139: verifying by the shared number lists no choice (400 SIGNIN_REFUSED, like an unknown contact); the choice is made at ask', v.status === 400 && v.body.code === 'SIGNIN_REFUSED' && !('choices' in v.body), v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     v = await verify('athi@alpha-timers.br', { pin: '2580' });
     t('   …and by the chosen id, the PIN signs him in at Alpha', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     DB.athiAtAlpha.break_status = 'removed';

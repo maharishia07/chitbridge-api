@@ -29,8 +29,8 @@ of file each thing is; this says what already does the job.
 | 64 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 62 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `here` | `screen-id.js` |  |
+| 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `failed` | `service.js` | what every catch answers: |
 | 60 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 59 | `items` | `books-store.js` | PERF1: |
@@ -87,8 +87,8 @@ of file each thing is; this says what already does the job.
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
 | 30 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
+| 30 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 29 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 29 | `hold` | `orders.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |

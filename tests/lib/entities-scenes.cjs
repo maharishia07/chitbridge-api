@@ -63,7 +63,7 @@ function extras(tools) {
     /* the 7 Nov contract pass: POST /verify is judged. These reach each declared status and the closed answer (new answers: not frozen) */
     N('verify-unknown-key-refused', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '123456', colour: 'red' } }),
     N('verify-ok', 'POST ' + at('/verify'), 200, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => 'token-of-ravik'), setup: { sqlRows: PERSON_BY_HANDLE } }),
-    N('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 409, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
+    N('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 400, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
     N('verify-device-removed', 'POST ' + at('/verify'), 403, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
     N('verify-session-not-listed', 'POST ' + at('/verify'), 503, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
     N('verify-db-fails', 'POST ' + at('/verify'), 500, { body: { email: 'ghost@example.com', otp: '123456' }, setup: failing })
