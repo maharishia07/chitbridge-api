@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 226,
-  "meets": 411,
+  "partial": 225,
+  "meets": 412,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -24886,11 +24886,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "59f8df87e6c03a6f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#869: hash moved by the not-migrated reword only; the not_ready sentence is plain, true, carries no migration id; ready path unchanged. Prior: cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
