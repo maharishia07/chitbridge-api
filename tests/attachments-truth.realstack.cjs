@@ -75,8 +75,9 @@ async function idCases(A, B, C, chit) {
     const two = await upload(A, { chit_id: chit, message_id: crypto.randomUUID(), name: 'msg-two.txt', mime: 'text/plain', data_base64: b64 });
     expect(one.status === 200 && two.status === 200, 'made-up message ids answered HTTP ' + one.status + ' and ' + two.status);
     const copies = (await pg.query(`SELECT entity_id FROM cb_attachment WHERE chit_id = $1 AND name = 'msg-one.txt'`, [chit])).rows.map((row) => row.entity_id);
-    expect(copies.includes(A.entity) && copies.includes(B.entity) && !copies.includes(C.entity), 'a message the caller cannot see fans out to the whole roster (finding F2, listed): copies held by ' + JSON.stringify(copies));
-    return 'no FK · rls_entity present · made-up message id = 200 · copies for the roster only';
+    /* RAIL-187 (finding F2 fixed): a message the caller holds no copy of never widens the audience; the file stays with the caller alone */
+    expect(copies.length === 1 && copies[0] === A.entity, 'a made-up message id must keep the file with the caller only (RAIL-187, F2): copies held by ' + JSON.stringify(copies));
+    return 'no FK · rls_entity present · made-up message id = 200 · one copy, held by the caller';
   });
 }
 
