@@ -189,12 +189,12 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
       try { assert.strictEqual((await q('GET', '/compare/' + id)).status, 200); } finally { C0.canRead = keep; }
       Object.assign(WHO, { identity_id: SHOP, identity_type: 'entity', parent_entity_id: undefined, whole_entity: undefined });
     });
-    await ta('before b309 runs: GET /compare says so (ready false, Load greyed with the sentence); a load answers 503 in words — never a 500', async () => {
+    await ta('before the books comparison update runs: GET /compare says so (ready false, Load greyed with the sentence); a load answers 503 in words — never a 500', async () => {
       X.T.compareReady = false;
       try {
-        const r = await q('GET', '/compare'); assert.strictEqual(r.body.ready, false); assert.deepStrictEqual(r.body.may.load, { may: false, why: r.body.why }); assert.match(r.body.why, /b309/);
+        const r = await q('GET', '/compare'); assert.strictEqual(r.body.ready, false); assert.deepStrictEqual(r.body.may.load, { may: false, why: r.body.why }); assert.match(r.body.why, /arrives after the next update\. It was not run and nothing was posted\./); assert.doesNotMatch(r.body.why, /\bb\d{2,4}\b/);
         const w = await q('POST', '/compare/snapshots', { label: 'x', source: 'tally', part: 'tb', period_to: '2026-09-30', xml: FIX('tally-tb-ledgers.xml') });
-        assert.strictEqual(w.status, 503); assert.match(w.body.message, /b309/);
+        assert.strictEqual(w.status, 503); assert.strictEqual(w.body.code, 'BOOKS_NOT_MIGRATED'); assert.strictEqual(w.body.detail, r.body.why); assert.doesNotMatch(w.body.message, /\bb\d{2,4}\b/);
       } finally { X.T.compareReady = true; }
     });
 
