@@ -92,6 +92,13 @@ async function main() {
   const resB = await ask(port, WHO_B, 'PUT', '/api/chits/' + CHIT + '/disputes/' + DISP + '/resolve', { resolution_note: 'done' });
   check('resolve as shop B: 404 on shop A\'s dispute (it answered ' + resB.status + ')', resB.status === 404, resB.text.slice(0, 200));
 
+  /* the dispute-message party check, through the real POST /messages route */
+  const msg = { message_text: 'hello', thread_type: 'external', is_dispute: true, dispute_id: DISP };
+  const msgB = await ask(port, WHO_B, 'POST', '/api/chits/' + CHIT + '/messages', msg);
+  check('dispute message as shop B (holds the chit, not a party): 403 Not a party (it answered ' + msgB.status + ')', msgB.status === 403 && /Not a party/.test(msgB.text), msgB.text.slice(0, 200));
+  const msgA = await ask(port, WHO_A, 'POST', '/api/chits/' + CHIT + '/messages', msg);
+  check('dispute message as shop A (a party): passes the party check (it answered ' + msgA.status + ')', !/Not a party/.test(msgA.text), msgA.text.slice(0, 200));
+
   await openCountCase();
   listSqlCase();
   server.close();

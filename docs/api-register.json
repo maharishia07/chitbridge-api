@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 228,
-  "meets": 409,
+  "partial": 221,
+  "meets": 416,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -796,11 +796,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4a17b9d60cbb5078"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -10693,11 +10692,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b29d0408daaea305"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -11382,11 +11380,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "717bda3d3a5a7b88"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -11492,11 +11489,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4fb72caa3f81d69c"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -13334,11 +13330,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "620e6978a139f9e5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -40743,11 +40738,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b01be72f3b0a508b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-chit2.js",
@@ -62758,11 +62752,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0db505edd6bea9db"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-dispute.js",
     "core.js",

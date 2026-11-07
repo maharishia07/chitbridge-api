@@ -43,11 +43,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id/purge": {
-   "hash": "fc31a63bfe103fc8",
+   "hash": "4a17b9d60cbb5078",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "DELETE /api/crm/followups/:id": {
@@ -556,11 +556,11 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/inbox": {
-   "hash": "043cd9e70f06789d",
+   "hash": "b29d0408daaea305",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "GET /api/chits/raida/report": {
@@ -596,19 +596,19 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/rollup": {
-   "hash": "ad6796f3a4111cb6",
+   "hash": "717bda3d3a5a7b88",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "GET /api/chits/sent": {
-   "hash": "81a3de9166377e50",
+   "hash": "4fb72caa3f81d69c",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "GET /api/chits/trace/batches": {
@@ -708,11 +708,11 @@
    "lifecycle": "stable"
   },
   "GET /api/crm/parties/:id/timeline": {
-   "hash": "6cbf9daf9774ff55",
+   "hash": "620e6978a139f9e5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "GET /api/crm/privacy-requests": {
@@ -2311,11 +2311,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/archive": {
-   "hash": "b9353130dc633b3d",
+   "hash": "b01be72f3b0a508b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/assign-lines": {
@@ -3403,11 +3403,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve": {
-   "hash": "8d1af83e23757398",
+   "hash": "0db505edd6bea9db",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/priority": {
