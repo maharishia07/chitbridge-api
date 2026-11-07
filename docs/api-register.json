@@ -50045,9 +50045,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b7fcd845681fd8a0"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -57491,9 +57490,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5bd01e8d7f6c816d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
