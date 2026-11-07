@@ -850,7 +850,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
           sign = role === 'creditors' ? -1 : 1;
         /* created_at is a MOMENT: its day is the shop's (dayOf), never E.ymd — that reads `date` columns */
         const items = (await S.items(h, e, null, a.account_id)).filter((item) => new Date(item.created_at).getTime() < cut).map(E.itemOf);
-        const d = E.dues(items, asOf, side, followOpt);
+        const d = E.dues(items, asOf, side, Object.assign({ pack: B.packOf(req.books) }, followOpt));
         if (role === 'creditors') payableItems = items;
         const byRef = d.open.by_ref || {}; /* the NETTED bills — the one due figure (see above) */
         /* PERF1: each party's open documents, grouped ONCE — the filter over every document ran once per party (251 × 15k at 100k lines) */

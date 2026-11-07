@@ -106,6 +106,7 @@ const ask = (server, method, url, body, signedIn = true) =>
     const data = JSON.stringify(body || {});
     const headers = { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) };
     if (signedIn) headers.authorization = 'Bearer test';
+    headers['idempotency-key'] = 'k1-guard-' + method + path;   /* idem3: a keyed money write (DELETE :c/payment) asks for the key before it judges the id, so both asks carry one and only the id differs */
     const req = http.request({ port: server.address().port, method, path: url, headers }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));

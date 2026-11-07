@@ -1,6 +1,11 @@
 /**
  * ChitBridge connector CORE — the half that talks to ChitBridge. Adapters (./adapters/*.js) talk to the outside system.
  *
+ * OWNS      the connector's one HTTP door to ChitBridge (`call`, with the key and any extra headers such as Idempotency-Key), the stream of the mailbox bell and the read/write helpers.
+ * CALLED BY the adapters' runners (./index.js, ./till.js) on the shop PC.
+ * FLOW      adapter reads the outside system → core.call → ChitBridge → adapter writes back
+ * CARD      23-connectors-and-integrations/tally-connector
+ *
  * Athi, 2026-09-05: "read the product data from the existing system, create offers in ours and pass back to their
  * system; when the order is made we take care of network connectivity and others." — and: "does it mean we can use it
  * for any system which has a similar connector? GoFrugal or any other system in the world?" Yes: this core never knows
@@ -69,12 +74,12 @@ class CB {
    * ⚠️ AN ABORT THROWS, like any other failure — so every existing catch keeps its bill queued exactly as it
    * does for a refused connection. What changes is that the failure ARRIVES.
    */
-  async call(method, p, body, ms) {
+  async call(method, p, body, ms, extra) {
     const ac = new AbortController();
     const to = setTimeout(() => { try { ac.abort(); } catch (_) {} }, ms || 120000);
     let r;
     try {
-      r = await fetch(this.api + p, { method, signal: ac.signal, headers: { 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+      r = await fetch(this.api + p, { method, signal: ac.signal, headers: Object.assign({ 'X-Api-Key': this.key, 'Content-Type': 'application/json' }, extra || {}), body: body ? JSON.stringify(body) : undefined });
     } catch (e) {
       /* ⚠️ SAY IT WAS A DEADLINE, not "fetch failed" — the two need different actions from whoever reads the log */
       if (e && (e.name === 'AbortError' || e.name === 'TimeoutError')) {

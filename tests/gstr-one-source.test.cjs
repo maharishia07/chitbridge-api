@@ -57,7 +57,7 @@ const minor = (rupees) => Math.round(rupees * 100);
   const BP = require(path.join(H.API, 'lib', 'books-period'));
 
   /* ── the fixture: copies as the chit tables hold them ── */
-  const party = (id) => ({ Gstin: IDS[id].gstn, LglNm: IDS[id].display_name, State: '33', Pos: '33', RegType: String((IDS[id].policy_flags || {}).gst_registration || 'regular') });
+  const party = (id) => ({ Gstin: IDS[id].gstn, LglNm: IDS[id].display_name, State: '33', Pos: '33', Country: 'IN', RegType: String((IDS[id].policy_flags || {}).gst_registration || 'regular') });
   const frozen = (seller, buyer, lines) => T.determine({ seller: party(seller), buyer: party(buyer), lines });
   const line = (name, price, rate) => ({ name, hsn: '9999', qty: 1, unit_price: price, rate });
   const rows = [];

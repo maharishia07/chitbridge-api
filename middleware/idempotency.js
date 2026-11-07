@@ -48,6 +48,9 @@ const HOUR_MS = 3600 * 1000;
 const UNVERIFIED_MEMORY_MAX = 5000; /* entries the store-off memory keeps before the oldest is forgotten */
 /** a status that is NOT a settled outcome, so the claim is dropped and a retry may run: a server error, a refused token (401) or a refused role/scope (403: hat-gate, key scope, enrol pending — lifted later by a promotion or an approval) */
 const notSettled = (status) => status >= 500 || status === 401 || status === 403;
+/** idem3 (7 Nov): a 4xx that says "not YET" is no outcome: the till queues the points behind their bill and sends the SAME key again once the bill has landed, so the first 409 must not become the key's answer. Add a code here only if its route says it is waiting for something, never refusing. */
+const WAITING_CODES = new Set(['BILL_NOT_RECORDED']);
+const waitsFor = (body) => !!(body && WAITING_CODES.has(body.code));
 const STORE_MISSING_CODES = ['42P01', '42703']; /* table or column missing — pre-b109, expected rather than alarming */
 
 /**
@@ -137,7 +140,7 @@ const dbStore = {
   },
   async finalize(entity, key, status, body) {
     return withEntity(entity, async (db) => {
-      if (notSettled(status) || carriesCode(body)) {
+      if (notSettled(status) || carriesCode(body) || waitsFor(body)) {
         // a server error, a refused token or an answer that carries a code is NOT recorded — let a retry re-run it
         await db.query(`DELETE FROM idempotency_key WHERE entity_id = $1 AND idem_key = $2 AND state = 'in_progress'`, [entity, key]);
       } else {
@@ -179,7 +182,7 @@ const memoryStore = {
     const memoryKey = entity + '\n' + key,
       held = unverified.get(memoryKey);
     if (!held) return;
-    if (notSettled(status) || carriesCode(body))
+    if (notSettled(status) || carriesCode(body) || waitsFor(body))
       unverified.delete(memoryKey); // not a completed outcome (or it carries a code) — a retry may run again
     else Object.assign(held, { state: 'done', status, response: body == null ? null : body });
   },
