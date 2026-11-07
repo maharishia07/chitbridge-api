@@ -5,6 +5,12 @@
  * evaluates a basket through the key, places a storefront order for one item (the customer rail, dev OTP), runs the
  * catch-up, and checks the voucher reached the fake Tally exactly once — then runs the catch-up again (no duplicate),
  * marks the chit paid through the API and checks ONE Receipt voucher reached the fake Tally (and not twice), and revokes
+ *
+ * OWNS      the one-machine proof of the connector loop: fake Tally + the live API, PASS/FAIL per step (a script, not a library).
+ * CALLED BY a person at a terminal (node prove.js <api>); nothing requires it.
+ * FLOW      read api + CB_TOKEN → mint key → sync items → basket → order → catch-up (twice) → Mark paid (own Idempotency-Key) → revoke key
+ * CARD      09-counter/connector-proof
+ *
  * the key. Prints PASS/FAIL per step. Leaves the products behind (the shared test account accumulates —
  * a known cost); the key is revoked; the receipts file is temporary.
  */
