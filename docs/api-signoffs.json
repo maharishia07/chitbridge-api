@@ -715,11 +715,11 @@
    "lifecycle": "stable"
   },
   "GET /api/crm/parties/:id/timeline": {
-   "hash": "620e6978a139f9e5",
+   "hash": "1d3706ef33c106b7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: whole handler re-read after RAIL-146h (cost-blind reader gets null money, same keys); caller-scoped 404 for a foreign party; 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/crm/privacy-requests": {
@@ -2003,35 +2003,35 @@
    "lifecycle": "stable"
   },
   "POST /api/books/accruals": {
-   "hash": "e11dc56f2f6c00ee",
+   "hash": "8946badbc2fbfb0d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/accruals/:ref/reverse": {
-   "hash": "d60f521d80212da1",
+   "hash": "c5804bdfe29a5772",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets": {
-   "hash": "fa69bd94b52e0c7d",
+   "hash": "85ee4d9880bd3f5d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets/:id/dispose": {
-   "hash": "07f4da6c18005556",
+   "hash": "dd20f8b7ff039130",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/check": {
@@ -2051,11 +2051,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/closing-stock": {
-   "hash": "81c7a68b6596fef6",
+   "hash": "f7e474aa3f126a6f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/compare/preflight": {
@@ -2075,19 +2075,19 @@
    "lifecycle": "stable"
   },
   "POST /api/books/contra": {
-   "hash": "b7de4792f46dba1f",
+   "hash": "4791a685ccbf85d4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/depreciation/run": {
-   "hash": "e6107dd2f522b2cd",
+   "hash": "7f566abeda51311f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/enable": {
@@ -2147,11 +2147,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/gst/close": {
-   "hash": "3c7634f00c4bd826",
+   "hash": "e0e55c0fbac21845",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/gst/pay": {
@@ -2163,19 +2163,19 @@
    "lifecycle": "stable"
   },
   "POST /api/books/loans": {
-   "hash": "b4badb092ebd3991",
+   "hash": "1c90f5d4dea66b3f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/loans/:ref/emi": {
-   "hash": "10480c2322762cd4",
+   "hash": "0f3772ca67a39e28",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/move-in/import": {
@@ -2299,19 +2299,19 @@
    "lifecycle": "stable"
   },
   "POST /api/books/recurring/:id/post": {
-   "hash": "e86f80702fc4ce0e",
+   "hash": "a9a8fedb79f55b44",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/recurring/:id/skip": {
-   "hash": "592300a405e4e0eb",
+   "hash": "c51214ebf2d96a82",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/setting": {
@@ -2331,11 +2331,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/write-off": {
-   "hash": "0eba96facf73332e",
+   "hash": "4a83f18d6fc594f8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
@@ -2443,11 +2443,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/costs": {
-   "hash": "2b38b28b578677cd",
+   "hash": "f07c1d1194dee405",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
@@ -2547,11 +2547,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/register/templates": {
-   "hash": "7783fd2adbe4f1d4",
+   "hash": "5342aa1379665464",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/send": {
@@ -3683,19 +3683,19 @@
    "lifecycle": "stable"
   },
   "PUT /api/assist/catalogue-source": {
-   "hash": "04b1fcb826d849fd",
+   "hash": "e8f1198436967af4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/assist/container": {
-   "hash": "37f873526d513655",
+   "hash": "0a70997c357d3b62",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/catalogue-face": {
