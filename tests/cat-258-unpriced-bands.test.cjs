@@ -30,7 +30,10 @@ let port = 0;
 async function send(route, lines) {
   Object.assign(world, { realAuth: false, who: lab.world.who, asKey: false, db: 'ok', sqlRows: null, keyScopes: null });
   SERVICES.shelfOf = async () => ({ productOf: (line) => products[line.item_id || line.code] || null, idOf: () => null });
-  return lab.send(port, 'POST', route, { lines });
+  SERVICES.shopOf = async () => ({ party: { LglNm: 'Shop', Gstin: '33AAAAA0000A1Z5', State: '33', Country: 'IN', RegType: 'regular' }, priceIncludesTax: false });
+  SERVICES.askedShopOf = async (entity_id) => SERVICES.shopOf(entity_id); /* ACC-272: this shop is registered */
+  const body = route.includes('invoice') ? { lines: lines.map((line) => Object.assign({ gst_rate: 5 }, line)), offers: [], buyer: { LglNm: 'Walk-in' } } : { lines };
+  return lab.send(port, 'POST', route, body);
 }
 
 async function bands() {
@@ -49,8 +52,10 @@ async function bill() {
   let answer = await send('/api/invoice/build', [{ code: 'blank', qty: 5, pricing: TIERED }]);
   check('invoice/build of an unpriced tiered line → 422 NO_PRICE', answer.status === 422 && answer.json.code === 'NO_PRICE', answer.json);
   check('the refusal names the product and says to set its price', /"Loose rice" has no price on the shelf\. Set its price, or send one\./.test(answer.json.message || answer.json.detail || ''), answer.json);
-  answer = await send('/api/invoice/build', [{ code: 'blank', qty: 5, listPrice: 10, pricing: TIERED }]);
-  check('a price the caller sends is not refused as unpriced', answer.json.code !== 'NO_PRICE', answer.json);
+  answer = await send('/api/invoice/build', [{ code: 'blank', qty: 5, listPrice: 10 }]);
+  check('a price the caller sends builds AT that price (5 × 10 = 50)', answer.status === 200 && answer.json.pricing[0].unit_price === 10 && answer.json.offers.subtotal === 50, answer.json);
+  answer = await send('/api/invoice/build', [{ code: 'blank', qty: 5, listPrice: 0 }]);
+  check('a listPrice of 0 is a deliberate free line: built at 0, not refused', answer.status === 200 && answer.json.pricing[0].unit_price === 0, answer.json);
 }
 
 (async () => {

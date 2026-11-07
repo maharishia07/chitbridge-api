@@ -187,7 +187,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const said = S.saidInclusive(body);
     if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
     const entity_id = auth.entityOf(req);
-    const shop = await S.shopOf(entity_id);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
     if (st.code === 'NO_COUNTRY') return refuse(req, res, 422, 'NO_COUNTRY', st.why);

@@ -105,6 +105,8 @@ async function unpricedIsNullNeverZero() {
   check('an unpriced tiered line still lists its bands with the tier prices 8 and 7', line.bands.filter((band) => band.from >= 10).map((band) => band.price).join() === '8,7', line.bands);
   const mixed = await price([{ code: 'blank', qty: 5, pricing: TIERED }, { qty: 10, listPrice: 10, pricing: TIERED }], { products });
   check('a basket of an unpriced line and a 10 × 8 line: the priced line totals 80, the unpriced one is null in its own row', mixed.json.total === 80 && mixed.json.lines[0].unit_price === null && mixed.json.lines[1].unit_price === 8, mixed.json);
+  check('the mixed basket says its total is partial: total_partial true, the unpriced key named, words given (CAT-258)', mixed.json.total_partial === true && mixed.json.unpriced_lines.length === 1 && /no price set/.test(mixed.json.total_words || ''), mixed.json);
+  check('an all-priced basket carries none of the partial keys', first({ json: { lines: [1] } }) && (await price([{ qty: 10, listPrice: 10, pricing: TIERED }])).json.total_partial === undefined);
   const firstBand = line.bands.find((band) => band.from === 1);
   check('the first band of an unpriced ladder is null, not a free 0, with the words "no price set" (CAT-258)', !!firstBand && firstBand.price === null && firstBand.why === 'no price set', firstBand);
 }

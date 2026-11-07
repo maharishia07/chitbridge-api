@@ -22,6 +22,7 @@ stubMod('middleware/auth.js', Object.assign((req, res, next) => { req.identity =
 const S = require('../lib/services');
 S.shelfOf = async () => ({ shelf: null, items: [], byId: new Map(), byCode: new Map(), idOf: () => null, productOf: () => null });
 S.shopOf = async () => ({ party: { LglNm: 'Shop', Gstin: '33AAAAA0000A1Z5', State: '33', Country: 'IN', RegType: 'regular' }, priceIncludesTax: false });
+S.askedShopOf = async (entity_id) => S.shopOf(entity_id); /* ACC-272: this test's shop is registered; the ask is tested in acc-272-unknown-registration */
 
 let pass = 0, fail = 0;
 const t = (label, got, want) => {

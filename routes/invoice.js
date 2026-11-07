@@ -57,7 +57,7 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
       const [code, words] = S.unpricedSaid(unpriced, sh.productOf(unpriced), (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"');
       return problem(req, res, taxSaid(422, code, words, { line: unpriced.key }));
     }
-    const shop = await S.shopOf(entity_id);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */
     const currency = body.currency || T.currencyOf(seller);
