@@ -588,8 +588,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 200, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/chits/:chit_id/books-request": {
@@ -1271,8 +1270,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/till/reward/claim": {
@@ -1284,8 +1282,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/till/pair": {

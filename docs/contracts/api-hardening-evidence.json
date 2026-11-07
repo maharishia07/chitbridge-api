@@ -185,7 +185,8 @@
   },
   "DELETE /api/chits/:chit_id/payment": {
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "idempotent_money_write": true
   },
   "POST /api/chits/:chit_id/books-request": {
    "strict_input": true,
@@ -388,10 +389,12 @@
    "output_allowlist": true
   },
   "POST /api/till/reward": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/till/reward/claim": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/till/pair": {
    "output_allowlist": true

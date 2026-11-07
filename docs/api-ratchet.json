@@ -12,7 +12,7 @@
   "strict_input": 72,
   "output_allowlist": 60,
   "foreign_id_404": 20,
-  "idempotent_money_write": 6,
+  "idempotent_money_write": 3,
   "inbound_validated": 0,
   "trips_budgeted": 46
  },

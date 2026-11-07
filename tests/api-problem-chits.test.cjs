@@ -601,7 +601,7 @@ const EXTRAS = [
 
 /** FIN-51: Mark paid is a money write and REQUIRES an Idempotency-Key; every scenario that reaches it carries a fresh one (a shared key would replay the first answer) */
 let keySeed = 0;
-const keyOf = (method, urlPath) => (method === 'POST' && /\/payment$/.test(urlPath.split('?')[0]) ? { 'idempotency-key': 'scenario-' + (++keySeed) } : {});
+const keyOf = (method, urlPath) => ((method === 'POST' || method === 'DELETE') && /\/payment$/.test(urlPath.split('?')[0]) ? { 'idempotency-key': 'scenario-' + (++keySeed) } : {});
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
