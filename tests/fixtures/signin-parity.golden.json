@@ -1,5 +1,5 @@
 {
- "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged",
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged · amended 2026-11-07 (SEC-139): the three missing-secret scenarios now answer the one SIGNIN_REFUSED sentence; check.pin says has_pin false like everyone",
  "scenarios": {
   "ask.entity.email": {
    "responses": [
@@ -1402,9 +1402,9 @@
     {
      "status": 400,
      "body": {
-      "error": "Verification failed",
-      "message": "Enter your PIN.",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -1938,9 +1938,9 @@
     {
      "status": 400,
      "body": {
-      "error": "PIN required",
-      "message": "Enter your 4 digit PIN to login",
-      "use_pin": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -2239,9 +2239,9 @@
     {
      "status": 400,
      "body": {
-      "error": "OTP required",
-      "message": "Enter the OTP your admin shared with you",
-      "use_otp": true
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],
@@ -2683,7 +2683,7 @@
      "status": 200,
      "body": {
       "valid": true,
-      "has_pin": true
+      "has_pin": false
      }
     }
    ],

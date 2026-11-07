@@ -162,7 +162,6 @@ function extras(tools) {
     X('login-short-code', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '12' } }),
     /* the 7 Nov contract pass: the three aliases are judged now. These are the answers the sweep ADDS or must reach to prove each declared status and the closed answer */
     N('check-login-username-twice', 'GET ' + at('/check-login'), 400, { url: at('/check-login?username=a@shop-a&username=b@shop-a') }),
-    N('check-login-db-fails', 'GET ' + at('/check-login'), 500, { url: at('/check-login?username=ravik@shop-a'), setup: failing }),
     N('set-pin-unknown-key-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234', colour: 'red' }, setup: { who: STAFF } }),
     N('set-pin-owner-refused', 'POST ' + at('/set-pin'), 400, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: OWNER } }),
     N('set-pin-db-fails', 'POST ' + at('/set-pin'), 500, { body: { pin: '1234', confirm_pin: '1234' }, setup: Object.assign({ who: STAFF }, failing) }),

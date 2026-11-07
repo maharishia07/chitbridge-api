@@ -168,8 +168,7 @@
   500
  ],
  "GET /api/actors/check-login": [
-  400,
-  500
+  400
  ],
  "GET /api/actors/settings": [
   401,
