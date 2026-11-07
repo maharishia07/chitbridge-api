@@ -54,6 +54,7 @@ const GUARDS = [
   'backup-guard.test.cjs', // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
   'spin-scripts.test.cjs', // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs', // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
+  'pg-no-deprecation.test.cjs', // PLT-42: the db layer raises no pg DeprecationWarning (queued client.query() on a busy client is removed in pg@9)
   'records-keeping.test.cjs', // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
   'fx-dates-tz.test.cjs', // ⭐ a rate's day is the same on every server (India · Sydney · UTC · LA) — fx-rates reads dates with books-engines ymd
   'till-country-bill.test.cjs', // ⭐ the counter bill in IN · AU · AE: fmtCount by money, tax words per pack (api #163; on the board since the 14 Oct rebuild)
