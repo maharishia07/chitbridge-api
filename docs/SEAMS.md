@@ -29,7 +29,7 @@ of file each thing is; this says what already does the job.
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 63 | `failed` | `service.js` | what every catch answers: |
+| 64 | `failed` | `service.js` | what every catch answers: |
 | 62 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entry` | `books-store.js` |  |
