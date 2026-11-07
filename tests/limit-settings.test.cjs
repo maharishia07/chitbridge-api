@@ -100,6 +100,7 @@ function decimalCases() {
 /** every converted site: file, setting, default, reader, bounds. Source must call the reader with exactly these, and the reader must give typo/blank -> default, valid -> valid. */
 const SITES = [
   ['routes/till.js', 'TILL_CATALOGUE_MAX', 20, 'int', {}], ['lib/otp.js', 'MAX_OTP_ATTEMPTS', 5, 'int', {}],
+  ['lib/ai.js', 'AI_PRICE_IN', 1, 'num', { min: 0 }], ['lib/ai.js', 'AI_PRICE_OUT', 5, 'num', { min: 0 }], ['lib/kyb.js', 'KYB_FIELD_COST_USD', 0.02, 'num', { min: 0 }],
   ['lib/ai.js', 'AI_MAX_TOKENS', 4000, 'int', {}], ['lib/ai.js', 'AI_MAX_IMAGES', 4, 'int', {}], ['lib/ai.js', 'AI_MAX_IMAGE_B64', 1400000, 'int', {}],
   ['lib/ai.js', 'AI_FREE_USD', 1.0, 'num', { min: 0 }], ['lib/ai.js', 'AI_RATE_PER_HOUR', 60, 'int', {}], ['lib/ai.js', 'AI_RATE_PER_DAY', 300, 'int', {}],
   ['lib/ai.js', 'AI_GLOBAL_DAILY_USD', 25, 'num', { min: 0 }], ['lib/ai.js', 'AI_METER_FAIL_MAX', 20, 'int', {}], ['lib/ai.js', 'AI_SKILL_TTL_MS', 60000, 'int', { min: 0 }],
