@@ -2215,18 +2215,20 @@
       "extra": true
     },
     "GET /health": {
-      "file": "server.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js"
+      "file": "health.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
     },
     "OPTIONS *": {
-      "file": "server.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js"
+      "file": "preflight.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "registered_only": true
     },
     "PATCH /api/actors/:id": {
       "file": "actors.js",

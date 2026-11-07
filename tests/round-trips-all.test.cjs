@@ -190,7 +190,7 @@ for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !calle
 const ID = '00000000-0000-4000-8000-000000000001';
 async function fire(port, route) {
   const sp = route.indexOf(' ');
-  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID);
+  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
   wire = 0;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);

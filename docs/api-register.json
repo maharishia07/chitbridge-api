@@ -4,8 +4,8 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 10,
-  "partial": 238,
+  "not_started": 7,
+  "partial": 241,
   "meets": 389,
   "columns": {
    "strict_input": {
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 76
+    "failing": 73
    },
    "foreign_id_404": {
     "applies": 203,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 637,
-    "failing": 49
+    "failing": 47
    }
   },
   "reported": {
@@ -21659,12 +21659,14 @@
    "owner_area": "openapi",
    "owner_agent": "cb-api",
    "file": "routes/openapi.js",
-   "line": 35,
-   "hash": "1d85b1e5731b06d5",
+   "line": 36,
+   "hash": "74d01a534e01a051",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -21677,15 +21679,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21699,7 +21701,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -21718,7 +21722,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -28866,15 +28870,17 @@
    "key": "GET /health",
    "method": "GET",
    "path": "/health",
-   "owner_area": "server",
-   "owner_agent": "cb-platform",
-   "file": "server.js",
-   "line": 491,
-   "hash": "c25e42989502c043",
+   "owner_area": "health",
+   "owner_agent": "unassigned",
+   "file": "routes/health.js",
+   "line": 14,
+   "hash": "a68d6882ceaebe1f",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -28887,19 +28893,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28909,7 +28915,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -28928,12 +28936,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -28947,15 +28955,17 @@
    "key": "OPTIONS *",
    "method": "OPTIONS",
    "path": "*",
-   "owner_area": "server",
-   "owner_agent": "cb-platform",
-   "file": "server.js",
-   "line": 163,
-   "hash": "cfc1e63a162440a5",
+   "owner_area": "preflight",
+   "owner_agent": "unassigned",
+   "file": "routes/preflight.js",
+   "line": 16,
+   "hash": "935cfbf551c234cf",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -28968,19 +28978,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28990,7 +29000,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -29009,12 +29021,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {

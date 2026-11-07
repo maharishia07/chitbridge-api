@@ -1104,6 +1104,9 @@
  "GET /api/offers/openapi.json": [
   500
  ],
+ "GET /api/openapi.json": [
+  500
+ ],
  "GET /api/people": [
   401,
   422,
@@ -1458,6 +1461,12 @@
   400,
   401,
   403,
+  500
+ ],
+ "GET /health": [
+  500
+ ],
+ "OPTIONS *": [
   500
  ],
  "PATCH /api/actors/:id": [
