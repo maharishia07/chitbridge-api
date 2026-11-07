@@ -48,7 +48,7 @@ router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async
 router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   try {
     const me = ctx(req);
-    const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped } = await C.ledgerFor(me, req.query.month);
     res.json({
       month: bounds.month,
       period: bounds.period,
@@ -59,6 +59,7 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       net: ledger.net,
       count: ledger.count,
       provisional: ledger.provisional,
+      dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
         subject: item.subject,
@@ -80,11 +81,21 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   }
 });
 
+/* ACC-266 C5: a copy that fails to read fails every time until it is repaired, so the refusal names the bills and says they need repair; it does not promise a retry */
+const DROPPED_NAMED = 5;
+function droppedWords(dropped) {
+  const first = dropped.slice(0, DROPPED_NAMED).join(', ');
+  const more = dropped.length > DROPPED_NAMED ? ' and ' + (dropped.length - DROPPED_NAMED) + ' more' : '';
+  return dropped.length + ' bill(s) of this month could not be read, so the file would be short and was not made. These bills need repair: ' + first + more + '. Ask support to repair them, then ask for the file again.';
+}
+
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
-    const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped } = await C.ledgerFor(me, req.query.month);
+    /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
+    if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped), { dropped: dropped.slice(0, DROPPED_NAMED) }));
     const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
     /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */

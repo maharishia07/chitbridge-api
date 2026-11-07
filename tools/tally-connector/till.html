@@ -6139,7 +6139,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-06.ctr177';
+var TILL_BUILD = '2026-11-07.sec143';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -26439,7 +26439,7 @@ function usignAnswer(path, reqBody, reply, name){
   var body = reply && reply.body, door = usignDoor(path);
   if (!body || typeof body !== 'object') return reply;
   if (name && usignWasRefused(door, reply)) body.message = usignRefusalWords(name, door);   /* the owner, or a typed ID, keeps the server's sentence */
-  else if (door === 'ask' && usignAskedFirstCode(reply)) body.message = 'Type the first code the owner gave you. Then choose a Counter PIN.';
+  else if (door === 'ask' && name && usignWasOk(reply)) body.message = 'Type your PIN, or the first code the owner gave you.';   /* SEC-143: ask answers everyone the same, so a picked worker is told both ways in, never which she has */
   else if (door === 'pin' && usignWasOk(reply) && reqBody && reqBody.pin) USIGN.newPin = String(reqBody.pin);
   return reply;
 }
@@ -26454,9 +26454,6 @@ function usignWasOk(reply){
 /** the server's one sentence for every hidden reason (lib/otp.js SIGNIN_REFUSED_SENTENCE) */
 function usignWasRefused(door, reply){
   return (door === 'ask' || door === 'verify') && reply.status === 400 && /^That sign-in didn.t work/.test(String(reply.body.message || ''));
-}
-function usignAskedFirstCode(reply){
-  return usignWasOk(reply) && reply.body.kind === 'actor' && reply.body.need === 'code';
 }
 
 /** the window, mounted fresh into #usignbody — the ONLY place this page calls CBSignin.mount */

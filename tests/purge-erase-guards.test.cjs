@@ -24,7 +24,7 @@ const TARGET = '44444444-4444-4444-8444-444444444444';
 
 function rows(sql, params, ctx) {
   if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(sql) && /SELECT role/.test(sql)) return ctx.header ? [ctx.header] : [];
-  if (/FROM chit_disputes WHERE chit_id = \$1 AND status = 'open'/.test(sql)) {
+  if (/FROM chit_disputes WHERE chit_id = \$1 AND entity_id = \$2 AND status = 'open'/.test(sql)) {
     if (ctx.disputesFail) throw new Error('relation "chit_disputes" does not exist');
     return [{ count: ctx.openDisputes || 0 }];
   }
