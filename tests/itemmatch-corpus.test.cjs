@@ -48,7 +48,8 @@ const FAMILIES = {
   pharma: {
     cat: cat([mk('Paracetamol 500mg'), mk('Paracetamol 650mg', ['dolo 650']), mk('Amoxicillin 250mg'), mk('Cetirizine 10mg'), mk('Metformin 500mg')]),
     yes: [['paracetamol 500 mg', 'Paracetamol 500mg'], ['paracetmol 500mg', 'Paracetamol 500mg'], ['amoxicilin 250mg', 'Amoxicillin 250mg'], ['cetrizine 10mg', 'Cetirizine 10mg'], ['metphormin 500mg', 'Metformin 500mg'], ['dolo 650', 'Paracetamol 650mg']],
-    no: [['cetirizine 5mg'], ['diclofenac 50mg']],
+    no: [['cetirizine 5mg'], ['diclofenac 50mg'], ['paracetamol 5000'], ['metformin 50']],
+    never: [['paracetamol 500', 'Paracetamol 650mg'], ['paracetamol 650', 'Paracetamol 500mg'], ['paracetamol 650mg', 'Paracetamol 500mg'], ['metformin 500mg', 'Paracetamol 500mg']],
     ask: [
       ['paracetamol 600mg', ['Paracetamol 500mg', 'Paracetamol 650mg']],
       ['amoxicillin 500mg', ['Amoxicillin 250mg']]
@@ -92,6 +93,10 @@ for (const [fam, f] of Object.entries(FAMILIES)) {
   if (f.narrow) for (const [phrase] of f.narrow.no) {
     const got = outcome(im.match(phrase, '', f.narrow.cat));
     check(!got.startsWith('item:'), fam + ' must NOT match (narrow catalogue): "' + phrase + '"', got);
+  }
+  for (const [phrase, wrong] of f.never || []) {
+    const got = outcome(im.match(phrase, '', f.cat));
+    check(got !== 'item:' + wrong, fam + ' must NEVER be ' + wrong + ': "' + phrase + '"', got);
   }
   for (const [phrase, names] of f.ask || []) {
     const r = im.match(phrase, '', f.cat);
