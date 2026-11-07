@@ -1442,6 +1442,34 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "date-given-bs-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     }
     }
    ]
   },
@@ -1892,6 +1920,34 @@
       "error": "Only the owner may see what you owe.",
       "message": "Only the owner may see what you owe."
      }
+    },
+    {
+     "scenario": "date-given-dues-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "asOf"
+     }
     }
    ]
   },
@@ -2165,6 +2221,34 @@
      "fixture": {
       "error": "Not found",
       "message": "No such ledger."
+     }
+    },
+    {
+     "scenario": "date-given-ledger-read",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
      }
     }
    ]
@@ -2691,6 +2775,34 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "date-given-pl-both-bad",
+     "status": 400,
+     "body_keys": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Which date? Use YYYY-MM-DD.",
+      "message": "Which date? Use YYYY-MM-DD.",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "Which date? Use YYYY-MM-DD.",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "from"
      }
     }
    ]

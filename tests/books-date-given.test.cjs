@@ -43,6 +43,11 @@ ok('a reader handed only the value gets its field from the request (query asOf, 
   assert.strictEqual(refusalOf(e, { query: { asOf: '03/10/2026' } }).field, 'asOf');
   assert.strictEqual(refusalOf(e, { body: { narration: 'n', date: '03/10/2026' } }).field, 'date');
 });
+ok('a bad value that also sits in another key names the date key, not the narration', () => {
+  const e = refused(() => P.dateGiven('tomorrow', null, 'x'));
+  assert.strictEqual(refusalOf(e, { body: { narration: 'tomorrow', date: 'tomorrow' } }).field, 'date');
+  assert.strictEqual(refusalOf(e, { query: { note: 'tomorrow', asOf: 'tomorrow' } }).field, 'asOf');
+});
 ok('a missing required date (no default) is still the old question', () => {
   const e = refused(() => P.dateOf({}, 'date'));
   assert(e && e.code === 'BOOKS_BAD_REQUEST');
