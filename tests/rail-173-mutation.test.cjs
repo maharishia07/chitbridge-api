@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
-const GUARD = /^[ \t]*if \(verdict\.ok && \(await revivesTakenBack\([^\n]*\n/m;
+const GUARD = /^[ \t]*if \(takenBack\) return takenBack;\n/m;
 
 const source = fs.readFileSync(path.join(ROOT, 'lib', 'rail-status.js'), 'utf8');
 const broken = source.replace(GUARD, '');
