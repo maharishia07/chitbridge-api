@@ -43,6 +43,7 @@ db.query = async () => ({
     { identity_id: 'b1', gstn: PACK.buyer.gstn, display_name: 'Buyer', policy_flags: {}, country: PACK.buyer.country }
   ]
 });
+require('../lib/country-setup').registrationOfShop = async () => 'regular'; /* ACC-273: these AU / AE sellers carry no number but are registered shops (the owner said so); a seller nobody asked charges no tax (tests/acc-273-send-reads-registration) */
 const sendMoney = require('../lib/send-money');
 const creditNote = require('../lib/credit-note');
 const chits = require('../routes/chits');
