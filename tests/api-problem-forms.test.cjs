@@ -24,6 +24,7 @@
 const path = require('path');
 const fs = require('fs');
 const { harness, OWNER, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
 const S = require('./lib/forms-scenes.cjs');
 
@@ -104,7 +105,7 @@ function checkWords() {
   check('faultOf: 409 is FORMS_ALREADY_SIGNED, 403 is FORMS_NOT_PARTICIPANT, any other under 500 is FORMS_BAD_REQUEST (400) or FORMS_REFUSED', clash.code === 'FORMS_ALREADY_SIGNED' && words.faultOf(Object.assign(new Error('x'), { status: 403 }), req, 'x').code === 'FORMS_NOT_PARTICIPANT' && words.faultOf(Object.assign(new Error('x'), { status: 400 }), req, 'x').code === 'FORMS_BAD_REQUEST' && words.faultOf(Object.assign(new Error('x'), { status: 418 }), req, 'x').code === 'FORMS_REFUSED');
   const mute = words.faultOf(Object.assign(new Error(''), { status: 400 }), req, 'Sign form failed');
   check('faultOf: a refusal with no words answers the generic sentence', mute.legacy.message === SAFE, mute);
-  const store = words.faultOf(Object.assign(new Error('Forms not migrated yet (b108).'), { status: 503, code: 'FORMS_STORE_MISSING' }), req, 'Issue form failed');
+  const store = words.faultOf(Object.assign(new Error('Forms arrive after the next update. No form can be issued or read yet.'), { status: 503, code: 'FORMS_STORE_MISSING' }), req, 'Issue form failed');
   check('faultOf: the missing forms store is a 503 FORMS_STORE_MISSING whose message is the generic sentence, as before', store.status === 503 && store.code === 'FORMS_STORE_MISSING' && store.legacy.message === SAFE && store.legacy.code === 'FORMS_STORE_MISSING', store);
   const fault = words.faultOf(Object.assign(new Error(SECRET_SQL), { code: '22P02' }), req, 'Issue form failed');
   check('faultOf: a database fault is a 500 INTERNAL that says nothing of its cause and does not echo the SQLSTATE', fault.status === 500 && fault.code === 'INTERNAL' && sameValue(fault.legacy, { error: 'Issue form failed', message: SAFE }) && !JSON.stringify(fault).includes('vault'), fault);
@@ -361,6 +362,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 40, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -369,7 +371,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/forms.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

@@ -29,6 +29,7 @@
  * engine missing the counter refuses the sale (never a ₹0 bill); the shop-PC program's chitOf carries the same invoice.
  * Broken once each by scripts/tax-truth-breaks.cjs.
  * Run: node tests/tax-truth.test.cjs
+ * CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
  */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');

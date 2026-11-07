@@ -84,10 +84,13 @@ const GUARDS = [
   'truth-harness-partner.test.cjs', // LIFECYCLE-B4: the harness's order() and invoice() — a buy order, an invoice that names its order, item_id on every line
   /* ⭐⭐ T2-SPLIT (2026-10-14): the giant handlers became named steps — the ratchet, and the golden masters that prove nothing moved */
   'fn-size.test.cjs', // no NEW function over 80 lines in lib/ routes/ (the list may only shrink); worst complexity never rises
+  'fn-size-adopted.test.cjs', // fn-size skips ADOPTED engine files (header on line 1 only); hand-written code still counts
+  'touched-routes.test.cjs', // MNT-30: the touch rule for routes (report in warn mode until the switch date): touched = new or hash moved, 13/13 counted, fail mode fails below 13/13
   'readability-guard.test.cjs', // ⭐⭐ READ-GUARD (DISCIPLINES §6, 15 Oct): ONLY the code this change touched — hard limits · new cryptic name · empty catch · header · CARD · trace row · readability.ratchet.json (the web's tools/readability.cjs, from the twin checkout)
   'send-golden.test.cjs', // POST /chits/send: 40 scenarios, every SQL · copy · hook · answer = the trace frozen before the split
   'network-build-golden.test.cjs', // POST /network-design/build + /validate: 18 scenarios, the same
   'deliver-trace-golden.test.cjs', // deliver-lines · the trace walk · by-batch: 18 scenarios, the same
+  'ctp-tolerant-reader.test.cjs', // RAIL-126 b: CTP inbound is a tolerant reader — a higher minor of our major is read, unknown fields ignored, another major refused CTP_VERSION_UNSUPPORTED
   'ctp-door.test.cjs', // every refusal at CTP's receiving door (/deliver, /query) — status and words, nothing written
   'network-door.test.cjs', // PLT-45/RAIL-97: the pass at CTP's door — a member/master accepts a chit only with a certificate signed by the PINNED key (lapsed, revoked, wrong key, copy: refused in words); the master's questions; standalone unchanged
   'network-cert.test.cjs', // PLT-45: the second key slot (CB_NETWORK_ROOT_KEY), the certificate (seal, bind, in date, 10-minute lapse), the cb<scope><nn>-root handles, the network wants
@@ -137,6 +140,8 @@ const GUARDS = [
   'tax-lines.test.js', // ⭐⭐ the month's ledger and GSTR: a credit note REDUCES tax; cdnr · cdnur · b2cs netting · Table 13 (2026-09-28)
   'walk-in-buyer.test.cjs', // ⭐⭐ BUY1: a buyer with no country / place of supply is taxed INSIDE the shop (tax-lines.walkIn) — AU 10% · AE 5% · IN intra; a foreign buyer stays export
   'round-trips-all.test.cjs', // ⭐⭐ every route the web client calls has a round-trip budget (round-trips.budget.json) — fired offline, I19 (DB10)
+  'live-trips-writer.test.cjs', // SPD-39: the live-count writer never lowers or raises a fired line, refuses an unbudgeted route, keeps the flags
+  'live-trips-tool.test.cjs', // SPD-39: the live-trips harness restores sit-in when a run throws (fake client, offline)
   'read-batch-entity.test.cjs', // EFF-TRIPS: readBatch carries a statement per entity in ONE trip (the brands' released offers)
   'network-offers-shape.test.cjs', // EFF-TRIPS: GET /api/network-offers answers the pre-change shape row for row, in ≤ 4 trips (golden)
   'people.test.cjs', // ⭐ P1: GET /api/people — one statement, the caller's shop only, may/why per action, owner-only greyed with its sentence
@@ -149,6 +154,8 @@ const GUARDS = [
   'snapshot-wire.test.js', // what a counter receives AFTER JSON — the Map that cost the shop its tax
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs', // the bill number's shape: what the date says vs when the run restarts
+  'ctr-177-bill-number-unique.test.cjs', // CTR-177: the till's real takeNumber never issues a number twice across a roll (needs the engines pin that carries the period label)
+  'ctr-187-return-on-credit.test.cjs', // CTR-187: a return on an On-credit bill offers Reduce what they owe first, whole note or nothing, refund.parts []
   'bell-param.test.cjs', // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'network-catalogue.test.cjs', // a brand publishes product changes; a store's own price is only ever suggested to
@@ -159,6 +166,10 @@ const GUARDS = [
   'network-standing.test.cjs', // ⭐ TOP-CORRECT 2: a SUSPENDED member is refused the `network` catalogue tier and the tree — one edge-state read (network-membership standingSql), the root alone is not enough
   'send-suspended.test.cjs', // NET-7: a SUSPENDED member's send is refused 403 MEMBERSHIP_SUSPENDED in words (one standing() read); active, no edge, draft, self-chit pass
   'public-stock-visibility.test.cjs', // ⭐ TOP-CORRECT 5: the anonymous stock doors (/integrations/stock/:handle, /ask/:handle/stock) obey the storefront's visibility — private/closed/network = the same 404 as no shop
+  'network-view.test.js', // QA wave 1 (FR-N5/N6): one shopfront over many departments - a private department is absent, categories are never invented, search finds only what is shown
+  'actors-switch-off.test.cjs', // QA wave 1: the owner's switch off / remove / back on of a person (PUT /api/actors/:id/status): the write, the cleanup counts, the refusals
+  'supplier-list-crud.test.cjs', // QA wave 1: PATCH only the caller's own supplier row, UNKNOWN_FIELD, a real business is not renamed; DELETE owner-only, 404, the CRM's one remove
+  'availability.test.js', // QA wave 1: a stock figure carries its date, an absent figure is never zero, a stale one never outranks a fresh one (lib/availability)
   /* ⭐ what the application can work out about a shop without asking it — country decides tax, money and every
      format, so the rule that it must return UNKNOWN rather than guess is a guarded one (registration) */
   'govcontext.test.js',
@@ -302,6 +313,7 @@ const GUARDS = [
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
+  'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
   'acc-200-cash-rounding.test.cjs', // ⭐ ACC-200: a counter bill's payment gap posts as round-off only inside the books pack's cash step (AU 5c on cash); none = exact, so an IN bill 50p short waits, named
   'books-recurring.test.cjs', // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once
   'books-todo.test.cjs', // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
@@ -317,6 +329,15 @@ const GUARDS = [
   'books-voucher-series.test.cjs', // ⭐⭐ v1.16.0: a series per voucher type (SV PV RV PY CV CN DN JV), MJ for a person's entry, counters in alphabetical order
   'books-counter-snapshot.test.cjs', // ⭐⭐ the counter is told `books: true` only when the ledger is on; dues: receivable side, latest dispute
   'books-strict-input.test.cjs', // S33: every key a books route or its library reads is declared in its closed body (api #682 review, 1 Nov)
+  'testing-strict-input.test.cjs', // S33: the test board's closed write bodies refuse an unknown key by name and still take every key a handler reads or a caller sends (k13)
+  'platform-strict-input.test.cjs', // S33: channels platform doors and POST /api/keys refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'chits-b-strict-input.test.cjs', // S33: the rest of the chits write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'entities-strict-input.test.cjs', // S33: entities and relationships write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'offers-products-strict-input.test.cjs', // S33: products and network-offers write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'connectors-strict-input.test.cjs', // S33: connector cockpit and integrations write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'catalogue-strict-input.test.cjs', // S33: catalogue enquiry and photo-extract bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
@@ -334,6 +355,7 @@ const GUARDS = [
   'marketing-outbound.test.cjs', // ⭐ MKT-2/17: Offers sent are receipts with the person, purpose, send and consent basis (b776 columns only once they exist); refusals in one INSERT; the list pages; select takes counterparty_ids/until
   'bills-folder.test.cjs', // the folder inventory numbered with the ledger; view folders; the step function; bills leave Task — nothing else
   'bills-private.test.cjs', // ⭐⭐ a bill's steps stay with the shop that took them, at the folder's messaging level; only the dispute always crosses
+  'fin71-step-ticket.test.cjs', // ⭐ FIN-71: a bill's R-1400 step that fails raises ONE deduped Sev-3 ticket (client_ref r1400:payment:bill), never silent; no payment id in the step
   /* ⭐⭐ THE SHOP'S NAME IS THE PROFILE'S NAME (2026-10-01) — broken once each by tests/shop-name-breaks.test.js */
   'shop-name.test.js', // the account's name wins invoiceParty/profileValues; a vault name only fills an empty one; a difference is reported, case-blind
   'shop-name-breaks.test.js', // each of those four rules, broken once, turns shop-name.test.js red
@@ -349,6 +371,7 @@ const GUARDS = [
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
   'api-17-query-day.test.cjs', // API-17: a ?since= that is not a day (7, -1, abc, 2026-02-30, twice) answers 400 VALIDATION_FAILED on folders/mis, relationships/scorecard and capture/consolidate, the db never asked
   'api-invalid-json.test.cjs', // API-14: a body that is not JSON (cut off, null, a string, a number) answers 400 INVALID_JSON on every route, not 500
+  'api-auth-first.test.cjs', // API-37: every route that needs a sign-in answers 401 signed out, with a uuid in each :param and a junk body - never 404, 400, 422 or 500 (S6 auth first)
   'api-nul-input.test.cjs', // API-15: a NUL byte in a body or query answers 400 INVALID_CHARACTER at the door, not 500 from Postgres
   'cmp-22-23-input.test.cjs', // CMP-22/23: a non-uuid identity_id on the identity-document routes answers 403 IDOC_SUBJECT_FORBIDDEN and a badly typed or impossible (2026-02-30) field of POST /api/kyb/credential 400 VALIDATION_FAILED, before the database
   'api-18-text-cap.test.cjs', // API-18: kind/name of POST /api/definitions, name of POST /api/keys and id of POST /api/integrations/heartbeat are capped at 200 characters; longer is a 400 before the database
@@ -362,6 +385,10 @@ const GUARDS = [
   'api-problem-governance.test.cjs', // API-4 sweep, governance: every refusal of routes/governance.js is a Problem with its old keys frozen; the foreign id of GET /entities/:id is the unknown id's 404; no 5xx says its cause
   'api-problem-chits.test.cjs', // API-4 sweep, chits: every refusal of routes/chits.js is a Problem with its old keys frozen; no 5xx says its cause; the schemas agree with the validator chains they replaced
   'api-problem-finance.test.cjs', // API-4 sweep, folders, Home facts and pricing: every refusal of routes/folders.js, routes/facts.js and routes/pricing.js is a Problem with its old keys frozen; no 5xx says its cause
+  'api-problem-offers.test.cjs', // CAT-220: POST /api/offers/evaluate and /explain at the route: the discount and its reason in words, an expired or not-yet-started offer skipped, the shop's own shelf, a key not scoped 403
+  'api-problem-pricing.test.cjs', // CAT-221: POST /api/pricing/price at the route: the tier price at each quantity, below the first break the list price, fixed and range, an unpriced line null never 0
+  'api-problem-till-price.test.cjs', // CAT-222: POST /api/till/price (what is written, was, now, refusals in words) and GET /api/till/worth-an-offer (each reason in words, urgency order, clamped window) at the route
+  'cat-54-money-truth.test.cjs', // CAT-54: the money-truth matrix, hand-computed: tax-inclusive prices split out, one rounder per ISO 4217 minor unit, a split payment against the AU 5c cash step (cash only) and India's exact paisa
   'shop-actors.test.cjs', // SEC-103: actorOwned is true only for an actor of this shop; foreign, unknown and no-uuid are false, a database that is down is an error
   'sec100-folder-fk.test.cjs', // SEC-100: no write puts another shop's folder into a folder foreign key (rules, parent on create and move, routing); a foreign id and an unknown id answer alike, nothing is written
   'repeat-supply-status.test.cjs', // REPEAT-500: the repeat store reads a copy's status from chit_status through lib/select.rows, never h.current_status
@@ -371,6 +398,7 @@ const GUARDS = [
   'api-problem-crm.test.cjs', // API-4 sweep, the CRM: every refusal of routes/crm.js (24 routes) is a Problem with its old keys frozen (consent, privacy requests, the send gate unchanged); no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-relationships.test.cjs', // API-4 sweep, the relationships: every refusal of routes/relationships.js (14 routes) is a Problem with its old keys frozen; no answer carries a thrown error's text; another shop's list row answers as an unknown one
   'api-problem-schemas.test.cjs', // API-4 sweep, the schema engine: every refusal of the 7 routes of routes/schemas.js is a Problem with its old keys frozen; no success answer moved; no answer of any status carries a thrown text bar the one listed relay; every body is closed (an unknown key is refused by name) and the web's keys are accepted; another shop's column key answers as an unknown one
+  'api-reported.test.cjs', // CAP-17 slice 1: the three reported register columns (BFLA role gates, parameterised SQL, rate limit) are counted from the real routes and never enter meets; a role gate refuses a lower role 403
   'api-problem-integrations.test.cjs', // API-1 slice 1c: every refusal of routes/integrations.js is a Problem with its old keys frozen; no 5xx says its cause
   'api-problem-ctp.test.cjs', // API-1 slice 1d: routes/ctp.js — every answer to another installation a Problem that keeps `accepted`/`ok` and `why`, on both mounts
   'api-problem-storefront.test.cjs', // API-1 slice 1e: the 11 public storefront doors of routes/catalogue.js — a Problem that keeps the old body, strict input, closed 200s, one 404
@@ -386,6 +414,7 @@ const GUARDS = [
   'api-problem-catalogue.test.cjs', // API-4 sweep, the rest of the catalogue: the shopper's orders and documents, the product enquiries, the photo read and the catalogue face — every refusal a Problem with its old keys frozen, no success answer moved
   'api-problem-small.test.cjs', // API-4 sweep, Lane B2 (4 Nov): every refusal of routes/adopt.js (2 routes) and routes/people.js is a Problem with its old keys frozen; a non-uuid chit_id is a 404 (K-1); no 5xx says its cause
   'api-problem-csp-report.test.cjs', // API-4 sweep, the public CSP report door (routes/csp-report.js): a junk body 400, an 8 KB+ body 413, a flood 429, a fault 500 are Problems; a report is still 204; no sign-in is asked
+  'api-problem-plumbing.test.cjs', // API-4 contract pass, the plumbing doors (GET /health, OPTIONS *, GET /api/openapi.json): the replies the probe, a browser and a tool read, and a fault as a Problem 500
   'api-problem-chit-proposals.test.cjs', // API-4 sweep, the proposal doors (RAIL-106): every refusal of the 5 routes of routes/chit-proposals.js is a Problem with its keys frozen at the first contract; every body closed (S33); no answer says a failure's cause; another shop's chit id answers as an unknown one (S35)
   'ctp-return-path.test.cjs', // RAIL-106: the return path — a status another installation decided is mirrored on the shadow row through the one status write; sequence, repeat, late message (db and transport stubbed)
   'ctp-return-disputes.test.cjs', // RAIL-106 part 2: a dispute raised or resolved elsewhere is recorded here through recordRaise / recordResolve; confidential scoping kept
@@ -447,6 +476,7 @@ const GUARDS = [
   'agent-signin-body.test.cjs', // M01: the shop-PC agent sends mode:'login' via CBSignin.ask()/verify() — a login never creates an identity
   'employee-code.test.cjs', // M02: first code e-mailed, never shown in a sealed env (Resend required), single-use, 24 h
   'offer-clash.test.cjs', // T2-LABS: an offer saved LIVE that overlaps another live discount → 409 OFFER_CLASH in words (CBOffers.clashes); drafts · pauses · renames · basket offers untouched
+  'ctr-157-offer-live-signal.test.cjs', // CTR-157: PUT /api/definitions/:id (an offer made live, paused, changed) rings the shop-changed bell so every open counter hears it; a refused save rings nothing
   'auth-first.test.cjs', // M04: POST /api/chits/send — auth before the body is read (401 not 400/413, validators never run); before/after matrix: no allow/deny change
   'person-session.test.cjs', // M05: a person session is listed, bound to one device (DEVICE_MISMATCH), revocable within 60 s (fake clock); sign-in on B never revokes A; legacy tokens unchanged
   'rail-actions.test.cjs', // ⭐⭐ R01: GET /chits/:id `actions` and the writing doors are ONE engine (lib/rail.js) — 14 situations; before/after: same outcome, `why` added
@@ -474,6 +504,7 @@ const GUARDS = [
   'iddocs-verify.test.cjs', // M18: phone/e-mail identity documents verified by a code (lib/otp.js engine); 5 wrong -> locked; PUT clears; an unverified contact is never used for recovery
   'sec101-iddoc-hash.test.cjs', // SEC-101: Aadhaar (store:false) stored with a KEYED hash (HKDF of VAULT_ENC_KEY), legacy sha256 still recognised, no key = 503; PHONE/EMAIL hashes byte for byte unchanged, sign-in + device-key match still find the person
   'sec106-staff-code-hash.test.cjs', // SEC-106: a staff first code is kept as a KEYED hash (HKDF of VAULT_ENC_KEY, otp_code_hash), never plain; verifyOtp compares the hash, every issue zeroes the attempts and writes a code_issued trail row; an idempotent answer carrying a code is never stored; b781 written, not run
+  'register-gate.test.cjs', // RAIL-90: the register is a per-shop capability — off (403 CAPABILITY_OFF) for a shop with no key and no rows; on with the key; on with existing rows and no key
   'raida-close-route.test.cjs', // RAIL-93: POST /api/chits/:chit_id/raida/:raida_id/close passes the worklist's disposition (and carried-forward register, evidence) to raida.close; a full register's ending writes its closing row
   'sides.test.cjs', // CB Sides: driftOf (resolver) + the impact walk (lib/impact, shared with raida.walk) + GET /api/entities/sides is ONE read; a source with no data is a 'not yet' row, never a number
   'entities-header.test.cjs', // N19: GET /api/entities/header is ONE read (<= 3 trips); planted compliance rows -> bands from lib/licence-rules.js; unverified PHONE -> check false; no rule -> days only; no fee amount hard-coded
@@ -492,12 +523,23 @@ const GUARDS = [
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
   'request-log.test.cjs', // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
+  'signin-enumeration.test.cjs', // SEC-139: before a secret is proven an unknown account, a known one sent no secret and a wrong secret get ONE answer (and about the same time) on actors/login, entities/verify, signin/verify; no CHOOSE_IDENTITY list at verify; check-login one constant answer
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'move-in-country-gate.test.cjs', // move-in W1: books from another country are refused whole (an unknown country never gets India's rules); unmatched codes / units held; X-1; the proof
   'move-in-meter.test.cjs', // move-in W1.6: items written inside the move-in are metered only after it commits; a rolled-back one meters nothing
   'move-in-added-via.test.cjs', // QM-1: the move-in writes only an added_via the migrations' CHECKs allow (read from the .sql); a 23514 is a 422 sentence
   'local-kind.test.cjs', // K-DB OPS-41: a minted party is 'local' once b769's CHECK allows it, 'supplier' + a log line before; an unreadable CHECK never fails a mint
   'retention-archive-gate.test.cjs', // K-DB DB-21/PM-16: a retention commit without an archive receipt is BLOCKED, deletes 0, sends no write; every attempt is one flush event
+  /* QA coverage 2026-11-06 (areas 08 · 13 · 27): units with no proof until now. Each header names its UNIT and CARD. */
+  'rewards-customer-view.test.cjs', // 08 Customer's rewards view: no programme is a sentence · points never a currency · the balance is the whole-ledger SUM · reading never writes · a NUL id is 400
+  'points.test.js', // 08 a point can never be added to a rupee (it was green and reached by no runner)
+  'retention-never-early.test.cjs', // 27 Retention rules: an open dispute never retires · a resolved one is a FLOOR · the extension is bounded · a sender cannot shorten a copy · a runaway sweep is blocked
+  'retention-floor.test.js', // 27 the receiver-side retention floor (it was green and reached by no runner)
+  'purge-erase-guards.test.cjs', // 27 Auto-purge / erase: a sent or received copy is never purged · an open or unreadable dispute refuses · only the creator, only my entity · erase is platform-only, tombstone not delete
+  'storage-ownership.test.cjs', // 27 Object storage: a key not under the owner is NOT_OWNER before any read · one replicated row per participant · a replay stores once · a half-set config falls back to the db
+  'trace-edge.test.cjs', // 13 Batch traceability: no silent holes · is_origin only a true boolean · parents a UUID set · units to one base, unknown unit says so (the qty coercion holes: trace-edge-qty.known-failing.cjs)
+  'inventory-engine.test.cjs', // 13 On hand & movements: the sign comes from the reason · every refusal says why · weighted average and its three edges · replay equals applying one by one (null-rate hole: inventory-null-rate.known-failing.cjs)
+  'stocked-counted.test.cjs', // 13 what is not stock never moves a balance: the product flag wins · else the trade · one query · an unreadable flag keeps items counted
   /* QA-79 (22 Oct): tests that passed offline (stub db, no server) and no runner reached. Their output is counted as '<n> passed' too. */
   'account-sessions.test.cjs',
   'actors-create-level.test.cjs',
@@ -512,6 +554,7 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',
   'country-registry-callers.test.cjs',
@@ -555,13 +598,139 @@ const GUARDS = [
   /* CRM-43 (29 Oct): merged_into names only a party of this shop; the b782 trigger function reads each table's own column only inside its own IF branch */
   'party-merge-target.test.cjs',
   'party-merge-guard-sql.test.cjs',
-  'r58-no-sales-offer-on-receipt.test.js'
+  'r58-no-sales-offer-on-receipt.test.js',
+  'books-payables.test.cjs', // MNT-47: CB FINANCE payables ageing, MSME day 45, early-pay offer
+  'move-in.test.cjs', // MNT-47: move in from Xero / QuickBooks - guessed columns, dry run, write through the doors
+  'parallel-run.test.cjs', // MNT-47: their Tally/Xero period beside ours, each difference with why
+  'fx-rates.test.cjs', // MNT-47: foreign-currency trade end to end, rates and revalue
+  'register-country-guess.test.cjs', // MNT-47: a new shop country is what the owner was shown
+  'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
+  'policy-set.test.js', // MNT-47: the units set policy flag
+  'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
+  'crm-calls.test.cjs', // QA wave 2: the call desk: queue, outcomes, the follow-up the call answered is closed (a uuid; a non-uuid closes nothing)
+  'csv.test.js', // QA wave 2: the CSV round trip - what comes out goes back in
+  'csv-preflight.test.js', // QA wave 2: import preflight: every refusal named before a row is written
+  'visibility-cap.test.js', // QA wave 2: a visibility choice bounded by an operator cap; an absent declaration closes nobody
+  'visibility-mirror.test.cjs', // QA wave 2: the two visibility columns hold one fact, every writer writes both
+  'exposure-cost.test.js', // QA wave 2: cost never reaches a customer-facing surface
+  'ai-vision.test.js', // QA wave 2: photo to item: the vision request body, caps-only, injection through the image path
+  'gs1.test.js', // QA wave 2: the GS1 check digit and the judgement around it
+  'units-alias.test.js', // QA wave 2: a rename is never a conversion
+  'schedule-apply.test.cjs', // QA wave 2: publish on a date: applyDue picks only this shop's due rows, one writer, b203 absent answers not enabled
+  'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
+  'api-foreign-bite.test.cjs', // API-1 S35 bite: a foreign-id case can FAIL (a store that ignores the owner is caught, on the helper and on the real chits routes); every public_ids / cannot_answer exemption carries a reason and names a real route
+  'incidents.test.js', // CMP-29: an incident is refused without an account of what happened, in words, before anything is written
+  'line-complete.test.cjs', // 1 line model (wave 3): a line that asked for nothing is not done; the roll-up counts only genuinely finished lines
+  'work-rows.test.cjs', // 1 line model (wave 3): GET /api/work list / row / sheet through the real router: folders, stage words, per-line delivery, truncation, RLS, one batch not a query per row
+  'worklist-unassigned.test.cjs', // 1 line model (wave 3): work nobody picked up still appears on the worklist (no assignment row is not invisible)
+  'docnumber.test.js', // 9 returns (wave 3): the numbering rules per jurisdiction, the credit-note series, no Indian rule escapes into a country not studied
+  'user-id-rule.test.cjs', // 18 user id (wave 3): the User ID rule through the real route handlers over a stubbed database
+  'round-trips.test.cjs', // 28 performance (wave 3): GET /me has a round-trip budget and it is enforced
+  'round-trips-chit.test.cjs', // 28 performance (wave 3): opening a chit has a round-trip budget too
+  'trips-headers.test.cjs', // 28 performance (wave 3): the round-trip counter answers the right people and nobody else
+  'may-trade.test.cjs', // 28 worlds (wave 3): mayTrade is the database rule asked at the door; the trigger clauses and the helper SQL agree
+  'sit-load-evidence.test.cjs', // 28 load simulation + performance (wave 3): the RECORDED SIT knee/stress/load runs agree with themselves and are not stale (a record, not a live run)
+  'books-cashflow.test.cjs', // 16 cash position (wave 3): lib/books-cashflow.project shortfall and no-shortfall to the minor unit, GET /cashflow and the cheques pdc_reminders over the in-memory books (repaired: payments need an Idempotency-Key)
+  'combo-templates.test.cjs', // 7 combo templates (wave 3): save / reopen / rename / delete a combo, push CREATES the product once then UPDATES, cross-entity isolation (repaired: the stub now states the shop currency)
+  'till-counter-doors.test.cjs', // 9 verify and reconcile + customer display (wave 3): POST /reconcile ok / absorbed / missing / unknown in one query, GET /verify spread sample, read-only; pair a screen by code, a screen key and nothing else, spent on first read, expiry, guess lock-out
+  'live-trips-network.test.cjs', // SPD-42: the driven network scenario counts the highest 2xx trips and reports every route unreached when the load shop has no node (fake client, offline)
+  'api-card-helpers.test.cjs', // API-1 (MNT-12): the register's derived reads/writes follow a function split into private same-file helpers; a shared helper beyond the depth does not leak
+  'channels.test.js', // b123 channel map; the webhook gets the RAW body (a probe in the real app: Buffer, not an object)
+  'whatsapp-out.test.js', // b126 outbound: every refusal with a recipient leaves a receipt (fake handle), one bare exception; the window, templates
+  'acc-223-238-cancel.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-231-move-in-role-ledgers.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-232-parallel-run.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-234-actor-tester-code.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-241-move-in-currency.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'acc-244-move-in-credit-type.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'amend-guard.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'auth-before-validate.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'auth-middleware.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'books-auto-post.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'books-cash-waiting.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'case-fields.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'catalogue-columns.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'catalogue-read.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'catalogue-visibility.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'column-parity.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'column-rules.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'conf-cache.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'connector-rows.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'consolidate-units.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'cors-headers.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'crm-204-contact-email.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'crm-groups.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'ctp-repair.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'ctp-return-tool.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'currency-envelope.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'current-actor.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'db-coldstart.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'defaults.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'dev-otp.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'exports-exist.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'finance-followup.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'form-handshake.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'groupsum-selection.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'handle.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'identity.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'idoc-normalise.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'item-cost.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'itemmatch-qualifier.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'jurisdiction.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'k1-chits-guard.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'me-include.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'meters.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'money.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'network-build.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'numerals.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'offerable.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'offers-engine.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'order-input.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'party-no-at-add.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'per-copy-design.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'ppl-21-login-format.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'price-provenance.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'proof-exit.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'pulse.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'raida.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'rail-158-service-errors.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'read-batch.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'repeat-supply.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'reporting.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'retired-entities-lookup.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'rev04-cost-leak.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'route-auth.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'run-tests-exit.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'schedule.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'schema-probe.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec-126-network-store-public.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec105-dispute-queue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec116-actors-connector-config.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec118-employee-code.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec91-supplier-catalogue.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sec92-readiness-passport.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'select-received-party.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'set38-signup-stamp.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sheet.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'slab-cites.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'sql-placeholders.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'tax-governance.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'tax-registration.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'tax-scheme.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'tax-slab.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'till-bills-credit-note.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'till-line-answer.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'till-retain.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'till-shop-move.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'till-t2f.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'trend-reads-books.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
 function countChecks(out) {
-  const m = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
-  return m ? Number(String(m[m.length - 1]).match(/\d+/)[0]) : 0;
+  const countMatches = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
+  return countMatches ? Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]) : 0;
 }
 
 const all = process.argv.indexOf('--all') >= 0;
@@ -589,6 +758,7 @@ const files = all
 const NEEDS_ENGINES = [
   'books-close-country.test.cjs',
   'books-returns.test.cjs',
+  'p1-7-bas-basis.test.cjs',
   'pay-fix.test.cjs',
   'rcm-post.test.cjs',
   'engines-pinned.test.js',
@@ -607,7 +777,9 @@ const NEEDS_ENGINES = [
   'books-manual-events.test.cjs',
   'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
-  'pay-fix-void.test.cjs' // QA-80: runs the real chits router over the books harness
+  'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
+  'change-pin-lock.test.cjs', // PPL-30: change-pin counts a wrong current PIN and honours the lock like sign-in (verifyCredential, 5 tries, ASVS V2.2.1)
+  'change-pin-lock-mutation.test.cjs' // PPL-30: with the count-and-lock removed the test above goes red
 ];
 const ENGINES_ABSENT = !fs.existsSync(path.join(__dirname, '..', '..', 'chitbridge-engines'));
 const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
@@ -619,8 +791,8 @@ const SKIP_ENGINES = ENGINES_ABSENT && process.env.CB_ENGINES_ABSENT_OK === '1';
  * data/test-cases.json spells it (`chitbridge-api/tests/<file>`), so the post uses key_from 'name' and nothing is guessed.
  * A skip is written as a skip, never a pass; a failure carries the lines this script already prints for it.
  */
-const ji = process.argv.indexOf('--junit');
-const JUNIT = ji >= 0 ? path.resolve(process.argv[ji + 1] || 'test-results/guards.xml') : null;
+const junitAt = process.argv.indexOf('--junit');
+const JUNIT = junitAt >= 0 ? path.resolve(process.argv[junitAt + 1] || 'test-results/guards.xml') : null;
 const KEY = (f) => 'chitbridge-api/tests/' + f;
 const report = [];
 
@@ -636,31 +808,31 @@ for (const text of files) {
     report.push({ name: KEY(text), status: 'skipped', message: 'needs chitbridge-engines (private), not checked out' });
     continue;
   }
-  const t0 = Date.now();
-  const r = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
-  const out = (r.stdout || '') + (r.stderr || '');
+  const startedAt = Date.now();
+  const spawned = spawnSync(process.execPath, [path.join(TESTS, text)], { encoding: 'utf8', timeout: 120000, env: Object.assign({}, process.env, { OUTPUT_ALLOWLIST: 'enforce' }) /* S34: the gate runs the output allow-list for real; production defaults to report */ });
+  const out = (spawned.stdout || '') + (spawned.stderr || '');
   /* every guard ends with "<n> checks"; take the LAST one, because a stray warning can print after it */
-  const n = countChecks(out);
+  const checkCount = countChecks(out);
   /* ⚠️ A GUARD THAT COUNTED NOTHING PROVED NOTHING (2026-09-17: three guards ended without "<n> checks" and read "ok · 0") */
-  const bad = r.status !== 0 || /\bFAIL\b/.test(out) || n === 0;
-  total += n;
-  if (bad) failed.push(text);
-  console.log('  ' + (bad ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(n).padStart(4) + ' checks');
-  const list = bad
+  const broken = spawned.status !== 0 || /\bFAIL\b/.test(out) || checkCount === 0;
+  total += checkCount;
+  if (broken) failed.push(text);
+  console.log('  ' + (broken ? 'FAIL' : ' ok ') + '  ' + text.replace(/\.test\.(js|cjs)$/, '').padEnd(22) + String(checkCount).padStart(4) + ' checks');
+  const list = broken
     ? out
         .split('\n')
         .filter((item) => /FAIL|Error|expected/i.test(item))
         .slice(0, 5)
         .map((item) => item.trim())
     : [];
-  if (bad) console.log(list.map((item) => '          ' + item).join('\n'));
+  if (broken) console.log(list.map((item) => '          ' + item).join('\n'));
   report.push({
     name: KEY(text),
-    status: bad ? 'fail' : 'pass',
-    time: (Date.now() - t0) / 1000,
+    status: broken ? 'fail' : 'pass',
+    time: (Date.now() - startedAt) / 1000,
     /* ⚠️ never an empty reason: a red row on the board with no words is a question nobody can answer */
-    message: bad ? (list.length ? list.join('\n') : n === 0 ? 'counted no checks' : 'exit ' + r.status) : '',
-    output: bad ? out.split('\n').slice(-40).join('\n') : ''
+    message: broken ? (list.length ? list.join('\n') : checkCount === 0 ? 'counted no checks' : 'exit ' + spawned.status) : '',
+    output: broken ? out.split('\n').slice(-40).join('\n') : ''
   });
 }
 

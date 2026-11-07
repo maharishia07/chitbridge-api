@@ -29,6 +29,7 @@ const path = require('path');
 const fs = require('fs');
 const { harness, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
 const S = require('./lib/privacy-scenes.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -39,6 +40,7 @@ process.env.DATABASE_URL = '';
 const MOUNT = '/api/privacy';
 const ROUTE_COUNT = 4;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const SAFE = 'Something went wrong — please try again.';
 const LEAK = /SELECT secret|catalogue_items|relation "/;
@@ -103,8 +105,8 @@ function checkWords() {
   check('faultOf: a refusal with no code of its own answers under REFUSED', nameless.status === 400 && nameless.code === 'REFUSED' && nameless.legacy.code === 'REFUSED', nameless);
   const why = words.faultOf(Object.assign(new Error('No.'), { status: 403, code: 'NO_CONSENT', why: 'Because.' }), req);
   check('faultOf: a `why` rides after the three old keys', sameValue(Object.keys(why.legacy), ['code', 'error', 'message', 'why']) && why.legacy.why === 'Because.', why);
-  const migrated = words.faultOf(Object.assign(new Error('Privacy records need migration b306 — not run yet.'), { status: 503, code: 'PRIVACY_NOT_MIGRATED' }), req);
-  check('faultOf: the migration not run is 503 PRIVACY_NOT_MIGRATED with the old `error` word', migrated.status === 503 && migrated.code === 'PRIVACY_NOT_MIGRATED' && sameValue(migrated.legacy, { code: 'PRIVACY_NOT_MIGRATED', error: 'Not migrated yet', message: 'Privacy records need migration b306 — not run yet.' }), migrated);
+  const migrated = words.faultOf(Object.assign(new Error('Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update.'), { status: 503, code: 'PRIVACY_NOT_MIGRATED' }), req);
+  check('faultOf: the migration not run is 503 PRIVACY_NOT_MIGRATED with the old `error` word', migrated.status === 503 && migrated.code === 'PRIVACY_NOT_MIGRATED' && sameValue(migrated.legacy, { code: 'PRIVACY_NOT_MIGRATED', error: 'Not migrated yet', message: 'Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update.' }), migrated);
   const plain = words.faultOf(new Error(SECRET_SQL), req);
   check('faultOf: an error with no status is a 500 INTERNAL, the generic sentence, nothing of its cause', plain.status === 500 && plain.code === 'INTERNAL' && sameValue(plain.legacy, { error: 'Failed', message: SAFE }) && !LEAK.test(JSON.stringify(plain)), plain);
   const coded = words.faultOf(sqlError('42501'), req);
@@ -138,7 +140,7 @@ function checkContractShape(routes, router) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = Object.values(contract.OPERATIONS).filter((one) => one.requestBody).map((one) => one.requestBody.content['application/json'].schema);
   check('the two bodies are declared as an object or a list and require nothing: the handlers answered a list and a missing field in the library\'s own words', bodies.length === 2 && bodies.every((schema) => sameValue(schema.type, ['object', 'array']) && !(schema.required || []).length), bodies);
-  check('no body schema refuses an unknown key: the handlers never read it, and refusing it is an owner\'s decision (strict_input stays open)', bodies.every((schema) => schema.additionalProperties !== false));
+  check('both body schemas refuse an unknown key by name (contract bulk pass batch 1): the shopper page sends only { channel, purpose, allowed } and { kind }', bodies.every((schema) => schema.additionalProperties === false));
   check('every field the handlers read is declared as anything (a text where a yes was wanted is the library\'s 400, not the schema\'s)', bodies.every((schema) => Object.values(schema.properties).every((one) => sameValue(one, {}))) && sameValue(Object.keys(bodies[0].properties).concat(Object.keys(bodies[1].properties)).sort(), ['allowed', 'channel', 'kind', 'purpose']));
   check('the two writes are declared as 201, the two reads as 200', [KEYS.CONSENT, KEYS.REQUESTS].every((key) => contract.OPERATIONS[key].responses['201']) && [KEYS.FACTS, KEYS.ME].every((key) => contract.OPERATIONS[key].responses['200']));
   check('GET /facts asks for no sign-in (public); the three shopper routes ask for a bearer token', sameValue(contract.OPERATIONS[KEYS.FACTS].security, []) && SHOPPER_ROUTES.every((key) => sameValue(contract.OPERATIONS[key].security, [{ bearer: [] }])));
@@ -248,12 +250,13 @@ async function checkTokenOnly(port) {
     const answer = await ask(port, method, url, body, undefined, Object.assign({ seen }, S.OTHERS_ROWS));
     const params = [].concat(...seen.map((one) => one.params || [])).map((value) => (Array.isArray(value) ? value.join('|') : String(value)));
     const label = method + ' ' + url.split('?')[0];
-    check(label + ': it is answered (2xx) although the body names others', answer.status >= 200 && answer.status < 300, [answer.status, answer.text]);
-    check(label + ': the database is handed no id, name or value of another shop or shopper (' + seen.length + ' statements)', seen.length > 0 && !params.some((value) => OTHERS_VALUES.some((other) => value.includes(other)) || value === '2000-01-01T00:00:00.000Z' || value === 'AU'), params);
+    const refused = method === 'POST';
+    check(label + (refused ? ': a body that names others is refused by name (422)' : ': it is answered (2xx) although the query names others'), refused ? answer.status === 422 : answer.status >= 200 && answer.status < 300, [answer.status, answer.text]);
+    check(label + ': the database is handed no id, name or value of another shop or shopper (' + seen.length + ' statements)', (refused ? seen.length === 0 : seen.length > 0) && !params.some((value) => OTHERS_VALUES.some((other) => value.includes(other)) || value === '2000-01-01T00:00:00.000Z' || value === 'AU'), params);
     check(label + ': the answer carries nothing of another shop or shopper', !OTHERS_VALUES.some((value) => textOf(answer).includes(value)) && !/"country":"AU"/.test(textOf(answer)), textOf(answer).slice(0, 200));
   }
   const filed = [];
-  const answer = await ask(port, 'POST', '/me/requests', Object.assign({ kind: 'access' }, hostile), undefined, { seen: filed });
+  const answer = await ask(port, 'POST', '/me/requests', { kind: 'access' }, undefined, { seen: filed });
   const insert = filed.find((one) => /INSERT INTO privacy_request/.test(one.sql));
   check('the request is written for the token\'s shopper at the token\'s shop, in the shop\'s country, as them: owner, party, country, by', !!insert && insert.params[0] === S.SHOP && insert.params[1] === S.ME && insert.params[2] === 'Test customer' && insert.params[4] === 'IN' && insert.params[7] === S.ME && insert.params[5] !== '2000-01-01T00:00:00.000Z', insert && insert.params);
   check('the 201 record carries that shopper and no other', answer.status === 201 && answer.json.request.party_id === S.ME && answer.json.request.who === 'Test customer', answer.json);
@@ -339,14 +342,17 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 60, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the privacy routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/privacy.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');

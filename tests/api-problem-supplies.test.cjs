@@ -26,6 +26,7 @@ const fs = require('fs');
 const { harness, OWNER, STAFF, SECRET_SQL, SHOP, sameValue, raising, answering, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/supplies-scenes.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -71,7 +72,7 @@ function checkWords() {
   const missing = words.words.notFound();
   check('notFound: the old body is { error: "Not found" } and nothing else', sameValue(missing.legacy, { error: 'Not found' }) && missing.code === 'NOT_FOUND', missing);
   const later = words.words.notReady();
-  check('notReady: the 503 sentence is the old one (Not ready, run b217 first)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'run b217 first' }), later);
+  check('notReady: the 503 sentence is the old one (Not ready, Supplies arrive after the next update. Supplies cannot be recorded or listed yet.)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'Supplies arrive after the next update. Supplies cannot be recorded or listed yet.' }), later);
   const lost = words.faultOf(new Error(SECRET_SQL), req, 'Could not record the purchase');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && lost.legacy.error === 'Could not record the purchase' && !THROWN.test(JSON.stringify(lost)), lost);
   check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 in the old validation keys and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(Object.assign(new Error(SECRET_SQL), { code }), req, 'Could not add the supply'); return one.status === 400 && one.code === 'SUPPLY_INVALID' && sameValue(one.legacy, { error: 'validation', message: 'Cannot save this text. Type it again.' }) && !THROWN.test(JSON.stringify(one)); }));
@@ -95,7 +96,7 @@ function checkContractShape(routes) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that may be an object or a list: the handlers read a list as an empty body and answer their own 400', bodies.every((key) => sameValue(contract.OPERATIONS[key].requestBody.content['application/json'].schema.type, ['object', 'array'])), bodies);
-  check('no body names a key as required and none is closed (an unknown key was dropped before, and still is)', bodies.every((key) => { const one = contract.OPERATIONS[key].requestBody.content['application/json'].schema; return !one.required && one.additionalProperties === undefined; }));
+  check('no body names a key as required and every one is closed (contract bulk pass batch 1: an unknown key is refused by name, 422)', bodies.every((key) => { const one = contract.OPERATIONS[key].requestBody.content['application/json'].schema; return !one.required && one.additionalProperties === false; }));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
   check('a malformed path argument is still the route\'s own answer, never a 400 of the schema: the id is plain text', operations.filter((key) => key.includes(':')).every((key) => contract.OPERATIONS[key].parameters.every((one) => one.schema.type === 'string' && !one.schema.pattern)));
 }
@@ -217,15 +218,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 20, frozen);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).length === ROUTE_COUNT && Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the supplies routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/supplies.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

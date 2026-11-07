@@ -27,6 +27,7 @@ const LINE = '44444444-4444-4444-8444-444444444444';
 const queries = [];
 const run = async (sql, params) => {
   queries.push(String(sql));
+  if (/SELECT capabilities FROM identities/.test(String(sql))) return { rows: [{ capabilities: ['register'] }], rowCount: 1 }; /* RAIL-90: the register is on for this shop */
   if (/information_schema/.test(String(sql))) return { rows: [{ '?column?': 1 }], rowCount: 1 }; /* every table and column is there */
   if ((params || []).some((p) => p === 'abc')) throw Object.assign(new Error('invalid input syntax for type uuid: "abc"'), { code: '22P02' });
   return { rows: [], rowCount: 0 };

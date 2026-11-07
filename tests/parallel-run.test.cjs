@@ -6,6 +6,8 @@
  *   · equal ✅ · different (a bill on the rail they keyed later; a rounding rule; an entry only theirs) · a mapping gap · only ours
  *   · their party ledgers pooled under the group ours keeps on one control ledger · a snapshot part is never replaced (409) · who may (owner · auditor · not a viewer)
  * No database, no network.
+ * CARD      14-accounting/parallel-run
+ * CARD      23-connectors-and-integrations/xero-quickbooks-myob
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -187,12 +189,12 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
       try { assert.strictEqual((await q('GET', '/compare/' + id)).status, 200); } finally { C0.canRead = keep; }
       Object.assign(WHO, { identity_id: SHOP, identity_type: 'entity', parent_entity_id: undefined, whole_entity: undefined });
     });
-    await ta('before b309 runs: GET /compare says so (ready false, Load greyed with the sentence); a load answers 503 in words — never a 500', async () => {
+    await ta('before the books comparison update runs: GET /compare says so (ready false, Load greyed with the sentence); a load answers 503 in words — never a 500', async () => {
       X.T.compareReady = false;
       try {
-        const r = await q('GET', '/compare'); assert.strictEqual(r.body.ready, false); assert.deepStrictEqual(r.body.may.load, { may: false, why: r.body.why }); assert.match(r.body.why, /b309/);
+        const r = await q('GET', '/compare'); assert.strictEqual(r.body.ready, false); assert.deepStrictEqual(r.body.may.load, { may: false, why: r.body.why }); assert.match(r.body.why, /arrives after the next update\. It was not run and nothing was posted\./); assert.doesNotMatch(r.body.why, /\bb\d{2,4}\b/);
         const w = await q('POST', '/compare/snapshots', { label: 'x', source: 'tally', part: 'tb', period_to: '2026-09-30', xml: FIX('tally-tb-ledgers.xml') });
-        assert.strictEqual(w.status, 503); assert.match(w.body.message, /b309/);
+        assert.strictEqual(w.status, 503); assert.strictEqual(w.body.code, 'BOOKS_NOT_MIGRATED'); assert.strictEqual(w.body.detail, r.body.why); assert.doesNotMatch(w.body.message, /\bb\d{2,4}\b/);
       } finally { X.T.compareReady = true; }
     });
 
@@ -222,7 +224,7 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
       assert.strictEqual(byName(tb, 'Suppliers (Trade creditors)').status, 'equal');
       assert.strictEqual(byName(tb, 'GST collected').cause, 'only_theirs');
       assert.strictEqual(byName(tb, 'Bank Fees').status, 'gap');
-      const paid = byName(tb, 'GST paid'); assert.strictEqual(paid.status, 'only_ours'); assert.match(paid.why, /Only in ours: 1 entry/);
+      const paid = byName(tb, 'GST paid'); assert.strictEqual(paid.status, 'only_ours'); assert.match(paid.why, /Their file has one GST account \(matched to 2200\); this is the other half/);
       const pl = r.body.parts.pl.lines; assert.strictEqual(byName(pl, 'Sales').status, 'equal'); assert.strictEqual(byName(pl, 'Bank Fees').status, 'gap');
     });
     await ta('the BAS, box by box from our books: G1 and 1A equal, 1B different (ours counts GST paid)', async () => {

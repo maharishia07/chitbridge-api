@@ -31,6 +31,7 @@ const crypto = require('crypto');
 const { harness, OWNER, STAFF, SECRET_SQL, sqlError, sameValue } = require('./lib/problem-world.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
 const S = require('./lib/identity-docs-scenes.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -125,7 +126,7 @@ function checkContractShape(routes, router) {
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
   const bodies = Object.values(contract.OPERATIONS).filter((one) => one.requestBody).map((one) => one.requestBody.content['application/json'].schema);
   check('the three bodies are declared as an object or a list and require nothing: the handlers answered a list and a missing field in their own words', bodies.length === 3 && bodies.every((schema) => sameValue(schema.type, ['object', 'array']) && !(schema.required || []).length), bodies);
-  check('no body schema refuses an unknown key: the handlers dropped it without a word, and refusing it is an owner\'s decision (strict_input stays open)', bodies.every((schema) => schema.additionalProperties !== false));
+  check('every body schema refuses an unknown key by name (contract bulk pass, batch 2: the web sends only value, consent and identity_id)', bodies.every((schema) => schema.additionalProperties === false));
   const queries = [].concat(...Object.values(contract.OPERATIONS).map((one) => (one.parameters || []).filter((item) => item.in === 'query')));
   check('every query value is declared as anything (a repeated value was read as it came)', queries.length >= 4 && queries.every((item) => sameValue(item.schema, {})), queries);
   check('a document value, a code and a consent are declared as anything: a number was taken as a phone, a number as a code', sameValue(contract.OPERATIONS[KEYS.PUT].requestBody.content['application/json'].schema.properties.value, {}) && sameValue(contract.OPERATIONS[KEYS.VERIFY].requestBody.content['application/json'].schema.properties.code, {}));
@@ -388,15 +389,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const legacy = legacyRoutes();
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen >= 60, frozen);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the identity-docs routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/identity-docs.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(proved).length });
   }

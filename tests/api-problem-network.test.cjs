@@ -23,9 +23,10 @@ const path = require('path');
 const fs = require('fs');
 const { harness, OWNER, STAFF, SECRET_SQL, sameValue, raising, answering, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/network-scenes.cjs');
-const { memory, B, NODE, EDGE, CONNECTION } = require('./lib/network-memory.cjs');
+const { memory, B, C, NODE, EDGE, CONNECTION } = require('./lib/network-memory.cjs');
 const chains = require('./lib/network-chains.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -47,6 +48,7 @@ const { check, world } = lab;
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const REGISTER_FILE = path.join(HERE, 'docs', 'error-codes.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const CHILD = { identity_id: C, identity_type: 'entity', display_name: 'Shop C' }; /* the business node C belongs to: the one who may claim it */
 const STRANGER = { identity_id: B, identity_type: 'entity', display_name: 'Shop B' };
 const WORLDS = [
   { id: 'signed-out', setup: { realAuth: true } },
@@ -173,9 +175,68 @@ const FOREIGN_ROUTES = () => {
 function playFor(port, item) {
   return async (who, planted) => {
     const rows = planted ? memory({ tree: true, edge: { state: 'requested' }, request: true }) : memory({ lonely: true });
-    Object.assign(world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', sqlRows: rows.answer, jsonThrows: false, noCustomer: false });
+    Object.assign(world, { realAuth: false, who: who === 'owner' ? (item.route.endsWith('/claim') ? CHILD : OWNER) : STRANGER, asKey: false, db: 'ok', sqlRows: rows.answer, jsonThrows: false, noCustomer: false });
     return lab.send(port, item.request.method, item.url, item.request.body);
   };
+}
+
+/**
+ * SEC-138: the existence oracle on the 8 routes. For each: [missing id] and [exists, not yours] answer the SAME 404 (same bytes, request id aside) with the code a missing id has;
+ * [exists, yours] is the real answer; a LEVEL refusal (a staff login) is still the 403 and comes before any existence question; a suspended member of the network still reads
+ * its sentence (403) for an id INSIDE its own network; the claimant of a node already claimed is still told 409 (and nobody else).
+ */
+async function checkOracleClosed(port, items) {
+  console.log('\n-- SEC-138: the 8 routes no longer tell a stranger which ids exist --');
+  const eight = items.filter((item) => item.route !== 'PUT /api/connections/:id/respond');
+  const edgeRoute = (route) => /connections\/:id/.test(route);
+  for (const item of eight) {
+    const play = playFor(port, item);
+    const missing = await play('stranger', false);
+    const foreign = await play('stranger', true);
+    const own = await play('owner', true);
+    const code = edgeRoute(item.route) ? 'EDGE_NOT_FOUND' : 'NOT_FOUND';
+    check(item.route + ': a missing id and an id that is not yours are both 404 ' + code, missing.status === 404 && foreign.status === 404 && missing.json && foreign.json && missing.json.code === code && foreign.json.code === code, [missing.status, foreign.status]);
+    check(item.route + ': the two 404 are byte for byte the same body', FOREIGN.comparable(missing) === FOREIGN.comparable(foreign));
+    check(item.route + ': the owner own id is not a 404 (the case proves something)', own.status !== 404, own.status);
+    if (!edgeRoute(item.route)) continue;
+    Object.assign(world, { who: STAFF, realAuth: false, sqlRows: memory({ tree: true, edge: { state: 'requested' } }).answer });
+    const staff = await lab.send(port, item.request.method, item.url, item.request.body);
+    check(item.route + ': a level refusal (staff login) is still a 403, before the existence check', staff.status === 403, staff.status);
+  }
+  const ask = async (route, options, who, url) => {
+    const item = FOREIGN_ROUTES().find((one) => one.route === route);
+    Object.assign(world, { realAuth: false, who, asKey: false, db: 'ok', sqlRows: memory(options).answer, jsonThrows: false, noCustomer: false });
+    return lab.send(port, item.request.method, url || item.url, item.request.body);
+  };
+  const suspended = await ask('GET /api/network/entities/:id/subtree', { tree: true, edge: { state: 'suspended' } }, CHILD, '/api/network/entities/' + NODE.a + '/subtree');
+  check('GET subtree: a suspended member asking for a node of its own network still reads the suspended sentence (403)', suspended.status === 403 && /suspended/.test(JSON.stringify(suspended.json)), suspended.status);
+  const claimant = await ask('POST /api/network/entities/:id/claim', { childClaimed: true }, CHILD);
+  check('POST claim: the business the node belongs to is still told 409 ALREADY_CLAIMED', claimant.status === 409 && claimant.json.code === 'ALREADY_CLAIMED', claimant.status);
+  const other = await ask('POST /api/network/entities/:id/claim', { childClaimed: true }, STRANGER);
+  const gone = await ask('POST /api/network/entities/:id/claim', { lonely: true }, STRANGER);
+  check('POST claim: anyone else gets the 404 of a missing node for a node already claimed (no 409)', other.status === 404 && FOREIGN.comparable(other) === FOREIGN.comparable(gone), [other.status, gone.status]);
+  const asker = await ask('POST /api/network/connections/:id/approve', { edge: { state: 'requested', requested_by: NODE.c } }, CHILD);
+  check('POST approve: a party who asked the connection itself still reads the rule (403)', asker.status === 403, asker.status);
+}
+
+/**
+ * SEC-138 residual A: a caller whose identity has no place on the tree (no actor: not an entity, or no bridge id) must not tell an id that exists from one that does not.
+ * For the subtree, the connections and the 5 edge routes: a planted id and a missing id answer the same 404, byte for byte.
+ */
+async function checkNoActor(port, items) {
+  console.log(String.fromCharCode(10) + '-- SEC-138: a caller with no place on the tree learns nothing from an id --');
+  const NOBODY = { identity_id: '99999999-9999-4999-8999-999999999999', identity_type: 'entity', display_name: 'No place' };
+  const routes = items.filter((item) => item.route !== 'PUT /api/connections/:id/respond' && !item.route.endsWith('/claim'));
+  for (const item of routes) {
+    const answer = async (planted) => {
+      const rows = planted ? memory({ tree: true, edge: { state: 'requested' }, request: true }) : memory({ lonely: true });
+      Object.assign(world, { realAuth: false, who: NOBODY, asKey: false, db: 'ok', sqlRows: rows.answer, jsonThrows: false, noCustomer: false });
+      return lab.send(port, item.request.method, item.url, item.request.body);
+    };
+    const [missing, real] = [await answer(false), await answer(true)];
+    const code = /connections\/:id/.test(item.route) ?'EDGE_NOT_FOUND' : 'NOT_FOUND';
+    check(item.route + ': with no actor an existing id and a missing id are both 404 ' + code + ', byte for byte the same', missing.status === 404 && real.status === 404 && real.json && real.json.code === code && FOREIGN.comparable(missing) === FOREIGN.comparable(real), [missing.status, real.status]);
+  }
 }
 
 async function checkForeignIds(port) {
@@ -185,6 +246,9 @@ async function checkForeignIds(port) {
   const failures = await FOREIGN.runCases(items.map((item) => ({ route: item.route, play: playFor(port, item) })), recording.record);
   console.log('  foreign id: ' + (items.length - failures.length) + ' of ' + items.length + ' routes held');
   failures.forEach((sentence) => console.log('  FINDING ' + sentence));
+  check('SEC-138: every network route addressed by an id answers the id of another shop exactly as an unknown id (' + items.length + ' routes)', failures.length === 0, failures);
+  await checkOracleClosed(port, items);
+  await checkNoActor(port, items);
   return { proved: recording.proved(), failures, asked: items.length };
 }
 
@@ -240,15 +304,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const searchJunk = junkKeys.filter((key) => /availability/.test(key));
   check('a search for text holding a NUL byte answers as one that finds nothing: 200 with no degraded mark', searchJunk.length === 1 && searchJunk.every((key) => recording[key].status === 200 && recording[key].body && recording[key].body.degraded === undefined), searchJunk.map((key) => recording[key]));
   check('the writes switched off answer 503 on all eight writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 8 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the network routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for the three network route files', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

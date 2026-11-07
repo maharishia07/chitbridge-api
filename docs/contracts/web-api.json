@@ -1152,21 +1152,49 @@
         "balance_minor": 100000,
         "carried_minor": 8325000
        }
-      ]
+      ],
+      "interest_minor": null,
+      "interest_state": "not_set",
+      "early": null,
+      "follow_up": {
+       "not_due": 0,
+       "d0_30": 0,
+       "d31_60": 0,
+       "d61_90": 0,
+       "d90_plus": 118000,
+       "worst": "d90_plus",
+       "no_terms_minor": 0,
+       "terms": "ok"
+      }
      }
     ],
     "total_minor": 59000,
     "payables": {
      "total_minor": 59000
+    },
+    "follow_up_total": {
+     "not_due": 0,
+     "d0_30": 0,
+     "d31_60": 0,
+     "d61_90": 0,
+     "d90_plus": 118000,
+     "worst": "d90_plus",
+     "no_terms_minor": 0,
+     "terms": "ok"
     }
    },
    "optional": [
+    "follow_up_total",
     "parties[].buckets.lt_1y",
     "parties[].buckets.lt_6m",
     "parties[].buckets.m6_1y",
     "parties[].credit_limit_from",
     "parties[].credit_limit_minor",
+    "parties[].early",
+    "parties[].follow_up",
     "parties[].foreign",
+    "parties[].interest_minor",
+    "parties[].interest_state",
     "parties[].last_remind",
     "parties[].over_limit",
     "parties[].payable",
@@ -4420,7 +4448,7 @@
      }
     ],
     "notes": [
-     "Their account codes could not be kept yet (a database update, b302, is still to run) — a trial balance will match on names."
+     "The saved account codes arrive after the next update. A trial balance will match on names until then."
     ],
     "source_code_written": false,
     "proof": {
@@ -5124,11 +5152,11 @@
    "example": {
     "code": "CRM_NOT_MIGRATED",
     "error": "Not migrated yet",
-    "message": "CRM needs migration b276 — not run yet.",
+    "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
     "type": "https://chitbridge.com/problems/crm_not_migrated",
     "title": "Crm not migrated",
     "status": 503,
-    "detail": "CRM needs migration b276 — not run yet.",
+    "detail": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
     "hint": "Try again after the next update.",
     "request_id": null
    },

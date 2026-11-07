@@ -8,6 +8,7 @@
  *       the masters' writers log every change. (The live twin of A is b305's PROOFS P3/P4 — run on the database.)
  *   B · Retention floors (IN 8 FY / 72 months GST · AU 5–7 y · AE 5–7 y): ONE floor, lib/policy.js RECORDS_FLOOR_YEARS, at least as long
  *       as every registered pack asks; the mint applies it under every copy; the sweep never lists a copy younger than it.
+ * CARD      21-compliance-attestation-and-trade/our-obligations-per-country-records-keeping
  */
 'use strict';
 const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
@@ -92,7 +93,7 @@ for (const [f, tables] of Object.entries(WRITERS)) {
   check('A6 ' + f + ' writes the change log', /logChange\(|INSERT INTO books_change_log/.test(s));
   for (const t of tables) check('A6 ' + f + ' logs ' + t, new RegExp("table_name: '" + t + "'").test(s));
 }
-check('A6 the change log has ONE writer', /async function logChange\(db, e, c\)[\s\S]*INSERT INTO books_change_log/.test(read('lib/books-store.js')));
+check('A6 the change log has ONE writer', /async function logChange\(db, e, change\)[\s\S]*INSERT INTO books_change_log/.test(read('lib/books-store.js')));
 
 /* ── B · the retention floor ───────────────────────────────────────────────────────────────────────────────────────── */
 check('B1 RECORDS_FLOOR_YEARS is 9 (IN s.128(5): 8 financial years after the year, counted from the mint)', policy.RECORDS_FLOOR_YEARS === 9);

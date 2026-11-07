@@ -80,13 +80,15 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   }
 });
 
-/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON. Validate before filing. */
+/** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
     const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
     const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
+    /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
+    if (out.ok === false) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', out.why));
     res.setHeader('Content-Disposition', `attachment; filename="${form}-${bounds.period}.json"`);
     res.json(out);
   } catch (err) {
@@ -96,7 +98,7 @@ router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
 
 /* ── THE TAX ENGINE AS A SERVICE (rung 2) ──
  *   POST /api/tax/rate     (key: tax)  { lines:[{ item_id?|code?|name, hsn? }] } → the slab each line resolves to on THIS entity's shelf
- *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, unit_price?, discount?, rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
+ *   POST /api/tax/compute  (key: tax)  { seller?, buyer, lines:[{ item_id?|code?|name, qty, price?, discount?, gst_rate?, cess_rate?, hsn? }], scheme?, priceIncludesTax? }
  *                                       → the INV-01 block + money (by rate) + currency + pack; a line without a rate takes the shelf's, without a price the shelf's
  *                                         price; seller omitted = this entity; priceIncludesTax omitted = the shop's own setting
  * Global by scheme: GST (state decides intra/inter) or a VAT-type scheme (the border decides domestic/cross) — the line's

@@ -362,6 +362,7 @@ const EXTRAS = [
   X('counters-listed-with-a-holder', 'GET ' + CT, 200, { setup: { flags: HELD } }),
   X('counters-listed-as-staff', 'GET ' + CT, 200, { setup: { flags: FREE, who: STAFF } }),
   X('counters-key-refused', 'GET ' + CT, 403, { setup: { asKey: true } }),
+  X('counter-make-unknown-key-refused', 'POST ' + CT, 400, { body: { colour: 'red', name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made', 'POST ' + CT, 201, { body: { name: 'Back office' }, setup: { flags: FREE } }),
   X('counter-made-unnamed', 'POST ' + CT, 201, { body: {}, setup: { flags: FREE } }),
   X('counter-none-left', 'POST ' + CT, 400, { body: {}, setup: { flags: FREE, bookedAll: true } }),
@@ -369,17 +370,20 @@ const EXTRAS = [
   X('counter-make-not-migrated', 'POST ' + CT, 503, { body: {}, setup: { flags: FREE, policyMissing: true } }),
   X('counter-make-as-staff', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, who: STAFF } }),
   X('counter-make-by-key', 'POST ' + CT, 403, { body: {}, setup: { flags: FREE, asKey: true } }),
+  X('counter-rename-unknown-key-refused', 'PATCH ' + CT + '/:id', 400, { body: { colour: 'red', name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-renamed', 'PATCH ' + CT + '/:id', 200, { body: { name: 'Till one' }, setup: { flags: FREE } }),
   X('counter-rename-unnamed', 'PATCH ' + CT + '/:id', 400, { body: {}, setup: { flags: FREE } }),
   X('counter-rename-unknown', 'PATCH ' + CT + '/:id', 404, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/C9' }),
   X('counter-rename-lowercase-id', 'PATCH ' + CT + '/:id', 200, { body: { name: 'x' }, setup: { flags: FREE }, url: CT + '/c1' }),
   X('counter-rename-fails', 'PATCH ' + CT + '/:id', 500, { body: { name: 'x' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-assign-unknown-key-refused', 'POST ' + CT + '/:id/assign', 400, { body: { colour: 'red', phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-assigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '+919812345678' }, setup: { flags: FREE } }),
   X('counter-unassigned', 'POST ' + CT + '/:id/assign', 200, { body: { phone: '' }, setup: { flags: FREE } }),
   X('counter-assign-bad-phone', 'POST ' + CT + '/:id/assign', 400, { body: { phone: '12' }, setup: { flags: FREE } }),
   X('counter-assign-unknown', 'POST ' + CT + '/:id/assign', 404, { body: { phone: '' }, setup: { flags: FREE }, url: CT + '/C9/assign' }),
   X('counter-assign-as-staff', 'POST ' + CT + '/:id/assign', 403, { body: { phone: '' }, setup: { flags: FREE, who: STAFF } }),
   X('counter-assign-fails', 'POST ' + CT + '/:id/assign', 500, { body: { phone: '' }, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-open-unknown-key-refused', 'POST ' + CT + '/:id/open', 400, { body: { colour: 'red' }, setup: { flags: FREE, patchKeys: true } }),
   X('counter-opened', 'POST ' + CT + '/:id/open', 200, { body: {}, setup: { flags: FREE, patchKeys: true } }),
   X('counter-open-held', 'POST ' + CT + '/:id/open', 409, { body: {}, setup: { flags: HELD } }),
   X('counter-open-unknown', 'POST ' + CT + '/:id/open', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/open' }),
@@ -387,6 +391,7 @@ const EXTRAS = [
   X('counter-open-mint-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: new Error(SECRET_SQL) } }),
   X('counter-open-mint-refuses', 'POST ' + CT + '/:id/open', 400, { body: {}, setup: { flags: FREE, patchKeys: true, mintFails: Object.assign(new Error('Too many keys.'), { status: 400 }) } }),
   X('counter-open-fails', 'POST ' + CT + '/:id/open', 500, { body: {}, setup: { flags: FREE, db: 'fail' } }),
+  X('counter-release-unknown-key-refused', 'POST ' + CT + '/:id/release', 400, { body: { colour: 'red' }, setup: { flags: HELD } }),
   X('counter-released', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: HELD } }),
   X('counter-released-free', 'POST ' + CT + '/:id/release', 200, { body: {}, setup: { flags: FREE } }),
   X('counter-release-unknown', 'POST ' + CT + '/:id/release', 404, { body: {}, setup: { flags: FREE }, url: CT + '/C9/release' }),
@@ -464,7 +469,7 @@ function applyPatch(setup) {
   if (setup.policyMissing) {
     const policy = require(path.join(HERE, 'lib', 'policy'));
     swap(policy, 'patchKey', async () => {
-      throw Object.assign(new Error('Policy flags are not migrated on this environment (b130).'), { status: 503 });
+      throw Object.assign(new Error('Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings.'), { status: 503 });
     });
   }
   return () => undo.reverse().forEach(([owner, name, original]) => (owner[name] = original));
@@ -661,26 +666,26 @@ function checkAllowList(recording, routes) {
   const proved = {};
   const { shapeOf } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
-  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => mountOf(route) === RS)).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
+  ['GET ' + WK + '/:chit_id', 'GET ' + WK + '/facts', 'GET ' + WK + '/list'].concat(Object.keys(routes).filter((route) => [RS, CT].includes(mountOf(route)))).sort().forEach((route) => { /* in the order the evidence file is read: sorted */
     const shape = shapeOf(route);
-    const answers = Object.values(recording).filter((one) => one.route === route && one.status === 200 && one.body);
+    const answers = Object.values(recording).filter((one) => one.route === route && String(one.status) === String((shape || {}).status || 200) && one.body);
     const fits = shape && engine.compile(shape.schema);
     const held = !!shape && shape.schema.additionalProperties === false && answers.length > 0 && answers.every((one) => fits(one.body));
     check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return proved;
+  return FOREIGN.ownedBy(proved, (route) => [RS, WK, CT].includes(mountOf(route))); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the work reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route)) && routes[route].output_allowlist).sort().map((route) => [route, { output_allowlist: true }]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => [RS, WK].includes(mountOf(route))).forEach((route) => {
+  Object.keys(routes).filter((route) => [RS, WK, CT].includes(mountOf(route))).forEach((route) => {
     delete routes[route].output_allowlist;
     if (!Object.keys(routes[route]).length) delete routes[route];
   });
@@ -742,7 +747,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, proved);
     writeAllowList(allowed);
   } else {
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads and repeat-supply routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the work reads, repeat-supply and counters routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/repeat-supply.js · routes/work.js · routes/counters.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(proved).length });
   }

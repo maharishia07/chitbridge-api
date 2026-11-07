@@ -26,6 +26,7 @@ const fs = require('fs');
 const { harness, OWNER, STAFF, SECRET_SQL, sameValue, raising, answering, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/relationships-scenes.cjs');
 const FOREIGN = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -207,8 +208,9 @@ async function checkReadsAreScoped(port) {
       Object.assign(world, { who: OWNER });
       const own = await lab.send(port, item.method, item.url);
       const same = FOREIGN.comparable(foreignAnswer).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID') === FOREIGN.comparable(unknown).replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, 'ID');
-      held.push([item.route, foreignAnswer.status, unknown.status, own.status, same]);
-      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', same && foreignAnswer.status === (item.unknown || 200) && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer), [foreignAnswer.status, unknown.status, own.status]);
+      const holds = same && foreignAnswer.status === (item.unknown || 200) && own.status === 200 && FOREIGN.comparable(own) !== FOREIGN.comparable(foreignAnswer);
+      held.push([item.route, foreignAnswer.status, unknown.status, own.status, same, holds]);
+      check(item.route + ': another shop\'s id answers as an unknown id (' + foreignAnswer.status + ', same body) and the owner\'s own id is not the same answer', holds, [foreignAnswer.status, unknown.status, own.status]);
     } finally {
       [sources2.rewardStore.balance, sources2.select.rows, sources2.policy.get] = kept;
     }
@@ -241,7 +243,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   const foreign = await checkForeignIds(port);
-  await checkReadsAreScoped(port);
+  const scoped = await checkReadsAreScoped(port);
+  /* Slice 1 (critic 6 Nov, class C): a scoped read whose foreign id answered exactly as the unknown id and whose own id differs is that route's foreign_id_404 evidence */
+  scoped.filter((item) => item[5]).forEach((item) => (foreign.proved[item[0]] = { foreign_id_404: true }));
+  foreign.proved = Object.fromEntries(Object.keys(foreign.proved).sort().map((route) => [route, foreign.proved[route]]));
   server.close();
   checkWords();
   checkCodesRegistered(contractModule());
@@ -258,15 +263,18 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
   const unreadable = recording['GET /api/relationships/suppliers/availability|availability-one-unreadable'];
   check('availability: a supplier whose catalogue cannot be read is a row with state err and the one safe sentence', !!unreadable && unreadable.status === 200 && unreadable.body.results[0].state === 'err' && unreadable.body.results[0].error === 'Something went wrong — please try again.', unreadable && unreadable.body);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
   if (lab.argv.includes('--write')) {
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     FOREIGN.writeEvidence(EVIDENCE_FILE, lab.mine, foreign.proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the relationship routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/relationships.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the routes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine), foreign.proved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, lab.mine)).length, held: Object.keys(foreign.proved).length });
   }

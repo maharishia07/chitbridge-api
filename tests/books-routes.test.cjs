@@ -7,6 +7,9 @@
  * leaves no half-recorded payment · a duplicate tax id is a 409 DUPLICATE_PARTY.
  * Needs the books engines v1.8.0 for the "on" half (BOOKS_ENGINES_SRC); without them it says so and checks the "off" half.
  * Run: node tests/books-routes.test.cjs
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
+ * CARD      14-accounting/statements-tb-pandl-bs-party-statement
+ * CARD      14-accounting/accounts-packs-and-auditor-file
  */
 'use strict';
 const { routeAt } = require('./support/src-find.cjs'); /* iter1: route anchors survive the formatter */
@@ -28,9 +31,11 @@ const authStub = Object.assign((req, res, next) => { req.identity = WHO; next();
   requireScope: () => (req, res, next) => next(),
 });
 
-const call = (port, method, p, body) => new Promise((done) => {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
     (res) => { let raw = ''; res.on('data', (c) => raw += c); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) {} done({ status: res.statusCode, body: j }); }); });
   r.end(b);
 });
@@ -170,7 +175,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }] }',
     pr.status === 200 && has(p0, ['against_ref', 'bill_no', 'due_date', 'open_minor', 'apply_minor', 'disputed']) && p0.bill_no === 'C1-0042' && p0.open_minor === 105000 && p0.apply_minor === 60000, JSON.stringify(pr.body));
   const cf = await q('POST', '/payments/' + pay.body.payment.payment_id + '/confirm', { allocations: [{ against_ref: p0.against_ref, amount_minor: 60000 }] });
-  ok('POST /payments/:id/confirm { allocations } → allocated', cf.status === 200 && cf.body.ok && cf.body.allocated_minor === 60000, JSON.stringify(cf.body));
+  ok('POST /payments/:id/confirm { allocations } → allocated (a first posting carries no `duplicate` key — FIN-63 step 2)', cf.status === 200 && cf.body.ok && cf.body.allocated_minor === 60000 && !('duplicate' in cf.body), JSON.stringify(cf.body));
   const over = await q('POST', '/payments/' + pay.body.payment.payment_id + '/confirm', { allocations: [{ against_ref: p0.against_ref, amount_minor: 1 }] });
   ok('…confirming more than the payment has left is refused (422, in words)', over.status === 422 && typeof over.body.error === 'string', JSON.stringify(over.body));
   const chq = await q('POST', '/payments', { party_id: CUST, direction: 'in', amount_minor: 10000, currency: 'INR', mode: 'cheque', cheque: { number: '000777', bank: 'SBI', date: '2026-09-21' }, received_at: '2026-09-21' });

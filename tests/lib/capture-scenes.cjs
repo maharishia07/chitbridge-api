@@ -109,6 +109,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/simulate ── */
   const simulate = [
+    X('sim-unknown-key-refused', R('POST', '/simulate'), 400, { body: { colour: 'red', sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-ok', R('POST', '/simulate'), 200, { body: { sender_ref: '919840012345', sender_name: 'Anna', subject: 'Order', raw_text: '5 kg tomato', media_refs: [] }, setup: world({}) }),
     X('sim-channel-is-always-web', R('POST', '/simulate'), 200, { body: { channel: 'whatsapp', sender_ref: '919840012345', raw_text: 'hello' }, setup: world({}) }),
     X('sim-no-text', R('POST', '/simulate'), 400, { body: { sender_ref: '919840012345' }, setup: world({}) }),
@@ -128,6 +129,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/structure ── */
   const structure = [
+    X('structure-unknown-key-refused', R('POST', '/:id/structure'), 400, { url: at('/' + CAP + '/structure'), body: { colour: 'red' }, setup: world({}) }),
     X('structure-ok', R('POST', '/:id/structure'), 200, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: STRUCTURED, note: 'read by the co-assist', usage: { input_tokens: 10, output_tokens: 20 } }) }),
     X('structure-unknown', R('POST', '/:id/structure'), 404, { url: at('/' + CAP + '/structure'), setup: world({ capture: null }) }),
     X('structure-nothing-usable', R('POST', '/:id/structure'), 422, { url: at('/' + CAP + '/structure'), setup: world({}), patch: reader({ data: null }) }),
@@ -143,6 +145,7 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/raise ── */
   const raise = [
+    X('raise-unknown-key-refused', R('POST', '/:id/raise'), 400, { url: at('/' + CAP + '/raise'), body: { colour: 'red' }, setup: world(withStructured()) }),
     X('raise-ok', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), setup: world(withStructured()) }),
     X('raise-without-catalogue', R('POST', '/:id/raise'), 200, { url: at('/' + CAP + '/raise'), body: { use_catalogue: false }, setup: world(withStructured()) }),
     X('raise-not-read-yet', R('POST', '/:id/raise'), 409, { url: at('/' + CAP + '/raise'), setup: world({}) }),
@@ -155,12 +158,14 @@ function extras(tools) {
 
   /* ── POST /api/capture/:id/convert and /dismiss ── */
   const handled = [
+    X('convert-unknown-key-refused', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: { colour: 'red', chit_id: CHIT }, setup: world({}) }),
     X('convert-ok', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({}) }),
     X('convert-without-chit', R('POST', '/:id/convert'), 200, { url: at('/' + CAP + '/convert'), setup: world({}) }),
     X('convert-unknown', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: null }) }),
     X('convert-already-handled', R('POST', '/:id/convert'), 404, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'converted' }) }) }),
     X('convert-fails', R('POST', '/:id/convert'), 500, { url: at('/' + CAP + '/convert'), body: { chit_id: CHIT }, setup: world(failing(/UPDATE capture SET status = 'converted'/)) }),
     X('convert-body-is-a-list', R('POST', '/:id/convert'), 400, { url: at('/' + CAP + '/convert'), body: [1], setup: world({}), after: true }),
+    X('dismiss-unknown-key-refused', R('POST', '/:id/dismiss'), 400, { url: at('/' + CAP + '/dismiss'), body: { colour: 'red' }, setup: world({}) }),
     X('dismiss-ok', R('POST', '/:id/dismiss'), 200, { url: at('/' + CAP + '/dismiss'), setup: world({}) }),
     X('dismiss-unknown', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: null }) }),
     X('dismiss-already-handled', R('POST', '/:id/dismiss'), 404, { url: at('/' + CAP + '/dismiss'), setup: world({ capture: Object.assign({}, CAPTURE_ROW, { status: 'dismissed' }) }) }),
@@ -182,6 +187,7 @@ function extras(tools) {
     X('stores-ok', R('GET', '/stores'), 200, { setup: world({}) }),
     X('stores-not-migrated', R('GET', '/stores'), 200, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/, '42P01')) }),
     X('stores-read-fails', R('GET', '/stores'), 500, { setup: world(failing(/FROM wholesaler_store WHERE owner_entity_id/)) }),
+    X('stores-save-unknown-key-refused', R('POST', '/stores'), 400, { body: { colour: 'red', phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-ok', R('POST', '/stores'), 200, { body: { phone: '+91 98400 12345', display_name: 'Chola Stores', address: 'Anna Nagar', notes: 'gate 2' }, setup: world({}) }),
     X('stores-save-no-phone', R('POST', '/stores'), 400, { body: { display_name: 'Chola Stores' }, setup: world({}) }),
     X('stores-save-not-migrated', R('POST', '/stores'), 503, { body: { phone: '9840012345' }, setup: world(failing(/INSERT INTO wholesaler_store/, '42703')) }),
@@ -196,7 +202,9 @@ function extras(tools) {
     verify('verify-wrong-token', 403, '?hub.mode=subscribe&hub.verify_token=nope&hub.challenge=1158201444'),
     verify('verify-wrong-mode', 403, '?hub.mode=unsubscribe&hub.verify_token=verify-me&hub.challenge=1158201444'),
     verify('verify-nothing-sent', 403, ''),
-    verify('verify-not-configured', 403, '?hub.mode=subscribe&hub.verify_token=undefined&hub.challenge=1158201444', { WHATSAPP_VERIFY_TOKEN: null })
+    verify('verify-not-configured', 403, '?hub.mode=subscribe&hub.verify_token=undefined&hub.challenge=1158201444', { WHATSAPP_VERIFY_TOKEN: null }),
+    /* a fault of ours while answering the handshake: a Problem 500 that says nothing of its cause (new answer: not frozen) */
+    Object.assign(verify('verify-fault', 500, '?hub.mode=subscribe&hub.verify_token=verify-me&hub.challenge=1158201444'), { patch: { response: { type: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── POST /api/capture/webhook/whatsapp (signed by Meta: HMAC over the raw bytes; always 200 once signed) ── */
@@ -219,7 +227,11 @@ function extras(tools) {
     wa('wa-stop-reply-not-recorded', 200, whatsappBody([whatsappMessage('wamid.STOP2', 'STOP')]), { patch: stopFailed }),
     wa('wa-body-is-not-json', 200, '{ not json'),
     wa('wa-capture-fails', 200, oneMessage, { setup: world(failing(/INSERT INTO capture/)) }),
-    wa('wa-nothing-in-it', 200, '{}')
+    wa('wa-nothing-in-it', 200, '{}'),
+    /* the contract pass (7 Nov): a signed body the schema refuses, and a fault in the signature step, are Problems (new answers: not frozen) */
+    wa('wa-extra-top-level-key-taken', 200, JSON.stringify({ object: 'whatsapp_business_account', entry: [], colour: 'red' }), { after: true }),
+    wa('wa-body-is-a-list', 400, '[]', { after: true }),
+    wa('wa-gate-fault', 500, oneMessage, { patch: { crypto: { createHmac: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── POST /api/capture/webhook/email (signed by the provider; always 200 once signed) ── */
@@ -233,7 +245,9 @@ function extras(tools) {
     mail('email-form-fields', 200, 'to=orders%40shop.example&from=anna%40example.com&subject=Order&body-plain=5%20kg%20tomato', { raw: mailPost('to=orders%40shop.example&from=anna%40example.com&subject=Order&body-plain=5%20kg%20tomato') }),
     mail('email-no-binding', 200, mailBody(), { setup: world({ unbound: true }) }),
     mail('email-no-text', 200, mailBody({ text: '   ' })),
-    mail('email-capture-fails', 200, mailBody(), { setup: world(failing(/INSERT INTO capture/)) })
+    mail('email-capture-fails', 200, mailBody(), { setup: world(failing(/INSERT INTO capture/)) }),
+    mail('email-body-is-a-number', 400, '5', { after: true }),
+    mail('email-gate-fault', 500, mailBody(), { patch: { crypto: { createHmac: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── K-1 (B2): a value no column can hold is a 400 in words, never a 500 (the harness has no door; the real server's door answers INVALID_CHARACTER first). Not frozen: new answers ── */

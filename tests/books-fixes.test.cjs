@@ -8,6 +8,7 @@
  * (Dates read back as a database hands them over are in tests/books-dates-tz.test.cjs — it runs itself under two zones.)
  *
  * Needs the books engines (BOOKS_ENGINES_SRC, else the sibling ../chitbridge-engines/src). Run: node tests/books-fixes.test.cjs
+ * CARD      14-accounting/opening-balances
  */
 'use strict';
 const path = require('path');
@@ -31,9 +32,11 @@ const authStub = Object.assign((req, res, next) => { req.identity = OWNER; next(
   entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
   requireScope: () => (req, res, next) => next(),
 });
-const call = (port, method, p, body) => new Promise((done) => {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key); pass headers to replay one */
+let attempts = 0;
+const call = (port, method, p, body, headers) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: Object.assign({ 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + ++attempts }, headers || {}) },
     (res) => { const bufs = []; res.on('data', (c) => bufs.push(c)); res.on('end', () => { const raw = Buffer.concat(bufs); let j = {}; try { j = JSON.parse(raw.toString('utf8') || '{}'); } catch (_) {} done({ status: res.statusCode, body: j, raw, headers: res.headers }); }); });
   r.end(b);
 });
@@ -65,7 +68,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const st2 = await q('GET', '/status');
     ok('the table missing (42P01) → migrated: false', st2.status === 200 && st2.body.migrated === false && st2.body.enabled === false, JSON.stringify(st2.body));
     const en2 = await q('POST', '/enable', {});
-    ok('…and POST /enable says to run the SQL first (503)', en2.status === 503 && /b272/.test(en2.body.error || ''), en2.status + ' ' + JSON.stringify(en2.body));
+    ok('…and POST /enable says the ledger waits for the update, without a migration id (503)', en2.status === 503 && !/b27/.test(en2.body.error || '') && /after the next update/.test(en2.body.error || ''), en2.status + ' ' + JSON.stringify(en2.body));
     X.store.setting = real; srv.close();
   });
 

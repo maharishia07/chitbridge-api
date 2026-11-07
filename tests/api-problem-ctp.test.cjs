@@ -87,7 +87,10 @@ function installStubs() {
     },
     verifyWith: () => true
   });
+  const realEnvelope = require(path.join(API, 'lib', 'ctpenvelope')); /* RAIL-126 b: the version rule is the real one; the stand-in replaces only the opener */
   mock('lib/ctpenvelope', {
+    speaks: realEnvelope.speaks,
+    versionRefusal: realEnvelope.versionRefusal,
     digest: () => 'H-1',
     open: () =>
       world.openWhy
@@ -123,7 +126,7 @@ const DOORS = { manifest: 'GET /.well-known/ctp.json', deliver: 'POST /deliver',
 const SCENARIOS = [
   { id: 'manifest-ok', door: 'manifest', status: 200 },
   { id: 'manifest-keys-fail', door: 'manifest', status: 500, setup: { keysFail: true } },
-  { id: 'deliver-not-envelope', door: 'deliver', status: 400, body: { ctp: '2' } },
+  { id: 'deliver-not-envelope', door: 'deliver', status: 400, body: { ctp: 2 } },
   { id: 'deliver-no-body', door: 'deliver', status: 400 },
   { id: 'deliver-no-recipient', door: 'deliver', status: 400, body: env({ to: {} }) },
   { id: 'deliver-no-installation', door: 'deliver', status: 400, body: env({ from: {} }) },

@@ -64924,6 +64924,118 @@
    "changed_at": "2026-10-23T03:10:41+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/api-card-helpers.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE REGISTER'S DERIVED FACTS FOLLOW PRIVATE HELPERS: a call is real only after comments and strings are blanked, a due date or a count is not money.",
+   "claim": "THE REGISTER'S DERIVED FACTS FOLLOW PRIVATE HELPERS: a call is real only after comments and strings are blanked, a due date or a count is not money.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 92 lines. Run: node chitbridge-api/tests/api-card-helpers.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/api-card.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T17:53:45.237Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/live-trips-writer.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE LIVE ROUND-TRIP WRITER: merges measured trips into the budget, never raises a fired ceiling (fails instead), keeps registered_only/extra/awaiting_client.",
+   "claim": "THE LIVE ROUND-TRIP WRITER: merges measured trips into the budget, never raises a fired ceiling (fails instead), keeps registered_only/extra/awaiting_client.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 74 lines. Run: node chitbridge-api/tests/live-trips-writer.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips-writer.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/live-trips-tool.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE LIVE ROUND-TRIP HARNESS, AS A UNIT: refuses a route with no budget line, restores SIT state on a thrown error, cleanup touches only tagged rows.",
+   "claim": "THE LIVE ROUND-TRIP HARNESS, AS A UNIT: refuses a route with no budget line, restores SIT state on a thrown error, cleanup touches only tagged rows.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 62 lines. Run: node chitbridge-api/tests/live-trips-tool.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/live-trips-network.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE HARNESS NETWORK STEPS, AS UNITS: request building and answer reading against a fake client, no network.",
+   "claim": "THE HARNESS NETWORK STEPS, AS UNITS: request building and answer reading against a fake client, no network.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 61 lines. Run: node chitbridge-api/tests/live-trips-network.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "tools/live-trips-network.cjs"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-06T22:40:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/assign-merge-patch.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -65373,6 +65485,41 @@
    "data": "",
    "steps": [],
    "note": "test.guard · integration · 273 lines. Run: node chitbridge-api/tests/bills-private.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "connector",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/books.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-10-01T18:22:38+05:30",
+   "needs": [
+    "a database",
+    "the API running"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/fin71-step-ticket.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "A BILL'S R-1400 STEP THAT FAILS RAISES ONE SUPPORT TICKET, NEVER SILENT.",
+   "claim": "A BILL'S R-1400 STEP THAT FAILS RAISES ONE SUPPORT TICKET, NEVER SILENT.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 228 lines. Run: node chitbridge-api/tests/fin71-step-ticket.test.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -98740,6 +98887,731 @@
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:devsuite.cjs)",
    "changed_at": "2026-11-04T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/api-problem-plumbing.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "THE PLUMBING DOORS ON THE REAL APP: GET /HEALTH IS 200 \"OK\" WHATEVER THE DATABASE SAYS, THE PREFLIGHT IS 204 OR 403, THE OPENAPI JSON IS 200, A FAULT IS A PROBLEM 500, NO AUTH ASKED.",
+   "claim": "THE PLUMBING DOORS ON THE REAL APP: GET /HEALTH IS 200 \"OK\" WHATEVER THE DATABASE SAYS, THE PREFLIGHT IS 204 OR 403, THE OPENAPI JSON IS 200, A FAULT IS A PROBLEM 500, NO AUTH ASKED.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 190 lines. Run: node chitbridge-api/tests/api-problem-plumbing.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 190,
+   "step": "",
+   "areas": [
+    "api"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T00:00:00Z"
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-223-238-cancel.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-223-238-cancel (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-223-238-cancel (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 391 lines. Run: node chitbridge-api/tests/acc-223-238-cancel.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.677Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-231-move-in-role-ledgers.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-231-move-in-role-ledgers (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-231-move-in-role-ledgers (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 164 lines. Run: node chitbridge-api/tests/acc-231-move-in-role-ledgers.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.677Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-232-parallel-run.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-232-parallel-run (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-232-parallel-run (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 141 lines. Run: node chitbridge-api/tests/acc-232-parallel-run.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-234-actor-tester-code.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-234-actor-tester-code (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-234-actor-tester-code (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 66 lines. Run: node chitbridge-api/tests/acc-234-actor-tester-code.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-241-move-in-currency.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-241-move-in-currency (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-241-move-in-currency (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 191 lines. Run: node chitbridge-api/tests/acc-241-move-in-currency.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/acc-244-move-in-credit-type.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "acc-244-move-in-credit-type (guard enrolled by the 7 Nov test sweep)",
+   "claim": "acc-244-move-in-credit-type (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 108 lines. Run: node chitbridge-api/tests/acc-244-move-in-credit-type.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/amend-guard.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "amend-guard (guard enrolled by the 7 Nov test sweep)",
+   "claim": "amend-guard (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 109 lines. Run: node chitbridge-api/tests/amend-guard.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-cash-waiting.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "books-cash-waiting (guard enrolled by the 7 Nov test sweep)",
+   "claim": "books-cash-waiting (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 53 lines. Run: node chitbridge-api/tests/books-cash-waiting.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/crm-204-contact-email.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "crm-204-contact-email (guard enrolled by the 7 Nov test sweep)",
+   "claim": "crm-204-contact-email (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 55 lines. Run: node chitbridge-api/tests/crm-204-contact-email.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctp-repair.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ctp-repair (guard enrolled by the 7 Nov test sweep)",
+   "claim": "ctp-repair (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 103 lines. Run: node chitbridge-api/tests/ctp-repair.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/ctp-return-tool.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ctp-return-tool (guard enrolled by the 7 Nov test sweep)",
+   "claim": "ctp-return-tool (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 19 lines. Run: node chitbridge-api/tests/ctp-return-tool.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/finance-followup.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "finance-followup (guard enrolled by the 7 Nov test sweep)",
+   "claim": "finance-followup (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 257 lines. Run: node chitbridge-api/tests/finance-followup.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/k1-chits-guard.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "k1-chits-guard (guard enrolled by the 7 Nov test sweep)",
+   "claim": "k1-chits-guard (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 165 lines. Run: node chitbridge-api/tests/k1-chits-guard.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/ppl-21-login-format.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "ppl-21-login-format (guard enrolled by the 7 Nov test sweep)",
+   "claim": "ppl-21-login-format (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 73 lines. Run: node chitbridge-api/tests/ppl-21-login-format.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/rail-158-service-errors.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "rail-158-service-errors (guard enrolled by the 7 Nov test sweep)",
+   "claim": "rail-158-service-errors (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 106 lines. Run: node chitbridge-api/tests/rail-158-service-errors.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/retired-entities-lookup.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "retired-entities-lookup (guard enrolled by the 7 Nov test sweep)",
+   "claim": "retired-entities-lookup (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 30 lines. Run: node chitbridge-api/tests/retired-entities-lookup.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec-126-network-store-public.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec-126-network-store-public (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec-126-network-store-public (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 283 lines. Run: node chitbridge-api/tests/sec-126-network-store-public.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec105-dispute-queue.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec105-dispute-queue (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec105-dispute-queue (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 74 lines. Run: node chitbridge-api/tests/sec105-dispute-queue.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec116-actors-connector-config.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec116-actors-connector-config (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec116-actors-connector-config (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 60 lines. Run: node chitbridge-api/tests/sec116-actors-connector-config.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec118-employee-code.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec118-employee-code (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec118-employee-code (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 115 lines. Run: node chitbridge-api/tests/sec118-employee-code.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.678Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec91-supplier-catalogue.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec91-supplier-catalogue (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec91-supplier-catalogue (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 27 lines. Run: node chitbridge-api/tests/sec91-supplier-catalogue.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.679Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/sec92-readiness-passport.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "sec92-readiness-passport (guard enrolled by the 7 Nov test sweep)",
+   "claim": "sec92-readiness-passport (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 72 lines. Run: node chitbridge-api/tests/sec92-readiness-passport.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.679Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/set38-signup-stamp.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "set38-signup-stamp (guard enrolled by the 7 Nov test sweep)",
+   "claim": "set38-signup-stamp (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 105 lines. Run: node chitbridge-api/tests/set38-signup-stamp.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.679Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/till-bills-credit-note.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "till-bills-credit-note (guard enrolled by the 7 Nov test sweep)",
+   "claim": "till-bills-credit-note (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 196 lines. Run: node chitbridge-api/tests/till-bills-credit-note.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.679Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/trend-reads-books.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "trend-reads-books (guard enrolled by the 7 Nov test sweep)",
+   "claim": "trend-reads-books (guard enrolled by the 7 Nov test sweep)",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 74 lines. Run: node chitbridge-api/tests/trend-reads-books.test.cjs · hand-added by the 7 Nov sweep; node board.cjs rebuilds it with its real claim",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-07T03:17:13.679Z",
+   "needs": [
+    "a database (via policy.js)"
+   ]
   }
  ]
 }

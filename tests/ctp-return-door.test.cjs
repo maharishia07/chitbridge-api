@@ -3,6 +3,7 @@
  * What it pins: an event goes through the SAME checks as a delivery (unknown peer 403, forged 409, tampered 409, crossing refused 409, no recipient here 404) and only then reaches
  * the applier; a verified one is answered `accepted: true` with `applied`; the applier's refusals come back with their status, code and words; a refused event writes nothing;
  * a delivery still goes to mint.deliver, untouched.
+ * CARD      05-ctp-and-cross-installation/ctp-return-path
  */
 'use strict';
 const crypto = require('crypto');

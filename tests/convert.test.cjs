@@ -6,6 +6,7 @@
  *
  * ⚠️ NO DATABASE, NO NETWORK, NO CHIT. The engine is handed lines and rates; where they came from is the
  * caller's business. That is what makes it an asset rather than a feature.
+ * CARD      06-catalogue-pim/units-conversion-codes
  */
 const assert = require('assert');
 const cv = require('../lib/convert');

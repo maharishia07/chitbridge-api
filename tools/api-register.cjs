@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const card = require('./api-card.cjs');
+const reported = require('./api-reported.cjs');
 
 const TOOLS_DIR = __dirname;
 const rootArg = process.argv.indexOf('--root');
@@ -134,8 +135,23 @@ function chainRules(fn) {
 }
 
 /** the functions a route file defines for this route: found by their own text in the file (a middleware from another module is not in it) */
-function ownFunctions(handlers, fileText, shared) {
-  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && fileText.includes(fn.toString()));
+function ownFunctions(handlers, fileText, shared, otherTexts) {
+  const inFile = (fn) => fileText.includes(fn.toString());
+  /* an ALIAS (routes/actors.js POST /login runs routes/signin.js's handler): a function the route file does not hold is looked up in the other routes files, so the register judges the handler that really answers */
+  const inOther = (fn) => (otherTexts || []).some((text) => text.includes(fn.toString()));
+  return handlers.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn) && (inFile(fn) || inOther(fn)));
+}
+
+/** the text of every routes file but this one, read once */
+const routeTexts = new Map();
+function readRouteTexts() {
+  const found = ROUTER_DIRS.filter((dir) => fs.existsSync(path.join(ROOT, dir)));
+  found.forEach((dir) => fs.readdirSync(path.join(ROOT, dir)).filter((name) => name.endsWith('.js')).forEach((name) => routeTexts.set(dir + '/' + name, fs.readFileSync(path.join(ROOT, dir, name), 'utf8'))));
+}
+function otherRouteTexts(file) {
+  if (file === 'unknown') return [];
+  if (!routeTexts.size) readRouteTexts();
+  return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
 }
 
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
@@ -238,7 +254,9 @@ function strictInputColumn(operation, leaf, facts, evidence) {
 function outputAllowlistColumn(operation, evidence) {
   const schemas = successSchemas(operation);
   if (!schemaOutColumn(operation)) return false;
-  return schemas.length === 0 || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
+  /* an operation that SAYS its answer is text with no keys (x-no-keys-to-leak, set by the route's contract row `noKeys`) and holds no JSON schema has nothing to allow-list; every other text or binary answer stays red until its owner says so and cb-api signs it again */
+  const textOnly = !!operation && operation['x-no-keys-to-leak'] === true && schemas.every((schema) => !schema);
+  return schemas.length === 0 || textOnly || (schemas.every(refusesUnknownKeys) && !!(evidence && evidence.output_allowlist === true));
 }
 
 /** foreign_id_404 (S35): a route addressed by an id needs its generated case to see another shop's id answered with the unknown id's 404; a route with no id in its path, or whose id is public by design (api-hardening-scope.json public_ids), is not addressed by a shop's own id */
@@ -259,17 +277,52 @@ const inboundColumn = (isInbound, operation, facts) => !isInbound || (facts.hasS
 /** trips_budgeted (S38): the route has a FIRED line (a measured ceiling, not the placeholder) in round-trips.budget.json; tests/round-trips-all.test.cjs fails the guards when the route goes over it. Making it cheaper is cb-speed's; this only checks the budget exists */
 const tripsBudgetedColumn = (key, budget) => !!(budget && budget[key] && budget[key].fired === true);
 
+/** a route whose path id S35 does not apply to: public by design (public_ids) or reachable only by the platform or the builder (platform_only); both lists live in api-hardening-scope.json, each entry with its reason */
+const idExempt = (scope, key) => scope.publicIds.has(key) || scope.platformOnly.has(key);
+
 /** which of the six columns apply to a route (a column that does not apply passes, and is not counted as a pass in the per-column baseline) */
 function hardeningApplies(leaf, operation, scope) {
   const key = leaf.method + ' ' + leaf.path;
   const hasBody = !!(operation && require('../middleware/validate').bodySchemaOf(operation)) || BODY_METHODS.includes(leaf.method);
-  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !scope.publicIds.has(key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+  return { strict_input: hasBody, output_allowlist: true, foreign_id_404: leaf.path.includes(':') && !idExempt(scope, key), idempotent_money_write: scope.money.has(key), inbound_validated: scope.inbound.has(key), trips_budgeted: true };
+}
+
+/** cannot_answer (scope file): { 'METHOD /path': Set of statuses } the route can never answer; an entry without a route, a status and a reason of MIN_REASON characters counts for nothing (scopeProblems, run by --check, names it) */
+const MIN_REASON = 20;
+const hasReason = (text) => String(text || '').trim().length >= MIN_REASON;
+function cannotAnswerOf(list) {
+  const found = {};
+  (list || []).filter((entry) => entry && entry.route && entry.status && hasReason(entry.reason)).forEach((entry) => (found[entry.route] = (found[entry.route] || new Set()).add(Number(entry.status))));
+  return found;
 }
 
 /** the curated lists of docs/contracts/api-hardening-scope.json as sets */
 function hardeningScope() {
   const file = readJson('docs/contracts/api-hardening-scope.json', {});
-  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})) };
+  return { money: new Set(file.money_writes || []), notMoney: new Set(file.money_reviewed_not || []), inbound: new Set(file.inbound || []), publicIds: new Set(Object.keys(file.public_ids || {})), platformOnly: new Set(Object.keys(file.platform_only || {})), cannotAnswer: cannotAnswerOf(file.cannot_answer) };
+}
+
+/**
+ * scopeProblems(file, rows) — the exemptions of api-hardening-scope.json (public_ids, platform_only, cannot_answer) held to one rule each, for --check: a reason of MIN_REASON characters or more,
+ * a route the register has, for cannot_answer a status that route declares, and no route and status twice. A one-character reason, a typo'd route or an undeclared status is a sentence here.
+ */
+function scopeProblems(file, rows) {
+  const byKey = new Map(rows.map((row) => [row.key, row]));
+  const found = [];
+  ['public_ids', 'platform_only'].forEach((list) => Object.entries(file[list] || {}).forEach(([key, reason]) => {
+    if (!byKey.has(key)) found.push(list + ': "' + key + '" is not a route of the app');
+    if (!hasReason(reason)) found.push(list + ': "' + key + '" needs a reason of at least ' + MIN_REASON + ' characters');
+  }));
+  const seen = new Set();
+  (file.cannot_answer || []).forEach((entry) => {
+    const name = 'cannot_answer: "' + entry.route + ' ' + entry.status + '"';
+    if (!byKey.has(entry.route)) found.push(name + ' is not a route of the app');
+    else if (!byKey.get(entry.route).declared.includes(entry.status)) found.push(name + ': the route does not declare that status');
+    if (!hasReason(entry.reason)) found.push(name + ' needs a reason of at least ' + MIN_REASON + ' characters');
+    if (seen.has(entry.route + ' ' + entry.status)) found.push(name + ' is listed twice');
+    seen.add(entry.route + ' ' + entry.status);
+  });
+  return found.map((sentence) => 'docs/contracts/api-hardening-scope.json ' + sentence);
 }
 
 /** a mutating route whose path reads like money but is in no list: someone must say whether it is a money write (--check fails) */
@@ -288,11 +341,11 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
     missing_input_answer: missingInputColumn(operation, result),
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
-    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status)),
+    error_tests: declared.length > 0 && declared.every((status) => tested.includes(status) || !!(scope.cannotAnswer && scope.cannotAnswer[key] && scope.cannotAnswer[key].has(status))),
     status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
     strict_input: strictInputColumn(operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
-    foreign_id_404: foreignIdColumn(leaf, evidence, scope.publicIds.has(key)),
+    foreign_id_404: foreignIdColumn(leaf, evidence, idExempt(scope, key)),
     idempotent_money_write: idempotentMoneyColumn(scope.money.has(key), operation, leaf, evidence),
     inbound_validated: inboundColumn(scope.inbound.has(key), operation, facts),
     trips_budgeted: tripsBudgetedColumn(key, budget)
@@ -304,7 +357,7 @@ function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
-  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared);
+  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, otherRouteTexts(info.file));
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
@@ -317,11 +370,20 @@ function rowOf(leaf, context) {
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
-  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key]));
+  return Object.assign({ key, method: leaf.method, path: leaf.path, owner_area: area, owner_agent: facts4card.owner_agent, file: info.file, line, hash: shortHash(hashSource), does: facts4card.does, errors: facts4card.errors, reads: facts4card.reads, writes: facts4card.writes, money: facts4card.money, actions: facts4card.actions, derived: facts4card.derived, columns, applies: hardeningApplies(leaf, operation, context.scope), declared, notes: notesOf(facts, legacyEntry) }, basisOf(columns, context.evidence[key], operation), reportedRow(leaf, source, fileText, context.evidence[key]));
 }
 
+/** the reported columns (CAP-17 slice 1, tools/api-reported.cjs): shown on the row as `reported` and `reported_applies`, never in `columns`, so they cannot move a status */
+const reportedRow = (leaf, source, fileText, evidence) => {
+  const found = reported.reportedOf({ leaf, source, fileText, evidence });
+  return { reported: found.columns, reported_applies: found.applies };
+};
+
 /** a route whose output_allowlist passes on keys recorded in tests alone (its shape is `closed_by: recordings`, evidence `output_allowlist_basis: recordings`) says so on its row, apart from a route whose handler names its keys; nothing is added to any other row */
-const basisOf = (columns, evidence) => (columns.output_allowlist && evidence && evidence.output_allowlist_basis === 'recordings' ? { output_allowlist_basis: 'recordings' } : {});
+const basisOf = (columns, evidence, operation) => (columns.output_allowlist && ((evidence && evidence.output_allowlist_basis === 'recordings') || closedByRecordings(operation)) ? { output_allowlist_basis: 'recordings' } : {});
+
+/** does a success schema of the operation hold a node tools/api-allowlist.cjs closed from recorded answers alone (x-closed-by recordings): the shape file is the one source of the basis, whichever test proved the route */
+const closedByRecordings = (operation) => !!operation && successSchemas(operation).some((schema) => JSON.stringify(schema || {}).includes('"x-closed-by":"recordings"'));
 
 /** the 4xx statuses tests cover for a route: the scenario tests' list plus what the generated contract cases answered */
 const testedStatuses = (context, key) => (context.errorTests[key] || []).concat((context.contract[key] && context.contract[key].statuses) || []);
@@ -422,7 +484,7 @@ function buildRegister() {
     .sort((left, right) => (left.key < right.key ? -1 : 1));
   mergeHuman(rows, readSignoffs());
   addEffect(rows, context.budget);
-  return { version: 1, stage: STAGE, counts: countsOf(rows), machine_columns: MACHINE_COLUMNS, human_columns: HUMAN_COLUMNS, routes: rows };
+  return { version: 1, stage: STAGE, counts: countsOf(rows), machine_columns: MACHINE_COLUMNS, reported_columns: reported.REPORTED_COLUMNS, human_columns: HUMAN_COLUMNS, routes: rows };
 }
 
 /** callers, offline and round-trip share, once every row is known (they read the committed docs/contracts/api-callers.json and round-trips.budget.json, never the web checkout) */
@@ -448,7 +510,7 @@ function countsOf(rows) {
   const count = (status) => rows.filter((row) => row.status === status).length;
   const columns = Object.fromEntries(HARDENING_COLUMNS.map((name) => [name, { applies: rows.filter((row) => row.applies[name]).length, failing: rows.filter((row) => !row.columns[name]).length }]));
   const fromRecordings = rows.filter((row) => row.output_allowlist_basis === 'recordings').length;
-  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
+  return Object.assign({ routes: rows.length, no_does: card.withoutDoes(rows), not_started: count('not started'), partial: count('partial'), meets: count('meets standard'), columns, reported: reported.reportedCounts(rows) }, fromRecordings ? { output_allowlist_from_recordings: fromRecordings } : {});
 }
 
 const mark = (value) => (value === true ? 'yes' : value === false ? 'no' : '-');
@@ -470,12 +532,15 @@ function renderMarkdown(register) {
   ].concat(counts.output_allowlist_from_recordings ? ['**Output allow-list closed from recordings only: ' + counts.output_allowlist_from_recordings + ' routes** (`output_allowlist_basis: recordings` in `docs/api-register.json`; their keys are the recorded answers, so a new key is reported and kept, never dropped, until the handler names its keys).', ''] : []).concat([
     'Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape · codes_registered · missing_input_answer · error_tests · status_codes · strict_input · output_allowlist · foreign_id_404 · idempotent_money_write · inbound_validated · trips_budgeted (a column that does not apply to a route reads yes). "meets standard" also needs a cb-api sign-off by someone other than the route builder; the human columns and sign-offs are kept by hand in `docs/api-signoffs.json` (each with the hash it was signed against; a moved hash makes the sign-off stale) and shown here and in `docs/api-register.json`, which are derived and never carry the source.',
     '',
-    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
+    'Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": ' + reported.REPORTED_COLUMNS.map((name) => name + ' (fails on ' + counts.reported[name].failing + ' of ' + counts.reported[name].applies + ' routes it applies to)').join(' · ') + '. A column that does not apply to a route reads yes.',
+    '',
+    '| method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|'
   ]);
   register.routes.forEach((row) => {
     const columns = MACHINE_COLUMNS.map((name) => mark(row.columns[name]));
-    lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status).join(' | ') + ' |');
+    const shown = reported.REPORTED_COLUMNS.map((name) => mark(row.reported[name]));
+    lines.push('| ' + [row.method, row.path + (row.aliases ? ' (also ' + row.aliases.join(', ') + ')' : ''), row.owner_area, row.file + ':' + row.line].concat(columns, row.status, shown).join(' | ') + ' |');
   });
   return lines.concat(card.renderCards(register.routes)).join('\n') + '\n';
 }
@@ -493,9 +558,10 @@ function check(register) {
   same(JSON_FILE, jsonText(register));
   const codes = require(path.join(TOOLS_DIR, 'error-codes.cjs')).check();
   const unsaid = unclassifiedMoney(register.routes, hardeningScope()).map((key) => key + ' looks like a money write but is in neither list of docs/contracts/api-hardening-scope.json (money_writes or money_reviewed_not)');
+  const scopeFound = scopeProblems(readJson('docs/contracts/api-hardening-scope.json', {}), register.routes);
   const overrides = evidenceOverrides(readJson('docs/contracts/api-hardening-results.json', { routes: {} }).routes, readJson('docs/contracts/api-hardening-evidence-areas.json', { routes: {} }).routes);
   if (overrides.length) console.log(overrides.length + ' column(s) proved by an area test where the generated case failed (review each):\n  ' + overrides.join('\n  '));
-  return problems.concat(codes.problems, unsaid, signoffProblems(readSignoffs(), register.routes));
+  return problems.concat(codes.problems, unsaid, scopeFound, signoffProblems(readSignoffs(), register.routes));
 }
 
 /** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
@@ -523,4 +589,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

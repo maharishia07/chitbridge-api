@@ -10,6 +10,7 @@
  *   5. shellcheck (when installed) finds anything in deploy/*.sh.
  * The CLIs' own check of every command (PARSE=1, no credentials) is slower and needs aws/az/gcloud: `bash deploy/spin-check.sh`.
  * Run: node tests/spin-scripts.test.cjs
+ * CARD      28-platform-and-operations/hosting-and-deploy
  */
 'use strict';
 const fs = require('fs'), path = require('path'), http = require('http');

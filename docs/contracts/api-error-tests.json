@@ -167,6 +167,9 @@
   401,
   500
  ],
+ "GET /api/actors/check-login": [
+  400
+ ],
  "GET /api/actors/settings": [
   401,
   500
@@ -416,7 +419,8 @@
   500
  ],
  "GET /api/capture/webhook/whatsapp": [
-  403
+  403,
+  500
  ],
  "GET /api/catalogue-face": [
   401,
@@ -896,6 +900,7 @@
  ],
  "GET /api/governance/boilerplate/:key": [
   401,
+  403,
   404,
   500
  ],
@@ -1073,7 +1078,6 @@
  ],
  "GET /api/network/entities/:id/connections": [
   401,
-  403,
   404,
   500
  ],
@@ -1091,6 +1095,7 @@
  "GET /api/network/place": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/notifications": [
@@ -1101,6 +1106,9 @@
   500
  ],
  "GET /api/offers/openapi.json": [
+  500
+ ],
+ "GET /api/openapi.json": [
   500
  ],
  "GET /api/people": [
@@ -1228,6 +1236,12 @@
   401,
   500
  ],
+ "GET /api/service/:chit_id": [
+  401,
+  404,
+  500,
+  503
+ ],
  "GET /api/signin/devices": [
   401,
   403,
@@ -1247,6 +1261,7 @@
  ],
  "GET /api/tax/gstr": [
   401,
+  422,
   500
  ],
  "GET /api/tax/invoice/:chit_id": [
@@ -1452,6 +1467,12 @@
   403,
   500
  ],
+ "GET /health": [
+  500
+ ],
+ "OPTIONS *": [
+  500
+ ],
  "PATCH /api/actors/:id": [
   400,
   401,
@@ -1466,6 +1487,7 @@
   403,
   404,
   409,
+  422,
   500,
   503
  ],
@@ -1476,6 +1498,7 @@
   500
  ],
  "PATCH /api/combo-templates/:id": [
+  400,
   401,
   404,
   500
@@ -1612,6 +1635,7 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "PATCH /api/testing/incidents/:id": [
@@ -1642,6 +1666,17 @@
   503
  ],
  "POST /api/actors/check-key": [
+  400,
+  401,
+  500
+ ],
+ "POST /api/actors/login": [
+  400,
+  403,
+  500,
+  503
+ ],
+ "POST /api/actors/set-pin": [
   400,
   401,
   500
@@ -1841,6 +1876,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/books/loans": [
@@ -1932,6 +1968,7 @@
   401,
   403,
   404,
+  422,
   500
  ],
  "POST /api/books/payments/:id/propose": [
@@ -2049,10 +2086,14 @@
   503
  ],
  "POST /api/capture/webhook/email": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/capture/webhook/whatsapp": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/catalogue/:bridge_id/login/verify": [
   400,
@@ -2128,12 +2169,14 @@
   503
  ],
  "POST /api/channels/:id/auto-raise": [
+  400,
   401,
   404,
   500,
   503
  ],
  "POST /api/channels/:id/provider-ref": [
+  400,
   401,
   404,
   500,
@@ -2594,6 +2637,12 @@
   409,
   500
  ],
+ "POST /api/entities/verify": [
+  400,
+  403,
+  500,
+  503
+ ],
  "POST /api/events/ticket": [
   401,
   500
@@ -2671,6 +2720,7 @@
  ],
  "POST /api/governance/boilerplate/:key/adopt": [
   401,
+  403,
   404,
   500
  ],
@@ -2682,6 +2732,7 @@
  ],
  "POST /api/governance/conformance": [
   401,
+  403,
   422,
   500
  ],
@@ -2730,6 +2781,7 @@
   403,
   404,
   409,
+  422,
   500,
   503
  ],
@@ -2738,6 +2790,7 @@
   401,
   403,
   404,
+  422,
   429,
   500,
   503
@@ -2794,10 +2847,12 @@
  "POST /api/kyb/credential": [
   400,
   401,
+  422,
   500
  ],
  "POST /api/kyb/field": [
   401,
+  422,
   500
  ],
  "POST /api/network-design/build": [
@@ -2870,6 +2925,7 @@
   503
  ],
  "POST /api/network/connections/:id/approve": [
+  400,
   401,
   403,
   404,
@@ -2878,6 +2934,7 @@
   503
  ],
  "POST /api/network/connections/:id/decline": [
+  400,
   401,
   403,
   404,
@@ -2886,6 +2943,7 @@
   503
  ],
  "POST /api/network/connections/:id/disconnect": [
+  400,
   401,
   403,
   404,
@@ -2894,6 +2952,7 @@
   503
  ],
  "POST /api/network/connections/:id/resume": [
+  400,
   401,
   403,
   404,
@@ -2902,6 +2961,7 @@
   503
  ],
  "POST /api/network/connections/:id/suspend": [
+  400,
   401,
   403,
   404,
@@ -2916,8 +2976,8 @@
   503
  ],
  "POST /api/network/entities/:id/claim": [
+  400,
   401,
-  403,
   404,
   409,
   500,
@@ -2926,11 +2986,13 @@
  "POST /api/notifications/dismiss": [
   400,
   401,
+  422,
   500,
   503
  ],
  "POST /api/notifications/seen": [
   401,
+  422,
   500,
   503
  ],
@@ -2956,6 +3018,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -2963,6 +3026,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -3163,6 +3227,48 @@
   401,
   500
  ],
+ "POST /api/service/:chit_id/pause": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/answer": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/service/:chit_id/pause/:pause_id/end": [
+  400,
+  401,
+  404,
+  409,
+  422,
+  500,
+  503
+ ],
+ "POST /api/service/:chit_id/resolve": [
+  400,
+  401,
+  404,
+  422,
+  500,
+  503
+ ],
+ "POST /api/service/:chit_id/respond": [
+  401,
+  404,
+  422,
+  500,
+  503
+ ],
  "POST /api/signin/ask": [
   400,
   409,
@@ -3192,7 +3298,6 @@
  "POST /api/signin/verify": [
   400,
   403,
-  409,
   500,
   503
  ],
@@ -3207,6 +3312,7 @@
  "POST /api/supplies": [
   400,
   401,
+  422,
   500,
   503
  ],
@@ -3214,11 +3320,13 @@
   400,
   401,
   404,
+  422,
   500
  ],
  "POST /api/supplies/purchase": [
   400,
   401,
+  422,
   500,
   503
  ],
@@ -3673,6 +3781,7 @@
   400,
   401,
   403,
+  422,
   500,
   503
  ],
@@ -3713,51 +3822,18 @@
   403,
   500
  ],
- "PUT /api/testing/cmdb/:ci": [
-  400,
-  401,
-  403,
-  500
- ],
- "GET /api/service/:chit_id": [
-  401,
-  404,
-  500,
-  503
- ],
- "POST /api/service/:chit_id/pause": [
-  400,
-  401,
-  404,
-  409
- ],
- "POST /api/service/:chit_id/pause/:pause_id/answer": [
-  400,
-  401,
-  404,
-  409
- ],
- "POST /api/service/:chit_id/pause/:pause_id/end": [
-  400,
-  401,
-  404,
-  409,
-  500
- ],
- "POST /api/service/:chit_id/resolve": [
-  400,
-  401,
-  404
- ],
- "POST /api/service/:chit_id/respond": [
-  401,
-  404,
-  500
- ],
  "PUT /api/service/:chit_id": [
   400,
   401,
   404,
+  422,
+  500,
+  503
+ ],
+ "PUT /api/testing/cmdb/:ci": [
+  400,
+  401,
+  403,
   500
  ]
 }

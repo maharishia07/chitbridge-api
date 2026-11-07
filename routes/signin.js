@@ -43,6 +43,7 @@ const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { failed } = require('../lib/products-contract'); // a fault of ours: a 500 that says nothing of its cause (the old body kept: the screen's label and the safe sentence)
 const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
@@ -240,7 +241,8 @@ function note(req, identity, action, method, code, jti) {
  */
 const chooseWhich = (req, res, choices) => {
   res.locals.code = 'CHOOSE_IDENTITY';
-  return res.status(409).json({ error: 'Which account?', code: 'CHOOSE_IDENTITY', message: 'That contact is on more than one account. Choose one.', choices });
+  const message = 'That contact is on more than one account. Choose one.';
+  return problem(req, res, { status: 409, code: 'CHOOSE_IDENTITY', detail: message, legacy: { error: 'Which account?', code: 'CHOOSE_IDENTITY', message, choices } });
 };
 /**
  * ⭐ SEC-81 (API-STANDARD S6) — ONE ANSWER BEFORE SIGN-IN. An unknown account, a wrong secret and a locked account all get this same
@@ -268,7 +270,15 @@ const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username)
 /** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
 const junkAsUnknown = (handler, typedBy) => (req, res, next) => (holdsNul(typedBy(req)) ? unknownAccount(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
-const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED)$/.test(String(reason || ''));
+const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED|REQUIRED)$/.test(String(reason || ''));
+/**
+ * SEC-139 (API-STANDARD S6): a secret that was NOT sent (or a code, which hashes nothing) is refused like a wrong PIN or an account that is
+ * not there: the same status, code and body, after spending the same hash time. "Enter your PIN" was only ever said to a person who exists.
+ */
+const secretRefused = async (req, res, check) => {
+  if (!(check.method === 'pin' && 'left' in check)) await identityAuth.spendCheckTime(); /* a PIN just counted (wrong, or the try that locked) was hashed; every other refusal was not */
+  return refused(req, res, check.reason);
+};
 
 /* ── ask ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
 /**
@@ -515,7 +525,8 @@ async function verifyChecks(req, res, next) {
 function deviceRevoked(req, res, identity, method) {
   note(req, identity, 'fail', method, 'DEVICE_REVOKED');
   res.locals.code = 'DEVICE_REVOKED';
-  return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
+  const message = 'The shop removed this device. Ask the owner.';
+  return problem(req, res, { status: 403, code: 'DEVICE_REVOKED', detail: message, legacy: { error: 'Forbidden', code: 'DEVICE_REVOKED', message } });
 }
 /**
  * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
@@ -531,7 +542,7 @@ function sessionRefused(err, req, res, identity, method) {
   if (code !== 'SESSION_NOT_LISTED') return false;
   note(req, identity, 'fail', method, code);
   res.locals.code = code;
-  res.status(503).json({ error: 'Sign-in failed', code, message: err.message });
+  problem(req, res, { status: 503, code, detail: err.message, legacy: { error: 'Sign-in failed', code, message: err.message } });
   return true;
 }
 const jtiOf = (token) => {
@@ -554,7 +565,7 @@ async function verify(req, res) {
     const handle = (req.body.user_id || '').trim();
     const id = String(req.body.id || '').trim();
     if (!email && !handle && !id) {
-      return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'Type your mobile number, email or User ID.', legacy: { error: 'Verification failed', message: 'Type your mobile number, email or User ID.' } });
     }
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
@@ -566,15 +577,7 @@ async function verify(req, res) {
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
       const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
-      if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
-      if (f.ambiguous) {
-        res.locals.code = 'AMBIGUOUS_NAME';
-        return res.status(409).json({
-          error: 'Ambiguous business',
-          code: 'AMBIGUOUS_NAME',
-          message: 'More than one business matches that name. Ask your admin for the exact login.'
-        });
-      }
+      if (f.ambiguous) return unknownAccount(req, res); // SEC-139: no secret proves several accounts or businesses; the choice is made at ask, never listed here
       rows = f.identity ? [f.identity] : [];
     }
     if (rows.length === 0) {
@@ -587,11 +590,12 @@ async function verify(req, res) {
     if (!check.ok) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
-      if (isSecretRefusal(check.reason)) return refused(req, res, check.reason);
-      return res.status(check.status).json({
-        error: 'Verification failed',
-        message: check.message,
-        ...(check.use_pin ? { use_pin: true } : {})
+      if (isSecretRefusal(check.reason)) return secretRefused(req, res, check);
+      return problem(req, res, {
+        status: check.status,
+        code: 'VERIFICATION_FAILED',
+        detail: check.message,
+        legacy: { error: 'Verification failed', message: check.message, ...(check.use_pin ? { use_pin: true } : {}) }
       });
     }
 
@@ -790,7 +794,7 @@ async function verify(req, res) {
   } catch (err) {
     if (sessionRefused(err, req, res, identity, identity && methodOf(identity))) return;
     console.error('Verify error:', err.message);
-    res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Verification failed'));
   }
 }
 
@@ -800,38 +804,21 @@ async function verify(req, res) {
  */
 async function actorSecretRefused(req, res, actor) {
   const otp = (req.body.otp || '').trim();
-  const nestedPin = req.body.pin;
-  if (actor.pin_hash) {
-    if (!nestedPin) {
-      note(req, actor, 'fail', 'pin', 'PIN_REQUIRED');
-      res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
-      return true;
-    }
-    const check = await identityAuth.verifyCredential(query, actor, { pin: nestedPin });
-    if (!check.ok) {
-      note(req, actor, actionOf(check.reason), 'pin', check.reason);
-      refused(req, res, check.reason);
-      return true;
-    }
-  } else {
-    if (!otp) {
-      note(req, actor, 'fail', 'otp', 'OTP_REQUIRED');
-      res.status(400).json({ error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true });
-      return true;
-    }
-    // F5: lib/otp.js's per-account attempt cap; authLimiter still sits in front of this door
-    const check = await identityAuth.verifyCredential(query, actor, { otp, name: req.body.username });
-    if (!check.ok) {
-      note(req, actor, actionOf(check.reason), 'otp', check.reason);
-      if (isSecretRefusal(check.reason)) refused(req, res, check.reason);
-      else {
-        res.locals.code = check.reason;
-        res.status(check.status).json({ error: 'Login failed', message: check.message });
-      }
-      return true;
-    }
+  const nestedPin = String(req.body.pin || '').trim();
+  /* SEC-139: one secret box. A co-assist with a PIN may type it in either field (a first-timer's code goes in `otp`): the page cannot know which, and check-login no longer says */
+  const typed = actor.pin_hash ? nestedPin || otp : otp;
+  const method = actor.pin_hash ? 'pin' : 'otp';
+  const check = typed
+    ? await identityAuth.verifyCredential(query, actor, actor.pin_hash ? { pin: typed } : { otp: typed, name: req.body.username })
+    : { ok: false, reason: actor.pin_hash ? 'PIN_REQUIRED' : 'OTP_REQUIRED' };
+  if (check.ok) return false;
+  note(req, actor, actionOf(check.reason), method, check.reason);
+  if (isSecretRefusal(check.reason)) await secretRefused(req, res, check);
+  else {
+    res.locals.code = check.reason;
+    problem(req, res, { status: check.status, code: 'LOGIN_FAILED', detail: check.message, legacy: { error: 'Login failed', message: check.message } });
   }
-  return false;
+  return true;
 }
 
 /**
@@ -847,19 +834,11 @@ async function actorLogin(req, res) {
   try {
     const username = req.body.username.trim().toLowerCase();
     if (!username.includes('@')) {
-      return res.status(400).json({ error: 'Invalid format', message: 'Actor login format is: yourname@entityname' });
+      return problem(req, res, { status: 400, code: 'LOGIN_FORMAT_INVALID', detail: 'Actor login format is: yourname@entityname', legacy: { error: 'Invalid format', message: 'Actor login format is: yourname@entityname' } });
     }
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
-    if (e.ambiguous) {
-      res.locals.code = 'AMBIGUOUS_NAME';
-      return res.status(409).json({
-        error: 'Ambiguous business',
-        message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID ' + 'after the @ instead — ask your admin for it.',
-        code: 'AMBIGUOUS_NAME'
-      });
-    }
-    if (!e.ok) return unknownAccount(req, res);
+    if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name are told at ask, not here before a secret
     const parent_entity = e.entity;
 
     const actor = await query(
@@ -882,7 +861,7 @@ async function actorLogin(req, res) {
 
     if (a.break_status === 'removed' || a.break_status === 'deactivated') {
       note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
-      return refused(req, res, a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED'); // SEC-81: before the secret, so no state is told
+      return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
     }
 
     if (await actorSecretRefused(req, res, a)) return;
@@ -908,43 +887,19 @@ async function actorLogin(req, res) {
   } catch (err) {
     if (sessionRefused(err, req, res, a, a && (a.pin_hash ? 'pin' : 'otp'))) return;
     console.error('Actor login error:', err.message);
-    res.status(500).json({ error: 'Login failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Login failed'));
   }
 }
 
 /**
- * checkLogin — GET /api/actors/check-login?username= (moved from routes/actors.js, unchanged). Does this co-assist have a
- * PIN, so the page shows the right box. ⚠️ KEPT ANSWERING, NOT 410: app.html#/login (L3748) calls it before every
- * key@Display Name sign-in, and app.html is untouched until PR 14 — a 410 here would refuse every co-assist on app.html.
- * It retires with the other aliases (PR 16). Read-only: it issues no code (ask would overwrite the code the admin shared).
+ * checkLogin — GET /api/actors/check-login?username= . SEC-139 (API-STANDARD S6): ONE CONSTANT ANSWER, no lookup. It once said whether a
+ * co-assist had a PIN, which told who exists. app.html#/login still calls it before every key@Display Name sign-in; the constant
+ * `has_pin: false` sends everyone to the one secret box, and /api/actors/login takes the PIN or the first code in it (actorSecretRefused).
+ * Read-only: it issues no code. Retires with the other aliases (PR 16).
  */
-/** SEC-81: an unknown or removed co-assist answers like a known one with no PIN, so this page helper tells nothing about who exists */
-const UNKNOWN_CHECK = { valid: true, has_pin: false };
-async function checkLogin(req, res) {
-  try {
-    const username = (req.query.username || '').trim().toLowerCase();
-    if (!username.includes('@')) return res.json(UNKNOWN_CHECK);
-    const { actor_key, entity_name } = identityAuth.splitLogin(username);
-    const entity = await query(
-      `SELECT identity_id FROM identities
-       WHERE LOWER(display_name) = $1
-       AND identity_type = 'entity' AND status = 'active'`,
-      [entity_name]
-    );
-    if (entity.rows.length === 0) return res.json(UNKNOWN_CHECK);
-    const actor = await query(
-      `SELECT pin_hash, break_status FROM identities
-       WHERE actor_key = $1 AND parent_entity_id = $2
-       AND identity_type = 'actor'`,
-      [actor_key, entity.rows[0].identity_id]
-    );
-    if (actor.rows.length === 0) return res.json(UNKNOWN_CHECK);
-    const x = actor.rows[0];
-    if (x.break_status === 'removed') return res.json(UNKNOWN_CHECK);
-    res.json({ valid: true, has_pin: !!x.pin_hash });
-  } catch (err) {
-    res.json(UNKNOWN_CHECK);
-  }
+const CHECK_LOGIN_ANSWER = Object.freeze({ valid: true, has_pin: false });
+function checkLogin(req, res) {
+  res.json(CHECK_LOGIN_ANSWER);
 }
 
 /* ── pin ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -964,13 +919,13 @@ async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
     if (req.identity.identity_type !== 'actor') {
-      return res.status(400).json({ error: 'Only actors can set PIN' });
+      return problem(req, res, { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } });
     }
     await identityAuth.setPin(query, identity_id, req.body.pin);
     note(req, { identity_id, parent_entity_id: auth.entityOf(req) }, 'link', 'pin');
     res.json({ message: 'PIN set successfully — use PIN for future logins' });
   } catch (err) {
-    res.status(500).json({ error: 'Set PIN failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Set PIN failed'));
   }
 }
 

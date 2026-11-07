@@ -119,6 +119,8 @@ async function q(sql, params) {
       const o = {}; cols.forEach((c) => { o[c] = c === '1' ? 1 : (r[c] === undefined ? null : r[c]); }); return o; });
     return { rows, rowCount: rows.length };
   }
+  const counted = require(path.join(API, 'tests', 'lib', 'pin-count-stub.cjs')).answer(s, params, (id) => Object.values(DB).find((r) => r.identity_id === id), 'NOW');
+  if (counted) return counted;
   if ((m = s.match(/^UPDATE identities SET (.+?) WHERE (.+)$/i))) {
     const sets = splitTop(m[1], ',');
     const hit = where(m[2], params);
@@ -273,7 +275,9 @@ async function run(sc, door) {
 /* API-4b: the auth middleware's refusals are Problem bodies now. The old keys are frozen inside them (error, message, any code), so the golden
    is compared on those: the Problem-owned keys, and the codes API-4b added to code-less answers, are set aside (tests/api-4b-auth-problem.test.cjs owns them). */
 const PROBLEM_KEYS = ['type', 'title', 'status', 'detail', 'hint', 'request_id'];
-const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED'];
+const API_4B_CODES = ['TOKEN_MISSING', 'TOKEN_INVALID', 'TOKEN_EXPIRED', 'KEY_REVOKED', 'KEY_NOT_SCOPED', 'ACCESS_REVOKED', 'CONNECTOR_NOT_APPROVED',
+  /* the 7 Nov contract pass of the sign-in aliases: the refusals that had no code gained one (the old keys are all still there) */
+  'VALIDATION_FAILED', 'VERIFICATION_FAILED', 'PIN_REQUIRED', 'OTP_REQUIRED', 'LOGIN_FAILED', 'LOGIN_FORMAT_INVALID', 'PIN_ACTORS_ONLY'];
 const frozenBody = (b) => {
   if (!b || typeof b.type !== 'string' || b.type.indexOf('https://chitbridge.com/problems/') !== 0) return b;
   const o = Object.assign({}, b);

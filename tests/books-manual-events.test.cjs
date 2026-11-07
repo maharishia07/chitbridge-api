@@ -6,6 +6,7 @@
  * nothing · owner-only (a co-assist 403) · the numbers are gap-free (a preview takes none) · a shop's own ledger takes the next free code and refuses a typed one
  * · the grid lists every event, its fields and the pack's classes, and names what could not be composed.
  * Run: node tests/books-manual-events.test.cjs   (BOOKS_ENGINES_SRC=<lib/ or chitbridge-engines/src>)
+ * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  */
 'use strict';
 const { rig, addStaffLedger, counter, SUPP } = require('./support/books-manual-rig.cjs');

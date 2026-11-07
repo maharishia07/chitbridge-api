@@ -4,6 +4,7 @@
  * entry (owner door: manual entry, reversal, typed write-off) takes MJ; each series is gap-free on its own counter; ONE counter per entry; counters
  * taken in alphabetical order; a stored entry's type is derived from its series until b279 (journal_entry.voucher_type) is run.
  * Run: node tests/books-voucher-series.test.cjs
+ * CARD      14-accounting/voucher-series-and-document-numbers
  */
 'use strict';
 const fs = require('fs');

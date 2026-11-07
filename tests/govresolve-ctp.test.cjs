@@ -23,6 +23,7 @@
  *
  * ⚠️ OFFLINE. The database is stubbed: what is under test is the RULE, and a rule that needs two live
  * installations to check is a rule nobody checks. Same stance as tests/ctp-collision.test.cjs.
+ * CARD      19-onboarding-and-shop-setup/entity-kind-constitution-vertical-plan-type
  */
 const assert = require('assert');
 const fs = require('fs');

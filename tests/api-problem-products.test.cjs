@@ -27,6 +27,7 @@ const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const MOUNT = '/api/products';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -153,7 +154,7 @@ function checkAllowList(recording) {
     check(route + ': every recorded 200 (' + answers.length + ') holds only the keys its operation lists (a closed schema the answers fit)', held, { answers: answers.length, errors: fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return proved;
+  return FOREIGN.ownedBy(proved, lab.mine); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the products routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
@@ -173,6 +174,60 @@ function writeAllowList(proved) {
   fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
 }
 
+/* ── the foreign-id world for GET /:id/schedule (S35, weaker reading): shop B asks for shop A's parked change list by an item id ── */
+const SCHEDULE_ROUTE = 'GET ' + MOUNT + '/:id/schedule';
+const STRANGER = { identity_id: '66666666-6666-4666-8666-666666666666', identity_type: 'entity', display_name: 'Shop B' };
+const PARKED = { schedule_id: PARTY, item_id: PARTY, effective_at: '2027-01-01T00:00:00.000Z', patch: { status: 'unavailable' }, created_at: '2026-11-01T00:00:00.000Z' };
+/** the stand-in db of this world: the parked change is shop A's, so a statement answers it only when it names shop A as the owner (as WHERE entity_id = $1 and RLS would) */
+const parkedFor = (planted) => (sql, params) => (planted && /catalogue_item_schedule/.test(sql) && (params || [])[0] === OWNER.identity_id ? { rows: [PARKED], rowCount: 1 } : null);
+
+/** shop B asks for shop A's item: the answer must be the one an unknown item gets (200, nothing parked), and shop A must see its row; proved to FAIL under a store that ignores the owner */
+async function checkScheduleIds(port) {
+  console.log(String.fromCharCode(10) + '-- signed in as another shop: the schedule list of a foreign item answers as an unknown item (S35, weaker reading: this route answers 200, not 404) --');
+  const schema = sources().schema;
+  const was = schema.hasTable;
+  schema.hasTable = async () => true; /* the parked-changes table exists in this world */
+  const play = async (who, planted) => {
+    Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', sqlRows: parkedFor(planted), jsonThrows: false, noCustomer: false });
+    return lab.send(port, 'GET', MOUNT + '/' + PARTY + '/schedule');
+  };
+  try {
+    const sentence = await FOREIGN.sameAsUnknownCase(play);
+    check(SCHEDULE_ROUTE + ': another shop\'s item answers byte for byte as an unknown one, and the owner sees its parked change', sentence === null, sentence);
+    const bite = await FOREIGN.biteCase(play, FOREIGN.sameAsUnknownCase);
+    check(SCHEDULE_ROUTE + ': the case can FAIL (a store that ignores the owner is caught)', bite === null, bite);
+    return sentence === null ? { [SCHEDULE_ROUTE]: { foreign_id_404: true } } : {};
+  } finally {
+    schema.hasTable = was;
+  }
+}
+const scheduleEvidenceOnDisk = () => FOREIGN.evidenceOf(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE);
+/* ── Slice 1 (critic 6 Nov, class C): the foreign-id world of the three item-id writes whose store call is entity-scoped (catwrite.patchItems / the media read): shop A holds the item,
+   shop B asks for it (the stand-in answers the row only to a statement that names shop A) → exactly the unknown id's 404 ── */
+const WRITE_STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
+const HELD_ROUTES = [
+  ['PUT ' + MOUNT + '/:id/status', 'PUT', '/status', { status: 'unavailable' }],
+  ['PUT ' + MOUNT + '/:id/availability', 'PUT', '/availability', { qty: 3 }],
+  ['POST ' + MOUNT + '/:id/media', 'POST', '/media', { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }]
+];
+const heldItem = () => ({ item_id: PARTY, entity_id: OWNER.identity_id, is_active: true, schema_id: null, item_data: { name: 'Tea', unit: 'kg', price: { amount: 10, currency: 'INR' } } });
+async function checkForeignIds(port) {
+  console.log('-- signed in as another shop: a foreign item id answers exactly as an unknown one (S35) --');
+  const recording = FOREIGN.recorder();
+  const cases = HELD_ROUTES.map(([route, method, tail, body]) => ({
+    route,
+    play: async (who, planted) => {
+      Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : WRITE_STRANGER, asKey: false, db: 'ok', jsonThrows: false, noCustomer: false, sqlRows: (sql, params) => (planted && /catalogue_items/.test(sql) && params.includes(OWNER.identity_id) ? { rows: [heldItem()], rowCount: 1 } : null) });
+      return lab.send(port, method, MOUNT + '/' + PARTY + tail, body);
+    }
+  }));
+  const failures = await FOREIGN.runCases(cases, recording.record);
+  failures.forEach((sentence) => check('foreign id: ' + sentence, false));
+  check('foreign id: ' + HELD_ROUTES.length + ' item-id writes answer a foreign id exactly as an unknown id (404, same body) and the own id is not a 404', failures.length === 0, failures);
+  return recording.proved();
+}
+const heldByThisWorld = (route) => HELD_ROUTES.some((one) => one[0] === route);
+
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
@@ -185,6 +240,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const allowed = capturing ? () => [] : contractModule().allowedStatuses();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.extras({ PARTY, OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }), {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
+  const scheduleProved = await checkScheduleIds(server.address().port);
+  const foreignProved = await checkForeignIds(server.address().port);
   server.close();
   const allowed200 = checkAllowList(recording);
   if (lab.flagValue('--capture')) {
@@ -214,8 +271,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     writeAllowList(allowed200);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE, scheduleProved);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, heldByThisWorld, foreignProved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the item-id writes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, heldByThisWorld), foreignProved), foreignProved);
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the products routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed200), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed200).length });
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for the schedule list exactly when it held here', sameValue(scheduleEvidenceOnDisk(), scheduleProved), { onDisk: scheduleEvidenceOnDisk(), held: scheduleProved });
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/products.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
   }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');

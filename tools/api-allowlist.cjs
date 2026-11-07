@@ -11,6 +11,9 @@
  *   node tools/api-allowlist.cjs --capture F [--capture G ...] --file routes/assist.js            show what would be written (no file touched)
  *   node tools/api-allowlist.cjs --capture F --file routes/assist.js --write                       merge those routes' shapes into docs/contracts/api-output-shapes.json
  *   node tools/api-allowlist.cjs --capture F --file routes/assist.js --web                         also list keys the web callers read near each call that the shape lacks (a review list)
+ *   node tools/api-allowlist.cjs --capture F --file routes/x.js --from-recordings --write      a route whose answer is handed on (a library call, a spread) closes every node the handler does not name from the recorded keys
+ *                                                                                              (x-closed-by recordings: a key outside them is reported and KEPT, never dropped) - the same basis as the books route(...) wrapper
+ *                                                                                              --only-open: write only the routes that fail output_allowlist in the register now (a run from one test never rewrites a route that passes)
  *   node tools/api-allowlist.cjs --check F ...                                                     every recorded success answer in F passes through its route's shape unchanged (exit 1 if not)
  *
  * CLOSED FROM RECORDINGS (S34: "recorded answers plus the keys the handler names"): a route whose answer comes from a shared wrapper (routes/books.js route(...)) has no literal in its own text, so its keys are the recorded
@@ -222,17 +225,24 @@ function leafSchema(stats) {
 const keyedByData = (names) => names.length > DYNAMIC_KEYS || (names.length > 2 && names.filter((name) => KEY_LOOKS_LIKE_DATA.test(name)).length > names.length / 2);
 
 /** a node of a route answered by a shared wrapper (no literal to read): the recorded keys are all there is, and the node is marked x-closed-by recordings */
-const recordedOnly = (stats, source, open) => !source && !!open.recordings && !!stats && stats.objects > 0;
+const recordedOnly = (stats, source, open) => !literalClosed(source) && !!open.recordings && !!stats && stats.objects > 0;
+
+/** a handler literal that names every key of its node (no spread, no computed key): the one source that can close a node without the recordings */
+const literalClosed = (source) => !!source && source.kind === 'object' && !source.spread && !source.computed;
+
+/** the keys of a node closed from recordings: every key a recorded answer held, and the ones the handler's literal names beside a spread */
+const recordedKeys = (seen, source) => [...new Set(seen.concat(source && source.kind === 'object' ? [...source.keys.keys()] : []))];
 
 /** the keys a node may hold: seen in the answers, named in the literal; null when they cannot be known (the node stays open, with the reason) */
 function keysOf(stats, source, where, open) {
   const seen = stats ? [...stats.keys.keys()] : [];
-  if (recordedOnly(stats, source, open)) return seen;
+  if (recordedOnly(stats, source, open)) return recordedKeys(seen, source);
   if (source && source.kind === 'object') {
     if (source.spread || source.computed) return open(where, source.spread ? 'a spread (...x) adds keys the text does not name' : 'a computed key'), null;
     return [...new Set(seen.concat([...source.keys.keys()]))];
   }
-  if (namesTokens(source)) return [...new Set(seen.concat([...source.tokens]))];
+  /* a value passed through names tokens (shorthand identifiers, call arguments, keys of unrelated literals): none of them is a key of THIS answer, so only a key some recorded answer held counts */
+  if (namesTokens(source) && seen.length) return seen;
   return open(where, whyOpen(source)), null;
 }
 
@@ -290,7 +300,7 @@ function closeObject(stats, source, where, open) {
   if (keyedByData(names)) return open(where || '(answer)', 'a map keyed by data (' + names.length + ' keys)'), { type: 'object' };
   const properties = propertiesOf(names, { stats, source, where, open });
   const required = requiredOf(stats, names, source);
-  const byRecordings = recordedOnly(stats, source, open) ? { [CLOSED_BY]: 'recordings' } : {};
+  const byRecordings = recordedOnly(stats, source, open) || namesTokens(source) ? { [CLOSED_BY]: 'recordings' } : {};
   return Object.assign({ type: 'object' }, required.length ? { required } : {}, { properties, additionalProperties: false }, byRecordings);
 }
 
@@ -339,13 +349,13 @@ function exampleOf(captures, routeKey, status) {
 const routesOfFile = (file) => (readJson(REGISTER_FILE, { routes: [] }).routes || []).filter((row) => row.file === file).map((row) => ({ key: row.key, line: row.line }));
 
 /** the shape of every route of a file: { shapes: {key: entry}, listed: {key: reason} } */
-function deriveFile(file, captures) {
+function deriveFile(file, captures, options = {}) {
   const lines = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n');
   const result = { shapes: {}, listed: {} };
   routesOfFile(file).forEach((route) => {
     const byStatus = samplesOf(captures, route.key);
     if (!Object.keys(byStatus).length) return void (result.listed[route.key] = 'not reached: no recorded request reaches a success answer, so there is no shape (observed 0); add a scenario that does, or leave the route partial');
-    const entry = shapeEntry(route, { byStatus, lines, captures });
+    const entry = shapeEntry(route, { byStatus, lines, captures, fromRecordings: !!options.fromRecordings });
     result.shapes[route.key] = entry;
     if (entry.open.length) result.listed[route.key] = 'open at ' + entry.open.map((item) => (item.path || '(answer)') + ' — ' + item.reason).join('; ');
   });
@@ -362,13 +372,16 @@ function wrapperLineOf(lines, route) {
   return at + 1;
 }
 
+/** a route( wrapper route: its own text holds no res.json at all */
+const answeredByWrapper = (wrapperLine, answers) => wrapperLine > 0 && !answers.node && answers.calls === 0;
+
 /** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text; a route( wrapper route (its own text holds no res.json) closes from recordings */
-function shapeEntry(route, { byStatus, lines, captures }) {
+function shapeEntry(route, { byStatus, lines, captures, fromRecordings }) {
   const statuses = Object.keys(byStatus);
   const wrapperLine = route.line ? 0 : wrapperLineOf(lines, route);
   const answers = handlerAnswers(handlerText(lines, route.line || wrapperLine));
   const status = statuses.includes('200') ? '200' : statuses[0] || '200';
-  const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: wrapperLine > 0 && !answers.node && answers.calls === 0 });
+  const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: answeredByWrapper(wrapperLine, answers) || !!fromRecordings });
   const byRecordings = JSON.stringify(derived.schema).includes('"' + CLOSED_BY + '"') ? { closed_by: 'recordings' } : {};
   return Object.assign({ status, schema: derived.schema, observed: (byStatus[status] || []).length, open: derived.open }, byRecordings, exampleOf(captures, route.key, status));
 }
@@ -399,15 +412,27 @@ function flatListed(listed) {
   return flat;
 }
 
+/** an object with `added` merged in and every key it already existing kept in ITS place (a changed key in the same spot, a new key just before the first key that sorts after it): a run touches only its own lines, so parallel area runs do not collide */
+function placed(object, added) {
+  const existing = object || {};
+  const fresh = Object.keys(added).filter((key) => !(key in existing)).sort();
+  const merged = {};
+  const keepKey = (key) => { merged[key] = key in added ? added[key] : existing[key]; };
+  Object.keys(existing).forEach((key) => {
+    while (fresh.length && fresh[0] < key) keepKey(fresh.shift());
+    keepKey(key);
+  });
+  fresh.forEach(keepKey);
+  return merged;
+}
+
 /** the file after the shapes of one run are merged in (other routes' rows stay as they are); same input twice = same output */
 function mergeShapeFile(file, result) {
-  const routes = Object.assign({}, file.routes, result.shapes);
+  const routes = placed(file.routes, result.shapes);
   const listed = flatListed(file.listed);
   Object.keys(result.shapes).forEach((key) => delete listed[key]);
   Object.keys(result.listed).filter((key) => !result.shapes[key]).forEach((key) => delete routes[key]); /* a route no recorded answer reaches keeps no shape */
-  Object.assign(listed, result.listed);
-  const sorted = (object) => Object.fromEntries(Object.keys(object).sort().map((key) => [key, object[key]]));
-  return { _about: file._about, routes: sorted(routes), listed: sorted(listed) };
+  return { _about: file._about, routes, listed: placed(listed, result.listed) };
 }
 
 /** write the shapes into docs/contracts/api-output-shapes.json (other routes' rows stay as they are) */
@@ -437,10 +462,10 @@ function checkCaptures(captures) {
 const flagValues = (argv, flag) => argv.reduce((all, arg, at) => (arg === flag && argv[at + 1] ? all.concat(argv[at + 1]) : all), []);
 
 /** the shapes and listed routes of every --file, from the captures */
-function deriveFiles(files, captures) {
+function deriveFiles(files, captures, options) {
   const merged = { shapes: {}, listed: {} };
   files.forEach((file) => {
-    const derivedFile = deriveFile(file, captures);
+    const derivedFile = deriveFile(file, captures, options);
     Object.assign(merged.shapes, derivedFile.shapes);
     Object.assign(merged.listed, derivedFile.listed);
   });
@@ -461,6 +486,22 @@ function report(merged, files, withWeb) {
   Object.keys(missing).forEach((key) => console.log('  WEB READS (not in the shape, review) ' + key + ': ' + missing[key].join(', ')));
 }
 
+/** --only-open: keep only the routes that FAIL output_allowlist in the register now, so a run from one test's recordings never rewrites a route that passes (its own contract schema, or a shape another run closed from more answers) */
+function onlyOpen(merged, wanted) {
+  if (!wanted) return merged;
+  const file = readJson(SHAPES_FILE, { routes: {}, listed: {} });
+  const failing = new Set((readJson(REGISTER_FILE, { routes: [] }).routes || []).filter((row) => row.columns && row.columns.output_allowlist === false).map((row) => row.key));
+  const shapes = (file.routes || {});
+  const lost = (key) => key in shapes && merged.shapes[key] && lostKeys(shapes[key].schema, merged.shapes[key].schema).length > 0;
+  Object.keys(merged.shapes).filter(lost).forEach((key) => console.log('  SKIPPED ' + key + ': the old shape names ' + lostKeys(shapes[key].schema, merged.shapes[key].schema).join(', ') + ' that these recordings never saw (add the scenario, or widen by hand)'));
+  const keep = (key) => failing.has(key) && !lost(key);
+  const pick = (object) => Object.fromEntries(Object.keys(object).filter(keep).map((key) => [key, object[key]]));
+  return { shapes: pick(merged.shapes), listed: pick(merged.listed) };
+}
+
+/** the top-level keys the old schema lists that the new one does not */
+const lostKeys = (oldSchema, newSchema) => Object.keys((oldSchema && oldSchema.properties) || {}).filter((name) => !((newSchema && newSchema.properties) || {})[name]);
+
 /** the command line: --check F | --capture F [--capture G] --file routes/x.js [--write] [--web]; the exit code */
 function main(argv) {
   const captures = flagValues(argv, '--capture').concat(flagValues(argv, '--check')).map((file) => readJson(file, null)).filter(Boolean).map((capture) => (capture.answers && typeof capture.about === 'string' ? capture.answers : capture)); /* a fixture { about, answers } (docs/contracts/books-answers.json) is its answers */
@@ -470,8 +511,13 @@ function main(argv) {
     return lost.length ? 1 : 0;
   }
   const files = flagValues(argv, '--file');
-  if (!captures.length || !files.length) return console.log('usage: --capture F [--capture G] --file routes/x.js [--write] [--web]  |  --check F'), 2;
-  const merged = deriveFiles(files, captures);
+  if (!captures.length || !files.length) return console.log('usage: --capture F [--capture G] --file routes/x.js [--write] [--web] [--from-recordings] [--only-open]  |  --check F'), 2;
+  return deriveAndReport(argv, files, captures);
+}
+
+/** the shapes of --file from the captures, printed, and written with --write */
+function deriveAndReport(argv, files, captures) {
+  const merged = onlyOpen(deriveFiles(files, captures, { fromRecordings: argv.includes('--from-recordings') }), argv.includes('--only-open'));
   report(merged, files, argv.includes('--web'));
   if (argv.includes('--write')) writeShapes(merged);
   return 0;

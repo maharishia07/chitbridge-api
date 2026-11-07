@@ -11,6 +11,7 @@
  * and non-empty) — the client runs the real CBVariant.validate() before ever offering "Save as".
  *
  * Run: node tests/combo-templates.test.cjs
+ * CARD      07-offers-pricing-and-combos/combo-modifier-templates-combo-lab
  */
 'use strict';
 const path = require('path');
@@ -60,7 +61,8 @@ async function run() {
   const dbExports = {
     /* defaultSchemaId()/ensureDeclared()'s own bookkeeping queries — none of them are what this test is
        proving, so they get an empty, harmless answer, same as an entity with no custom schema at all. */
-    query: async () => ({ rows: [] }),
+    /* the shop STATES its money (lib/regional.currencyRead never guesses INR): these two shops are Indian ones */
+    query: async (text) => ({ rows: /FROM identities WHERE identity_id/.test(text) ? [{ currency_code: 'INR', country: 'IN' }] : [] }),
     withEntity: async (entity_id, fn) => fn({
       query: async (text, params) => {
         const q = text.replace(/\s+/g, ' ').trim();

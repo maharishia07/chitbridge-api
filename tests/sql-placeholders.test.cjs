@@ -60,4 +60,4 @@ if (failures.length) {
   console.error(`\n${failures.length} site(s). Write $\${n++}, not $\{n++}.\n`);
   process.exit(1);
 }
-console.log(`✓ SQL placeholders — ${files.length} files scanned, every interpolated counter carries its $`);
+console.log(`✓ SQL placeholders — ${files.length} files scanned, every interpolated counter carries its $ (${files.length} checks)`);

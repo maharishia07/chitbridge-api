@@ -53,7 +53,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   TABLES = new Set();
   t('nothing migrated: a read is empty, not an error', (await raida.list('e1', CHIT1)).migrated === false);
   const w0 = await caught(() => raida.add('e1', 'c1', { kind: 'risk', body: 'x' }));
-  t('nothing migrated: a write refuses, naming b182', !!w0 && w0.status === 503 && /b182/.test(w0.message));
+  t('nothing migrated: a write refuses, in plain words', !!w0 && w0.status === 503 && !/b182/.test(w0.message) && /after the next update/.test(w0.message));
 
   PHASE0();
   let sh = await raida.shape();
@@ -155,7 +155,7 @@ const FULL = () => { TABLES = new Set(['register_entry', 'register_subject', 're
   t('and the insert names no b185 column',
     !/subject_id|likelihood|disposition|revises_id/.test(flat()));
   const noGate = await caught(() => raida.closeSubject('e1', 'S1', {}));
-  t('the gate refuses cleanly before b185', !!noGate && noGate.status === 503 && /b185/.test(noGate.message));
+  t('the gate refuses cleanly before b185', !!noGate && noGate.status === 503 && !/b185/.test(noGate.message) && /after the next update/.test(noGate.message));
 
   console.log('\n-- \u26a0\ufe0f\u26a0\ufe0f the dispute path is still not reimplemented --');
   const src = require('fs').readFileSync(API + '/lib/raida.js', 'utf8');

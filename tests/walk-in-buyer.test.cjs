@@ -11,6 +11,7 @@
  * Pure: no DB, no server. Part 3 runs the seam through the REAL country packs — chitbridge-engines v1.37.0 beside this repo
  * (reg-au · reg-ae), which the api has not adopted yet (engines.lock.json pins tax v1.20.0: India only, plus the generic
  * VAT border rule). Without the sibling checkout those cases are skipped and SAID.
+ * CARD      23-connectors-and-integrations/public-services-api
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');

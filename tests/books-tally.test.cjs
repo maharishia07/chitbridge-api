@@ -7,6 +7,7 @@
  * line's bill references add up to the line · every ledger and party a voucher names has a master · a Journal that
  * touches cash is listed for review, never hidden.
  * Run: node tests/books-tally.test.cjs
+ * CARD      23-connectors-and-integrations/tally-connector
  */
 'use strict';
 const fs = require('fs');

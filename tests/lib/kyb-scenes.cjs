@@ -105,7 +105,7 @@ function extras(tools) {
     X('credential-evidence-unknown', CREDENTIAL, 200, { body: { standard_key: 'iec', evidence_ref: OTHER_CHIT } }),
     X('credential-title-long', CREDENTIAL, 200, { body: { title: 'Municipal Licence To Trade In Dry Goods And Groceries Within The Ward Number Seven Area' } }),
     X('credential-title-an-object', CREDENTIAL, 400, { body: { title: { a: 1 } } }),
-    X('credential-extra-keys', CREDENTIAL, 200, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
+    X('credential-extra-keys-refused', CREDENTIAL, 422, { body: { title: 'Village NOC', rung: 'verified', entity_id: 'x', verification: { method: 'registry' } } }),
     X('credential-nothing-named', CREDENTIAL, 400, { body: {} }),
     X('credential-body-a-list', CREDENTIAL, 400, { body: [] }),
     X('credential-title-blank', CREDENTIAL, 400, { body: { title: '', standard_key: '' } }),
@@ -144,6 +144,7 @@ function extras(tools) {
     S('risk-library-throws-503', RISK, 503, { patch: { kyb: { risk: thrown(SECRET_SQL, 503) } } }),
     /* POST /field */
     X('field-not-connected', FIELD, 200, {}),
+    X('field-extra-key-refused', FIELD, 422, { body: { vertical: 'food' } }),
     X('field-provider-named', FIELD, 200, { env: { KYB_FIELD_PROVIDER: 'x', KYB_FIELD_KEY: 'y' } }),
     X('field-served-from-cache', FIELD, 200, { setup: withRows(when(/FROM kyb_field_cache/, [{ result: cachedResult, created_at: '2026-10-01T00:00:00Z' }])) }),
     X('field-reads-fail', FIELD, 200, { setup: { db: 'fail' } }),

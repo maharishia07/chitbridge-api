@@ -1,3 +1,10 @@
+/**
+ * scripts/prove-lifecycle.js: the live proof that N sources assimilate into one boilerplate and the standards govern at runtime.
+ * OWNS       the live proof that N sources assimilate into one boilerplate and the standards govern at runtime.
+ * CALLED BY  by hand (node scripts/prove-lifecycle.js); never by CI. The mould and conformance steps are PLATFORM-ONLY (SEC-133): set CB_PLATFORM_TOKEN to a platform login's token or they answer 403 NOT_PLATFORM.
+ * FLOW       register a throwaway shop, mint a chit, read its stamp, then check conformance as the platform
+ * CARD       21-compliance-attestation-and-trade/governance
+ */
 // prove-lifecycle.js — LIVE end-to-end proof of "N sources assimilate into a boilerplate, and a standard actively
 // governs at runtime." Hits the live API. Run AFTER: (1) b87 EXIM seeded, (2) the multi-layer seam deployed.
 //   node scripts/prove-lifecycle.js
@@ -6,6 +13,7 @@
 //   B. RUNTIME GOVERNANCE — the conformance endpoint READS both standards live; EXIM (chit-scope) flags a real
 //      contradiction on an export order missing hs_code/incoterms; ISO 9000 (entity-scope) is read but not mis-applied.
 //   C. DISCRIMINATION — a complete order passes (the check isn't just always-fail).
+const PLATFORM_TOKEN = process.env.CB_PLATFORM_TOKEN;
 const B = process.env.CB_API || 'https://chitbridge-api-production.up.railway.app';
 let P = 0,
   F = 0;
@@ -63,7 +71,7 @@ const S = (o) => JSON.stringify(o || '');
 
   // ── B. RUNTIME GOVERNANCE: the standard is READ live and flags a contradiction ───────────────
   const exportOrder = { purpose: 'export order', product: 'Royale Play Tussar', quantity: 40 }; // no hs_code / incoterms
-  const v1 = await api('POST', '/api/governance/conformance', { token, body: { data: exportOrder, scope: 'chit' } });
+  const v1 = await api('POST', '/api/governance/conformance', { token: PLATFORM_TOKEN || token, body: { data: exportOrder, scope: 'chit' } });
   const checkedRefs = ((v1.j && v1.j.checked) || []).map((item) => item.ref);
   chk('both standards READ at runtime', checkedRefs.includes('iso-9001@v1') && checkedRefs.includes('exim-policy@v1'), checkedRefs.join(', ') || 'none');
   chk(
@@ -90,7 +98,7 @@ const S = (o) => JSON.stringify(o || '');
     export_declaration: 'EDF-' + ts,
     incoterms: 'FOB'
   };
-  const v2 = await api('POST', '/api/governance/conformance', { token, body: { data: goodOrder, scope: 'chit' } });
+  const v2 = await api('POST', '/api/governance/conformance', { token: PLATFORM_TOKEN || token, body: { data: goodOrder, scope: 'chit' } });
   chk('a COMPLETE export order PASSES (check discriminates)', v2.j && v2.j.status === 'pass', 'status ' + (v2.j && v2.j.status));
 
   console.log('\n  ── the boilerplate assimilated:');

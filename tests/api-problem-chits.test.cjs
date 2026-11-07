@@ -30,6 +30,7 @@ const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const MOUNT = '/api/chits';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 /** the route file this mount serves (named in full so the graph links this test to it) */
 const ROUTE_FILE = 'routes/chits.js';
 /** this file's routes: the chits router's own; the proposal doors it mounts (/:chit_id/proposals…) are tests/api-problem-chit-proposals.test.cjs's */
@@ -70,6 +71,7 @@ function rowsFor(sql) {
   }
   if (world.db === 'fail') throw new Error(SECRET_SQL);
   if (world.migrated && /information_schema/.test(sql)) return { rows: [{ '?column?': 1 }], rowCount: 1 }; /* lib/schema: every table and column is there */
+  if (/SELECT capabilities FROM identities/.test(sql)) return { rows: [{ capabilities: ['register'] }], rowCount: 1 }; /* RAIL-90: the register is on for the test shop */
   if (/SELECT COUNT\(/i.test(sql)) return { rows: [{ count: '0' }], rowCount: 1 }; /* a count of nothing is 0, not no row */
   return { rows: [], rowCount: 0 };
 }
@@ -828,7 +830,7 @@ function checkAllowList(recording) {
     check(route + ': every recorded 200 (' + answers.length + ') fits the closed shape of its root', held, { answers: answers.length, errors: fits && fits.errors });
     if (held) proved[route] = { output_allowlist: true };
   });
-  return proved;
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** the chit routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {

@@ -10,6 +10,7 @@
  * routes/catalogue.js changes one byte, every returning customer stops being recognised and silently becomes a
  * SECOND identity — with their order history left behind on the first. So the original formula is written out
  * here independently and the module is held to it.
+ * CARD      18-identity-sign-in-and-access/user-id
  */
 const assert = require('assert');
 const mint = require('../lib/mintuserid');

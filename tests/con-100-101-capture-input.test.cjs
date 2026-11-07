@@ -91,8 +91,8 @@ async function refused(server, method, url, body, status, code) {
   await refused(server, 'POST', '/api/capture/abc/convert', { chit_id: GOOD }, 404, 'NOT_FOUND');
   await refused(server, 'POST', '/api/capture/abc/dismiss', {}, 404, 'NOT_FOUND');
   // BH-15 · CON-101
-  for (const phone of [-1, 1e21, 9876543210, true, {}, [], 'abc', '12', '+', '1'.repeat(40)]) await refused(server, 'POST', '/api/capture/stores', { name: 'x', phone }, 400, 'VALIDATION_FAILED');
-  await refused(server, 'POST', '/api/capture/stores', { name: 'x' }, 400, 'INVALID_INPUT'); // absent: the library's own refusal, unchanged
+  for (const phone of [-1, 1e21, 9876543210, true, {}, [], 'abc', '12', '+', '1'.repeat(40)]) await refused(server, 'POST', '/api/capture/stores', { display_name: 'x', phone }, 400, 'VALIDATION_FAILED');
+  await refused(server, 'POST', '/api/capture/stores', { display_name: 'x' }, 400, 'INVALID_INPUT'); // absent: the library's own refusal, unchanged
 
   // valid calls still pass
   const conv = await ask(server, 'POST', '/api/capture/' + GOOD + '/convert', { chit_id: GOOD });

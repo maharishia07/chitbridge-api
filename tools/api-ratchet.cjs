@@ -270,6 +270,23 @@ function checkColumns(baseRatchet, head, headRatchet) {
   return problems;
 }
 
+/**
+ * CAP-17 slice 1: the REPORTED columns (tools/api-reported.cjs) are not in "meets" yet, but the routes failing each may only go down (a new route may add its own);
+ * a base with no figure just records. When Athi lets them into "meets", they move into HARDENING_COLUMNS and this check goes with the column ratchet above.
+ */
+function checkReported(baseRatchet, head, headRatchet) {
+  const problems = [];
+  const added = Math.max(0, head.counts.routes - baseRatchet.total);
+  Object.keys(head.counts.reported || {}).forEach((name) => {
+    const actual = head.counts.reported[name].failing;
+    const before = baseRatchet.reported_failing && baseRatchet.reported_failing[name];
+    if (before !== undefined && actual > before + added) problems.push('routes failing the reported column ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
+    if (!headRatchet.reported_failing || headRatchet.reported_failing[name] < actual) problems.push('docs/api-ratchet.json reported_failing.' + name + ' is below the register: run node tools/api-ratchet.cjs --write');
+  });
+  console.log('reported (not yet in meets): ' + Object.keys(head.counts.reported || {}).map((name) => name + ' ' + head.counts.reported[name].failing + '/' + head.counts.reported[name].applies).join(' · '));
+  return problems;
+}
+
 /** a code in the code must be a row of docs/ERROR-CODES.md; rows waiting for their sentence may not grow beyond the new codes */
 function checkCodes(baseRatchet, headRatchet) {
   const codes = require('./error-codes.cjs');
@@ -319,7 +336,7 @@ function writeRatchet(head) {
   const rawNow = rawErrorWritesOf(ROOT).length;
   refuseRises(previous, { notMeeting, rawNow, columnsFailing, routes: head.counts.routes });
   if (previous && previous.routes_without_does !== undefined && head.counts.no_does > previous.routes_without_does + Math.max(0, head.counts.routes - previous.total)) throw new Error('refusing to raise the count of routes with no @does');
-  const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, columns_failing: columnsFailing, debt: previous ? previous.debt : [] };
+  const next = { version: 1, stage: head.stage || (previous ? previous.stage : '1a'), updated: today(), total: head.counts.routes, not_meeting: notMeeting, codes_total: rows.length, codes_pending: codes.pendingCount(rows), raw_error_writes: rawNow, routes_without_does: head.counts.no_does, columns_failing: columnsFailing, reported_failing: Object.fromEntries(Object.keys(head.counts.reported || {}).map((name) => [name, head.counts.reported[name].failing])), debt: previous ? previous.debt : [] };
   fs.writeFileSync(RATCHET_FILE, JSON.stringify(next, null, 1) + '\n');
   console.log('wrote docs/api-ratchet.json: ' + next.not_meeting + ' of ' + next.total + ' not meeting; ' + next.codes_pending + ' of ' + next.codes_total + ' codes waiting for a sentence; ' + next.raw_error_writes + ' response writes carry raw error text');
 }
@@ -336,7 +353,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet));
   } finally {
     base.remove();
   }

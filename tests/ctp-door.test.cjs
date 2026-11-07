@@ -59,7 +59,13 @@ const env = (patch) => Object.assign({}, ENV, patch || {});
 
 /* [name, door, body, ctx, status, why (exact, or a RegExp), wrote?] */
 const CASES = [
-  ['deliver · not a CTP/1 envelope', 'deliver', { ctp: '2' }, ok, 400, 'not a CTP/1 envelope'],
+  ['deliver · not a CTP/1 envelope', 'deliver', { ctp: 2 }, ok, 400, 'not a CTP/1 envelope'],
+  /* RAIL-126 (b): the TOLERANT READER — a minor of our major is read, a field we do not know is ignored, another major is refused naming both */
+  ['deliver · another major is refused, naming both versions', 'deliver', env({ ctp: '2' }), ok, 400, 'this installation speaks CTP/1 (any minor); the message is CTP/2, a version it does not read'],
+  ['deliver · another major with a minor is refused the same way', 'deliver', env({ ctp: '2.1' }), ok, 400, 'this installation speaks CTP/1 (any minor); the message is CTP/2, a version it does not read'],
+  ['deliver · an unknown HIGHER minor of our major is accepted and written', 'deliver', env({ ctp: '1.7' }), ok, 200, undefined, true],
+  ['deliver · fields we do not know are ignored, not refused', 'deliver', env({ ctp: '1.1', future_field: { a: 1 }, priority_hint: 'x' }), ok, 200, undefined, true],
+  ['deliver · a version that is no version at all stays "not an envelope"', 'deliver', env({ ctp: '1x' }), ok, 400, 'not a CTP/1 envelope'],
   ['deliver · no recipient named', 'deliver', env({ to: {} }), ok, 400, 'the envelope does not name a recipient'],
   ['deliver · no installation named', 'deliver', env({ from: {} }), ok, 400, 'the envelope does not say which installation sent it'],
   ['deliver · a stranger installation', 'deliver', env(), { to: LIVE_TO }, 403, 'installation mx-1 is not one we deal with'],
@@ -92,6 +98,8 @@ const CASES = [
   ['deliver · accepted, written as OUR recipient', 'deliver', env(), ok, 200, undefined, true],
   ['deliver · the same envelope again → accepted, nothing written twice', 'deliver', env(), Object.assign({}, ok, { heldFrom: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' }), 200, undefined, false], /* sit/run6 (RAIL-107): held from OUR row of the sender */
   ['deliver · the same chit id from another sender → refused in words', 'deliver', env(), Object.assign({}, ok, { heldFrom: '33333333-3333-4333-8333-333333333333' }), 409, 'a chit with that id is already here from another sender'],
+  ['query · another major is refused, naming both versions', 'query', { ctp: '2', kind: 'query', from: { installation_key: 'mx-1' } }, ok, 400, 'this installation speaks CTP/1 (any minor); the message is CTP/2, a version it does not read'],
+  ['query · a higher minor and an unknown field go on to the peer check', 'query', { ctp: '1.3', kind: 'query', from: { installation_key: 'mx-1' }, future_field: true }, {}, 403, 'installation mx-1 is not one we deal with'],
   ['query · not a CTP/1 query', 'query', { ctp: '1', kind: 'deliver' }, ok, 400, 'not a CTP/1 query'],
   ['query · no installation named', 'query', { ctp: '1', kind: 'query', from: {} }, ok, 400, 'the question does not say which installation is asking'],
   ['query · a stranger installation', 'query', { ctp: '1', kind: 'query', from: { installation_key: 'mx-1' } }, {}, 403, 'installation mx-1 is not one we deal with'],

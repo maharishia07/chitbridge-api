@@ -16,6 +16,7 @@
  * ⭐⭐ A BUDGET, NOT A SNAPSHOT. Asserting the exact count would fail on any harmless change and get raised
  * reflexively until it meant nothing. A CEILING fails only when someone adds a round trip to the hottest
  * endpoint — which is the event worth interrupting a build for.
+ * CARD      28-platform-and-operations/performance-and-round-trips
  */
 const API = require('path').join(__dirname, '..').split(require('path').sep).join('/');
 

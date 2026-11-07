@@ -32,6 +32,7 @@ const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json')
 const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json'); /* the area tests' own evidence file (R2-4) */
 const ANSWERS_FILE = path.join(HERE, 'docs', 'contracts', 'books-answers.json'); /* the period-end routes' 2xx answers, produced by tests/support/books-capture.cjs --build */
 const MOUNT = '/api/books';
+const FOREIGN = require('./lib/foreign-id-world.cjs');
 const MOUNTS = ['/api/books', '/api/tax', '/api/invoice'];
 /** the route files these mounts serve (named in full so the graph links this test to each of them) */
 const ROUTE_FILES = { '/api/books': 'routes/books.js', '/api/tax': 'routes/tax.js', '/api/invoice': 'routes/invoice.js' };
@@ -57,15 +58,21 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "books_entry" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null };
 const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
+const OTHER = '77777777-7777-4777-8777-777777777777'; /* another shop: the owner of the row in the foreign-id world */
+/** another shop's row that answers ANY column (the generator's proxy row, tools/api-contract-tests.cjs rowOf): a handler that read it unscoped would answer with it, not 404 */
+const foreignRow = () => new Proxy({}, { get: (target, name) => (typeof name !== 'string' || name === 'then' || name === 'toJSON' ? undefined : /entity_id$|^owner$/.test(name) ? OTHER : /_id$/.test(name) ? PARTY : /_at$|date/.test(name) ? '2026-10-01' : 1), has: () => true });
 
 /** the rows a statement gets: the ledger's switch, then a scenario's own rows, then nothing (or the secret failure when the db is down) */
 function rowsFor(sql, params) {
+  if (world.sqlLog) world.sqlLog.push(String(sql));
   /* K-1: a db that answers as Postgres does to a value that is no uuid (22P02), so a route that lets one through shows as a 500 */
   if (world.db === 'uuid' && (params || []).some((value) => typeof value === 'string' && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value))) throw Object.assign(new Error('invalid input syntax for type uuid: "' + params[0] + '"'), { code: '22P02' });
   if (/FROM books_setting/.test(sql)) return world.ledgerOn ? { rows: [SETTING_ROW], rowCount: 1 } : { rows: [], rowCount: 0 };
+  /* S35 (Wave M · M3): the path id names ANOTHER shop's row — hidden from a statement that names the caller (SHOP: a scoped read, as RLS hides it), shown to any statement that does not (a read by the id alone surfaces it) */
+  if (world.rowOwner && (params || []).includes(PARTY)) return params.includes(SHOP) ? { rows: [], rowCount: 0 } : { rows: [foreignRow()], rowCount: 1 };
   if (world.sqlRows) {
     const given = world.sqlRows(String(sql));
     if (given) return given;
@@ -127,6 +134,14 @@ const ADVICE_PATCH = (ready) => ({
   store: { payment: async () => ({ payment_id: PARTY }), adviceReady: async () => ready },
   books: { adviceFor: async () => ({ may: { send_advice: { ok: false, why: 'already_sent', say: 'An advice is already sent.' }, share_advice: { ok: true } }, advice: { chit_id: '99999999-9999-4999-8999-999999999999' } }) }
 });
+/** a registered Indian shop: the identities row the tax routes read (its GSTIN makes a GSTR possible), and a held copy of one chit with its invoice block */
+const IN_SHOP = { sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [{ identity_id: SHOP, gstn: '33AAAAA0000A1Z5', display_name: 'Ponni Stores', country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }], rowCount: 1 } : null) };
+/** the same shop with no GSTIN (unregistered), and one in Australia: the seller facts a handler answers as null */
+const shopWith = (extra) => ({ sqlRows: (sql) => (/FROM identities/.test(sql) ? { rows: [Object.assign({ identity_id: SHOP, gstn: null, display_name: null, country: 'IN', policy_flags: {}, timezone: 'Asia/Kolkata' }, extra)], rowCount: 1 } : null) });
+const NO_GSTIN_SHOP = shopWith({});
+const AU_SHOP = shopWith({ country: 'AU', timezone: 'Australia/Sydney' });
+const COPY_ENTRY = { chit_id: PARTY, direction: 'sent', sells: true, status: 'accepted', provisional: false, frozen: true, rated: 1, unrated: 0, seller: { LglNm: 'Ponni Stores' }, buyer: { LglNm: 'Ravi' }, invoice: { Version: '1.1', ValDtls: { AssVal: 100 }, ItemList: [] } };
+const COPY_PATCH = { cost: { isCostBlind: async () => false }, taxcopy: { copyOf: async () => ({ chit_id: PARTY }), invoiceOf: async () => require(path.join(HERE, 'lib', 'tax-copy')).invoiceFrom(COPY_ENTRY) } };
 const BAD_MONEY = { party_id: PARTY, amount_minor: 100, currency: 'USD', mode: 'cash' };
 /** the cash position of a shop with one drawer and nothing owed, made by the cash engine's own project() (the stand-in db cannot seat the ledgers read() needs) */
 const CASH_PATCH = {
@@ -186,6 +201,9 @@ const LEDGER_LINE_BARE = Object.assign({}, LEDGER_LINE, { doc_date: null, narrat
 const LEDGER_PATCH = { store: { accounts: async () => CHART, entryLines: async () => [LEDGER_LINE, LEDGER_LINE_BARE] }, books: { ledgerOf: async () => ({ opening_minor: 0, period0: false }) } };
 const LEDGER_PAGE_PATCH = { store: Object.assign({}, LEDGER_PATCH.store, { entryPage: async () => ({ rows: [LEDGER_LINE], limit: 10, next: null }), pageSums: async () => ({ before_dr: 0, before_cr: 0, dr: 1000, cr: 0, entries: 1 }) }), books: LEDGER_PATCH.books };
 const packIN = () => require(path.join(HERE, 'lib', 'books-engines')).packs().packFor('IN');
+const ASSET_DISPOSED = { entity: SHOP, asset_id: PARTY, name: 'Press', asset_class: 'plant', cost_minor: 100000, currency: 'INR', put_to_use: '2025-04-01', source_entry_id: ENTRY, source_chit_id: null, accumulated_minor: 20000, last_dep_fy: '2025-26', disposed_on: DAY, disposal_entry_id: ENTRY, proceeds_minor: 0, created_by: SHOP, wdv_minor: 0 };
+const COMPARE_READY = { store: { compareReady: async () => true } };
+const COMPARE_PATCH = { store: { compareReady: async () => true, compareParts: async () => [{ snapshot_id: PARTY, part: 'tb', label: 'Tally Q2', source: 'tally', period_from: '2026-07-01', period_to: '2026-09-30', rows: [] }] } };
 const STATEMENT_PATCH = { books: { ledgerCtx: async () => ({ s: SETTING_ROW, chart: CHART, pack: packIN(), years: [], cache: {} }), yearBalances: async () => ({}) }, store: { ledgerLines: async () => [], entryLines: async () => [] } };
 const MANUAL_PREVIEW = { ok: true, kind: 'expense', voucher: { series: 'MJ', type: 'Journal' }, date: DAY, lines: [{ code: '5000', ledger: 'Rent', dr_minor: 1000, cr_minor: 0, type: 'expense', rule: 'expense' }], balanced: true, totals: { dr_minor: 1000, cr_minor: 1000 }, credit: null, bill: null, flags: [], refusals: [], code: null, duplicate: null }; /* books-manual preview :483 */
 const SHOP_TERMS = { credit_days: 30, credit_limit_minor: null, interest: null, early: null };
@@ -243,7 +261,14 @@ const WRITES_READY = [
   X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
   X('ledger-read-party', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/debtors?party=' + PARTY, patch: LEDGER_PATCH }),
   X('ledger-page', 'GET /api/books/ledger/:account', 200, { url: MOUNT + '/ledger/1300?limit=10', patch: LEDGER_PAGE_PATCH }),
-  X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: STATEMENT_PATCH })
+  X('statement-read', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: true, supplier: false, ledgered: false }) }) } }),
+  X('statement-ledgered-only', 'GET /api/books/party/:id/statement', 200, { patch: { books: STATEMENT_PATCH.books, store: Object.assign({}, STATEMENT_PATCH.store, { partyOn: async () => ({ customer: false, supplier: false, ledgered: true }) }) } }),
+  X('statement-stranger', 'GET /api/books/party/:id/statement', 404, {}),
+  /* S35 (Wave M · M3): the own id of a route whose other worlds (unknown, foreign) run the real code over the stand-in db; inWorlds is what those worlds keep too */
+  X('compare-read', 'GET /api/books/compare/:id', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
+  X('compare-read-csv', 'GET /api/books/compare/:id/csv', 200, { patch: COMPARE_PATCH, inWorlds: COMPARE_READY }),
+  X('pack-file-served', 'GET /api/books/packs/:id/file', 200, { patch: { pack: { download: async () => ({ found: true, stored: true, pack: PACK_FULL, bytes: Buffer.from('zip') }) } } }),
+  X('asset-disposed', 'POST /api/books/assets/:id/dispose', 200, { body: { date: DAY }, patch: { period: { disposeAsset: async () => Object.assign({ asset: ASSET_DISPOSED }, JOURNAL, { moved: false }) } } })
 ];
 /* ── API-8 (2 of 2): months and the year, audit packs, recurring entries, exchange rates, the parallel run and the move-in preflight ── */
 const STAMP = '2026-09-30T10:00:00.000Z';
@@ -297,6 +322,11 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('fx-revalue-reads', 'GET /api/books/fx-revalue', 200, { url: MOUNT + '/fx-revalue?fiscal_year=2026-27&period=6' }),
   X('currency-not-the-ledgers', 'POST /api/books/payments/preview', 422, { body: BAD_MONEY }),
   X('currency-not-the-ledgers', 'POST /api/books/payments', 422, { body: BAD_MONEY }),
+  /* FIN-63: the four money doors refuse a call with no Idempotency-Key in words, before the ledger's own gates (the same 422 on every path) */
+  X('key-required', 'POST /api/books/payments', 422, { body: PAID, noKey: true }),
+  X('key-required', 'PATCH /api/books/payments/:id', 422, { body: { advice_shared_at: true }, noKey: true }),
+  X('key-required', 'POST /api/books/payments/:id/confirm', 422, { body: { allocations: [] }, noKey: true }),
+  X('key-required', 'POST /api/books/gst/pay', 422, { body: { fy: '2026-27', period: 6, amounts: { cgst_minor: 1 }, bank: 'bank', challan_no: 'CPIN1' }, noKey: true }),
   X('window-too-long', 'GET /api/books/bank/rail', 400, { url: MOUNT + '/bank/rail?from=2020-01-01&to=2026-01-01' }),
   X('nothing-to-change', 'PATCH /api/books/payments/:id', 400, { body: {} }),
   X('which-advice-chit', 'PATCH /api/books/payments/:id', 400, { body: { advice_chit_id: 'not-an-id' } }),
@@ -322,6 +352,22 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   /* B2 (4 Nov): the chit id in the address is no uuid → the unknown id's 404, never the driver's 500 (K-1) */
   X('chit-id-not-a-uuid', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/abc' }),
   X('chit-id-holds-nul', 'GET /api/invoice/:chit_id', 404, { setup: { db: 'uuid' }, url: '/api/invoice/a%00b' }),
+  /* API-31 (Wave M, tax + invoice): the 2xx answers of the seven routes, so their shapes close from recordings and the handlers' own literals (tools/api-allowlist.cjs) */
+  X('rated-lines', 'POST /api/tax/rate', 200, { setup: IN_SHOP, body: { lines: [{ key: 'a', name: 'tea', qty: 1, hsn: '0902' }] } }),
+  X('computed-intra-state', 'POST /api/tax/compute', 200, { setup: IN_SHOP, body: { buyer: { name: 'Walk-in' }, lines: [{ key: 'a', name: 'tea', qty: 2, price: 100, gst_rate: 5 }] } }),
+  X('computed-inclusive-flag', 'POST /api/tax/compute', 200, { setup: IN_SHOP, body: { priceIncludesTax: true, lines: [{ key: 'a', name: 'tea', qty: 1, price: 105, gst_rate: 5 }] } }),
+  X('built-invoice', 'POST /api/invoice/build', 200, { setup: IN_SHOP, body: { buyer: { name: 'Priya' }, lines: [{ key: 'a', name: 'tea', qty: 2, listPrice: 100, gst_rate: 5 }] } }),
+  X('chit-invoice', 'GET /api/tax/invoice/:chit_id', 200, { setup: IN_SHOP, patch: COPY_PATCH }),
+  X('chit-invoice', 'GET /api/invoice/:chit_id', 200, { setup: IN_SHOP, patch: COPY_PATCH }),
+  X('chit-invoice-cost-blind', 'GET /api/invoice/:chit_id', 200, { setup: IN_SHOP, patch: Object.assign({}, COPY_PATCH, { cost: { isCostBlind: async () => true } }) }),
+  X('gstr1-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr1' }),
+  X('gstr3b-of-the-month', 'GET /api/tax/gstr', 200, { setup: IN_SHOP, url: '/api/tax/gstr?month=2026-10&form=gstr3b' }),
+  X('ledger-of-a-registered-shop', 'GET /api/tax/ledger', 200, { setup: IN_SHOP, url: '/api/tax/ledger?month=2026-10' }),
+  X('rated-lines-no-hsn', 'POST /api/tax/rate', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1 }] } }),
+  X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
+  X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),
+  X('built-unregistered-seller', 'POST /api/invoice/build', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
+  X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
@@ -331,10 +377,13 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('advice-not-ready', 'PATCH /api/books/payments/:id', 503, { body: { advice_chit_id: PARTY }, patch: ADVICE_PATCH(false) })
 ]);
 
-function send(port, method, urlPath, body) {
+/* FIN-63: every call is its own attempt (a fresh Idempotency-Key: the money doors require one); `noKey` leaves it off to see the refusal */
+let attempts = 0;
+function send(port, method, urlPath, body, noKey) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const once = noKey ? {} : { 'idempotency-key': 'attempt-' + ++attempts };
+    const options = { port, path: urlPath, method, headers: Object.assign(once, data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));
@@ -375,7 +424,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -389,7 +438,7 @@ async function runScenario(port, scenario) {
   if (scenario.who === 'auditor') world.who = OWNER;
   const restore = applyPatch(scenario.patch);
   const method = scenario.route.split(' ')[0];
-  const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body);
+  const answer = await send(port, method, scenario.url, scenario.body === undefined && BODY_METHODS.includes(method) ? {} : scenario.body, scenario.noKey);
   restore();
   return answer;
 }
@@ -497,7 +546,7 @@ function checkAllowList(recording) {
   const proved = {};
   const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
   const recorded = Object.assign({}, Object.fromEntries(Object.entries(fixture).filter(([, one]) => closedByRecordings(one.route))), recording); /* only for the routes whose shape is closed from them */
-  const words = require(path.join(HERE, 'lib', 'books-contract.js'));
+  const words = { OPERATIONS: Object.assign({}, require(path.join(HERE, 'lib', 'books-contract.js')).OPERATIONS, require(path.join(HERE, 'lib', 'tax-contract.js')).OPERATIONS) }; /* the ledger's routes and the tax and invoice services' (API-31) */
   const engine = require(path.join(HERE, 'middleware', 'validate.js')).bodyEngine;
   const { prune } = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   Object.keys(words.OPERATIONS).sort().forEach((route) => {
@@ -512,26 +561,72 @@ function checkAllowList(recording) {
   });
   const filter = require(path.join(HERE, 'lib', 'output-allowlist.js'));
   check('the output filter dropped no key from any answer of any scenario (' + filter.droppedCount() + ' dropped)', filter.droppedCount() === 0, filter.droppedKeys());
-  return proved;
+  return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
 /** is this route's shape closed from recorded answers alone (docs/contracts/api-output-shapes.json closed_by), not from keys its handler names */
 const closedByRecordings = (route) => ((require(path.join(HERE, 'lib', 'output-allowlist.js')).shapeOf(route) || {}).closed_by === 'recordings');
+/**
+ * S35 foreign_id_404 (Wave M · M3), the generator's own rule (tools/api-contract-tests.cjs foreignIdCase) over this file's worlds, because its proxy world never
+ * reaches a books route (the country gate stops it): a route addressed by a uuid in its path is proved when (1) some recorded scenario found the caller's own
+ * id (a 2xx), (2) the unknown id (the nothing-found world) is a 404, and (3) another shop's id (the foreign-id world: the row exists, owned by OTHER) answers
+ * byte for byte as the unknown id. → { route: { foreign_id_404: true } } for the routes that held; a route whose path value is not a row's uuid (a year, a ref) is left to
+ * docs/contracts/api-hardening-scope.json public_ids (cb-api); the ledger's account code is read from the caller's own chart, so it is proved here too.
+ */
+async function checkForeignIds(port, routes, recording) {
+  const proved = {};
+  const idRoutes = Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && /:(id|chit_id|account)\b/.test(route));
+  for (const route of idRoutes) {
+    const outcome = await foreignIdOutcome(port, routes, recording, route);
+    if (route === 'POST ' + MOUNT + '/parties/:id/dispute') check('a dispute of a party that is not the shop writes no party_item row (unknown id and another shop id)', outcome.held && !outcome.wrote, outcome);
+    if (outcome.held) proved[route] = { foreign_id_404: true };
+    else console.log('  note  ' + route + ': foreign_id_404 not held here (' + outcome.why + ') — the register keeps it open');
+  }
+  check("S35: on every books route addressed by a uuid whose own id a scenario finds, another shop's id answers the unknown id's 404 byte for byte — or the route is named above (" + Object.keys(proved).length + ' of ' + idRoutes.length + ' held)', Object.keys(proved).length > 0);
+  await checkForeignBite(port, routes, recording);
+  return proved;
+}
+/** one route: the request that found the caller's own id (a recorded 2xx: its body passes the route's own input checks), sent again at an unknown id and at another shop's; worldPatch swaps a store read in both worlds */
+async function foreignIdOutcome(port, routes, recording, route, worldPatch) {
+  const key = Object.keys(recording).find((one) => recording[one].route === route && recording[one].status >= 200 && recording[one].status < 300);
+  if (!key) return { held: false, why: 'no scenario finds the own id' };
+  const own = EXTRAS.find((one) => one.id === key.slice(route.length + 1)) || {};
+  const patch = Object.assign({}, own.inWorlds, worldPatch);
+  const seen = [];
+  const ask = (id, setup) => runScenario(port, { id, route, url: urlOf(routes[route], false), body: recording[key].request.body, setup: Object.assign({ sqlLog: seen }, setup), patch });
+  const unknown = await ask('unknown-id', {});
+  const foreign = await ask('foreign-id', { rowOwner: OTHER });
+  return { wrote: seen.some((one) => /INSERT INTO party_item/i.test(one)), held: unknown.status === 404 && foreign.status === 404 && shaOf(foreign) === shaOf(unknown), why: 'unknown id ' + unknown.status + ', foreign id ' + foreign.status };
+}
+/** the bite: a pack read by its id alone (no entity_id) must NOT hold, or the foreign-id world could not fail (S35, as tests/api-contract.test.cjs does for the generator) */
+async function checkForeignBite(port, routes, recording) {
+  const unscoped = { store: { pack: async (db, entity, id) => (await db.query('SELECT * FROM books_pack WHERE pack_id = $1', [id])).rows[0] || null } };
+  const outcome = await foreignIdOutcome(port, routes, recording, 'GET ' + MOUNT + '/packs/:id', unscoped);
+  check("foreign_id_404 bites: a pack read by its id alone (no entity_id) is NOT held (" + outcome.why + ')', !outcome.held);
+}
+/** the books routes the evidence file says foreign_id_404 for */
+function foreignIdEvidenceOnDisk() {
+  const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
+  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].foreign_id_404).sort().map((route) => [route, { foreign_id_404: true }]));
+}
 /** the books reads the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
-  return Object.fromEntries(Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/') && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
+  return Object.fromEntries(Object.keys(routes).filter((route) => MINE(route) && routes[route].output_allowlist).sort().map((route) => [route, Object.assign({ output_allowlist: true }, routes[route].output_allowlist_basis ? { output_allowlist_basis: routes[route].output_allowlist_basis } : {})]));
 }
 /** write this file's output_allowlist rows into the evidence file (other routes and columns stay as they are) */
 function writeAllowList(proved) {
   const onDisk = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8'));
   const routes = onDisk.routes || {};
-  Object.keys(routes).filter((route) => route.includes(' ' + MOUNT + '/')).forEach((route) => {
-    delete routes[route].output_allowlist;
-    if (!Object.keys(routes[route]).length) delete routes[route];
+  Object.keys(routes).filter(MINE).forEach((route) => {
+    if (!(proved[route] && proved[route].output_allowlist)) {
+      delete routes[route].output_allowlist;
+      delete routes[route].output_allowlist_basis;
+    }
+    if (route.includes(' ' + MOUNT + '/')) delete routes[route].foreign_id_404; /* foreign ids are proved for the books mount only */
   });
   Object.keys(proved).forEach((route) => (routes[route] = Object.assign(routes[route] || {}, proved[route])));
-  const sorted = Object.fromEntries(Object.keys(routes).sort().map((route) => [route, routes[route]]));
-  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes: sorted }), null, 1) + '\n');
+  Object.keys(routes).filter((route) => !Object.keys(routes[route]).length).forEach((route) => delete routes[route]);
+  fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes }), null, 1) + '\n'); /* every row keeps its place (the file is not one sorted list); a newly proved route is added at the end */
 }
 
 /** lib/tax-contract.js as a unit: the words of a tax refusal and of a fault, as the service always said them */
@@ -607,6 +702,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   checkKit();
   checkAnswers(recording);
   const proved = checkAllowList(recording);
+  const server2 = app.listen(0);
+  const foreignProved = await checkForeignIds(server2.address().port, routes, recording);
+  server2.close();
+  Object.keys(foreignProved).forEach((route) => (proved[route] = Object.assign(proved[route] || {}, foreignProved[route])));
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -617,7 +716,10 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     writeAllowList(proved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/books.js', sameValue(mine, coverage), { onDisk: Object.keys(mine).length, covered: Object.keys(coverage).length });
-    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books routes whose success answers held closed here', sameValue(allowListEvidenceOnDisk(), proved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(proved).length });
+    const allowProved = Object.fromEntries(Object.keys(proved).filter((route) => proved[route].output_allowlist).map((route) => [route, Object.fromEntries(Object.entries(proved[route]).filter(([key]) => key.startsWith('output_allowlist')))]));
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the books routes whose success answers held closed here', sameValue(allowListEvidenceOnDisk(), allowProved), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowProved).length });
+    const foreignOnDisk = foreignIdEvidenceOnDisk();
+    check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the books routes that held it here', sameValue(foreignOnDisk, Object.fromEntries(Object.keys(foreignProved).sort().map((route) => [route, foreignProved[route]]))), { onDisk: Object.keys(foreignOnDisk).length, held: Object.keys(foreignProved).length });
   }
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);

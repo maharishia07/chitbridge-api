@@ -24,6 +24,7 @@
  * CARD      18-identity-sign-in-and-access/identity-documents-and-the-vault
  * CALLED BY lib/identity-auth.js, routes/keys.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
+const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
@@ -236,7 +237,7 @@ async function resolveSubject(req, wanted) {
 router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:scheme'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      const message = 'Identity records are not switched on yet — the b174 migration has not been run.';
+      const message = waiting('Identity records', true, 'Nothing was saved; the owner can still sign in by e-mail.');
       return problem(req, res, { status: 503, code: 'IDOC_NOT_MIGRATED', detail: message, legacy: { error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message } });
     }
     const cc = await shopCountry(auth.entityOf(req)); /* CX4: the shop's country, never the client's */

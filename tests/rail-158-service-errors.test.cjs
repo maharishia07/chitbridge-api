@@ -51,8 +51,10 @@ app.use((req, res, next) => {
 });
 app.use('/api/service', require(path.join(ROOT, 'routes', 'service.js')));
 
-let failed = 0;
+let failed = 0,
+  total = 0;
 const check = (ok, label) => {
+  total++;
   if (!ok) failed++;
   console.log((ok ? 'ok   ' : 'FAIL ') + label);
 };
@@ -98,6 +100,6 @@ const ask = (server, method, url, body) =>
     check(a.status === 500 && a.body.code === 'INTERNAL' && !/10\.0\.0\.5|SELECT|refused/.test(a.text), method + ' ' + url.replace(GOOD, ':id') + ' on a database fault → 500 INTERNAL, none of the thrown text (got ' + a.status + ')');
   }
   server.close();
-  console.log(failed ? failed + ' FAILED' : 'all passed');
+  console.log(failed ? failed + ' FAILED' : 'all passed (' + total + ' checks)');
   process.exit(failed ? 1 : 0);
 })();

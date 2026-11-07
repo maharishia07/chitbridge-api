@@ -1708,13 +1708,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -1796,13 +1796,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -2514,6 +2514,46 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "statement-stranger",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
     }
    ]
   },
@@ -3090,6 +3130,136 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot compute",
+      "code": "GSTR_REFUSED",
+      "message": "A return needs the shop GSTIN (15 characters).",
+      "type": "https://chitbridge.com/problems/gstr_refused",
+      "title": "Return cannot be built",
+      "status": 422,
+      "detail": "A return needs the shop GSTIN (15 characters).",
+      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -3325,14 +3495,26 @@
      "scenario": "advice-not-ready",
      "status": 503,
      "body_keys": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
      },
      "fixture": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]
@@ -4750,13 +4932,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -4826,13 +5008,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -5067,6 +5249,18 @@
      "fixture": {
       "error": "Which financial year? e.g. 2026-27.",
       "message": "Which financial year? e.g. 2026-27."
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]
@@ -6228,6 +6422,18 @@
       "error": "This ledger is kept in INR.",
       "message": "This ledger is kept in INR."
      }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     }
     }
    ]
   },
@@ -6311,6 +6517,18 @@
      },
      "fixture": {
       "error": "Not found"
+     }
+    },
+    {
+     "scenario": "key-required",
+     "status": 422,
+     "body_keys": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
+     },
+     "fixture": {
+      "error": "Missing Idempotency-Key",
+      "message": "Send an Idempotency-Key header: one per attempt, the same one when you retry it."
      }
     }
    ]
@@ -7644,11 +7862,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -8522,11 +8740,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -8860,11 +9078,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     }
    ]
@@ -9600,11 +9818,11 @@
      "status": 503,
      "body_keys": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     }
    ]
@@ -11653,6 +11871,18 @@
      "fixture": {
       "error": "validation",
       "message": "product_id required"
+     }
+    },
+    {
+     "scenario": "qk-hide-by-not-uuid",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "by must be the id of the person who marked it sold out"
      }
     },
     {
@@ -14416,6 +14646,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "counter-rename-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -14564,11 +14836,11 @@
      "status": 503,
      "body_keys": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -14611,6 +14883,48 @@
      "fixture": {
       "error": "Forbidden",
       "message": "Counters are managed by a signed-in person, not by a key."
+     }
+    },
+    {
+     "scenario": "counter-make-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -14815,6 +15129,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "counter-assign-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -15090,6 +15446,48 @@
       "error": "Failed",
       "message": "relation \"repeat_supply\" does not exist -- SELECT secret FROM vault"
      }
+    },
+    {
+     "scenario": "counter-open-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -15279,6 +15677,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "counter-release-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/counter_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "COUNTER_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Check the name and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -16958,11 +17398,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      }
     }
    ]
@@ -17564,11 +18004,11 @@
      "status": 503,
      "body_keys": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      },
      "fixture": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      }
     },
     {
@@ -19776,11 +20216,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      }
     },
     {
@@ -20464,11 +20904,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      }
     }
    ]
@@ -26183,14 +26623,14 @@
     },
     {
      "scenario": "connections-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "those are not your connections",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     }
    ]
@@ -26247,14 +26687,14 @@
     },
     {
      "scenario": "subtree-foreign",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "that is not your network — or your membership is suspended; ask the network to resume it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {
@@ -26464,6 +26904,58 @@
       "error": "Request failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "handshake-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26609,12 +27101,12 @@
      "body_keys": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      },
      "fixture": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      }
     },
     {
@@ -26627,6 +27119,48 @@
      "fixture": {
       "error": "Build failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "build-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -26716,6 +27250,48 @@
       "error": "Re-issue failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "reissue-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26755,6 +27331,48 @@
      "fixture": {
       "error": "Too large",
       "message": "design exceeds 2000000 bytes"
+     }
+    },
+    {
+     "scenario": "validate-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -26894,6 +27512,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "request-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -26965,14 +27623,14 @@
     },
     {
      "scenario": "approve-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27023,6 +27681,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "approve-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27095,14 +27793,14 @@
     },
     {
      "scenario": "decline-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27129,6 +27827,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "decline-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27201,14 +27939,14 @@
     },
     {
      "scenario": "disconnect-stranger",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      },
      "fixture": {
-      "error": "only the two businesses on this connection can act on it",
-      "code": "NOT_ALLOWED"
+      "error": "edge not found",
+      "code": "EDGE_NOT_FOUND"
      }
     },
     {
@@ -27247,6 +27985,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "disconnect-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27341,6 +28119,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "resume-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27448,6 +28266,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "suspend-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27538,6 +28396,46 @@
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
      }
+    },
+    {
+     "scenario": "register-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27617,14 +28515,14 @@
     },
     {
      "scenario": "claim-not-yours",
-     "status": 403,
+     "status": 404,
      "body_keys": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      },
      "fixture": {
-      "error": "only the business this node belongs to can claim it",
-      "code": "NOT_ALLOWED"
+      "error": "not found",
+      "code": "NOT_FOUND"
      }
     },
     {
@@ -27639,6 +28537,46 @@
       "error": "Network editing disabled",
       "message": "Network changes aren't available yet.",
       "code": "NET_WRITE_DISABLED"
+     }
+    },
+    {
+     "scenario": "claim-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "colour is not accepted here.",
+      "code": "NETWORK_BAD_REQUEST",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -27768,6 +28706,58 @@
       "error": "Response failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "respond-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Not accepted here"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27844,6 +28834,48 @@
       "error": "Save failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/network_bad_request",
+      "title": "Network request not usable",
+      "status": 400,
+      "code": "NETWORK_BAD_REQUEST",
+      "detail": "colour is not accepted here.",
+      "hint": "Read the sentence, fix it and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -27851,38 +28883,92 @@
    "answers": [
     {
      "scenario": "shop-owner",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "viewer-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -27890,35 +28976,85 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -27926,11 +29062,25 @@
      "status": 500,
      "body_keys": {
       "error": "Boilerplate read failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Boilerplate read failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -27938,11 +29088,25 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -28413,38 +29577,92 @@
    "answers": [
     {
      "scenario": "shop-owner",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "viewer-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28452,35 +29670,85 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "bad-id",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
      "scenario": "db-fails",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found",
-      "message": "No such boilerplate"
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28488,11 +29756,25 @@
      "status": 500,
      "body_keys": {
       "error": "Adopt failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Adopt failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      }
     },
     {
@@ -28500,11 +29782,55 @@
      "status": 404,
      "body_keys": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Not found",
-      "message": "No such boilerplate"
+      "message": "No such boilerplate",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "No such boilerplate",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "shop-refused-adopt-writes-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -29784,11 +31110,213 @@
      "status": 500,
      "body_keys": {
       "error": "Conformance check failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Conformance check failed",
-      "message": "Something went wrong — please try again."
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "shop-owner",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "conformance-body-a-list",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must be a object.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "(body) must be a object.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "shop-refused-conformance-reads-nothing",
+     "status": 403,
+     "body_keys": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Platform only",
+      "code": "NOT_PLATFORM",
+      "may": false,
+      "why": "NOT_PLATFORM",
+      "message": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "type": "https://chitbridge.com/problems/not_platform",
+      "title": "Platform only",
+      "status": 403,
+      "detail": "Only the platform may do this. Your shop’s own settings are under Settings.",
+      "hint": "Pick one of the kinds listed.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -31913,12 +33441,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -31957,12 +33485,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -32159,12 +33687,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -32289,12 +33817,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -32591,12 +34119,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -32732,13 +34260,13 @@
      "status": 409,
      "body_keys": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      },
      "fixture": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      }
     },
     {
@@ -33199,12 +34727,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -33371,12 +34899,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -33515,12 +35043,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -33825,12 +35353,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -33981,12 +35509,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -35190,11 +36718,11 @@
      "status": 503,
      "body_keys": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -35444,12 +36972,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      }
     },
@@ -35636,11 +37164,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -35766,11 +37294,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -35894,11 +37422,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -36022,11 +37550,11 @@
      "status": 503,
      "body_keys": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -36304,6 +37832,58 @@
       "error": "Bind failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "bind-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -36428,11 +38008,11 @@
      "status": 503,
      "body_keys": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -36528,11 +38108,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      }
     },
     {
@@ -36540,11 +38120,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -36569,6 +38149,58 @@
      "fixture": {
       "error": "Auto-raise update failed",
       "message": "Because: library words."
+     }
+    },
+    {
+     "scenario": "auto-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -36640,11 +38272,11 @@
      "status": 503,
      "body_keys": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -36681,6 +38313,58 @@
      "fixture": {
       "error": "Update failed",
       "message": "Because: library words."
+     }
+    },
+    {
+     "scenario": "ref-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -36786,11 +38470,11 @@
      "status": 503,
      "body_keys": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -36963,6 +38647,58 @@
      "fixture": {
       "error": "Template update failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "template-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -39991,12 +41727,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -40005,12 +41741,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -40235,12 +41971,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -40249,12 +41985,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -40279,12 +42015,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -40293,12 +42029,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -40695,12 +42431,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -40721,12 +42457,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -41337,12 +43073,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -41351,12 +43087,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -41453,12 +43189,12 @@
      "body_keys": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -41567,12 +43303,12 @@
      "body_keys": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      }
     },
     {
@@ -42054,6 +43790,32 @@
       "code": "INTERNAL",
       "detail": "Something went wrong on our side.",
       "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "rate-shop-asks",
+     "status": 409,
+     "body_keys": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "refused",
+      "message": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "type": "https://chitbridge.com/problems/tax_registration_unknown",
+      "title": "Registration not said yet",
+      "status": 409,
+      "code": "TAX_REGISTRATION_UNKNOWN",
+      "detail": "Is this business registered for GST? Answer it in Settings → Country setup.",
+      "hint": "Answer it in Settings → Country setup: yes with the number, or no.",
       "request_id": "req-test"
      }
     }
@@ -42707,12 +44469,12 @@
      "body_keys": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      },
      "fixture": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      }
     },
     {
@@ -45138,6 +46900,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "group-change-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -45197,6 +47001,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "keys-reorder-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -45273,6 +47119,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "group-make-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -45358,6 +47246,48 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "key-add-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -45397,6 +47327,48 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "screen-write-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "colour is not accepted here.",
+      "type": "https://chitbridge.com/problems/quick_key_invalid",
+      "title": "Quick key not valid",
+      "status": 400,
+      "code": "QUICK_KEY_INVALID",
+      "detail": "colour is not accepted here.",
+      "hint": "Fill in what is missing and try again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -46298,12 +48270,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -46312,12 +48284,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -46356,6 +48328,44 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "dismiss-entity-in-the-body-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "entity_id is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "entity_id is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46378,11 +48388,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      }
     },
     {
@@ -46407,6 +48417,54 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "seen-body-names-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "seen_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "seen_at is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "entity_id",
+      "errors": [
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "seen_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "seen_at is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -46540,6 +48598,44 @@
       "error": "Could not save the supply",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "edit-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46634,11 +48730,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -46663,6 +48759,54 @@
      "fixture": {
       "error": "Could not add the supply",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "add-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       },
+       {
+        "field": "visible",
+        "code": "UNKNOWN_FIELD",
+        "detail": "visible is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       },
+       {
+        "field": "visible",
+        "code": "UNKNOWN_FIELD",
+        "detail": "visible is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -46822,6 +48966,44 @@
       "error": "Could not record it",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "issue-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -46928,11 +49110,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -46969,6 +49151,44 @@
      "fixture": {
       "error": "Could not record the purchase",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "buy-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "price is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -47259,12 +49479,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -47427,12 +49647,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -47642,6 +49862,124 @@
       "error": "Failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "consent-asked-to-name-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "shop",
+      "errors": [
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "shop_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop_entity_id is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "identity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "identity_id is not accepted here."
+       },
+       {
+        "field": "noted_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "noted_by is not accepted here."
+       },
+       {
+        "field": "basis",
+        "code": "UNKNOWN_FIELD",
+        "detail": "basis is not accepted here."
+       },
+       {
+        "field": "source",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source is not accepted here."
+       },
+       {
+        "field": "source_ref",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source_ref is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "shop",
+      "errors": [
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "shop_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop_entity_id is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "identity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "identity_id is not accepted here."
+       },
+       {
+        "field": "noted_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "noted_by is not accepted here."
+       },
+       {
+        "field": "basis",
+        "code": "UNKNOWN_FIELD",
+        "detail": "basis is not accepted here."
+       },
+       {
+        "field": "source",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source is not accepted here."
+       },
+       {
+        "field": "source_ref",
+        "code": "UNKNOWN_FIELD",
+        "detail": "source_ref is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -47665,12 +50003,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -47777,12 +50115,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -48003,6 +50341,114 @@
      "fixture": {
       "error": "Failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "request-asked-to-name-others-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "who",
+      "errors": [
+       {
+        "field": "who",
+        "code": "UNKNOWN_FIELD",
+        "detail": "who is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "country",
+        "code": "UNKNOWN_FIELD",
+        "detail": "country is not accepted here."
+       },
+       {
+        "field": "received_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "received_at is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "created_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "created_by is not accepted here."
+       },
+       {
+        "field": "answer",
+        "code": "UNKNOWN_FIELD",
+        "detail": "answer is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "who",
+      "errors": [
+       {
+        "field": "who",
+        "code": "UNKNOWN_FIELD",
+        "detail": "who is not accepted here."
+       },
+       {
+        "field": "party_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "party_id is not accepted here."
+       },
+       {
+        "field": "country",
+        "code": "UNKNOWN_FIELD",
+        "detail": "country is not accepted here."
+       },
+       {
+        "field": "received_at",
+        "code": "UNKNOWN_FIELD",
+        "detail": "received_at is not accepted here."
+       },
+       {
+        "field": "owner_entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "owner_entity_id is not accepted here."
+       },
+       {
+        "field": "shop",
+        "code": "UNKNOWN_FIELD",
+        "detail": "shop is not accepted here."
+       },
+       {
+        "field": "created_by",
+        "code": "UNKNOWN_FIELD",
+        "detail": "created_by is not accepted here."
+       },
+       {
+        "field": "answer",
+        "code": "UNKNOWN_FIELD",
+        "detail": "answer is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -48384,6 +50830,44 @@
       "error": "Server error",
       "message": "A relayed sentence."
      }
+    },
+    {
+     "scenario": "code-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -48652,6 +51136,44 @@
       "error": "Server error",
       "message": "A relayed sentence."
      }
+    },
+    {
+     "scenario": "verify-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -48663,12 +51185,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -48677,12 +51199,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -48863,12 +51385,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -48979,6 +51501,44 @@
       "error": "Not configured",
       "code": "VAULT_ENC_UNCONFIGURED",
       "message": "Secure storage is not switched on yet, so this cannot be saved. Nothing was stored."
+     }
+    },
+    {
+     "scenario": "put-unknown-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49356,6 +51916,64 @@
       "error": "Cannot save this text",
       "message": "Cannot save this text. Type it again."
      }
+    },
+    {
+     "scenario": "credential-extra-keys-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "rung",
+      "errors": [
+       {
+        "field": "rung",
+        "code": "UNKNOWN_FIELD",
+        "detail": "rung is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "verification",
+        "code": "UNKNOWN_FIELD",
+        "detail": "verification is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "Some of what was sent is missing or not valid.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "rung",
+      "errors": [
+       {
+        "field": "rung",
+        "code": "UNKNOWN_FIELD",
+        "detail": "rung is not accepted here."
+       },
+       {
+        "field": "entity_id",
+        "code": "UNKNOWN_FIELD",
+        "detail": "entity_id is not accepted here."
+       },
+       {
+        "field": "verification",
+        "code": "UNKNOWN_FIELD",
+        "detail": "verification is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -49419,6 +52037,44 @@
      "fixture": {
       "error": "Field failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "field-extra-key-refused",
+     "status": 422,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "vertical is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "vertical",
+      "errors": [
+       {
+        "field": "vertical",
+        "code": "UNKNOWN_FIELD",
+        "detail": "vertical is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 422,
+      "code": "INVALID_INPUT",
+      "detail": "vertical is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "vertical",
+      "errors": [
+       {
+        "field": "vertical",
+        "code": "UNKNOWN_FIELD",
+        "detail": "vertical is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49580,6 +52236,58 @@
       "error": "Convert failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "convert-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -49655,6 +52363,58 @@
      "fixture": {
       "error": "Dismiss failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "dismiss-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49779,6 +52539,58 @@
      "fixture": {
       "error": "Raise failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "raise-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -49952,6 +52764,58 @@
       "error": "Structure failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "structure-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -50034,11 +52898,11 @@
      "status": 503,
      "body_keys": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      },
      "fixture": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      }
     },
     {
@@ -50051,6 +52915,58 @@
      "fixture": {
       "error": "Capture failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "sim-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -50122,11 +53038,11 @@
      "status": 503,
      "body_keys": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -50139,6 +53055,58 @@
      "fixture": {
       "error": "Store save failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stores-save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "colour is not accepted here."
+       }
+      ],
+      "type": "https://chitbridge.com/problems/invalid_input",
+      "title": "Input not valid",
+      "status": 400,
+      "code": "INVALID_INPUT",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send it again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -50720,11 +53688,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -50946,11 +53914,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -54204,11 +57172,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -54278,11 +57246,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -54338,11 +57306,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -54816,11 +57784,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -55012,11 +57980,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -55172,11 +58140,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -55450,6 +58418,58 @@
      "fixture": {
       "error": "Not found"
      }
+    },
+    {
+     "scenario": "combo-edit-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -55616,6 +58636,58 @@
       "error": "Could not save this combo",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "combo-save-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     }
     }
    ]
   },
@@ -55721,6 +58793,58 @@
      "fixture": {
       "error": "Invalid combo",
       "message": "A combo needs at least one group to be worth saving."
+     }
+    },
+    {
+     "scenario": "combo-push-unknown-key-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "colour",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "colour is not accepted here.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "colour",
+      "errors": [
+       {
+        "field": "colour",
+        "code": "UNKNOWN_FIELD",
+        "detail": "colour is not accepted here."
+       }
+      ]
      }
     }
    ]
@@ -58484,6 +61608,100 @@
      },
      "fixture": {
       "error": "Failed",
+      "message": "Something went wrong — please try again."
+     }
+    }
+   ]
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "answers": [
+    {
+     "scenario": "wa-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-not-hex",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-of-another-body",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
+  },
+  "POST /api/capture/webhook/email": {
+   "answers": [
+    {
+     "scenario": "email-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "email-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
+  },
+  "POST /api/actors/set-pin": {
+   "answers": [
+    {
+     "scenario": "set-pin-owner-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Only actors can set PIN"
+     },
+     "fixture": {
+      "error": "Only actors can set PIN"
+     }
+    },
+    {
+     "scenario": "set-pin-db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Set PIN failed",
+      "message": "Something went wrong — please try again."
+     },
+     "fixture": {
+      "error": "Set PIN failed",
       "message": "Something went wrong — please try again."
      }
     }

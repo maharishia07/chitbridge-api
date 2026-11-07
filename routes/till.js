@@ -34,6 +34,7 @@ const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
+const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
   round: roundMoney
 } = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
@@ -239,6 +240,9 @@ async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
   snap.row = (await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
+  /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
+     books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
+  snap.registration = 'gstn' in snap.row && !snap.row.gstn ? await countrySetup.registrationOfShop(entity_id) : null;
   snap.till = await claimedSeries(snap.asked);
   snap.ownRead = await ownReader(entity_id, since);
 }
@@ -1210,7 +1214,7 @@ async function withNetworkOffers(entity_id, items, offers) {
  * (see DELTA_CAP). Never a fresh "now" taken after the read.
  */
 function snapshotBody(snap) {
-  const { asked, row, flags, till, sectors, shelf, liveCount, offers, reward, customers, suppliers, staff, particulars, catList, paged, network, holdsStock } =
+  const { asked, row, flags, registration, till, sectors, shelf, liveCount, offers, reward, customers, suppliers, staff, particulars, catList, paged, network, holdsStock } =
     snap;
   const body = {
     at: paged.cursor || asked.readAt,
@@ -1227,7 +1231,7 @@ function snapshotBody(snap) {
     /* ⭐ which counter this key is, so the bill series is prefixed by something nobody types. A SUGGESTION:
        a counter that has already issued numbers keeps its own — see the note above claimedSeries. */
     till,
-    shop: shopBlock(row, flags, particulars, holdsStock),
+    shop: shopBlock(row, flags, particulars, holdsStock, registration),
     items: paged.items,
     removed: paged.removed,
     delta: !!asked.since,
@@ -1281,13 +1285,13 @@ function taxBlock(shelf) {
   };
 }
 
-/** the `shop` block of the snapshot: who the shop is, how it is registered, and how it is paid — in three runs of fields */
-function shopBlock(row, flags, particulars, holdsStock) {
+/** the `shop` block of the snapshot: who the shop is, how it is registered (`registration` = country-setup.registrationOfShop's answer), and how it is paid — in three runs of fields */
+function shopBlock(row, flags, particulars, holdsStock, registration) {
   const { party, gstin, country, stateSplit, shopMoney } = particulars;
   return {
     ...shopIdentity(party, row),
     ...shopAddressParts(party),
-    ...shopRegistration(row, flags, gstin, stateSplit),
+    ...shopRegistration(row, flags, gstin, stateSplit, registration),
     /* ⭐ the jurisdiction, derived once and used by everything below — see lib/profile.countryOf */
     country,
     /* M127: does this shop hold stock? From its own data (holdsStockOf); null = unknown, shown as usual. The counter may override (till option stock). */
@@ -1343,12 +1347,13 @@ function shopAddressParts(party) {
  * ⚠️ The counter BUILDS the link rather than being sent one, because the web host is something the
  * page already resolves (cbHome()) and the API does not know which front end asked.
  */
-function shopRegistration(row, flags, gstin, stateSplit) {
+function shopRegistration(row, flags, gstin, stateSplit, registration) {
   return {
     gstin: gstin,
     handle: row.user_id || null,
     state_code: String(gstin || '').slice(0, 2) && stateSplit ? String(gstin).slice(0, 2) : null /* CX0: only under a state-split pack (stateSplit above) */,
-    reg_type: String(flags.gst_registration || 'regular')
+    /* ⭐ CTR-170 (R13, Athi 29 Oct): the registration as the ONE reader answers it — 'unknown' when nobody said, so the counter ASKS; never 'regular' by default */
+    reg_type: countrySetup.registrationWord(registration, flags.gst_registration)
   };
 }
 
@@ -1873,6 +1878,7 @@ router.post('/quick-keys/hide', auth, auth.requireScope('till'), ...checked('POS
     if (!counter_id) return refuseNoCounter(req, res);
     const body = req.body || {};
     if (!body.product_id) return refuseBad(req, res, 'product_id required');
+    if (body.by && !UUID_RE.test(String(body.by))) return refuseBad(req, res, 'by must be the id of the person who marked it sold out'); /* CTR-200: hidden_by is a uuid column; a name used to reach it and answer 500 */
     const rows = await withEntity(entity_id, (db) =>
       quickKeys.hideItem(db, entity_id, counter_id, body.product_id, body.shift_id, body.by || null, body.also_counters)
     );
@@ -2242,11 +2248,15 @@ function slabPatchOf(item_data, slab) {
   for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
   return patch;
 }
-/** the shop's tax facts in ONE read → { word, charges }: the pack's word for its tax, and whether a sale of this shop carries it (tax-shelf.chargesTax) */
-async function shopTaxFacts(db, entity_id) {
+/**
+ * the shop's tax facts in ONE read → { word, charges, ask }: the pack's word for its tax, and whether a sale of this shop carries it (tax-shelf.chargesTax:
+ * true · false · null = nobody said the registration, with `ask` the question, CTR-170). `registration` = country-setup.registrationOfShop's answer, read before the transaction.
+ */
+async function shopTaxFacts(db, entity_id, registration) {
   const shop = (await db.query('SELECT gstn, country, policy_flags FROM identities WHERE identity_id = $1', [entity_id])).rows[0] || {};
   const flags = shop.policy_flags || {};
-  return { word: taxShelf.taxWordOf(shop.country), charges: taxShelf.chargesTax({ gstin: shop.gstn, reg_type: flags.gst_registration }, taxPacks.packFor(shop.country)) };
+  const charges = taxShelf.chargesTax({ gstin: shop.gstn, reg_type: countrySetup.registrationWord(registration, flags.gst_registration) }, taxPacks.packFor(shop.country));
+  return { word: taxShelf.taxWordOf(shop.country), charges, ask: charges === null ? countrySetup.registrationAsk(shop.country) : null };
 }
 /** the slab the owner picked, if the shop's shelf (own + governed) holds it */
 const slabOnShelf = (shelf, slab_id) => (shelf && shelf.slabs instanceof Map && shelf.slabs.get(slab_id)) || null;
@@ -2257,9 +2267,10 @@ function rateBodyOf(req) {
     slab_id = String(body.slab_id || '');
   return { item_id, slab_id, missing: !item_id ? 'item_id required' : !slab_id ? 'slab_id required' : null };
 }
-/** the door's one transaction: the shop's tax facts, the slab, the product, the write — or WHICH refusal the handler answers ('no_tax' · 'no_slab' · 'no_item'; the statuses stay in the handler, S15) */
-async function setRateOnce(db, entity_id, shelf, item_id, slab_id) {
-  const facts = await shopTaxFacts(db, entity_id);
+/** the door's one transaction: the shop's tax facts, the slab, the product, the write — or WHICH refusal the handler answers ('unknown' · 'no_tax' · 'no_slab' · 'no_item'; the statuses stay in the handler, S15) */
+async function setRateOnce(db, entity_id, shelf, item_id, slab_id, registration) {
+  const facts = await shopTaxFacts(db, entity_id, registration);
+  if (facts.charges === null) return { refused: 'unknown', word: facts.word, ask: facts.ask };
   if (!facts.charges) return { refused: 'no_tax', word: facts.word };
   const slab = slabOnShelf(shelf, slab_id);
   if (!slab) return { refused: 'no_slab', word: facts.word };
@@ -2285,8 +2296,10 @@ router.post('/rate', auth, ...checked('POST /rate'), async (req, res) => {
     const { item_id, slab_id, missing } = rateBodyOf(req);
     if (missing) return refuseBad(req, res, missing);
     const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false });
-    const out = await withEntity(entity_id, (db) => setRateOnce(db, entity_id, shelf, item_id, slab_id));
+    const registration = await countrySetup.registrationOfShop(entity_id); /* CTR-170: the ONE reader, before the transaction (its own RLS read) */
+    const out = await withEntity(entity_id, (db) => setRateOnce(db, entity_id, shelf, item_id, slab_id, registration));
     /* the refusals, in the pack's word for its tax (never "GST" in code), the caller's values never echoed (Q19) */
+    if (out.refused === 'unknown') return problem(req, res, { status: 409, ...said('TAX_REGISTRATION_UNKNOWN', 'refused', out.ask.question + ' Answer it in Settings → Country setup.') });
     if (out.refused === 'no_tax') return problem(req, res, { status: 409, ...said('TILL_NO_TAX_SCHEME', 'refused', 'This shop charges no ' + out.word + ', so no rate is needed.') });
     if (out.refused) return problem(req, res, { status: 404, ...notFound(out.refused === 'no_slab' ? 'That rate is not one of this shop’s ' + out.word + ' slabs.' : 'That product is not in this shop’s catalogue.') });
     if (out.changed) shopChanged(entity_id, 'rate set');
@@ -3477,6 +3490,7 @@ function billRow(row) {
     ...billWho(row, business),
     total: counterBill.paidOf(row.summary_json) /* the one pick of what was paid (lib/counter-bill paidOf) — the reward earns from the same figure */,
     ...billMoney(row),
+    ...creditNoteMoney(business),
     ...billSlip(business),
     lines: (Array.isArray(row.line_items) ? row.line_items : []).map(billLine)
   };
@@ -3517,6 +3531,32 @@ function billMoney(row) {
     saved: money.savings != null ? money.savings : null,
     taxable: money.taxable != null ? money.taxable : money.net != null ? money.net : null,
     tax: money.tax != null ? money.tax : null
+  };
+}
+
+/** a credit note's money as a SIGN: -abs of a finite number, 0 stays 0 (never -0), anything else null (never 0) */
+function negOf(figure) {
+  if (typeof figure !== 'number' || !Number.isFinite(figure)) return null;
+  return figure === 0 ? 0 : -Math.abs(figure);
+}
+
+/**
+ * ACC-255: a counter credit note has no invoice, so summary_json.money is null by design (lib/send-money scope 'none');
+ * its money sits in business_json.{taxable, tax, refund} as the counter stored it. The reader only PICKS those (negative,
+ * kind credit_note, so a day's net is a plain sum) — no by_rate arithmetic, a missing key answers null.
+ * Sale rows get {} so their bytes do not move. counter-bill.paidOf stays untouched (the reward reads it).
+ */
+function creditNoteMoney(business) {
+  if (business.slip !== 'credit_note') return {};
+  const refund = business.refund && typeof business.refund === 'object' ? business.refund : {};
+  return {
+    total: negOf(refund.total),
+    saved: null,
+    taxable: negOf(business.taxable),
+    tax: negOf(business.tax),
+    refunds: Array.isArray(refund.parts) ? refund.parts : [],
+    against: business.against && business.against.bill_no ? { bill_no: business.against.bill_no } : null,
+    reason_words: business.reason_words || null
   };
 }
 

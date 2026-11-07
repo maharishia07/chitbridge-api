@@ -5,6 +5,8 @@
  * The ★★ tests are the two that decide whether this is trustworthy: an ABSENT figure must never become zero, and a
  * stale figure must never sort ahead of a fresh one. Both are the kind of thing that looks harmless in a diff and
  * makes a network promise stock it does not have.
+ * CARD      13-inventory-stock-and-traceability/stock-across-stores
+ * UNIT      13/Stock across stores (integrations ask/stock)
  */
 const assert = require('assert');
 const A = require('../lib/availability');

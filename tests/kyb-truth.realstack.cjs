@@ -46,7 +46,9 @@ async function cases(A, B) {
     expect((await held(A, 'custom-village-noc')).length === 1 && again.b.added.standard === 'custom-village-noc', 'a second add made a second row');
   });
   await kase('KY-02', "a client's rung, verification and entity are ignored: the row is the caller's, declared", async () => {
-    ok(await credential(A, { title: 'Ward licence', rung: 'verified', verification: { method: 'registry', verified_at: '2026-01-01' }, status: 'expired', entity_id: B.entity }), 'credential');
+    const spoofed = await credential(A, { title: 'Ward licence', rung: 'verified', verification: { method: 'registry', verified_at: '2026-01-01' }, status: 'expired', entity_id: B.entity });
+    expect(spoofed.status === 422, 'a client rung, verification, status and entity are refused by name (contract bulk pass batch 1), got HTTP ' + spoofed.status);
+    ok(await credential(A, { title: 'Ward licence' }), 'credential');
     const mine = await held(A, 'custom-ward-licence');
     expect(mine.length === 1 && mine[0].status === 'gathered' && Object.keys(mine[0].verification || {}).length === 0, 'the caller row ' + JSON.stringify(mine));
     expect((await held(B, 'custom-ward-licence')).length === 0, 'a row was written for another shop');

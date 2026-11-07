@@ -28,7 +28,8 @@ const authStub = Object.assign((req, res, next) => { req.identity = OWNER; next(
 });
 const call = (port, method, p, body) => new Promise((done) => {
   const b = JSON.stringify(body || {});
-  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
+  /* FIN-63: every call is its own attempt (a fresh Idempotency-Key per request) */
+  const r = http.request({ host: '127.0.0.1', port, path: p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b), 'Idempotency-Key': 'attempt-' + process.hrtime.bigint() } },
     (res) => {
       let raw = '';
       res.on('data', (c) => (raw += c));

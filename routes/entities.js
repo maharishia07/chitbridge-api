@@ -18,6 +18,8 @@ const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STA
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
+const { VERIFY_REFUSALS } = require('../lib/signin-contract');
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -342,7 +344,7 @@ const prefSetRoute = (fixedKind) =>
   };
 
 router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
-router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, validate, signin.handlers.verify);
+router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
 // shared constitution catalogue. Empty (chooser hidden) if the catalogue isn't there yet.
@@ -1215,7 +1217,9 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
     const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
     if (s.rows[0] && s.rows[0].sealed) return problem(req, res, { status: 403, ...contract.words.sealed() });
-    await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1`, [req.params.id]);
+    const done = await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1 RETURNING identity_id`, [req.params.id]);
+    /* an erasure that matched nothing erased nothing: never answer 'done' for it (GDPR Art. 17 · DPDP s.12). A non-uuid id is answered 404 by router.param above (K-1), before the database is asked. */
+    if (!done.rows.length) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...contract.words.identityUnknown() });
     res.json({ message: 'Identity tombstoned', id: req.params.id });
   } catch (err) {
     problem(req, res, failed(err, req, 'Erase failed'));

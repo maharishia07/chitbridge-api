@@ -43,11 +43,8 @@ function fakeDb(rows) {
       if (row) row.otp_attempts = (row.otp_attempts || 0) + 1;
       return { rows: [] };
     }
-    if (/UPDATE identities SET pin_attempts = \$1/.test(s)) {
-      const row = table.find((r) => r.identity_id === params[1]);
-      if (row) { row.pin_attempts = params[0]; if (/pin_locked_at/.test(s)) row.pin_locked_at = new Date(); }
-      return { rows: [] };
-    }
+    const counted = require('./lib/pin-count-stub.cjs').answer(s, params, (id) => table.find((r) => r.identity_id === id));
+    if (counted) return counted;
     if (/pin_attempts = 0/.test(s) || /otp_code = NULL/.test(s) || /email_verified/.test(s)) {
       const row = table.find((r) => r.identity_id === params[0]);
       if (row) { row.pin_attempts = 0; row.otp_code = null; row.otp_expires_at = null; row.otp_attempts = 0; }

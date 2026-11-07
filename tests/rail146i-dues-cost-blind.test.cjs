@@ -54,6 +54,10 @@ function partOne() {
   noLeak('/dues | every row but the customer one, and the total', { parties: blind.parties.slice(1), total_minor: blind.total_minor });
   const custOnly = { currency: 'INR', asOf: '2026-10-30', parties: [page.parties[1]], total_minor: 118000 };
   t('/dues | a page with no purchase side comes back as it was (same reference)', DV.blindDuesAnswer(custOnly) === custOnly, true);
+  /* FIN-72: a both-sides party's follow-up split goes with its balance, the page's follow_up_total with total_minor (full cases: tests/finance-followup.test.cjs part 4) */
+  const fup = { d31_60: 5000, worst: 'd31_60' };
+  const fpage = DV.blindDuesAnswer({ parties: [{ party_id: 'b', side: 'both', balance_minor: 1, buckets: {}, follow_up: fup }, { party_id: 'c', side: 'customer', balance_minor: 5000, buckets: {}, follow_up: fup }], total_minor: 5001, follow_up_total: fup });
+  t('/dues FIN-72 | a both-sides row follow_up is null, the customer row keeps its own, follow_up_total is null with total_minor', [fpage.parties.find((r) => r.party_id === 'b').follow_up, fpage.parties.find((r) => r.party_id === 'c').follow_up === fup, fpage.follow_up_total, fpage.total_minor], [null, true, null, null]);
   t('/dues | the owner\'s page object was not mutated', page.parties[2].balance_minor === SECRET.sup_balance && page.total_minor !== null, true);
 }
 

@@ -306,6 +306,7 @@ const INFRA_LIBS = [
   'adopt-contract.js',
   'people-contract.js',
   'csp-report-contract.js',
+  'plumbing-contract.js',
   /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
   'network-offers-contract.js',
   /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
@@ -334,6 +335,7 @@ const INFRA_LIBS = [
   'books-cashflow.js',
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
+  'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */
   'home-facts.js', 'till-summary.js', 'open-orders.js',   /* M168: the till's order list and Home's Orders card, one query (2026-10-10) */
   /* [CB Sides] the two panels' read (sides: SQL + the reuses) and the impact walk shared with raida.walk (impact: pure graph rule, used by the register and the panel) (2026-10-09) */
@@ -347,6 +349,8 @@ const INFRA_LIBS = [
      by the routes that catch their own errors and by server.js's handler — wording, not a rule; the rule is the
      trigger. (2026-09-28, external review §23) */
   'knownerr.js',
+  /* the ONE sentence for a part that waits for a database update (503 not migrated): wording only, no rule (API-STANDARD S8a) */
+  'not-migrated.js',
   'input-hygiene.js',
   /* E01: the body budget per route, the request deadline and the statement deadline — transport limits, read from env;
      no business rule (2026-10-08) */
@@ -386,7 +390,7 @@ const INFRA_LIBS = [
    * built. Classifying it engine today would lock a file that is expected to grow, and the engine lock means
    * default-no-change.
    */
-  'raida.js',
+  'raida.js', 'register-gate.js', /* RAIL-90: the per-shop switch of the register, infra beside it */
   'vaultcrypto.js', 'retention.js',
   /**
    * ⚠️⚠️ THIRTY-ONE FILES HAD DRIFTED OUT OF EVERY BUCKET, which is this test failing at the thing it exists
