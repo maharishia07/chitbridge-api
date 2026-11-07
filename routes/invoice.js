@@ -57,15 +57,13 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     const currency = body.currency || T.currencyOf(seller);
     /* 2 · offers on the priced lines */
     const off = await S.offerLines(entity_id, priced, body.offers, { currency });
-    const gross = priced.reduce((total, item) => total + item.unit_price * item.qty, 0);
-    const orderOff = (off.ev.adjustments || [])
-      .filter((item) => item.scope !== 'line' && item.scope !== 'note')
-      .reduce((total, item) => total + Math.abs(Number(item.amount) || 0), 0);
+    /* ⭐ CAT-249: a basket offer's share of each line is the ENGINE's (ev.cart_shares, split by running net after the line offers) — the rule
+       lib/offers-live.js applies to the chit; never a second split (by gross) here, so the bill matches the till and the offers screen */
+    const cartShare = (key) => ((off.ev.cart_shares && off.ev.cart_shares[key]) || []).reduce((total, part) => total + Math.abs(Number(part.amount) || 0), 0);
     const withOffers = priced.map((item) => {
       const p = off.per[item.key] || {};
       const lineOff = Number(p.off) || 0;
-      const share = gross > 0 ? (orderOff * (item.unit_price * item.qty)) / gross : 0;
-      return Object.assign({}, item, { discount: S.R2((item.discount || 0) + lineOff + share), offer_label: p.label || null });
+      return Object.assign({}, item, { discount: S.R2((item.discount || 0) + lineOff + cartShare(item.key)), offer_label: p.label || null });
     });
     /* 3 · tax rates, then the block */
     const rated = S.rateLines(withOffers, sh);

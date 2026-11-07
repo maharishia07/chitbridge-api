@@ -2789,11 +2789,11 @@
    "lifecycle": "stable"
   },
   "POST /api/invoice/build": {
-   "hash": "4398af0a939aea6e",
+   "hash": "3538084d1c14fdc9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#901",
    "lifecycle": "stable"
   },
   "POST /api/keys": {
