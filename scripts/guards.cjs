@@ -435,7 +435,8 @@ const GUARDS = [
   'ctp-return-gaps.test.cjs', // RAIL-106 part 3: void, cancel flags, attachments by reference, the bell, every local party's timeline row, the message limit
   'ctp-return-door.test.cjs', // RAIL-106: the event kind at the one door (routes/ctp.js): same checks as a copy, applied to our rows only
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
-  'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte)
+  'acc192-credit-note.test.cjs', // ACC-192 1b: IN/AU/AE credit note over the changed lines only, half-up per line, the books keep the original and add the note
+  'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte); ACC-192 1b: a decrease on an issued invoice is one credit note, a raise is refused, the buyer applies only when the seller confirms
   'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
   'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
