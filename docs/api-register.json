@@ -49960,7 +49960,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 35,
-   "hash": "3538084d1c14fdc9",
+   "hash": "b7fcd845681fd8a0",
    "does": "",
    "errors": {
     "count": 1,
@@ -49968,6 +49968,7 @@
      400,
      401,
      403,
+     409,
      422,
      500
     ],
@@ -49976,8 +49977,7 @@
     ]
    },
    "reads": [
-    "catalogue_items",
-    "identities"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -50014,6 +50014,7 @@
     400,
     401,
     403,
+    409,
     422,
     500
    ],
@@ -50036,8 +50037,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#901",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b7fcd845681fd8a0"
    },
    "status": "partial",
    "callers": [],
@@ -57407,7 +57409,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 180,
-   "hash": "cf1ed74ea06db463",
+   "hash": "5bd01e8d7f6c816d",
    "does": "",
    "errors": {
     "count": 0,
@@ -57415,14 +57417,14 @@
      400,
      401,
      403,
+     409,
      422,
      500
     ],
     "codes": []
    },
    "reads": [
-    "catalogue_items",
-    "identities"
+    "catalogue_items"
    ],
    "writes": [],
    "money": false,
@@ -57459,6 +57461,7 @@
     400,
     401,
     403,
+    409,
     422,
     500
    ],
@@ -57480,8 +57483,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5bd01e8d7f6c816d"
    },
    "status": "partial",
    "callers": [

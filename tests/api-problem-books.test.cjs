@@ -58,7 +58,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "books_entry" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, ledgerOn: true, db: 'ok', sqlRows: null, rowOwner: null, sqlLog: null, registration: 'unregistered' };
 const world = Object.assign({}, FRESH);
 const SETTING_ROW = { entity_id: SHOP, enabled: true, walkin_grain: 'day', fy_start_month: 4, functional_currency: 'INR', country: 'IN', pack_version: '1', timezone: 'Asia/Kolkata' };
 const OTHER = '77777777-7777-4777-8777-777777777777'; /* another shop: the owner of the row in the foreign-id world */
@@ -99,7 +99,8 @@ function installStubs() {
   const db = new Proxy(known, { get: (target, name) => (name in target ? target[name] : typeof name === 'symbol' || name === 'then' ? undefined : async () => ({ rows: [], rowCount: 0 })) });
   mock('db', db);
   mock('db/index', db);
-  mock('lib/country-setup', { currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
+  /* ACC-272: tax/compute and invoice/build ask the shop's registration (registrationOfShop; a world says it: 'unknown' = never said) */
+  mock('lib/country-setup', { registrationOfShop: async () => world.registration, registrationWord: (answer, scheme) => (answer && answer !== 'regular' ? answer : String(scheme || 'regular')), registrationAsk: () => ({ code: 'TAX_REGISTRATION_UNKNOWN', question: 'Is this business registered for GST?' }), currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
 }
 
@@ -367,6 +368,9 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('computed-unregistered-seller', 'POST /api/tax/compute', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
   X('computed-non-india-seller', 'POST /api/tax/compute', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 10 }] } }),
   X('built-unregistered-seller', 'POST /api/invoice/build', 200, { setup: NO_GSTIN_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
+  /* ACC-272: the shop has no tax number and never said whether it is registered: the question, 409, never priced at no tax */
+  X('computed-registration-never-said', 'POST /api/tax/compute', 409, { setup: Object.assign({}, NO_GSTIN_SHOP, { registration: 'unknown' }), body: { lines: [{ name: 'tea', qty: 1, price: 10, gst_rate: 0 }] } }),
+  X('built-registration-never-said', 'POST /api/invoice/build', 409, { setup: Object.assign({}, NO_GSTIN_SHOP, { registration: 'unknown' }), body: { lines: [{ name: 'tea', qty: 1, listPrice: 10 }] } }),
   X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),

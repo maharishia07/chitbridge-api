@@ -3166,9 +3166,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/invoice/build** · invoice · cb-accounting · partial
 - does: _not yet written_
-- errors: 1 code(s) [INVOICE_BAD_REQUEST] · statuses 400, 401, 403, 422, 500 · money n (derived)
+- errors: 1 code(s) [INVOICE_BAD_REQUEST] · statuses 400, 401, 403, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 8 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): catalogue_items · writes (derived): - · callers: - · actions: -
 
 ### keys (cb-security, 0 of 3 with a description)
 
@@ -4106,9 +4106,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/tax/compute** · tax · cb-accounting · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 403, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 403, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-admin.js 0/106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, identities · writes (derived): - · callers: cap-admin.js · actions: -
+- reads (derived): catalogue_items · writes (derived): - · callers: cap-admin.js · actions: -
 
 **POST /api/tax/rate** · tax · cb-accounting · partial
 - does: _not yet written_
