@@ -571,13 +571,14 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 422"
+    "why": "not reached: answered 500"
    },
    "foreign_id_404": {
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": true
+    "pass": false,
+    "why": "the second send with the same key was run again, not replayed"
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -965,12 +966,14 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/invoice/:chit_id": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    },
    "foreign_id_404": {
     "pass": true
@@ -4151,7 +4154,8 @@
   },
   "GET /api/tax/invoice/:chit_id": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    },
    "foreign_id_404": {
     "pass": true
@@ -4183,7 +4187,8 @@
     "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    }
   },
   "GET /api/books/status": {
