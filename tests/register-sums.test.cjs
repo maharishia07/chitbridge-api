@@ -21,7 +21,7 @@ const rows = reg.routes;
 
 const FILE_EXCEPTIONS = { 'server.js': 'direct routes in server.js', 'src/routes/network.js': 'the network router lives under src/' };
 const PATH_EXCEPTIONS = {
-  'GET /health': 'server.js', 'OPTIONS *': 'server.js',
+  'GET /health': 'routes/health.js', 'OPTIONS *': 'routes/preflight.js', /* moved out of server.js on 7 Nov (contract pass); still outside /api, so still named rows */
 };
 /* M7: routes/ctp.js is mounted at / and at /api/ctp on purpose (server.js); the register holds ONE row per handler, the bare path is its alias */
 const CTP_ALIASES = { 'GET /api/ctp/.well-known/ctp.json': ['/.well-known/ctp.json'], 'POST /api/ctp/deliver': ['/deliver'], 'POST /api/ctp/query': ['/query'] };

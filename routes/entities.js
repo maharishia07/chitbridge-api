@@ -18,6 +18,8 @@ const { UUID } = require('../lib/namedentity'); // the one uuid shape // API-STA
 const { isTriggerRefusal } = require('../lib/knownerr'); // SEC-94: only a trigger's own sentence is said; any other CHECK violation is a fault
 const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an assignee is looked up under the caller's shop before it is stored
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
+const { VERIFY_REFUSALS } = require('../lib/signin-contract');
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -342,7 +344,7 @@ const prefSetRoute = (fixedKind) =>
   };
 
 router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
-router.post('/verify', signin.door('entity-verify'), signin.verifyChecks, validate, signin.handlers.verify);
+router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the
 // shared constitution catalogue. Empty (chooser hidden) if the catalogue isn't there yet.

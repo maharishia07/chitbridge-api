@@ -19,7 +19,7 @@ const logger = require('../lib/logger');
 const AGENT_OF = {
   actors: 'cb-people', adopt: 'cb-operations', assist: 'cb-ai', attachments: 'cb-rail', books: 'cb-accounting', 'books-money': 'cb-accounting', capture: 'cb-connect',
   catalogue: 'cb-catalogue', 'catalogue-face': 'cb-catalogue', channels: 'cb-connect', chits: 'cb-rail', 'combo-templates': 'cb-catalogue',
-  connections: 'cb-network', connectors: 'cb-connect', counters: 'cb-counter', 'csp-report': 'cb-security', crm: 'cb-crm', ctp: 'cb-rail',
+  connections: 'cb-network', connectors: 'cb-connect', counters: 'cb-counter', 'csp-report': 'cb-security', health: 'cb-platform', preflight: 'cb-platform', crm: 'cb-crm', ctp: 'cb-rail',
   definitions: 'cb-catalogue', entities: 'cb-network', events: 'cb-rail', facts: 'cb-reports', folders: 'cb-rail', forms: 'cb-compliance',
   governance: 'cb-settings', 'identity-docs': 'cb-compliance', integrations: 'cb-connect', invoice: 'cb-accounting', keys: 'cb-security',
   kyb: 'cb-compliance', marketing: 'cb-marketing', network: 'cb-network', 'network-design': 'cb-network', 'network-offers': 'cb-network',

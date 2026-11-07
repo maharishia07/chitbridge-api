@@ -4,17 +4,17 @@
  "updated": "2026-11-07",
  "total": 637,
  "not_meeting": 224,
- "codes_total": 548,
+ "codes_total": 554,
  "codes_pending": 0,
- "raw_error_writes": 3,
+ "raw_error_writes": 2,
  "routes_without_does": 627,
  "columns_failing": {
-  "strict_input": 75,
-  "output_allowlist": 76,
+  "strict_input": 72,
+  "output_allowlist": 66,
   "foreign_id_404": 20,
   "idempotent_money_write": 7,
-  "inbound_validated": 2,
-  "trips_budgeted": 49
+  "inbound_validated": 0,
+  "trips_budgeted": 46
  },
  "reported_failing": {
   "bfla_role_check": 0,

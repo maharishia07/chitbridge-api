@@ -43,6 +43,7 @@ const empCode = require('../lib/employee-code'); // SEC-106: the one issuer of a
 const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { failed } = require('../lib/products-contract'); // a fault of ours: a 500 that says nothing of its cause (the old body kept: the screen's label and the safe sentence)
 const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
@@ -240,7 +241,8 @@ function note(req, identity, action, method, code, jti) {
  */
 const chooseWhich = (req, res, choices) => {
   res.locals.code = 'CHOOSE_IDENTITY';
-  return res.status(409).json({ error: 'Which account?', code: 'CHOOSE_IDENTITY', message: 'That contact is on more than one account. Choose one.', choices });
+  const message = 'That contact is on more than one account. Choose one.';
+  return problem(req, res, { status: 409, code: 'CHOOSE_IDENTITY', detail: message, legacy: { error: 'Which account?', code: 'CHOOSE_IDENTITY', message, choices } });
 };
 /**
  * ⭐ SEC-81 (API-STANDARD S6) — ONE ANSWER BEFORE SIGN-IN. An unknown account, a wrong secret and a locked account all get this same
@@ -515,7 +517,8 @@ async function verifyChecks(req, res, next) {
 function deviceRevoked(req, res, identity, method) {
   note(req, identity, 'fail', method, 'DEVICE_REVOKED');
   res.locals.code = 'DEVICE_REVOKED';
-  return res.status(403).json({ error: 'Forbidden', code: 'DEVICE_REVOKED', message: 'The shop removed this device. Ask the owner.' });
+  const message = 'The shop removed this device. Ask the owner.';
+  return problem(req, res, { status: 403, code: 'DEVICE_REVOKED', detail: message, legacy: { error: 'Forbidden', code: 'DEVICE_REVOKED', message } });
 }
 /**
  * sessionRefused(err, req, res, identity, method) → true when issueToken refused the door and the answer is sent.
@@ -531,7 +534,7 @@ function sessionRefused(err, req, res, identity, method) {
   if (code !== 'SESSION_NOT_LISTED') return false;
   note(req, identity, 'fail', method, code);
   res.locals.code = code;
-  res.status(503).json({ error: 'Sign-in failed', code, message: err.message });
+  problem(req, res, { status: 503, code, detail: err.message, legacy: { error: 'Sign-in failed', code, message: err.message } });
   return true;
 }
 const jtiOf = (token) => {
@@ -554,7 +557,7 @@ async function verify(req, res) {
     const handle = (req.body.user_id || '').trim();
     const id = String(req.body.id || '').trim();
     if (!email && !handle && !id) {
-      return res.status(400).json({ error: 'Verification failed', message: 'Type your mobile number, email or User ID.' });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'Type your mobile number, email or User ID.', legacy: { error: 'Verification failed', message: 'Type your mobile number, email or User ID.' } });
     }
 
     /* ⚠️ NO identity_type FILTER on the e-mail / user_id lookups (a handle is unique whatever type owns it) — but ACCOUNTS only (SEC-130) */
@@ -569,11 +572,8 @@ async function verify(req, res) {
       if (f.ambiguous && f.choices) return chooseWhich(req, res, f.choices);
       if (f.ambiguous) {
         res.locals.code = 'AMBIGUOUS_NAME';
-        return res.status(409).json({
-          error: 'Ambiguous business',
-          code: 'AMBIGUOUS_NAME',
-          message: 'More than one business matches that name. Ask your admin for the exact login.'
-        });
+        const message = 'More than one business matches that name. Ask your admin for the exact login.';
+        return problem(req, res, { status: 409, code: 'AMBIGUOUS_NAME', detail: message, legacy: { error: 'Ambiguous business', code: 'AMBIGUOUS_NAME', message } });
       }
       rows = f.identity ? [f.identity] : [];
     }
@@ -588,10 +588,11 @@ async function verify(req, res) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
       if (isSecretRefusal(check.reason)) return refused(req, res, check.reason);
-      return res.status(check.status).json({
-        error: 'Verification failed',
-        message: check.message,
-        ...(check.use_pin ? { use_pin: true } : {})
+      return problem(req, res, {
+        status: check.status,
+        code: 'VERIFICATION_FAILED',
+        detail: check.message,
+        legacy: { error: 'Verification failed', message: check.message, ...(check.use_pin ? { use_pin: true } : {}) }
       });
     }
 
@@ -790,7 +791,7 @@ async function verify(req, res) {
   } catch (err) {
     if (sessionRefused(err, req, res, identity, identity && methodOf(identity))) return;
     console.error('Verify error:', err.message);
-    res.status(500).json({ error: 'Verification failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Verification failed'));
   }
 }
 
@@ -804,7 +805,7 @@ async function actorSecretRefused(req, res, actor) {
   if (actor.pin_hash) {
     if (!nestedPin) {
       note(req, actor, 'fail', 'pin', 'PIN_REQUIRED');
-      res.status(400).json({ error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true });
+      problem(req, res, { status: 400, code: 'PIN_REQUIRED', detail: 'Enter your 4 digit PIN to login', legacy: { error: 'PIN required', message: 'Enter your 4 digit PIN to login', use_pin: true } });
       return true;
     }
     const check = await identityAuth.verifyCredential(query, actor, { pin: nestedPin });
@@ -816,7 +817,7 @@ async function actorSecretRefused(req, res, actor) {
   } else {
     if (!otp) {
       note(req, actor, 'fail', 'otp', 'OTP_REQUIRED');
-      res.status(400).json({ error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true });
+      problem(req, res, { status: 400, code: 'OTP_REQUIRED', detail: 'Enter the OTP your admin shared with you', legacy: { error: 'OTP required', message: 'Enter the OTP your admin shared with you', use_otp: true } });
       return true;
     }
     // F5: lib/otp.js's per-account attempt cap; authLimiter still sits in front of this door
@@ -826,7 +827,7 @@ async function actorSecretRefused(req, res, actor) {
       if (isSecretRefusal(check.reason)) refused(req, res, check.reason);
       else {
         res.locals.code = check.reason;
-        res.status(check.status).json({ error: 'Login failed', message: check.message });
+        problem(req, res, { status: check.status, code: 'LOGIN_FAILED', detail: check.message, legacy: { error: 'Login failed', message: check.message } });
       }
       return true;
     }
@@ -847,17 +848,14 @@ async function actorLogin(req, res) {
   try {
     const username = req.body.username.trim().toLowerCase();
     if (!username.includes('@')) {
-      return res.status(400).json({ error: 'Invalid format', message: 'Actor login format is: yourname@entityname' });
+      return problem(req, res, { status: 400, code: 'LOGIN_FORMAT_INVALID', detail: 'Actor login format is: yourname@entityname', legacy: { error: 'Invalid format', message: 'Actor login format is: yourname@entityname' } });
     }
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
     if (e.ambiguous) {
       res.locals.code = 'AMBIGUOUS_NAME';
-      return res.status(409).json({
-        error: 'Ambiguous business',
-        message: 'More than one business is called "' + entity_name + '". Sign in with the business User ID ' + 'after the @ instead — ask your admin for it.',
-        code: 'AMBIGUOUS_NAME'
-      });
+      const message = 'More than one business is called "' + entity_name + '". Sign in with the business User ID ' + 'after the @ instead — ask your admin for it.';
+      return problem(req, res, { status: 409, code: 'AMBIGUOUS_NAME', detail: message, legacy: { error: 'Ambiguous business', message, code: 'AMBIGUOUS_NAME' } });
     }
     if (!e.ok) return unknownAccount(req, res);
     const parent_entity = e.entity;
@@ -908,7 +906,7 @@ async function actorLogin(req, res) {
   } catch (err) {
     if (sessionRefused(err, req, res, a, a && (a.pin_hash ? 'pin' : 'otp'))) return;
     console.error('Actor login error:', err.message);
-    res.status(500).json({ error: 'Login failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Login failed'));
   }
 }
 
@@ -943,7 +941,7 @@ async function checkLogin(req, res) {
     if (x.break_status === 'removed') return res.json(UNKNOWN_CHECK);
     res.json({ valid: true, has_pin: !!x.pin_hash });
   } catch (err) {
-    res.json(UNKNOWN_CHECK);
+    problem(req, res, failed(err, req, 'Check failed')); /* a fault of ours is told as one (a 500 that says nothing of its cause); it names no person, so SEC-81 holds */
   }
 }
 
@@ -964,13 +962,13 @@ async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
     if (req.identity.identity_type !== 'actor') {
-      return res.status(400).json({ error: 'Only actors can set PIN' });
+      return problem(req, res, { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } });
     }
     await identityAuth.setPin(query, identity_id, req.body.pin);
     note(req, { identity_id, parent_entity_id: auth.entityOf(req) }, 'link', 'pin');
     res.json({ message: 'PIN set successfully — use PIN for future logins' });
   } catch (err) {
-    res.status(500).json({ error: 'Set PIN failed', message: safeErr(err) });
+    problem(req, res, failed(err, req, 'Set PIN failed'));
   }
 }
 

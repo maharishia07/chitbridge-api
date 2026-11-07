@@ -89,6 +89,8 @@ const { v4: uuidv4 } = require('uuid');
 const { query: db, withTransaction, withEntity } = require('../db');
 const { validate, validateAsProblem, schemaValidate, sanitise } = require('../middleware/validate');
 const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
+const { VERIFY_REFUSALS } = require('../lib/signin-contract');
 const contract = require('../lib/actors-contract'); // the contract (each route's operation) and the words of a refusal
 const { words, failed, failedBare } = contract;
 const auth = require('../middleware/auth');
@@ -695,10 +697,10 @@ router.patch(
 
 // ── GET /api/actors/check-login — MOVED to routes/signin.js (checkLogin), answering exactly as before (M06) ─────────
 // ⚠️ NOT 410 YET: app.html#/login reads it before every key@Display Name sign-in, and app.html is untouched until PR 14.
-router.get('/check-login', signin.handlers.checkLogin);
+router.get('/check-login', ...checked('GET /check-login'), signin.handlers.checkLogin);
 
 // ── POST /api/actors/set-pin — ALIAS (M06): the SAME handler as POST /api/signin/pin ───────────────────────────────
-router.post('/set-pin', auth, signin.pinChecks, validate, signin.handlers.pin);
+router.post('/set-pin', auth, ...checked('POST /set-pin'), signin.pinChecks, validate, signin.handlers.pin);
 
 // ── PUT /api/actors/change-pin ──────────────────────────────
 // Actor changes own PIN from profile page
@@ -804,7 +806,7 @@ router.delete('/:id/pin', auth, ownerWrite, ...checked('DELETE /:id/pin'), async
 // ── POST /api/actors/login — ALIAS (M06): the SAME handler as POST /api/signin/verify, on its actor-login door ──────
 // key@Display Name or key@user-id · OTP the first time, PIN after. The lookup, the words and the token are unchanged;
 // the PIN check is lib/identity-auth.js verifyCredential() — this file's own hash-compare + lock copy is gone (one PIN engine).
-router.post('/login', signin.door('actor-login'), signin.verifyChecks, validate, signin.handlers.verify);
+router.post('/login', signin.door('actor-login'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /login'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // ── GET /api/actors ──────────────────────────────────────────
 // List all actors under entity — with filters

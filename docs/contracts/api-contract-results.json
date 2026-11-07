@@ -210,6 +210,14 @@
     400
    ]
   },
+  "GET /api/actors/check-login": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "GET /api/adopt/:chit_id": {
    "cases": 3,
    "failed": 0,
@@ -1794,6 +1802,22 @@
     400
    ]
   },
+  "POST /api/actors/login": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/actors/set-pin": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
   "POST /api/actors/suggest-key": {
    "cases": 4,
    "failed": 0,
@@ -2275,6 +2299,22 @@
    ]
   },
   "POST /api/capture/stores": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/webhook/email": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/capture/webhook/whatsapp": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,
@@ -2891,6 +2931,14 @@
    ]
   },
   "POST /api/entities/populations": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/entities/verify": {
    "cases": 2,
    "failed": 0,
    "missing_input_ok": true,

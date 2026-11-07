@@ -4,17 +4,17 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 10,
-  "partial": 214,
+  "not_started": 0,
+  "partial": 224,
   "meets": 413,
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 75
+    "failing": 72
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 76
+    "failing": 66
    },
    "foreign_id_404": {
     "applies": 203,
@@ -26,11 +26,11 @@
    },
    "inbound_validated": {
     "applies": 6,
-    "failing": 2
+    "failing": 0
    },
    "trips_budgeted": {
     "applies": 637,
-    "failing": 49
+    "failing": 46
    }
   },
   "reported": {
@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 279,
+    "applies": 282,
     "failing": 39
    },
    "rate_limited": {
@@ -84,7 +84,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 764,
+   "line": 766,
    "hash": "1496623347f83909",
    "does": "",
    "errors": {
@@ -2506,7 +2506,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 811,
+   "line": 813,
    "hash": "d244d298c4147b45",
    "does": "",
    "errors": {
@@ -2614,7 +2614,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1643,
+   "line": 1645,
    "hash": "efa2df44b57bb2df",
    "does": "",
    "errors": {
@@ -2712,7 +2712,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1832,
+   "line": 1834,
    "hash": "6458c8b9839b8b36",
    "does": "",
    "errors": {
@@ -2807,15 +2807,20 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 698,
-   "hash": "cfc1e63a162440a5",
+   "line": 700,
+   "hash": "c2825714de4cdd1d",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     500
+    ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -2825,15 +2830,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -2847,7 +2852,10 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -2856,7 +2864,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
@@ -2866,7 +2874,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -2892,7 +2900,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1513,
+   "line": 1515,
    "hash": "67ab400b5c2716dc",
    "does": "",
    "errors": {
@@ -7677,7 +7685,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 287,
+   "line": 332,
    "hash": "2c754880414516a4",
    "does": "",
    "errors": {
@@ -7770,7 +7778,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 72,
+   "line": 110,
    "hash": "6617cb1ca9a06c8a",
    "does": "",
    "errors": {
@@ -7869,7 +7877,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 311,
+   "line": 356,
    "hash": "99aa450700b1fb37",
    "does": "",
    "errors": {
@@ -7962,13 +7970,18 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 139,
-   "hash": "78663c728812c446",
+   "line": 178,
+   "hash": "0a50596c571c6882",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     403,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_VERIFY_REFUSED"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -7980,19 +7993,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8002,7 +8015,10 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    403,
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -8021,12 +8037,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -13856,7 +13872,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 355,
+   "line": 357,
    "hash": "b4f32940f2822490",
    "does": "",
    "errors": {
@@ -13950,7 +13966,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2371,
+   "line": 2373,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14046,7 +14062,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 462,
+   "line": 464,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -14140,7 +14156,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 489,
+   "line": 491,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -14260,7 +14276,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 846,
+   "line": 848,
    "hash": "b43d5b8b4da152b9",
    "does": "",
    "errors": {
@@ -14358,7 +14374,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1686,
+   "line": 1688,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14463,7 +14479,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 433,
+   "line": 435,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -14565,7 +14581,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1572,
+   "line": 1574,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14666,7 +14682,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1436,
+   "line": 1438,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14765,7 +14781,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1420,
+   "line": 1422,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -14863,7 +14879,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 383,
+   "line": 385,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14963,7 +14979,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 400,
+   "line": 402,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -15052,7 +15068,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 478,
+   "line": 480,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -15146,7 +15162,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1243,
+   "line": 1245,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -21659,12 +21675,14 @@
    "owner_area": "openapi",
    "owner_agent": "cb-api",
    "file": "routes/openapi.js",
-   "line": 35,
-   "hash": "1d85b1e5731b06d5",
+   "line": 36,
+   "hash": "74d01a534e01a051",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -21677,15 +21695,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21699,7 +21717,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -21718,7 +21738,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -24520,7 +24540,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 137,
+   "line": 138,
    "hash": "44b050cddc91b9e8",
    "does": "",
    "errors": {
@@ -24611,7 +24631,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 110,
+   "line": 111,
    "hash": "3d96a78c38ea06b5",
    "does": "",
    "errors": {
@@ -28864,15 +28884,17 @@
    "key": "GET /health",
    "method": "GET",
    "path": "/health",
-   "owner_area": "server",
+   "owner_area": "health",
    "owner_agent": "cb-platform",
-   "file": "server.js",
-   "line": 491,
-   "hash": "c25e42989502c043",
+   "file": "routes/health.js",
+   "line": 15,
+   "hash": "0e48a0105a3e73d4",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -28885,19 +28907,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28907,7 +28929,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -28926,12 +28950,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -28945,15 +28969,17 @@
    "key": "OPTIONS *",
    "method": "OPTIONS",
    "path": "*",
-   "owner_area": "server",
+   "owner_area": "preflight",
    "owner_agent": "cb-platform",
-   "file": "server.js",
-   "line": 163,
-   "hash": "cfc1e63a162440a5",
+   "file": "routes/preflight.js",
+   "line": 16,
+   "hash": "935cfbf551c234cf",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     500
+    ],
     "codes": []
    },
    "reads": [],
@@ -28966,19 +28992,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -28988,7 +29014,9 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -29007,12 +29035,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -29029,7 +29057,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 516,
+   "line": 518,
    "hash": "8374bddd65efb2b4",
    "does": "",
    "errors": {
@@ -29784,7 +29812,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1213,
+   "line": 1215,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29886,7 +29914,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 819,
+   "line": 821,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -29986,7 +30014,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 859,
+   "line": 861,
    "hash": "e55ea05cc2141a4a",
    "does": "",
    "errors": {
@@ -30080,7 +30108,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 813,
+   "line": 815,
    "hash": "3a7c9f99a608bfbf",
    "does": "",
    "errors": {
@@ -30182,7 +30210,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 444,
+   "line": 446,
    "hash": "8acfd347e88e2965",
    "does": "",
    "errors": {
@@ -30291,7 +30319,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 892,
+   "line": 894,
    "hash": "bb90f2791c17bec0",
    "does": "",
    "errors": {
@@ -31759,7 +31787,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 256,
+   "line": 258,
    "hash": "1b8f501b8d6311c4",
    "does": "",
    "errors": {
@@ -31868,7 +31896,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 902,
+   "line": 904,
    "hash": "96cd3d3a4301dedd",
    "does": "",
    "errors": {
@@ -31972,7 +32000,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 222,
+   "line": 224,
    "hash": "ae084b0e0058d439",
    "does": "",
    "errors": {
@@ -32066,12 +32094,18 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 807,
-   "hash": "cfc1e63a162440a5",
+   "line": 809,
+   "hash": "1d103dfb77678668",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     403,
+     409,
+     500,
+     503
+    ],
     "codes": []
    },
    "reads": [],
@@ -32084,15 +32118,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -32106,7 +32140,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500,
+    503
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -32115,7 +32155,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
@@ -32125,7 +32165,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -32151,16 +32191,24 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 701,
-   "hash": "ed4b3e29367ec07b",
+   "line": 703,
+   "hash": "27b5bfc3930f25ad",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": [
+     "PIN_ACTORS_ONLY"
+    ]
    },
    "reads": [],
-   "writes": [],
+   "writes": [
+    "identities"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -32169,15 +32217,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -32191,9 +32239,14 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -32212,7 +32265,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
@@ -32238,7 +32291,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 192,
+   "line": 194,
    "hash": "5b6d84f0c36544bd",
    "does": "",
    "errors": {
@@ -35752,10 +35805,10 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-money.js",
    "line": 24,
-   "hash": "1ad7908a99d2ccf9",
+   "hash": "4ce6bac54d1caaf6",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -35764,7 +35817,10 @@
      422,
      500
     ],
-    "codes": []
+    "codes": [
+     "LEDGER_OFF",
+     "SIGN_IN_FOR_LEDGER"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -35782,7 +35838,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -38163,7 +38219,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 106,
+   "line": 144,
    "hash": "fae0d72b43d1bf93",
    "does": "",
    "errors": {
@@ -38266,7 +38322,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 116,
+   "line": 154,
    "hash": "6198a417da1c810c",
    "does": "",
    "errors": {
@@ -38369,7 +38425,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 96,
+   "line": 134,
    "hash": "6119468e82f68823",
    "does": "",
    "errors": {
@@ -38468,7 +38524,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 81,
+   "line": 119,
    "hash": "316b36b697a0b6cf",
    "does": "",
    "errors": {
@@ -38571,7 +38627,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 54,
+   "line": 92,
    "hash": "332e360cbe8c6666",
    "does": "",
    "errors": {
@@ -38670,7 +38726,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 320,
+   "line": 365,
    "hash": "25e15eef7eb38b4d",
    "does": "",
    "errors": {
@@ -38763,13 +38819,19 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 240,
-   "hash": "39fe1022ec617edf",
+   "line": 287,
+   "hash": "a462ab6d9b3687be",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_BAD_SIGNATURE"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -38781,18 +38843,18 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
-    "inbound_validated": false,
+    "inbound_validated": true,
     "trips_budgeted": true
    },
    "applies": {
@@ -38803,8 +38865,14 @@
     "inbound_validated": true,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38822,7 +38890,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38844,13 +38912,19 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 208,
-   "hash": "560f4ec338a1edeb",
+   "line": 251,
+   "hash": "3a8844ba3a2cf7e9",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_BAD_SIGNATURE"
+    ]
    },
    "reads": [
     "channel_binding",
@@ -38868,18 +38942,18 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
-    "inbound_validated": false,
+    "inbound_validated": true,
     "trips_budgeted": true
    },
    "applies": {
@@ -38890,8 +38964,14 @@
     "inbound_validated": true,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38909,7 +38989,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -46805,7 +46885,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1660,
+   "line": 1662,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -46909,8 +46989,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 344,
-   "hash": "3ca46d82f2148ce9",
+   "line": 346,
+   "hash": "dfcc09f3956e0bc2",
    "does": "",
    "errors": {
     "count": 0,
@@ -47009,15 +47089,23 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 345,
-   "hash": "cfc1e63a162440a5",
+   "line": 347,
+   "hash": "1d7aab67142b501d",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     400,
+     403,
+     409,
+     500,
+     503
+    ],
     "codes": []
    },
-   "reads": [],
+   "reads": [
+    "identities"
+   ],
    "writes": [],
    "money": false,
    "actions": [],
@@ -47027,15 +47115,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -47049,7 +47137,13 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    400,
+    403,
+    409,
+    500,
+    503
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -47058,7 +47152,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": true
    },
    "human": {
@@ -47068,7 +47162,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [
     "app.html",
     "intake.html",
@@ -56247,7 +56341,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 979,
+   "line": 977,
    "hash": "1619118ca55a191c",
    "does": "",
    "errors": {
@@ -56340,7 +56434,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 100,
+   "line": 101,
    "hash": "84b6041b552384e3",
    "does": "",
    "errors": {
@@ -56425,17 +56519,19 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 981,
-   "hash": "b3b2c66b8c80de1f",
+   "line": 979,
+   "hash": "bc129aaa67f2fc10",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      400,
      401,
      500
     ],
-    "codes": []
+    "codes": [
+     "PIN_ACTORS_ONLY"
+    ]
    },
    "reads": [],
    "writes": [
@@ -56453,7 +56549,7 @@
     "schema_out": true,
     "missing_input_answer": true,
     "error_shape": false,
-    "codes_registered": false,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
@@ -56522,7 +56618,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 76,
+   "line": 77,
    "hash": "b494fb71a9c4325d",
    "does": "",
    "errors": {
@@ -56622,7 +56718,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 159,
+   "line": 160,
    "hash": "c33c8228d107195e",
    "does": "",
    "errors": {
@@ -56725,7 +56821,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 980,
+   "line": 978,
    "hash": "009c20842cd7b499",
    "does": "",
    "errors": {
@@ -61422,7 +61518,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1606,
+   "line": 1608,
    "hash": "9c263b466717f482",
    "does": "",
    "errors": {
@@ -61530,7 +61626,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 984,
+   "line": 986,
    "hash": "994de2d1f6d92849",
    "does": "",
    "errors": {
@@ -61641,7 +61737,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1741,
+   "line": 1743,
    "hash": "5bad29fcae6cbc82",
    "does": "",
    "errors": {
@@ -61743,7 +61839,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1340,
+   "line": 1342,
    "hash": "f54854bfb3bb4ac1",
    "does": "",
    "errors": {
@@ -61852,7 +61948,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1202,
+   "line": 1204,
    "hash": "384478f656dc3004",
    "does": "",
    "errors": {
@@ -61958,7 +62054,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 705,
+   "line": 707,
    "hash": "2cc704f2d6675973",
    "does": "",
    "errors": {
@@ -62061,7 +62157,7 @@
    "owner_area": "actors",
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
-   "line": 1538,
+   "line": 1540,
    "hash": "89e1e089d74a0296",
    "does": "",
    "errors": {
@@ -63602,7 +63698,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1627,
+   "line": 1629,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63708,7 +63804,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1546,
+   "line": 1548,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {

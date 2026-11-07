@@ -594,10 +594,12 @@
     },
     "GET /api/capture/webhook/whatsapp": {
       "file": "capture.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 403,
+      "registered_only": true,
+      "floor_is_cost": "the handshake reads one environment variable and the query string; it never calls the database, so the 403 the stub gets is the whole cost"
     },
     "GET /api/catalogue-face": {
       "file": "catalogue-face.js",
@@ -2215,18 +2217,20 @@
       "extra": true
     },
     "GET /health": {
-      "file": "server.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js"
+      "file": "health.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true
     },
     "OPTIONS *": {
-      "file": "server.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "no mount in server.js"
+      "file": "preflight.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 204,
+      "registered_only": true
     },
     "PATCH /api/actors/:id": {
       "file": "actors.js",
