@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 66
+    "failing": 60
    },
    "foreign_id_404": {
     "applies": 203,
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 119
+  "output_allowlist_from_recordings": 120
  },
  "machine_columns": [
   "schema_in",
@@ -13564,7 +13564,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 219,
-   "hash": "59e047fa21d05e3f",
+   "hash": "e581982c3c888b49",
    "does": "",
    "errors": {
     "count": 1,
@@ -13596,7 +13596,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23455,7 +23455,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 733,
-   "hash": "d18c205627345524",
+   "hash": "e85807898c5889e2",
    "does": "",
    "errors": {
     "count": 0,
@@ -23483,7 +23483,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23505,6 +23505,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -41567,7 +41568,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41765,7 +41766,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41862,7 +41863,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46443,7 +46444,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 316,
-   "hash": "5c520fe73951ec52",
+   "hash": "d03b3c6bdf7fb60f",
    "does": "",
    "errors": {
     "count": 8,
@@ -46489,7 +46490,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46531,8 +46532,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d03b3c6bdf7fb60f"
    },
    "status": "partial",
    "callers": [],

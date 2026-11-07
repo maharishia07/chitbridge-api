@@ -25,6 +25,8 @@ const API = process.env.API_ROOT ? path.resolve(process.env.API_ROOT) : HERE;
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
+const ALLOW = require('./lib/allowlist-world.cjs');
 /* this file's rows: the three doors on both mounts */
 const MINE = (route) => / (\/api\/ctp)?\/(deliver|query|\.well-known\/ctp\.json)$/.test(route);
 const argv = process.argv.slice(2);
@@ -268,6 +270,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkContract();
+  /* output_allowlist (S34): the two doors whose success schema is closed (the manifest, the receiving door) have every recorded 200 fit it; the query door's answer is one of eight questions' and stays open (its owner: cb-rail) */
+  const contract = require(path.join(HERE, 'lib', 'ctp-contract.js'));
+  const operationOf = (route) => (route.endsWith('ctp.json') ? contract.MANIFEST_OPERATION : route.endsWith('/deliver') ? contract.DELIVER_OPERATION : contract.QUERY_OPERATION);
+  const flat = {};
+  Object.keys(recording).forEach((route) => Object.keys(recording[route]).forEach((id) => (flat[route + '|' + id] = Object.assign({ route }, recording[route][id]))));
+  const allowHeld = ALLOW.checkAllowList(flat, Object.fromEntries(Object.keys(recording).map((route) => [route, operationOf(route)])), check);
   const coverage = Object.fromEntries(Object.keys(tested).sort().map((route) => [route, [...tested[route]].sort((a, b) => a - b)]));
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(MINE).sort().map((route) => [route, onDisk[route]]));
@@ -275,7 +283,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !MINE(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/ctp.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    ALLOW.writeEvidence(EVIDENCE_FILE, MINE, allowHeld);
+  } else check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the ctp routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, MINE), allowHeld), allowHeld);
+  if (!argv.includes('--write')) check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/ctp.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();
