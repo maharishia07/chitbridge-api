@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 'use strict';
+// OWNS      the live proof of the use-case chits against a running server
+// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-usecases.js
+// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/send-mint-a-chit
 /**
  * prove-usecases.js — GOODS · PURE SERVICE · BOTH, the whole cycle, against the live API.
  *
@@ -58,8 +62,7 @@ const EMAIL = 'cholaauto@email.com';
         purpose: 'order',
         manual_subject: subject,
         line_items: lines,
-        recipients: [{ entity_id: E.identity_id, role: 'to' }],
-        send_to_self: true
+        recipients: [{ entity_id: E.identity_id, role: 'to' }]
       }
     });
     const det = await P.j('/api/chits/' + s.b.chit_id, auth);

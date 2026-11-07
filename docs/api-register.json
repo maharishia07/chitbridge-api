@@ -5,12 +5,12 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 216,
-  "meets": 421,
+  "partial": 215,
+  "meets": 422,
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 72
+    "failing": 71
    },
    "output_allowlist": {
     "applies": 637,
@@ -43415,7 +43415,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 400,
-   "hash": "3c76bd61695c1790",
+   "hash": "f066453f5d1ddaf5",
    "does": "",
    "errors": {
     "count": 0,
@@ -43448,7 +43448,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -43487,11 +43487,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3c76bd61695c1790"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#893",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",

@@ -1,4 +1,8 @@
 'use strict';
+// OWNS      the live proof of the line-thread boundary on a real two-party chit
+// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-line-threads.js
+// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/thread-messages-on-a-chit
 /**
  * prove-line-threads.js — THE BOUNDARY, ON A REAL TWO-PARTY CHIT.
  *
@@ -37,8 +41,7 @@ const login = async (email, name) => {
         { particulars: 'Rice', quantity: 80, unit: 'kg', price: 60 },
         { particulars: 'Dal', quantity: 20, unit: 'kg', price: 140 }
       ],
-      recipients: [{ entity_id: buyer.id, role: 'to' }],
-      send_to_self: false
+      recipients: [{ entity_id: buyer.id, role: 'to' }]
     }
   });
   const id = s.b.chit_id;

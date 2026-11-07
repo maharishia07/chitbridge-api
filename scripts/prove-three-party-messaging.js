@@ -1,4 +1,8 @@
 'use strict';
+// OWNS      the live proof of one order across three parties and their actors, one full cycle
+// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-three-party-messaging.js
+// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/thread-messages-on-a-chit
 /**
  * prove-three-party-messaging.js — ONE ORDER, THREE PARTIES, THEIR ACTORS, ONE FULL CYCLE.
  *
@@ -70,8 +74,7 @@ const actor = async (owner, label) => {
       recipients: [
         { entity_id: buyer.id, role: 'to' },
         { entity_id: carrier.id, role: 'cc' }
-      ],
-      send_to_self: false
+      ]
     }
   });
   const chit = sent.b.chit_id;

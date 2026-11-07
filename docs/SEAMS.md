@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 113 | `words` | `variant.browser.js` |  |
 | 112 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 111 | `withEntity` | `books-hooks.js` |  |
-| 106 | `read` | `books-cashflow.js` | Trips: |
+| 107 | `read` | `books-cashflow.js` | Trips: |
 | 97 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 78 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -67,9 +67,9 @@ of file each thing is; this says what already does the job.
 | 38 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 37 | `host` | `chit-sheet.js` |  |
 | 37 | `live` | `receivables.js` | the allocations that still count: |
+| 36 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 36 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
-| 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 33 | `closeModal` | `app.html` |  |

@@ -1,4 +1,8 @@
 'use strict';
+// OWNS      the live proof that line events accumulate on a line spine, both directions (goods drawn down, service accumulated)
+// CALLED BY tests/rail126-send-strict.test.cjs (static: the body it sends is a key the closed POST /send accepts) · by hand against a running server: node scripts/prove-line-events.js
+// FLOW      running api → POST /api/chits/send (closed body, RAIL-126) → ✓ / ✗ per case → exit 1 on any ✗
+// CARD 01-rail-core-the-chit/line-model
 /**
  * prove-line-events.js — ONE MECHANISM, BOTH DIRECTIONS (b152).
  *
@@ -45,8 +49,7 @@ const ok = (cond, msg, detail) => {
         purpose: 'order',
         manual_subject: subject,
         line_items: lines,
-        recipients: myId ? [{ entity_id: myId, role: 'to' }] : [],
-        send_to_self: true
+        recipients: myId ? [{ entity_id: myId, role: 'to' }] : []
       }
     });
     const det = await P.j('/api/chits/' + s.b.chit_id, auth);
