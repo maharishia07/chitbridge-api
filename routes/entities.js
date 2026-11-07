@@ -376,7 +376,7 @@ const prefSetRoute = (fixedKind) =>
     }
   };
 
-router.post('/register', signin.door('register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
+router.post('/register', signin.door('register'), ...checked('POST /register'), signin.askChecks, validate, signin.handlers.ask, registerNew);
 router.post('/verify', signin.door('entity-verify'), declaresStatuses(VERIFY_REFUSALS), ...checked('POST /verify'), signin.verifyChecks, validate, signin.handlers.verify);
 
 // GET /entities/constitutions — PUBLIC (pre-auth): the verticals a registrant can choose from at sign-up. Reads the

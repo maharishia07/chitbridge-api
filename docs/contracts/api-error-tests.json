@@ -2637,6 +2637,11 @@
   409,
   500
  ],
+ "POST /api/entities/register": [
+  400,
+  409,
+  500
+ ],
  "POST /api/entities/verify": [
   400,
   403,

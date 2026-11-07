@@ -14,7 +14,7 @@ of file each thing is; this says what already does the job.
 | 113 | `words` | `variant.browser.js` |  |
 | 112 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 111 | `withEntity` | `books-hooks.js` |  |
-| 106 | `read` | `books-cashflow.js` | Trips: |
+| 107 | `read` | `books-cashflow.js` | Trips: |
 | 97 | `answer` | `availability.js` | from March; then nearest. |
 | 87 | `money` | `bill-privacy.js` |  |
 | 78 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -93,16 +93,16 @@ of file each thing is; this says what already does the job.
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 28 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 27 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 27 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 27 | `sheet` | `cap-employees.js` |  |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
+| 27 | `account` | `home-facts.js` | OMITTED: |
 | 27 | `owner` | `books.js` |  |
-| 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 26 | `money` | `cart.js` |  |
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 26 | `account` | `home-facts.js` | OMITTED: |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `opts` | `cap-stock.js` |  |
