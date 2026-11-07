@@ -282,7 +282,7 @@ function memoryRegister() {
   await q('POST', '/periods/2026-27/7/unlock', { reason: 'test' });
 
   /* ── GST month close and the challan ── */
-  const so = P.gstSetOff({ date: '2026-09-30', output: { cgst: 90, sgst: 90, igst: 0 }, input: { cgst: 45, sgst: 45, igst: 0 } });
+  const so = P.gstSetOff({ country: 'IN', date: '2026-09-30', output: { cgst: 90, sgst: 90, igst: 0 }, input: { cgst: 45, sgst: 45, igst: 0 } });
   const gc = await q('POST', '/gst/close', { fy: '2026-27', period: 6 });
   const gce = entries('gstclose:2026-27:6')[0];
   ok('POST /gst/close → utilised (CGST←CGST, SGST←SGST 45 each), payable 45 + 45 by challan', gc.status === 200 && gc.body.ok && gce && gc.body.utilised.length === 2 && gc.body.payable_minor.cgst_minor === 4500
@@ -371,7 +371,7 @@ function memoryRegister() {
   const cte = entries('contra:dep-1')[0];
   ok('POST /contra → cash into the bank', ct.status === 200 && ct.body.ok && cte, JSON.stringify(ct.body));
   eq('…lines are the engine\'s contra: Dr bank 5,000 · Cr cash', cte && stored(cte), engine({ type: 'contra', from: 'cash', to: 'bank', amount: 5000, date: '2026-09-15', currency: 'INR' }));
-  ok('…keyed by a person: series MJ with the voucher type the engine gives {manual:true} — Contra', cte && seriesOf(cte) === 'MJ' && cte.voucher_type === 'Contra' && P.voucherTypeOf({ type: 'contra' }, { manual: true }).type === 'Contra', cte && cte.voucher_type);
+  ok('…keyed by a person: series MJ with the voucher type the engine gives {manual:true} — Contra', cte && seriesOf(cte) === 'MJ' && cte.voucher_type === 'Contra' && P.voucherTypeOf({ type: 'contra' }, { manual: true, country: 'IN' }).type === 'Contra', cte && cte.voucher_type);
   ok('…a double tap posts once', (await q('POST', '/contra', ctB)).body.duplicate === true && X.T.entries.filter((x) => x.source_ref === 'contra:dep-1').length === 1);
   const cs6 = await q('POST', '/contra', { from: 'bank', to: 'bank', amount_minor: 100, date: '2026-09-15' });
   ok('…the same account on both sides is the engine\'s refusal (422)', cs6.status === 422 && /different accounts/.test(cs6.body.message), JSON.stringify(cs6.body));

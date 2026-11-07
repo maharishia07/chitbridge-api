@@ -88,6 +88,18 @@ function create() {
       const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
       return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
     },
+    async inputTaxOfChits(db, e, chitIds, roles, from, to) {
+      const out = {}, day = (x) => String(x.posting_date).slice(0, 10);
+      const chitOf = (x) => { const m = /^chit:([0-9a-f-]{36})/.exec(x.source_ref || ''); return m ? m[1] : null; };
+      const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id && day(r) < to);
+      for (const x of T.entries.filter((y) => y.entity_id === e && chitIds.map(String).indexOf(chitOf(y)) >= 0 && day(y) >= from && day(y) < to && live(y))) {
+        for (const l of T.lines.filter((z) => z.entry_id === x.entry_id)) {
+          const a = T.accounts.find((acc) => acc.account_id === l.account_id);
+          if (a && roles.indexOf(a.role) >= 0) { const m = (out[chitOf(x)] = out[chitOf(x)] || {}); m[a.role] = (m[a.role] || 0) + Number(l.dr_minor || 0) - Number(l.cr_minor || 0); }
+        }
+      }
+      return out;
+    },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;

@@ -175,7 +175,7 @@ router.post('/rate', auth, auth.requireScope('tax'), ...checked('POST /rate'), a
  *   G3 · a line with no price that names an item (item_id or code) is priced by the one price reader (services.priceLine: the product's
  *        structure at the quantity, money.priceOf) — never 0. `priced[]` says each line's unit price and where it came from.
  *   G1 · `money` is tax.moneyOf (the summary_json.money shape: by_rate · heads · currency_code), `pack` is regulation.status of the seller's
- *        country (id + version, or the code and sentence when there is none). No country → 422 NO_COUNTRY: tax is never worked out on a guess.
+ *        country (id + version, or the code and sentence when there is none). No country → 422 NO_COUNTRY, a country with no pack → 422 NO_COUNTRY_PACK (CTRY-94): tax is never worked out on a guess.
  * Who may call: a signed-in session of the shop, or the shop's API key with scope `tax` (or `services`). Trips: 2 (identities, shelf) — the shelf
  * is read only when a line needs a rate or a price.
  */
@@ -192,7 +192,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
-    if (st.code === 'NO_COUNTRY') return refuse(req, res, 422, 'NO_COUNTRY', st.why);
+    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, st.why); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
     const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];
@@ -307,7 +307,7 @@ router.openapi = {
         responses: {
           200: { description: 'the INV-01 block, the heads, money (by rate), currency and the pack version' },
           400: { description: 'code: NO_LINES · BAD_QTY · BAD_PRICE · BAD_RATE · NO_PRICE · BAD_FLAG, and a sentence' },
-          422: { description: 'code: NO_COUNTRY · ITEM_NOT_FOUND · NO_PRICE, and a sentence' }
+          422: { description: 'code: NO_COUNTRY · NO_COUNTRY_PACK · ITEM_NOT_FOUND · NO_PRICE, and a sentence' }
         }
       }
     },

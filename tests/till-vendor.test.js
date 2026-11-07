@@ -120,21 +120,21 @@ function unfreeze() { P.Date = realDate; }
 
 it('a bill with no offer and no tax adds up to what the customer pays', () => {
   P.CART = [{ price: 200, qty: 2, gross: 400, net: 400, save: 0 }, { price: 30, qty: 3, gross: 90, net: 90, save: 0 }];
-  P.S = { shop: { reg_type: 'unregistered' } };
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
   const m = P.billMoney();
   assert.strictEqual(m.net, 490); assert.strictEqual(m.tax, 0); assert.strictEqual(m.save, 0);
 });
 
 it('an offer comes off the total and is shown as a saving, never as a lower price', () => {
   P.CART = [{ price: 30, qty: 3, gross: 90, net: 81, save: 9 }];
-  P.S = { shop: { reg_type: 'unregistered' } };
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
   const m = P.billMoney();
   assert.strictEqual(m.gross, 90); assert.strictEqual(m.save, 9); assert.strictEqual(m.net, 81);
 });
 
 it('⭐ ACC-206: a line priced below its catalogue price (a price structure, no offer) shows the engine\'s gross and savings, as a send does', () => {
   P.CART = [{ price: 309, unitPrice: 284, qty: 2, gross: 568, net: 568, save: 0 }, { price: 30, qty: 3, gross: 90, net: 81, save: 9 }];
-  P.S = { shop: { reg_type: 'unregistered' } };
+  P.S = { shop: { reg_type: 'unregistered', country: 'IN' } };
   const m = P.billMoney();
   assert.strictEqual(m.gross, 618 + 90, 'gross at the catalogue price');
   assert.strictEqual(m.save, 50 + 9, 'the structure\'s 50 and the offer\'s 9, both said by the engine');
@@ -631,7 +631,7 @@ it('⚠️ a count of zero only speaks when somebody keeps counts', () => {
 /* ── does this shop charge GST at all? (2026-09-08) ──────────────────────────────────────────────────────────── */
 
 it('⚠️⚠️ NO GSTIN, NO GST — a shop without one prints a CASH MEMO, whatever the setting says', () => {
-  P.S = { shop: { name: 'Corner Shop', reg_type: 'regular' } };      /* the flag defaults to 'regular' for every account */
+  P.S = { shop: { name: 'Corner Shop', reg_type: 'regular', country: 'IN' } };      /* the flag defaults to 'regular' for every account */
   const t = P.shopTax();
   assert.strictEqual(t.charges, false, 'it charged GST for a shop that has no GSTIN');
   assert.strictEqual(t.kind, 'cash', 'and it would have headed the slip TAX INVOICE');
