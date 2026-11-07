@@ -764,11 +764,11 @@
    "lifecycle": "stable"
   },
   "GET /api/entities/me/can-see-costs": {
-   "hash": "b43d5b8b4da152b9",
+   "hash": "f12cd611fc9dc327",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
    "lifecycle": "stable"
   },
   "GET /api/entities/mis": {
@@ -1771,11 +1771,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
-   "hash": "bb90f2791c17bec0",
+   "hash": "a452dc1b95bd6bba",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
    "lifecycle": "stable"
   },
   "PATCH /api/folders/:id": {
@@ -2782,7 +2782,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
    "lifecycle": "stable"
   },
   "POST /api/invoice/build": {
@@ -3338,11 +3338,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/shop": {
-   "hash": "ecbd876fea2f9aed",
+   "hash": "ccac90af562b2eeb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
    "lifecycle": "stable"
   },
   "POST /api/till/state": {
@@ -3540,11 +3540,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/governance/profile/vault": {
-   "hash": "c0c431476199942f",
+   "hash": "3956541db49b2344",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#352",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
    "lifecycle": "stable"
   },
   "PUT /api/integrations/streams": {
