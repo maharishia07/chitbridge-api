@@ -10,8 +10,8 @@
  * FLOW      fresh shop -> receipt + bills through the doors -> owner pg reads/deletes -> GAPS_SQL / OPEN_SQL with real parameters -> healShop (cb_app, RLS on)
  * CARD      13-inventory-stock-and-traceability/on-hand-and-movements
  *
- * ⚠️ LOCAL ONLY (the harness refuses any other api or database). Needs DEV_OTP armed. The ONE write outside the doors is the owner's DELETE of a
- * sale movement of THIS run's shop, to arm the precondition. healShop runs as cb_app (STOCK_SWEEP_APP_DB, default: the TRUTH_DB host with cb_app/cbapp).
+ * ⚠️ LOCAL ONLY (the harness refuses any other api or database). Needs DEV_OTP armed. The ONE write outside the doors is the owner's DELETE of sale
+ * movements of THIS run's shop, to arm the precondition, and at the end of ALL of this shop's stock rows (movements and balances), so the installation-wide log = balance check of stock-truth (ST-26) stays true. healShop runs as cb_app (STOCK_SWEEP_APP_DB, default: the TRUTH_DB host with cb_app/cbapp).
  * Run: node tests/stock-sweep-truth.realstack.cjs
  */
 const { Client } = require('pg');
@@ -107,6 +107,11 @@ async function cases() {
   } catch (e) {
     results.push({ id: 'SSW-RUN', pass: false, seen: String(e && e.stack) });
     console.error(e);
+  }
+  /* the arming above removed movements the balance cache still counts; ST-26 of stock-truth asks every shop on the installation for log = balance, so this run's shop leaves no stock rows behind */
+  if (SHOP) {
+    await pg.query('DELETE FROM stock_movement WHERE entity_id = $1', [SHOP.entity]);
+    await pg.query('DELETE FROM stock_balance WHERE entity_id = $1', [SHOP.entity]);
   }
   await pg.end();
   finish('stock-sweep-truth', process.env.SSW_TRUTH_JSON, { shop: SHOP && SHOP.name });
