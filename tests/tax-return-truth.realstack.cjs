@@ -41,13 +41,15 @@ const monthOf = (back) => {
     const sent = ok(await j('/api/chits/send', { method: 'POST', token: shop.token, body: bill(RUN + '-B1', [[RICE, 1]]) }), 'counter bill').b;
     const chit = String(sent.chit_id || (sent.chit && sent.chit.chit_id));
     let seen = null;
+    let last = null;
     for (let tries = 0; tries < 20 && !seen; tries++) {
       const led = ok(await j('/api/tax/ledger?month=' + monthOf(0), { token: shop.token }), 'ledger').b;
+      last = { count: led.count, rows: (led.rows || []).map((row) => row.chit_id), not_in_books: led.not_in_books, dropped: led.dropped };
       if ((led.rows || []).some((row) => String(row.chit_id) === chit)) seen = 'counted';
       else if ((led.not_in_books || []).some((item) => String(item.chit_id) === chit)) seen = 'named';
       else await pause(500);
     }
-    expect(seen, 'the bill is in neither rows nor not_in_books: silent');
+    expect(seen, 'the bill ' + chit + ' is in neither rows nor not_in_books: silent. Ledger saw ' + JSON.stringify(last) + ' · sent answer ' + JSON.stringify(sent).slice(0, 200));
     return seen;
   });
   await kase('TR-03', 'a shop whose books are OFF has its counter bill left out of not_in_books (no entries by design)', async () => {

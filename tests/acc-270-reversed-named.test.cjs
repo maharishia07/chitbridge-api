@@ -132,6 +132,7 @@ const minor = (rupees) => Math.round(rupees * 100);
   counter(4, 1180);
   counter(5, 0);
   counter(6, 590, 'cancelled');
+  counter(8, undefined); /* a counter bill with no stored total at all: not known to be free, so named without an amount */
   const rev1 = await X.B.reverseEntry(X.db, SHOP, p1.entry_id, { reason: 'bill 1 returned', by: SHOP });
   const rev2 = await X.B.reverseEntry(X.db, SHOP, p2.entry_id, { reason: 'bill 2 keyed twice', by: SHOP });
   eq('the books put the filed-month bill reversal in October (their rule); the same-month one on its own date', [rev1.posting_date, rev2.posting_date.slice(0, 7)], ['2026-10-01', '2026-10']);
@@ -148,10 +149,11 @@ const minor = (rupees) => Math.round(rupees * 100);
   eq('the re-posted bill 7 is a prior-period item in October (a September bill booked in October), not a reversed one', [oct.prior_period.map((p) => p.chit_id), oct.reversed.map((x) => x.chit_id)], [[rowOf(7).chit_id], [rowOf(1).chit_id]]);
   eq('October NAMES bill 1 and only bill 1: reversed_after_filed, invoice 2026-09-28, reversed 2026-10-01', oct.reversed.map((x) => [x.chit_id === rowOf(1).chit_id, x.kind, x.invoice_day, x.invoice_month, x.reversed_day, x.month]), [[true, 'reversed_after_filed', '2026-09-28', '2026-09', '2026-10-01', '2026-10']]);
   ok('...with words a shopkeeper can read', /reversed on 2026-10-01 after 2026-09 was filed/.test(oct.reversed[0].words) && /report the credit in the open month, 2026-10/.test(oct.reversed[0].words), oct.reversed[0].words);
-  eq('October NAMES the counter bill with no entry (bill 4); the free bill and the cancelled bill are not named', oct.not_in_books.map((x) => [x.chit_id === rowOf(4).chit_id, x.kind, x.invoice_day]), [[true, 'not_in_books', '2026-10-12']]);
+  eq('October NAMES the counter bill with no entry (bill 4) and the one with no stored total (bill 8); the free bill and the cancelled bill are not named', oct.not_in_books.map((x) => [x.chit_id === rowOf(4).chit_id, x.chit_id === rowOf(8).chit_id, x.kind, x.invoice_day]), [[true, false, 'not_in_books', '2026-10-12'], [false, true, 'not_in_books', '2026-10-12']]);
+  ok('...bill 8 is named without an amount', oct.not_in_books[1].words.indexOf('Bill T8 (dated 2026-10-12): the books hold no entry') === 0, oct.not_in_books[1].words);
   ok('...with words', /Bill T4 .*for 1180.*no entry.*in no GST return/.test(oct.not_in_books[0].words), oct.not_in_books[0].words);
   const g1 = TL.gstr1(oct.ledger, oct.me, oct.bounds.period), g3 = TL.gstr3b(oct.ledger, oct.me, oct.bounds.period);
-  eq('GSTR-1 and GSTR-3B for October carry both lists in _cb', [g1._cb.reversed.length, g1._cb.not_in_books.length, g3._cb.reversed.length, g3._cb.not_in_books.length], [1, 1, 1, 1]);
+  eq('GSTR-1 and GSTR-3B for October carry both lists in _cb', [g1._cb.reversed.length, g1._cb.not_in_books.length, g3._cb.reversed.length, g3._cb.not_in_books.length], [1, 2, 1, 2]);
   ok('the SQL itself reads the books AS AT the month end (a reversal on/after $5 does not count) and carries the reversed / no-entry arms', /reverses_entry_id = j\.entry_id AND to_char\(r\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /AND to_char\(j\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /books_reversed_day/.test(seenSql) && /books_no_entry/.test(seenSql), seenSql.slice(0, 200));
   /* a shop whose books are OFF has no entries by design: its counter bills are not named */
   booksOn = false;
