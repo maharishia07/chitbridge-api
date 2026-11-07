@@ -433,6 +433,7 @@ const GUARDS = [
   'ctp-return-door.test.cjs', // RAIL-106: the event kind at the one door (routes/ctp.js): same checks as a copy, applied to our rows only
   'ctp-window-shopping.test.cjs', // RAIL-107: a chit from a business this installation holds no row for — the sender is found by bridge id and a stub is made
   'chit-proposals.test.cjs', // RAIL-106 part 4: one proposal mechanism on ONE chit (rounds, seller computes, accept stores the seller's invoice byte for byte)
+  'acc192-invoice-issued.test.cjs', // ACC-192 slice 1a: an issued invoice (books entry · frozen_at · a carried tax invoice) is never rewritten by a round or an amend; the money edits are told from a comment fix; quotations and pro-formas still re-issue
   'send-seller-currency.test.cjs', // RAIL-106: a send is priced in the SELLER's money; a seller on another installation prices its own goods
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)

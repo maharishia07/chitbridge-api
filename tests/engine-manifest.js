@@ -767,6 +767,7 @@ const ENGINE_OTHER = [
      applied there through the same writers) and the ONE proposal mechanism (rounds, counters, change orders). CB's rules, not plumbing. */
   'ctpreturn.js',
   'chit-proposal.js',
+  'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
