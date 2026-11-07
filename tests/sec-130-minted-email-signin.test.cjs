@@ -117,7 +117,7 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 160);
     ]) {
       reset(false);
       const a = await call(url, body);
-      t('⭐ ' + label + ': refused, no code written on the party', refused(a) && DB.party.otp_code === null, show(a) + ' otp=' + DB.party.otp_code);
+      t('⭐ ' + label + ': the one ask answer, no code written on the party', a.status === 200 && a.body.need === 'pin_or_code' && DB.party.otp_code === null, show(a) + ' otp=' + DB.party.otp_code);
     }
 
     say('\n── verify, with a live code on the party: never a token for it ──');
@@ -136,7 +136,7 @@ const show = (r) => r.status + ' ' + JSON.stringify(r.body).slice(0, 160);
     say('\n── a real account still signs in ──');
     reset(false);
     let a = await call('/api/signin/ask', { id: 'owner@shopx.test' });
-    t('the shop owner by e-mail: code sent, id = the shop', a.status === 200 && a.body.kind === 'entity' && a.body.id === 'shopx', show(a));
+    t('the shop owner by e-mail: the one ask answer, code stored on the shop', a.status === 200 && a.body.need === 'pin_or_code' && !!DB.shopx.otp_code, show(a));
     let v = await call('/api/signin/verify', { id: 'owner@shopx.test', otp: '123456' });
     t('   …and the code signs the shop in', v.status === 200 && idOf(v) === 'shopx', show(v));
     reset(false);

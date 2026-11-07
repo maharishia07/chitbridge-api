@@ -49,7 +49,8 @@ const CALLS = {
   terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
-  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200], cancelledStillPosted: [E, 200], openDisputes: [E, U],
+  unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200],
+  unpostedInWindow: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 50, { skipWalkin: true, skipIds: [U] }], unpostedCount: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', { skipWalkin: true }], cancelledStillPosted: [E, 200], openDisputes: [E, U],
   /* M30 · the payment advice (b285) */
   adviceReady: [E], paymentsAdvice: [E, [U]], setAdvice: [E, U, { advice_chit_id: U, advice_shared_at: null }], adviceStates: [E, [U]], paymentsNeedingAdvice: [E, 50], shopName: [E], bankRailChits: [E, '2026-10-01', '2026-10-31', 500],
   /* F5 A1 · the books to-do's bills_unrated: the shop's registration facts, and the sale bills in the books with an unrated line */

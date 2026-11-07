@@ -122,6 +122,8 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `BODY_LIMIT_DEFAULT` / `BODY_LIMIT_LARGE` | optional | `256kb` / `8mb` | no | Request body caps. |
 | `REQUEST_TIMEOUT_MS` | optional | `30000` | no | Request deadline. |
 | `IDEMPOTENCY_WINDOW_HOURS` | optional | `48` | no | How long an idempotency key is remembered. |
+| `IDEMPOTENCY_STALE_MINUTES` | optional | `10` | no | Minutes after which a crashed request's in-progress key may be claimed by a retry. |
+| `IDEMPOTENCY_TOKEN_MINUTES` | optional | `15` | no | Minutes a recorded answer that carries a token may be replayed. |
 | `IMPORT_PREFLIGHT_MAX` / `IMPORT_COMMIT_MAX` / `PRODUCTS_BULK_MAX` | optional | `60` / `20` / `60` | no | Product import/bulk rate limits. |
 | `TILL_CATALOGUE_MAX` / `TILL_DELTA_CAP` | optional | `20` / `20000` | no | Counter catalogue rate and delta size caps. |
 | `NOTIF_FEED_DAYS` | optional | `90` | no | Notification feed look-back. |

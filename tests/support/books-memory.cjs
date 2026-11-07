@@ -131,7 +131,7 @@ function create() {
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },
     /* ── the four writes ── */
     async insertEntry(db, e, h) {
-      if (h.source_ref && T.entries.some((x) => x.entity_id === e && x.source_ref === h.source_ref)) throw Object.assign(new Error('duplicate source_ref'), { code: '23505' });
+      if (h.source_ref && T.entries.some((x) => x.entity_id === e && x.source_ref === h.source_ref)) throw Object.assign(new Error('duplicate key value violates unique constraint "journal_entry_src_uq"'), { code: '23505', constraint: 'journal_entry_src_uq' });
       if (T.entries.some((x) => x.entity_id === e && x.entry_no === h.entry_no)) throw Object.assign(new Error('duplicate entry_no'), { code: '23505' });
       const r = Object.assign({ entry_id: id(), entity_id: e, created_at: now() }, clone(h)); T.entries.push(r); return { entry_id: r.entry_id, created_at: r.created_at };
     },
@@ -279,7 +279,7 @@ function create() {
     async packs(db, e) { return clone(T.packs.filter((x) => x.entity_id === e)); },
     async pack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); return p ? clone(p) : null; },
     async ackPack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); if (!p) return null; p.acknowledged_at = p.acknowledged_at || now(); return { acknowledged_at: p.acknowledged_at }; },
-    async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; }, async cancelledStillPosted() { return []; },
+    async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; }, async unpostedInWindow() { return []; }, async unpostedCount() { return { count: 0, oldest: null }; }, async cancelledStillPosted() { return []; },
     async openDisputes(db, e, chit) { return T.disputes.filter((d) => d.entity_id === e && d.chit_id === chit && d.status === 'open').length; },
     /* ── M30 · the payment advice (b285): T.adviceReady = false stands in for "the migration has not run" ── */
     async adviceReady() { return T.adviceReady !== false; },

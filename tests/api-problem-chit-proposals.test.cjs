@@ -26,6 +26,7 @@ const fs = require('fs');
 const { harness, OWNER, STAFF, SECRET_SQL, sameValue, answering, firstOf } = require('./lib/problem-world.cjs');
 const scenes = require('./lib/chit-proposals-scenes.cjs');
 const foreign = require('./lib/foreign-id-world.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -65,6 +66,8 @@ const WORLDS = [
   { id: 'nothing-set-up', setup: {} },
   { id: 'bad-id', setup: {}, badId: true }
 ];
+/* accept has no 200 scene: the stand-in cannot carry a decided round through lib/amend, so its allow-list stays unproved (API-7 left: a scene that accepts a round whose lines still hold) */
+const withoutAccept = (operations) => Object.fromEntries(Object.entries(operations).filter(([route]) => !route.endsWith('/accept')));
 const contractModule = () => require(path.join(HERE, 'lib', 'chit-proposals-contract.js'));
 
 /** lib/chit-proposals-contract.js as a unit: every door has an operation, every body is closed, every success answer is closed, the library's refusals are published */
@@ -166,6 +169,7 @@ async function foreignWorld(port) {
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal frozen at the first contract is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 30, frozen);
   check('a caller who is not signed in is refused with 401 on every door', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
+  const allowHeld = ALLOW.checkAllowList(recording, withoutAccept(contractModule().OPERATIONS), check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
@@ -173,8 +177,10 @@ async function foreignWorld(port) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
+    ALLOW.writeEvidence(EVIDENCE_FILE, lab.mine, allowHeld);
     foreign.writeEvidence(EVIDENCE_FILE, lab.mine, proved);
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the proposal routes whose success answers held closed here', sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, lab.mine), allowHeld), allowHeld);
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/chit-proposals.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
     check('docs/contracts/api-hardening-evidence-areas.json says exactly what the foreign-id world showed', sameValue(foreign.evidenceOf(EVIDENCE_FILE, lab.mine), proved), proved);
   }
