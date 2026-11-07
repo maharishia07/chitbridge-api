@@ -328,6 +328,8 @@ const INFRA_LIBS = [
   'shop-clock.js',
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
+  /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
+  'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',

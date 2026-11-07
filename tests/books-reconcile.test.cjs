@@ -45,6 +45,7 @@ async function shop(grain) {
   const calls = [];
   const pred = (e, from, to, opt) => Array.from(chits.values()).filter((c) => {
     const o = opt || {};
+    if ((c.entity_id || SHOP) !== e) return false; /* the SQL's h.entity_id = $1: a chit_id is per shop copy */
     if (!(c.created_at >= from && c.created_at < to)) return false;
     if (X.T.entries.some((x) => x.entity_id === e && (x.source_ref === 'chit:' + c.chit_id || x.source_ref === 'bill:' + c.chit_id || (x.source_chit_ids || []).indexOf(c.chit_id) >= 0))) return false;
     if (X.T.outbox.some((x) => x.done_at == null && x.source_chit_id === c.chit_id)) return false;
@@ -224,14 +225,14 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     S.X.T.outbox.length = 0; /* the crash left no row at all */
     const out = await S.R.tick();
     ok('the next pass posts it', S.entriesOf(c).length === 1 && out.posted === 1, JSON.stringify(out));
-    const chits = fs.readFileSync(path.join(H.API, 'routes', 'chits.js'), 'utf8');
+    const chits = require('../tools/chits-files.cjs').read(H.API); /* the ONE list of chits files */
     ok('routes/chits.js still schedules the hook after the commit and never awaits it (the bill\'s write is untouched)', /setImmediate\(/.test(chits.slice(chits.indexOf('hooks.afterChit(sender_id') - 400, chits.indexOf('hooks.afterChit(sender_id'))) && !/await hooks\.afterChit/.test(chits));
     back();
   });
 
   await section('T10 · the predicate (SQL): every clause the plan and the critic name, and the tender words equal modeOf', async () => {
     const src = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
-    const shared = src.slice(src.indexOf('const TENDER_FOUR'));
+    const shared = src.slice(src.indexOf('const TENDER_FOUR'), src.indexOf('async function cancelledStillPosted')); /* the predicate only: the next function also says 'cancelled', 'rejected' and hid a deleted clause */
     ok('one predicate: unpostedInWindow and unpostedCount both select FROM the same UNPOSTED_FROM', (src.match(/\$\{UNPOSTED_FROM\}|\$\{UNPOSTED_FROM\}/g) || []).length >= 0 && /SELECT h\.chit_id \$\{UNPOSTED_FROM\}/.test(src) && /count\(\*\)::int AS count, min\(h\.created_at\) AS oldest \$\{UNPOSTED_FROM\}/.test(src));
     ok('the clauses: own entry · day listing · payment · OPEN outbox row · cancelled/rejected · skipIds · walk-in', ['j.source_ref IN', 'source_chit_ids @>', 'books_payment', 'o.done_at IS NULL', "'cancelled', 'rejected'", '<> ALL ($5::uuid[])', '$4::boolean AND h.sender_entity_id = h.entity_id'].every((x) => shared.indexOf(x) >= 0));
     /* the walk-in tender words, run as JS regexes (\y → \b), against modeOf: a part is "ok" iff modeOf says a known non-credit mode */
@@ -276,6 +277,116 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
   });
 
 
+
+  await section('T13 · cross-shop (review 1): two shops hold the SAME chit_id — one shop\'s answer must not hide the other\'s copy', async () => {
+    const R = require(path.join(H.API, 'lib', 'books-reconcile'));
+    const keep = Object.assign({}, R._D); const back = quiet();
+    R.reset();
+    const A = 'a0000000-0000-4000-8000-00000000000a', B = 'b0000000-0000-4000-8000-00000000000b', X = cid();
+    const copies = [{ entity_id: A, chit_id: X }, { entity_id: B, chit_id: X }]; /* chit_header PK (chit_id, entity_id, direction): sender and buyer share the id */
+    const found = (e, opt) => copies.filter((c) => c.entity_id === e && (((opt || {}).skipIds || []).indexOf(c.chit_id) < 0)); /* the SQL: entity = $1 AND chit_id <> ALL(skipIds) */
+    const posts = [];
+    Object.assign(R._D, {
+      now: () => Date.now(), shops: async () => [A, B], busy: () => false,
+      withEntity: async (s, fn) => fn({ query: async () => ({ rows: [{ got: true }] }), _s: s }),
+      settingOf: async () => ({ enabled: true, walkin_grain: 'bill', enabled_at: '2020-01-01T00:00:00Z' }),
+      store: () => ({
+        unpostedCount: async (h, e, f, t, opt) => ({ count: found(e, opt).length, oldest: null }),
+        unpostedInWindow: async (h, e, f, t, limit, opt) => found(e, opt).slice(0, limit)
+      }),
+      postChit: async (e, id) => { posts.push(e); return e === A ? { waiting: true } : { queued: true }; } /* A: classify says "wait" (remembered); B: still not in the books */
+    });
+    await R.tick(); await R.tick();
+    ok('B\'s copy is posted on EVERY pass (A\'s remembered `waiting` does not hide it), A\'s is read once', posts.filter((e) => e === B).length === 2 && posts.filter((e) => e === A).length === 1, JSON.stringify(posts.map((e) => e.slice(0, 1))));
+    ok('…and /health COUNTS B\'s missing bill (books_unposted 1, not 0)', R.health().books_unposted === 1, JSON.stringify(R.health()));
+    R.reset(); Object.assign(R._D, keep); back();
+  });
+
+  await section('T14 · C5 (review 3): the 422 names the bills it could not read, and says they need repair — no "try again"', async () => {
+    const TC = require(path.join(H.API, 'lib', 'tax-copy')); const authPath = require.resolve(path.join(H.API, 'middleware', 'auth')), taxPath = require.resolve(path.join(H.API, 'routes', 'tax'));
+    const savedAuth = require.cache[authPath], savedTax = require.cache[taxPath], realLedger = TC.ledgerFor;
+    const passAuth = new Proxy((req, res, next) => next(), { get: (fn, key) => (key === 'entityOf' ? () => SHOP : typeof fn[key] === 'undefined' ? () => (req, res, next) => next() : fn[key]) });
+    require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: passAuth }; delete require.cache[taxPath];
+    const express = require('express'), http = require('http');
+    const app = express(); app.use('/api/tax', require(taxPath));
+    const server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
+    const get = (p) => new Promise((resolve, reject) => http.get({ host: '127.0.0.1', port: server.address().port, path: p }, (res) => { let b = ''; res.on('data', (d) => { b += d; }); res.on('end', () => resolve({ status: res.statusCode, text: b })); }).on('error', reject));
+    const ids = [1, 2, 3, 4, 5, 6, 7].map(() => cid());
+    try {
+      TC.ledgerFor = async () => ({ bounds: { period: '102026' }, me: {}, ledger: {}, dropped: ids });
+      const r = await get('/api/tax/gstr?month=2026-10&form=gstr1');
+      ok('422 with code GSTR_REFUSED', r.status === 422 && /GSTR_REFUSED/.test(r.text), r.status + ' ' + r.text.slice(0, 200));
+      ok('…it names the first five dropped bills and counts the rest', ids.slice(0, 5).every((x) => r.text.indexOf(x) >= 0) && ids.slice(5).every((x) => r.text.indexOf(x) < 0) && /and 2 more/.test(r.text), r.text.slice(0, 400));
+      ok('…it says they need repair and does NOT promise a retry', /need repair/.test(r.text) && !/try again in a minute/i.test(r.text), r.text.slice(0, 400));
+    } finally {
+      TC.ledgerFor = realLedger; server.close();
+      if (savedAuth) require.cache[authPath] = savedAuth; else delete require.cache[authPath];
+      if (savedTax) require.cache[taxPath] = savedTax; else delete require.cache[taxPath];
+    }
+  });
+
+  await section('T15a · review 4: the cancelled/rejected clause of the SQL, applied by a fake — a cancelled copy is never handed to postChit', async () => {
+    const S = await shop(); const back = quiet();
+    const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8'); /* the harness swaps the store module, so the predicate is read as written: the UNPOSTED_FROM template only */
+    const predicate = storeSrc.slice(storeSrc.indexOf('const UNPOSTED_FROM'), storeSrc.indexOf('async function cancelledStillPosted'));
+    const clause = /FROM chit_status cs WHERE[^)]*current_status IN \(([^)]*)\)/.exec(predicate); /* the status list the predicate ACTUALLY carries */
+    const excluded = clause ? clause[1].split(',').map((x) => x.replace(/['\s]/g, '')) : [];
+    const was = S.X.store.unpostedInWindow, wasCount = S.X.store.unpostedCount;
+    const keepOpen = (list) => list.filter((row) => excluded.indexOf((S.chits.get(String(row.chit_id)) || {}).status) < 0);
+    S.X.store.unpostedInWindow = async (db, e, f, t, l, opt) => keepOpen(await was(db, e, f, t, l, opt));
+    S.X.store.unpostedCount = async (db, e, f, t, opt) => { const rows = keepOpen(await was(db, e, f, t, 200, opt)); return { count: rows.length, oldest: null }; };
+    const dead = S.expense(10 * 60000), rej = S.expense(11 * 60000), live = S.expense(12 * 60000);
+    dead.status = 'cancelled'; rej.status = 'rejected';
+    const asked = []; const pc = S.R._D.postChit; S.R._D.postChit = (s, id, o) => { asked.push(id); return pc(s, id, o); };
+    await S.R.tick();
+    ok('the SQL excludes cancelled and rejected (read from the text it sends)', excluded.indexOf('cancelled') >= 0 && excluded.indexOf('rejected') >= 0, JSON.stringify(excluded));
+    ok('postChit is asked for the live bill only, never the cancelled or rejected copy', asked.length === 1 && asked[0] === live.chit_id, JSON.stringify(asked));
+    S.R._D.postChit = pc; S.X.store.unpostedInWindow = was; S.X.store.unpostedCount = wasCount; back();
+  });
+
+  /* a handle that behaves like Postgres inside a transaction: after a failed statement every query is refused until ROLLBACK TO SAVEPOINT */
+  const strictHandle = (S) => {
+    const h = { aborted: false, log: [] };
+    h.query = async (text, v) => {
+      h.log.push(String(text));
+      if (/^ROLLBACK TO SAVEPOINT/.test(text)) { h.aborted = false; return { rows: [] }; }
+      if (/SAVEPOINT/.test(text)) return { rows: [] };
+      if (h.aborted) throw new Error('current transaction is aborted, commands ignored until end of transaction block');
+      return S.X.db.query(text, v);
+    };
+    return h;
+  };
+  const raceEvent = (ref) => ({ type: 'sale_bill', date: '2026-09-30', currency: 'INR', party: MALA, source_ref: ref, source_chit_id: 'c0000000-0000-4000-8000-0000000000b' + ref.length, by_rate: [{ rate: 5, taxable: 1000, cgst: 25, sgst: 25, igst: 0 }], paid: {}, round_off: 0 });
+
+  await section('T15b · review 4: a unique violation on ANOTHER constraint is an error, not "duplicate"', async () => {
+    const S = await shop(); const back = quiet();
+    const ev = raceEvent('chit:other-uq');
+    await S.X.B.postEntry(S.X.db, SHOP, ev); /* the source now has an entry, so a wrong "any 23505 is a duplicate" would find a winner and answer duplicate */
+    const ES = S.X.store.entryBySource, IE = S.X.store.insertEntry; let first = true;
+    S.X.store.entryBySource = async (...a) => { if (first) { first = false; return null; } return ES(...a); };
+    S.X.store.insertEntry = async () => { throw Object.assign(new Error('duplicate key value violates unique constraint "journal_entry_no_uq"'), { code: '23505', constraint: 'journal_entry_no_uq' }); };
+    let got = null, threw = null;
+    try { got = await S.X.B.postEntry(S.X.db, SHOP, ev); } catch (e) { threw = e; }
+    S.X.store.entryBySource = ES; S.X.store.insertEntry = IE;
+    ok('a 23505 on journal_entry_no_uq is rethrown (never answered as duplicate)', !!threw && !got, JSON.stringify(got));
+    back();
+  });
+
+  await section('T15c · review 4: after a duplicate the transaction is still usable (ROLLBACK TO SAVEPOINT ran)', async () => {
+    const S = await shop(); const back = quiet();
+    const ev = raceEvent('chit:sp-1'); const h = strictHandle(S);
+    const ES = S.X.store.entryBySource, IE = S.X.store.insertEntry; let skipRead = false;
+    S.X.store.entryBySource = async (...a) => { if (h.aborted) throw new Error('current transaction is aborted'); if (skipRead) { skipRead = false; return null; } return ES(...a); };
+    S.X.store.insertEntry = async (...a) => { try { return await IE(...a); } catch (e) { h.aborted = true; throw e; } };
+    const a = await S.X.B.postEntry(h, SHOP, ev);
+    skipRead = true; /* the read-before-insert sees nothing, the insert hits journal_entry_src_uq and aborts the transaction */
+    let b = null, why = null;
+    try { b = await S.X.B.postEntry(h, SHOP, ev); } catch (e) { why = e.message; }
+    S.X.store.entryBySource = ES; S.X.store.insertEntry = IE;
+    ok('the loser reads the winner AFTER the rollback: { duplicate: true } with the winner\'s number', !why && b && b.duplicate === true && b.entry_no === a.entry_no, why || JSON.stringify(b));
+    ok('…it opened a savepoint and rolled back to it', h.log.indexOf('SAVEPOINT books_post_src') >= 0 && h.log.indexOf('ROLLBACK TO SAVEPOINT books_post_src') >= 0, JSON.stringify(h.log));
+    back();
+  });
   console.log('\n  ' + (fail ? '✗ ' + fail + ' failed · ' : '✓ ') + pass + ' passed · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })();

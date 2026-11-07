@@ -6752,6 +6752,7 @@
           "net",
           "count",
           "provisional",
+          "dropped",
           "rows",
           "note"
         ],
@@ -6785,6 +6786,12 @@
           },
           "provisional": {
             "type": "boolean"
+          },
+          "dropped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "rows": {},
           "note": {
