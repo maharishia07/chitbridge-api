@@ -18220,11 +18220,11 @@
      "status": 409,
      "body_keys": {
       "error": "not_enabled",
-      "message": "Scheduled changes arrive after the next update. Everything else works meanwhile."
+      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
      },
      "fixture": {
       "error": "not_enabled",
-      "message": "Scheduled changes arrive after the next update. Everything else works meanwhile."
+      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
      }
     },
     {

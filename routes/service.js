@@ -1,5 +1,4 @@
 'use strict';
-const { waiting } = require('../lib/not-migrated');
 // OWNS      the seven service clock routes of a chit (read, start, respond, resolve, pause, end, answer) and their plain answers when an id, a time or a text value is not valid.
 // CALLED BY server.js (app.use('/api/service')) · the web service panel (cap-service.js) · tools/api-register.cjs (router.openapi) · tests/api-problem-service.test.cjs · tests/rail-158-service-errors.test.cjs · tests/rail-161-service-catches.test.cjs
 // FLOW      router.param id guard (404, before sign-in) → auth → schemaValidate (lib/service-contract.js) → handler: mine(entity, chit) → withEntity → chit_sla / pause functions → res | failed() (503 not migrated · 400 a value no column can hold · 500)
@@ -16,6 +15,7 @@ const { waiting } = require('../lib/not-migrated');
  * This has cost two evenings already: a swallowed 42P01 sent him back to the SQL editor twice for migrations that
  * had applied perfectly.
  */
+const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const { body } = require('express-validator');
 const crypto = require('crypto');

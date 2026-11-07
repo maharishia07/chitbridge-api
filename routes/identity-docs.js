@@ -1,5 +1,4 @@
 'use strict';
-const { waiting } = require('../lib/not-migrated');
 /**
  * routes/identity-docs.js — a person's own identity record: phone, email, and government IDs.
  *
@@ -25,6 +24,7 @@ const { waiting } = require('../lib/not-migrated');
  * CARD      18-identity-sign-in-and-access/identity-documents-and-the-vault
  * CALLED BY lib/identity-auth.js, routes/keys.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
  */
+const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,

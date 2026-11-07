@@ -16,6 +16,8 @@ const ID = /\bb[0-9]{2,3}\b/;
 check('singular reads "X arrives after the next update."', waiting('The asset register') === 'The asset register arrives after the next update. Everything else works meanwhile.');
 check('plural reads "X arrive"', /^Channels arrive after/.test(waiting('Channels', true)));
 check('the meanwhile can be said exactly', waiting('Unit and source', true, 'Type, label and required still work.').endsWith('Type, label and required still work.'));
+check('refusal path: a missing subject still reads as a sentence, never throws, never carries an id', (() => { try { return !ID.test(waiting(undefined)) && /after the next update/.test(waiting(undefined)); } catch (e) { return false; } })());
+check('fail-closed: the sentence never promises a date or a number it cannot keep', !/[0-9]/.test(waiting('Stores', true)));
 check('no sentence carries a migration id', !ID.test(waiting('Stores', true)));
 /* the sites this change moved: none of these files may put a migration id in a string handed to a person */
 const SITES = ['lib/books-contract.js', 'lib/books-assets.js', 'lib/books-recurring.js', 'lib/assist-contract.js', 'lib/channels.js', 'lib/stores.js', 'lib/profile.js', 'routes/identity-docs.js', 'lib/bell-contract.js', 'lib/crm-contract.js', 'lib/privacy.js', 'lib/fx-rates.js'];
