@@ -5423,7 +5423,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 818,
-   "hash": "17d02ebb850fc623",
+   "hash": "e118d9e7968db836",
    "does": "",
    "errors": {
     "count": 3,
@@ -5508,7 +5508,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#754 FIN-72",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#946 CTRY-94",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57419,7 +57419,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 182,
-   "hash": "af3a4c2553c0c02a",
+   "hash": "89ef5c7405cbca28",
    "does": "",
    "errors": {
     "count": 0,
@@ -57495,7 +57495,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "af3a4c2553c0c02a"
+    "stale_since": "89ef5c7405cbca28"
    },
    "status": "partial",
    "callers": [
