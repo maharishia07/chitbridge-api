@@ -51,7 +51,7 @@ const SECRET_SQL = 'relation "chit_copy" does not exist -- INSERT INTO vault';
 const PEER = { installation_key: 'mx-1', domain: 'mx.example.com', hosted_locally: false, active: true };
 const LIVE_TO = { identity_id: 'e-to', population: 'live' };
 const SHOP = { identity_id: 'e-to', bridge_id: 'CBRECV0001', display_name: 'Recv', user_id: 'recv' };
-const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, event: null, storeFails: false, keysFail: false, catalogueFails: false };
+const FRESH = { peer: PEER, to: LIVE_TO, mayCross: true, peerThrows: false, crossThrows: false, noKey: false, openWhy: null, noSender: false, event: null, storeFails: false, keysFail: false, catalogueFails: false, planted: false };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: the peer, the recipient, the crossing rule, the live world */
@@ -119,7 +119,7 @@ function installStubs() {
       return SHOP;
     },
     publicViewFor: async () => ({ available: true }),
-    publicResponseFor: () => ({ items: [] })
+    publicResponseFor: () => (world.planted ? { items: [], cost_price: 5, internal_note: 'x' } : { items: [] })
   });
 }
 
@@ -157,6 +157,7 @@ const SCENARIOS = [
   { id: 'query-not-open', door: 'query', status: 403, body: ASK({ want: 'resolve', handle: 'recv' }), setup: { openWhy: 'unsigned' } },
   { id: 'query-unknown-question', door: 'query', status: 400, body: ASK({ want: 'everything' }) },
   { id: 'query-catalogue', door: 'query', status: 200, body: ASK({ want: 'catalogue', bridge_id: 'CBRECV0001' }) },
+  { id: 'query-resolve-not-a-business', door: 'query', status: 200, body: ASK({ want: 'resolve', handle: 'Not A Handle!' }) },
   { id: 'query-fails', door: 'query', status: 500, body: ASK({ want: 'catalogue', bridge_id: 'CBRECV0001' }), setup: { catalogueFails: true } }
 ];
 const MOUNTS = ['', '/api/ctp'];
@@ -210,8 +211,26 @@ function checkSuccess(label, scenario, answer) {
   check(label + ': answers JSON, as before', /application\/json/.test(answer.type), answer.type);
   if (scenario.id.startsWith('deliver-event')) check(label + ': accepted, and says whether it applied (a peer reads applied)', answer.json && answer.json.accepted === true && answer.json.applied === scenario.setup.event.applied && answer.json.chit_id === 'chit-1');
   else if (scenario.door === 'deliver') check(label + ': accepted, so lib/ctptransport counts it delivered', answer.json && answer.json.accepted === true && answer.json.chit_id === 'chit-1');
-  if (scenario.door === 'query') check(label + ': ok and found', answer.json && answer.json.ok === true && answer.json.found === true);
+  if (scenario.id === 'query-resolve-not-a-business') check(label + ': ok, not found, and says why (a peer reads found and why)', answer.json && answer.json.ok === true && answer.json.found === false && typeof answer.json.why === 'string');
+  else if (scenario.door === 'query') check(label + ': ok and found', answer.json && answer.json.ok === true && answer.json.found === true);
   if (scenario.door === 'manifest') check(label + ': says CTP/1 and the key', answer.json && answer.json.ctp === '1' && answer.json.public_key === 'PK-here');
+}
+
+/** API-7 / S34, red first: a column the handler never named (a seller's cost, an internal note) is kept out of a peer's answer; under report mode it passes and is counted, under enforce it is dropped */
+async function plantedColumn(port) {
+  const keep = process.env.OUTPUT_ALLOWLIST;
+  const ask = async () => {
+    Object.assign(world, FRESH, { planted: true });
+    return (await send(port, 'POST', '/api/ctp/query', ASK({ want: 'catalogue', bridge_id: 'CBRECV0001' }))).json;
+  };
+  process.env.OUTPUT_ALLOWLIST = 'report';
+  const reported = await ask();
+  check('report mode (the default): a planted column still passes through, counted not dropped', reported && reported.cost_price === 5 && reported.internal_note === 'x', reported);
+  process.env.OUTPUT_ALLOWLIST = 'enforce';
+  const enforced = await ask();
+  check('enforce: the planted columns are dropped from the query answer, the keys a peer reads stay', enforced && enforced.cost_price === undefined && enforced.internal_note === undefined && enforced.ok === true && enforced.found === true && Array.isArray(enforced.items), enforced);
+  if (keep === undefined) delete process.env.OUTPUT_ALLOWLIST;
+  else process.env.OUTPUT_ALLOWLIST = keep;
 }
 
 async function checkRoutes(port, recording) {
@@ -270,6 +289,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const server = app.listen(0);
   const recording = {};
   const tested = await checkRoutes(server.address().port, recording);
+  await plantedColumn(server.address().port);
   server.close();
   if (argv.includes('--capture')) {
     fs.writeFileSync(argv[argv.indexOf('--capture') + 1], JSON.stringify(recording, null, 1));

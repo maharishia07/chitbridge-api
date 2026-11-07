@@ -66,8 +66,6 @@ const WORLDS = [
   { id: 'nothing-set-up', setup: {} },
   { id: 'bad-id', setup: {}, badId: true }
 ];
-/* accept has no 200 scene: the stand-in cannot carry a decided round through lib/amend, so its allow-list stays unproved (API-7 left: a scene that accepts a round whose lines still hold) */
-const withoutAccept = (operations) => Object.fromEntries(Object.entries(operations).filter(([route]) => !route.endsWith('/accept')));
 const contractModule = () => require(path.join(HERE, 'lib', 'chit-proposals-contract.js'));
 
 /** lib/chit-proposals-contract.js as a unit: every door has an operation, every body is closed, every success answer is closed, the library's refusals are published */
@@ -169,7 +167,7 @@ async function foreignWorld(port) {
   const frozen = Object.keys(legacy).filter(lab.mine).reduce((sum, route) => sum + legacy[route].answers.length, 0);
   check('every refusal frozen at the first contract is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 30, frozen);
   check('a caller who is not signed in is refused with 401 on every door', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
-  const allowHeld = ALLOW.checkAllowList(recording, withoutAccept(contractModule().OPERATIONS), check);
+  const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));

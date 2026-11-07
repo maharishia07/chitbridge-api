@@ -36,7 +36,7 @@ function copyRows(owner, options) {
     if (/FROM chit_detail WHERE chit_id = \$1 AND entity_id = \$2/.test(sql)) return held ? { rows: [detail], rowCount: 1 } : { rows: [], rowCount: 0 };
     if (/FROM chit_proposal WHERE entity_id = \$1 AND chit_id = \$2 ORDER BY/.test(sql)) return params && String(params[0]) === String(owner) ? { rows: choice.proposals, rowCount: choice.proposals.length } : { rows: [], rowCount: 0 };
     if (/FROM chit_proposal WHERE entity_id = \$1 AND chit_id = \$2 AND proposal_id = \$3/.test(sql)) {
-      const found = String(params[0]) === String(owner) ? choice.proposals.filter((row) => row.proposal_id === params[2]) : [];
+      const found = choice.shared || String(params[0]) === String(owner) ? choice.proposals.filter((row) => row.proposal_id === params[2]) : [];
       return { rows: found, rowCount: found.length };
     }
     if (/SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(sql)) return { rows: [{ bridge_id: 'CBTEST0001', display_name: 'Test shop' }], rowCount: 1 };
@@ -66,6 +66,9 @@ function extras(tools) {
   const myRound = round(ROUND_A, { from_entity_id: OWNER.identity_id, from_name: 'Test shop' });
   const olderRound = round(ROUND_A, { round: 2 });
   const newerRound = round(ROUND_B, { round: 3 });
+  /* a money-free round that still holds: its base hash is the one the lines and invoice of this copy give now (lib/chit-proposal baseHashOf), so accepting it reaches the 200 without lib/amend */
+  const heldHash = require('../../lib/chit-proposal').baseHashOf({ header: { business_json: { deal_type: 'rfq' } }, live: require('../../lib/amend').liveSet([{ particulars: 'Pump', quantity: 2, price: 100, line_id: null }], []) });
+  const termsRound = round(ROUND_A, { kind: 'terms', terms: { payment: '30 days' }, summary: null, currency_code: null, base_hash: heldHash });
   const requestRound = round(ROUND_A, { kind: 'request', request: { lines: [{ line_index: 0, quantity: 3 }] }, currency_code: null, summary: null });
   /** the table is there but every later statement fails with the text a caller must never see */
   const failsAfterSetup = (sql) => {
@@ -104,6 +107,7 @@ function extras(tools) {
     X('accept-older-round', ACCEPT, 409, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [olderRound, newerRound] })), url: at('/' + ROUND_A + '/accept'), body: {} }),
     X('accept-a-request', ACCEPT, 409, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [requestRound] })), url: at('/' + ROUND_A + '/accept'), body: {} }),
     X('accept-stale-round', ACCEPT, 409, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [openRound] })), url: at('/' + ROUND_A + '/accept'), body: { note: 'yes' } }),
+    X('accept-terms-round', ACCEPT, 200, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [termsRound], shared: true })), url: at('/' + ROUND_A + '/accept'), body: { note: 'Agreed' } }),
     X('accept-unknown-key-refused', ACCEPT, 422, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [openRound] })), url: at('/' + ROUND_A + '/accept'), body: { note: 'yes', signed: true } }),
     X('accept-read-fails', ACCEPT, 500, { setup: withRows(failsAfterSetup), body: {} }),
     X('reject-round', REJECT, 200, { setup: withRows(copyRows(OWNER.identity_id, { proposals: [openRound] })), url: at('/' + ROUND_A + '/reject'), body: { note: 'Too dear' } }),

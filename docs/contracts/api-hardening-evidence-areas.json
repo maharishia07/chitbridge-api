@@ -1090,6 +1090,7 @@
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
@@ -1215,6 +1216,9 @@
    "output_allowlist": true
   },
   "POST /api/ctp/deliver": {
+   "output_allowlist": true
+  },
+  "POST /api/ctp/query": {
    "output_allowlist": true
   },
   "POST /api/definitions": {
@@ -1609,6 +1613,9 @@
    "output_allowlist": true
   },
   "POST /deliver": {
+   "output_allowlist": true
+  },
+  "POST /query": {
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
