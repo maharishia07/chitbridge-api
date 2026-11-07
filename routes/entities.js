@@ -86,6 +86,38 @@ function userIdVerdict(wanted, display_name) {
 }
 
 /**
+ * ⭐ SEC-130 (A) · mailAlreadyOnFile(email): the held address gets ONE mail through the same mailer, awaited like a new address's code, so the two paths do the same
+ * work and take the same time (a faster refusal would be the timing signal). It carries no code and no shop name: it says the address is already on file, how to sign
+ * in, and where to get help. Both paths sit behind the same app-level per-IP authLimiter (signin.askChecks is field validation, not a limit; no per-address cap yet, SEC-148). Best effort: sendEmail never throws.
+ */
+function mailAlreadyOnFile(email) {
+  const html =
+    '<div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;"><h2 style="color: #0D47A1;">Chit and Bridge</h2>' +
+    '<p>Someone asked to register with this e-mail address, which is already on file with us.</p>' +
+    '<p>If that was you, go to the sign-in page and sign in with this address; we send a code there. No new account was made.</p>' +
+    '<p>If you need help, use Help in the app or reply to this e-mail. If this was not you, ignore it.</p></div>';
+  return require('../lib/notify').sendEmail(email, 'Chit and Bridge: this e-mail is already on file', html);
+}
+
+/**
+ * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
+ * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
+ * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
+ */
+async function emailHeldByNoAccount(sql, args) {
+  try {
+    await query(sql, args);
+    return false;
+  } catch (e) {
+    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) {
+      await mailAlreadyOnFile(args[3]);
+      return true;
+    }
+    throw e;
+  }
+}
+
+/**
  * registerNew — a new e-mail at /register without mode:'login' becomes a new entity (ask() hands over with next()).
  *
  * ⭐⭐ THE USER ID IS CHOSEN AT REGISTRATION, AND ONLY HERE. Athi, 2026-08-19: *"through the registration page, only the
@@ -130,14 +162,14 @@ async function registerNew(req, res) {
     if (mark.population !== null) more.push(['population', mark.population]);
     if (guess && guess.currency) more.push(['currency_code', guess.currency]);
     if (guess && guess.timezone && (await schema.hasColumn('identities', 'timezone'))) more.push(['timezone', guess.timezone]);
-    await query(
+    const sql =
       `INSERT INTO identities (identity_id, bridge_id, display_name, email, identity_type, status, user_id, entity_kind, country` +
-        more.map(([c]) => ', ' + c).join('') +
-        `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
-        more.map((_, index) => ', $' + (index + 8)).join('') +
-        ')',
-      [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, (guess && guess.country) || null].concat(more.map(([, v]) => v))
-    );
+      more.map(([c]) => ', ' + c).join('') +
+      `) VALUES ($1, $2, $3, $4, 'entity', 'pending', $5, $6, $7` +
+      more.map((_, index) => ', $' + (index + 8)).join('') +
+      ')';
+    const args = [identity_id, bridge_id, display_name, email, verdict.value, mark.entity_kind, guess?.country || null].concat(more.map(([, v]) => v));
+    if (await emailHeldByNoAccount(sql, args)) return res.json({ message: 'Verification code sent to your email', email });
     /* where each guessed value came from (b299 setup_source) — best-effort: a label lost never costs a sign-up, but it is said */
     if (guess) {
       try {
