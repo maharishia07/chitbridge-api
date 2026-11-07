@@ -12,9 +12,6 @@
 const express = require('express');
 const cbLog = require('../lib/logger');
 const { waiting } = require('../lib/not-migrated');
-const {
-  round: roundMoney
-} = require('../lib/money'); /* ⭐ money.round — the one rounder (SPEC-money-one-reader.md): half away from zero, on the decimal value */
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
@@ -1796,8 +1793,8 @@ function sendBillCopyFor(sendState, receiver) {
   const { counterBill, is_draft, sender_id, sender_display_name } = sendState;
   if (!counterBill || is_draft || receiver.kind !== 'to' || !receiver.entity_id || String(receiver.entity_id) === String(sender_id)) return null;
   const copyBusiness = Object.assign({}, sendBjFor(sendState, receiver.entity_id), { counter_bill: true });
-  const parts = copyBusiness.payment && Array.isArray(copyBusiness.payment.parts) ? copyBusiness.payment.parts : [];
-  const total = roundMoney(parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0));
+  /* ACC-252: what the bill comes to is the bill's own engine figure, picked by the ONE reader (counter-bill.pickOf: the carried invoice's TotInvVal, else summary_json.money.total), never what was paid (the parts) */
+  const total = ownBill.pickOf({ summary_json: sendState.summary_json, business_json: copyBusiness }).total;
   return {
     purpose: 'invoice',
     business_json: copyBusiness,
