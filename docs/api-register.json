@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 216,
-  "meets": 421,
+  "partial": 218,
+  "meets": 419,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -9792,7 +9792,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5427,
-   "hash": "92b767d1356f7beb",
+   "hash": "837d644d48e9aa1d",
    "does": "",
    "errors": {
     "count": 0,
@@ -10516,7 +10516,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3102,
-   "hash": "55d4d0593ffb2a8c",
+   "hash": "54b00476fd18ef9d",
    "does": "",
    "errors": {
     "count": 0,
@@ -10587,10 +10587,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "54b00476fd18ef9d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js"
@@ -10619,7 +10620,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3298,
-   "hash": "b29d0408daaea305",
+   "hash": "130ced1d0eda9241",
    "does": "",
    "errors": {
     "count": 0,
@@ -10692,10 +10693,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "130ced1d0eda9241"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "authority-forms.html",
