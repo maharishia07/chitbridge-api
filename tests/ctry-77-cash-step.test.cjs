@@ -47,6 +47,8 @@ ok('lib/cash-step.js types no step number', !/\b5\b/.test(fs.readFileSync(path.j
   const now = Date.parse('2026-11-07T10:00:00Z');
   ok('replay · billed 2 hours before it arrives (ISO) → a replay', CS.replayOf({ billed_at: '2026-11-07T08:00:00Z' }, now) === true);
   ok('replay · billed in ms, 1 day before → a replay', CS.replayOf({ billed_at: now - 86400000 }, now) === true);
+  ok('backdated · billed 40 days before → NOT a replay (refused)', CS.replayOf({ billed_at: now - 40 * 86400000 }, now) === false);
+  ok('future · billed 2 hours AFTER now → NOT a replay (refused)', CS.replayOf({ billed_at: '2026-11-07T12:00:00Z' }, now) === false);
   ok('live · billed 30 seconds before → NOT a replay (refused)', CS.replayOf({ billed_at: '2026-11-07T09:59:30Z' }, now) === false);
   ok('live · no billed_at or unreadable → NOT a replay (refused)', CS.replayOf({}, now) === false && CS.replayOf({ billed_at: 'soon' }, now) === false);
 }

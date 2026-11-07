@@ -1674,6 +1674,7 @@ async function sendCashStep(sendState, req, res) {
   /* an OFFLINE REPLAY of a bill already printed is accepted, said on the answer (cash_step) - never a wedged queue; the books take the gap as round-off */
   if (refusal.accepted) {
     sendState.cashStep = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, cite: refusal.cite };
+    business_json.cash_step = sendState.cashStep; /* recorded ON the chit, not only on the answer: the books and a later reader see why the cash is off the step */
     return;
   }
   res.locals.code = refusal.code;
@@ -6766,4 +6767,5 @@ router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
+module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

@@ -15,13 +15,14 @@ const ok = (name, fn) => { try { fn(); pass++; console.log('   ok   ' + name); }
 
 function grab(name) {
   let at = HTML.indexOf('\nfunction ' + name + '(');
+  if (at < 0) at = HTML.indexOf('\nasync function ' + name + '(');
   if (at < 0) at = HTML.indexOf('\nvar ' + name + ' = ');
   assert.ok(at >= 0, name + ' is gone from till.html');
   let i = HTML.indexOf('{', at), depth = 0;
   for (; i < HTML.length; i++) { if (HTML[i] === '{') depth++; else if (HTML[i] === '}' && --depth === 0) break; }
   return HTML.slice(at, i + 1);
 }
-const FNS = ['r2', 'shopCur', 'docCountry', 'shopPack', 'shopMinor', 'booksMajor', 'cashRule', 'payWayId', 'cashDue', 'restBeforeLast', 'cashRoundOf', 'addPart', 'tenderParts'];
+const FNS = ['r2', 'shopCur', 'docCountry', 'shopPack', 'shopMinor', 'booksMajor', 'cashRule', 'payWayId', 'cashDue', 'restBeforeLast', 'cashRoundOf', 'addPart', 'tenderParts', 'subTaken', 'subIssue', 'chitOfSubscription'];
 
 /** a till page for one shop: net = the bill, picked = the tender way, typed = the amount box */
 function page(country, currency, net, picked, typed) {
@@ -33,11 +34,14 @@ function page(country, currency, net, picked, typed) {
     S: { shop: { country, currency, name: 'Test Shop' } }, MONEY: () => MONEY, cbQuiet: () => {},
     PICKED: picked, PAY_ASKED: false, PARTS: [], said: [],
     billMoney: () => ({ net }), say: (words) => ctx.said.push(words), money: (n) => String(n), creditCust: () => null,
+    SUB_WHAT: 'AMC', SUB_AMOUNT: String(net), SUB_CADENCE: '30', SUB_OCC: '', SUB_CUSTOMER: '', SUB_HOW: picked, WHO: null, SUB_WHYNOT: '', subbed: [],
+    tillStopped: async () => false, subCanIssue: () => true, sure: async () => true, toastLine: (w) => ctx.said.push(w), subClose: () => {}, paintMenu: () => {}, tillStamp: () => ({ id: 'C1' }),
+    HOST: { subscription: async (b) => { ctx.subbed.push(b); return { ok: true }; } },
     document: { getElementById: () => box }, paintParts: () => {}, paintTotals: () => {}, draftSave: () => {}
   };
   ctx.CBMoney = MONEY; ctx.CBRegulation = ctx.window.CBRegulation; ctx.CBCountries = ctx.window.CBCountries;
   vm.createContext(ctx);
-  vm.runInContext(FNS.map(grab).join('\n') + '\nthis.__f = { addPart, tenderParts, cashRoundOf };', ctx);
+  vm.runInContext(FNS.map(grab).join('\n') + '\nthis.__f = { addPart, tenderParts, cashRoundOf, subIssue, chitOfSubscription };', ctx);
   return { f: ctx.__f, ctx };
 }
 
@@ -75,5 +79,23 @@ ok('IN control · the partial-cash push stays as typed', () => {
   const p = page('IN', 'INR', 100.03, 'Cash', 33.33);
   assert.strictEqual(p.f.tenderParts([{ how: 'UPI', amount: 50 }], 100.03, 33.33)[1].amount, 33.33);
 });
-console.log('\n' + pass + ' ok, ' + fail + ' failed');
-process.exit(fail ? 1 : 0);
+ok('AU · "+ part" Cash 0.01 rounds to nothing → no Cash 0.00 part is pushed, and it says so', () => {
+  const p = page('AU', 'AUD', 10.03, 'Cash', 0.01); p.f.addPart();
+  assert.strictEqual(p.ctx.PARTS.length, 0); assert.ok(p.ctx.said.length === 1);
+});
+(async () => {
+  const sub = async (country, currency, how, amount) => { const p = page(country, currency, amount, how, ''); await p.f.subIssue(); return p; };
+  let p = await sub('AU', 'AUD', 'Cash', 10.02);
+  ok('AU · a CASH subscription of 10.02 is taken 10.00 with cash_round -0.02, and the chit carries both', () => {
+    assert.strictEqual(JSON.stringify(p.ctx.subbed[0].payments), JSON.stringify([{ how: 'Cash', amount: 10 }]));
+    assert.strictEqual(p.ctx.subbed[0].cash_round, -0.02);
+    const chit = p.f.chitOfSubscription(Object.assign({ no: 'SUB-1', what: 'AMC' }, p.ctx.subbed[0]));
+    assert.strictEqual(chit.business_json.payment.cash_round, -0.02);
+  });
+  p = await sub('AU', 'AUD', 'Card', 10.02);
+  ok('AU · a CARD subscription of 10.02 stays exact, no cash_round', () => { assert.strictEqual(p.ctx.subbed[0].payments[0].amount, 10.02); assert.strictEqual(p.ctx.subbed[0].cash_round, undefined); });
+  p = await sub('IN', 'INR', 'Cash', 10.02);
+  ok('IN control · a cash subscription of 10.02 stays exact', () => { assert.strictEqual(p.ctx.subbed[0].payments[0].amount, 10.02); assert.strictEqual(p.ctx.subbed[0].cash_round, undefined); });
+  console.log(String(pass) + ' ok, ' + fail + ' failed');
+  process.exit(fail ? 1 : 0);
+})();

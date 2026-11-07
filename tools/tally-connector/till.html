@@ -6560,7 +6560,7 @@ function chitOfSubscription(s){
       till: tillStamp(s.till, s.by),
       doc: 'subscription', slip: 'subscription',
       bill_no: s.no, billed_at: s.at,
-      payment: { mode: s.mode, paid: s.total, parts: s.payments || [] },
+      payment: { mode: s.mode, paid: s.total, parts: s.payments || [], cash_round: s.cash_round },
       /* ⭐ what was actually agreed — never classified into a scheme, per "we are not classifying... let it be
        * that way". `occurrences_total: null` means "runs until cancelled/paused", not a data gap. */
       subscription: { what: s.what, occurrences_total: s.occurrencesTotal, cadence_days: s.cadenceDays, starts_at: s.startsAt },
@@ -20979,8 +20979,10 @@ function addPart(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
+  var coinAmount = cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED));
+  if (!(coinAmount > 0)) { say('That rounds to nothing in ' + PICKED + ' - type at least the smallest coin.'); return; }   /* CTRY-77: never a Cash 0.00 part */
   /* CTRY-77: a CASH part is TAKEN at the pack's coin step like the part that pays the rest (cashDue) — typed 10.02 on a 10.02 bill goes out 10.00, cash_round -0.02 follows from cashRoundOf */
-  PARTS.push({ how: PICKED, amount: cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED)) });
+  PARTS.push({ how: PICKED, amount: coinAmount });
   PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals(); draftSave();          /* R1 · a part payment is part of the bill */
@@ -25767,6 +25769,11 @@ function subPaint(){
 }
 /** ⭐⭐ ISSUE IT. Same discipline as an expense: numbered from its own series, written locally, queued, sent
  *  when the line is there. Unlike an expense, this IS a sale — see chitOfSubscription()'s own comment. */
+/** CTRY-77: a CASH subscription is TAKEN at the pack's coin step like a bill (cashDue); cash_round is what the coin changed, as on a bill (absent when nothing rounds) */
+function subTaken(amount){
+  var taken = cashDue(amount, payWayId(SUB_HOW)), moved = r2(taken - amount);
+  return { payments: [{ how: SUB_HOW, amount: taken }], cash_round: moved ? moved : undefined };
+}
 async function subIssue(){
   var what = SUB_WHAT.trim(), amount = r2(Number(SUB_AMOUNT) || 0), cadence = Number(SUB_CADENCE) || 0;
   if (!what) { toastLine('Say what this subscription/AMC is for first.'); return; }
@@ -25780,7 +25787,7 @@ async function subIssue(){
     + (occ ? ', ' + occ + ' included' : ', ongoing') + ', every ' + cadence + ' day(s)?';
   if (!(await sure(confirmWords, 'Yes, sign them up', 'New subscription/AMC'))) return;
   var body = { what: what, customer: { name: custName }, price: amount, total: amount, mode: SUB_HOW,
-    payments: [{ how: SUB_HOW, amount: amount }],
+    payments: subTaken(amount).payments, cash_round: subTaken(amount).cash_round,
     occurrencesTotal: occ, cadenceDays: cadence, startsAt: new Date().toISOString(),
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null };
   var r = { ok: false };
