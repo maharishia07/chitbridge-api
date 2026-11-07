@@ -258,7 +258,7 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
 
   await section('T12 · C5 / ACC-268: ledgerFor names the copy it could not read, and the GSTR route and the pack say so', async () => {
     const src = fs.readFileSync(path.join(H.API, 'lib', 'tax-copy.js'), 'utf8');
-    ok('ledgerFor pushes the failed chit into `dropped` and returns it', /dropped\.push\(h\.chit_id\)/.test(src) && /ledger: T\.ledger\(entries, meParty\), dropped/.test(src));
+    ok('ledgerFor pushes the failed chit into `dropped` and returns it', /dropped\.push\(h\.chit_id\)/.test(src) && /ledger: monthLedger, dropped/.test(src));
     for (const [file, re, what] of [['routes/tax.js', /\(dropped \|\| \[\]\)\.length\) return problem/, 'GET /tax/gstr refuses a short month (422 GSTR_REFUSED)'], ['routes/tax.js', /dropped: dropped/, 'GET /tax/ledger carries `dropped`'], ['lib/books-pack.js', /led\.dropped && led\.dropped\.length\) pending\.push/, 'the pack puts a short GSTR-1 on `pending`, no half file'], ['routes/books.js', /ledgerCopy\.dropped \|\| \[\]/, 'the GSTR-3B comparison does not compare a short month']])
       ok(what, re.test(fs.readFileSync(path.join(H.API, file), 'utf8')));
     /* behaviour: the REAL ledgerFor on a fresh copy of the module, its db stubbed; copies the reader cannot build are named, not dropped in silence */
