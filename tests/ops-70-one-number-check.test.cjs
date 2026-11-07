@@ -24,6 +24,7 @@ const ROOT = path.join(__dirname, '..');
 const SHOP = '11111111-1111-4111-8111-111111111111';
 const posted = [];
 const stamped = [];
+const stampedCosts = [];
 
 const stub = (rel, exports) => {
   const p = require.resolve(path.join(ROOT, rel));
@@ -39,6 +40,7 @@ const db = {
   query: async (sql, params) => {
     if (/^\s*UPDATE supply_item/.test(sql)) {
       stamped.push(...params[1]);
+      stampedCosts.push(...params[3]);
       return { rows: [] };
     }
     if (/^\s*SELECT supply_item_id/.test(sql)) {
@@ -77,6 +79,7 @@ const buy = (server, line) =>
     const data = JSON.stringify({ ref: 'B-' + ++seq, lines: [line] });
     posted.length = 0;
     stamped.length = 0;
+    stampedCosts.length = 0;
     const req = http.request({ port: server.address().port, method: 'POST', path: '/api/supplies/purchase', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
@@ -104,6 +107,7 @@ async function refused(server, label, line, words) {
     await refused(server, 'cost -5' + keep, { name: kind, qty: 2, cost: -5 }, COST);
     await refused(server, 'cost "abc"' + keep, { name: kind, qty: 2, cost: 'abc' }, COST);
     await refused(server, 'cost true' + keep, { name: kind, qty: 2, cost: true }, COST);
+    await refused(server, 'cost "   " (spaces only)' + keep, { name: kind, qty: 2, cost: '   ' }, COST);
   }
 
   /* hand-computed: 3 × 20 counted → the ledger is asked for qty 3 at rate 20, and the answer has no "no cost" */
@@ -118,6 +122,7 @@ async function refused(server, label, line, words) {
 
   a = await buy(server, { name: 'kept Rice', qty: 4, cost: '' });
   check(a.body.says === '1 line recorded · 1 counted · 1 at no cost', 'a cost of "" is no cost: said "at no cost" (got "' + a.body.says + '")');
+  check(stamped.length === 1 && stampedCosts.length === 1 && stampedCosts[0] === null, 'a cost of "" stamps null, so the UPDATE (COALESCE) keeps last_cost instead of writing 0 (got ' + JSON.stringify(stampedCosts) + ')');
   a = await buy(server, { name: 'kept Rice', qty: 4, cost: 0 });
   check(a.body.says === '1 line recorded · 1 counted · 1 at no cost', 'a cost of 0 typed is at no cost: said (got "' + a.body.says + '")');
 
