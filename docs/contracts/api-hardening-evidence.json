@@ -72,6 +72,9 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/chits/send": {
+   "strict_input": true
+  },
   "GET /api/chits/sent": {
    "output_allowlist": true
   },

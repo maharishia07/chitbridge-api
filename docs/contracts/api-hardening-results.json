@@ -265,8 +265,7 @@
   },
   "POST /api/chits/send": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
