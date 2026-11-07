@@ -10,7 +10,7 @@ const assert = require('assert'), fs = require('fs'), path = require('path');
 const read = (p) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8').replace(/\r\n/g, '\n');
 const PAGE = read('tools/tally-connector/till.html');
 function fn(sig) { const a = PAGE.indexOf(sig); assert.ok(a >= 0, sig + ' is gone'); return PAGE.slice(a, PAGE.indexOf('\n}\n', a) + 3); }
-const src = ['function usignRefusalWords(', 'function usignAnswer(', 'function usignDoor(', 'function usignWasOk(', 'function usignWasRefused(', 'function usignAskedFirstCode(',
+const src = ['function usignRefusalWords(', 'function usignAnswer(', 'function usignDoor(', 'function usignWasOk(', 'function usignWasRefused(',
   'function whoHandle(', 'function whoPick(', 'function whoAsk(', 'function whoNoPinWords(', 'async function usignAfterIn(', 'async function usignKeepChosenPin(', 'function usignCounterLine(', 'function usignInWords(']
   .map(fn).join('\n');
 let pass = 0;
@@ -88,12 +88,12 @@ function world(o) {
     assert.strictEqual(a.body.message, 'Slow down.'); assert.strictEqual(b.body.message, 'Type your mobile number, email or User ID.');
   });
   await it('R112 · a first code is SHOWN by the owner: the ask answer says so, and no "Co-assists" or "sent"', () => {
-    const w = world(); const r = w.api.usignAnswer('/api/signin/ask', {}, { status: 200, body: { kind: 'actor', need: 'code', message: 'First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.' } }, 'Asha Devi');
-    assert.ok(/first code the owner gave you/.test(r.body.message) && /Counter PIN/.test(r.body.message)); assert.ok(!/Co-assists|sent/.test(r.body.message));
+    const w = world(); const r = w.api.usignAnswer('/api/signin/ask', {}, { status: 200, body: { need: 'pin_or_code', message: 'If that sign-in exists, enter your PIN or the code we sent.' } }, 'Asha Devi');
+    assert.ok(/first code the owner gave you/.test(r.body.message) && /PIN/.test(r.body.message)); assert.ok(!/Co-assists|sent|If that/.test(r.body.message), 'SEC-143: one sentence for a picked worker, whatever she has');
   });
   await it('R112 · an owner e-mailed code keeps the server words', () => {
-    const w = world(); const r = w.api.usignAnswer('/api/signin/ask', {}, { status: 200, body: { kind: 'entity', need: 'code', message: 'Verification code sent to your email' } }, '');
-    assert.strictEqual(r.body.message, 'Verification code sent to your email');
+    const w = world(); const r = w.api.usignAnswer('/api/signin/ask', {}, { status: 200, body: { need: 'pin_or_code', message: 'If that sign-in exists, enter your PIN or the code we sent.' } }, '');
+    assert.strictEqual(r.body.message, 'If that sign-in exists, enter your PIN or the code we sent.');
   });
 
   await it('3 · the PIN chosen in the first sign-in is the counter PIN: kept, dialog closed, no second ask', async () => {

@@ -6752,6 +6752,7 @@
           "net",
           "count",
           "provisional",
+          "dropped",
           "rows",
           "note"
         ],
@@ -6785,6 +6786,12 @@
           },
           "provisional": {
             "type": "boolean"
+          },
+          "dropped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "rows": {},
           "note": {
@@ -25515,9 +25522,29 @@
     },
     "GET /api/relationships/customers/groups": {
       "status": "200",
-      "schema": {},
+      "schema": {
+        "type": "object",
+        "required": [
+          "names",
+          "migrated"
+        ],
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/customers/groups"
       }
