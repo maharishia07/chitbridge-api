@@ -101,7 +101,7 @@ of file each thing is; this says what already does the job.
 | 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 26 | `opts` | `cap-stock.js` |  |
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
-| 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 26 | `owner` | `books.js` |  |
 | 25 | `load` | `cap-assist.js` |  |
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
