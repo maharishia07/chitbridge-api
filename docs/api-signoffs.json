@@ -1846,6 +1846,7 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
    "lifecycle": "stable"
   },
+  "POST /api/actors/login": {"hash":"4a792d6a3f9ffc26","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#883","lifecycle":"stable"},
   "POST /api/actors/suggest-key": {
    "hash": "5b6d84f0c36544bd",
    "names_clear": true,
@@ -2621,6 +2622,8 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
    "lifecycle": "stable"
   },
+  "POST /api/entities/register": {"hash":"6f33e5526ce8ba8e","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#883","lifecycle":"stable"},
+  "POST /api/entities/verify": {"hash":"fe7072cdd634a673","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#883","lifecycle":"stable"},
   "POST /api/folders": {
    "hash": "a35c61b13fd33d04",
    "names_clear": true,
@@ -3087,6 +3090,8 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
    "lifecycle": "stable"
   },
+  "POST /api/signin/ask": {"hash":"08511a0cb859c596","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#883","lifecycle":"stable"},
+  "POST /api/signin/verify": {"hash":"8638009db812fb3e","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent reviewer, not the builder) 2026-11-07 PR#883","lifecycle":"stable"},
   "POST /api/tax/compute": {
    "hash": "cf1ed74ea06db463",
    "names_clear": true,

@@ -191,8 +191,7 @@ router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /ses
  * ⚠️⚠️ THE RISKIEST IAM MOVE: A REAL PERSON'S 401 STOPS THE BUILD. So nothing here changes who may sign in or what an old
  * path answers. Every old path is an ALIAS — the SAME function — and answers byte for byte what it answered before the
  * move (tests/signin-routes.test.cjs replays 53 requests against a golden recorded from the pre-move code).
- * The only differences are additive and only on the NEW door (req.signinDoor === 'signin'): ask answers `kind` + `need`,
- * a refusal for an unknown id carries `code: 'NO_ACCOUNT'`, and ask/verify take `{ id }` (a user id or e-mail).
+ * The only difference is additive and only on the NEW door (req.signinDoor === 'signin'): a refusal for an unknown id carries `code: 'NO_ACCOUNT'`, and ask/verify take `{ id }` (a user id or e-mail). SEC-143: ask answers ONE body to everyone (askAnswered), on every door.
  *
  * ⭐ DOORS. `door(name)` marks which path a request came in by, because the old paths keep their old words:
  *   'register'     /api/entities/register   — ask, and an unknown e-mail without mode:'login' goes on to REGISTRATION
@@ -236,12 +235,13 @@ function note(req, identity, action, method, code, jti) {
   );
 }
 /**
- * ⭐ M14 — ONE CONTACT, SEVERAL PEOPLE: the door asks which, never guesses (DECISIONS 2026-10-08). `choices[].id` is the STORED
- * id (grammar and all) the page sends back as `id`; the person only ever typed a number or an address.
+ * ⭐ M14 — ONE CONTACT, SEVERAL PEOPLE (Athi 2026-11-07: the chooser comes AFTER the secret). Only the accounts the typed secret OPENS are listed,
+ * so a stranger learns nothing; `choices[].id` is the STORED id the page sends back as `id` with the same secret.
  */
-const chooseWhich = (req, res, choices) => {
+const chooseWhich = async (req, res, opens) => {
   res.locals.code = 'CHOOSE_IDENTITY';
   const message = 'That contact is on more than one account. Choose one.';
+  const choices = await identityAuth.choicesOf(query, opens);
   return problem(req, res, { status: 409, code: 'CHOOSE_IDENTITY', detail: message, legacy: { error: 'Which account?', code: 'CHOOSE_IDENTITY', message, choices } });
 };
 /**
@@ -257,8 +257,25 @@ const refused = (req, res, reason) => {
 /** no such account: refuse like a wrong secret, after spending the time a secret check spends */
 const unknownAccount = async (req, res) => {
   await identityAuth.spendCheckTime();
+  await identityAuth.padHashes(req.contactPad || 0);
   return refused(req, res, 'NO_ACCOUNT');
 };
+/**
+ * ⭐ SEC-143 (API-STANDARD S6) — ONE ASK ANSWER. Before a secret is proven the ask door says the same thing to everyone: an unknown person,
+ * a person with a PIN, a person who gets a code, a contact shared by several accounts, a store with no inbox. It never says which box
+ * (PIN or code), which account (id, user_id, handle, e-mail), which kind of person, or that a choice exists; the one box takes either secret.
+ * It spends one hash time first, the time an unknown account spends, so what a person needs is not told by how long the answer takes either.
+ * The true reason goes to the request log and signin_events (note) only. A code made here is mailed AFTER the answer starts (askMail), never inside its time.
+ */
+const ASK_ANSWER = { message: 'If that sign-in exists, enter your PIN or the code we sent.', need: 'pin_or_code' };
+/** answers an ask: waits for the hash time that has run BESIDE the branch's own work (so owner, first-timer, PIN holder and unknown take as long as the slowest, not a sum), notes the true reason in the log, then says ASK_ANSWER (plus the code only on an opted-in local stack) */
+const askAnswered = async (req, res, reason, echoed, hashing = identityAuth.spendCheckTime()) => {
+  await hashing;
+  if (reason) res.locals.code = reason;
+  return res.json(devOtp.mayExposeOtp() && echoed ? { ...ASK_ANSWER, dev_otp: echoed } : ASK_ANSWER); // dev_otp: the explicit local-stack opt-in only (lib/dev-otp.js), never sealed
+};
+/** a mail or text for a code made at ask goes out without holding the answer; a failure to send is logged, never told on the door */
+const askMail = (sending) => Promise.resolve(sending).catch((err) => console.error('ask mail not sent:', err.message));
 /** K-1: a typed value with a NUL byte names no account and no database can hold it (Postgres refuses it, 22021): it is answered as an unknown value is, before any lookup */
 const holdsNul = (value) => String(value == null ? '' : value).includes('\u0000');
 /** the shop a door names, as findLoginIdentity reads it: one with a NUL byte names no shop, as an unknown shop does (the id is then looked up on its own) */
@@ -268,7 +285,7 @@ const typedByAsk = (req) => String(req.body.email || req.body.user_id || req.bod
 /** what the verify door looks up: the username after its @ on the key@Display Name door, else the first of e-mail, user id, id that was typed */
 const typedByVerify = (req) => (actorLoginDoor(req) ? (String(req.body.username).includes('@') ? String(req.body.username) : '') : (req.body.email || '').toLowerCase().trim() || (req.body.user_id || '').trim() || String(req.body.id || '').trim());
 /** a door's handler that answers a typed value with a NUL byte as an unknown one (K-1): the same refusal, the same spent time, before any lookup. The old paths mount these (router.handlers). */
-const junkAsUnknown = (handler, typedBy) => (req, res, next) => (holdsNul(typedBy(req)) ? unknownAccount(req, res) : handler(req, res, next));
+const junkAsUnknown = (handler, typedBy, unknown = unknownAccount) => (req, res, next) => (holdsNul(typedBy(req)) ? unknown(req, res) : handler(req, res, next));
 /** a wrong or locked secret is refused with the one answer; a missing PIN or an expired code still has its own sentence (it needed the right secret) */
 const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED|REQUIRED)$/.test(String(reason || ''));
 /**
@@ -277,6 +294,7 @@ const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED|REQUIRED)$/.test(S
  */
 const secretRefused = async (req, res, check) => {
   if (!(check.method === 'pin' && 'left' in check)) await identityAuth.spendCheckTime(); /* a PIN just counted (wrong, or the try that locked) was hashed; every other refusal was not */
+  await identityAuth.padHashes(req.contactPad || 0); /* SEC-143: a contact door costs the same hash times whoever is behind it */
   return refused(req, res, check.reason);
 };
 
@@ -299,10 +317,15 @@ const askChecks = [
  * DEV_OTP left set by mistake can never make a production code predictable. TTL stays 60 min (D4's 10 min is a change
  * to who can sign in — not in this move).
  */
-async function sendCode(req, res, { identity_id, email, display_name }, extra) {
-  const otp = generateOTP('entity');
+/** a fresh code on the identity (kept plain here, as the owner door always has) — the code itself is returned */
+async function storeCode(identity_id) {
+  const code = generateOTP('entity');
   const expires = new Date(Date.now() + 60 * 60 * 1000);
-  await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [otp, expires, identity_id]);
+  await query(`UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0 WHERE identity_id = $3`, [code, expires, identity_id]);
+  return code;
+}
+async function sendCode(req, res, { identity_id, email, display_name }, extra) {
+  const otp = await storeCode(identity_id);
   /**
    * ⚠️ A NETWORK-MINTED STORE HAS NO INBOX. It is issued a handle and a claim code; the credential travels through the
    * OPERATOR (Athi, 2026-08-07: "he can have the password similar to an actor and … circulate the same"). Calling the
@@ -360,82 +383,52 @@ async function ask(req, res, next) {
     if (!input) {
       return res.status(400).json({ error: 'Validation failed', message: 'Type your mobile number, email or User ID.' });
     }
-    /* the new door also answers `id`: the stored id the page verifies with — a mobile or e-mail resolves ONCE (M14) */
-    const extra = (kind, need, id) => (isNewDoor(req) ? { kind, need, ...(id ? { id } : {}) } : {});
 
     /**
      * ⭐⭐⭐ A COASSIST TYPED INTO THE SAME BOX — answered FIRST, before anything splits on '@': a coassist's own user id
      * (`bala@mayurbhavan.br`, b260) contains '@' like an e-mail, and the e-mail branch below would have gone on to
      * REGISTER a new entity under it. identityAuth.findLoginIdentity() asks lib/resolveuserid.js's grammar instead.
-     * ⚠️ AMBIGUOUS is refused, never guessed.
+     * ⚠️ AMBIGUOUS is never guessed, and (SEC-143) never listed: one contact on several accounts gets the one answer and no code.
      */
+    const hashing = identityAuth.spendCheckTime();
+    hashing.catch((err) => console.error('ask hash time:', err.message)); // awaited by askAnswered too; a failure there reaches the catch below
+    const answer = (reason, echoed) => askAnswered(req, res, reason, echoed, hashing);
     const found = await identityAuth.findLoginIdentity(query, input, { shop: shopNamed(req) });
-    if (found.ambiguous && found.choices) return chooseWhich(req, res, found.choices);
-    if (found.ambiguous) {
-      res.locals.code = 'AMBIGUOUS_NAME';
-      return res.status(409).json({
-        error: 'Ambiguous business',
-        code: 'AMBIGUOUS_NAME',
-        message: 'More than one business matches that name. Ask your admin for the exact login.'
-      });
-    }
+    if (found.ambiguous) return answer('AMBIGUOUS_NAME');
     if (found.identity && found.identity.identity_type === 'actor') {
       const a = found.identity;
       if (identityAuth.needsPin(a)) {
         note(req, a, 'ask', 'pin');
-        return res.json(Object.assign({ message: 'Enter your PIN.', use_pin: true, user_id: a.user_id }, extra('actor', 'pin', a.user_id)));
+        return answer();
       }
       /* M14: an employee who signed in by a VERIFIED e-mail gets the code there — the one contact the shop proved is theirs */
       const toMail = found.via === 'contact' && input.includes('@') && !identityAuth.mobileOf(input);
       const { otp, fresh } = await firstCodeFor(a, toMail);
       note(req, a, 'ask', 'otp');
-      const sent = toMail && fresh ? await sendOtpEmail(input.toLowerCase(), a.display_name, otp) : null;
-      return res.json(
-        Object.assign(
-          {
-            message: empCode.askMessage(toMail, fresh, sent),
-            user_id: a.user_id,
-            ...(devOtp.mayExposeOtp() && { dev_otp: otp })
-          },
-          extra('actor', 'code', a.user_id)
-        )
-      );
+      if (toMail && fresh) askMail(sendOtpEmail(input.toLowerCase(), a.display_name, otp));
+      return answer(null, otp);
     }
 
     /**
      * ⭐ M14 — A CUSTOMER by the contact the storefront proved (identities.phone / otp_contact): the code goes back on the same
-     * channel, the customer's own fixed test code applies (lib/dev-otp.js 'customer'), the .cr handle travels as `id`.
+     * channel, the customer's own fixed test code applies (lib/dev-otp.js 'customer').
      * Customers are not person sessions (issueToken: no jti) — exactly the storefront's token.
      */
     if (found.identity && found.identity.identity_type === 'customer') {
       const c = found.identity;
       const row = (await query('SELECT otp_contact, phone FROM identities WHERE identity_id = $1', [c.identity_id])).rows[0] || {};
       const to = row.otp_contact || row.phone || '';
-      const channel = to.includes('@') ? 'email' : 'phone';
       const otp = await identityAuth.issueOtp(query, c, undefined, 'customer');
-      if (to) await sendOtp(channel, to, c.display_name, otp);
+      if (to) askMail(sendOtp(to.includes('@') ? 'email' : 'phone', to, c.display_name, otp));
       note(req, c, 'ask', 'otp');
-      return res.json(
-        Object.assign(
-          {
-            message: channel === 'email' ? 'Code sent to your email' : 'Code sent to your phone',
-            ...(devOtp.mayExposeOtp() && { dev_otp: otp })
-          },
-          extra('customer', 'code', c.email)
-        )
-      );
+      return answer(null, otp);
     }
 
     /* ⭐ M14 — an OWNER found by a mobile number or a verified e-mail: the row is in hand; the lookups below would not find a number */
     if (found.identity && found.via === 'contact') {
       const e = found.identity;
       note(req, { identity_id: e.identity_id }, 'ask', 'otp');
-      return await sendCode(
-        req,
-        res,
-        { identity_id: e.identity_id, email: e.email, display_name: e.display_name },
-        extra('entity', 'code', e.user_id || e.email)
-      );
+      return await mailedCode(answer, e);
     }
 
     const isEmail = input.includes('@');
@@ -450,13 +443,13 @@ async function ask(req, res, next) {
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
       } else {
-        return unknownAccount(req, res);
+        return answer('NO_ACCOUNT');
       }
     } else {
       /**
        * ── HANDLE OR NAME ── `user_id` FIRST (the only unique one; a network-minted store's `<network>.<store>`), THEN
        * display name — and the name must be UNAMBIGUOUS: taking rows[0] once mailed a code to the wrong owner and locked
-       * the other out. Ambiguity is refused with how to be specific.
+       * the other out. Ambiguity gets the one answer and no code (SEC-143).
        */
       const accounts = async (sql) => ({ rows: (await query(sql, [input])).rows.filter(identityAuth.isAccount) }); // SEC-130: a minted party is no account
       let rows = await accounts(
@@ -470,29 +463,26 @@ async function ask(req, res, next) {
            AND identity_type = 'entity'
            AND status = 'active'`
         );
-        if (rows.rows.length > 1) {
-          res.locals.code = 'AMBIGUOUS_NAME';
-          return res.status(409).json({
-            error: 'Ambiguous name',
-            message: `More than one business is called "${input}". Sign in with your email address or your User ID instead.`,
-            code: 'AMBIGUOUS_NAME'
-          });
-        }
+        if (rows.rows.length > 1) return answer('AMBIGUOUS_NAME');
       }
-      if (rows.rows.length === 0) {
-        return unknownAccount(req, res);
-      }
+      if (rows.rows.length === 0) return answer('NO_ACCOUNT');
       identity_id = rows.rows[0].identity_id;
       email = rows.rows[0].email;
       display_name = rows.rows[0].display_name;
       console.log(`Display name login: ${display_name} → ${email}`);
     }
     note(req, { identity_id }, 'ask', 'otp');
-    return await sendCode(req, res, { identity_id, email, display_name }, extra('entity', 'code'));
+    return await mailedCode(answer, { identity_id, email, display_name });
   } catch (err) {
     console.error('Register error:', err.message);
     res.status(500).json({ error: 'Registration failed', message: safeErr(err) });
   }
+}
+/** ask for an owner: a fresh code on the account, mailed after the answer (a store with no inbox has the code its network operator issued) */
+async function mailedCode(answer, { identity_id, email, display_name }) {
+  const code = await storeCode(identity_id);
+  if (email) askMail(sendOtpEmail(email, display_name, code));
+  return answer(null, code);
 }
 
 /* ── verify ──────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -553,6 +543,32 @@ const jtiOf = (token) => {
     return null;
   }
 };
+/**
+ * identityOnContact — a contact on several accounts (SEC-143): try the secret on all of them (identityAuth.proveOnContact); the ONE it opens is
+ * the person, several it opens get the chooser (only those), none it opens gets the one refusal and costs the contact one miss.
+ * → the identity to go on with, or null once it has answered.
+ */
+async function identityOnContact(req, res, found, secret) {
+  const proof = await identityAuth.proveOnContact(query, found.candidates, found.contact, secret);
+  req.contactPad = Math.max(0, identityAuth.CONTACT_HASHES - proof.hashes);
+  if (proof.opens.length === 1) return proof.opens[0];
+  if (proof.opens.length > 1) await chooseWhich(req, res, proof.opens);
+  else await secretRefused(req, res, proof.refusal);
+  return null;
+}
+/** M06 { id }: the ONE lookup ask uses (an e-mail, a stored user id, key@Display Name, a mobile) → the accounts to try, or null once it has answered */
+async function accountsOfTypedId(req, res, secret) {
+  const f = await identityAuth.findLoginIdentity(query, secret.name, { shop: shopNamed(req) });
+  if (f.ambiguous && f.via !== 'contact') {
+    await unknownAccount(req, res); // two businesses of one name are never listed (SEC-139)
+    return null;
+  }
+  if (!f.ambiguous) return f.identity ? [f.identity] : [];
+  const chosen = await identityOnContact(req, res, f, secret);
+  return chosen ? [chosen] : null;
+}
+/** is this typed value a contact (an e-mail, a mobile, key@business): the doors that take one pad their refusals to the same hash time */
+const contactShaped = (typed) => typed.includes('@') || !!identityAuth.mobileOf(typed);
 const methodOf = (identity) => (identityAuth.needsPin(identity) ? 'pin' : 'otp');
 
 async function verify(req, res) {
@@ -575,10 +591,8 @@ async function verify(req, res) {
     if (email) rows = (await query(`SELECT ${COLS} FROM identities WHERE email = $1`, [email])).rows.filter(identityAuth.isAccount);
     else if (handle) rows = (await query(`SELECT ${COLS} FROM identities WHERE LOWER(user_id) = LOWER($1)`, [handle])).rows.filter(identityAuth.isAccount);
     else {
-      /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
-      const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
-      if (f.ambiguous) return unknownAccount(req, res); // SEC-139: no secret proves several accounts or businesses; the choice is made at ask, never listed here
-      rows = f.identity ? [f.identity] : [];
+      rows = await accountsOfTypedId(req, res, { otp, pin: nestedPin, name: id });
+      if (!rows) return; // answered: the chooser, or the one refusal
     }
     if (rows.length === 0) {
       return unknownAccount(req, res);
@@ -802,15 +816,18 @@ async function verify(req, res) {
  * actorSecretRefused — the secret step of the key@Display Name door: first sign-in takes the code (pin_hash NULL), a returning actor the PIN,
  * both through the ONE engine. Returns true when it has already answered (SEC-81: a wrong or locked secret gets the one safe sentence).
  */
+async function actorSecretCheck(req, actor, typed) {
+  const pinHolder = !!actor.pin_hash;
+  if (!typed) return { ok: false, reason: pinHolder ? 'PIN_REQUIRED' : 'OTP_REQUIRED' };
+  return identityAuth.verifyCredential(query, actor, pinHolder ? { pin: typed } : { otp: typed, name: req.body.username });
+}
+/** the secret step of the key@Display Name door, answered when it is refused (see actorSecretRefused) */
 async function actorSecretRefused(req, res, actor) {
   const otp = (req.body.otp || '').trim();
   const nestedPin = String(req.body.pin || '').trim();
   /* SEC-139: one secret box. A co-assist with a PIN may type it in either field (a first-timer's code goes in `otp`): the page cannot know which, and check-login no longer says */
-  const typed = actor.pin_hash ? nestedPin || otp : otp;
   const method = actor.pin_hash ? 'pin' : 'otp';
-  const check = typed
-    ? await identityAuth.verifyCredential(query, actor, actor.pin_hash ? { pin: typed } : { otp: typed, name: req.body.username })
-    : { ok: false, reason: actor.pin_hash ? 'PIN_REQUIRED' : 'OTP_REQUIRED' };
+  const check = await actorSecretCheck(req, actor, actor.pin_hash ? nestedPin || otp : otp);
   if (check.ok) return false;
   note(req, actor, actionOf(check.reason), method, check.reason);
   if (isSecretRefusal(check.reason)) await secretRefused(req, res, check);
@@ -838,7 +855,7 @@ async function actorLogin(req, res) {
     }
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
-    if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name are told at ask, not here before a secret
+    if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name get the refusal, not a list (SEC-143)
     const parent_entity = e.entity;
 
     const actor = await query(
@@ -929,8 +946,13 @@ async function pin(req, res) {
   }
 }
 
-const askDoor = junkAsUnknown(ask, typedByAsk);
-const verifyDoor = junkAsUnknown(verify, typedByVerify);
+const askDoor = junkAsUnknown(ask, typedByAsk, (req, res) => askAnswered(req, res, 'NO_ACCOUNT'));
+/** SEC-143: the doors that take a contact pad their refusals to CONTACT_HASHES hash times, found or not (a refusal spends the first itself) */
+const padded = (handler) => (req, res, next) => {
+  req.contactPad = contactShaped(typedByVerify(req)) ? identityAuth.CONTACT_HASHES - 1 : 0;
+  return handler(req, res, next);
+};
+const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
 router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
 router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
 router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
