@@ -21,7 +21,7 @@ const MUTANTS = [
   ['exact-match tolerance', 'return word.length <= 4 ? 1 : word.length <= 7 ? 2 : 3;', 'return -1;', null],
   ['old per-token tolerance on numbers and sizes', 'function exactTokens(phrase) {', 'function exactTokens(phrase) {\n  return [];', /must ASK.*pencil 2b/],
   ['stage-3 substring without subsetExact (CAT-261 review)', ' && subsetExact(foldedPhrase, foldedName)', '', /must ASK.*folic 10000/],
-  ['stage-3 substring cuts a short code mid-token (CAT-261 review)', 'function containsWhole(big, small) {', 'function containsWhole(big, small) {\n  return big.includes(small);', /must ASK.*linen shirt xll/],
+  ['stage-3 substring cuts a short code mid-token (CAT-261 review)', 'function containsWhole(outer, small) {', 'function containsWhole(outer, small) {\n  return outer.includes(small);', /must ASK.*linen shirt xll/],
   ['no unit alias table (CAT-261 review)', 'UNIT_ALIAS[word] ?', 'false ?', /MUST match.*milk 1 ltr/]
 ];
 
