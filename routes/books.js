@@ -2120,6 +2120,7 @@ async function compareRead(req) {
       const taxCopy = require('../lib/tax-copy'),
         taxLines = require('../lib/tax-lines'),
         ledgerCopy = await taxCopy.ledgerFor(e, fetched.to.slice(0, 7));
+      if ((ledgerCopy.dropped || []).length) throw new Error('ACC-266 C5: ' + ledgerCopy.dropped.length + ' bill(s) could not be read — a short month is not compared');
       fetched.ours.ret = Object.assign(PR.gstr3bBoxes(taxLines.gstr3b(ledgerCopy.ledger, ledgerCopy.me, ledgerCopy.bounds.period)), { short: 'GSTR-3B' });
     } catch (err) {
       fetched.ours.ret = new Error('Our GSTR-3B for ' + fetched.to.slice(0, 7) + ' could not be read from the rail.');
@@ -2214,10 +2215,10 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
   try {
     const e = ctx(req);
     const fy = req.query.fy ? String(req.query.fy) : null;
-    const { rows, figures, setting, taxStates } = await withEntity(e, async (h) => {
+    const { rows, figures, setting, taxStates, trail } = await withEntity(e, async (h) => {
       const all = await S.periods(h, e, null),
         books = await B.settingOf(h, e);
-      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all) };
+      return { rows: all, figures: await S.periodFigures(h, e, fy), setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy) };
     });
     /* the dates as dates ('YYYY-MM-DD'), never a Date through JSON — that is the day before, east of UTC */
     const dated = rows.map((item) => Object.assign({}, item, { start_date: E.ymd(item.start_date), end_date: E.ymd(item.end_date) }));
@@ -2225,7 +2226,7 @@ router.get('/periods', auth, on, ...checked('GET /periods'), async (req, res) =>
     const taxPeriods = [].concat(...Array.from(taxStates.values()).map((state) => state.periods.map((item) => Object.assign({ form: state.form }, item))));
     /* M157: entries + sales per month, and what each month may do (the server's one rule — B.periodAdvice) */
     res.json({
-      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods).filter((item) => !fy || item.fiscal_year === fy)
+      periods: B.periodAdvice(dated, figures, require('../lib/books-hooks').dayOf(CLOCK.now(), setting), taxPeriods, trail).filter((item) => !fy || item.fiscal_year === fy)
     });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

@@ -6,8 +6,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -58,8 +58,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -110,8 +110,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -162,8 +162,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Dev mode — verification code issued",
-      "email": "owner@shop.test",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "123456"
      }
     }
@@ -212,17 +212,10 @@
   "ask.unknown.email": {
    "responses": [
     {
-     "status": 400,
+     "status": 200,
      "body": {
-      "error": "Sign-in failed",
-      "message": "That sign-in didn't work. Check the details and try again.",
-      "type": "https://chitbridge.com/problems/signin_refused",
-      "title": "Sign-in refused",
-      "status": 400,
-      "code": "SIGNIN_REFUSED",
-      "detail": "That sign-in didn't work. Check the details and try again.",
-      "hint": "Check the details and try again.",
-      "request_id": null
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -270,17 +263,10 @@
   "ask.unknown.name": {
    "responses": [
     {
-     "status": 400,
+     "status": 200,
      "body": {
-      "error": "Sign-in failed",
-      "message": "That sign-in didn't work. Check the details and try again.",
-      "type": "https://chitbridge.com/problems/signin_refused",
-      "title": "Sign-in refused",
-      "status": 400,
-      "code": "SIGNIN_REFUSED",
-      "detail": "That sign-in didn't work. Check the details and try again.",
-      "hint": "Check the details and try again.",
-      "request_id": null
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -328,11 +314,10 @@
   "ask.ambiguous": {
    "responses": [
     {
-     "status": 409,
+     "status": 200,
      "body": {
-      "error": "Ambiguous name",
-      "message": "More than one business is called \"Twin\". Sign in with your email address or your User ID instead.",
-      "code": "AMBIGUOUS_NAME"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -382,9 +367,9 @@
     {
      "status": 200,
      "body": {
-      "message": "This store signs in with the code its network operator issued.",
-      "handle": "net.store",
-      "operator_issued": true
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
+      "dev_otp": "123456"
      }
     }
    ],
@@ -437,9 +422,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Enter your PIN.",
-      "use_pin": true,
-      "user_id": "ravi@shopone.br"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -489,9 +473,8 @@
     {
      "status": 200,
      "body": {
-      "message": "Enter your PIN.",
-      "use_pin": true,
-      "user_id": "ravi@shopone.br"
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code"
      }
     }
    ],
@@ -541,8 +524,8 @@
     {
      "status": 200,
      "body": {
-      "message": "First sign-in — enter the one-time code your admin shared, then set a PIN in Co-assists.",
-      "user_id": "mala@shopone.br",
+      "message": "If that sign-in exists, enter your PIN or the code we sent.",
+      "need": "pin_or_code",
       "dev_otp": "654321"
      }
     }

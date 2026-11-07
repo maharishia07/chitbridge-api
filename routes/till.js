@@ -78,6 +78,7 @@ function taxFactsOf(item_data) {
  */
 const categories = require('../lib/categories');
 const regional = require('../lib/regional');
+const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: who may change the shop's tax number (owner, or a key) */
 const countrySetup = require('../lib/country-setup'); /* W1-TILL: shopMoney + MONEY_UNSTATED — the one reader of a shop's money */
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus'); /* "may somebody take one NOW?" — one definition, the storefront's */
@@ -97,7 +98,7 @@ const { rateLimit } = require('../lib/rate-limit');
  */
 const catalogueMintLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
+  max: require('../lib/limits').intFromEnv('TILL_CATALOGUE_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: require('../lib/limiter-key').callerKey /* SEC-79 */,
@@ -2985,6 +2986,8 @@ router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), 
     const source = 'counter' + (await namedCounter(req));
     const as_of = new Date().toISOString();
 
+    /* ⭐ CTR-182: the tax number is the owner's — a person under the owner is refused FIRST (before the number is even checked), nothing written; a till key keeps its right */
+    if (taxIdDoor.taxIdDiffers(before.gstin, body.gstin) && !taxIdDoor.mayChangeTaxId(req)) return problem(req, res, taxIdDoor.refusal());
     const refusal = checkSentTaxId(body, before);
     if (refusal) return problem(req, res, { status: 400, ...refusal });
 
@@ -3445,9 +3448,11 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
     const found = await nestedWithEntity(entity_id, (db) =>
       db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till])
     );
-    const rows = found.rows.map(billRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
+    const live = found.rows.filter((row) => !row.withdrawn);
+    const rows = live.map(billRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
+    const withdrawn = found.rows.filter((row) => row.withdrawn).map(withdrawnRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
     const paged = pageLimit.pageOut('bills', rows, page, rows.length);
-    res.json({ days, count: rows.length, bills: paged.bills, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
+    res.json({ days, count: rows.length, bills: paged.bills, withdrawn, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3457,7 +3462,7 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
+const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json, false AS withdrawn
          FROM chit_header h
          LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
        /**
@@ -3480,7 +3485,26 @@ const BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, d.line_items
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
-        ORDER BY h.created_at DESC LIMIT $3`;
+          /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
+          ${counterBill.NOT_WITHDRAWN_SQL}
+        ORDER BY h.created_at DESC LIMIT $3)
+      UNION ALL
+       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. */
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true
+         FROM chit_header h
+        WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
+          AND h.business_json ? 'bill_no'
+          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+          ${counterBill.WITHDRAWN_SQL}
+        ORDER BY h.created_at DESC LIMIT $3)
+      ORDER BY created_at DESC`;
+
+/** CTR-197: a withdrawn (cancelled or rejected) bill, named only - its number, its ids and its moment, so the counter can drop its own copy from the day */
+function withdrawnRow(row) {
+  const business = row.business_json || {};
+  return { chit_id: row.chit_id, no: business.bill_no || null, client_ref: business.client_ref || null, at: business.billed_at || row.created_at, by: (business.till && business.till.by) || null };
+}
 
 /** one earlier bill as the counter reprints it: who, when, what was paid and saved, the stored invoice, and its lines */
 function billRow(row) {
@@ -3781,14 +3805,30 @@ function orderParty(head, business) {
   };
 }
 
-/** their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door → { total, from } (both null when there is none) */
+/**
+ * their invoice: the chit THIS counterparty sent that bills THIS order, else the figure keyed off their paper bill at the door → { total, from } (both null when there is none).
+ * ⭐ OPS-82: a bill belongs to an order by what it names, never by being the first from the same supplier. The link is the one the books read
+ * (business_json.order.from = the order's chit id, lib/books-hooks receiptFacts; lib/open-orders billNames). Two bills naming the order is two candidates:
+ * the match picks neither, names both in `from`, and the figure stays unknown. A bill whose total_value is not stated is an unknown figure, never 0.
+ */
 function theirInvoice(head, receipts, invoices) {
-  const theirChit = invoices.find((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)) || null;
+  const billing = invoices.filter((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)
+    && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
+  if (billing.length > 1) return { total: null, from: 'several invoices name this order: ' + billing.map(invoiceNo).join(', ') };
+  if (billing.length) {
+    const stated = (billing[0].summary_json || {}).total_value;
+    if (stated != null) return { total: Number(stated), from: 'their invoice' };
+  }
   const keyed = receipts
     .map((item) => (item.their_bill && item.their_bill.total != null ? Number(item.their_bill.total) : null))
     .filter((value) => value != null);
-  if (theirChit) return { total: Number((theirChit.summary_json || {}).total_value || 0), from: 'their invoice' };
   return keyed.length ? { total: keyed.reduce((first, second) => first + second, 0), from: 'their bill, keyed at the door' } : { total: null, from: null };
+}
+
+/** the number an invoice chit carries: the same reading as lib/books-hooks receiptFacts, else its chit id */
+function invoiceNo(invoice) {
+  const business = invoice.business_json || {};
+  return String(business.bill_no || business.invoice_no || business.doc_no || invoice.chit_id);
 }
 
 /** awaited · differs · open · agreed — see matchOrder */

@@ -116,7 +116,8 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
   console.log('\n— D · the walk-in day leaves a cancelled bill out —');
   const storeSrc = fs.readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
   const cb = storeSrc.slice(storeSrc.indexOf('async function counterBills('), storeSrc.indexOf('async function unpostedChits('));
-  t('counterBills: NOT EXISTS a cancelled / rejected status row for the bill', /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(cb));
+  const withdrawn = require(path.join(H.API, 'lib', 'counter-bill')).NOT_WITHDRAWN_SQL; /* CTR-197: the one condition, shared with GET /till/bills */
+  t('counterBills: NOT EXISTS a cancelled / rejected status row for the bill (the one shared condition)', cb.includes('NOT_WITHDRAWN_SQL') && /NOT EXISTS \(SELECT 1 FROM chit_status cs WHERE cs\.chit_id = h\.chit_id AND cs\.entity_id = h\.entity_id AND cs\.current_status IN \('cancelled', 'rejected'\)\)/.test(withdrawn));
 
   console.error = origErr;
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');

@@ -1399,6 +1399,7 @@ async function pullChit(work) {
   const movedOnPull = await assignChit(client, entity_id, chit_id, { identity_id: action_by_id, display_name: action_by_name }, 'pull', {
     me: railActions.meOf(req)
   });
+  if (movedOnPull.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPull.from) }); /* RAIL-173: nothing was written */
   await taskCount(handle, action_by_id, 'take');
   // Log assignment event
   await handle(
@@ -1449,12 +1450,12 @@ async function pushChit(work) {
   // Warning if overloaded
   const overloaded = t.current_task_count >= t.max_tasks;
 
+  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
+  if (movedOnPush.refused) return problem(req, res, { status: 409, ...words.billTakenBack(movedOnPush.from) }); /* RAIL-173: nothing was written, no count moved */
   // Reduce previous assignee count
   if (chitRow.assigned_to_actor_id) {
     await taskCount(handle, chitRow.assigned_to_actor_id, 'release');
   }
-
-  const movedOnPush = await assignChit(client, entity_id, chit_id, t, 'push', { me: railActions.meOf(req) }); /* W1-RAIL: the one writer */
   await taskCount(handle, t.identity_id, 'take');
   // Log assignment — differentiate initial push from actor-to-actor transfer
   const isTransfer = !!chitRow.assigned_to_actor_id;
