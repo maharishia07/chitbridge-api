@@ -76,13 +76,27 @@ async function childTransaction() {
     committedDead: dead.sql.some((s) => /COMMIT/.test(s)),
     deadReleasedWithError: !!(dead.releasedWith),
     secondIsFresh: second !== dead.n,
+    listenersLeft: seen.clients.reduce((n, c) => n + c.listenerCount('error'), 0),
     secondRan: seen.clients.some((c) => c !== dead && c.sql.some((q) => /work-2/.test(q)))
   }));
   console.log('ALIVE');
   process.exit(0);
 }
 
+/** child C: src/db.js withTx, one good transaction: the handler must be gone from the client once it is released */
+async function childTxSrc() {
+  process.env.DATABASE_URL = 'postgres://u:p@127.0.0.1:1/none';
+  const seen = { clients: [] };
+  require.cache[require.resolve('pg')] = { id: 'pg', filename: 'pg', loaded: true, exports: fakePg(seen) };
+  const { withTx } = require(target('DB_ERR_SRC_DB', 'src/db.js'));
+  await withTx((c) => c.query('work-2'));
+  console.log('RESULT ' + JSON.stringify({ listenersLeft: seen.clients.reduce((n, c) => n + c.listenerCount('error'), 0), clients: seen.clients.length }));
+  console.log('ALIVE');
+  process.exit(0);
+}
+
 if (ROLE === 'pool') { childPool(); }
+else if (ROLE === 'txsrc') { childTxSrc().catch((e) => { console.log('CHILD-FAIL ' + e.message); process.exit(3); }); }
 else if (ROLE === 'tx') { childTransaction().catch((e) => { console.log('CHILD-FAIL ' + e.message); process.exit(3); }); }
 else {
   let fails = 0;
@@ -104,7 +118,11 @@ else {
   check(got.committedDead === false, 'B  the broken transaction is never committed');
   check(got.deadReleasedWithError === true, 'B  the dead client is released WITH an error, so the pool destroys it');
   check(got.secondIsFresh === true && got.secondRan === true, 'B  the next transaction runs on a fresh client, not the dead one');
+  check(got.listenersLeft === 0, 'B  the error handler is removed when the client is released (listeners left: ' + got.listenersLeft + ') — handlers must not stack on a pooled client');
   const bLines = logged(b, 'database client error');
   check(bLines.length === 1 && /Connection terminated/.test(bLines[0]) && /"level":"error"/.test(bLines[0]), 'B  and it is logged once, in words, at error level (' + bLines.length + ' line)');
+  const c = run('txsrc');
+  const cGot = JSON.parse((c.stdout.match(/RESULT (.*)/) || [])[1] || '{}');
+  check(c.status === 0 && cGot.clients === 1 && cGot.listenersLeft === 0, 'C  src/db.js withTx removes its error handler when the client is released (listeners left: ' + cGot.listenersLeft + ')');
   process.exit(fails ? 1 : 0);
 }

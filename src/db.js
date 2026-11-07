@@ -1,3 +1,7 @@
+// src/db.js — the services layer's ONE pool and its transaction helper.
+// OWNS      the pg Pool for src/services and withTx (begin / commit / rollback); a dead connection is logged, never an uncaught exception (PLT-86).
+// FLOW      service ──▶ withTx(fn) ──▶ pool.connect ──▶ begin ──▶ fn(client) ──▶ commit | rollback ──▶ release (with the error when the client died).
+// CARD      28-platform-and-operations/api-standard
 /* CALLED BY src/services/catalogue.js, src/services/chit.js, src/services/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs] */
 const { Pool } = require('pg');
 const { sslFor } = require('../db/connect-config'); /* HX1: TLS from config (the URL's sslmode · PGSSLMODE · PGSSL=disable · the env), never a guess */

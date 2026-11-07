@@ -56,4 +56,13 @@ it('ORD-65: not a refusal unless it says so: a books refusal with no status, a r
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: 'X', refused: true, status: 500 })), null);
   assert.strictEqual(K.known(Object.assign(new Error('x'), { code: 'X', status: 422 })), null);
 });
+it('PLT-86: a connection lost in flight (class 08, 57P01-03, socket codes) answers 503 DB_CONNECTION_LOST, not 500', () => {
+  for (const code of ['08000', '08003', '08006', '57P01', '57P02', '57P03', 'ECONNRESET', 'EPIPE', 'ETIMEDOUT']) {
+    const r = K.known(Object.assign(new Error('Connection terminated unexpectedly'), { code }));
+    assert.ok(r && r.status === 503 && r.body.code === 'DB_CONNECTION_LOST', code + ' must answer 503 DB_CONNECTION_LOST');
+    assert.ok(!/terminated/.test(r.body.message), 'the driver words never go back');
+  }
+  assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '23505' })), null);
+  assert.strictEqual(K.known(Object.assign(new Error('x'), { code: '57014' })).body.code, 'STATEMENT_TIMEOUT');
+});
 console.log(pass + ' checks');

@@ -5,6 +5,8 @@
  *   1. src/db.js: the pool 'error' listener removed
  *   2. db/index.js: the client 'error' listener removed (withTransaction)
  *   3. db/index.js: the dead client released plainly (back to client.release())
+ *   4. db/index.js: removeListener deleted (handlers would stack on a pooled client)
+ *   5. src/db.js: withTx removeListener deleted
  * A broken copy is written beside the real file, the test is run against it, the copy is deleted. Proves the test can fail.
  * RUN       node tests/db-error-survives-mutation.test.cjs
  * CARD      28-platform-and-operations/api-standard
@@ -34,10 +36,14 @@ function wentRed(file, edit, envName) {
 const noPoolListener = (src) => src.replace("pool.on('error',", "(() => {})('error',");
 const noClientListener = (src) => src.replace("client.on('error', onClientError);", '');
 const plainRelease = (src) => src.replace('client.release(clientDied || undefined);', 'client.release();');
+const noClientRemove = (src) => src.replace("client.removeListener('error', onClientError);", '');
+const noTxRemove = (src) => src.replace("c.removeListener('error', onError);", '');
 const cases = [
   ['src/db.js without the pool error listener', wentRed('src/db.js', noPoolListener, 'DB_ERR_SRC_DB')],
   ['withTransaction without the client error listener', wentRed('db/index.js', noClientListener, 'DB_ERR_INDEX')],
-  ['withTransaction releasing the dead client plainly', wentRed('db/index.js', plainRelease, 'DB_ERR_INDEX')]
+  ['withTransaction releasing the dead client plainly', wentRed('db/index.js', plainRelease, 'DB_ERR_INDEX')],
+  ['withTransaction without removeListener', wentRed('db/index.js', noClientRemove, 'DB_ERR_INDEX')],
+  ['src/db.js withTx without removeListener', wentRed('src/db.js', noTxRemove, 'DB_ERR_SRC_DB')]
 ];
 let bad = 0;
 cases.forEach(([label, red]) => {
