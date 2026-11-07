@@ -623,6 +623,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "CASH_ROUNDING_STEP",
+   "status": "400",
+   "title": "Cash amount not accepted",
+   "shopkeeper": "This cash amount cannot be paid in coins in your country.",
+   "hint": "Take the nearest amount named in cash, or pay that part by card, and send the bill again.",
+   "owner_area": "chits",
+   "since": "2026-11-07"
+  },
+  {
    "code": "CATALOGUE_NOT_EMPTY",
    "status": "409",
    "title": "Shop already has products",

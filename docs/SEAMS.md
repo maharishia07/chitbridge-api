@@ -16,7 +16,7 @@ of file each thing is; this says what already does the job.
 | 112 | `withEntity` | `books-hooks.js` |  |
 | 108 | `read` | `books-cashflow.js` | Trips: |
 | 97 | `answer` | `availability.js` | from March; then nearest. |
-| 88 | `money` | `bill-privacy.js` |  |
+| 89 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -29,7 +29,7 @@ of file each thing is; this says what already does the job.
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 63 | `failed` | `service.js` | what every catch answers: |
+| 64 | `failed` | `service.js` | what every catch answers: |
 | 62 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entry` | `books-store.js` |  |
@@ -38,8 +38,8 @@ of file each thing is; this says what already does the job.
 | 58 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 55 | `record` | `access-events.js` |  |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 52 | `pack` | `books-store.js` |  |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 51 | `pack` | `books-store.js` |  |
 | 51 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -64,9 +64,9 @@ of file each thing is; this says what already does the job.
 | 39 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 38 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `host` | `chit-sheet.js` |  |
-| 37 | `live` | `receivables.js` | the allocations that still count: |
 | 36 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
 | 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
