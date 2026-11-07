@@ -6757,7 +6757,8 @@
           "note",
           "prior_period",
           "not_in_books",
-          "reversed"
+          "reversed",
+          "expense_no_tax"
         ],
         "properties": {
           "month": {
@@ -6909,6 +6910,33 @@
                 },
                 "month": {
                   "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "expense_no_tax": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "amount",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
                 },
                 "words": {
                   "type": "string"

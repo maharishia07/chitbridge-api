@@ -62,6 +62,7 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       prior_period: T.priorPeriodOf(ledger), // ACC-224: late bills of an earlier month the books hold in this one, each with its words
       reversed: T.reversedOf(ledger), // ACC-270: bills reversed this month after an earlier month held them, with words
       not_in_books: T.notInBooksOf(ledger), // ACC-270: counter bills the books hold no entry for, with words
+      expense_no_tax: T.expenseNoTaxOf(ledger), // ACC-269: till expenses with no ITC claimed (GST not stated / not in the books), with words
       dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
