@@ -64,5 +64,12 @@ ok('a line with no price at all -> computeTax throws, readFault answers a named 
 ok('readFault on an ordinary error is still the 500 that says nothing of its cause', TC.readFault(new Error('x'), {}).status === 500);
 ok('routes/invoice.js reaches computeTax with the normLines lines (the throw is its guard)', ri.includes('S.normLines(req.body)') && ri.includes('S.computeTax(') && ri.includes('readFault(e, req)'));
 
+/* 6 · ACC-222 (folded): a rate below 0 or above 100 would answer a negative tax with bridge ok - refused, named, for every caller */
+for (const [field, v] of [['gst_rate', -5], ['gst_rate', 101], ['cess_rate', -1]]) {
+  const e = call(mapped({ [field]: v }));
+  ok('computeTax refuses ' + field + ' = ' + v + ' (outside 0-100%)', e instanceof Error && e.code === 'line_unreadable' && e.said[0] === 'BAD_RATE' && e.said[1].includes('outside 0'), String(e && e.message));
+}
+ok('rates 0 and 100 are still priced', [0, 100].every((v) => !(call(mapped({ gst_rate: v })) instanceof Error)));
+
 console.log('' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
