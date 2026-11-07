@@ -4,6 +4,7 @@
  * read-batch-rls-guard-mutation.test.cjs — OPS-27 mutation checks: break db/index.js two ways and tests/read-batch-rls-guard.test.cjs MUST go red each time.
  *   1. the exemption removed (readBatch guards every statement again — the old false warnings / silent fallback)
  *   2. the exemption too wide (every batch exempt — an unscoped batch would no longer be guarded)
+ *   3. the decision reverted to the BATCH entity alone (batch 'shop-1' + a statement {entity:''} would run unguarded under no shop)
  * A broken copy is written beside db/index.js, the test is run against it, the copy is deleted. Proves the test can fail, in BOTH directions.
  * RUN       node tests/read-batch-rls-guard-mutation.test.cjs
  * CARD      13-inventory-stock-and-traceability (OPS-27)
@@ -14,7 +15,8 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const ROOT = path.join(__dirname, '..');
-const EXEMPT = 'if (!scopedStatement(entityId, s)) rlsGuardCheck(s.text);';
+const EXEMPT = 'if (!scopedStatement(bound)) rlsGuardCheck(s.text);';
+const BATCH_ONLY = 'if (!scopedStatement(entityId)) rlsGuardCheck(s.text);';   /* the decision reverted to the batch entity alone */
 const ALWAYS_GUARD = 'rlsGuardCheck(s.text);';
 const NEVER_GUARD = 'if (false) rlsGuardCheck(s.text);';
 
@@ -35,7 +37,8 @@ function wentRed(edit) {
 
 const cases = [
   ['the exemption removed (every batch guarded again)', wentRed((src) => src.replace(EXEMPT, ALWAYS_GUARD))],
-  ['the exemption too wide (an unscoped batch no longer guarded)', wentRed((src) => src.replace(EXEMPT, NEVER_GUARD))]
+  ['the exemption too wide (an unscoped batch no longer guarded)', wentRed((src) => src.replace(EXEMPT, NEVER_GUARD))],
+  ['the decision taken from the batch entity alone (a statement switched to "" slips through)', wentRed((src) => src.replace(EXEMPT, BATCH_ONLY))]
 ];
 let bad = 0;
 cases.forEach(([label, red]) => {
