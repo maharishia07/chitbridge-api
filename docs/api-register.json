@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 192,
-  "meets": 445,
+  "partial": 186,
+  "meets": 451,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -2966,11 +2966,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "640e90743374e79a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: read and default-row insert now under withEntity; same answer shape); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -8229,11 +8228,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "09d3c11dea78f26b"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: owner preview via auth.softIdentity, cost keys stripped for a cost-blind co-assist; schema unchanged, foreign id still 404); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -32565,11 +32563,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0fed4ed7dae69c10"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js",
@@ -32780,11 +32777,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2cf1be4ee2eeae1f"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -32881,11 +32877,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "425efdd67b8c7b70"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-149 #976: softIdentity now the one auth decision; contract and answers unchanged); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -62221,11 +62216,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a28cbf5d48a25637"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 batch k61: handler re-read against the 13 columns after its hash moved (SEC-75 #979: upsert and read-back under withEntity; same body, 400 and answer); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "core.js"
