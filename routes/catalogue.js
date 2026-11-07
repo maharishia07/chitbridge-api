@@ -988,9 +988,9 @@ router.get('/network/:bridge_id', doorCheck('GET /network/:bridge_id'), async (r
  * signed-out, switched-off or removed person is a stranger here too. The identity carries can_see_costs (the database's, not the token's).
  */
 async function ownerOf(req, entity) {
-  const who = await auth.softIdentity(req);
-  if (!who || String(who.parent_entity_id || who.identity_id) !== String(entity.identity_id)) return null;
-  return who;
+  const caller = await auth.softIdentity(req);
+  if (!caller || String(caller.parent_entity_id || caller.identity_id) !== String(entity.identity_id)) return null;
+  return caller;
 }
 /**
  * ⭐ SEC4 · A CUSTOMER SIGNED IN TO THIS SHOP — the token /login/verify (or /order/confirm) issued: identity_type 'customer' and

@@ -61,9 +61,9 @@ const CONTEXT_HINTS = {
 // the caller's own (tenant-scoped) context. Absent/invalid token → anonymous (the assistant is available
 // pre-auth on welcome/login/register), grounded on the public KB only. Never throws.
 async function softIdentity(req) {
-  const who = await auth.softIdentity(req); // SEC-149: the SAME decision auth runs (session listing, status, current level) — a valid signature alone is a stranger
-  if (!who) return null;
-  return { identity_id: who.identity_id, parent_entity_id: who.parent_entity_id, identity_type: who.identity_type, access_level: who.access_level }; // a draft that costs money asks lib/access with the CURRENT level
+  const caller = await auth.softIdentity(req); // SEC-149: the SAME decision auth runs (session listing, status, current level) — a valid signature alone is a stranger
+  if (!caller) return null;
+  return { identity_id: caller.identity_id, parent_entity_id: caller.parent_entity_id, identity_type: caller.identity_type, access_level: caller.access_level }; // a draft that costs money asks lib/access with the CURRENT level
 }
 
 /** the catalogue source a body names; none named = the seed source (one reading for structure and adopt) */

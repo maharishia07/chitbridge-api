@@ -57,8 +57,9 @@ customerAuth.soft = (req) => {
   const header = (req && req.headers && req.headers.authorization) || '';
   try {
     return header.startsWith('Bearer ') ? customerOf(header.slice(7).trim()) : null;
-  } catch (_) {
-    return null; /* a missing, bad or expired token is simply anonymous on a public read */
+  } catch (notOurToken) {
+    require('../lib/logger').fellBack('customer-auth soft: the token did not verify — read as a stranger', notOurToken, 'debug'); /* a missing, bad or expired token is simply anonymous on a public read */
+    return null;
   }
 };
 module.exports = customerAuth;
