@@ -64,9 +64,9 @@ of file each thing is; this says what already does the job.
 | 39 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 38 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `host` | `chit-sheet.js` |  |
+| 37 | `live` | `receivables.js` | the allocations that still count: |
 | 36 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 35 | `modal` | `app.html` |  |
 | 35 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |

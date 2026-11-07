@@ -28,10 +28,10 @@ const invc = (st) => ({ chit_id: 'inv-1', purpose: 'invoice', sender_entity_id: 
   let copies = {}, rcptRows = [], invRows = [];
   TC.copyOf = async (id) => copies[id] || null; TC.entryFor = async (c) => { const t = c.summary_json && c.summary_json.money && c.summary_json.money.total; return t ? Object.assign({}, ENTRY, { invoice: Object.assign({}, ENTRY.invoice, { ItemList: [{ GstRt: 12, AssAmt: t / 1.12, CgstAmt: t * 0.06 / 1.12, SgstAmt: t * 0.06 / 1.12, IgstAmt: 0, CesAmt: 0 }], ValDtls: { TotInvVal: t } }) }) : ENTRY; };
   const q0 = X.db.query;
+  Object.defineProperty(X.T, 'receiptBills', { get: () => rcptRows, configurable: true });
   X.db.query = async (t, v) => {
     const s = String(t);
     if (/purpose = 'invoice' AND sender_entity_id IS DISTINCT FROM/.test(s)) return { rows: invRows.filter((x) => x.on === v[1]) };
-    if (/purpose = 'receipt' AND sender_entity_id IS NOT DISTINCT FROM/.test(s)) return { rows: rcptRows.filter((x) => v[1].indexOf(x.on) >= 0) };
     if (/FROM chit_status cs JOIN chit_header h/.test(s)) return { rows: v[1].map((id) => ({ chit_id: id })) };
     return q0(t, v);
   };
