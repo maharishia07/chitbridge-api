@@ -17,7 +17,7 @@ const express = require('express');
 const { UUID } = require('../lib/namedentity'); // the one uuid shape: an id that is not one names no chit (K-1)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { readFault, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
+const { readFault, taxSaid, invoiceContract: contract } = require('../lib/tax-contract'); // the contract: each route's operation and the 5xx words
 const router = express.Router();
 const auth = require('../middleware/auth');
 const S = require('../lib/services');
@@ -51,6 +51,12 @@ router.post('/build', auth, auth.requireScope('invoice'), ...checked('POST /buil
     });
     /* 1 · pricing structure */
     const priced = lines.map((item) => Object.assign({}, item, S.priceLine(item, sh.productOf(item))));
+    /* ⭐ CAT-258: a line nobody priced is asked about by name (422 NO_PRICE, the words tax/compute uses), never billed at 0 */
+    const unpriced = priced.find((item) => item.unit_price == null);
+    if (unpriced) {
+      const [code, words] = S.unpricedSaid(unpriced, sh.productOf(unpriced), (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"');
+      return problem(req, res, taxSaid(422, code, words, { line: unpriced.key }));
+    }
     const shop = await S.shopOf(entity_id);
     const seller = S.party(body.seller, shop.party);
     /* ⭐ CX1 (T5): no currency asked for → the SELLER's pack's money (tax-lines.currencyOf), never INR by name */

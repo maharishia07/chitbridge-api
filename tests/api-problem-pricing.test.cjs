@@ -106,8 +106,7 @@ async function unpricedIsNullNeverZero() {
   const mixed = await price([{ code: 'blank', qty: 5, pricing: TIERED }, { qty: 10, listPrice: 10, pricing: TIERED }], { products });
   check('a basket of an unpriced line and a 10 × 8 line: the priced line totals 80, the unpriced one is null in its own row', mixed.json.total === 80 && mixed.json.lines[0].unit_price === null && mixed.json.lines[1].unit_price === 8, mixed.json);
   const firstBand = line.bands.find((band) => band.from === 1);
-  if (firstBand && firstBand.price === null) check('the first band of an unpriced ladder is null, not a free 0', true);
-  else console.log('  SKIP  the first band of an unpriced ladder should be null, not a free 0: today it says price ' + JSON.stringify(firstBand && firstBand.price) + ' (CAT-258)');
+  check('the first band of an unpriced ladder is null, not a free 0, with the words "no price set" (CAT-258)', !!firstBand && firstBand.price === null && firstBand.why === 'no price set', firstBand);
 }
 
 async function whoMayAsk() {

@@ -20009,7 +20009,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 122,
+   "line": 128,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -49968,7 +49968,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 35,
-   "hash": "3538084d1c14fdc9",
+   "hash": "4b7e688e4972dce7",
    "does": "",
    "errors": {
     "count": 1,
@@ -50044,8 +50044,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#901",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4b7e688e4972dce7"
    },
    "status": "partial",
    "callers": [],
@@ -57415,7 +57416,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 180,
-   "hash": "cf1ed74ea06db463",
+   "hash": "53fa623a0a620cbb",
    "does": "",
    "errors": {
     "count": 0,
@@ -57488,8 +57489,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "53fa623a0a620cbb"
    },
    "status": "partial",
    "callers": [
