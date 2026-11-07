@@ -227,6 +227,12 @@ const WRITES_READY = [
   X('account-added-source-code', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: '200', source_code_written: true }) } } }),
   X('account-added-source-code-unwritten', 'POST /api/books/accounts', 200, { body: { name: 'Fees', parent_id: ENTRY, source_code: '200' }, patch: { books: { addAccount: async () => ({ code: '4010', account_id: ENTRY2, name: 'Fees', source_code: null, source_code_written: false }) } } }), /* addAccount :1678: before b302 the code is not written, null */
   X('enable-switched-on', 'POST /api/books/enable', 200, { body: { walkin_grain: 'day' }, patch: { books: { enable: async () => ENABLED } } }),
+/* ACC-274: a GIVEN date that is not a real day is a 400 DATE_INVALID naming the field, on a write and on a read (it was today, with a 200) */
+  X('date-given-slashes-write', 'POST /api/books/entries', 400, { body: { narration: 'x', date: '03/10/2026', lines: [] } }),  X('date-given-not-a-day-write', 'POST /api/books/entries', 400, { body: { narration: 'x', date: '2026-02-30', lines: [] } }),  X('date-given-slashes-read', 'GET /api/books/trial-balance', 400, { url: MOUNT + '/trial-balance?asOf=03%2F10%2F2026' }),
+  X('date-given-pl-both-bad', 'GET /api/books/pl', 400, { url: MOUNT + '/pl?from=03%2F10%2F2026&to=03%2F10%2F2026' }),
+  X('date-given-bs-read', 'GET /api/books/bs', 400, { url: MOUNT + '/bs?asOf=tomorrow' }),
+  X('date-given-dues-read', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=2026-02-30' }),
+  X('date-given-ledger-read', 'GET /api/books/ledger/:account', 400, { url: MOUNT + '/ledger/1300?from=31-12-2026', patch: LEDGER_PATCH }),
   X('outbox-retried', 'POST /api/books/outbox/retry', 200, { patch: { hooks: { retryOutbox: async () => RETRIED } } }),
   X('payment-preview-advance', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000 }, patch: { books: { proposeFor: async () => PROPOSAL, duplicateWarnings: async () => [] } } }),
   X('payment-preview-settles', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000, allocate: 'oldest_first' }, patch: { books: { proposeFor: async () => PROPOSAL_SETTLES, duplicateWarnings: async () => [{ code: 'W1', words: 'The same money within 24 hours.', entry_no: 'R/1' }] } } }),
@@ -499,6 +505,7 @@ async function checkRoutes(port, scenarios, recording) {
     if (answer.status >= 400) (tested[scenario.route] = tested[scenario.route] || new Set()).add(answer.status);
     if (recordingOnly()) continue;
     check(label + ': answers (not a hang)', answer.status !== 0);
+    if (scenario.expect) check(label + ': answers the status the row expects', answer.status === scenario.expect, [answer.status, scenario.expect]); /* ACC-274: a 200 where a refusal was expected used to pass silently (the status was only checked for 4xx answers) */
     if (answer.status < 400) continue;
     check(label + ': ' + answer.status + ' is a status the contract declares for this route', allowed(scenario.route).includes(answer.status), allowed(scenario.route));
     if (inherited(scenario, answer)) continue;

@@ -80,7 +80,7 @@ function rowsFor(sql, p) {
   W.rec.push({ s, p, ent: ENT });
   if (/to_regprocedure/.test(s)) return [{ ok: true }];
   if (/^SELECT 1 FROM cb_attachment WHERE id = \$1/.test(s)) return (W.heldAtt || []).includes(p[0]) ? [{}] : [];
-  if (/^SELECT visibility_entity_id FROM chit_messages/.test(s)) return [{ visibility_entity_id: W.internalNote ? ME : null }];
+  if (/^SELECT visibility_entity_id(, is_dispute, dispute_id)? FROM chit_messages/.test(s)) return [{ visibility_entity_id: W.internalNote ? ME : null, is_dispute: false, dispute_id: null }];
   if (/^SELECT role FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return [{ role: 'sender' }];
   if (/^INSERT INTO chit_line_amendment/.test(s)) return [{ amendment_id: 'am-1', line_index: p[2], line_id: p[3], seq: 1, line: p[4] === null ? null : JSON.parse(p[4]), reason_code: p[5], reason: p[6], actor_name: p[8], created_at: new Date() }];
   if (/^SELECT line_items FROM chit_detail/.test(s)) return [{ line_items: [{ particulars: 'Pump seal', quantity: 10 }] }];

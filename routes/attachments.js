@@ -9,8 +9,9 @@
  * by that entity. That is the CB core principle applied to files: nothing OWNED is ever shared, it is
  * replicated, so a counterparty deleting or retaining their copy cannot touch yours.
  *
- * ⚠ THE ONE EXCEPTION IS AN INTERNAL MESSAGE, which stays single and belongs to the author entity alone — an
- * internal note is not addressed to the other party, so fanning its attachment out to them would leak it.
+ * ⚠ THE EXCEPTIONS ARE NARROWER AUDIENCES. An INTERNAL message's file stays single and belongs to the author entity alone — an
+ * internal note is not addressed to the other party. A DISPUTE message's file goes to exactly the parties that message goes to
+ * (the dispute's roster, or the chit when it is chit-wide: lib/dispute-audience), here and on other installations (RAIL-187).
  *
  * ⚠ The bytes live in object storage (lib/storage.js), never in the row; this route carries no key and makes
  * no bucket decision of its own.
@@ -32,11 +33,13 @@ const auth = require('../middleware/auth');
 const storage = require('../lib/storage');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract'); // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
+const disputeAudience = require('../lib/dispute-audience'); // RAIL-187: a file on a dispute message goes to the parties that message goes to: the one reading, not a copy of it
 const ctpReturn = require('../lib/ctpreturn'); // RAIL-106: a file on a chit is told to the parties on other installations, who pull it
 
 /**
  * Who gets a copy of a file put on a chit: every participant named on the caller's own copy (and the caller), except an INTERNAL note's file, which stays with its author entity.
- * → { participants, internalNote } or null when the caller holds no copy of the chit (not a participant).
+ * A DISPUTE message's file → the dispute's own audience (lib/dispute-audience, the rule its message delivery uses), `toIds` naming it for the copy sent to other installations.
+ * → { participants, internalNote, toIds? } or null when the caller holds no copy of the chit (not a participant).
  */
 async function audienceFor(entity_id, chit_id, message_id) {
   const rosterRow = await withEntity(entity_id, (db) => db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2 LIMIT 1`, [chit_id, entity_id]));
@@ -45,9 +48,15 @@ async function audienceFor(entity_id, chit_id, message_id) {
   if (!participants.includes(entity_id)) participants.push(entity_id);
   if (!message_id) return { participants, internalNote: false };
   // an INTERNAL-message attachment stays private to its entity (single copy)
-  const message = await withEntity(entity_id, (db) => db.query(`SELECT visibility_entity_id FROM chit_messages WHERE message_id = $1 AND chit_id = $2 LIMIT 1`, [message_id, chit_id]));
+  const message = await withEntity(entity_id, (db) => db.query(`SELECT visibility_entity_id, is_dispute, dispute_id FROM chit_messages WHERE message_id = $1 AND chit_id = $2 LIMIT 1`, [message_id, chit_id]));
+  if (!message.rows.length) return { participants: [entity_id], internalNote: false, toIds: [entity_id] }; /* RAIL-187: a message I hold no copy of is none I may widen a file onto: my copy only */
   const owner = message.rows[0] && message.rows[0].visibility_entity_id;
-  return owner ? { participants: [owner], internalNote: true } : { participants, internalNote: false };
+  if (owner) return { participants: [owner], internalNote: true };
+  const disputed = message.rows[0] && message.rows[0].is_dispute && message.rows[0].dispute_id;
+  if (!disputed) return { participants, internalNote: false };
+  const dispute = await disputeAudience.audienceOf(entity_id, chit_id, disputed);
+  if (!dispute) return { participants: [entity_id], internalNote: false, toIds: [entity_id] }; /* fail closed: not a party to that dispute → my copy only */
+  return dispute.wide ? { participants, internalNote: false } : { participants: dispute.ids, internalNote: false, toIds: dispute.ids };
 }
 
 /** the file as announced to a party on another installation: by REFERENCE (id, name, type, size, sha-256), never the bytes */
@@ -91,7 +100,7 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
       forEntity: entity_id
     });
     /* ⭐ RAIL-106: the party elsewhere pulls the bytes over the CTP door, from the copy this entity holds. An internal note's file stays here. */
-    const crossed = audience.internalNote ? { queued: 0 } : await ctpReturn.onAttachment(entity_id, announcement(file, id, buffer));
+    const crossed = audience.internalNote ? { queued: 0 } : await ctpReturn.onAttachment(entity_id, announcement(file, id, buffer), audience.toIds);
     res.json({ id, name, mime: mime || 'application/octet-stream', size: buffer.length, ...ctpReturn.answerOf(crossed) });
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Upload failed')); /* the cause is logged with the request id; the caller gets the one generic sentence */
