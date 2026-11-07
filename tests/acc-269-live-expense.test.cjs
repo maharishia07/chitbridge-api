@@ -48,6 +48,10 @@ function loadWith(rows, posted) {
   const stranger = Object.assign(liveExpense(3, 0), { purpose: 'note', business_json: { bill_no: 'X-3' } });
   const still = await loadWith([stranger], {}).ledgerFor(SHOP, month);
   ok('ACC-268 unchanged: a non-expense chit that states no total is still named', still.dropped.length === 1, JSON.stringify([still.dropped, still.expense_no_tax]));
+  /* spoof: a sale that merely carries an expense key is still refused */
+  const spoof = Object.assign(liveExpense(4, 0), { purpose: 'order', business_json: { bill_no: 'X-4', expense: { what: 'x', amount: 5 } } });
+  const spoofed = await loadWith([spoof], {}).ledgerFor(SHOP, month);
+  ok('a non-expense chit carrying an expense key is still named, not moved to expense_no_tax', spoofed.dropped.length === 1 && (spoofed.expense_no_tax || []).length === 0, JSON.stringify([spoofed.dropped, spoofed.expense_no_tax]));
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n\n' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
