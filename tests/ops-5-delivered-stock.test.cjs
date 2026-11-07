@@ -20,7 +20,8 @@ const L1 = '33333333-3333-4333-8333-333333333331',
   L2 = '33333333-3333-4333-8333-333333333332';
 const ITEM = '44444444-4444-4444-8444-444444444444';
 
-const world = { deliveries: [], receipts: [], use: { bill: 'resale' }, lines: [], seq: 0 };
+const world = { deliveries: [], receipts: [], use: { bill: 'resale' }, lines: [], seq: 0, order: null };
+const receiptRow = (against, qty, no) => ({ chit_id: 'R-' + no, purpose: 'receipt', created_at: '2026-10-31', business_json: { client_ref: no, against: { chit_id: against } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] });
 const ledger = new Map(); /* the stock index (entity|ref|line_ref|reason|lot) -> qty, in memory */
 const onHand = () => [...ledger.values()].reduce((a, q) => a + q, 0);
 
@@ -30,7 +31,7 @@ function copy() {
     sender_entity_id: 'seller',
     purpose: 'invoice',
     current_status: 'pending',
-    business_json: { use: world.use },
+    business_json: { use: world.use, ...(world.order ? { order: { from: world.order } } : {}) },
     /* the supplier's own item_id is on the line and must be ignored */
     line_items: world.lines.map((x) => ({ line_id: x.line_id, particulars: x.name, quantity: x.qty, unit: 'kg', price: 60, item_id: 'THEIR-SKU' }))
   };
@@ -48,12 +49,16 @@ function fakeDb() {
         return { rowCount: 1, rows: [] };
       }
       if (/FROM chit_line_delivery d JOIN stock_movement/.test(t)) {
+        /* the link: the bill itself, or (OPS-75) the order the supplier's bill is for - a read that cannot follow the order finds nothing */
+        const follows = p[1] === CHIT || (/'order' ->> 'from'/.test(t) && world.order && p[1] === world.order);
+        if (!follows) return { rows: [] };
         const counted = [...ledger.entries()].filter(([k]) => k.includes('|GI:')).reduce((a, [, q]) => a + q, 0);
         return { rows: counted ? [{ item_id: ITEM, qty: counted }] : [] };
       }
       if (/chit_line_event/.test(t)) return { rows: [{ copies: 2 }] };
       if (/FROM chit_line_delivery/.test(t)) return { rows: world.deliveries.filter((d) => d.kind === 'deliver') };
       if (/FROM chit_header WHERE entity_id/.test(t)) return { rows: world.receipts };
+      if (/h.business_json #>> '{against,chit_id}' = ANY/.test(t)) return { rows: world.receipts.filter((r) => p[1].includes(r.business_json.against.chit_id)) };
       if (/FROM chit_header h/.test(t)) return { rows: [copy()] };
       if (/FROM catalogue_items/.test(t)) return { rows: [{ item_id: ITEM, item_data: { name: 'Basmati Rice', unit: 'kg', price: 90 }, updated_at: null }] };
       return { rows: [], rowCount: 0 };
@@ -92,7 +97,7 @@ const eq = (a, b, msg) => {
   checks++;
 };
 function reset(over) {
-  Object.assign(world, { deliveries: [], receipts: [], use: { bill: 'resale' }, seq: 0, lines: [{ line_id: L1, name: 'Basmati Rice', qty: 80 }] }, over || {});
+  Object.assign(world, { deliveries: [], receipts: [], use: { bill: 'resale' }, seq: 0, order: null, lines: [{ line_id: L1, name: 'Basmati Rice', qty: 80 }] }, over || {});
   ledger.clear();
 }
 const count = (rows, who) => deliverline.record(SHOP, CHIT, rows, who || { actor_id: 'a', actor_name: 'A', private: true });
@@ -135,7 +140,7 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
   await count([{ line_id: L1, quantity: 100, unit: 'kg', kind: 'add', amount: 40, particulars: 'freight', client_ref: 'f1' }]);
   eq(onHand(), 0, 'a charge (kind add) is not goods');
 
-  reset({ receipts: [{ x: 1 }] });
+  reset({ receipts: [receiptRow(CHIT, 10, 'GRN-A')] });
   const dup = await count([{ line_id: L1, quantity: 10, unit: 'kg', client_ref: 'r1' }]);
   eq([onHand(), codes(dup)], [0, ['already_received']], 'a receipt already raised against the bill: not counted twice, and said so');
 
@@ -154,8 +159,8 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
   eq([rules[0].code, rules[1].reason, rules[1].ref], ['take_back_not_posted', 'purchase', 'GI:T2'], 'a take-back is refused; a delivery is a purchase with its own ref');
 
   /* a receipt raised AFTER the bill was counted in: the shared link is against.chit_id = the bill */
-  const receipt = (qty) => ({ chit_id: 'R1', purpose: 'receipt', business_json: { client_ref: 'GRN1', against: { chit_id: CHIT } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] });
-  const receive = (qty) => stockFromChit.postDelivered && require(path.join(API, 'lib/stock-from-chit')).postFor(SHOP, receipt(qty), dbStub.withEntity, {});
+  const receipt = (qty, against) => ({ chit_id: 'R1', purpose: 'receipt', business_json: { client_ref: 'GRN1', against: { chit_id: against || CHIT } }, line_items: [{ line_id: L1, item_id: ITEM, quantity: qty, unit: 'kg', price: 60 }] });
+  const receive = (qty, against) => require(path.join(API, 'lib/stock-from-chit')).postFor(SHOP, receipt(qty, against), dbStub.withEntity, {});
   reset();
   await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'x1' }]);
   const same = await receive(50);
@@ -167,13 +172,39 @@ const codes = (r) => ((r && r.stock && r.stock.skipped) || []).map((s) => s.code
   eq((await receive(80)).moved, 0, 'the receipt sent again posts nothing twice');
   reset();
   await receive(50);
-  reset({ receipts: [{ x: 1 }] });
-  eq(ledger.size, 0, 'scene: receipt first');
   reset();
   await receive(50);
-  world.receipts = [{ x: 1 }];
+  world.receipts = [receiptRow(CHIT, 50, 'GRN1')];
   await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'x3' }]);
   eq(onHand(), 50, 'receipt before the bill: the bill is not counted a second time (already_received)');
+
+  /* OPS-75: the receipt is raised against the PO and does NOT name the bill - the shared link is the PO (bill.business_json.order.from = receipt.against.chit_id).
+     Stock must post once whichever arrives first. Quantities are plain counts, so the case is the same for an IN and an AU shop (no country branch in the posting). */
+  const PO = '55555555-5555-4555-8555-555555555555', OTHER_PO = '66666666-6666-4666-8666-666666666666';
+  reset({ order: PO });
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p1' }]);
+  const poSame = await receive(50, PO);
+  eq([onHand(), poSame.skipped.map((s) => s.code)], [50, ['already_counted_in']], 'OPS-75 bill first: a receipt of 50 against the PO is not posted again');
+  reset({ order: PO });
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p2' }]);
+  eq([(await receive(80, PO)).moved, onHand()], [1, 80], 'OPS-75 bill 50, receipt 80 against the PO: only the remainder 30 is posted');
+  reset({ order: PO });
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p3' }]);
+  eq([(await receive(50, OTHER_PO)).moved, onHand()], [1, 100], 'OPS-75 a receipt against ANOTHER order is a different delivery: posted');
+  reset({ order: PO });
+  await receive(50, PO);
+  world.receipts = [receiptRow(PO, 50, 'GRN1')];
+  const billAfter = await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p4' }]);
+  eq([onHand(), codes(billAfter)], [50, ['already_received']], 'OPS-75 receipt first: the bill counted in afterwards, same goods, posts nothing');
+  reset({ order: PO });
+  await receive(50, PO);
+  world.receipts = [receiptRow(PO, 50, 'GRN1')];
+  await count([{ line_id: L1, quantity: 80, unit: 'kg', client_ref: 'p5' }]);
+  eq(onHand(), 80, 'OPS-75 receipt 50 first, then the whole bill 80: only the remainder 30 is posted, stock 80');
+  reset({ order: PO });
+  world.receipts = [receiptRow(OTHER_PO, 50, 'GRN9')];
+  await count([{ line_id: L1, quantity: 50, unit: 'kg', client_ref: 'p6' }]);
+  eq(onHand(), 50, 'OPS-75 a receipt for another order does not net this bill');
 
   console.log(checks + ' checks');
 })().catch((e) => {

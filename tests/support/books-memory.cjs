@@ -79,6 +79,11 @@ function create() {
       return T.entries.filter((x) => x.entity_id === e && String(x.posting_date).slice(0, 10) >= from && String(x.posting_date).slice(0, 10) <= to && (types || []).indexOf(x.event_type) >= 0)
         .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && !l.party_id).map((l) => ({ entry_id: h.entry_id, event_type: h.event_type, code: (T.accounts.find((a) => a.account_id === l.account_id) || {}).code, dr_minor: l.dr_minor, cr_minor: l.cr_minor })));
     },
+    /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
+    async receiptBillsAgainst(db, e, ids) {
+      const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
+      return (T.receiptBills || []).filter((r) => (ids || []).indexOf(r.on) >= 0 && live(r)).map((r) => ({ chit_id: r.chit_id, no: r.no, total: r.total, entry_id: live(r).entry_id, entry_no: live(r).entry_no }));
+    },
     async unreversedForChit(db, e, chit_id) {
       const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
       return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
@@ -131,7 +136,7 @@ function create() {
     async years(db, e) { return Array.from(new Set(Array.from(T.balances.values()).filter((b) => b.entity_id === e).map((b) => b.fiscal_year))).sort(); },
     /* ── the four writes ── */
     async insertEntry(db, e, h) {
-      if (h.source_ref && T.entries.some((x) => x.entity_id === e && x.source_ref === h.source_ref)) throw Object.assign(new Error('duplicate source_ref'), { code: '23505' });
+      if (h.source_ref && T.entries.some((x) => x.entity_id === e && x.source_ref === h.source_ref)) throw Object.assign(new Error('duplicate key value violates unique constraint "journal_entry_src_uq"'), { code: '23505', constraint: 'journal_entry_src_uq' });
       if (T.entries.some((x) => x.entity_id === e && x.entry_no === h.entry_no)) throw Object.assign(new Error('duplicate entry_no'), { code: '23505' });
       const r = Object.assign({ entry_id: id(), entity_id: e, created_at: now() }, clone(h)); T.entries.push(r); return { entry_id: r.entry_id, created_at: r.created_at };
     },
@@ -266,6 +271,7 @@ function create() {
     async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
+    async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))).map((c) => { const i = T.identities.find((x) => x.identity_id === c.by); return Object.assign({}, c, { by_name: i ? i.display_name || null : null }); }); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },
@@ -279,7 +285,7 @@ function create() {
     async packs(db, e) { return clone(T.packs.filter((x) => x.entity_id === e)); },
     async pack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); return p ? clone(p) : null; },
     async ackPack(db, e, pid) { const p = T.packs.find((x) => x.entity_id === e && x.pack_id === pid); if (!p) return null; p.acknowledged_at = p.acknowledged_at || now(); return { acknowledged_at: p.acknowledged_at }; },
-    async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; }, async cancelledStillPosted() { return []; },
+    async counterBills() { return []; }, async countersBilling() { return []; }, async unpostedChits() { return []; }, async unpostedInWindow() { return []; }, async unpostedCount() { return { count: 0, oldest: null }; }, async cancelledStillPosted() { return []; },
     async openDisputes(db, e, chit) { return T.disputes.filter((d) => d.entity_id === e && d.chit_id === chit && d.status === 'open').length; },
     /* ── M30 · the payment advice (b285): T.adviceReady = false stands in for "the migration has not run" ── */
     async adviceReady() { return T.adviceReady !== false; },

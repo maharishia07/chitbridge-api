@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 148,
+  "long_functions": 143,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -231,9 +231,6 @@
     "routes/integrations.js": [
       "GET /reconcile",
       "POST /heartbeat"
-    ],
-    "routes/invoice.js": [
-      "POST /build"
     ],
     "routes/network-design.js": [
       "GET /availability",

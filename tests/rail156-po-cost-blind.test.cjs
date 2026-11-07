@@ -36,6 +36,8 @@ function rows(s, p) {
   if (/can_see_costs FROM identities/.test(s)) return [{ can_see_costs: p[0] === GRANTED_ID }];
   if (/SELECT country, currency_code, timezone FROM identities/.test(s)) return [{ country: 'IN', currency_code: 'INR', timezone: null }];
   if (/SELECT self_copy_pref, currency_code FROM identities/.test(s)) return [{ self_copy_pref: null, currency_code: 'INR' }];
+  /* ACC-206 (OPS-98): the send's engine reads seller and buyer in ONE query (lib/send-money partiesOf, identity_id = ANY($1)); a stand-in that answers none makes every priced send 503 MONEY_NOT_COMPUTED */
+  if (/FROM identities/.test(s) && /identity_id = ANY/.test(s)) return (p[0] || []).map((id) => ROWS[id]).filter(Boolean);
   if (/FROM identities/.test(s) && /identity_id = \$1/.test(s)) { const r = ROWS[p[0]]; return r ? [r] : []; }
   return [];
 }
