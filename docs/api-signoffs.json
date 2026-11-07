@@ -555,19 +555,19 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/folder": {
-   "hash": "55d4d0593ffb2a8c",
+   "hash": "54b00476fd18ef9d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/inbox": {
-   "hash": "b29d0408daaea305",
+   "hash": "130ced1d0eda9241",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#921",
    "lifecycle": "stable"
   },
   "GET /api/chits/raida/report": {

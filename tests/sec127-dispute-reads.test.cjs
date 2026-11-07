@@ -32,6 +32,9 @@ const DISP = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 /** shop A's copy of one open dispute on a chit both shops hold */
 const ALL = [{ dispute_id: DISP, chit_id: CHIT, entity_id: SHOP_A, raised_by_entity_id: SHOP_A, status: 'open', category: 'x', reason: 'r', scope: 'targeted', created_at: '2026-10-01' }];
 
+/** shop A's copy of one dispute message on the same chit (both shops hold the chit; only A is on the dispute) */
+const MESSAGES = [{ message_id: 'mmmmmmmm-mmmm-4mmm-8mmm-mmmmmmmmmmmm', chit_id: CHIT, entity_id: SHOP_A, is_dispute: true, dispute_id: DISP, thread_type: 'external', message_text: 'A-only dispute words', created_at: '2026-10-02' }];
+
 const lab = harness({ here: HERE, mounts: ['/api/chits'], routeFiles: { '/api/chits': 'routes/chits.js' } });
 const { check } = lab;
 const seen = [];
@@ -43,6 +46,11 @@ function modelWithoutRls(sql, params) {
   const mine = (row) => (named ? row.entity_id === params[Number(named[1]) - 1] : true);
   if (/FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2/.test(asked)) return { rows: [{ entity_id: params[1] }], rowCount: 1 }; /* both shops hold the chit */
   if (/FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2/.test(asked)) return { rows: [{ all_recipients: [] }], rowCount: 1 };
+  if (/FROM chit_messages WHERE chit_id/.test(asked)) {
+    seen.push(asked);
+    const rows = MESSAGES.filter(mine);
+    return { rows, rowCount: rows.length };
+  }
   if (/FROM chit_disputes/.test(asked) && !/count\(\*\)|COUNT\(\*\)/.test(asked)) {
     seen.push(asked);
     const rows = ALL.filter(mine);
@@ -71,6 +79,8 @@ function listSqlCase() {
   const text = CF.read(HERE) + fs.readFileSync(path.join(HERE, 'lib', 'select.js'), 'utf8');
   const bare = text.match(/FROM chit_disputes cd\s+WHERE cd\.chit_id = (ch|cs)\.chit_id AND cd\.status/g) || [];
   check('chit-list dispute counts/filters: none left without cd.entity_id (' + bare.length + ' bare)', bare.length === 0, bare.join(' | '));
+  const bareMsg = text.match(/FROM chit_messages cm2?\s+WHERE cm2?\.chit_id = ch\.chit_id AND cm2?\.visibility/g) || [];
+  check('chit-list message count/last-message: none left without cm.entity_id (' + bareMsg.length + ' bare)', bareMsg.length === 0, bareMsg.join(' | '));
   check('chit-list SQL names cd.entity_id in the counts', (text.match(/cd\.entity_id = (ch|cs)\.entity_id/g) || []).length >= 8);
 }
 
@@ -85,6 +95,14 @@ async function main() {
   check("GET disputes as shop B: none of shop A's disputes", getB.json && (getB.json.disputes || []).length === 0, getB.text.slice(0, 300));
   const getA = await ask(port, WHO_A, 'GET', '/api/chits/' + CHIT + '/disputes');
   check('GET disputes as shop A: its one dispute', getA.json && (getA.json.disputes || []).length === 1, getA.text.slice(0, 300));
+
+  /* SEC-127c: the thread read, with and without ?dispute=1, names the caller's shop in its own SQL */
+  for (const q of ['?dispute=1', '', '?thread_type=external']) {
+    const thrB = await ask(port, WHO_B, 'GET', '/api/chits/' + CHIT + '/messages' + q);
+    check('GET messages' + q + ' as shop B: none of the dispute message of shop A (' + thrB.status + ')', thrB.status === 200 && !/A-only/.test(thrB.text) && (thrB.json.messages || []).length === 0, thrB.text.slice(0, 200));
+  }
+  const thrA = await ask(port, WHO_A, 'GET', '/api/chits/' + CHIT + '/messages?dispute=1');
+  check('GET messages?dispute=1 as shop A: its one dispute message', thrA.json && (thrA.json.messages || []).length === 1, thrA.text.slice(0, 200));
 
   const evB = await ask(port, WHO_B, 'GET', '/api/chits/' + CHIT + '/diagnosis');
   const evText = evB.text;
