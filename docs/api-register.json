@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 220,
+  "meets": 417,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -30081,9 +30081,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9716bc3da47becc9"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [],
@@ -30178,9 +30177,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3b6d30d04f8b7892"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -30281,11 +30279,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "19d19443442b003b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -64524,9 +64521,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1298c3dcfb608c2a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#890",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
