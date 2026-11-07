@@ -3480,6 +3480,8 @@ const BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, d.line_items
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+          /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out, as the day close leaves it out */
+          ${counterBill.NOT_WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3`;
 
 /** one earlier bill as the counter reprints it: who, when, what was paid and saved, the stored invoice, and its lines */
