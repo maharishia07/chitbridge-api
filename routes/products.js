@@ -34,6 +34,7 @@ const orderInput = require('../lib/order-input'); // the shop's declared contrac
 const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
 const xlsxRead = require('../lib/xlsx-read'); // ⭐ and the same, from a workbook ([TILL-109])
 const { rateLimit } = require('../lib/rate-limit');
+const { intFromEnv } = require('../lib/limits');
 
 /**
  * ── ⚠️⚠️ THE IMPORT IS THE EXPENSIVE DOOR ([TILL-112]) ───────────────────────────────
@@ -54,7 +55,7 @@ const { rateLimit } = require('../lib/rate-limit');
 const { callerKey: importKey } = require('../lib/limiter-key');
 const preflightLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.IMPORT_PREFLIGHT_MAX || '60'),
+  max: intFromEnv('IMPORT_PREFLIGHT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,
@@ -63,7 +64,7 @@ const preflightLimiter = rateLimit({
 /* ⚠️ the paste-a-list door: smaller per request than the import, larger than a single add */
 const bulkLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.PRODUCTS_BULK_MAX || '60'),
+  max: intFromEnv('PRODUCTS_BULK_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,
@@ -71,7 +72,7 @@ const bulkLimiter = rateLimit({
 });
 const importLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.IMPORT_COMMIT_MAX || '20'),
+  max: intFromEnv('IMPORT_COMMIT_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: importKey,

@@ -20,6 +20,7 @@ const shopActors = require('../lib/shop-actors'); // SEC-103: actorOwned — an 
 const folderViews = require('../lib/folder-views'); // SEC-100: folderOwned — a folder id is looked up under the caller's shop before it is stored
 const { declaresStatuses } = require('../lib/contract-kit'); // a gate that refuses nothing and says which statuses a call under it can answer
 const { VERIFY_REFUSALS } = require('../lib/signin-contract');
+const taxIdDoor = require('../lib/tax-id-door'); // CTR-182: only the owner changes the shop's tax number
 const contract = require('../lib/entities-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed } = contract;
 
@@ -881,7 +882,7 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const cost = require('../lib/cost');
-    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req) });
+    res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req), may_set_tax_id: taxIdDoor.mayChangeTaxId(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Read failed'));
   }
@@ -923,10 +924,21 @@ async function visibilityCapFor(entityId) {
   return visibilityCap.capOf({ plan, planMenu, paramsOverride });
 }
 
+/** CTR-182: the tax_id field to write: none when the number is only the stored one echoed back, so the column is skipped and a different case can never rewrite it */
+const taxIdToWrite = (stored, sent) => (taxIdDoor.taxIdDiffers(stored && stored.gstn, sent) ? { tax_id: sent } : {});
+
+/** CTR-182: does this PATCH send a tax number that differs from the shop's stored one? (one read, only on the path of a person who is not the owner) */
+async function sendsOtherTaxId(req) {
+  if (!req.body || !req.body.gstn) return false;
+  const stored = await query('SELECT gstn FROM identities WHERE identity_id = $1', [auth.entityOf(req)]);
+  return taxIdDoor.taxIdDiffers(stored.rows[0] && stored.rows[0].gstn, req.body.gstn);
+}
+
 router.patch(
   '/profile',
   auth,
   require('../lib/access').writeGate /* SEC-71: the shop's own details are the owner's or an editor's to change */,
+  taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the shop's tax number is the owner's — a person who sends a DIFFERENT one is refused 403, nothing written */,
   /**
    * ⚠️ EVERY RULE SAYS WHAT IT WANTS. Athi, 2026-08-18: *"it says validation failed, not sure what it is. Need
    * to have explanation so people understand and update accordingly."*
@@ -949,7 +961,7 @@ router.patch(
      */
     body('display_name').optional().trim().isLength({ min: 2, max: 255 }).withMessage('A business name is 2 characters or more.'),
     /* T2-POLICY (SET4): no "15 characters" here — the tax number is checked in the handler by profile.taxIdRefusal, from the shop's pack */
-    body('gstn').optional().trim(),
+    body('gstn').optional({ nullable: true }).isString().withMessage('The tax number is text.').trim() /* CTR-182: text only, for everyone — an array or number is refused 400 */,
     body('logo_url').optional().trim(),
     body('address').optional().trim(),
     body('business_status').optional().isIn(['open', 'closed', 'away']),
@@ -1088,10 +1100,10 @@ router.patch(
       const P = require('../lib/profile');
       const idFields = {};
       if (req.body.gstn) {
-        const c = await query('SELECT country FROM identities WHERE identity_id = $1', [id]);
+        const c = await query('SELECT country, gstn FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
         if (bad) return problem(req, res, { status: 400, ...contract.words.taxNumberRefused(bad) });
-        idFields.tax_id = req.body.gstn;
+        Object.assign(idFields, taxIdToWrite(c.rows[0], req.body.gstn));
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);
