@@ -21,7 +21,7 @@ let pass = 0, fail = 0;
 const t = (name, ok, extra) => { if (ok) { pass++; say('  ok  ' + name); } else { fail++; say('  FAIL ' + name + (extra ? '\n       ' + extra : '')); } };
 
 const E = 'held@elsewhere.test';
-let ROWS = [], BREAK = null;
+let ROWS = [], BREAK = null, INSERTS = 0, MAILS = [];
 const reset = () => {
   ROWS = [
     { identity_id: 'shopx', parent_entity_id: null, email: 'x@shopx.test', otp_contact: null, user_id: 'shopx', display_name: 'Shop X', identity_type: 'entity' },
@@ -31,6 +31,8 @@ const reset = () => {
     { identity_id: 'partyy2', parent_entity_id: 'shopy', email: 'own@y.test', otp_contact: null, user_id: '~shopy.cus-2', display_name: 'Y Second', identity_type: 'entity' }
   ];
   BREAK = null;
+  INSERTS = 0;
+  MAILS = [];
 };
 const lc = (v) => String(v == null ? '' : v).toLowerCase();
 const unique = (email, except) => ROWS.some((r) => r.identity_id !== except && r.email && email && lc(r.email) === lc(email));
@@ -41,6 +43,7 @@ async function q(sql, p) {
   let m;
   if (BREAK) throw BREAK;
   if (/^INSERT INTO identities/i.test(s)) {
+    INSERTS++;
     if (unique(p[3])) throw dup();
     ROWS.push({ identity_id: p[0], email: p[3], user_id: p[4], display_name: p[2], identity_type: 'entity', parent_entity_id: null });
     return { rows: [], rowCount: 1 };
@@ -65,7 +68,7 @@ stub('db', { query: q, pool: { query: q, connect: async () => ({ query: q, relea
 stub('lib/schema', { hasColumn: async () => true, hasColumns: async () => true, hasTable: async () => true, has: async () => true, columns: async () => [], table: async () => ({}) });
 stub('lib/schema-bootstrap', { ensureDefaultSchema: async () => {} });
 stub('lib/rootlink', { connect: async () => null });
-stub('lib/notify', { sendOtp: async () => ({ delivered: true }), sendOtpEmail: async () => ({ delivered: true }), sendOtpSms: async () => ({}), sendEmail: async () => ({}), sendSupportAlert: async () => ({}) });
+stub('lib/notify', { sendOtp: async () => ({ delivered: true }), sendOtpEmail: async (to, name, otp) => { MAILS.push({ kind: 'code', to, otp }); return { delivered: true }; }, sendOtpSms: async () => ({}), sendEmail: async (to, subject, html) => { MAILS.push({ kind: 'notice', to, subject, html }); return { delivered: true }; }, sendSupportAlert: async () => ({}) });
 stub('lib/istest', { atRegistration: () => ({ population: null, entity_kind: 'customer' }), ready: async () => true });
 
 const app = express();
@@ -100,6 +103,10 @@ const nameless = (s) => !/held traders|elsewhere|shop x|partyx|shopx/i.test(Stri
     t('register on a fresh e-mail answers 200 "code sent"', fresh.status === 200 && /code sent|code issued/i.test(fresh.body.message || ''), fresh.status + ' ' + JSON.stringify(fresh.body));
     t('⭐ register on an e-mail a shop minted onto a party: the SAME status as a fresh one (was a 500)', held.status === fresh.status, held.status + ' ' + JSON.stringify(held.body));
     t('⭐ …and the SAME message, naming no holder', held.body.message === fresh.body.message && nameless(JSON.stringify(held.body).split(E).join('')), JSON.stringify(held.body));
+    t('⭐ the INSERT still runs for the held address (the refusal is the database refuses it, not a skipped call)', INSERTS === 2, 'inserts ' + INSERTS);
+    const notice = MAILS.filter((m) => m.to === E);
+    t('⭐ the held address gets exactly ONE mail through the mailer, the same work as a fresh one (timing)', notice.length === 1 && MAILS.filter((m) => m.to === 'brand-new@fresh.test').length === 1, JSON.stringify(MAILS.map((m) => m.kind + ':' + m.to)));
+    t('⭐ …that mail is a notice with NO code and names no shop', notice[0] && notice[0].kind === 'notice' && !/d{6}/.test(notice[0].html) && nameless(notice[0].html + notice[0].subject) && /already on file/.test(notice[0].html), notice[0] && notice[0].html);
     t('   …and no second account was made for that e-mail', ROWS.filter((r) => r.email === E).length === 1);
 
     say('\n── the party PATCH ──');

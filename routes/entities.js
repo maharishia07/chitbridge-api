@@ -85,6 +85,20 @@ function userIdVerdict(wanted, display_name) {
 }
 
 /**
+ * ⭐ SEC-130 (A) · mailAlreadyOnFile(email): the held address gets ONE mail through the same mailer, awaited like a new address's code, so the two paths do the same
+ * work and take the same time (a faster refusal would be the timing signal). It carries no code and no shop name: it says the address is already on file, how to sign
+ * in, and where to get help. The per-address ask limits (signin.askChecks, before registerNew) cap both paths alike. Best effort: sendEmail never throws.
+ */
+function mailAlreadyOnFile(email) {
+  const html =
+    '<div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;"><h2 style="color: #0D47A1;">Chit and Bridge</h2>' +
+    '<p>Someone asked to register with this e-mail address, which is already on file with us.</p>' +
+    '<p>If that was you, go to the sign-in page and sign in with this address; we send a code there. No new account was made.</p>' +
+    '<p>If you need help, use Help in the app or reply to this e-mail. If this was not you, ignore it.</p></div>';
+  return require('../lib/notify').sendEmail(email, 'Chit and Bridge: this e-mail is already on file', html);
+}
+
+/**
  * ⭐ SEC-130 (A) · emailHeldByNoAccount(sql, args) → true when the INSERT was refused because the e-mail is held by a record that is no account (a party a shop
  * minted: sign-in cannot find it, but identities.email is one global unique). The caller then answers with the words a NEW address gets, sends no code and
  * makes nothing, so a stranger cannot tell a held address from a free one (OWASP: account enumeration). Any other error is thrown as before.
@@ -94,7 +108,10 @@ async function emailHeldByNoAccount(sql, args) {
     await query(sql, args);
     return false;
   } catch (e) {
-    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) return true;
+    if (e && e.code === '23505' && /email/i.test(String(e.constraint || e.detail || ''))) {
+      await mailAlreadyOnFile(args[3]);
+      return true;
+    }
     throw e;
   }
 }
