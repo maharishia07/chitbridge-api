@@ -3271,7 +3271,6 @@
  ],
  "POST /api/signin/ask": [
   400,
-  409,
   500
  ],
  "POST /api/signin/logout": [

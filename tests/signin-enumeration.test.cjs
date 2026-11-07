@@ -176,7 +176,7 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
     world.reset();
     ['twinA', 'twinB'].forEach((k) => { world.DB()[k].email = 'shared@twin.test'; });
     const A = await call('POST', '/api/signin/ask', { email: 'shared@twin.test' });
-    t('ask still offers the choice (409 CHOOSE_IDENTITY): the page needs it to continue', A.status === 409 && A.body.code === 'CHOOSE_IDENTITY' && Array.isArray(A.body.choices) && A.body.choices.length === 2, A.status + ' ' + A.raw.slice(0, 100));
+    t('ask offers NO choice either (SEC-143): 200, the one answer, no choices', A.status === 200 && !('choices' in A.body) && A.body.need === 'pin_or_code', A.status + ' ' + A.raw.slice(0, 100));
     const ghost = await call('POST', '/api/entities/verify', { email: 'nobody@nowhere.test', otp: '000000' });
     for (const [label, body] of [['no secret', {}], ['a wrong code', { otp: '000000' }], ['a code that is right for one of them', { otp: '123456' }]]) {
       const v = await call('POST', '/api/entities/verify', Object.assign({ email: 'shared@twin.test' }, body));
@@ -184,6 +184,51 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
     }
     const sv = await call('POST', '/api/signin/verify', { id: 'shared@twin.test' });
     t('signin/verify (id) on the shared contact: the same answer, no choices', shape(sv) === shape(ghost), sv.raw.slice(0, 120));
+
+    say('\n── POST /api/signin/ask (SEC-143): ONE answer before a secret is proven ──');
+    const devNow = devOtp.mayExposeOtp;
+    devOtp.mayExposeOtp = () => false; /* a sealed environment: the code is never echoed (lib/dev-otp.js) */
+    const askId = (id, extra) => call('POST', '/api/signin/ask', Object.assign({ id }, extra));
+    const ASK_SAME = { message: 'If that sign-in exists, enter your PIN or the code we sent.', need: 'pin_or_code' };
+    const ASK_WHO = {
+      'an unknown person': 'nobody@shopone.br', 'an unknown e-mail': 'nobody@nowhere.test', 'an unknown user id': 'nobodyatall', 'a PIN holder (key@business.br)': 'ravi@shopone.br',
+      'a PIN holder (key@Display Name)': 'ravi@shop one', 'a first-timer who gets a code': 'mala@shopone.br', 'an owner by e-mail (gets a code)': 'owner@shop.test', 'an owner by user id': 'shopone',
+      'a store with no inbox': 'net.store', 'a removed co-assist': 'gone@shopone.br', 'a locked PIN': 'lockd@shopone.br', 'two businesses of one name': 'Twin'
+    };
+    world.reset();
+    ['twinA', 'twinB'].forEach((k) => { world.DB()[k].email = 'shared@twin.test'; });
+    ASK_WHO['one contact on two accounts'] = 'shared@twin.test';
+    const answers = {};
+    for (const [label, id] of Object.entries(ASK_WHO)) answers[label] = await askId(id);
+    t('ask: ' + Object.keys(ASK_WHO).length + ' kinds of person (unknown, PIN holder, code holder, owner, no inbox, removed, locked, ambiguous, shared contact) get ONE answer (status, body, headers)', same(Object.values(answers)) && answers['an unknown person'].status === 200, Object.entries(answers).filter(([, r]) => shape(r) !== shape(answers['an unknown person'])).map(([k, r]) => k + ': ' + r.raw.slice(0, 90)).join(' | '));
+    const a0 = answers['an unknown person'];
+    t('ask: that answer is the fixed sentence and the fixed need, nothing else', JSON.stringify(a0.body) === JSON.stringify(ASK_SAME), a0.raw);
+    t('ask: no need pin/code, use_pin, kind, id, user_id, handle, email, choices, operator_issued or 409 anywhere in them', Object.values(answers).every((r) => r.status === 200 && !/use_pin|"kind"|"id"|user_id|handle|"email"|choices|operator_issued|CHOOSE|AMBIGUOUS|"code"/.test(r.raw)), Object.values(answers).map((r) => r.raw).find((x) => /use_pin|"kind"|"id"|user_id|handle|"email"|choices|operator_issued|CHOOSE|AMBIGUOUS/.test(x)) || '');
+    const ghostBodies = [{ email: 'nobody@nowhere.test' }, { user_id: 'nobodyatall' }, { id: 'no\u0000body' }, { id: 'nobody', shop: 'sh\u0000op' }];
+    const regIn = [await call('POST', '/api/entities/register', { display_name: 'owner@shop.test', email: 'owner@shop.test', mode: 'login' }), await call('POST', '/api/entities/register', { display_name: 'nobody@nowhere.test', email: 'nobody@nowhere.test', mode: 'login' })];
+    const oldDoor = [];
+    for (const b of ghostBodies) oldDoor.push(await call('POST', '/api/signin/ask', b));
+    t('ask: the same answer by { email }, { user_id }, a NUL byte in the id or the shop, and on the old register door in login mode', same([a0, ...oldDoor, ...regIn]), [...oldDoor, ...regIn].map((r) => r.status + ' ' + r.raw.slice(0, 60)).join(' | '));
+    const before = JSON.stringify(Object.values(world.DB()).map((r) => [r.otp_code, r.pin_attempts, r.otp_attempts]));
+    await askId('ravi@shopone.br');
+    t('ask: a PIN holder is asked no code (nothing issued) and a miss is counted for nobody', JSON.stringify(Object.values(world.DB()).map((r) => [r.otp_code, r.pin_attempts, r.otp_attempts])) === before);
+    world.reset();
+    const mala = Object.values(world.DB()).find((x) => x.actor_key === 'mala');
+    await askId('mala@shopone.br');
+    t('ask: a first-timer still has the code kept for them (the work is done, only the answer is the same)', !!mala.otp_code);
+
+    const tAsk = async (id) => { await askId(id); const ms = []; for (let i = 0; i < 9; i++) ms.push((await askId(id)).ms); return median(ms); };
+    for (const [label, id] of [['a PIN holder', 'ravi@shopone.br'], ['a first-timer', 'mala@shopone.br'], ['an owner by e-mail', 'owner@shop.test']]) {
+      world.reset();
+      await askId('nobody@shopone.br'); await askId(id);
+      const rk = await pairedRatio(async () => (await askId(id)).ms, async () => (await askId('nobody@shopone.br')).ms, 9);
+      t('ask time: ' + label + ' takes about as long as an unknown person (paired ratio ' + rk.toFixed(2) + ')', rk > 0.4 && rk < 2.5 && (await tAsk(id)) > 5, String(rk));
+    }
+    devOtp.mayExposeOtp = devNow;
+    world.reset();
+    const echoed = await askId('mala@shopone.br');
+    const knownKeys = Object.keys(echoed.body).filter((k) => k !== 'dev_otp').sort().join();
+    t('ask: on a local stack that echoes codes (never sealed) the only extra is dev_otp', knownKeys === 'message,need', echoed.raw);
 
     say('\n── GET /api/actors/check-login: no signal about a person ──');
     world.reset();

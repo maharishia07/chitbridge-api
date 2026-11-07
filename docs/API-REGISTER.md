@@ -567,12 +567,12 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:323 | yes | yes | no | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/resolve | service | routes/service.js:236 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/service/:chit_id/respond | service | routes/service.js:215 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/ask | signin | routes/signin.js:934 | yes | yes | no | no | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/ask | signin | routes/signin.js:908 | yes | yes | no | no | yes | no | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/logout | signin | routes/signin.js:101 | no | no | no | yes | no | no | no | no | no | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/pin | signin | routes/signin.js:936 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/pin | signin | routes/signin.js:910 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/renew | signin | routes/signin.js:77 | yes | yes | no | yes | yes | no | yes | no | no | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/signin/sessions/revoke | signin | routes/signin.js:160 | yes | yes | no | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/signin/verify | signin | routes/signin.js:935 | yes | yes | yes | yes | yes | no | no | no | no | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/signin/verify | signin | routes/signin.js:909 | yes | yes | yes | yes | yes | no | no | no | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/simulator/feedback | simulator | routes/simulator.js:107 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/simulator/lead | simulator | routes/simulator.js:82 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |

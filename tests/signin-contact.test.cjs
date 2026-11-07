@@ -111,6 +111,7 @@ const call = (method, url, body, token) => new Promise((resolve, reject) => { co
   r.on('error', reject); if (data) r.write(data); r.end(); });
 const claims = (tok) => { try { return jwt.decode(tok) || {}; } catch (_) { return {}; } };
 const ask = (id) => call('POST', '/api/signin/ask', { id });
+const ONE = (r) => r.status === 200 && r.body.need === 'pin_or_code' && Object.keys(r.body).every((k) => ['message', 'need', 'dev_otp'].includes(k)); /* SEC-143: ask says the same to everyone */
 const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ id }, cred));
 
 (async () => {
@@ -123,12 +124,12 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     say('\n── the owner, by the e-mail the shop signed up with, and by a verified mobile ──');
     reset();
     let a = await ask('athi@mayur.test');
-    t('owner by e-mail: a code is sent (kind entity, need code) and the answer names the stored id', a.status === 200 && a.body.kind === 'entity' && a.body.need === 'code' && a.body.id === 'mayuri123', JSON.stringify(a.body));
+    t('owner by e-mail: the one ask answer (no kind, no id), and the code is stored on the shop', ONE(a) && !!DB.mayur.otp_code, JSON.stringify(a.body));
     let v = await verify('athi@mayur.test', { otp: '123456' });
     t('   …and 123456 signs the owner in (token is the shop)', v.status === 200 && claims(v.body.token).identity_id === 'mayur', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     reset(); DOCS = DOCS.filter((d) => d.identity_id !== 'athiAtAlpha');   /* only Mayur holds this number now */
     a = await ask('98765 43210');
-    t('⭐ owner by mobile (typed with a space): found through the VERIFIED phone document — code sent, id = the shop\'s user id', a.status === 200 && a.body.kind === 'entity' && a.body.id === 'mayuri123', JSON.stringify(a.body));
+    t('⭐ owner by mobile (typed with a space): found through the VERIFIED phone document — the one answer, the code stored on the shop', ONE(a) && !!DB.mayur.otp_code, JSON.stringify(a.body));
     v = await verify('9876543210', { otp: '123456' });
     t('   …and the code signs the owner in by the same number', v.status === 200 && claims(v.body.token).identity_id === 'mayur', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     v = await verify('mayuri123', { otp: '123456' });
@@ -137,78 +138,76 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     say('\n── the employee, by mobile: first-time code → signed in and asked to set a PIN → the PIN works ──');
     reset();
     a = await ask('9000000001');
-    t('⭐ employee by mobile: kind actor, need code, id = bala@mayuri123.br (never typed)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'code' && a.body.id === 'bala@mayuri123.br', JSON.stringify(a.body));
-    v = await verify(a.body.id, { otp: '123456' });
+    t('⭐ employee by mobile: the one answer (no kind, no id); the code is stored on bala', ONE(a) && !!DB.bala.otp_code, JSON.stringify(a.body));
+    v = await verify('bala@mayuri123.br', { otp: '123456' });
     t('   the code signs Bala in under Mayur Bhavan and says requires_pin_setup', v.status === 200 && claims(v.body.token).identity_id === 'bala' && claims(v.body.token).parent_entity_id === 'mayur' && v.body.requires_pin_setup === true, v.status + ' ' + JSON.stringify(v.body).slice(0, 160));
     const sp = await call('POST', '/api/signin/pin', { pin: '4826', confirm_pin: '4826' }, v.body.token);
     t('   /api/signin/pin sets it', sp.status === 200 && !!DB.bala.pin_hash, sp.status + ' ' + JSON.stringify(sp.body));
     a = await ask('9000000001');
-    t('   next time by the same mobile: need pin, no code issued', a.status === 200 && a.body.need === 'pin' && a.body.id === 'bala@mayuri123.br' && DB.bala.otp_code === null, JSON.stringify(a.body));
+    t('   next time by the same mobile: the same answer, and no code issued', ONE(a) && !DB.bala.otp_code, JSON.stringify(a.body));
     v = await verify('9000000001', { pin: '4826' });
     t('   ⭐ the PIN signs him in BY MOBILE (no .br typed) and does not ask again', v.status === 200 && claims(v.body.token).identity_id === 'bala' && !v.body.requires_pin_setup, v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     a = await ask('bala@mail.test');
-    t('⚠️ an UNVERIFIED e-mail document opens nothing (M18): no account', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
+    t('⚠️ an UNVERIFIED e-mail document opens nothing (M18): the one answer, no code made', ONE(a) && !DB.bala.otp_code, JSON.stringify(a.body));
     DOCS.find((d) => d.scheme === 'EMAIL').status = 'verified'; DOCS.find((d) => d.scheme === 'EMAIL').verified_at = 'NOW';
     a = await ask('Bala@Mail.test');
-    t('   verified, the same e-mail finds him (case-insensitively)', a.status === 200 && a.body.id === 'bala@mayuri123.br' && a.body.need === 'pin', JSON.stringify(a.body));
+    t('   verified, the same e-mail finds him (case-insensitively): the same answer, and he has a PIN so no code', ONE(a) && !DB.bala.otp_code, JSON.stringify(a.body));
 
     say('\n── the customer, by the e-mail the storefront proved ──');
     reset();
     a = await ask('kavi@mail.test');
-    t('⭐ customer by e-mail: kind customer, need code, id = the .cr handle; the customer\'s own fixed code (123123) is set', a.status === 200 && a.body.kind === 'customer' && a.body.id === 'kavi=mail.test@mayuri123.cr' && DB.kavi.otp_code === '123123', JSON.stringify(a.body) + ' otp=' + DB.kavi.otp_code);
+    t('⭐ customer by e-mail: the one answer (no kind, no handle); the customer\'s own fixed code (123123) is set', ONE(a) && DB.kavi.otp_code === '123123', JSON.stringify(a.body) + ' otp=' + DB.kavi.otp_code);
     v = await verify('kavi@mail.test', { otp: '123123' });
     t('   the code signs the customer in: a customer token under the shop, no PIN step, no onboarding (status untouched)', v.status === 200 && claims(v.body.token).identity_type === 'customer' && claims(v.body.token).parent_entity_id === 'mayur' && !('requires_pin_setup' in v.body) && DB.kavi.status === 'active', v.status + ' ' + JSON.stringify(v.body).slice(0, 160));
-    v = await verify(a.body.id, { otp: '123123' });
+    v = await verify('kavi=mail.test@mayuri123.cr', { otp: '123123' });
     t('   the .cr handle the chooser would hand back also verifies (grammar behind the scenes) — the spent code is refused', v.status === 400, v.status);
 
     say('\n── one contact, two people: the door asks which — never guesses ──');
     reset();
     a = await ask('+98765 43210');
-    t('⭐ a mobile verified on the owner here (bare) and the employee there (with +) → 409 CHOOSE_IDENTITY with both', a.status === 409 && a.body.code === 'CHOOSE_IDENTITY' && Array.isArray(a.body.choices) && a.body.choices.length === 2, a.status + ' ' + JSON.stringify(a.body));
-    const ch = (a.body.choices || []).map((c) => c.kind + ':' + c.id + '@' + c.shop).sort().join(' | ');
-    t('   each choice carries the STORED id, a plain kind and the shop', ch === 'employee:athi@alpha-timers.br@Alpha Timers | owner:mayuri123@Mayur Bhavan', ch);
+    t('⭐ SEC-143: a mobile on the owner here and the employee there: the one answer, no list of choices, no code made', ONE(a) && !('choices' in a.body) && !DB.mayur.otp_code && !DB.athiAtAlpha.otp_code, a.status + ' ' + JSON.stringify(a.body));
     a = await ask('athi@alpha-timers.br');
-    t('   the page re-asks with the chosen stored id → the employee door (need pin)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'pin', JSON.stringify(a.body));
+    t('   a typed stored id still gets the one answer (the PIN employee: no code)', ONE(a) && !DB.athiAtAlpha.otp_code, JSON.stringify(a.body));
     v = await verify('9876543210', { pin: '2580' });
-    t('   SEC-139: verifying by the shared number lists no choice (400 SIGNIN_REFUSED, like an unknown contact); the choice is made at ask', v.status === 400 && v.body.code === 'SIGNIN_REFUSED' && !('choices' in v.body), v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
+    t('   SEC-139: verifying by the shared number lists no choice (400 SIGNIN_REFUSED, like an unknown contact)', v.status === 400 && v.body.code === 'SIGNIN_REFUSED' && !('choices' in v.body), v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     v = await verify('athi@alpha-timers.br', { pin: '2580' });
     t('   …and by the chosen id, the PIN signs him in at Alpha', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
     DB.athiAtAlpha.break_status = 'removed';
     a = await ask('9876543210');
-    t('   a removed employee is not offered: the number is the owner\'s alone again', a.status === 200 && a.body.id === 'mayuri123', a.status + ' ' + JSON.stringify(a.body).slice(0, 120));
+    t('   a removed employee is not offered: the number is the owner\'s alone again (the owner gets the code)', ONE(a) && !!DB.mayur.otp_code, a.status + ' ' + JSON.stringify(a.body).slice(0, 120));
 
     say('\n── nothing that worked before changes ──');
     reset();
     a = await ask('bala@mayuri123.br');
-    t('a typed .br id still answers as before (need code, first day)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'code', JSON.stringify(a.body));
+    t('a typed .br id: the one answer, the first-day code stored', ONE(a) && !!DB.bala.otp_code, JSON.stringify(a.body));
     a = await ask('mayuri123');
-    t('a user id still answers as before', a.status === 200 && a.body.kind === 'entity' && a.body.need === 'code', JSON.stringify(a.body));
+    t('a user id: the one answer, the code stored on the shop', ONE(a) && !!DB.mayur.otp_code, JSON.stringify(a.body));
     a = await call('POST', '/api/entities/register', { display_name: 'athi@mayur.test', email: 'athi@mayur.test', mode: 'login' });
-    t('the old door by e-mail: 200, and no kind/need/id leak onto it', a.status === 200 && !('kind' in a.body) && !('id' in a.body), JSON.stringify(a.body));
+    t('the old door by e-mail: 200, the same one answer, and no kind/id leak onto it', a.status === 200 && !('kind' in a.body) && !('id' in a.body) && a.body.need === 'pin_or_code', JSON.stringify(a.body));
     a = await ask('nobody@nowhere.test');
-    t('an unknown e-mail: SIGNIN_REFUSED, nothing created', a.status === 400 && a.body.code === 'SIGNIN_REFUSED' && Object.keys(DB).length === 5, a.status + ' ' + JSON.stringify(a.body));
+    t('an unknown e-mail: the one answer, nothing created', ONE(a) && Object.keys(DB).length === 5, a.status + ' ' + JSON.stringify(a.body));
     a = await ask('9999999999');
-    t('an unknown mobile: SIGNIN_REFUSED', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
+    t('an unknown mobile: the one answer', ONE(a), a.status + ' ' + JSON.stringify(a.body));
     reset(); DOCS_TABLE = false;
     a = await ask('athi@mayur.test');
-    t('⚠️ identity_documents not migrated yet: the owner still signs in by e-mail (the document lookup is skipped, not a 500)', a.status === 200 && a.body.id === 'mayuri123', a.status + ' ' + JSON.stringify(a.body));
+    t('⚠️ identity_documents not migrated yet: the owner still signs in by e-mail (the document lookup is skipped, not a 500)', ONE(a) && !!DB.mayur.otp_code, a.status + ' ' + JSON.stringify(a.body));
     a = await ask('9000000001');
-    t('   …and a mobile is simply not found yet (no crash)', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
+    t('   …and a mobile is simply not found yet (the one answer, no crash)', ONE(a), a.status + ' ' + JSON.stringify(a.body));
 
     say('\n── M202 · a shop-named door adds the @shop behind the scenes ──');
     reset();
     a = await call('POST', '/api/signin/ask', { id: 'bala', shop: 'mayuri123' });
-    t('a bare short id + the shop the counter names → found (need code, first day)', a.status === 200 && a.body.kind === 'actor' && a.body.need === 'code' && a.body.id === 'bala@mayuri123.br', a.status + ' ' + JSON.stringify(a.body));
+    t('a bare short id + the shop the counter names → found (the one answer, the first-day code stored)', ONE(a) && !!DB.bala.otp_code, a.status + ' ' + JSON.stringify(a.body));
     a = await ask('bala');
-    t('the same short id with NO shop context → not found (never guessed across shops)', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
+    t('the same short id with NO shop context → not found (never guessed across shops): the one answer', ONE(a), a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: 'bala', shop: 'alpha-timers' });
-    t('…and named at ANOTHER shop → not found there', a.status === 400 && a.body.code === 'SIGNIN_REFUSED', a.status + ' ' + JSON.stringify(a.body));
+    t('…and named at ANOTHER shop → not found there: the one answer', ONE(a), a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: '9876543210', shop: 'alpha-timers' });
-    t('a mobile still goes by its contact with a shop named (asked which, as before)', a.status === 409 && a.body.code === 'CHOOSE_IDENTITY', a.status + ' ' + JSON.stringify(a.body));
+    t('a shared mobile with a shop named: the one answer, no list of choices', ONE(a) && !('choices' in a.body), a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: 'athi@mayur.test', shop: 'alpha-timers' });
-    t('an e-mail still works with a shop named', a.status === 200 && a.body.id === 'mayuri123', a.status + ' ' + JSON.stringify(a.body));
+    t('an e-mail still works with a shop named: the one answer, the code stored', ONE(a) && !!DB.mayur.otp_code, a.status + ' ' + JSON.stringify(a.body));
     a = await call('POST', '/api/signin/ask', { id: 'mayuri123', shop: 'alpha-timers' });
-    t('an owner exact handle still works with a shop named (falls back to the exact id)', a.status === 200 && a.body.kind === 'entity', a.status + ' ' + JSON.stringify(a.body));
+    t('an owner exact handle still works with a shop named (falls back to the exact id)', ONE(a), a.status + ' ' + JSON.stringify(a.body));
     v = await call('POST', '/api/signin/verify', { id: 'bala', shop: 'mayuri123', otp: '123456' });
     t('verify with the short id + shop signs the same person in', v.status === 200 && claims(v.body.token).identity_id === 'bala', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
   } finally { server.close(); }
