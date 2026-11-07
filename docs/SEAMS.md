@@ -11,12 +11,12 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 155 | `list` | `amend.js` |  |
 | 124 | `rows` | `crm.js` | still in them: |
-| 115 | `words` | `variant.browser.js` |  |
+| 116 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 112 | `withEntity` | `books-hooks.js` |  |
+| 113 | `withEntity` | `books-hooks.js` |  |
 | 109 | `read` | `books-cashflow.js` | Trips: |
 | 99 | `answer` | `availability.js` | from March; then nearest. |
-| 92 | `money` | `bill-privacy.js` |  |
+| 93 | `money` | `bill-privacy.js` |  |
 | 81 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
@@ -24,10 +24,10 @@ of file each thing is; this says what already does the job.
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 67 | `list` | `cap-settings.js` |  |
-| 67 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 67 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
-| 65 | `entry` | `books-store.js` |  |
+| 66 | `entry` | `books-store.js` |  |
 | 64 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `failed` | `service.js` | what every catch answers: |
@@ -64,7 +64,7 @@ of file each thing is; this says what already does the job.
 | 39 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
-| 38 | `live` | `receivables.js` | the allocations that still count: |
+| 39 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `host` | `chit-sheet.js` |  |
 | 37 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
@@ -156,7 +156,7 @@ of file each thing is; this says what already does the job.
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
-| 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
+| 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
 | 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `move` | `rail.js` | Order = the order the server refused in: |

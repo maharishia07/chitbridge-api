@@ -1208,6 +1208,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CREDIT_NOTE_NOT_ISSUED",
+   "status": "409",
+   "title": "Credit note not issued",
+   "shopkeeper": "The credit note could not be issued, so the change was not applied on either side.",
+   "hint": "Try again; if it repeats, tell us.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
+  },
+  {
    "code": "CRM_BAD_REQUEST",
    "status": "400",
    "title": "Bad request",
@@ -2385,6 +2394,15 @@
    "hint": "Name the buyer or add their tax number to issue the tax invoice.",
    "owner_area": "chits",
    "since": "2026-10-30"
+  },
+  {
+   "code": "INVOICE_INCREASE_REFUSED",
+   "status": "409",
+   "title": "Not a decrease",
+   "shopkeeper": "This change does not lower a bill that is already invoiced. A raise needs a debit note, which is not available yet.",
+   "hint": "Ask for the same or a lower price.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
   },
   {
    "code": "INVOICE_MONEY_LOCKED",
