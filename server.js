@@ -7,6 +7,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { rateLimit } = require('./lib/rate-limit');
+const { intFromEnv } = require('./lib/limits');
 const log = require('./lib/logger');
 const { problem, fromError } = require('./lib/problem'); // API-STANDARD S3: the one error writer
 
@@ -252,7 +253,7 @@ app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.l
 // Rate limiting — higher limit in dev/testing
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX || '500'),
+  max: intFromEnv('RATE_LIMIT_MAX', 500),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
@@ -262,7 +263,7 @@ app.use('/api/', limiter);
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX || '30'),
+  max: intFromEnv('AUTH_RATE_LIMIT_MAX', 30),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many attempts', message: 'Too many login/OTP attempts — please try again in 15 minutes' }
@@ -291,7 +292,7 @@ app.use(
    share (or halve) the 30 that guard code/PIN guessing. 120 per 15 min per IP, same factory. */
 const checkLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.CHECK_LOGIN_RATE_LIMIT_MAX || '120'),
+  max: intFromEnv('CHECK_LOGIN_RATE_LIMIT_MAX', 120),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many sign-in checks — please try again in a few minutes' }
@@ -329,7 +330,7 @@ app.use(
 // (covers browse + order/start + order/confirm + login/verify; override via CATALOGUE_RATE_LIMIT_MAX).
 const catalogueLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.CATALOGUE_RATE_LIMIT_MAX || '60'),
+  max: intFromEnv('CATALOGUE_RATE_LIMIT_MAX', 60),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many attempts — please try again in a few minutes' }
@@ -340,7 +341,7 @@ app.use('/api/catalogue', catalogueLimiter);
 // If this is hit too hard, the client simply falls through to its own library floor (no hard failure).
 const assistLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.ASSIST_RATE_LIMIT_MAX || '40'),
+  max: intFromEnv('ASSIST_RATE_LIMIT_MAX', 40),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests', message: 'Too many assistant requests — please try again shortly.' }
