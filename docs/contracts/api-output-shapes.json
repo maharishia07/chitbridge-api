@@ -6754,7 +6754,8 @@
           "provisional",
           "dropped",
           "rows",
-          "note"
+          "note",
+          "prior_period"
         ],
         "properties": {
           "month": {
@@ -6796,6 +6797,49 @@
           "rows": {},
           "note": {
             "type": "string"
+          },
+          "prior_period": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "cause",
+                "invoice_day",
+                "invoice_month",
+                "booked_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "cause": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "booked_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false

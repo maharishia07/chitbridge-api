@@ -1427,11 +1427,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/ledger": {
-   "hash": "8c9251a891a20a4a",
+   "hash": "6f9049f9c18bdb46",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#916",
    "lifecycle": "stable"
   },
   "GET /api/testing/cases": {
