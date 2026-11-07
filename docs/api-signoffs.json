@@ -2355,7 +2355,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#886",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
