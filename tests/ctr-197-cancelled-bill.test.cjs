@@ -22,8 +22,11 @@ const WITHDRAWN = /current_status IN \('cancelled', 'rejected'\)/;
 function rowsFor(sql) {
   const text = String(sql);
   if (!/h\.sender_entity_id = \$1 AND h\.purpose IN/.test(text)) return /SELECT self_copy_pref/.test(text) ? [{ self_copy_pref: null }] : [];
-  const leavesWithdrawnOut = WITHDRAWN.test(text) && /NOT EXISTS \(SELECT 1 FROM chit_status/.test(text);
-  return BILL_ROWS.filter((r) => !(leavesWithdrawnOut && ['cancelled', 'rejected'].includes(STATUS[r.chit_id])));
+  const gone = (r) => ['cancelled', 'rejected'].includes(STATUS[r.chit_id]);
+  const leavesWithdrawnOut = WITHDRAWN.test(text) && /AND NOT EXISTS \(SELECT 1 FROM chit_status/.test(text);
+  const namesWithdrawn = WITHDRAWN.test(text) && /AND EXISTS \(SELECT 1 FROM chit_status/.test(text); /* the statement's second arm */
+  const live = BILL_ROWS.filter((r) => !(leavesWithdrawnOut && gone(r))).map((r) => Object.assign({ withdrawn: false }, r));
+  return live.concat(namesWithdrawn ? BILL_ROWS.filter(gone).map((r) => ({ chit_id: r.chit_id, created_at: r.created_at, business_json: r.business_json, withdrawn: true })) : []);
 }
 const tx = { query: async (s) => ({ rows: rowsFor(s) }) };
 const dbPath = require.resolve(path.join(API, 'db'));
@@ -63,7 +66,8 @@ const sum = (rows, key) => Math.round(rows.reduce((a, b) => a + (b[key] || 0), 0
   app.use('/api/till', require(path.join(API, 'routes', 'till')));
   const srv = app.listen(0);
   const port = srv.address().port;
-  const bills = async (rows, status) => { BILL_ROWS = rows; STATUS = status || {}; return (await (await fetch(`http://127.0.0.1:${port}/api/till/bills`)).json()).bills; };
+  const answer = async (rows, status) => { BILL_ROWS = rows; STATUS = status || {}; return (await fetch(`http://127.0.0.1:${port}/api/till/bills`)).json(); };
+  const bills = async (rows, status) => (await answer(rows, status)).bills;
   let n = 0;
   const ok = (name, fn) => Promise.resolve(fn()).then(() => { n++; console.log('  ok  ' + name); });
 
@@ -83,6 +87,14 @@ const sum = (rows, key) => Math.round(rows.reduce((a, b) => a + (b[key] || 0), 0
   await ok('a rejected bill is left out like a cancelled one', async () => {
     const rows = await bills([sale('S1', 1000, 847.46, 152.54), sale('S2', 1180, 1000, 180)], { 'sale-S2': 'rejected' });
     assert.deepStrictEqual(rows.map((r) => r.no), ['S1']);
+  });
+  await ok('the withdrawn bills are NAMED (number, ids, moment) so a counter can drop its own copy; live ones are not named', async () => {
+    const sold = sale('S2', 1180, 1000, 180); sold.business_json.client_ref = 'ref-S2';
+    const got = await answer([sale('S1', 1000, 847.46, 152.54), sold, note('N1', 330, -300, -30)], { 'sale-S2': 'cancelled', 'cn-N1': 'rejected' });
+    assert.deepStrictEqual(got.bills.map((r) => r.no), ['S1']);
+    assert.deepStrictEqual(got.withdrawn.map((r) => [r.no, r.chit_id, r.client_ref]), [['S2', 'sale-S2', 'ref-S2'], ['N1', 'cn-N1', null]]);
+    assert.strictEqual(got.count, 1);
+    assert.deepStrictEqual((await answer([sale('S1', 1000, 847.46, 152.54)], {})).withdrawn, []);
   });
   await ok('a live bill (any other status, or none) stays listed', async () => {
     const rows = await bills([sale('S1', 1000, 847.46, 152.54), sale('S2', 1180, 1000, 180)], { 'sale-S1': 'accepted', 'sale-S2': 'completed' });

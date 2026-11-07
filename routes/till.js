@@ -3445,9 +3445,11 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
     const found = await nestedWithEntity(entity_id, (db) =>
       db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till])
     );
-    const rows = found.rows.map(billRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
+    const live = found.rows.filter((row) => !row.withdrawn);
+    const rows = live.map(billRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
+    const withdrawn = found.rows.filter((row) => row.withdrawn).map(withdrawnRow).filter((bill) => bill.no && (!by || (bill.by && bill.by.id === by)));
     const paged = pageLimit.pageOut('bills', rows, page, rows.length);
-    res.json({ days, count: rows.length, bills: paged.bills, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
+    res.json({ days, count: rows.length, bills: paged.bills, withdrawn, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
     problem(req, res, failed(e, req));
   }
@@ -3457,7 +3459,7 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json
+const BILLS_SQL = `(SELECT h.chit_id, h.created_at, h.business_json, d.line_items, h.summary_json, false AS withdrawn
          FROM chit_header h
          LEFT JOIN chit_detail d ON d.chit_id = h.chit_id AND d.entity_id = h.entity_id
        /**
@@ -3480,9 +3482,26 @@ const BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, d.line_items
           AND h.business_json ? 'bill_no'
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
-          /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out, as the day close leaves it out */
+          /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
           ${counterBill.NOT_WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3`;
+        ORDER BY h.created_at DESC LIMIT $3)
+      UNION ALL
+       /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. */
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb AS line_items, NULL::jsonb AS summary_json, true AS withdrawn
+         FROM chit_header h
+        WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
+          AND h.business_json ? 'bill_no'
+          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+          ${counterBill.WITHDRAWN_SQL}
+        ORDER BY h.created_at DESC LIMIT $3)
+      ORDER BY created_at DESC`;
+
+/** CTR-197: a withdrawn (cancelled or rejected) bill, named only - its number, its ids and its moment, so the counter can drop its own copy from the day */
+function withdrawnRow(row) {
+  const business = row.business_json || {};
+  return { chit_id: row.chit_id, no: business.bill_no || null, client_ref: business.client_ref || null, at: business.billed_at || row.created_at, by: (business.till && business.till.by) || null };
+}
 
 /** one earlier bill as the counter reprints it: who, when, what was paid and saved, the stored invoice, and its lines */
 function billRow(row) {
