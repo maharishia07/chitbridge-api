@@ -66,13 +66,74 @@ async function readerCases() {
     const calls = await callsAllowed(got, 40);
     ok(calls === Math.min(want, 40), why + ': a real limiter lets ' + Math.min(want, 40) + ' calls through before 429 (got ' + calls + ')');
   }
-  const refused = CASES.filter((c) => c[1] === 30 && c[0] !== undefined).length;
-  ok(warned.length === refused, 'every refused value is logged (' + warned.length + ' lines for ' + refused + ' refused cases)');
-  process.env.SEC125_X = 'abc';
-  limits.intFromEnv('SEC125_X', 30);
-  ok(warned.length === refused, 'the same refused value is not logged twice');
+  ok(warned.length === 1, 'a refused setting is logged ONCE, whatever the values (' + warned.length + ' line)');
+  ok(/SEC125_X/.test(warned[0]) && !/abc|30s|99999/.test(warned[0]), 'the line names the setting and carries no value');
   log.warn = realWarn;
   delete process.env.SEC125_X;
+}
+
+/** a secret pasted into the wrong setting must never reach a log line (name only) */
+function secretCases() {
+  const lines = [];
+  const realWarn = log.warn;
+  log.warn = (msg, ctx) => lines.push(JSON.stringify([msg, ctx]));
+  const secret = 'sk-live-SUPERSECRET-9f8e7d';
+  ['SEC125_S1', 'SEC125_S2'].forEach((name, i) => { process.env[name] = i ? secret + ' ' : secret; limits.intFromEnv(name, 5); limits.numFromEnv(name, 5); });
+  log.warn = realWarn;
+  ok(lines.length === 2 && lines.every((l) => !l.includes('SUPERSECRET')), 'a secret-looking value never appears in the log (' + lines.length + ' lines, name only)');
+  delete process.env.SEC125_S1; delete process.env.SEC125_S2;
+}
+
+/** numFromEnv: decimals are taken inside the range; typo, blank, negative, exponent, huge fall back */
+function decimalCases() {
+  const cases = [[undefined, 25], ['', 25], ['abc', 25], ['-1', 25], ['1e3', 25], ['NaN', 25], ['2.5.1', 25], ['Infinity', 25], ['99999999999', 25], ['0', 0], ['1.5', 1.5], [' 40 ', 40]];
+  for (const [value, want] of cases) {
+    if (value === undefined) delete process.env.SEC125_D; else process.env.SEC125_D = value;
+    const got = limits.numFromEnv('SEC125_D', 25, { min: 0 });
+    ok(got === want, 'numFromEnv ' + JSON.stringify(value) + ' -> ' + want + ' (got ' + got + ')');
+  }
+  process.env.SEC125_D = '150';
+  ok(limits.numFromEnv('SEC125_D', 40, { max: 100 }) === 40, 'numFromEnv past its max (a percent of 150) -> the default');
+  delete process.env.SEC125_D;
+}
+
+/** every converted site: file, setting, default, reader, bounds. Source must call the reader with exactly these, and the reader must give typo/blank -> default, valid -> valid. */
+const SITES = [
+  ['routes/till.js', 'TILL_CATALOGUE_MAX', 20, 'int', {}], ['lib/otp.js', 'MAX_OTP_ATTEMPTS', 5, 'int', {}],
+  ['lib/ai.js', 'AI_MAX_TOKENS', 4000, 'int', {}], ['lib/ai.js', 'AI_MAX_IMAGES', 4, 'int', {}], ['lib/ai.js', 'AI_MAX_IMAGE_B64', 1400000, 'int', {}],
+  ['lib/ai.js', 'AI_FREE_USD', 1.0, 'num', { min: 0 }], ['lib/ai.js', 'AI_RATE_PER_HOUR', 60, 'int', {}], ['lib/ai.js', 'AI_RATE_PER_DAY', 300, 'int', {}],
+  ['lib/ai.js', 'AI_GLOBAL_DAILY_USD', 25, 'num', { min: 0 }], ['lib/ai.js', 'AI_METER_FAIL_MAX', 20, 'int', {}], ['lib/ai.js', 'AI_SKILL_TTL_MS', 60000, 'int', { min: 0 }],
+  ['lib/speech.js', 'SPEECH_TIMEOUT_MS', 20000, 'int', {}], ['lib/whatsapp-media.js', 'WHATSAPP_MEDIA_MAX_BYTES', 5000000, 'int', {}],
+  ['lib/workpattern.js', 'WORKPATTERN_MEMO_TTL_MS', 300000, 'int', { min: 0 }],
+  ['lib/retention.js', 'RETENTION_GRACE_DAYS', 30, 'int', { min: 0 }], ['lib/retention.js', 'RETENTION_SOFT_DELETE_DAYS', 7, 'int', { min: 0 }],
+  ['lib/retention.js', 'RETENTION_MAX_EXTEND_DAYS', 365, 'int', { min: 0 }], ['lib/retention.js', 'RETENTION_MAX_ROWS_PER_RUN', 1000, 'int', {}],
+  ['lib/retention.js', 'RETENTION_MAX_PCT_PER_RUN', 20, 'int', { max: 100 }],
+  ['lib/kyb.js', 'KYB_EXPIRY_WINDOW_DAYS', 60, 'int', {}], ['lib/kyb.js', 'KYB_CONCENTRATION_PCT', 40, 'num', { max: 100 }], ['lib/kyb.js', 'KYB_FIELD_CACHE_HOURS', 24, 'int', { min: 0 }]
+];
+function siteCases() {
+  for (const [file, name, def, kind, bounds] of SITES) {
+    const src = fs.readFileSync(path.join(API, file), 'utf8');
+    const call = (kind === 'int' ? 'intFromEnv' : 'numFromEnv') + "('" + name + "', ";
+    ok(src.includes(call) && !new RegExp('(Number|parseInt)[(]process[.]env[.]' + name).test(src), file + ' reads ' + name + ' through ' + call.split('(')[0]);
+    const read = kind === 'int' ? limits.intFromEnv : limits.numFromEnv;
+    const valid = Math.min(bounds.max === undefined ? 7 : bounds.max, 7);
+    for (const [value, want, why] of [['abc', def, 'typo'], ['', def, 'blank'], [String(valid), valid, 'valid']]) {
+      process.env[name] = value;
+      const got = read(name, def, bounds);
+      ok(got === want, name + ' ' + why + ' ' + JSON.stringify(value) + ' -> ' + want + ' (got ' + got + ')');
+    }
+    delete process.env[name];
+  }
+}
+
+/** MAX_OTP_ATTEMPTS: NaN used to mean unlimited tries; a typo must still lock after 5 wrong codes (real lib/otp.js in a child) */
+function otpCases() {
+  const script = "const o = require('./lib/otp'); (async () => { const at = (n) => o.verifyOtp(async () => ({}), { otp_attempts: n, otp_code: '123456' }, '000000', {}); const r4 = await at(0), r5 = await at(5); console.log('CAP=' + o.MAX_OTP_ATTEMPTS + ' AT0=' + r4.reason + ' AT5=' + r5.reason); })().catch((e) => { console.log('ERR=' + e.message); });";
+  for (const [value, cap] of [['abc', 5], ['', 5], ['-1', 5], ['3', 3]]) {
+    const out = cp.spawnSync(process.execPath, ['-e', script], { env: Object.assign({}, process.env, { LOG_LEVEL: 'error', MAX_OTP_ATTEMPTS: value }), encoding: 'utf8', cwd: API, timeout: 60000 });
+    const m = /CAP=([0-9]+) AT0=([A-Z_]+) AT5=([A-Z_]+)/.exec(out.stdout || '');
+    ok(m && Number(m[1]) === cap && m[3] === 'OTP_LOCKED' && m[2] === "OTP_WRONG", 'MAX_OTP_ATTEMPTS=' + JSON.stringify(value) + ' -> cap ' + cap + ', locked at 5 wrong tries (' + (m ? m[0] : (out.stdout + out.stderr).slice(0, 150)) + ')');
+  }
 }
 
 function timeoutCases() {
@@ -129,6 +190,10 @@ function sourceCases() {
 
 (async () => {
   await readerCases();
+  secretCases();
+  decimalCases();
+  siteCases();
+  otpCases();
   timeoutCases();
   sourceCases();
   realServerCase('abc', 30);
