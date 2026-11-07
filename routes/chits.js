@@ -82,6 +82,7 @@ const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of a
 const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
+const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
 /* ⭐⭐ THE INBOX PREDICATE (lib/folder-inventory inboxSql) — bills are not tasks: a received bill and the shop's own counter bill
@@ -497,6 +498,7 @@ const SEND_STEPS = [
   sendMoney,
   sendIssued,
   sendPaper,
+  sendCashStep,
   sendBridge,
   sendCopyPolicy,
   sendPromote,
@@ -1655,6 +1657,24 @@ async function sendPaper(sendState, req, res) {
     if (!business_json.not_invoice) business_json.not_invoice = paper.held.reason;
     sendState.paper = { code: 'INVOICE_HELD_BUYER', not_invoice: business_json.not_invoice, why: paper.held.why, cite: paper.held.cite };
   }
+}
+
+/**
+ * ⭐ CTRY-77 (AU-02b; Athi 5 Nov: REFUSE) — a CASH part the shop's pack says no coin can make is refused by name: 400 CASH_ROUNDING_STEP with the
+ * pack's cite (lib/cash-step: pack.cashRounding step_minor, AU 5c). The till rounds before it sends (TILL-B2); this is the door for a caller that
+ * did not. Card, UPI and every other tender are exact; a shop whose pack has no cashRounding (India, UAE) is untouched. A draft or a chit without
+ * a counter tender: nothing. Its own step, outside any try, because a refusal must reach the counter.
+ */
+async function sendCashStep(sendState, req, res) {
+  const { sender_id, business_json, currency_code, is_draft } = sendState;
+  if (is_draft || !business_json || !business_json.payment) return;
+  const refusal = cashStep.refusalOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code });
+  if (!refusal) return;
+  res.locals.code = refusal.code;
+  return problem(req, res, {
+    status: 400,
+    ...said({ error: 'Cash amount not accepted', code: refusal.code, field: refusal.field, message: refusal.why, cite: refusal.cite, part_minor: refusal.part_minor, nearest_minor: refusal.nearest_minor }, 'CHIT_BAD_REQUEST')
+  });
 }
 
 /** which copies a self-chit or a numbered document keeps — declared, never silent */
