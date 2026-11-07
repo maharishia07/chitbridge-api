@@ -34,6 +34,8 @@ function loadWith(rows) {
 }
 /** ACC-268 as SIT part 6 made it live (k46-acc268r): a stored bill whose business_json was overwritten with {invoice:'x', bill_no} (no till mark) and whose header carries NO money block, only total_value (or nothing) */
 const liveLost = (n, totalValue) => Object.assign(header(n, 'order', { invoice: 'x', bill_no: 'T' + n }, 0), { summary_json: totalValue === undefined ? {} : { total_value: totalValue } });
+/** ACC-268 zero-read, SIT part 9 (k49 mode li): a counter bill (till mark, no invoice key) whose stored line_items became [null], so it reads to 0; its header carries no money block or only total_value */
+const zeroRead = (n, summary, lines) => Object.assign(header(n, 'order', { customer: { name: 'Walk-in' }, till: { id: 'C1' }, bill_no: 'T' + n, billed_at: AT }, 0), { summary_json: summary, line_items: lines === undefined ? [null] : lines });
 const month = AT.slice(0, 7);
 
 (async () => {
@@ -60,6 +62,15 @@ const month = AT.slice(0, 7);
   const freeLive = await loadWith([healthy(1), liveLost(9, 0)]).ledgerFor(SHOP, month);
   ok('(live shape) a skipped bill whose stored total is 0 is a free bill: not named', freeLive.dropped.length === 0, JSON.stringify(freeLive.dropped));
 
+  for (const [what, summary] of [['a stated money.total 300', { money: { total: 300 } }], ['only total_value 300', { total_value: 300 }], ['no stated total at all', {}]]) {
+    const z = await loadWith([healthy(1), zeroRead(6, summary)]).ledgerFor(SHOP, month);
+    ok('(zero-read, line_items [null], ' + what + ') the bill that reads to 0 is NAMED in dropped', z.dropped.length === 1 && z.dropped[0] === id(6) && /Bill T6/.test((z.dropped_why[0] || {}).why || ''), JSON.stringify([z.ledger.count, z.dropped, z.dropped_why]));
+  }
+  const zFree = await loadWith([healthy(1), zeroRead(7, { money: { total: 0 } }, [{ line_id: 'l', particulars: 'x', quantity: 1, price: 0, total: 0, gst_rate: 0 }])]).ledgerFor(SHOP, month);
+  ok('(zero-read) a free bill: stored total 0 with READABLE lines is not named', zFree.dropped.length === 0, JSON.stringify(zFree.dropped));
+  const zBadLines = await loadWith([healthy(1), zeroRead(8, { money: { total: 0 } })]).ledgerFor(SHOP, month);
+  ok('(zero-read) lines that cannot be read are named even when the stored total is 0', zBadLines.dropped.length === 1 && zBadLines.dropped[0] === id(8), JSON.stringify(zBadLines.dropped));
+
   const g = await loadWith([healthy(1), free]).ledgerFor(SHOP, month);
   ok('a genuinely free bill is not named', g.dropped.length === 0 && g.ledger.count === 2 && g.ledger.rows.some((row) => row.chit_id === id(5)), JSON.stringify([g.dropped, g.ledger.count]));
 
@@ -85,6 +96,9 @@ const month = AT.slice(0, 7);
     s = await serve([healthy(1), liveLost(7, 300)]);
     r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
     ok(form + ' (live shape) the skipped bill with no money block: 422 GSTR_REFUSED naming it', r.status === 422 && /GSTR_REFUSED/.test(r.text) && /Bill T7/.test(r.text), r.status + ' ' + r.text.slice(0, 300));
+    s = await serve([healthy(1), zeroRead(6, { total_value: 300 })]);
+    r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
+    ok(form + ' (zero-read) the bill that reads to 0: 422 GSTR_REFUSED naming it', r.status === 422 && /GSTR_REFUSED/.test(r.text) && /Bill T6/.test(r.text), r.status + ' ' + r.text.slice(0, 300));
     s = await serve([healthy(1), healthy(2), free]);
     r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
     ok(form + ' healthy month (with a free bill): 200 with the file', r.status === 200 && (form === 'gstr3b' ? JSON.parse(r.text).sup_details.osup_det.txval === 1000 : !!JSON.parse(r.text).gstin), r.status + ' ' + r.text.slice(0, 200));
