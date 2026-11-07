@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 10,
-  "partial": 238,
-  "meets": 389,
+  "partial": 231,
+  "meets": 396,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -16992,13 +16992,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -17089,13 +17089,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],
@@ -44792,11 +44792,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a43045fa24fa6af3"
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -47776,13 +47775,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],
@@ -47875,13 +47874,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],
@@ -47980,13 +47979,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],
@@ -48081,13 +48080,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],

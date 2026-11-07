@@ -938,6 +938,8 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
    "lifecycle": "stable"
   },
+  "GET /api/forms/:key": {"hash":"08052c0a110f1e18","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
+  "GET /api/forms/instances/:id": {"hash":"744fea246e3534bf","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
   "GET /api/governance/ai-skills": {
    "hash": "cf1d3b18bbcc525b",
    "names_clear": true,
@@ -2457,14 +2459,7 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
    "lifecycle": "stable"
   },
-  "POST /api/counters/:id/assign": {
-   "hash": "5d1efb59611f071b",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
-   "lifecycle": "stable"
-  },
+  "POST /api/counters/:id/assign": {"hash":"a43045fa24fa6af3","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
   "POST /api/counters/:id/open": {
    "hash": "069cfcf8c9de0a62",
    "names_clear": true,
@@ -2641,6 +2636,10 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#616 stage2 (re-sign)",
    "lifecycle": "stable"
   },
+  "POST /api/forms/:key/issue": {"hash":"092e83e65293070a","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
+  "POST /api/forms/:key/resolve": {"hash":"7fd0fee9436f303c","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
+  "POST /api/forms/instances/:id/attach": {"hash":"42e03fe7a2df5ff9","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
+  "POST /api/forms/instances/:id/sign": {"hash":"68b128505f754f6d","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api 2026-11-07 PR#865 stage2 (sign-off pass, clean)","lifecycle":"stable"},
   "POST /api/governance/ai-draft": {
    "hash": "1c0a1ffa765719c6",
    "names_clear": true,
