@@ -178,6 +178,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "GET /api/assist/container/:id": {
+   "hash": "4800ee1d9af92ecc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
+   "lifecycle": "stable"
+  },
   "GET /api/assist/erp-handoffs": {
    "hash": "748b83451499c0b2",
    "names_clear": true,
@@ -491,11 +499,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
-   "hash": "e92723610f98cd45",
+   "hash": "de2a306c4f9ddd23",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/enquiry": {
@@ -1467,11 +1475,11 @@
    "lifecycle": "stable"
   },
   "GET /api/testing/cmdb/:ci": {
-   "hash": "50f8b61c79dfa702",
+   "hash": "cb27ce34e66cddf0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#368",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "GET /api/testing/coverage": {
@@ -1979,11 +1987,11 @@
    "lifecycle": "stable"
   },
   "POST /api/assist/gap": {
-   "hash": "9ae4e8a63a91587a",
+   "hash": "f35cc44639c74477",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#375",
+   "signed_off_by_date": "cb-api (API-1, non-builder reviewer) 2026-11-07 PR#956",
    "lifecycle": "stable"
   },
   "POST /api/assist/publish": {
