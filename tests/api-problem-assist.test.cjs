@@ -64,7 +64,7 @@ const sources = () => ({
   catalogueWrite: require(path.join(HERE, 'lib', 'catalogue-write')),
   container: require(path.join(HERE, 'lib', 'container')),
   regional: require(path.join(HERE, 'lib', 'regional')),
-  jwt: require(path.join(HERE, 'lib', 'jwt-verify')),
+  auth: require(path.join(HERE, 'middleware', 'auth')), /* SEC-149: the assistant's soft sign-in is auth.softIdentity */
   log: require(path.join(HERE, 'lib', 'logger')),
   clock: Date,
   dice: Math
