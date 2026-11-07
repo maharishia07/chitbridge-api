@@ -3805,14 +3805,30 @@ function orderParty(head, business) {
   };
 }
 
-/** their invoice: a chit from this counterparty, else the figure keyed off their paper bill at the door → { total, from } (both null when there is none) */
+/**
+ * their invoice: the chit THIS counterparty sent that bills THIS order, else the figure keyed off their paper bill at the door → { total, from } (both null when there is none).
+ * ⭐ OPS-82: a bill belongs to an order by what it names, never by being the first from the same supplier. The link is the one the books read
+ * (business_json.order.from = the order's chit id, lib/books-hooks receiptFacts; lib/open-orders billNames). Two bills naming the order is two candidates:
+ * the match picks neither, names both in `from`, and the figure stays unknown. A bill whose total_value is not stated is an unknown figure, never 0.
+ */
 function theirInvoice(head, receipts, invoices) {
-  const theirChit = invoices.find((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)) || null;
+  const billing = invoices.filter((invoice) => head.counterparty_id && String(invoice.sender_entity_id) === String(head.counterparty_id)
+    && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
+  if (billing.length > 1) return { total: null, from: 'several invoices name this order: ' + billing.map(invoiceNo).join(', ') };
+  if (billing.length) {
+    const stated = (billing[0].summary_json || {}).total_value;
+    if (stated != null) return { total: Number(stated), from: 'their invoice' };
+  }
   const keyed = receipts
     .map((item) => (item.their_bill && item.their_bill.total != null ? Number(item.their_bill.total) : null))
     .filter((value) => value != null);
-  if (theirChit) return { total: Number((theirChit.summary_json || {}).total_value || 0), from: 'their invoice' };
   return keyed.length ? { total: keyed.reduce((first, second) => first + second, 0), from: 'their bill, keyed at the door' } : { total: null, from: null };
+}
+
+/** the number an invoice chit carries: the same reading as lib/books-hooks receiptFacts, else its chit id */
+function invoiceNo(invoice) {
+  const business = invoice.business_json || {};
+  return String(business.bill_no || business.invoice_no || business.doc_no || invoice.chit_id);
 }
 
 /** awaited · differs · open · agreed — see matchOrder */
