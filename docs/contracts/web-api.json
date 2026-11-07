@@ -6501,6 +6501,7 @@
   },
   "POST /api/tax/compute": {
    "status": 200,
+   "note": "ACC-191: money.tax, cgst, sgst, igst, cess, vat (and lines[].tax, by_rate[].tax) are a number OR null. null = not decided (supply unknown, a rate above 0, no head figure); the total stays the price. A reader words null as not decided, never 0.00.",
    "example": {
     "engine": "chitbridge-tax",
     "version": 1,
