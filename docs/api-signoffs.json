@@ -251,11 +251,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/cheques": {
-   "hash": "2c69506810995f71",
+   "hash": "29ab15b5384fcbde",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib) 2026-10-28 PR#451",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/compare": {
@@ -331,11 +331,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/ledger/:account": {
-   "hash": "c6c82739115a7f21",
+   "hash": "66409c311c5aabfc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/move-in/imports": {
@@ -371,11 +371,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/party/:id/statement": {
-   "hash": "75a103e8fbb110ad",
+   "hash": "3562c34153943e3a",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#770 M3 books foreign id",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
    "lifecycle": "stable"
   },
   "GET /api/books/payments/:id/advice": {

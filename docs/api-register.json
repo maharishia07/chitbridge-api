@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 218,
-  "meets": 419,
+  "partial": 215,
+  "meets": 422,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -4955,11 +4955,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "29ab15b5384fcbde"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -6062,11 +6061,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "66409c311c5aabfc"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank.js",
     "cap-books.js",
@@ -6602,11 +6600,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3562c34153943e3a"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#944 RAIL-146n: handler, lib/dues-view R9 and closed schema re-read; shape unchanged for owner and cost-allowed reader (byte-identical), cost-blind reader gets nulls + cost_hidden; no behaviour change for allowed readers; all 13 columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
