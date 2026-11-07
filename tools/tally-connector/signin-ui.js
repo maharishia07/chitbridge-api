@@ -39,8 +39,11 @@
  *   }) → { destroy(), state(), machine }
  *
  * ⭐ THE STATE MACHINE (one, here — tests/signin-ui.test.cjs drives it with no browser; the lab and every page drive the same one):
- *   out ──go()──► credential (need code | pin)  ──verify()──► in
- *     └─(409 CHOOSE_IDENTITY)──► choose ──choose(i)──► (re-asks with the STORED id, grammar and all) ──► credential
+ *   out ──go()──► credential (ONE box: a PIN or the code)  ──verify()──► in
+ *                                  └─(409 CHOOSE_IDENTITY, only AFTER a correct secret)──► choose ──choose(i)──► verify again with the STORED id
+ *   ⭐ SEC-143 (API-STANDARD S6): ask answers every person the same, so nothing before the secret says whether the person exists, has a PIN or
+ *      gets a code. The box takes either; the SHAPE of what is typed (4 digits = PIN, else code) picks pin or otp for verify. `resolved`
+ *      is what was typed. The one exception is the host's LOCAL book (the till): found on this device, it is a PIN box named for what it is.
  *   credential ──(200 + requires_pin_setup)──► setpin ──setPin(a,b)──► in
  *   ⚠️ A SPENT CODE IS NEVER RE-SENT: ask() is posted once per id; Continue again with the same id goes straight to the code box;
  *      a wrong code never re-asks; only "Send a new code" (again()) asks the server for another; once in, nothing asks.
@@ -69,6 +72,8 @@
     again: 'Send a new code',
     back: 'Not you? Start again',
     which: 'Which one are you?',
+    secret: 'PIN or code',
+    either: 'Enter your PIN or the code we sent.',
     setTitle: 'Choose a PIN',
     setWhy: 'Four digits, for next time.',
     pin1: 'Your new PIN',
@@ -317,17 +322,12 @@
       if (code && b.message) return String(b.message);
       return E.refusal({ status: r.status, message: b.message || b.error });
     }
-    function needOf(b) {
-      return b.need === 'pin' || b.use_pin === true ? 'pin' : 'code';
-    }
-    function kindOf(b) {
-      return b.kind === 'actor' ? 'employee' : b.kind === 'customer' ? 'customer' : b.kind === 'entity' ? 'owner' : b.kind || '';
-    }
+    /* the secret typed before a choice of account, kept in this closure only until the person picks (never in S, never painted) */
+    var held = null;
 
-    /** ask the server about an id. `typedId` is what the person typed, or (stored) the STORED id the chooser handed back — sent as
-     *  `id` whole, so a .br / .cr handle is never split by the e-mail shape it happens to have. */
+    /** ask about an id (typed, or repeated by "Send a new code", sent whole so a .br / .cr handle is never split). One answer for everyone (SEC-143). */
     function askFor(typedId, stored) {
-      var a = stored ? { ok: true, body: { mode: 'login', id: String(typedId) }, say: W.sent } : E.ask(typedId);
+      var a = stored ? { ok: true, body: { mode: 'login', id: String(typedId) }, say: W.either } : E.ask(typedId);
       if (!a.ok) {
         set({ why: a.why });
         return Promise.resolve(S);
@@ -336,20 +336,17 @@
       S.asks++;
       return post('/api/signin/ask', a.body).then(function (reply) {
         var b = reply.body || {};
-        if (reply.status === 409 && b.code === 'CHOOSE_IDENTITY' && Array.isArray(b.choices) && b.choices.length) {
-          return set({ busy: false, at: 'choose', choices: b.choices, said: b.message || '' });
-        }
         if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalOf(reply) });
-        var resolved = String(b.id || b.user_id || b.handle || a.body.id || a.body.email || a.body.user_id || typedId);
+        var resolved = String(typedId);
         return set({
           busy: false,
           at: 'credential',
-          need: needOf(b),
-          kind: kindOf(b),
+          need: 'either',
+          kind: '',
           resolved: resolved,
           local: null,
-          sent: needOf(b) === 'code' ? { id: resolved, typed: String(typedId), kind: kindOf(b), at: Date.now() } : null,
-          said: needOf(b) === 'pin' ? '' : b.message || a.say || W.sent
+          sent: { id: resolved, typed: resolved, kind: '', at: Date.now() },
+          said: b.message || W.either
         });
       });
     }
@@ -362,7 +359,7 @@
       }
       /* ⚠️ a code already on its way for this very id: no second ask — back to the box that takes it */
       if (S.sent && S.at !== 'in' && (w.value === S.sent.typed || w.value === S.sent.id)) {
-        return Promise.resolve(set({ at: 'credential', need: 'code', kind: S.sent.kind, resolved: S.sent.id, why: '', said: W.sent }));
+        return Promise.resolve(set({ at: 'credential', need: 'either', kind: '', resolved: S.sent.id, why: '', said: W.either }));
       }
       /* ⭐ THE HOST'S OWN CREDENTIAL FIRST (the till's counter PIN, SPEC-counter-identity §3): somebody who set one here signs in
        with it, line or no line — the shift change that happens forty times a day needs no code in a mailbox. Nothing is posted. */
@@ -377,17 +374,18 @@
       }
       return askFor(w.value);
     }
+    /** the person picked an account from the list the server gave AFTER a correct secret: verify again with the STORED id and the same secret */
     function choose(i) {
       var ch = S.choices[i];
-      if (!ch) return Promise.resolve(S);
-      return askFor(String(ch.id), true);
+      if (S.busy || !ch || !held) return Promise.resolve(S); /* a second tap while the first verify is out must not repost the one-time code */
+      return sendVerify(String(ch.id), held);
     }
     /* SEC1 · a TESTER code (the api's TESTER_CODE: 8+ characters, any kind) is sent as typed — the engine's code() knows only a
      4-digit PIN and a 6-digit code (chitbridge-engines signin.code; widening it is queued for the engines round). Only on the
      code step, never for a PIN or the host's local credential; the SERVER decides whether it is good. */
     function longCode(cred) {
       var text = String(cred == null ? '' : cred).trim();
-      return S.need === 'code' && !S.local && text.length >= 8 && text.length <= 64 ? { ok: true, value: text, isPin: false } : null;
+      return S.need === 'either' && !S.local && text.length >= 8 && text.length <= 64 ? { ok: true, value: text, isPin: false } : null;
     }
     function verify(cred) {
       var code = longCode(cred) || E.code(cred);
@@ -395,12 +393,9 @@
         set({ why: code.why });
         return Promise.resolve(S);
       }
-      if (S.need === 'pin' && !code.isPin) {
+      /* only the host's LOCAL book is a PIN box before the server speaks; the server's box takes either, so no shape is refused for its kind */
+      if (S.local && !code.isPin) {
         set({ why: E.pinShape('', W.pinName).why });
-        return Promise.resolve(S);
-      }
-      if (S.need === 'code' && code.isPin) {
-        set({ why: 'A code is six digits.' });
         return Promise.resolve(S);
       }
       /* ⭐ the host judges its own credential (the engine's pinAfter, in the host's book) — no network, whatever the line is doing */
@@ -426,13 +421,21 @@
             }
           );
       }
-      var body = { id: S.resolved };
+      return sendVerify(S.resolved, code);
+    }
+    /** post the typed id + the secret. A 409 CHOOSE_IDENTITY here follows a CORRECT secret: the list is shown now, never before. */
+    function sendVerify(id, code) {
+      var body = { id: id };
       body[code.isPin ? 'pin' : 'otp'] = code.value;
       set({ busy: true, why: '' });
       S.verifies++;
       return post('/api/signin/verify', body).then(function (reply) {
         var b = reply.body || {};
-        if (reply.status === 409 && b.code === 'CHOOSE_IDENTITY' && Array.isArray(b.choices)) return set({ busy: false, at: 'choose', choices: b.choices });
+        if (reply.status === 409 && b.code === 'CHOOSE_IDENTITY' && Array.isArray(b.choices) && b.choices.length) {
+          held = code;
+          return set({ busy: false, at: 'choose', choices: b.choices, said: '' });
+        }
+        held = null;
         if (reply.status < 200 || reply.status >= 300 || !b.token) return set({ busy: false, why: refusalOf(reply) });
         var s = sessionOf(b);
         S.sent = null; /* ⚠️ the code is spent: nothing here asks for it again */
@@ -512,13 +515,14 @@
     }
     /** "Send a new code" — the ONE way a second code is asked for, and only while a code box is open */
     function again() {
-      if (S.at !== 'credential' || S.need !== 'code' || !S.resolved) return Promise.resolve(S);
+      if (S.at !== 'credential' || S.local || !S.resolved) return Promise.resolve(S);
       return askFor(S.resolved, true);
     }
     /** back to the box. `sent` is KEPT: the code already on its way is remembered, so Continue with the same id does not ask twice */
     /* ⚠️ W1 (2026-10-12): `local` is dropped too — "Not you? Start again" from somebody's counter-PIN box used to carry THEIR entry
      into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. */
     function back() {
+      held = null;
       return set({ at: 'out', typed: '', kind: '', need: '', resolved: '', choices: [], why: '', said: '', token: null, local: null });
     }
     return {
@@ -539,6 +543,7 @@
       },
       go: go,
       choose: choose,
+      close: () => (held = null), // the window is torn down: the held secret goes with it
       verify: verify,
       setPin: setPin,
       again: again,
@@ -648,8 +653,8 @@
         esc(W.back) +
         '</button>';
     } else if (S.at === 'credential') {
-      var pin = S.need === 'pin',
-        local = !!S.local;
+      var local = !!S.local,
+        pin = local;
       /* a LOCAL credential is named for what it is (the counter PIN); its one other way on is the line, offered only when there is one */
       h =
         '<h2>' +
@@ -658,12 +663,11 @@
         (S.said ? '<p class="cbsi-said" data-testid="signin-said">' + esc(S.said) + '</p>' : '') +
         why +
         '<label>' +
-        esc(local ? W.localPin : pin ? W.pin : W.code) +
-        '<input name="cred" data-testid="' +
+        esc(local ? W.localPin : W.secret) +
+        /* UI element SGN-secret · path CBSignin.mount@<host page>›sign-in window›credential: the ONE masked box (testid kept: signin-code) */
+        '<input name="cred" data-el="CBSignin.secret@signin-ui.js›credential" data-testid="' +
         (pin ? 'signin-pin' : 'signin-code') +
-        '" type="' +
-        (pin ? 'password' : 'text') +
-        '" inputmode="numeric"' +
+        '" type="password" inputmode="numeric"' +
         (pin ? ' pattern="[0-9]*" maxlength="4"' : ' maxlength="64"') +
         ' autocomplete="one-time-code" enterkeyhint="go"></label>' +
         '<button type="submit" class="cbsi-go" data-testid="signin-verify"' +
@@ -672,7 +676,7 @@
         esc(S.busy ? W.working : W.verify) +
         '</button>' +
         '<div class="cbsi-row">' +
-        (pin ? '' : '<button type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
+        (local ? '' : '<button type="button" class="cbsi-ln" data-cbsi="again" data-testid="signin-again">' + esc(W.again) + '</button>') +
         (local && m.online() ? '<button type="button" class="cbsi-ln" data-cbsi="line" data-testid="signin-line">' + esc(W.line) + '</button>' : '') +
         '<button type="button" class="cbsi-ln" data-cbsi="back" data-testid="signin-back">' +
         esc(W.back) +
@@ -781,6 +785,7 @@
     paint(host, m, c);
     return {
       destroy: function () {
+        m.close();
         off();
         doc.removeEventListener('submit', onSubmit);
         doc.removeEventListener('click', onClick);

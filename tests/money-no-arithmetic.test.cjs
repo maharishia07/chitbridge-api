@@ -50,7 +50,6 @@ const SUSPECTS = [
 
 /** the known lines, each a backlog item that moves it into the engine (ACCOUNTING-BACKLOG, P2) */
 const EXCEPTIONS = [
-  { file: 'routes/chits.js', where: 'sendBillCopyFor', line: 'parts.reduce((sum, item) => sum + (Number(item && item.amount) || 0), 0)', backlog: 'ACC-252', why: 'bill_received.total = the sum of the payment parts on the buyer copy of a counter bill' },
   { file: 'lib/chit-proposal.js', where: 'priceOneLine', line: 'Number(amounts.price) * Number(amounts.quantity)', backlog: 'ACC-253', why: 'the line total of a seller-priced round (price x quantity) before the engine prices the round' }
 ];
 

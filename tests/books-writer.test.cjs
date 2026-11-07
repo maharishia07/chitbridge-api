@@ -39,7 +39,8 @@ const FILES = ['lib', 'routes', 'db', 'scripts', 'tools', 'backfill', 'middlewar
 const JOURNAL = ['journal_entry', 'journal_line', 'account_balance', 'party_item'];
 const WRITE_RE = new RegExp('\\b(INSERT\\s+INTO|UPDATE|DELETE\\s+FROM)\\s+(' + JOURNAL.join('|') + ')\\b', 'i');
 const STORE_WRITES = ['insertEntry', 'insertLines', 'addBalances', 'insertItems'];
-const HELPERS = ['writeLines', 'writeJournal', 'writeAllocation', 'writeStatus', 'writeChequeReceived', 'writeChequeStep', 'writeReversal'];
+/* writeEvent is the one dispatch of an event to its writer (ACC-266 split it out of postEntry so the savepoint wraps it): it calls the helpers, never the store, and is not exported, so it is a legitimate helper */
+const HELPERS = ['writeEvent', 'writeLines', 'writeJournal', 'writeAllocation', 'writeStatus', 'writeChequeReceived', 'writeChequeStep', 'writeReversal'];
 
 console.log('\n══ ONE WRITER OF THE LEDGER ══\n');
 
