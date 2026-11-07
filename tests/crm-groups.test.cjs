@@ -6,7 +6,7 @@
  *     page's own count; before b306 nobody may (NO_CONSENT), and the answer says consent is not set up
  *   · every action carries the server's may/why: a viewer reads the screen and sees VIEW_ONLY / OWNER_ONLY; the writes refuse them too
  *   · POST /groups is ONE transaction: add[] placed, remove[] taken out, the count after; ≤ 20 groups per customer; a bad name refused in words;
- *     before b205 (no groups column) 409 GROUPS_NOT_MIGRATED, never a 500
+ *     before the groups update runs (no groups column) 409 GROUPS_NOT_MIGRATED in words, never a 500
  *   · DELETE /groups/:name is the owner's; the group leaves every customer; an unknown name is 404
  *   · POST /segments/:key/send: dry = the count and who is refused by code, nothing sent; a real send asks the ONE sender per allowed member
  *     (lib/whatsapp-out.notify, which asks lib/privacy.gate again) — with no WHATSAPP_TOKEN every send is REFUSED in words, logged, never a 500;
@@ -135,9 +135,9 @@ const seg = (r, k) => r.body.segments.find((s) => s.key === k);
     const c = D.cust.find((r) => r.party_id === P(4)); c.groups = Array.from({ length: 20 }, (_, i) => 'G' + i);
     const r = await t.post('/groups', { name: 'VIP', add: [P(4)] }); assert.strictEqual(r.status, 400, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'TOO_MANY_GROUPS'); c.groups = [];
   });
-  await ita('before b205 (no groups column): 409 GROUPS_NOT_MIGRATED naming the file, never a 500', async () => {
+  await ita('before the groups update runs (no groups column): 409 GROUPS_NOT_MIGRATED in words, no migration id, never a 500', async () => {
     T.groupsColumn = false; const r = await t.post('/groups', { name: 'VIP', add: [P(2)] }); T.groupsColumn = true;
-    assert.strictEqual(r.status, 409, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'GROUPS_NOT_MIGRATED'); assert.ok(/b205/.test(r.body.message));
+    assert.strictEqual(r.status, 409, JSON.stringify(r.body)); assert.strictEqual(r.body.code, 'GROUPS_NOT_MIGRATED'); assert.ok(typeof r.body.message === 'string' && r.body.message.length > 20, JSON.stringify(r.body)); assert.doesNotMatch(r.body.message, /\bb\d{2,4}\b/);
   });
 
   console.log('\n-- DELETE /api/crm/groups/:name: the owner\'s --');
