@@ -39,11 +39,11 @@ of file each thing is; this says what already does the job.
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
 | 51 | `pack` | `books-store.js` |  |
+| 51 | `count` | `money-check.js` | the count /health reads |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
-| 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
 | 49 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 47 | `again` | `signin-ui.js` |  |
@@ -53,7 +53,7 @@ of file each thing is; this says what already does the job.
 | 44 | `read` | `cap-print.js` |  |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 42 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
+| 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 41 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 40 | `rules` | `docnumber.js` | the rule set for a country — |
 | 39 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -152,6 +152,7 @@ of file each thing is; this says what already does the job.
 | 18 | `notMigrated` | `crm-followups.js` |  |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 18 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
@@ -159,7 +160,6 @@ of file each thing is; this says what already does the job.
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
 | 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
-| 17 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 16 | `message` | `cap-print.js` | the one message: |
