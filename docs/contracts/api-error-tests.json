@@ -416,7 +416,8 @@
   500
  ],
  "GET /api/capture/webhook/whatsapp": [
-  403
+  403,
+  500
  ],
  "GET /api/catalogue-face": [
   401,
@@ -2071,10 +2072,14 @@
   503
  ],
  "POST /api/capture/webhook/email": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/capture/webhook/whatsapp": [
-  401
+  400,
+  401,
+  500
  ],
  "POST /api/catalogue/:bridge_id/login/verify": [
   400,

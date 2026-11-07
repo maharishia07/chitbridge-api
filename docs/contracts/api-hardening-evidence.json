@@ -1238,6 +1238,7 @@
    "foreign_id_404": true
   },
   "POST /api/capture/webhook/whatsapp": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/capture/webhook/email": {

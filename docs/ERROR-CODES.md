@@ -453,6 +453,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | VIEW_ONLY | varies | View only | Your login can only view. | Ask the owner for edit access. | crm-groups | 2026-10-22 |
 | VISIBILITY_CAPPED | 403 | Catalogue visibility closed | The catalogue cannot be that open for this business. | The sentence names who closed it; ask them. | entities | 2026-10-23 |
 | VISIBILITY_NOT_MIGRATED | 409 | Visibility not migrated | This database does not accept network visibility yet. | Apply the pending database update, then build again. | entities | 2026-10-22 |
+| WEBHOOK_BAD_SIGNATURE | 401 | Delivery not signed | A message sent to this shop was not taken, because we could not check who sent it. | The sender must sign the delivery with the shared secret; nothing is needed from the shopkeeper. | capture | 2026-11-07 |
+| WEBHOOK_VERIFY_REFUSED | 403 | Connection check refused | The messaging provider asked to connect, but its check did not match what this shop set up. | Check the verify token set in the provider and in this shop, then connect again. | capture | 2026-11-07 |
 | WITHDRAWN | 403 | They withdrew consent | They withdrew their consent to offers on that channel. | Do not send offers there. | crm | 2026-10-23 |
 | WORKBOOK_CUT | 413 | Workbook cut | This sheet is bigger than we read, so only part of it was read and nothing was imported. | Delete unused columns, or split the sheet, and upload again. | products | 2026-10-22 |
 | WORK_BAD_REQUEST | 400 | Work request not valid | That list request is not valid. | Ask for one view at a time. | work | 2026-10-23 |

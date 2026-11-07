@@ -4808,6 +4808,24 @@
    "since": "2026-10-22"
   },
   {
+   "code": "WEBHOOK_BAD_SIGNATURE",
+   "status": "401",
+   "title": "Delivery not signed",
+   "shopkeeper": "A message sent to this shop was not taken, because we could not check who sent it.",
+   "hint": "The sender must sign the delivery with the shared secret; nothing is needed from the shopkeeper.",
+   "owner_area": "capture",
+   "since": "2026-11-07"
+  },
+  {
+   "code": "WEBHOOK_VERIFY_REFUSED",
+   "status": "403",
+   "title": "Connection check refused",
+   "shopkeeper": "The messaging provider asked to connect, but its check did not match what this shop set up.",
+   "hint": "Check the verify token set in the provider and in this shop, then connect again.",
+   "owner_area": "capture",
+   "since": "2026-11-07"
+  },
+  {
    "code": "WITHDRAWN",
    "status": "403",
    "title": "They withdrew consent",

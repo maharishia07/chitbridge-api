@@ -978,6 +978,12 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
   },
+  "POST /api/capture/webhook/email": {
+   "output_allowlist": true
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "output_allowlist": true
+  },
   "POST /api/catalogue/:bridge_id/login/verify": {
    "output_allowlist": true,
    "foreign_id_404": true

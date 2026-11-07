@@ -39,8 +39,6 @@ const MOUNT = '/api/capture';
 const ROUTE_FILE = 'routes/capture.js';
 /** the three doors the providers call: signed (or the verify handshake), no session. Not swept: they answer today's bytes */
 const WEBHOOKS = ['GET ' + MOUNT + '/webhook/whatsapp', 'POST ' + MOUNT + '/webhook/whatsapp', 'POST ' + MOUNT + '/webhook/email'];
-/** the refusals those doors write by hand, which the contract does not declare */
-const WEBHOOK_REFUSALS = { [WEBHOOKS[0]]: [403], [WEBHOOKS[1]]: [401], [WEBHOOKS[2]]: [401] };
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -81,7 +79,9 @@ const sources = () => ({
   capture: require(path.join(HERE, 'lib', 'capture')),
   consolidate: require(path.join(HERE, 'lib', 'consolidate')),
   optout: require(path.join(HERE, 'lib', 'optout')),
-  autoraise: require(path.join(HERE, 'lib', 'autoraise'))
+  autoraise: require(path.join(HERE, 'lib', 'autoraise')),
+  crypto: require('crypto'),
+  response: require('express').response
 });
 const contractModule = () => require(path.join(HERE, 'lib', 'capture-contract.js'));
 
@@ -128,17 +128,18 @@ function checkCodesRegistered(contract) {
   check('every code the capture words (' + contract.CODES.length + ') answer under is a register row with its sentence written', missing.length === 0, missing);
 }
 
-/** the contract in front of the router: nine operations (the webhooks have none, by decision); a body is an object, a path argument stays plain text */
+/** the contract in front of the router: twelve operations (the three webhooks since the 7 Nov contract pass); a body is an object, a path argument stays plain text */
 function checkContractShape(routes) {
   console.log('\n-- the contract and the router agree --');
   const contract = contractModule();
   const operations = Object.keys(contract.OPERATIONS);
-  const swept = Object.keys(routes).filter((route) => !WEBHOOKS.includes(route));
-  check('every route the router holds, bar the three webhooks, has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 9 operations and the router 12 routes', operations.length === 9 && Object.keys(routes).length === 12, [operations.length, Object.keys(routes).length]);
-  check('the three webhooks are not in the contract: a refusal declared as a Problem would be false of what they send', WEBHOOKS.every((key) => !contract.OPERATIONS[key]));
-  const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
+  const swept = Object.keys(routes);
+  check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
+  check('the contract holds 12 operations and the router 12 routes', operations.length === 12 && Object.keys(routes).length === 12, [operations.length, Object.keys(routes).length]);
+  check('the three webhooks are in the contract and PUBLIC: no sign-in is asked of a provider, so no 401 from a session (the 401 is the signature)', WEBHOOKS.every((key) => contract.OPERATIONS[key] && sameValue(contract.OPERATIONS[key].security, [])));
+  const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody && !WEBHOOKS.includes(key));
   check('the six write routes declare a body that is an object (a list is the one new 400)', bodies.length === 6 && bodies.every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
+  check('the WhatsApp POST body is closed to Meta\'s envelope (object, entry); the e-mail body stays open to the provider\'s own fields', contract.OPERATIONS[WEBHOOKS[1]].requestBody.content['application/json'].schema.additionalProperties === false && contract.OPERATIONS[WEBHOOKS[2]].requestBody.content['application/json'].schema.additionalProperties !== false);
   check('a body requires none of its fields in the schema (the library answers a missing one in its own frozen words)', bodies.every((key) => !(contract.OPERATIONS[key].requestBody.content['application/json'].schema.required || []).length));
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
   check('a path argument is plain text: the library answers an unknown id in its own words', operations.filter((key) => key.includes(':')).every((key) => contract.OPERATIONS[key].parameters.every((one) => one.schema.type === 'string' && !one.schema.pattern)));
@@ -205,26 +206,30 @@ const sceneOf = (recording, route, id) => recording[route + '|' + id];
 const jsonOf = (answer) => (answer ? answer.body : null);
 
 /**
- * the three webhooks, scene by scene: the status, the content type and the body are TODAY's (these literals were read off the code before the sweep, and the --compare holds the rest byte for byte).
- * Meta's verify echo is text, never JSON and never a Problem; every signed delivery is answered 200; an unsigned body is 401 { error: 'bad signature' }.
+ * the three webhooks, scene by scene: every SUCCESS reply is what the provider has always been sent (these literals were read off the code before the contract pass, and the --compare holds the rest byte for byte).
+ * Meta's verify echo is plain text, never JSON and never a Problem; every signed delivery is answered 200; a refusal is a Problem (403 handshake, 401 signature) that keeps the old `error` key where there was one.
  */
 function checkWebhooks(recording) {
-  console.log('\n-- the webhooks answer exactly as they did (an outside contract, not swept) --');
+  console.log('\n-- the webhooks: the replies providers read are kept, the refusals are Problems --');
   const wa = WEBHOOKS[1];
   const mail = WEBHOOKS[2];
   const verify = (id) => sceneOf(recording, WEBHOOKS[0], id);
   const echo = verify('verify-ok');
-  check('GET verify: the right token echoes the challenge as it came, status 200, a text answer, not JSON, not a Problem', echo.status === 200 && shown(echo) === '1158201444' && !/json/.test(echo.type) && /^text\/html/.test(echo.type), echo);
+  check('GET verify: the right token echoes the challenge as it came, status 200, a text answer, not JSON, not a Problem', echo.status === 200 && shown(echo) === '1158201444' && !/json/.test(echo.type) && /^text\/plain/.test(echo.type), echo);
   ['verify-wrong-token', 'verify-wrong-mode', 'verify-nothing-sent', 'verify-not-configured'].forEach((id) => {
     const refused = verify(id);
-    check('GET verify · ' + id + ': 403 with the bare word forbidden, text, not a Problem', refused.status === 403 && shown(refused) === 'forbidden' && /^text\/html/.test(refused.type), refused);
+    check('GET verify · ' + id + ': 403 as a Problem (WEBHOOK_VERIFY_REFUSED); Meta reads the status', refused.status === 403 && /problem\+json/.test(refused.type) && jsonOf(refused).code === 'WEBHOOK_VERIFY_REFUSED' && jsonOf(refused).status === 403, refused);
   });
   const answered = (route, id, status, body) => {
     const got = sceneOf(recording, route, id);
     check(route + ' · ' + id + ': ' + status + ' ' + JSON.stringify(body) + ' as application/json', !!got && got.status === status && sameValue(jsonOf(got), body) && /^application\/json/.test(got.type) && !/problem/.test(got.type), got);
   };
+  const refusedSignature = (route, id) => {
+    const got = sceneOf(recording, route, id);
+    check(route + ' · ' + id + ': 401 as a Problem (WEBHOOK_BAD_SIGNATURE) that keeps the old error key "bad signature"', !!got && got.status === 401 && /problem\+json/.test(got.type) && jsonOf(got).code === 'WEBHOOK_BAD_SIGNATURE' && jsonOf(got).error === 'bad signature', got);
+  };
   answered(wa, 'wa-not-configured', 200, { ok: true, note: 'whatsapp not configured' });
-  ['wa-unsigned', 'wa-wrong-signature', 'wa-signature-not-hex', 'wa-signature-of-another-body'].forEach((id) => answered(wa, id, 401, { error: 'bad signature' }));
+  ['wa-unsigned', 'wa-wrong-signature', 'wa-signature-not-hex', 'wa-signature-of-another-body'].forEach((id) => refusedSignature(wa, id));
   answered(wa, 'wa-message-captured', 200, { ok: true, captured: 1 });
   answered(wa, 'wa-message-captured-and-raised', 200, { ok: true, captured: 1 });
   answered(wa, 'wa-redelivery', 200, { ok: true, captured: 1 });
@@ -238,7 +243,7 @@ function checkWebhooks(recording) {
   answered(wa, 'wa-capture-fails', 200, { ok: true });
   answered(wa, 'wa-nothing-in-it', 200, { ok: true, captured: 0 });
   answered(mail, 'email-not-configured', 200, { ok: true, note: 'email inbound not configured' });
-  ['email-unsigned', 'email-wrong-signature'].forEach((id) => answered(mail, id, 401, { error: 'bad signature' }));
+  ['email-unsigned', 'email-wrong-signature'].forEach((id) => refusedSignature(mail, id));
   answered(mail, 'email-signature-in-the-other-header', 200, { ok: true, captured: 1 });
   answered(mail, 'email-captured', 200, { ok: true, captured: 1 });
   answered(mail, 'email-form-fields', 200, { ok: true, captured: 1 });
@@ -278,7 +283,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
   const swept = capturing ? () => [] : contractModule().allowedStatuses();
-  const allowed = (route) => (WEBHOOK_REFUSALS[route] ? WEBHOOK_REFUSALS[route] : swept(route));
+  const allowed = swept;
   const scenarios = lab.scenariosOf(routes, WORLDS, extrasList(), VALUES);
   const tested = await lab.checkRoutes(port, scenarios, recording, allowed, sources);
   if (capturing) return finishCapture(server, recording, routes);
@@ -301,7 +306,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const everywhere = Object.keys(recording).filter(leaks);
   check('no answer of any route, a 200 and a relayed 4xx included, carries the text of a thrown error (a body scan: ' + Object.keys(recording).length + ' answers)', everywhere.length === 0, everywhere);
   check('a 2xx is never a Problem: every success answer keeps its own shape', Object.keys(recording).filter((key) => recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
-  check('the three webhooks never answer a Problem: their content types are untouched', Object.keys(recording).filter((key) => WEBHOOKS.some((route) => key.startsWith(route + '|'))).every((key) => !/problem\+json/.test(recording[key].type)));
+  check('a webhook answers a Problem only for a refusal: every 2xx of the three stays the provider\'s own reply', Object.keys(recording).filter((key) => WEBHOOKS.some((route) => key.startsWith(route + '|')) && recording[key].status < 400).every((key) => !/problem\+json/.test(recording[key].type)));
   const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));

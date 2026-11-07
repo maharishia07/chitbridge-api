@@ -202,7 +202,9 @@ function extras(tools) {
     verify('verify-wrong-token', 403, '?hub.mode=subscribe&hub.verify_token=nope&hub.challenge=1158201444'),
     verify('verify-wrong-mode', 403, '?hub.mode=unsubscribe&hub.verify_token=verify-me&hub.challenge=1158201444'),
     verify('verify-nothing-sent', 403, ''),
-    verify('verify-not-configured', 403, '?hub.mode=subscribe&hub.verify_token=undefined&hub.challenge=1158201444', { WHATSAPP_VERIFY_TOKEN: null })
+    verify('verify-not-configured', 403, '?hub.mode=subscribe&hub.verify_token=undefined&hub.challenge=1158201444', { WHATSAPP_VERIFY_TOKEN: null }),
+    /* a fault of ours while answering the handshake: a Problem 500 that says nothing of its cause (new answer: not frozen) */
+    Object.assign(verify('verify-fault', 500, '?hub.mode=subscribe&hub.verify_token=verify-me&hub.challenge=1158201444'), { patch: { response: { type: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── POST /api/capture/webhook/whatsapp (signed by Meta: HMAC over the raw bytes; always 200 once signed) ── */
@@ -225,7 +227,11 @@ function extras(tools) {
     wa('wa-stop-reply-not-recorded', 200, whatsappBody([whatsappMessage('wamid.STOP2', 'STOP')]), { patch: stopFailed }),
     wa('wa-body-is-not-json', 200, '{ not json'),
     wa('wa-capture-fails', 200, oneMessage, { setup: world(failing(/INSERT INTO capture/)) }),
-    wa('wa-nothing-in-it', 200, '{}')
+    wa('wa-nothing-in-it', 200, '{}'),
+    /* the contract pass (7 Nov): a signed body the schema refuses, and a fault in the signature step, are Problems (new answers: not frozen) */
+    wa('wa-unknown-key-refused', 400, JSON.stringify({ object: 'whatsapp_business_account', entry: [], colour: 'red' }), { after: true }),
+    wa('wa-body-is-a-list', 400, '[]', { after: true }),
+    wa('wa-gate-fault', 500, oneMessage, { patch: { crypto: { createHmac: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── POST /api/capture/webhook/email (signed by the provider; always 200 once signed) ── */
@@ -239,7 +245,9 @@ function extras(tools) {
     mail('email-form-fields', 200, 'to=orders%40shop.example&from=anna%40example.com&subject=Order&body-plain=5%20kg%20tomato', { raw: mailPost('to=orders%40shop.example&from=anna%40example.com&subject=Order&body-plain=5%20kg%20tomato') }),
     mail('email-no-binding', 200, mailBody(), { setup: world({ unbound: true }) }),
     mail('email-no-text', 200, mailBody({ text: '   ' })),
-    mail('email-capture-fails', 200, mailBody(), { setup: world(failing(/INSERT INTO capture/)) })
+    mail('email-capture-fails', 200, mailBody(), { setup: world(failing(/INSERT INTO capture/)) }),
+    mail('email-body-is-a-number', 400, '5', { after: true }),
+    mail('email-gate-fault', 500, mailBody(), { patch: { crypto: { createHmac: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
 
   /* ── K-1 (B2): a value no column can hold is a 400 in words, never a 500 (the harness has no door; the real server's door answers INVALID_CHARACTER first). Not frozen: new answers ── */

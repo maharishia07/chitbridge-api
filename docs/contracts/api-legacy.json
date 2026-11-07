@@ -61612,6 +61612,74 @@
      }
     }
    ]
+  },
+  "POST /api/capture/webhook/whatsapp": {
+   "answers": [
+    {
+     "scenario": "wa-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-not-hex",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "wa-signature-of-another-body",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
+  },
+  "POST /api/capture/webhook/email": {
+   "answers": [
+    {
+     "scenario": "email-unsigned",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    },
+    {
+     "scenario": "email-wrong-signature",
+     "status": 401,
+     "body_keys": {
+      "error": "bad signature"
+     },
+     "fixture": {
+      "error": "bad signature"
+     }
+    }
+   ]
   }
  },
  "global": {

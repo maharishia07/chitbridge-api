@@ -4,17 +4,17 @@
  "counts": {
   "routes": 637,
   "no_does": 627,
-  "not_started": 7,
-  "partial": 241,
+  "not_started": 4,
+  "partial": 244,
   "meets": 389,
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 75
+    "failing": 74
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 73
+    "failing": 70
    },
    "foreign_id_404": {
     "applies": 203,
@@ -26,11 +26,11 @@
    },
    "inbound_validated": {
     "applies": 6,
-    "failing": 2
+    "failing": 0
    },
    "trips_budgeted": {
     "applies": 637,
-    "failing": 47
+    "failing": 46
    }
   },
   "reported": {
@@ -7677,7 +7677,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 287,
+   "line": 330,
    "hash": "2c754880414516a4",
    "does": "",
    "errors": {
@@ -7770,7 +7770,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 72,
+   "line": 108,
    "hash": "6617cb1ca9a06c8a",
    "does": "",
    "errors": {
@@ -7869,7 +7869,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 311,
+   "line": 354,
    "hash": "99aa450700b1fb37",
    "does": "",
    "errors": {
@@ -7962,13 +7962,18 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 139,
-   "hash": "78663c728812c446",
+   "line": 176,
+   "hash": "0a50596c571c6882",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     403,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_VERIFY_REFUSED"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -7980,19 +7985,19 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -8002,7 +8007,10 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    403,
+    500
+   ],
    "notes": [],
    "reported": {
     "bfla_role_check": true,
@@ -8021,12 +8029,12 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 0,
+    "wire": 0,
     "screens": []
    },
    "measured": {
@@ -38178,7 +38186,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 106,
+   "line": 142,
    "hash": "fae0d72b43d1bf93",
    "does": "",
    "errors": {
@@ -38281,7 +38289,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 116,
+   "line": 152,
    "hash": "6198a417da1c810c",
    "does": "",
    "errors": {
@@ -38384,7 +38392,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 96,
+   "line": 132,
    "hash": "6119468e82f68823",
    "does": "",
    "errors": {
@@ -38483,7 +38491,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 81,
+   "line": 117,
    "hash": "316b36b697a0b6cf",
    "does": "",
    "errors": {
@@ -38586,7 +38594,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 54,
+   "line": 90,
    "hash": "332e360cbe8c6666",
    "does": "",
    "errors": {
@@ -38685,7 +38693,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 320,
+   "line": 363,
    "hash": "25e15eef7eb38b4d",
    "does": "",
    "errors": {
@@ -38778,13 +38786,19 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 240,
-   "hash": "39fe1022ec617edf",
+   "line": 285,
+   "hash": "a462ab6d9b3687be",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_BAD_SIGNATURE"
+    ]
    },
    "reads": [],
    "writes": [],
@@ -38796,18 +38810,18 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
-    "inbound_validated": false,
+    "inbound_validated": true,
     "trips_budgeted": true
    },
    "applies": {
@@ -38818,8 +38832,14 @@
     "inbound_validated": true,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38837,7 +38857,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -38859,13 +38879,19 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 208,
-   "hash": "560f4ec338a1edeb",
+   "line": 249,
+   "hash": "7aabecbdcc6f2df5",
    "does": "",
    "errors": {
-    "count": 0,
-    "statuses": [],
-    "codes": []
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     500
+    ],
+    "codes": [
+     "WEBHOOK_BAD_SIGNATURE"
+    ]
    },
    "reads": [
     "channel_binding",
@@ -38883,18 +38909,18 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
-    "status_codes": false,
-    "strict_input": false,
-    "output_allowlist": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
-    "inbound_validated": false,
+    "inbound_validated": true,
     "trips_budgeted": true
    },
    "applies": {
@@ -38905,8 +38931,14 @@
     "inbound_validated": true,
     "trips_budgeted": true
    },
-   "declared": [],
-   "notes": [],
+   "declared": [
+    400,
+    401,
+    500
+   ],
+   "notes": [
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -38924,7 +38956,7 @@
     "signed_off_by_date": null,
     "lifecycle": null
    },
-   "status": "not started",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
