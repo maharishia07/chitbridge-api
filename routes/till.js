@@ -97,7 +97,7 @@ const { rateLimit } = require('../lib/rate-limit');
  */
 const catalogueMintLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: parseInt(process.env.TILL_CATALOGUE_MAX || '20'),
+  max: require('../lib/limits').intFromEnv('TILL_CATALOGUE_MAX', 20),
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: require('../lib/limiter-key').callerKey /* SEC-79 */,
