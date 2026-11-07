@@ -157,6 +157,10 @@ const SM = require('../lib/send-money');
   const stop = SM.stopOf({ _cb: { bridge: { ok: false, step: 'tax', unexplained_minor: 7, words: 'Does not add up at tax', steps: [{ name: 'gross', amount_minor: 100 }, { name: 'total', amount_minor: 107 }] } } });
   ok('stopOf: refused in the engine own words — step, amount, gross and total READ off its steps (nothing worked out here)', stop.step === 'tax' && stop.unexplained_minor === 7 && stop.gross_minor === 100 && stop.total_minor === 107, J(stop));
   const stamps = SM.stampsOf('2026-10-30T00:00:00Z', 'send');
+  /* ACC-191: an undecided tax (supply unknown, a rate above 0, no head figure) is copied into the header as null, never 0; the total stays the price */
+  const undecided = require('../lib/tax-lines').invoiceFor({ lines: [{ name: 'x', qty: 5, unit_price: 9000, gst_rate: 18 }], seller: { Gstin: null, LglNm: 'S', State: null, Country: 'IN', RegType: 'regular' }, buyer: { Country: 'IN' }, currency: 'INR', at: '2026-11-07T00:00:00Z' }).invoice;
+  const undecidedHeader = require('../routes/chits').moneyOfInvoice(undecided, 'INR');
+  ok('moneyOfInvoice: an undecided tax is null in the header (not decided, never 0) and the total stays the price', undecidedHeader.tax === null && undecidedHeader.total === 45000 && undecidedHeader.taxable === 45000, J(undecidedHeader));
   ok('stampsOf: names the writer of each figure and the engine pin it came from', stamps.money.by === 'chits send' && /^tax@[0-9]/.test(stamps.money.engine) && stamps.money.where === 'send' && stamps.total_value.from === 'money.total', J(stamps));
 }
 

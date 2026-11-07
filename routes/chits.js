@@ -666,7 +666,8 @@ function refOf(req) {
  * ⭐⭐⭐ summary_json.money FOR A BILL THAT CARRIES ITS INVOICE — READ OFF IT by the engine's moneyOf (lib/tax.js, the same
  * reading the counter's screen, slip and reprint use — window.CBTax.moneyOf), never worked out again (Athi, 2026-10-02).
  * The header keeps its own names, which are moneyOf's: gross · savings · net · taxable · tax · total · round_off. Picked,
- * not added up. `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
+ * not added up. ⭐ ACC-191: `tax` is null when the supply is undecided (supply unknown, a rate above 0, no head figure): "not decided", copied as it is, never turned into 0; the total stays the price.
+ * `issued: true` says the figures are the counter's invoice, not the provisional estimate the send route
  * makes for other chits.
  */
 function moneyOfInvoice(invoice, currency_code) {
