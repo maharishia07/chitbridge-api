@@ -19,6 +19,9 @@
  * `.env` is gitignored, so it stays on your disk. Nothing here ever prints the password.
  * If ADMIN_DATABASE_URL is absent, the script still runs --skip-wipe (migrate + seed via the API) and tells you.
  * ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ * OWNS       the one-command reset (backup, wipe, migrate, seed, verify) and clearIdentityOwned(db): the tables that hold a no-cascade reference to identities, cleared before identities.
+ * CALLED BY  by hand only (node scripts/reset-and-seed.js); tests/reset-and-seed.test.cjs calls clearIdentityOwned. Requiring the file does not run it.
+ * CARD       28-platform-and-operations/db-role
  */
 require('dotenv').config();
 const fs = require('node:fs');
@@ -44,6 +47,14 @@ const step = (n, t) => console.log('\n' + B(`${n} · ${t}`));
 const ok = (m) => console.log('   ' + G('✓ ') + m);
 const bad = (m) => console.log('   ' + R('✗ ') + m);
 const note = (m) => console.log('   ' + Y('· ') + m);
+
+/* party_tax_id and party_contact reference identities with no cascade (SEC-130): clear them before identities. A table not migrated yet is skipped. */
+const IDENTITY_OWNED = ['party_tax_id', 'party_contact'];
+async function clearIdentityOwned(db) {
+  for (const owned of IDENTITY_OWNED) {
+    if ((await db.query('SELECT to_regclass($1) AS t', ['public.' + owned])).rows[0].t) await db.query(`DELETE FROM public.${owned}`);
+  }
+}
 
 // ── the cast, with data (same definitions as seed-test-entities.js, kept here so this file runs standalone) ──
 const ITR2 = {
@@ -229,7 +240,8 @@ async function signIn(email, display_name) {
   return { token: j.token, bridge_id: e.bridge_id, id: e.identity_id, name: e.display_name, email };
 }
 
-(async () => {
+/* Print the banner, then open the admin connection; null when ADMIN_DATABASE_URL is not set. */
+async function connectAdmin() {
   hr('═');
   console.log(B('  RESET AND SEED') + (DRY ? Y('   — DRY RUN, nothing will be changed') : R('   — LIVE')));
   console.log('  API   ' + API);
@@ -237,7 +249,6 @@ async function signIn(email, display_name) {
   hr('═');
 
   let db = null;
-  const wipeWanted = !SKIP_WIPE;
   if (ADMIN_URL) {
     if (/\[YOUR-REF\]|CHANGE|example\.com/i.test(ADMIN_URL)) {
       bad('ADMIN_DATABASE_URL still looks like a placeholder — refusing.');
@@ -251,8 +262,12 @@ async function signIn(email, display_name) {
       process.exit(1);
     }
   }
+  return db;
+}
 
-  // ── 1 · WHERE WE ARE ──
+/* Step 1: say what is in the database now, and refuse a role that cannot bypass RLS when a wipe is wanted. */
+async function stepWhereWeAre(db) {
+  const wipeWanted = !SKIP_WIPE;
   step(1, 'Where we are');
   if (db) {
     const c = await db.query(`SELECT
@@ -270,8 +285,10 @@ async function signIn(email, display_name) {
       if (wipeWanted) process.exit(1);
     }
   } else note('no DB connection — skipping steps 2 and 3');
+}
 
-  // ── 2 · BACKUP (always, before anything) ──
+/* Step 2: back up the blueprints (always, before anything). */
+async function stepBackup(db) {
   if (db) {
     step(2, 'Backup the blueprints');
     const b = await db.query('SELECT * FROM catalogue_source ORDER BY source_key');
@@ -284,8 +301,33 @@ async function signIn(email, display_name) {
     }
     note('catalogue_source has no entity_id, so blueprints survive the wipe anyway — this is belt and braces');
   }
+}
 
-  // ── 3 · WIPE ──
+/* Wipe in one transaction (RLS off for it); roll back and stop on any error. */
+async function wipeAll(db, cols) {
+  await db.query('BEGIN');
+  try {
+    await db.query('SET LOCAL row_security = off');
+    try {
+      await db.query('DELETE FROM schema_fields');
+    } catch (_) {}
+    for (const { table_name } of cols.rows) await db.query(`DELETE FROM public."${table_name}"`);
+    await clearIdentityOwned(db);
+    await db.query('DELETE FROM identities WHERE parent_entity_id IS NOT NULL');
+    await db.query('DELETE FROM identities');
+    await db.query('UPDATE catalogue_source SET owner_entity_id = NULL WHERE owner_entity_id IS NOT NULL');
+    await db.query('COMMIT');
+    ok(`cleared ${cols.rows.length} entity-scoped table(s) + all identities; blueprints kept, now unowned`);
+  } catch (e) {
+    await db.query('ROLLBACK');
+    bad('wipe rolled back: ' + e.message);
+    process.exit(1);
+  }
+}
+
+/* Step 3: wipe every identity and all entity-scoped data, in one transaction. */
+async function stepWipe(db) {
+  const wipeWanted = !SKIP_WIPE;
   if (db && wipeWanted) {
     step(3, 'Wipe every identity and all entity-scoped data');
     const cols = await db.query(`SELECT table_name FROM information_schema.columns
@@ -294,27 +336,13 @@ async function signIn(email, display_name) {
       note(`would clear ${cols.rows.length} entity-scoped table(s), then all identities`);
       note('YOUR OWN LOGIN IS DELETED TOO — you re-register afterwards (dev OTP ' + OTP + ')');
     } else {
-      await db.query('BEGIN');
-      try {
-        await db.query('SET LOCAL row_security = off');
-        try {
-          await db.query('DELETE FROM schema_fields');
-        } catch (_) {}
-        for (const { table_name } of cols.rows) await db.query(`DELETE FROM public."${table_name}"`);
-        await db.query('DELETE FROM identities WHERE parent_entity_id IS NOT NULL');
-        await db.query('DELETE FROM identities');
-        await db.query('UPDATE catalogue_source SET owner_entity_id = NULL WHERE owner_entity_id IS NOT NULL');
-        await db.query('COMMIT');
-        ok(`cleared ${cols.rows.length} entity-scoped table(s) + all identities; blueprints kept, now unowned`);
-      } catch (e) {
-        await db.query('ROLLBACK');
-        bad('wipe rolled back: ' + e.message);
-        process.exit(1);
-      }
+      await wipeAll(db, cols);
     }
   } else if (db) note('--skip-wipe: existing data left alone');
+}
 
-  // ── 4 · MIGRATION b114 ──
+/* Step 4: apply migration b114. */
+async function stepMigrate(db) {
   if (db) {
     step(4, 'Apply b114 (catalogue visibility)');
     const f = path.join(__dirname, '..', 'migrations', 'b114_catalogue_visibility.sql');
@@ -329,8 +357,60 @@ async function signIn(email, display_name) {
       }
     }
   }
+}
 
-  // ── 5 · SEED ──
+/* Publish the cast member's own blueprint when it has one; returns its source key, else null. */
+async function publishCast(member, entity) {
+  if (!member.publish) return null;
+  const keys = {};
+  member.publish.items.forEach((item) =>
+    Object.keys(item).forEach((entry) => {
+      if (entry !== 'name') keys[entry] = true;
+    })
+  );
+  const p = await call('PUT', '/api/assist/catalogue-source', {
+    token: entity.token,
+    body: {
+      source_key: member.publish.source_key,
+      version: 'v1',
+      for_vertical: member.publish.for_vertical,
+      title: member.publish.title,
+      collection: member.publish.collection,
+      schema: {
+        name: member.publish.collection,
+        fields: [{ key: 'name', label: 'Name', type: 'text' }].concat(
+          Object.keys(keys).map((item) => ({ key: item, label: item.replace(/_/g, ' '), type: 'text' }))
+        )
+      },
+      items: member.publish.items,
+      commercials_fields: [{ key: 'price', label: 'Price', type: 'money' }],
+      experience: { note: member.publish.title },
+      formatting: {}
+    }
+  });
+  if (p.status >= 400) bad(`  publish failed ${p.status}: ${JSON.stringify(p.json)}`);
+  return member.publish.source_key;
+}
+
+/* Sign in one cast member, publish/adopt their catalogue, set the face; returns who was made. */
+async function seedOne(member) {
+  const ent = await signIn(member.email, member.name);
+  const sourceKey = (await publishCast(member, ent)) || (member.adopt && member.adopt.source);
+  if (sourceKey) {
+    const a = await call('POST', '/api/assist/catalogue-adopt', {
+      token: ent.token,
+      body: { source: sourceKey, commercials: (member.adopt && member.adopt.commercials) || {} }
+    });
+    if (a.status >= 400) bad(`  adopt ${sourceKey} failed ${a.status}: ${JSON.stringify(a.json)}`);
+  }
+  await call('PUT', '/api/catalogue-face', { token: ent.token, body: { face: member.face } });
+  await call('PATCH', '/api/entities/profile', { token: ent.token, body: { catalogue_visibility: 'public' } });
+  ok(`  ${ent.bridge_id}  ${member.email}`);
+  return { ...ent, role: member.role };
+}
+
+/* Step 5: sign in each cast member, publish/adopt a catalogue, set the face; returns who was made. */
+async function seedCast() {
   step(5, 'Seed the cast');
   const made = [];
   for (const c of CAST) {
@@ -340,55 +420,16 @@ async function signIn(email, display_name) {
     }
     console.log('   ' + B(c.name) + '  ' + D(c.role));
     try {
-      const ent = await signIn(c.email, c.name);
-      let sourceKey = c.adopt && c.adopt.source;
-      if (c.publish) {
-        const keys = {};
-        c.publish.items.forEach((item) =>
-          Object.keys(item).forEach((entry) => {
-            if (entry !== 'name') keys[entry] = true;
-          })
-        );
-        const p = await call('PUT', '/api/assist/catalogue-source', {
-          token: ent.token,
-          body: {
-            source_key: c.publish.source_key,
-            version: 'v1',
-            for_vertical: c.publish.for_vertical,
-            title: c.publish.title,
-            collection: c.publish.collection,
-            schema: {
-              name: c.publish.collection,
-              fields: [{ key: 'name', label: 'Name', type: 'text' }].concat(
-                Object.keys(keys).map((item) => ({ key: item, label: item.replace(/_/g, ' '), type: 'text' }))
-              )
-            },
-            items: c.publish.items,
-            commercials_fields: [{ key: 'price', label: 'Price', type: 'money' }],
-            experience: { note: c.publish.title },
-            formatting: {}
-          }
-        });
-        if (p.status >= 400) bad(`  publish failed ${p.status}: ${JSON.stringify(p.json)}`);
-        sourceKey = c.publish.source_key;
-      }
-      if (sourceKey) {
-        const a = await call('POST', '/api/assist/catalogue-adopt', {
-          token: ent.token,
-          body: { source: sourceKey, commercials: (c.adopt && c.adopt.commercials) || {} }
-        });
-        if (a.status >= 400) bad(`  adopt ${sourceKey} failed ${a.status}: ${JSON.stringify(a.json)}`);
-      }
-      await call('PUT', '/api/catalogue-face', { token: ent.token, body: { face: c.face } });
-      await call('PATCH', '/api/entities/profile', { token: ent.token, body: { catalogue_visibility: 'public' } });
-      ok(`  ${ent.bridge_id}  ${c.email}`);
-      made.push({ ...ent, role: c.role });
+      made.push(await seedOne(c));
     } catch (e) {
       bad('  ' + e.message);
     }
   }
+  return made;
+}
 
-  // ── 6 · VERIFY ──
+/* Step 6: check each storefront is live. */
+async function stepVerify(db, made) {
   if (!DRY) {
     step(6, 'Verify — is each storefront actually live?');
     for (const m of made) {
@@ -404,7 +445,10 @@ async function signIn(email, display_name) {
       v.rows.forEach((row) => note(`catalogue_visibility=${row.catalogue_visibility}: ${row.count}`));
     }
   }
+}
 
+/* The closing summary, then close the connection and exit. */
+async function finish(db, made) {
   hr('─');
   if (DRY) {
     console.log(Y('  DRY RUN — nothing changed. Re-run with --go when the plan above looks right.'));
@@ -417,7 +461,23 @@ async function signIn(email, display_name) {
   hr('═');
   if (db) await db.end();
   process.exit(0);
-})().catch((e) => {
-  console.error(R('crashed: ') + ((e && e.stack) || e));
-  process.exit(1);
-});
+}
+
+/* the CLI run: only when started as a script, never when a test requires the file */
+if (require.main === module) {
+  (async () => {
+    const db = await connectAdmin();
+    await stepWhereWeAre(db);
+    await stepBackup(db);
+    await stepWipe(db);
+    await stepMigrate(db);
+    const made = await seedCast();
+    await stepVerify(db, made);
+    await finish(db, made);
+  })().catch((e) => {
+    console.error(R('crashed: ') + ((e && e.stack) || e));
+    process.exit(1);
+  });
+}
+
+module.exports = { clearIdentityOwned };
