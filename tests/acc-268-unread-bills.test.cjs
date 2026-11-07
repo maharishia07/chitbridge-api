@@ -71,6 +71,18 @@ const month = AT.slice(0, 7);
   const zBadLines = await loadWith([healthy(1), zeroRead(8, { money: { total: 0 } })]).ledgerFor(SHOP, month);
   ok('(zero-read) lines that cannot be read are named even when the stored total is 0', zBadLines.dropped.length === 1 && zBadLines.dropped[0] === id(8), JSON.stringify(zBadLines.dropped));
 
+  /* review of #937: off-diagonal shapes, each red before its fix */
+  for (const [what, lines] of [['null (key present)', null], ['a string', 'x'], ['an object', { a: 1 }]]) {
+    const bad = await loadWith([healthy(1), zeroRead(10, { money: { total: 0 } }, lines)]).ledgerFor(SHOP, month);
+    ok('(zero-read) line_items that is present but ' + what + ' (not a list) is unreadable: named even with stored total 0', bad.dropped.length === 1 && bad.dropped[0] === id(10), JSON.stringify(bad.dropped));
+  }
+  const absent = zeroRead(11, { money: { total: 0 } });
+  delete absent.line_items;
+  const noKey = await loadWith([healthy(1), absent]).ledgerFor(SHOP, month);
+  ok('(zero-read) line_items ABSENT (no such key) keeps the old reading: a stored 0 total is a free bill, not named', noKey.dropped.length === 0, JSON.stringify(noKey.dropped));
+  const onlyInvoice = await loadWith([healthy(1), Object.assign(zeroRead(12, {}), { business_json: { customer: { name: 'Walk-in' }, till: { id: 'C1' }, bill_no: 'T12', billed_at: AT, invoice: invoice(500, 90) } })]).ledgerFor(SHOP, month);
+  ok('(zero-read) the total only in the frozen business_json.invoice (590) reaches the words: "for 590", not "states no total"', onlyInvoice.dropped.length === 1 && /Bill T12: .*for 590/.test((onlyInvoice.dropped_why[0] || {}).why || ''), JSON.stringify([onlyInvoice.dropped, onlyInvoice.dropped_why]));
+
   const g = await loadWith([healthy(1), free]).ledgerFor(SHOP, month);
   ok('a genuinely free bill is not named', g.dropped.length === 0 && g.ledger.count === 2 && g.ledger.rows.some((row) => row.chit_id === id(5)), JSON.stringify([g.dropped, g.ledger.count]));
 
