@@ -208,7 +208,8 @@ async function judge(req, res) {
   const session = await judgeSession(req, res, decoded);
   if (session.refusal) return session;
   const coAssist = await judgeActor(decoded);
-  if (coAssist.refusal) return coAssist;
+  /* a removed co-assist is refused AFTER the identity was attached (the request log names who was turned away) — so this refusal carries what was proved */
+  if (coAssist.refusal) return { decoded, rotated, keyRec: key.keyRec, sessRec: session.sessRec, refusal: coAssist.refusal };
   return { decoded, rotated, keyRec: key.keyRec, sessRec: session.sessRec, actor: coAssist.actor };
 }
 /** the identity a soft reader hands out: the token's names, plus a co-assist's CURRENT hat / level / reach and can_see_costs from its database row (an owner always sees costs) */
@@ -260,26 +261,28 @@ const auth = async (req, res, next) => {
   if (req && DECIDED.has(req)) return require('../lib/reqctx').runWithActor(req.identity.identity_id, () => require('./hat-gate')(req, res, next));
   try {
     const judged = await judge(req, res);
-    if (judged.refusal) return refusedWith(req, res, judged.refusal.status, judged.refusal.code, judged.refusal.legacy);
     const { decoded, rotated, keyRec, sessRec } = judged;
-    /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
-    if (rotated) mark(res, 'kind', 'rotated');
+    if (decoded) {
+      /* E10: verified by the PREVIOUS secret — the rotation window is still carrying this person. Visible so the day nobody holds one is too. */
+      if (rotated) mark(res, 'kind', 'rotated');
 
-    // Attach identity to request
-    req.identity = {
-      identity_id: decoded.identity_id,
-      bridge_id: decoded.bridge_id,
-      display_name: decoded.display_name,
-      identity_type: decoded.identity_type,
-      email: decoded.email,
-      parent_entity_id: decoded.parent_entity_id || null,
-      owner_scope: decoded.owner_scope || null
-    };
-    /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
-       req.api_key.scopes, whether a counter is speaking. */
-    req.till = holderOf(decoded, keyRec, sessRec);
-    /* M05: the person session this request rides on ({ jti, device_id, surface }), for /api/signin/* — absent on legacy/key */
-    if (req.till.session) req.session = req.till.session;
+      // Attach identity to request
+      req.identity = {
+        identity_id: decoded.identity_id,
+        bridge_id: decoded.bridge_id,
+        display_name: decoded.display_name,
+        identity_type: decoded.identity_type,
+        email: decoded.email,
+        parent_entity_id: decoded.parent_entity_id || null,
+        owner_scope: decoded.owner_scope || null
+      };
+      /* ⭐ WHO HOLDS THIS REQUEST — one shape for a key, a person and an actor (lib/holder.js). Routes ask req.till, not
+         req.api_key.scopes, whether a counter is speaking. */
+      req.till = holderOf(decoded, keyRec, sessRec);
+      /* M05: the person session this request rides on ({ jti, device_id, surface }), for /api/signin/* — absent on legacy/key */
+      if (req.till.session) req.session = req.till.session;
+    }
+    if (judged.refusal) return refusedWith(req, res, judged.refusal.status, judged.refusal.code, judged.refusal.legacy);
 
     // Revalidate actor status — a removed/deactivated co-assist must lose access
     // immediately on their next request, not whenever the JWT happens to expire.
