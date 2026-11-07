@@ -36,11 +36,14 @@ function checker(argv) {
   return { check, tally };
 }
 
+/** idem3 (7 Nov): the counter's points writes REQUIRE an Idempotency-Key (routes/till.js pointsOnce); every scenario that reaches one carries a fresh key, a shared key would replay the first answer */
+let pointsKeySeed = 0;
+const pointsKey = (urlPath) => (/\/till\/reward(\/claim)?$/.test(String(urlPath).split('?')[0]) ? { 'idempotency-key': 'points-scenario-' + ++pointsKeySeed } : {});
 /** one HTTP call to the test app: { status, type, text, json } (status 0 = it did not answer in 4 s) */
 function send(port, method, urlPath, body) {
   return new Promise((resolve) => {
     const data = body === undefined ? null : JSON.stringify(body);
-    const options = { port, path: urlPath, method, headers: data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {} };
+    const options = { port, path: urlPath, method, headers: Object.assign(data ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } : {}, pointsKey(urlPath)) };
     const request = http.request(options, (response) => {
       let text = '';
       response.on('data', (part) => (text += part));

@@ -5044,6 +5044,7 @@ function payFailure(req, res, err) {
  * the same key and another body → 422 IDEMPOTENCY_CONFLICT; two at once → one runs (the other 409 IDEMPOTENCY_IN_PROGRESS).
  * The web already sends it (app.html EP chitPay idem:'attempt').
  */
+/* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
 const payOnce = require('../middleware/idempotency').requireKey();
 router.post(
   '/:chit_id/payment',
@@ -5083,7 +5084,7 @@ router.post(
     }
   }
 );
-router.delete('/:chit_id/payment', auth, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
+router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const r = await withEntity(entity_id, (db) =>
