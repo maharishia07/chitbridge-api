@@ -24915,7 +24915,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 95,
+   "line": 97,
    "hash": "13eb044abdeba057",
    "does": "",
    "errors": {
@@ -24928,7 +24928,8 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "identities",
+    "journal_entry"
    ],
    "writes": [],
    "money": false,
@@ -25117,7 +25118,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "6f9049f9c18bdb46",
+   "hash": "b1e106d69398f827",
    "does": "",
    "errors": {
     "count": 0,
@@ -25129,7 +25130,8 @@
     "codes": []
    },
    "reads": [
-    "identities"
+    "identities",
+    "journal_entry"
    ],
    "writes": [],
    "money": false,
@@ -25185,7 +25187,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#916",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#924",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -57417,7 +57419,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 180,
+   "line": 182,
    "hash": "af3a4c2553c0c02a",
    "does": "",
    "errors": {
@@ -57522,7 +57524,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 143,
+   "line": 145,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {

@@ -32,6 +32,8 @@ function loadWith(rows) {
   delete require.cache[tcPath];
   return require(tcPath);
 }
+/** ACC-268 as SIT part 6 made it live (k46-acc268r): a stored bill whose business_json was overwritten with {invoice:'x', bill_no} (no till mark) and whose header carries NO money block, only total_value (or nothing) */
+const liveLost = (n, totalValue) => Object.assign(header(n, 'order', { invoice: 'x', bill_no: 'T' + n }, 0), { summary_json: totalValue === undefined ? {} : { total_value: totalValue } });
 const month = AT.slice(0, 7);
 
 (async () => {
@@ -50,6 +52,13 @@ const month = AT.slice(0, 7);
   const b = await loadWith([healthy(1), zero]).ledgerFor(SHOP, month);
   ok('(b) a bill that reads 0 beside a non-zero money.total is named', b.ledger.count === 2 && b.dropped.length === 1 && b.dropped[0] === id(4), JSON.stringify([b.ledger.count, b.dropped]));
   ok('(b) with the reason in words', /Bill T4: it reads as 0 but the bill itself says it is for 590/.test((b.dropped_why[0] || {}).why || ''), JSON.stringify(b.dropped_why));
+
+  const live = await loadWith([healthy(1), liveLost(7, 300)]).ledgerFor(SHOP, month);
+  ok('(live shape) a bill with no money block, only total_value 300, that the ledger skips is NAMED in dropped, with its total', live.ledger.count === 1 && live.dropped.length === 1 && live.dropped[0] === id(7) && /Bill T7: .*left it out.*300/.test((live.dropped_why[0] || {}).why || ''), JSON.stringify([live.ledger.count, live.dropped, live.dropped_why]));
+  const none = await loadWith([healthy(1), liveLost(8)]).ledgerFor(SHOP, month);
+  ok('(live shape) a skipped bill that states no total at all is still NAMED (we cannot say it is free), without an amount', none.dropped.length === 1 && none.dropped[0] === id(8) && /Bill T8: .*left it out.*states no total/.test((none.dropped_why[0] || {}).why || ''), JSON.stringify([none.dropped, none.dropped_why]));
+  const freeLive = await loadWith([healthy(1), liveLost(9, 0)]).ledgerFor(SHOP, month);
+  ok('(live shape) a skipped bill whose stored total is 0 is a free bill: not named', freeLive.dropped.length === 0, JSON.stringify(freeLive.dropped));
 
   const g = await loadWith([healthy(1), free]).ledgerFor(SHOP, month);
   ok('a genuinely free bill is not named', g.dropped.length === 0 && g.ledger.count === 2 && g.ledger.rows.some((row) => row.chit_id === id(5)), JSON.stringify([g.dropped, g.ledger.count]));
@@ -73,6 +82,9 @@ const month = AT.slice(0, 7);
     s = await serve([healthy(1), zero]);
     r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
     ok(form + ' (b) zero-read bill: 422 GSTR_REFUSED', r.status === 422 && /GSTR_REFUSED/.test(r.text) && /Bill T4/.test(r.text), r.status + ' ' + r.text.slice(0, 300));
+    s = await serve([healthy(1), liveLost(7, 300)]);
+    r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
+    ok(form + ' (live shape) the skipped bill with no money block: 422 GSTR_REFUSED naming it', r.status === 422 && /GSTR_REFUSED/.test(r.text) && /Bill T7/.test(r.text), r.status + ' ' + r.text.slice(0, 300));
     s = await serve([healthy(1), healthy(2), free]);
     r = await s.get('/api/tax/gstr?month=' + month + '&form=' + form); s.close();
     ok(form + ' healthy month (with a free bill): 200 with the file', r.status === 200 && (form === 'gstr3b' ? JSON.parse(r.text).sup_details.osup_det.txval === 1000 : !!JSON.parse(r.text).gstin), r.status + ' ' + r.text.slice(0, 200));
