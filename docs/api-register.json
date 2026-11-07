@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 222,
+  "meets": 415,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -6743,7 +6743,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2213,
-   "hash": "a025e197a54c16cc",
+   "hash": "f996cd645019e1ca",
    "does": "",
    "errors": {
     "count": 1,
@@ -6758,6 +6758,7 @@
     ]
    },
    "reads": [
+    "books_change_log",
     "books_setting",
     "fiscal_period",
     "identities",
@@ -6818,10 +6819,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib; periods[].return additive and optional, form/period/label/closed read against books.periodAdvice and the contract) 2026-10-30 PR#599",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f996cd645019e1ca"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-books.js"
    ],
