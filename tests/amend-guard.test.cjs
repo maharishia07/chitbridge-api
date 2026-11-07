@@ -52,10 +52,11 @@ const refusal = async (promise) => {
     assert.strictEqual(await refusal(amend.guard(db, 'e', 'c', edit({ quantity: 1, unit: 'kg' }))), null);
     assert.strictEqual(db.asked, 1);
   });
-  await t('edits that name no existing line ask the database nothing', async () => {
+  await t('an edit that names a position the chit holds no id for asks the payload once and refuses nothing (nothing can be delivered against it)', async () => {
     const db = dbWith(40);
-    assert.strictEqual(await refusal(amend.guard(db, 'e', 'c', [{ line: { particulars: 'Rice', quantity: 1 } }])), null);
-    assert.strictEqual(db.asked, 0);
+    db.query = async () => { db.asked++; return { rows: [{ line_items: [{ particulars: 'Rice' }] }] }; };
+    assert.strictEqual(await refusal(amend.guard(db, 'e', 'c', amend.prepare([{ line_index: 0, line: { particulars: 'Rice', quantity: 1 } }]))), null);
+    assert.strictEqual(db.asked, 1);
   });
   await t('removing a delivered line: 409 LINE_DELIVERED, naming the line and what went out', async () => {
     const e = await refusal(amend.guard(dbWith(40), 'e', 'c', edit(null)));
@@ -78,6 +79,44 @@ const refusal = async (promise) => {
   });
   await t('an environment that has not run b144 refuses nothing (the relation is missing: no deliveries)', async () => {
     assert.strictEqual(await refusal(amend.guard(dbWith(0, 'kg', true), 'e', 'c', edit(null))), null);
+  });
+
+  console.log('\n== RAIL-174: an omitted quantity on a delivered line is refused ==\n');
+  await t('40 kg delivered, the correction omits quantity: 409 LINE_BELOW_DELIVERED naming the line; quantity 40 passes; nothing delivered passes', async () => {
+    const e = await refusal(amend.guard(dbWith(40), 'e', 'c', edit({ particulars: 'Basmati', unit: 'kg' })));
+    assert.ok(e && e.status === 409 && e.code === 'LINE_BELOW_DELIVERED', String(e && e.code));
+    assert.ok(/Basmati/.test(e.message) && /needs its quantity/.test(e.message) && /40 kg/.test(e.message) && /at least 40/.test(e.message), e.message);
+    const nul = await refusal(amend.guard(dbWith(40), 'e', 'c', amend.prepare([{ line_index: 0, line_id: LINE, line: { particulars: 'Basmati', unit: 'kg', quantity: null } }])));
+    assert.ok(nul && nul.code === 'LINE_BELOW_DELIVERED', 'a null quantity is the same erasure');
+    assert.strictEqual(await refusal(amend.guard(dbWith(40), 'e', 'c', edit({ particulars: 'Basmati', unit: 'kg', quantity: 40 }))), null);
+    assert.strictEqual(await refusal(amend.guard(dbWith(0), 'e', 'c', edit({ particulars: 'Basmati', unit: 'kg' }))), null, 'nothing delivered: free as before');
+  });
+
+  console.log('\n== RAIL-175: a line named by position is judged like one named by id ==\n');
+  const OTHER_ID = '33333333-3333-4333-8333-333333333333';
+  const byPosition = (delivered, ids) => ({
+    asked: [],
+    query: async function (sql) {
+      this.asked.push(/chit_detail/.test(sql) ? 'payload' : 'delivered');
+      if (/chit_detail/.test(sql)) return { rows: [{ line_items: ids.map((id) => ({ line_id: id })) }] };
+      return { rows: [{ line_id: LINE, particulars: 'Basmati', ordered_unit: 'kg', delivered }] };
+    }
+  });
+  await t('removing a delivered line by line_index alone: 409 LINE_DELIVERED (it used to pass the lock and reach the audit)', async () => {
+    const db = byPosition(40, [OTHER_ID, LINE]);
+    const e = await refusal(amend.guard(db, 'e', 'c', amend.prepare([{ line_index: 1, line: null }])));
+    assert.ok(e && e.status === 409 && e.code === 'LINE_DELIVERED' && /Basmati/.test(e.message), String(e && e.message));
+    assert.deepStrictEqual(db.asked, ['payload', 'delivered']);
+  });
+  await t('the position fills the prepared edit in place, so the live row and the audit row get the line_id too', async () => {
+    const prepared = amend.prepare([{ line_index: 1, line: { particulars: 'Basmati', quantity: 50, unit: 'kg' } }]);
+    assert.strictEqual(await refusal(amend.guard(byPosition(40, [OTHER_ID, LINE]), 'e', 'c', prepared)), null);
+    assert.strictEqual(prepared[0].line_id, LINE);
+  });
+  await t('an edit that already has its line_id costs no payload read', async () => {
+    const db = byPosition(0, [LINE]);
+    await amend.guard(db, 'e', 'c', amend.prepare([{ line_index: 0, line_id: LINE, line: { particulars: 'Basmati', quantity: 1, unit: 'kg' } }]));
+    assert.deepStrictEqual(db.asked, ['delivered']);
   });
 
   console.log('\n== RAIL-148: line_id and line_index must name the same line, for every caller ==\n');

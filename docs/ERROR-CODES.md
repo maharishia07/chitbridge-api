@@ -165,6 +165,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
+| DB_CONNECTION_LOST | 503 | Database unavailable | The connection to the database was lost while this was being done. Nothing was saved. | Try again in a moment. | platform | 2026-11-07 |
 | DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Definitions arrive after the next update. Nothing was saved. | Try again after the next update. | definitions | 2026-11-07 |
 | DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
@@ -507,6 +508,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |

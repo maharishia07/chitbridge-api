@@ -37,7 +37,6 @@ const ROUTE_FILE = 'routes/entities.js';
 /** POST /register is the sign-up (routes/signin.js's ask handler, a sweep of its own): run, not judged. POST /verify is JUDGED since the 7 Nov pass: the contract declares it and every status is tested; it has no frozen body to replay. */
 const SIGN_IN = ['POST ' + MOUNT + '/register'];
 const VERIFY = 'POST ' + MOUNT + '/verify';
-const ANY_STATUS = [400, 401, 403, 404, 409, 422, 429, 500, 503];
 /** CMP-30: an erasure that matched no entity now answers 404 where it answered 200 "done", so the worlds that reach an empty store (staff-asks, nothing-found) meet a refusal the sweep adds: nothing was frozen */
 const ERASE_NOW_404 = (route, scenario) => route === 'PATCH ' + MOUNT + '/:id/erase' && ['staff-asks', 'nothing-found'].includes(scenario);
 const lab = harness({
@@ -130,9 +129,9 @@ function checkContractShape(routes) {
   console.log('\n-- the contract and the router agree --');
   const contract = contractModule();
   const operations = Object.keys(contract.OPERATIONS);
-  const swept = Object.keys(routes).filter((key) => !SIGN_IN.includes(key));
-  check('every route the router holds but sign-in has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 24 operations: the 25 routes less POST /register', operations.length === 24 && Object.keys(routes).length === 25, [operations.length, Object.keys(routes).length]);
+  const swept = Object.keys(routes);
+  check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
+  check('the contract holds 25 operations: all 25 routes (POST /register since SEC-130 (A))', operations.length === 25 && Object.keys(routes).length === 25, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400)', bodies.every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));
@@ -203,7 +202,7 @@ function writeAllowList(proved) {
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');
   const declared = capturing ? () => [] : contractModule().allowedStatuses();
-  const allowed = (route) => (SIGN_IN.includes(route) ? ANY_STATUS : declared(route));
+  const allowed = (route) => declared(route); /* SEC-130 (A): POST /register is judged too since it is declared in the contract (its refusals stay recorded byte for byte) */
   const scenarios = lab.scenariosOf(routes, WORLDS, extrasList());
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
   if (lab.flagValue('--capture')) {
@@ -236,7 +235,7 @@ function writeAllowList(proved) {
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
   const mine = Object.fromEntries(Object.keys(onDisk).filter(lab.mine).sort().map((route) => [route, onDisk[route]]));
-  const judged = Object.fromEntries(Object.keys(coverage).filter((route) => !SIGN_IN.includes(route)).map((route) => [route, coverage[route]]));
+  const judged = Object.fromEntries(Object.keys(coverage).map((route) => [route, coverage[route]]));
   if (lab.argv.includes('--write')) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, judged);

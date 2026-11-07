@@ -171,6 +171,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
+  'stock-sweep.js',
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */

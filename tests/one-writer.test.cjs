@@ -165,7 +165,7 @@ const none = (list, why) => assert.deepStrictEqual(list, [], why + '\n      at: 
     assert.deepStrictEqual(sentOnly, { rows: 1, moved: false, from: null }, 'no received copy → not_received, quietly');
     const n = calls.length;
     await assignChit(db, 'E', 'C1', asha, 'push', { me: railStatus.SYSTEM });
-    assert.ok(/^SELECT current_status FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2 AND direction = 'received'$/.test(calls[n + 1].sql), 'without opts.from the gate reads the copy itself');
+    assert.ok(/^SELECT current_status FROM chit_status WHERE chit_id = \$1 AND entity_id = \$2 AND direction = 'received'$/.test(calls[n].sql), 'without opts.from the gate reads the copy itself (RAIL-173: BEFORE the holder is written, so a taken-back bill is refused with nothing written)');
   });
   await it('rerouteOpenTasks: everything one person still holds → a colleague (push) or the pool, closed copies excluded, scoped to the shop', async () => {
     const { rerouteOpenTasks, CLOSED_STATUSES } = require(path.join(API, 'lib', 'assign-chit'));

@@ -796,6 +796,8 @@ async function sendReplay(sendState, req, res) {
   if (!client_ref) return;
   try {
     const seen = await sameRefLook(sender_id, client_ref);
+    /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
+    if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
     if (seen) return answerReplay(req, res, seen, client_ref);
   } catch (e) {
     cbLog.fellBack(
@@ -2749,9 +2751,8 @@ async function sendMeter(sendState, req, res) {
  *
  * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
  * is the hottest path in the product and a sale that has already happened must not fail because a stock
- * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
- * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
- * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+ * row could not be written. The trade is real and worth naming: a failure here is posted again by lib/stock-sweep
+ * (CTR-178: derived from the chit at any time, with the same ref and the same idempotency — retried, healed by the shop's next sale or the till's replay, SAID if it still fails) — and because the balance is a cache that
  * rebuild() can check against the log.
  *
  * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
@@ -2765,6 +2766,9 @@ async function sendStock(sendState, req, res) {
           actor_id: req.identity && req.identity.identity_id
         })
         .then((reply) => {
+          /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
+          if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
+          require('../lib/stock-sweep').healSoon(sender_id, withEntity);
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
@@ -3154,7 +3158,7 @@ router.get('/folder', auth, ...checked('GET /folder'), async (req, res) => {
               cs.current_status, cs.read_at, cs.star_flag, cs.priority_flag, cs.deleted_at, cs.archived_at, ch.direction${costView.sideColsSql('ch', blind)},
               ${_cancelCol}
               (SELECT COUNT(*) FROM chit_messages cm
-                WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count
+                WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count
            ${joinFrom}
           WHERE ${where}
           ORDER BY ch.chit_id, (ch.direction = 'sent') DESC
@@ -3412,9 +3416,9 @@ router.get('/inbox', auth, ...checked('GET /inbox'), async (req, res) => {
          (SELECT COUNT(*) FROM chit_disputes cd
           WHERE cd.chit_id = ch.chit_id AND cd.entity_id = ch.entity_id AND cd.status = 'resolved') AS resolved_dispute_count,
          (SELECT COUNT(*) FROM chit_messages cm
-          WHERE cm.chit_id = ch.chit_id AND cm.visibility_entity_id IS NULL) AS message_count,
+          WHERE cm.chit_id = ch.chit_id AND cm.entity_id = ch.entity_id AND cm.visibility_entity_id IS NULL) AS message_count,
          (SELECT MAX(cm2.created_at) FROM chit_messages cm2
-          WHERE cm2.chit_id = ch.chit_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
+          WHERE cm2.chit_id = ch.chit_id AND cm2.entity_id = ch.entity_id AND cm2.visibility_entity_id IS NULL) AS last_message_at,
          (SELECT sl.action_by_display_name FROM state_log sl
           WHERE sl.chit_id = ch.chit_id AND sl.entity_id = ch.entity_id AND sl.action = 'created'
           ORDER BY sl.created_at ASC LIMIT 1) AS placed_by_name,
@@ -5442,7 +5446,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
       if (req.query.dispute === '1' || req.query.dispute === 'true') cond += ` AND is_dispute = true`;
       /* b155 — one line's thread. Read through to_jsonb so the column may not exist yet: naming line_id directly
          raises 42703 and would take the whole message panel down before the migration runs. */
-      const params = [chit_id];
+      const params = [chit_id, entity_id]; /* SEC-127c: $2 = my shop, named in the SQL below (not row security alone) */
       /* ⚠️ THE PLACEHOLDER IS "$" + THE INDEX. Written through a shell the dollar was eaten, leaving
          `= 2` — a uuid compared against the integer two, which matches nothing and returns an empty thread
          rather than an error. A filter that silently finds nothing looks exactly like "there are no notes". */
@@ -5450,7 +5454,7 @@ router.get('/:chit_id/messages', auth, ...checked('GET /:chit_id/messages'), asy
         params.push(req.query.line_id);
         cond += ` AND to_jsonb(chit_messages)->>'line_id' = $` + params.length;
       }
-      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1${cond} ORDER BY created_at ASC`, params);
+      return db.query(`SELECT * FROM chit_messages WHERE chit_id = $1 AND entity_id = $2${cond} ORDER BY created_at ASC`, params);
     });
     if (result === null) return problem(req, res, { status: 403, ...said({ error: 'Forbidden' }, 'CHIT_NOT_PERMITTED', 'This login holds no copy of this chit.') });
 
