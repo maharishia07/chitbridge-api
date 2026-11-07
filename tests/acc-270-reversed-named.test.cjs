@@ -63,6 +63,7 @@ const minor = (rupees) => Math.round(rupees * 100);
         return { day: String(j.posting_date).slice(0, 10), rev: v ? String(v.posting_date).slice(0, 10) : null };
       });
   let seenSql = '';
+  let booksOn = true; /* the fixture's books_setting.enabled of the shop */
   const memory = require('./support/books-memory.cjs');
   const ask = memory.fakeDb.query;
   memory.fakeDb.query = async (text, params) => {
@@ -78,7 +79,7 @@ const minor = (rupees) => Math.round(rupees * 100);
         const bookedDay = live.length ? live.map((e) => e.day).sort().pop() : null;
         const revs = all.filter((e) => e.day < dFrom && e.rev && e.rev >= dFrom && e.rev < dTo).map((e) => e.rev).sort();
         const bj = r.business_json || {};
-        const noEntry = String(r.sender_entity_id) === SHOP && !!bj.bill_no && !!(bj.till && bj.till.id) && !/^(rejected|cancelled)$/.test(r.current_status || '') && all.length === 0;
+        const noEntry = booksOn && String(r.sender_entity_id) === SHOP && !!bj.bill_no && !!(bj.till && bj.till.id) && !/^(rejected|cancelled)$/.test(r.current_status || '') && all.length === 0;
         return { bookedDay, revDay: revs.length ? revs.pop() : null, noEntry };
       };
       const found = rows.filter((r) => {
@@ -152,6 +153,12 @@ const minor = (rupees) => Math.round(rupees * 100);
   const g1 = TL.gstr1(oct.ledger, oct.me, oct.bounds.period), g3 = TL.gstr3b(oct.ledger, oct.me, oct.bounds.period);
   eq('GSTR-1 and GSTR-3B for October carry both lists in _cb', [g1._cb.reversed.length, g1._cb.not_in_books.length, g3._cb.reversed.length, g3._cb.not_in_books.length], [1, 1, 1, 1]);
   ok('the SQL itself reads the books AS AT the month end (a reversal on/after $5 does not count) and carries the reversed / no-entry arms', /reverses_entry_id = j\.entry_id AND to_char\(r\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /AND to_char\(j\.posting_date, 'YYYY-MM-DD'\) < \$5/.test(seenSql) && /books_reversed_day/.test(seenSql) && /books_no_entry/.test(seenSql), seenSql.slice(0, 200));
+  /* a shop whose books are OFF has no entries by design: its counter bills are not named */
+  booksOn = false;
+  const octOff = await TC.ledgerFor(SHOP, '2026-10');
+  eq('books OFF: the counter bill with no entry is NOT named (empty not_in_books); the reversed list is unaffected', [octOff.not_in_books.length, octOff.reversed.length], [0, 1]);
+  booksOn = true;
+  ok('the no-entry arm asks the shop keeps books: EXISTS (books_setting ... enabled) in the SQL', seenSql.includes('EXISTS (SELECT 1 FROM books_setting k WHERE k.entity_id = h.entity_id AND k.enabled)'), seenSql.slice(0, 120));
   const sep3b = TL.gstr3b(sep.ledger, sep.me, sep.bounds.period).sup_details.osup_det;
   eq('GSTR-3B September still shows the bill: output CGST 135, SGST 135', [sep3b.camt, sep3b.samt], [135, 135]);
 
