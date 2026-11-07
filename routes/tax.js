@@ -193,7 +193,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
-    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, st.why); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
+    if (/^NO_COUNTRY/.test(st.code)) return refuse(req, res, 422, st.code, st.code === 'NO_COUNTRY' ? require('../lib/country-setup').COUNTRY_FIRST : st.why); /* CTRY-94: a country with no pack is refused in the engine's words, not taxed as India */
     const needShelf = lines.some((item) => item.gst_rate == null || item.listPrice == null);
     const sh = needShelf ? await S.shelfOf(entity_id) : null;
     const priced = [];

@@ -102,7 +102,7 @@ function installStubs() {
   mock('db', db);
   mock('db/index', db);
   /* ACC-272: tax/compute and invoice/build ask the shop's registration (registrationOfShop; a world says it: 'unknown' = never said) */
-  mock('lib/country-setup', { registrationOfShop: async () => world.registration, registrationWord: (answer, scheme) => (answer && answer !== 'regular' ? answer : String(scheme || 'regular')), registrationAsk: () => ({ code: 'TAX_REGISTRATION_UNKNOWN', question: 'Is this business registered for GST?' }), currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
+  mock('lib/country-setup', { COUNTRY_FIRST: 'Set the shop’s country first (Country setup) — the books are kept by its law.' /* CTRY-94: the one sentence, as lib/country-setup holds it */, registrationOfShop: async () => world.registration, registrationWord: (answer, scheme) => (answer && answer !== 'regular' ? answer : String(scheme || 'regular')), registrationAsk: () => ({ code: 'TAX_REGISTRATION_UNKNOWN', question: 'Is this business registered for GST?' }), currencyStated: (...vals) => vals.find((one) => typeof one === 'string' && one.trim()) || null, gate: async () => ({ books: true, code: null, country: 'IN' }), status: async () => ({ books: true, code: null, country: 'IN' }) });
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
 }
 
