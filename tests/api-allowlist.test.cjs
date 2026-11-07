@@ -94,8 +94,9 @@ t('checkCaptures: a recorded answer that fits its committed shape loses nothing'
 t('checkCaptures: a recorded answer with a key the shape lacks is named', tool.checkCaptures([{ 'GET /api/assist/whoami|x': { route: 'GET /api/assist/whoami', status: 200, body: { ok: true, is_helpdesk: false, actions: {}, canary: 1 } } }]).some((line) => /canary/.test(line)));
 const contract = require(path.join(API, 'lib', 'assist-contract.js'));
 const whoami = contract.operationFor('GET /whoami');
+const noShape = require(path.join(API, 'lib', 'attachments-contract.js')); /* a row whose success answer is a download: no derived shape (docs/contracts/api-output-shapes.json 'not reached') */
 t('kit: a route with a derived shape answers under that closed schema, and its checked() chain holds the filter', whoami.responses[200].content['application/json'].schema.additionalProperties === false && contract.checked('GET /whoami').some((fn) => fn && fn.outputAllowlist));
-t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', contract.operationFor('POST /resolve').responses[200].content['application/json'].schema.additionalProperties === undefined && !contract.checked('POST /resolve').some((fn) => fn && fn.outputAllowlist));
+t('kit: a route with no derived shape keeps the row\'s own `out` and gets no filter', Object.values(noShape.operationFor('GET /:id').responses[200].content)[0].schema.additionalProperties === undefined && !noShape.checked('GET /:id').some((fn) => fn && fn.outputAllowlist));
 
 /* ── closed from recordings only (a route answered by a shared wrapper): reported, never enforced ── */
 const wrapped = tool.deriveShape({ samples: [{ ok: true, entry_id: 'e1', lines: [{ code: '1', dr: 1 }] }, { ok: true, duplicate: true, entry_id: 'e1' }], source: null, recordings: true });
