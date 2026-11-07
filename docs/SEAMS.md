@@ -100,7 +100,7 @@ of file each thing is; this says what already does the job.
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 27 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 27 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 27 | `account` | `home-facts.js` | OMITTED: |
+| 28 | `account` | `home-facts.js` | OMITTED: |
 | 27 | `owner` | `books.js` |  |
 | 26 | `money` | `cart.js` |  |
 | 25 | `load` | `cap-assist.js` |  |
@@ -158,7 +158,7 @@ of file each thing is; this says what already does the job.
 | 17 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
-| 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
+| 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
