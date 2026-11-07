@@ -134,6 +134,26 @@ const INVOICE = { currency: 'INR', ItemList: [{ GstRt: 5, AssAmt: 47.62, CgstAmt
     eq('(e) the page total still counts it (one honest ageing)', got.body.total_minor, 5000);
   } finally { srv.close(); }
 
+  /* ── (h) the flip's SQL names only columns the REAL tables have (SIT part 16: currency_code is on chit_detail, not chit_header; the twin hid it) ── */
+  {
+    const fs = require('fs'), baseline = fs.readFileSync(path.join(H.API, 'migrations', '000_baseline_2026-10-21.sql'), 'utf8');
+    const columnsOf = (table) => {
+      const start = baseline.indexOf('CREATE TABLE public.' + table + ' (');
+      const body = baseline.slice(start, baseline.indexOf(');', start));
+      return body.split(/\r?\n/).slice(1).map((line) => (line.trim().match(/^([a-z_]+) /) || [])[1]).filter((word) => word && !/^(CONSTRAINT|PRIMARY|UNIQUE|CHECK)$/i.test(word));
+    };
+    const cols = { h: columnsOf('chit_header'), d: columnsOf('chit_detail') };
+    const real = require(path.join(H.API, 'lib', 'books-store.js')), sent = [];
+    const spy = { query: async (text) => { sent.push(text); return { rows: [] }; } };
+    await real.chitForFlip(spy, SHOP, 'c1'); await real.stampConfirmed(spy, SHOP, 'c1', 0, '2026-11-07T00:00:00Z');
+    const used = []; sent.forEach((text) => text.replace(/([hd]).([a-z_]+)/g, (all, alias, col) => used.push([alias, col])));
+    ok('(h) the baseline tables were read (chit_header and chit_detail have columns)', cols.h.length > 5 && cols.d.length > 3, JSON.stringify([cols.h.length, cols.d.length]));
+    const missing = used.filter(([alias, col]) => cols[alias].indexOf(col) < 0).map((x) => x.join('.'));
+    eq('(h) every h.* / d.* column in the flip statements exists in the baseline', missing, []);
+    const bare = sent.join(' ').match(/UPDATE chit_header SET business_json/) ? ['business_json'] : [];
+    ok('(h) the UPDATE sets a real chit_header column', bare.every((col) => cols.h.indexOf(col) >= 0), 'business_json missing');
+  }
+
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('   FAIL threw: ' + (e && e.stack)); process.exit(1); });
