@@ -310,6 +310,31 @@ function agreeing(r) {
     ok('ACC-271 a blank discount / cess / list price / total is absent, the bill is made', blankOptional.status === 200, J([blankOptional.status, blankOptional.answer]));
     const removedBad = await send(invoiceBody(BUYER, [line('Item A', 180, 1, 5), { ...line('Gone', 1, 1, 5), qty: 'abc', removed: true }]));
     ok('ACC-271 a removed line is not on the bill, so its text figure does not stop the send', removedBad.status === 200, J([removedBad.status, removedBad.answer]));
+    /* ⭐ ACC-271 review: a BLANK rate is no rate — the shelf answers it; with no shelf it is refused BAD_RATE, never taxed at 0% */
+    const shelfLib = require(path.join(API, 'lib', 'tax-shelf'));
+    const realShelf = shelfLib.readShelf;
+    shelfLib.readShelf = async () => ({ items: [{ item_id: 'sh-1', item_data: { name: 'Item A', gst_rate: 18 } }], slabs: [], categories: [], face: {} });
+    try {
+      for (const key of ['gst_rate', 'rate']) {
+        const r = await send(invoiceBody(BUYER, [{ ...line('Item A', 100, 1, 5), gst_rate: undefined, [key]: '' }]));
+        const taxed = r.sentCopy && r.sentCopy.business_json && r.sentCopy.business_json.invoice;
+        ok(`ACC-271 blank ${key} on a shelf item at 18%: the shelf rate is used (total 118), not 0%`, r.status === 200 && !!taxed && taxed.ValDtls.TotInvVal === 118, J([r.status, r.answer, taxed && taxed.ValDtls]));
+      }
+    } finally {
+      shelfLib.readShelf = realShelf;
+    }
+    for (const key of ['gst_rate', 'rate']) {
+      const r = await send(invoiceBody(BUYER, [{ ...line('Item A', 100, 1, 5), gst_rate: undefined, [key]: '' }]));
+      ok(`ACC-271 blank ${key} with no shelf: 400 BAD_RATE naming the line, never a 0% bill`, r.status === 400 && r.answer.code === 'BAD_RATE' && r.answer.line === 0 && r.copies === null, J([r.status, r.answer]));
+    }
+    /* the check stands ahead of the scope split: a chit that is not a bill, one to several people, and one that already carries its invoice are refused too */
+    for (const [label, body] of [
+      ['an inquiry (not a billing document)', { purpose: 'inquiry', subject: 'q', recipients: [{ entity_id: BUYER }], line_items: [{ ...line('Item A', 180, 1, 5), qty: 'abc', quantity: undefined }] }],
+      ['an invoice to several recipients', invoiceBody(BUYER, [{ ...line('Item A', 180, 1, 5), price: 'abc' }], { recipients: [{ entity_id: BUYER }, { entity_id: OTHER }] })]
+    ]) {
+      const r = await send(body);
+      ok(`ACC-271 ${label} with text in a figure: refused by name`, r.status === 400 && /^BAD_/.test(r.answer.code || '') && r.copies === null, J([r.status, r.answer]));
+    }
     IDENTITIES_FAIL = true;
     const down = await send(invoiceBody(BUYER, [line('Item A', 180, 1, 5)]));
     IDENTITIES_FAIL = false;

@@ -464,7 +464,7 @@
    "code": "BAD_PRICE",
    "status": "400",
    "title": "Price below zero or not a number",
-   "shopkeeper": "A line has a price below 0, or a price or discount that is not a number.",
+   "shopkeeper": "A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number.",
    "hint": "Send a price of 0 or more, as a number.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -482,7 +482,7 @@
    "code": "BAD_QTY",
    "status": "400",
    "title": "Quantity not above zero or not a number",
-   "shopkeeper": "A line needs a quantity above 0, as a number.",
+   "shopkeeper": "A line, on a quote or on a chit being sent, needs a quantity above 0, as a number.",
    "hint": "Send a quantity above 0 on every line, as a number.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -491,7 +491,7 @@
    "code": "BAD_RATE",
    "status": "400",
    "title": "Tax rate out of range or not a number",
-   "shopkeeper": "A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number.",
+   "shopkeeper": "A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too).",
    "hint": "Send a rate from 0 to 100 (cess 0 or more), as a number.",
    "owner_area": "tax",
    "since": "2026-10-23"
@@ -2659,8 +2659,8 @@
   {
    "code": "MONEY_INPUT_UNREADABLE",
    "status": "422",
-   "title": "A line could not be read",
-   "shopkeeper": "A line has a price or quantity that is not a number, so the money could not be worked out.",
+   "title": "Retired: a line could not be read",
+   "shopkeeper": "Retired 2026-11-07 (ACC-271): a chit line with a figure that is not a number is now answered BAD_QTY, BAD_PRICE or BAD_RATE (400).",
    "hint": "Fix that line and send again.",
    "owner_area": "chits",
    "since": "2026-10-30"

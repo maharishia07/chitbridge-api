@@ -78,6 +78,7 @@ const regional = require('../lib/regional');
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
 const taxLines = require('../lib/tax-lines');
+const services = require('../lib/services'); // ACC-271: rateOrNull, the one reading of a blank rate
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
@@ -1353,6 +1354,23 @@ async function sellerMoney(sellerId) {
  * the storefront order path already does. Any other purpose: the sender sells (a bill, a quote, a captured message).
  */
 /**
+ * ⭐ ACC-271: a BLANK tax rate is no rate (null, services.rateOrNull), so the shelf may answer — decorate asks it only of undefined / null, and a blank would reach invoiceFor as 0%.
+ * → { lines, at } : the lines with each blank rate / cess made null, and the indexes that sent a blank gst_rate or rate. A blank-rated line the shelf does not rate stays refused (BAD_RATE, in sendMoney).
+ */
+function blankRatesToNone(lines) {
+  const at = [];
+  const keys = ['gst_rate', 'rate', 'cess_rate'];
+  const out = lines.map((item, index) => {
+    const blank = (key) => !!item && typeof item === 'object' && typeof item[key] === 'string' && item[key].trim() === '';
+    if (!keys.some(blank)) return item;
+    if (blank('gst_rate') || blank('rate')) at.push(index);
+    const next = { ...item };
+    for (const key of keys) if (blank(key)) next[key] = services.rateOrNull(item[key]);
+    return next;
+  });
+  return { lines: out, at };
+}
+/**
  * ⭐ G1 — EVERY LINE THE SELLER'S CATALOGUE CAN ANSWER GETS ITS RATE HERE, AT SEND (STUDY-gst-structure §6).
  * A chit line carried no rate, HSN or slab; only storefront orders resolved one. The same shelf reader the
  * storefront uses (own + governed slabs, categories, face) rates a line by item_id, else by exact name — and
@@ -1376,6 +1394,8 @@ async function sendSeller(sendState, req, res) {
   const counterBill = taxCopy.counterIssued(business_json);
   const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
   if (sellerId !== sender_id) sendState.currency_code = (await sellerMoney(sellerId)) || sendState.currency_code; /* DECISIONS 14:50: the seller's money, when this installation knows it */
+  const blankRated = blankRatesToNone(line_items);
+  line_items = blankRated.lines;
   try {
     const shelf = await taxShelf.readShelf(
       sellerId,
@@ -1392,7 +1412,8 @@ async function sendSeller(sendState, req, res) {
   } catch (e) {
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
-  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId });
+  const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
+  Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId, unratedBlank });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
@@ -1479,12 +1500,12 @@ async function sendMoney(sendState, req, res) {
   sendState.sellerElsewhere = !!sellerPlace && sellerPlace.local === false;
   const scope = sendMoneyScope.scopeOf(sendState);
   sendState.moneyScope = scope;
-  if (scope.kind !== 'engine' && scope.kind !== 'quotation') return;
-  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items); /* before either price: a quotation sends the same lines to the seller's installation */
+  const unreadable = sendMoneyScope.unreadableLine(sendState.line_items, sendState.unratedBlank); /* ahead of the scope split (ACC-271): whatever the chit is, a text figure is refused, not saved */
   if (unreadable) {
     return problem(req, res, { status: 400, ...said({ code: unreadable.code, error: 'A line could not be read', message: unreadable.message, line: unreadable.line, field: unreadable.field }, 'CHIT_BAD_REQUEST') }); /* ACC-271: the quote routes' codes (BAD_QTY · BAD_PRICE · BAD_RATE) */
   }
   if (scope.kind === 'quotation') return sendQuotation(sendState, sellerPlace, req, res);
+  if (scope.kind !== 'engine') return;
   let invoice;
   try {
     invoice = await sendMoneyScope.invoiceAtSend(sendState);
