@@ -577,8 +577,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 422, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "DELETE /api/chits/:chit_id/payment": {
@@ -2564,7 +2563,7 @@
    },
    "foreign_id_404": {
     "pass": false,
-    "why": "an unknown id answered 422, not 404"
+    "why": "another shop's id answered 422, not the unknown id's 404"
    }
   },
   "POST /api/catalogue/:bridge_id/login/verify": {
