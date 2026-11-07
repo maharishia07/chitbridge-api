@@ -20009,7 +20009,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 122,
+   "line": 134,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -49969,8 +49969,8 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 35,
-   "hash": "b7fcd845681fd8a0",
+   "line": 54,
+   "hash": "ac61e44ef9ea81f0",
    "does": "",
    "errors": {
     "count": 1,
@@ -50047,8 +50047,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "ac61e44ef9ea81f0"
    },
    "status": "partial",
    "callers": [],
@@ -52558,8 +52559,8 @@
    "owner_area": "pricing",
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
-   "line": 52,
-   "hash": "d3b57ed9daecd0aa",
+   "line": 58,
+   "hash": "1a7ce6f875846cf0",
    "does": "",
    "errors": {
     "count": 0,
@@ -52631,8 +52632,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#743 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1a7ce6f875846cf0"
    },
    "status": "partial",
    "callers": [],
@@ -57418,7 +57420,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 182,
-   "hash": "5bd01e8d7f6c816d",
+   "hash": "af3a4c2553c0c02a",
    "does": "",
    "errors": {
     "count": 0,
@@ -57492,8 +57494,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#925",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "af3a4c2553c0c02a"
    },
    "status": "partial",
    "callers": [

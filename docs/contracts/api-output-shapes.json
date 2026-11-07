@@ -40841,6 +40841,18 @@
           },
           "total": {
             "type": "number"
+          },
+          "total_partial": {
+            "type": "boolean"
+          },
+          "unpriced_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total_words": {
+            "type": "string"
           }
         },
         "additionalProperties": false
