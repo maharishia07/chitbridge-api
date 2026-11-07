@@ -22049,6 +22049,7 @@ async function dayClose(){
   if (d.closed) return;
   var chk = await dayServerCheck(rows);
   if (tok !== DAY_TOK || DAY_D !== d) return;
+  if (chk && chk.marked) return dayClose();   /* CTR-197: a cancelled bill left this device's day - read the report again without it (the second pass marks none, so it ends) */
   d.server = chk;
   dayCheckPaint(chk);
 }
@@ -22063,13 +22064,37 @@ var DAY_D = null, DAY_ROWS = [];
  * ⚠️ Nothing here touches billing: only the close waits. Expenses never reach /bills, so they are left out of both sides.
  */
 function dayKeyOf(at){ var t = new Date(at); return isNaN(t) ? String(at || '').slice(0, 10) : t.toISOString().slice(0, 10); }
+/** CTR-197: the bill numbers the server names as withdrawn (cancelled or rejected) → { no: 1 }; anything else it sends is ignored */
+function withdrawnNos(list){
+  var out = {};
+  (Array.isArray(list) ? list : []).forEach(function(w){ if (w && w.no) out[String(w.no)] = 1; });
+  return out;
+}
+/** CTR-197: mark this device's own copy of each named bill withdrawn - kept for the record, out of every day sum (isDocRow). → how many were newly marked */
+async function dayMarkWithdrawn(gone){
+  var n = 0;
+  if (!Object.keys(gone).length) return 0;
+  try {
+    var all = (await DB.all('bills')) || [];
+    for (var i = 0; i < all.length; i++) {
+      var b = all[i];
+      if (!b || !b.no || b._withdrawn || !gone[String(b.no)]) continue;
+      b._withdrawn = { at: Date.now() };
+      await DB.put('bills', b); n++;
+    }
+  } catch (e) { cbQuiet('dayMarkWithdrawn:1', e); }
+  return n;
+}
 async function dayServerCheck(rows){
   if (!(HOST && HOST.history && HOST.cred && HOST.cred())) return null;      /* the shop PC's program keeps its own day */
   var h; try { h = await HOST.history(2, tillId()); } catch (e) { h = { offline: true }; }
   if (!h || h.offline || !Array.isArray(h.bills)) return { state: 'offline' };
   var day = dayKeyOf(Date.now()), counted = function(b){ return !!(b && b.no) && !(isDocRow(b) || isExpenseRow(b)); };
+  /* ⭐ CTR-197: the server leaves a cancelled bill out of its list and NAMES it in `withdrawn`. A bill of this device that is named there is
+     known, not unsent: it is marked withdrawn in the store (out of the day's sums) and left out of both sides of the check. */
+  var gone = withdrawnNos(h.withdrawn), marked = await dayMarkWithdrawn(gone);
   var mine = {}, theirs = {};
-  (rows || []).filter(counted).forEach(function(b){ mine[String(b.no)] = b; });
+  (rows || []).filter(function(b){ return counted(b) && !gone[String(b.no)]; }).forEach(function(b){ mine[String(b.no)] = b; });
   h.bills.filter(function(b){ return counted(b) && dayKeyOf(b.at) === day; }).forEach(function(b){ theirs[String(b.no)] = b; });
   var more = Object.keys(theirs).filter(function(k){ return !mine[k]; }).map(function(k){ return theirs[k]; });
   var fewer = Object.keys(mine).filter(function(k){ return !theirs[k]; }).map(function(k){ return mine[k]; });
@@ -22078,7 +22103,7 @@ async function dayServerCheck(rows){
   var sales = function(list){ return list.filter(function(bill){ return !isReturnRow(bill); }); }, back = function(list){ return list.filter(isReturnRow); };
   /* an old note stored no amount: when none of the refunds carries one the sum is null (the bare word), never ₹0.00 */
   var backSum = function(list){ var known = back(list).filter(function(bill){ return bill.total != null; }); return known.length ? sum(known) : null; };
-  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer,
+  return { state: (more.length || fewer.length) ? 'differ' : 'agree', more: more, fewer: fewer, marked: marked,
            moreTotal: sum(sales(more)), fewerTotal: sum(sales(fewer)), moreBack: back(more).length, fewerBack: back(fewer).length,
            moreBackTotal: backSum(more), fewerBackTotal: backSum(fewer) };
 }
@@ -23759,7 +23784,7 @@ async function resendBill(no){
  * a list of what it is NOT is wrong the moment anything new exists. [[feedback-whitelist-drops-silently]]
  */
 /** M128: a despatch (D/..) or goods-received (GRN/..) note is stored beside the bills but is NOT one - the day's count, the slip's From-To and the Day book count bills only */
-function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' || b.kind === 'receipt')); }
+function isDocRow(b){ return !!(b && (b.doc === true || b.kind === 'despatch' || b.kind === 'receipt' || b._withdrawn)); }   /* CTR-197: a bill the server says was cancelled stays in the store but is no sale of the day */
 function isSaleRow(b){
   return !!(b && !b.tillPost && Array.isArray(b.lines) && (b.kind == null || b.kind === 'cash' || b.kind === 'tax' || b.kind === 'supply'));
 }
