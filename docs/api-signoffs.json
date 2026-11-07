@@ -2459,11 +2459,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
-   "hash": "e01c8002cbcabc9c",
+   "hash": "10046b55f800d3dc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#886",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#886 re-sign, 13 columns checked",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals": {
