@@ -561,6 +561,12 @@ function startServing() {
     } catch (e) {
       console.warn('books nightly not started:', e.message);
     }
+    /* ACC-266: the 30-second reconciler — a saved bill with no ledger entry is found and posted (lib/books-reconcile.js; BOOKS_RECONCILE=0 turns it off) */
+    try {
+      require('./lib/books-reconcile').start();
+    } catch (e) {
+      console.warn('books reconciler not started:', e.message);
+    }
     /* the follow-up sweep → the bell, every 6 h, once a day per follow-up (lib/crm-followups.js; CRM_SWEEP=0 turns it off) */
     try {
       require('./lib/crm-followups').start();
