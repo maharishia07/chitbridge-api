@@ -9,14 +9,14 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 151 | `list` | `amend.js` |  |
+| 152 | `list` | `amend.js` |  |
 | 123 | `rows` | `crm.js` | still in them: |
 | 113 | `words` | `variant.browser.js` |  |
 | 111 | `withEntity` | `books-hooks.js` |  |
 | 111 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 104 | `read` | `books-cashflow.js` | Trips: |
 | 96 | `answer` | `availability.js` | from March; then nearest. |
-| 87 | `money` | `bill-privacy.js` |  |
+| 88 | `money` | `bill-privacy.js` |  |
 | 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `next` | `dayopen.js` | the next thing to do — |
@@ -32,7 +32,7 @@ of file each thing is; this says what already does the job.
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 61 | `failed` | `service.js` | what every catch answers: |
+| 62 | `failed` | `service.js` | what every catch answers: |
 | 59 | `entry` | `books-store.js` |  |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 57 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
