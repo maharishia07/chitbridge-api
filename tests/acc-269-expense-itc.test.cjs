@@ -27,10 +27,11 @@ const expense = (n, x, extra) => ({ chit_id: id(n), sender_entity_id: SHOP, purp
 const bought = (n) => ({ chit_id: id(n), sender_entity_id: SUPPLIER, purpose: 'invoice', all_recipients: [{ role: 'sender', entity_id: SUPPLIER }, { role: 'receiver', entity_id: SHOP }], business_json: { invoice: invoice(100, 18) }, summary_json: { money: { total: 118 } }, sent_at: AT, created_at: AT, line_items: [{ line_id: 'l', particulars: 'x', quantity: 1, price: 100, total: 118, gst_rate: 18 }], currency_code: 'INR' });
 
 /** the real tax-copy on a fresh load, its db stubbed: copies come back for the copy read, `posted` ({ chit_id: { role: minor } }) for the books' input-tax read */
-function loadWith(rows, posted) {
+const roleReads = []; /* the batched input-tax statements the store was sent: [e, chitIds, roles, from, to] */
+function loadWith(rows, posted, identity) {
   const dbPath = require.resolve(path.join(API, 'db')), tcPath = require.resolve(path.join(API, 'lib', 'tax-copy'));
-  const handle = { query: async (sql, args) => (/a\.role = ANY/.test(sql) ? { rows: Object.entries((posted || {})[String(args[1])] || {}).map(([role, minor]) => ({ role, minor })) } : { rows }) };
-  require.cache[dbPath] = { exports: { query: async (sql) => ({ rows: /identities/.test(sql) ? [IDENTITY, SUPPLIER_ROW] : [] }), withEntity: async (e, fn) => fn(handle) } };
+  const handle = { query: async (sql, args) => { if (!/a\.role = ANY/.test(sql)) return { rows }; roleReads.push(args); return { rows: [].concat(...args[1].map((chit) => Object.entries((posted || {})[chit] || {}).map(([role, minor]) => ({ chit_id: chit, role, minor })))) }; } };
+  require.cache[dbPath] = { exports: { query: async (sql) => ({ rows: /identities/.test(sql) ? [identity || IDENTITY, SUPPLIER_ROW] : [] }), withEntity: async (e, fn) => fn(handle) } };
   delete require.cache[tcPath];
   return require(tcPath);
 }
@@ -58,6 +59,47 @@ function loadWith(rows, posted) {
 
   const none = await loadWith([expense(5, {})], {}).ledgerFor(SHOP, month);
   ok('an expense with no input tax posted changes nothing (4A stays 0)', itc(none).camt === 0 && itc(none).iamt === 0);
+
+  /* review of #941: ONE read for the month, the month's bounds, only India */
+  roleReads.length = 0;
+  const many = await loadWith([expense(6, { input_tax: { cgst: 9, sgst: 9 } }), expense(7, { input_tax: { cgst: 9, sgst: 9 } }), expense(8, { input_tax: { igst: 18 } })], { [id(6)]: { input_cgst: 900, input_sgst: 900 }, [id(7)]: { input_cgst: 900, input_sgst: 900 }, [id(8)]: { input_igst: 1800 } }).ledgerFor(SHOP, month);
+  ok('three expense chits in the month: ONE input-tax read (no N+1), bounded to the month', roleReads.length === 1 && roleReads[0][1].length === 3 && roleReads[0][3] === month + '-01', JSON.stringify(roleReads.map((x) => [x[1].length, x[3], x[4]])));
+  ok('  and 4A is the three chits: cgst 18, sgst 18, igst 18', itc(many).camt === 18 && itc(many).samt === 18 && itc(many).iamt === 18, JSON.stringify(itc(many)));
+
+  roleReads.length = 0;
+  const noExpense = await loadWith([bought(2)], {}).ledgerFor(SHOP, month);
+  ok('a month with no expense chit sends no input-tax read at all', roleReads.length === 0 && itc(noExpense).camt === 9);
+
+  for (const country of ['AU', 'AE']) {
+    roleReads.length = 0;
+    const away = await loadWith([expense(9, { input_tax: { gst: 15 } })], { [id(9)]: { gst_paid: 1500 } }, Object.assign({}, IDENTITY, { country })).ledgerFor(SHOP, month);
+    ok(country + ' shop: its expense is NOT read by this reader (BAS 1B / VAT201 read the posted ledger themselves): no read, ITC unchanged', roleReads.length === 0 && itc(away).camt === 0 && itc(away).iamt === 0, JSON.stringify(itc(away)));
+  }
+
+  /* the blocked credit: ACC-230 posts a head the books do not carry as input to COST, so no input_* line exists -> held out of 4A */
+  const blocked = await loadWith([expense(10, { input_tax: { cgst: 9, sgst: 9 } })], { [id(10)]: {} }).ledgerFor(SHOP, month);
+  ok('a blocked credit (its tax went to cost, no input line posted) is held out of 4A', itc(blocked).camt === 0 && itc(blocked).samt === 0, JSON.stringify(itc(blocked)));
+
+  /* the rules of the store's statement, on the in-memory twin that mirrors it: reversed nets to 0 · the month boundary · a later reversal */
+  const twin = require(path.join(API, 'tests', 'support', 'books-memory.cjs')).create();
+  const T2 = twin.T;
+  const acct = (account_id, role) => T2.accounts.push({ account_id, role });
+  acct('ac-cgst', 'input_cgst'); acct('ac-sgst', 'input_sgst');
+  const post = (n, date, ref, reverses) => { const entry_id = 'en-' + n; T2.entries.push({ entry_id, entity_id: SHOP, source_ref: ref, posting_date: date, reverses_entry_id: reverses || null });
+    T2.lines.push({ entry_id, account_id: 'ac-cgst', dr_minor: reverses ? 0 : 900, cr_minor: reverses ? 900 : 0 }, { entry_id, account_id: 'ac-sgst', dr_minor: reverses ? 0 : 900, cr_minor: reverses ? 900 : 0 }); return entry_id; };
+  const next = (m) => { const d = new Date(m.slice(0, 7) + '-01T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 10); };
+  const from = month + '-01', to = next(month), roles = ['input_cgst', 'input_sgst'];
+  post(1, from, 'chit:' + id(21)); post(2, from, 'chit:' + id(22));
+  post(3, to, 'chit:' + id(23)); /* posted on the 1st of the NEXT month */
+  post(4, from, 'chit:' + id(24)); post(5, from, 'chit:' + id(24), 'en-4'); /* 24 reversed in the month */
+  post(6, from, 'chit:' + id(26)); post(7, to, 'chit:' + id(26), 'en-6'); /* 26 reversed only NEXT month: still in this month, as filed */
+  const read = await twin.inputTaxOfChits(null, SHOP, [id(21), id(22), id(23), id(24), id(26)], roles, from, to);
+  ok('twin of the statement: a posted expense is in its month', read[id(21)] && read[id(21)].input_cgst === 900 && read[id(22)].input_sgst === 900, JSON.stringify(read));
+  ok('  an expense posted on the 1st of the next month is NOT in this month', !read[id(23)], JSON.stringify(read));
+  ok('  a reversed expense nets to 0 (absent)', !read[id(24)], JSON.stringify(read));
+  ok('  an expense reversed only in a LATER month is still in this month, as filed', read[id(26)] && read[id(26)].input_cgst === 900, JSON.stringify(read));
+  const nextMonth = await twin.inputTaxOfChits(null, SHOP, [id(23), id(26)], roles, to, next(to));
+  ok('  the next month holds the 1st-of-month posting, and not the reversed one', nextMonth[id(23)] && nextMonth[id(23)].input_cgst === 900 && !nextMonth[id(26)], JSON.stringify(nextMonth));
 
   /* AU BAS 1B: a read of the posted gst_paid ledger (gst-returns.returnFor) - this change does not touch it */
   const GR = require(path.join(API, 'lib', 'gst-returns'));
