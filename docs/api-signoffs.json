@@ -1679,6 +1679,8 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
    "lifecycle": "stable"
   },
+  "GET /health": {"hash":"0e48a0105a3e73d4","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: public uptime probe; 200 whatever the database says; no input; no internal text in any answer; only a 500 Problem from the one handler; summary plain","lifecycle":"stable"},
+  "OPTIONS *": {"hash":"935cfbf551c234cf","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: cors answers 204 or the app 403 ORIGIN_NOT_ALLOWED (documented, fixed words); no body read, no internal text; 500 via the one handler","lifecycle":"stable"},
   "PATCH /api/actors/:id": {
    "hash": "8374bddd65efb2b4",
    "names_clear": true,
@@ -3343,6 +3345,7 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
    "lifecycle": "stable"
   },
+  "PUT /api/actors/:id/tasks/route": {"hash":"5bad29fcae6cbc82","names_clear":true,"sentence_plain":true,"backward_compatible":true,"signed_off_by_date":"cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: owner-only 403 declared; chit and person looked up inside the caller shop so a foreign id is the same 404; every sentence fixed words, 500 generic; closed body chit_id/action/to_actor_id","lifecycle":"stable"},
   "PUT /api/actors/assign/:chit_id": {
    "hash": "f54854bfb3bb4ac1",
    "names_clear": true,
