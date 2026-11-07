@@ -328,6 +328,8 @@ const INFRA_LIBS = [
   'shop-clock.js',
   /* [BOOKS v2] the ledger's SQL (books-store), its nightly runner (books-nightly: retries, names mismatches, never fixes)
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
+  /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
+  'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js',
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js',
@@ -429,6 +431,7 @@ const INFRA_LIBS = [
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
   'owner.js',              // is this request the owner — one test for every owner-only switch
   'rate-door.js',          // who may set a tax rate on a product (owner or manager) and the keys a rate lives in — the same rule on every door (CAT-210)
+  'tax-id-door.js',        // who may change the shop's tax number (the owner, or a key; never a person under the owner) and the route gate that says so (CTR-182)
   /* ⭐ A RULE ABOUT THE CATALOGUE, NOT ABOUT A PRODUCT. It decides who may change a COLUMN and when —
      flexible while empty, tightened per column once used — and the routes and the screen both read it, so it
      sits here rather than being re-decided at either end. */

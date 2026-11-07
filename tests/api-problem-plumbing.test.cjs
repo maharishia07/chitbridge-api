@@ -87,7 +87,7 @@ function checkProblem(label, answer, status, code, causes) {
 
   /* ── /health: what the uptime probe reads ── */
   const up = await ask(port, 'GET', '/health');
-  const KEYS = ['status', 'platform', 'version', 'db', 'db_ms', 'timestamp', 'environment', 'commit', 'region', 'web', 'audit_lost', 'money_mismatch', 'output_dropped', 'legacy_tokens'];
+  const KEYS = ['status', 'platform', 'version', 'db', 'db_ms', 'timestamp', 'environment', 'commit', 'region', 'web', 'audit_lost', 'money_mismatch', 'books_unposted', 'books_unposted_oldest_s', 'books_reconcile_age_s', 'books_hook_failed', 'books_switch_unread', 'books_outbox_lost', 'output_dropped', 'legacy_tokens'];
   check('/health answers 200 with no sign-in', up.status === 200, [up.status, up.text.slice(0, 120)]);
   check('/health: status is "OK" and the platform name is kept (the probe reads these)', !!up.json && up.json.status === 'OK' && up.json.platform === 'Chit and Bridge', up.json);
   check('/health: exactly the keys the operation lists, no more', !!up.json && sameValue(Object.keys(up.json).sort(), KEYS.slice().sort()), up.json && Object.keys(up.json));

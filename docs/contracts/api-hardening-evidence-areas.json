@@ -83,6 +83,9 @@
    "foreign_id_404": true,
    "output_allowlist": true
   },
+  "GET /.well-known/ctp.json": {
+   "output_allowlist": true
+  },
   "GET /api/actors": {
    "output_allowlist": true
   },
@@ -273,6 +276,7 @@
    "output_allowlist": true
   },
   "GET /api/chits/:chit_id/proposals": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/use": {
@@ -336,6 +340,9 @@
    "output_allowlist": true
   },
   "GET /api/crm/segments": {
+   "output_allowlist": true
+  },
+  "GET /api/ctp/.well-known/ctp.json": {
    "output_allowlist": true
   },
   "GET /api/definitions": {
@@ -584,6 +591,9 @@
    "output_allowlist_basis": "recordings",
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "GET /api/relationships/customers/groups": {
+   "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist_basis": "recordings",
@@ -1076,15 +1086,18 @@
    "output_allowlist": true
   },
   "POST /api/chits/:chit_id/proposals": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "POST /api/chits/:chit_id/raida": {
@@ -1199,6 +1212,9 @@
    "output_allowlist": true
   },
   "POST /api/crm/walk-ins/add": {
+   "output_allowlist": true
+  },
+  "POST /api/ctp/deliver": {
    "output_allowlist": true
   },
   "POST /api/definitions": {
@@ -1590,6 +1606,9 @@
    "output_allowlist": true
   },
   "POST /api/till/stock/bulk": {
+   "output_allowlist": true
+  },
+  "POST /deliver": {
    "output_allowlist": true
   },
   "PUT /api/actors/:id/delegate": {
