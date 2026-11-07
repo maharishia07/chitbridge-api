@@ -308,11 +308,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/fx-revalue": {
-   "hash": "6e55385dcb5b72b0",
+   "hash": "dc47d5ce7ab5a294",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#869: not-ready line is the read-only balancesView sentence, plain, true, no migration id, on a 200; writes keep their own. Prior: cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
    "lifecycle": "stable"
   },
   "GET /api/books/health": {
@@ -3908,11 +3908,11 @@
    "lifecycle": "stable"
   },
   "GET /api/supplies": {
-   "hash": "33e67c8520a5c1fa",
+   "hash": "59f8df87e6c03a6f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#869: hash moved by the not-migrated reword only; the not_ready sentence is plain, true, carries no migration id; ready path unchanged. Prior: cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
    "lifecycle": "stable"
   },
   "PATCH /api/quick-keys/groups/:id/items": {

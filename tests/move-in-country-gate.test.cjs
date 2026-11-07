@@ -267,7 +267,7 @@ t('⭐ the proof holds the stated country, the company id, each held item with c
   });
   await ta('GET /move-in/imports before b765: ready false, with the sentence (never a 500)', async () => {
     const r = await call('GET', '/move-in/imports');
-    assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.ready, false); assert.ok(/b765/.test(r.body.why), r.body.why);
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.ready, false); assert.ok(!/b765/.test(r.body.why) && /after the next update/.test(r.body.why), r.body.why);
   });
   srv.close();
   done();

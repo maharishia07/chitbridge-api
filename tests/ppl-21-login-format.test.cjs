@@ -41,8 +41,10 @@ app.use(express.json());
 app.use((req, res, next) => ((req.id = 'req-test'), next()));
 app.use('/api/actors', require(path.join(ROOT, 'routes', 'actors.js')));
 
-let failed = 0;
+let failed = 0,
+  total = 0;
 const check = (ok, label) => {
+  total++;
   if (!ok) failed++;
   console.log((ok ? 'ok   ' : 'FAIL ') + label);
 };
@@ -65,6 +67,6 @@ const suggest = (server) =>
   const without = await suggest(server);
   check(/@chola-?auto-?care$|@cholaautocare$/.test(without.login_format), 'no User ID on file: the slug of the name, no spaces (got ' + without.login_format + ')');
   server.close();
-  console.log(failed ? failed + ' FAILED' : 'all passed');
+  console.log(failed ? failed + ' FAILED' : 'all passed (' + total + ' checks)');
   process.exit(failed ? 1 : 0);
 })();

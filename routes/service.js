@@ -15,6 +15,7 @@
  * This has cost two evenings already: a swallowed 42P01 sent him back to the SQL editor twice for migrations that
  * had applied perfectly.
  */
+const { waiting } = require('../lib/not-migrated');
 const express = require('express');
 const { body } = require('express-validator');
 const crypto = require('crypto');
@@ -32,7 +33,7 @@ const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.c
 /* K-1: Postgres refuses a NUL byte in text (22021; 22P05 inside a jsonb policy) and a time it cannot read (22007, 22008). That is the caller's value, not our fault: a 400 naming nothing of the database. */
 const BAD_TEXT = ['22021', '22P05'];
 const BAD_TIME = ['22007', '22008'];
-const gone = (res) => res.status(503).json({ error: 'Not migrated', message: 'The service clock needs b147 on this environment.' });
+const gone = (res) => res.status(503).json({ error: 'Not migrated', message: waiting('The service clock', false, 'Nothing was started.') });
 const ctx = (req) => auth.entityOf(req);
 /** what every catch answers: the migration not run (503), a value no column can hold (400), else the fault in no words of its cause (500). timeField names the time this route reads. */
 function failed(req, res, e, timeField) {

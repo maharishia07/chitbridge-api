@@ -41,6 +41,7 @@ of file each thing is; this says what already does the job.
 | 51 | `pack` | `books-store.js` |  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
+| 50 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
 | 49 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
@@ -116,6 +117,7 @@ of file each thing is; this says what already does the job.
 | 23 | `note` | `dbwatch.js` |  |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
+| 22 | `update` | `folder-rules.js` |  |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
@@ -156,7 +158,6 @@ of file each thing is; this says what already does the job.
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
-| 17 | `update` | `folder-rules.js` |  |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
 | 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `move` | `rail.js` | Order = the order the server refused in: |
@@ -204,8 +205,7 @@ of file each thing is; this says what already does the job.
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 12 | `payment` | `books-store.js` |  |
-| 12 | `migrated` | `country-setup.js` |  |
 | 12 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 12 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
-| 12 | `configured` | `platformroot.js` | is there a root at all? Read this before assuming an operator surface exists. |
 | 12 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
+| 11 | `close` | `avatar.js` |  |

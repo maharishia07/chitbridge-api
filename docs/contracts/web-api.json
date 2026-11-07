@@ -4448,7 +4448,7 @@
      }
     ],
     "notes": [
-     "Their account codes could not be kept yet (a database update, b302, is still to run) — a trial balance will match on names."
+     "The saved account codes arrive after the next update. A trial balance will match on names until then."
     ],
     "source_code_written": false,
     "proof": {
@@ -5152,11 +5152,11 @@
    "example": {
     "code": "CRM_NOT_MIGRATED",
     "error": "Not migrated yet",
-    "message": "CRM needs migration b276 — not run yet.",
+    "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
     "type": "https://chitbridge.com/problems/crm_not_migrated",
     "title": "Crm not migrated",
     "status": 503,
-    "detail": "CRM needs migration b276 — not run yet.",
+    "detail": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
     "hint": "Try again after the next update.",
     "request_id": null
    },

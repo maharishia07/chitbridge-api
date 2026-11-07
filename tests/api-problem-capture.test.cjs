@@ -102,8 +102,8 @@ function checkWords() {
   check('faultOf: a fault with no status is the screen\'s label and the safe sentence, never the cause', lost.status === 500 && lost.legacy.error === 'Capture failed' && !JSON.stringify(lost).includes('vault'), lost);
   const meant = contract.faultOf(refusal(400, 'raw_text required'), req, 'Capture failed', 'any');
   check('faultOf: a refusal our code threw keeps its status and its own sentence (relay any)', meant.status === 400 && meant.legacy.message === 'raw_text required' && sameValue(Object.keys(meant.legacy), ['error', 'message']) && meant.code === 'INVALID_INPUT', meant);
-  const bigRelay = contract.faultOf(refusal(503, 'Capture not migrated yet (b104).', 'CAPTURE_STORE_MISSING'), req, 'Capture failed', 'any');
-  check('faultOf: a 503 the library meant (relay any) keeps its code and sentence', bigRelay.status === 503 && bigRelay.code === 'CAPTURE_STORE_MISSING' && bigRelay.legacy.message === 'Capture not migrated yet (b104).', bigRelay);
+  const bigRelay = contract.faultOf(refusal(503, 'Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update.', 'CAPTURE_STORE_MISSING'), req, 'Capture failed', 'any');
+  check('faultOf: a 503 the library meant (relay any) keeps its code and sentence', bigRelay.status === 503 && bigRelay.code === 'CAPTURE_STORE_MISSING' && bigRelay.legacy.message === 'Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update.', bigRelay);
   const provider = contract.faultOf(refusal(502, 'AI HTTP 500: provider says SELECT secret FROM vault'), req, 'Structure failed', 'below500');
   check('faultOf: a 502 under relay below500 keeps its status and answers the safe sentence, never the provider\'s text', provider.status === 502 && provider.legacy.message === 'Something went wrong — please try again.' && !JSON.stringify(provider).includes('vault'), provider);
   const budget = contract.faultOf(refusal(402, 'AI budget used ($0.50). Add wallet credits to continue.'), req, 'Structure failed', 'below500');
@@ -114,7 +114,7 @@ function checkWords() {
   check('faultOf: a 409 is CAPTURE_REFUSED with its sentence', plain.code === 'CAPTURE_REFUSED' && plain.legacy.message === 'That message has already been handled', plain);
   const notFound = contract.faultOf(refusal(404, 'Capture not found'), req, 'Structure failed', 'below500');
   check('faultOf: a 404 is the register\'s NOT_FOUND', notFound.code === 'NOT_FOUND' && notFound.status === 404, notFound);
-  const storesWord = contract.storesFault(refusal(503, 'Stores are not migrated on this environment (b135).'), req);
+  const storesWord = contract.storesFault(refusal(503, 'Stores arrive after the next update. Nothing was changed.'), req);
   check('storesFault: the stores route\'s 503 is STORES_NOT_MIGRATED with its sentence', storesWord.status === 503 && storesWord.code === 'STORES_NOT_MIGRATED' && storesWord.legacy.error === 'Store save failed', storesWord);
   const unreadable = contract.failed(Object.assign(new Error(scenes.SECRET_TEXT), { status: 404 }), req, 'Consolidate failed');
   check('failed: always a 500 in the screen own label, whatever status was thrown, and nothing of the cause', unreadable.status === 500 && unreadable.legacy.error === 'Consolidate failed' && !JSON.stringify(unreadable).includes('vault'), unreadable);
