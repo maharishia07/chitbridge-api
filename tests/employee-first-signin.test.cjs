@@ -93,7 +93,7 @@ const ID = 'bala@mayuri123.br';
 const isBala = (tok) => { try { const c = jwt.decode(tok) || {}; return c.identity_id === 'bala' && c.identity_type === 'actor' && c.parent_entity_id === 'shop'; } catch (_) { return false; } };
 
 /** the whole first day on one door: ask → code → signed in + asked for a PIN → PIN set → PIN signs in, no second asking */
-async function firstDay(name, { ask, verify, pin, setPin }) {
+async function firstDay(name, { ask, verify, pin, setPin, asksForPin = true }) {
   reset();
   say('\n── ' + name + ' ──');
   const a = await ask();
@@ -107,9 +107,13 @@ async function firstDay(name, { ask, verify, pin, setPin }) {
   t('set-pin with that token: 200', s.status === 200, s.status + ' ' + JSON.stringify(s.body));
   t('   …and the row holds the PIN', !!DB.bala.pin_hash && bcrypt.compareSync('4321', DB.bala.pin_hash));
   const again = await ask();
-  t('next time, ask wants the PIN (use_pin; check-login says nothing per person since SEC-139), issues no code', again.status === 200 && (again.body.use_pin === true || again.body.signalless === true) && DB.bala.otp_code === null, JSON.stringify(again.body));
+  t('next time, ask wants the PIN (use_pin is exactly ' + asksForPin + '; the actor door check-login says has_pin false to everyone since SEC-139), issues no code', again.status === 200 && again.body.use_pin === asksForPin && DB.bala.otp_code === null, JSON.stringify(again.body));
   const p = await pin('4321');
   t('the PIN signs in (200) and does not ask to set one again', p.status === 200 && isBala(p.body.token) && !p.body.requires_pin_setup, p.status + ' ' + JSON.stringify(p.body).slice(0, 160));
+  if (!asksForPin) {
+    const viaBox = await verify('4321'); /* the one code box: the page cannot tell a PIN holder, so the PIN typed as `otp` signs in */
+    t('   and the PIN typed in the code box (otp) signs in too', viaBox.status === 200 && isBala(viaBox.body.token) && !viaBox.body.requires_pin_setup, viaBox.status + ' ' + JSON.stringify(viaBox.body).slice(0, 120));
+  }
   const w = await pin('9999');
   t('a wrong PIN is refused (400)', w.status === 400, w.status);
 }
@@ -138,10 +142,11 @@ async function firstDay(name, { ask, verify, pin, setPin }) {
     /* the co-assist door app.html takes for key@Display Name — unchanged, must keep answering the same */
     await firstDay('actor door · /api/actors/login { username: key@Display Name }', {
       ask: async () => { const r = await call('GET', '/api/actors/check-login?username=' + encodeURIComponent('bala@mayur bhavan'));
-        return { status: r.status, body: r.body.valid ? { use_pin: !!r.body.has_pin, signalless: r.body.has_pin === false } : { error: 'not valid' } }; }, /* SEC-139: check-login is one constant answer; the page shows one secret box */
+        return { status: r.status, body: r.body.valid ? { use_pin: r.body.has_pin } : { error: 'not valid' } }; }, /* SEC-139: check-login is one constant answer; the page shows one secret box */
       verify: (otp) => call('POST', '/api/actors/login', { username: 'bala@mayur bhavan', otp }),
       pin: (pin) => call('POST', '/api/actors/login', { username: 'bala@mayur bhavan', pin }),
       setPin: (tok) => call('POST', '/api/actors/set-pin', { pin: '4321', confirm_pin: '4321' }, tok),
+      asksForPin: false
     });
 
     say('\n── the signal is only for a first-time co-assist ──');

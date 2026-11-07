@@ -1,5 +1,5 @@
 {
- "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged · amended 2026-11-07 (SEC-139): the three missing-secret scenarios now answer the one SIGNIN_REFUSED sentence; check.pin says has_pin false like everyone",
+ "recorded_from": "pre-move api (origin/main cf349d2) · amended 2026-10-08 (fix/employee-first-signin): verify.actor.first.otp gains requires_pin_setup:true — the pre-move entity door signed a first-time co-assist in without the set-PIN signal, so the golden had recorded the bug · amended 2026-10-22 (SEC-81): every refusal of an unknown account, a wrong secret or a locked account now answers the one safe sentence (status 400, same body); rows unchanged · amended 2026-11-07 (SEC-139): the three missing-secret scenarios now answer the one SIGNIN_REFUSED sentence; check.pin says has_pin false like everyone · login.ambiguous now the one refusal (SEC-139)",
  "scenarios": {
   "ask.entity.email": {
    "responses": [
@@ -2456,11 +2456,11 @@
   "login.ambiguous": {
    "responses": [
     {
-     "status": 409,
+     "status": 400,
      "body": {
-      "error": "Ambiguous business",
-      "message": "More than one business is called \"twin\". Sign in with the business User ID after the @ instead — ask your admin for it.",
-      "code": "AMBIGUOUS_NAME"
+      "error": "Sign-in failed",
+      "message": "That sign-in didn't work. Check the details and try again.",
+      "code": "SIGNIN_REFUSED"
      }
     }
    ],

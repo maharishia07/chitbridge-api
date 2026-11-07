@@ -106,6 +106,54 @@ const ACTOR_OF = { pin: 'ravi', otp: 'mala' };
       t('time: known-without-secret takes about as long as unknown (' + tMissing.toFixed(1) + ' ms vs ' + tUnknown.toFixed(1) + ' ms): the hash is not skipped', tMissing > tUnknown * 0.5 && tMissing < tUnknown * 2 + 15 && tMissing > 5, tMissing + ' / ' + tUnknown);
     }
 
+    say('\n── removed and deactivated co-assists, the try that locks, an empty code ──');
+    world.reset();
+    const DB = world.DB();
+    DB.gone2 = Object.assign({}, DB.gone, { identity_id: 'gone2', actor_key: 'gone2', user_id: 'gone2@shopone.br', break_status: 'deactivated' });
+    const login = DOORS['POST /api/actors/login'];
+    const timeOf2 = async (user, sec) => { await login(user, sec); const ms = []; for (let i = 0; i < 7; i++) ms.push((await login(user, sec)).ms); return median(ms); };
+    const tGhost = await timeOf2('nobody@shop one', { pin: '9999' });
+    for (const who of ['gone@shop one', 'gone2@shop one']) {
+      const g = await login(who, { pin: '1234' }), ghost = await login('nobody@shop one', { pin: '1234' });
+      t(who + ' (' + DB[who.split('@')[0]].break_status + '): the same answer as an unknown account', shape(g) === shape(ghost), g.raw.slice(0, 100));
+      const tg = await timeOf2(who, { pin: '1234' });
+      t(who + ': and the hash time is spent (' + tg.toFixed(1) + ' ms vs ' + tGhost.toFixed(1) + ' ms)', tg > tGhost * 0.5 && tg < tGhost * 2 + 15, tg + '/' + tGhost);
+    }
+    DB.ravi.pin_attempts = 4; /* the next wrong PIN locks ravi */
+    const lockTry = await login('ravi@shop one', { pin: '9999' });
+    t('the try that locks the PIN is refused with the one answer', DB.ravi.pin_locked_at != null && lockTry.body.code === 'SIGNIN_REFUSED', lockTry.raw.slice(0, 100));
+    const tLock = [], tWrong = [];
+    for (let i = 0; i < 5; i++) {
+      DB.ravi.pin_attempts = 4; DB.ravi.pin_locked_at = undefined; tLock.push((await login('ravi@shop one', { pin: '9999' })).ms);
+      DB.ravi.pin_attempts = 0; DB.ravi.pin_locked_at = undefined; tWrong.push((await login('ravi@shop one', { pin: '9999' })).ms);
+    }
+    t('the try that locks costs the same as any refusal, not double (' + median(tLock).toFixed(1) + ' ms vs ' + median(tWrong).toFixed(1) + ' ms)', median(tLock) < median(tWrong) * 1.5 + 8, median(tLock) + '/' + median(tWrong));
+    const alreadyLocked = [];
+    for (let i = 0; i < 5; i++) alreadyLocked.push((await login('lockd@shop one', { pin: '9999' })).ms);
+    t('an already locked PIN also costs one hash (' + median(alreadyLocked).toFixed(1) + ' ms)', median(alreadyLocked) > tGhost * 0.5 && median(alreadyLocked) < tGhost * 2 + 15, String(median(alreadyLocked)));
+
+    const devOtp = require(path.join(API, 'lib', 'dev-otp'));
+    let testerMisses = 0;
+    const was = devOtp.parentGuessMiss;
+    devOtp.parentGuessMiss = async (...a) => { testerMisses++; return was.apply(devOtp, a); };
+    const OTP_DOORS = [['POST /api/actors/login', 'mala@shop one'], ['POST /api/entities/verify (actor, user_id)', 'mala@shopone.br'], ['POST /api/signin/verify (actor, id)', 'mala@shopone.br'], ['POST /api/entities/verify (owner, email)', 'owner@shop.test']];
+    for (const [door, user] of OTP_DOORS) {
+      world.reset();
+      const row = Object.values(world.DB()).find((x) => x.actor_key === 'mala' || x.email === user);
+      for (const sec of [{}, { otp: '' }, { otp: '   ' }]) await DOORS[door](user, sec);
+      t(door + ': a missing or blank code counts no miss on the account (otp_attempts ' + (row.otp_attempts || 0) + ') or at the tester door (' + testerMisses + ')', (row.otp_attempts || 0) === 0 && testerMisses === 0, JSON.stringify([row.otp_attempts, testerMisses]));
+      await DOORS[door](user, { otp: '000000' });
+      t(door + ': a wrong code still counts its miss (control)', row.otp_attempts === 1, String(row.otp_attempts));
+    }
+    devOtp.parentGuessMiss = was;
+
+    say('\n── two businesses of one name: the same refusal before a secret ──');
+    world.reset();
+    const a1 = await login('ravi@twin', { pin: '1234' }), a2 = await call('POST', '/api/signin/verify', { id: 'ravi@twin', pin: '1234' });
+    const g1 = await login('nobody@shop one', { pin: '1234' }), g2 = await call('POST', '/api/signin/verify', { id: 'nobody@shopone.br', pin: '1234' });
+    t('actors/login: two businesses called Twin answer 400 SIGNIN_REFUSED like an unknown account (not 409 AMBIGUOUS_NAME)', a1.status === 400 && shape(a1) === shape(g1), a1.status + ' ' + a1.raw.slice(0, 100));
+    t('signin/verify: two businesses called Twin answer 400 SIGNIN_REFUSED like an unknown account', a2.status === 400 && shape(a2) === shape(g2), a2.status + ' ' + a2.raw.slice(0, 100));
+
     say('\n── the right secret still signs in ──');
     world.reset();
     let r = await DOORS['POST /api/actors/login']('ravi@shop one', { pin: '1234' });

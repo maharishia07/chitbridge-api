@@ -169,7 +169,7 @@ function extras(tools) {
     N('login-ok', 'POST ' + at('/login'), 200, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => 'token-of-ravik'), setup: { sqlRows: LOGIN_ROW } }),
     N('login-device-removed', 'POST ' + at('/login'), 403, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: LOGIN_ROW } }),
     N('login-session-not-listed', 'POST ' + at('/login'), 503, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: signedIn(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: LOGIN_ROW } }),
-    N('login-two-businesses-of-one-name', 'POST ' + at('/login'), 409, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: { identityAuth: { findEntityByNameOrHandle: async () => ({ ambiguous: true }) } } }),
+    N('login-two-businesses-of-one-name', 'POST ' + at('/login'), 400, { body: { username: 'ravik@shop-a', otp: '123456' }, patch: { identityAuth: { findEntityByNameOrHandle: async () => ({ ambiguous: true }) } } }),
     N('login-db-fails', 'POST ' + at('/login'), 500, { body: { username: 'ghost@shop-a', otp: '123456' }, setup: failing })
   ];
 

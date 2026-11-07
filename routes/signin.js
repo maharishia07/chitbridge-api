@@ -275,9 +275,9 @@ const isSecretRefusal = (reason) => /^(PIN|OTP)_(WRONG|LOCKED|REQUIRED)$/.test(S
  * SEC-139 (API-STANDARD S6): a secret that was NOT sent (or a code, which hashes nothing) is refused like a wrong PIN or an account that is
  * not there: the same status, code and body, after spending the same hash time. "Enter your PIN" was only ever said to a person who exists.
  */
-const secretRefused = async (req, res, reason) => {
-  if (reason !== 'PIN_WRONG') await identityAuth.spendCheckTime(); /* a wrong PIN has just been hashed; every other refusal has not */
-  return refused(req, res, reason);
+const secretRefused = async (req, res, check) => {
+  if (!(check.method === 'pin' && 'left' in check)) await identityAuth.spendCheckTime(); /* a PIN just counted (wrong, or the try that locked) was hashed; every other refusal was not */
+  return refused(req, res, check.reason);
 };
 
 /* ── ask ─────────────────────────────────────────────────────────────────────────────────────────────────────────── */
@@ -577,12 +577,7 @@ async function verify(req, res) {
     else {
       /* M06 { id }: the ONE lookup ask uses — an e-mail, a stored user id, or key@Display Name */
       const f = await identityAuth.findLoginIdentity(query, id, { shop: shopNamed(req) });
-      if (f.ambiguous && f.choices) return unknownAccount(req, res); // SEC-139: no secret proves several accounts; the choice is made at ask, never listed here
-      if (f.ambiguous) {
-        res.locals.code = 'AMBIGUOUS_NAME';
-        const message = 'More than one business matches that name. Ask your admin for the exact login.';
-        return problem(req, res, { status: 409, code: 'AMBIGUOUS_NAME', detail: message, legacy: { error: 'Ambiguous business', code: 'AMBIGUOUS_NAME', message } });
-      }
+      if (f.ambiguous) return unknownAccount(req, res); // SEC-139: no secret proves several accounts or businesses; the choice is made at ask, never listed here
       rows = f.identity ? [f.identity] : [];
     }
     if (rows.length === 0) {
@@ -595,7 +590,7 @@ async function verify(req, res) {
     if (!check.ok) {
       note(req, identity, actionOf(check.reason), check.method, check.reason);
       res.locals.code = check.reason || null;
-      if (isSecretRefusal(check.reason)) return secretRefused(req, res, check.reason);
+      if (isSecretRefusal(check.reason)) return secretRefused(req, res, check);
       return problem(req, res, {
         status: check.status,
         code: 'VERIFICATION_FAILED',
@@ -818,7 +813,7 @@ async function actorSecretRefused(req, res, actor) {
     : { ok: false, reason: actor.pin_hash ? 'PIN_REQUIRED' : 'OTP_REQUIRED' };
   if (check.ok) return false;
   note(req, actor, actionOf(check.reason), method, check.reason);
-  if (isSecretRefusal(check.reason)) await secretRefused(req, res, check.reason);
+  if (isSecretRefusal(check.reason)) await secretRefused(req, res, check);
   else {
     res.locals.code = check.reason;
     problem(req, res, { status: check.status, code: 'LOGIN_FAILED', detail: check.message, legacy: { error: 'Login failed', message: check.message } });
@@ -843,12 +838,7 @@ async function actorLogin(req, res) {
     }
     const { actor_key, entity_name } = identityAuth.splitLogin(username);
     const e = await identityAuth.findEntityByNameOrHandle(query, entity_name.toLowerCase());
-    if (e.ambiguous) {
-      res.locals.code = 'AMBIGUOUS_NAME';
-      const message = 'More than one business is called "' + entity_name + '". Sign in with the business User ID ' + 'after the @ instead — ask your admin for it.';
-      return problem(req, res, { status: 409, code: 'AMBIGUOUS_NAME', detail: message, legacy: { error: 'Ambiguous business', message, code: 'AMBIGUOUS_NAME' } });
-    }
-    if (!e.ok) return unknownAccount(req, res);
+    if (e.ambiguous || !e.ok) return unknownAccount(req, res); // SEC-139: two businesses of one name are told at ask, not here before a secret
     const parent_entity = e.entity;
 
     const actor = await query(
@@ -871,7 +861,7 @@ async function actorLogin(req, res) {
 
     if (a.break_status === 'removed' || a.break_status === 'deactivated') {
       note(req, a, 'fail', methodOf(a), a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED');
-      return refused(req, res, a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED'); // SEC-81: before the secret, so no state is told
+      return secretRefused(req, res, { reason: a.break_status === 'removed' ? 'ACCESS_REMOVED' : 'ACCESS_DEACTIVATED' }); // SEC-81: before the secret, so no state is told; SEC-139: after the same hash time
     }
 
     if (await actorSecretRefused(req, res, a)) return;
