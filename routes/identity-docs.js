@@ -1,4 +1,5 @@
 'use strict';
+const { waiting } = require('../lib/not-migrated');
 /**
  * routes/identity-docs.js — a person's own identity record: phone, email, and government IDs.
  *
@@ -236,7 +237,7 @@ async function resolveSubject(req, wanted) {
 router.put('/documents/:scheme', auth, ...contract.checked('PUT /documents/:scheme'), async (req, res) => {
   try {
     if (!(await schema.hasTable('identity_documents'))) {
-      const message = 'Identity records are not switched on yet — the b174 migration has not been run.';
+      const message = waiting('Identity records', true);
       return problem(req, res, { status: 503, code: 'IDOC_NOT_MIGRATED', detail: message, legacy: { error: 'Not enabled', code: 'IDOC_NOT_MIGRATED', message } });
     }
     const cc = await shopCountry(auth.entityOf(req)); /* CX4: the shop's country, never the client's */

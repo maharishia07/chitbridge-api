@@ -75,7 +75,7 @@ function checkWords() {
   const words = contractModule();
   const req = { id: 'r1' };
   const migration = words.definitionFault(Object.assign(new Error('relation "definition" does not exist'), { code: '42P01' }), req);
-  check('definitionFault: a missing table is the short 503, in the words the screens map', migration.status === 503 && migration.code === 'DEFINITIONS_NOT_MIGRATED' && sameValue(migration.legacy, { error: 'Not provisioned', message: 'Definitions need migration b160. Ask the operator to run it.' }), migration);
+  check('definitionFault: a missing table is the short 503, in the words the screens map', migration.status === 503 && migration.code === 'DEFINITIONS_NOT_MIGRATED' && sameValue(migration.legacy, { error: 'Not provisioned', message: 'Definitions arrive after the next update. Everything else works meanwhile.' }), migration);
   const taken = words.definitionFault(Object.assign(new Error('duplicate key'), { code: '23505' }), req, { nameTaken: true });
   check('definitionFault: a taken name is the 409 with its sentence', taken.status === 409 && taken.code === 'DEFINITION_NAME_TAKEN' && taken.legacy.error === 'Name taken', taken);
   const readTaken = words.definitionFault(Object.assign(new Error('duplicate key'), { code: '23505' }), req);

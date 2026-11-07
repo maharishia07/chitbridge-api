@@ -1,4 +1,5 @@
 'use strict';
+const { waiting } = require('../lib/not-migrated');
 // OWNS      the seven service clock routes of a chit (read, start, respond, resolve, pause, end, answer) and their plain answers when an id, a time or a text value is not valid.
 // CALLED BY server.js (app.use('/api/service')) · the web service panel (cap-service.js) · tools/api-register.cjs (router.openapi) · tests/api-problem-service.test.cjs · tests/rail-158-service-errors.test.cjs · tests/rail-161-service-catches.test.cjs
 // FLOW      router.param id guard (404, before sign-in) → auth → schemaValidate (lib/service-contract.js) → handler: mine(entity, chit) → withEntity → chit_sla / pause functions → res | failed() (503 not migrated · 400 a value no column can hold · 500)
@@ -32,7 +33,7 @@ const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.c
 /* K-1: Postgres refuses a NUL byte in text (22021; 22P05 inside a jsonb policy) and a time it cannot read (22007, 22008). That is the caller's value, not our fault: a 400 naming nothing of the database. */
 const BAD_TEXT = ['22021', '22P05'];
 const BAD_TIME = ['22007', '22008'];
-const gone = (res) => res.status(503).json({ error: 'Not migrated', message: 'The service clock needs b147 on this environment.' });
+const gone = (res) => res.status(503).json({ error: 'Not migrated', message: waiting('The service clock') });
 const ctx = (req) => auth.entityOf(req);
 /** what every catch answers: the migration not run (503), a value no column can hold (400), else the fault in no words of its cause (500). timeField names the time this route reads. */
 function failed(req, res, e, timeField) {

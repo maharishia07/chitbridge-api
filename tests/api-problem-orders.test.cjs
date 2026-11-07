@@ -469,7 +469,7 @@ function applyPatch(setup) {
   if (setup.policyMissing) {
     const policy = require(path.join(HERE, 'lib', 'policy'));
     swap(policy, 'patchKey', async () => {
-      throw Object.assign(new Error('Policy flags are not migrated on this environment (b130).'), { status: 503 });
+      throw Object.assign(new Error('Policy flags arrive after the next update. Everything else works meanwhile.'), { status: 503 });
     });
   }
   return () => undo.reverse().forEach(([owner, name, original]) => (owner[name] = original));

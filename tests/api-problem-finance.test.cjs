@@ -389,7 +389,7 @@ const EXTRAS = [
   X('switched', 'PUT ' + F + '/inventory/:code', 200, { body: { on: true } }),
   X('policy-fails', 'PUT ' + F + '/inventory/:code', 500, { body: { on: true }, patch: { policy: { set: async () => { throw new Error(SECRET_SQL); } } } }),
   X('policy-refuses', 'PUT ' + F + '/inventory/:code', 400, { body: { on: true }, patch: { policy: { set: async () => { throw Object.assign(new Error('Policy refuses that.'), { status: 400 }); } } } }),
-  X('policy-not-migrated', 'PUT ' + F + '/inventory/:code', 503, { body: { on: true }, patch: { policy: { set: async () => { throw Object.assign(new Error('Policy flags are not migrated on this environment (b130).'), { status: 503 }); } } } }),
+  X('policy-not-migrated', 'PUT ' + F + '/inventory/:code', 503, { body: { on: true }, patch: { policy: { set: async () => { throw Object.assign(new Error('Policy flags arrive after the next update. Everything else works meanwhile.'), { status: 503 }); } } } }),
   /* messages, worklist, the rest of the reads */
   X('message-not-an-id', 'POST ' + F + '/messages/:message_id/mark', 400, { url: F + '/messages/nope/mark', body: { read: true } }),
   X('message-not-mine', 'POST ' + F + '/messages/:message_id/mark', 404, { body: { read: true } }),

@@ -40,7 +40,7 @@ const VENDOR = '55555555-5555-4555-8555-555555555555';
 
   /* ── the rates ── */
   T.fxReady = false;
-  await throws('before b391: adding a rate says which migration, in words', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '83.25' }, SHOP), /b391/, 'BOOKS_NOT_MIGRATED');
+  await throws('before b391: adding a rate says the rates wait for the update, without a migration id', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '83.25' }, SHOP), /after the next update/, 'BOOKS_NOT_MIGRATED');
   eq('…and the list is empty, not an error', await FX.list(db, SHOP, {}), []);
   T.fxReady = true;
   await throws('a rate of 0 is refused in words', () => FX.add(db, SHOP, s, { date: '2026-10-14', currency: 'USD', rate: '0' }, SHOP), /more than 0/);
@@ -95,7 +95,7 @@ const VENDOR = '55555555-5555-4555-8555-555555555555';
 
   /* ── before b392: a foreign payment says so ── */
   T.fxLines = false;
-  await throws('before b392: a USD payment answers BOOKS_NOT_MIGRATED in words', () => B.recordPayment(db, SHOP, { party_id: BUYER, direction: 'in', amount_minor: 100, currency: 'USD', mode: 'bank', received_at: '2026-10-20', by: SHOP, }), /b392/, 'BOOKS_NOT_MIGRATED');
+  await throws('before b392: a USD payment answers BOOKS_NOT_MIGRATED in words', () => B.recordPayment(db, SHOP, { party_id: BUYER, direction: 'in', amount_minor: 100, currency: 'USD', mode: 'bank', received_at: '2026-10-20', by: SHOP, }), /after the next update/, 'BOOKS_NOT_MIGRATED');
   eq('…and the revaluation preview says it is not ready', (await FX.revaluation(db, SHOP, s, fy, 7)).ready, false);
   T.fxLines = true;
 

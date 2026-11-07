@@ -1708,13 +1708,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
+      "message": "Comparing arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
+      "message": "Comparing arrives after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -1796,13 +1796,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
+      "message": "Comparing arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing needs a database update (b309) that is still to run.",
-      "message": "Comparing needs a database update (b309) that is still to run."
+      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
+      "message": "Comparing arrives after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -3495,13 +3495,13 @@
      "scenario": "advice-not-ready",
      "status": 503,
      "body_keys": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Advice arrives after the next update. Everything else works meanwhile.",
+      "message": "Advice arrives after the next update. Everything else works meanwhile.",
       "code": "BOOKS_NOT_MIGRATED"
      },
      "fixture": {
-      "error": "Advice not available yet — the books need an update (b285).",
-      "message": "Advice not available yet — the books need an update (b285).",
+      "error": "Advice arrives after the next update. Everything else works meanwhile.",
+      "message": "Advice arrives after the next update. Everything else works meanwhile.",
       "code": "BOOKS_NOT_MIGRATED"
      }
     },
@@ -4932,13 +4932,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
+      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
+      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -5008,13 +5008,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
+      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates are not set up yet — run migration b391 first.",
-      "message": "Exchange rates are not set up yet — run migration b391 first."
+      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
+      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -7862,11 +7862,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Rule delete failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -8740,11 +8740,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Rule update failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -9078,11 +9078,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Rule create failed",
-      "message": "Folder rules are not migrated on this environment (b132)."
+      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -9818,11 +9818,11 @@
      "status": 503,
      "body_keys": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Switch failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -14836,11 +14836,11 @@
      "status": 503,
      "body_keys": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "validation",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -17398,11 +17398,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Item versions need b146 on this environment."
+      "message": "Item versions arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -18004,11 +18004,11 @@
      "status": 503,
      "body_keys": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      },
      "fixture": {
       "error": "not_configured",
-      "message": "The media store is not configured (S3 env, or run b204 for the database store)."
+      "message": "The media store is not set up yet. Ask the operator to set it up."
      }
     },
     {
@@ -18220,11 +18220,11 @@
      "status": 409,
      "body_keys": {
       "error": "not_enabled",
-      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
+      "message": "Scheduled changes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "not_enabled",
-      "message": "Scheduled changes need migration b203 (catalogue_item_schedule)."
+      "message": "Scheduled changes arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -20216,11 +20216,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Product enquiries need b162 — not applied on this deployment."
+      "message": "Product enquiries arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -20904,11 +20904,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Cost is not migrated on this environment (b145)."
+      "message": "Cost arrives after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -27101,12 +27101,12 @@
      "body_keys": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "This database does not accept \"network\" visibility yet — apply migration b115."
+      "message": "Network visibility arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -33441,12 +33441,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -33485,12 +33485,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -33687,12 +33687,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -33817,12 +33817,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -34119,12 +34119,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -34260,13 +34260,13 @@
      "status": 409,
      "body_keys": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Everything else works meanwhile.",
+      "message": "Named groups arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups need migration b205 (customer_groups) — not run yet.",
-      "message": "Named groups need migration b205 (customer_groups) — not run yet."
+      "error": "Named groups arrive after the next update. Everything else works meanwhile.",
+      "message": "Named groups arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -34727,12 +34727,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -34899,12 +34899,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -35043,12 +35043,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "CRM needs migration b276 — not run yet."
+      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -35353,12 +35353,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -35509,12 +35509,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     }
    ]
@@ -36718,11 +36718,11 @@
      "status": 503,
      "body_keys": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Policy update failed",
-      "message": "Policy flags are not migrated on this environment (b130)."
+      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -36972,12 +36972,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Everything else works meanwhile.",
       "code": "VISIBILITY_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not stored",
-      "message": "This database does not accept \"network\" yet — apply migration b115.",
+      "message": "Network visibility arrives after the next update. Everything else works meanwhile.",
       "code": "VISIBILITY_NOT_MIGRATED"
      }
     },
@@ -37164,11 +37164,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b249 — the population registry does not exist in this database."
+      "message": "The population registry arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -37294,11 +37294,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b252 — the desk column does not exist in this database yet."
+      "message": "The desk setting arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -37422,11 +37422,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "Run migration b250 — the routing table does not exist in this database."
+      "message": "The routing table arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -37550,11 +37550,11 @@
      "status": 503,
      "body_keys": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Unbind failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -38008,11 +38008,11 @@
      "status": 503,
      "body_keys": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Approve failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -38108,11 +38108,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise is not migrated on this environment (b131)."
+      "message": "Auto-raise arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -38120,11 +38120,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -38272,11 +38272,11 @@
      "status": 503,
      "body_keys": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -38470,11 +38470,11 @@
      "status": 503,
      "body_keys": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Revoke failed",
-      "message": "Channels not migrated yet (b123)."
+      "message": "Channels arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -41727,12 +41727,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -41741,12 +41741,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -41971,12 +41971,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -41985,12 +41985,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "ERP handoff not enabled yet — apply migration b82."
+      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -42015,12 +42015,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -42029,12 +42029,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration not enabled yet — apply migration b79."
+      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -42431,12 +42431,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -42457,12 +42457,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Catalogue persistence not enabled yet — apply migration b75."
+      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -43073,12 +43073,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -43087,12 +43087,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring not enabled yet — apply migration b78."
+      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -43189,12 +43189,12 @@
      "body_keys": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "Container model not enabled yet — apply migration b80."
+      "error": "The container model arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -43303,12 +43303,12 @@
      "body_keys": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter not enabled yet — apply migration b81."
+      "error": "Regional scatter arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -44469,12 +44469,12 @@
      "body_keys": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      },
      "fixture": {
       "error": "Not yet available",
       "code": "MIGRATION",
-      "message": "Unit and source need migration b200 on the database. Type, label and required still work."
+      "message": "Unit and source arrive after the next update. Type, label and required still work."
      }
     },
     {
@@ -48270,12 +48270,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48284,12 +48284,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity needs b164 on this environment.",
+      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48388,11 +48388,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "Clearing the badge arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing the badge needs b157 on this environment."
+      "message": "Clearing the badge arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -48730,11 +48730,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -49110,11 +49110,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "run b217 first"
+      "message": "Supplies arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -49479,12 +49479,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -49647,12 +49647,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b306 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -50003,12 +50003,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -50115,12 +50115,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records need migration b307 — not run yet."
+      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -51185,12 +51185,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -51199,12 +51199,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -51385,12 +51385,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records are not switched on yet — the b174 migration has not been run."
+      "message": "Identity records arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -52898,11 +52898,11 @@
      "status": 503,
      "body_keys": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Capture failed",
-      "message": "Capture not migrated yet (b104)."
+      "message": "Capture arrives after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -53038,11 +53038,11 @@
      "status": 503,
      "body_keys": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Store save failed",
-      "message": "Stores are not migrated on this environment (b135)."
+      "message": "Stores arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -53688,11 +53688,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -53914,11 +53914,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields need migration b274 (migrations/b274_books_party.sql) — run it in the Supabase SQL editor."
+      "message": "The party fields arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -57172,11 +57172,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -57246,11 +57246,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -57306,11 +57306,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -57784,11 +57784,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -57980,11 +57980,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {
@@ -58140,11 +58140,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions need migration b160. Ask the operator to run it."
+      "message": "Definitions arrive after the next update. Everything else works meanwhile."
      }
     },
     {

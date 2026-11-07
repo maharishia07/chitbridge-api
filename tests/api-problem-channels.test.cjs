@@ -94,10 +94,10 @@ function checkWords() {
   check('faultOf: a refusal below 500 keeps its status and its sentence under the screen label', refused.status === 400 && refused.code === 'CHANNEL_BAD_REQUEST' && sameValue(refused.legacy, { error: 'Bind failed', message: 'Unknown channel' }), refused);
   const taken = words.faultOf(Object.assign(new Error('That business number is already in use.'), { status: 409 }), req, 'Bind failed', 'below500');
   check('faultOf: 409 is CHANNEL_ADDRESS_TAKEN', taken.status === 409 && taken.code === 'CHANNEL_ADDRESS_TAKEN', taken);
-  const missing = words.faultOf(Object.assign(new Error('Channels not migrated yet (b123).'), { status: 503, code: 'CHANNEL_STORE_MISSING' }), req, 'Revoke failed', 'any');
-  check('faultOf: relay "any" passes a 503 sentence on, with the library\'s own code', missing.status === 503 && missing.code === 'CHANNEL_STORE_MISSING' && missing.legacy.message === 'Channels not migrated yet (b123).', missing);
-  const held = words.faultOf(Object.assign(new Error('Channels not migrated yet (b123).'), { status: 503 }), req, 'Bind failed', 'below500');
-  check('faultOf: relay "below500" does NOT pass a 503 sentence on: the status stays, the words are the safe sentence', held.status === 503 && sameValue(held.legacy, { error: 'Bind failed', message: SAFE }) && held.detail !== 'Channels not migrated yet (b123).', held);
+  const missing = words.faultOf(Object.assign(new Error('Channels arrive after the next update. Everything else works meanwhile.'), { status: 503, code: 'CHANNEL_STORE_MISSING' }), req, 'Revoke failed', 'any');
+  check('faultOf: relay "any" passes a 503 sentence on, with the library\'s own code', missing.status === 503 && missing.code === 'CHANNEL_STORE_MISSING' && missing.legacy.message === 'Channels arrive after the next update. Everything else works meanwhile.', missing);
+  const held = words.faultOf(Object.assign(new Error('Channels arrive after the next update. Everything else works meanwhile.'), { status: 503 }), req, 'Bind failed', 'below500');
+  check('faultOf: relay "below500" does NOT pass a 503 sentence on: the status stays, the words are the safe sentence', held.status === 503 && sameValue(held.legacy, { error: 'Bind failed', message: SAFE }) && held.detail !== 'Channels arrive after the next update. Everything else works meanwhile.', held);
   const none = words.faultOf(Object.assign(new Error(SECRET_SQL), { status: 503 }), req, 'List failed', 'none');
   check('faultOf: relay "none" keeps the status and never the words', none.status === 503 && sameValue(none.legacy, { error: 'List failed', message: SAFE }) && !JSON.stringify(none).includes('vault'), none);
   const fault = words.faultOf(new Error(SECRET_SQL), req, 'Unbind failed', 'any');
