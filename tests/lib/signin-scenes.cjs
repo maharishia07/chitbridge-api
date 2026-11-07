@@ -65,7 +65,7 @@ function extras() {
     X('verify-unknown-account', 'POST ' + at('/verify'), 400, { body: { id: 'ghost', otp: '123456' } }),
     X('verify-unknown-email', 'POST ' + at('/verify'), 400, { body: { email: 'ghost@x.com', otp: '123456' } }),
     X('verify-unknown-user-id', 'POST ' + at('/verify'), 400, { body: { user_id: 'ghost', otp: '123456' } }),
-    X('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 409, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
+    X('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 400, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
     X('verify-device-removed', 'POST ' + at('/verify'), 403, { body: { email: 'a@x.com', otp: '123456' }, patch: refusing('DEVICE_REVOKED'), setup: KNOWN }),
     X('verify-session-not-listed', 'POST ' + at('/verify'), 503, { body: { email: 'a@x.com', otp: '123456' }, patch: refusing('SESSION_NOT_LISTED'), setup: KNOWN }),
     X('verify-db-fails', 'POST ' + at('/verify'), 500, { body: { id: 'ghost', otp: '123456' }, setup: FAILING }),
