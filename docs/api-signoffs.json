@@ -2165,11 +2165,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/periods/:fy/:p/:act": {
-   "hash": "846470aee92b23d6",
+   "hash": "92a8304b6bb46be8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; owner gate and typed 409/404 declared; lock or unlock twice lands on the same status (no money row); refusals plain, no migration id on this path",
    "lifecycle": "stable"
   },
   "POST /api/books/preview": {
@@ -2785,11 +2785,11 @@
    "lifecycle": "stable"
   },
   "POST /api/network/connections": {
-   "hash": "7bd5a2b4632f9f07",
+   "hash": "a148db102e19064e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; write switch 503, 401 NO_ACTOR, 403 NOT_ALLOWED, 404/409 codes all declared and registered; a repeat request answers EXISTS 409, never a second edge",
    "lifecycle": "stable"
   },
   "POST /api/network/connections/:id/approve": {
@@ -2833,19 +2833,19 @@
    "lifecycle": "stable"
   },
   "POST /api/network/entities": {
-   "hash": "c6d694c4d3cb2127",
+   "hash": "7ca07bce5e9b5658",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; write switch 503 declared and plain; 400/500 codes registered; service error text only via deliberate err(status) else generic 500",
    "lifecycle": "stable"
   },
   "POST /api/network/entities/:id/claim": {
-   "hash": "0a83e973455ac47c",
+   "hash": "f50ade78cee2531b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#746 stage2",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#865: handler read at the hash; id param 404 before the database; ALREADY_CLAIMED 409 declared and told only to the owner of the node; repeat claim is refused, not doubled",
    "lifecycle": "stable"
   },
   "POST /api/pricing/price": {
