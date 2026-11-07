@@ -60,10 +60,10 @@ of file each thing is; this says what already does the job.
 | 39 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 39 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
-| 38 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 37 | `host` | `chit-sheet.js` |  |
 | 36 | `gate` | `country-setup.js` | gate(h, entity): |
 | 36 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
@@ -75,11 +75,11 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 33 | `rate` | `convert.js` | A rate, with its evidence. |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `rate` | `convert.js` | A rate, with its evidence. |
 | 32 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 31 | `changes` | `books-store.js` |  |
 | 30 | `ensureCap` | `app.html` |  |

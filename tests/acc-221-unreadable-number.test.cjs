@@ -86,5 +86,23 @@ ok('a blank qty or price is still refused', blankQty[0].unread[0].field === 'qty
 const disc = S.normLines({ lines: [line({ discount: 'abc' })] })[0];
 ok('discount "abc" is refused (BAD_PRICE)', disc.unread[0].field === 'discount' && S.unreadSaid([disc], () => 'x')[0] === 'BAD_PRICE');
 
+/* 8 · re-check of #919: a blank or null GST rate is NO rate - the shelf fills it in; with no shelf rate it is refused, never taxed at 0% */
+const shelf18 = { items: [{ item_id: 'i2', item_data: { name: 'Sunflower Oil', price: 150 } }], slabs: [{ definition_id: 'IN-GST-18', name: 'GST 18%', rules: { rate: 18 } }], categories: [], face: { tax: { default_slab: 'IN-GST-18' } } };
+const oil = (rate) => ({ name: 'Sunflower Oil', qty: 1, price: 150, gst_rate: rate });
+for (const blank of ['', ' ', null, undefined]) {
+  const n = S.normLines({ lines: [oil(blank)] });
+  ok('gst_rate ' + JSON.stringify(blank) + ' reads as no rate (null), not 0', n[0].gst_rate === null, String(n[0].gst_rate));
+  ok('gst_rate ' + JSON.stringify(blank) + ' + a shelf rate of 18 -> 18%', S.rateLines(n, shelf18)[0].gst_rate === 18);
+  const e = call(Object.assign(mapped({}), { gst_rate: n[0].gst_rate }));
+  ok('gst_rate ' + JSON.stringify(blank) + ' with no shelf rate -> BAD_RATE, never 0%', e instanceof Error && e.said[0] === 'BAD_RATE' && e.said[1].includes('no tax rate'), String(e && e.message));
+}
+const zero = S.rateLines(S.normLines({ lines: [oil(0)] }), shelf18)[0];
+ok('an explicit 0 stays 0% even where the shelf says 18', zero.gst_rate === 0);
+const zeroTax = call(mapped({ gst_rate: 0 }));
+ok('an explicit 0 prices: 2 x 100, no tax = 200', !(zeroTax instanceof Error) && zeroTax.ValDtls.TotInvVal === 200, JSON.stringify(zeroTax.ValDtls || zeroTax.message));
+
+const noGstin = S.rateLines(S.normLines({ lines: [oil('')] }), { shelf: null, productOf: () => null, idOf: () => null })[0];
+ok('a shop with no tax shelf (no GSTIN, no GST) rates a rate-less line 0% on purpose', noGstin.gst_rate === 0);
+
 console.log('' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
