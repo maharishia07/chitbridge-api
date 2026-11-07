@@ -44,6 +44,8 @@ process.env.DB_BOOT_WAIT_MS = '2000';
 
 /* ── the wire: a pool that counts statements and answers with no rows ── */
 let wire = 0;
+/* fixture_row: a budget line may name the one row every non-probe statement of THAT route finds, so the stub reaches the route's own work (an INSERT ... RETURNING id otherwise gives no row and the route answers 500) */
+let fixtureRow = null;
 const empty = () => ({ rows: [], rowCount: 0, fields: [], command: 'SELECT' });
 /**
  * ⭐ EFF-TRIPS (2026-10-15): THE STUB SAYS THE SCHEMA IS WHOLE. A route that is honest about an absent table (lib/schema hasTable ·
@@ -74,7 +76,7 @@ function answer(text, params) {
   wire += 1;
   /* readBatch sends BEGIN; ...; COMMIT; as one simple-protocol text and slices the middle out of an array of results */
   if (/^\s*BEGIN;/.test(String(text))) return Array.from({ length: 200 }, empty);
-  return probe(text, params) || empty();
+  return probe(text, params) || (fixtureRow ? { rows: [fixtureRow], rowCount: 1, fields: [], command: 'SELECT' } : empty());
 }
 class FakePool {
   on() { return this; }
@@ -190,13 +192,14 @@ for (const k of Object.keys(budget.routes)) if (budget.routes[k].extra && !calle
 const ID = '00000000-0000-4000-8000-000000000001';
 async function fire(port, route) {
   const sp = route.indexOf(' ');
-  const method = route.slice(0, sp), url = route.slice(sp + 1).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
+  const method = route.slice(0, sp), url = ((budget.routes[route] && budget.routes[route].fixture_path) || route.slice(sp + 1)).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
   wire = 0;
+  fixtureRow = (budget.routes[route] && budget.routes[route].fixture_row) || null;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
   try {
     const opts = { method, signal: ac.signal, headers: { 'content-type': 'application/json' } };
-    if (method !== 'GET' && method !== 'DELETE') opts.body = '{}';
+    if (method !== 'GET' && method !== 'DELETE') opts.body = JSON.stringify((budget.routes[route] && budget.routes[route].fixture_body) || {}); /* fixture_body: the smallest valid body, so the stub reaches the route's own work instead of a 400 */
     const r = await realFetch('http://127.0.0.1:' + port + url, opts);
     await r.text().catch(() => '');
     const h = r.headers.get('x-db-trips');
@@ -236,7 +239,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       }
       (m.status >= 400 ? shallow : fired).push(row);
       /* a measured row: the number is the harness's; a hand `why` is kept beside it (a note is not lost by being measured) */
-      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(basis ? { basis } : {}), ...(r.registered_only || (b && b.registered_only) ? { registered_only: true } : {}), ...(b && b.extra ? { extra: true } : {}), ...(b && b.floor_is_cost ? { floor_is_cost: b.floor_is_cost } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}) });
+      next.routes[r.route] = Object.assign({}, (b && b.why && b.fired === false) ? { why: b.why } : {}, { file: r.file, trips: m.trips, wire: m.wire, fired: true, status: m.status, ...(basis ? { basis } : {}), ...(r.registered_only || (b && b.registered_only) ? { registered_only: true } : {}), ...(b && b.extra ? { extra: true } : {}), ...(b && b.floor_is_cost ? { floor_is_cost: b.floor_is_cost } : {}), ...(b && b.awaiting_client ? { awaiting_client: b.awaiting_client } : {}), ...(b && b.fixture_body ? { fixture_body: b.fixture_body } : {}), ...(b && b.fixture_row ? { fixture_row: b.fixture_row } : {}), ...(b && b.fixture_path ? { fixture_path: b.fixture_path } : {}) });
       if (!WRITE) {
         t(r.route + ' has a budget line (I19)', !!b);
         if (b && b.fired !== false) {
