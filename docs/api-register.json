@@ -51500,9 +51500,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "cf94b2f1ecb4b050"
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -51604,9 +51603,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "0fc9c8e13510c1f5"
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -51708,9 +51706,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "f2723d9cbe44782d"
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -51812,9 +51809,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "3816956041ef4601"
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
@@ -51916,9 +51912,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "53cbc22c6326a455"
+        "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#953: handler read at the hash; the answer now names its 8 keys (net.edgeView) as the closed schema lists; web netmAct and e2e read no dropped key; 13 columns pass",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [
