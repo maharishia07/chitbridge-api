@@ -11,15 +11,15 @@ of file each thing is; this says what already does the job.
 | 155 | `list` | `amend.js` |  |
 | 124 | `rows` | `crm.js` | still in them: |
 | 116 | `words` | `variant.browser.js` |  |
-| 114 | `withEntity` | `books-hooks.js` |  |
+| 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 109 | `read` | `books-cashflow.js` | Trips: |
 | 100 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 82 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 76 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 75 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -32,8 +32,8 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
-| 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `items` | `books-store.js` | PERF1: |
+| 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
@@ -80,8 +80,8 @@ of file each thing is; this says what already does the job.
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
+| 32 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 31 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 31 | `changes` | `books-store.js` |  |
 | 31 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 30 | `ensureCap` | `app.html` |  |

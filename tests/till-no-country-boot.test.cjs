@@ -13,7 +13,7 @@ function grab(n) {
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
   return h.slice(at, i + 1);
 }
-const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote'];
+const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop'];
 function page(shop) {
   const ctx = {
     window: { CBTax: require('../lib/tax'), CBRegulation: require('../lib/regulation') },

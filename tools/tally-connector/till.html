@@ -6679,7 +6679,7 @@ function chitOf(bill){
       not_invoice: bill.not_invoice || undefined,
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
-      credit_override: bill.credit_override || null,
+      credit_override: bill.credit_override || null, money_override: bill.money_override,   /* ACC-206 H */
       /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s result from billMoney(), carried UNCHANGED: this is the frozen invoice both
          ledgers post from (lib/tax-copy entryFor). A bill saved before it existed carries none; the server keeps its old path. */
       invoice: bill.invoice || undefined,
@@ -7370,15 +7370,19 @@ async function creditSinceRefresh(c){
  * Returns { by } when allowed, null when not.
  */
 async function ownerApprove(chk){
-  var book = pinBook();
-  var owners = Object.keys(book).map(function(k){ return book[k]; })
-    .filter(function(e){ return e && e.kind === 'entity' && !SIGN().pinLocked(e); });
   var msg = 'Over the credit limit.\n\nOwes ' + money(chk.owed) + ' now' + (chk.since ? ' (' + money(chk.since) + ' of it on this counter today)' : '')
     + '; this bill takes it to ' + money(chk.after)
     + ' against a limit of ' + money(chk.limit) + '. Only the owner can allow it.';
+  return ownerPinAsk(msg, 'Over the limit');
+}
+/** ACC-206 H: the owner's counter PIN, offline, for a refusal only the owner may lift (the credit limit, a bill whose money does not add up) → { by } or null */
+async function ownerPinAsk(msg, title){
+  var book = pinBook();
+  var owners = Object.keys(book).map(function(k){ return book[k]; })
+    .filter(function(e){ return e && e.kind === 'entity' && !SIGN().pinLocked(e); });
   if (!owners.length) { say(msg + '\n\nThe owner has no counter PIN on this counter, so it cannot be allowed here.'); return null; }
   var box = document.getElementById('askinput'); if (box) box.type = 'password';
-  var pin = await ask(msg + '\n\nOwner’s counter PIN:', '', 'Owner PIN', 'Over the limit');
+  var pin = await ask(msg + '\n\nOwner’s counter PIN:', '', 'Owner PIN', title);
   if (box) box.type = 'text';
   if (pin == null || !String(pin).trim()) return null;
   for (var i = 0; i < owners.length; i++) {
@@ -18460,7 +18464,17 @@ function billWarnHTML(m){
   if (un.length) out.push(billWarnLine('norate', un.length + (un.length === 1 ? ' item has' : ' items have') + ' no tax rate', 'Fix', rateMay()));
   if (cl) out.push(billWarnLine('state', 'GSTIN state ≠ address'));
   var bw = buyerWarnWords(m); if (bw) out.push(billWarnLine('buyer', bw, 'Name them'));
+  if (m && m.stop) out.push('<div class="t warnrow" data-testid="till-warn-money"><span>⚠ ' + esc(m.stop.words) + ' Only the owner can let it through.</span><span></span></div>');   /* ACC-206 H: said where it is sold; Bill asks the owner PIN */
   return out.join('');
+}
+/**
+ * why this bill is NOT a tax invoice, or null — read before the sale, never a stop.
+ * ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41): a taxed bill whose shop details disagree saves as NOT a tax
+ * invoice ('shop_details'). ⭐ CX1 (T1): …and a bill the shop's law says must name its buyer, with nobody named (buyerWarnWords), says 'buyer_identity'.
+ */
+function notInvoiceWhy(bill){
+  var clash = (shopTax().charges && Number(bill.tax) > 0) ? shopStateClash() : null;
+  return clash ? 'shop_details' : (!!buyerWarnWords(bill) ? 'buyer_identity' : null);
 }
 /**
  * ⭐ CX1 (T1): the pack says this bill must NAME ITS BUYER (reg-au: a tax invoice of A$1,000 or more shows the buyer's identity or ABN, s.29-70(1)(c)(ii))
@@ -19025,7 +19039,7 @@ function billMoney(){
   var m = moneyOf(inv);
   /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
   CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });
-  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv;
+  m.taxed = taxed; m.inclusive = inclusive; m.invoice = inv; m.stop = moneyStop(inv);   /* ACC-206 H: the engine's own verdict, read as data */
   return m;
 }
 /**
@@ -19052,6 +19066,34 @@ function noCountryMoney(){
 /** the totals row that says why nothing can be billed yet; '' for a shop with a country */
 function noCountryRow(bill){
   return bill.noCountry ? '<div class="t warnrow" data-testid="till-no-country"><span>' + esc(bill.why) + '</span><span></span></div>' : '';
+}
+/**
+ * ⭐ ACC-206 H — THE MONEY MUST ADD UP, OR THE SALE STOPS. The engine answers its own bridge (invoice._cb.bridge, tax v1.74.0+); when it did not balance this
+ * reads { step, unexplained_minor, words } off it and nothing else — no sum here (the server's lib/send-money stopOf reads the same fields). null = balanced, or an
+ * invoice frozen before the engine carried a bridge. Works offline: the engine is already on this page.
+ */
+function moneyStop(invoice){
+  var bridge = invoice && invoice._cb && invoice._cb.bridge;
+  if (!bridge || bridge.ok !== false) return null;
+  return { step: bridge.step, unexplained_minor: bridge.unexplained_minor, words: bridge.words || ('Does not add up at ' + bridge.step + '.') };
+}
+/**
+ * the bill does not add up: only the owner's counter PIN lets it through, and the owner types why. → business_json.money_override
+ * { by, at, why, step, unexplained_minor } (the shape routes/chits.js sendBridge writes; a counter key's `by` is accepted there), null = nothing to ask (it adds up), false = the sale stops here.
+ */
+async function moneyStopAsk(stop){
+  if (!stop) return null;
+  var said = stop.words + '\n\nThe bill does not add up. Only the owner can let it through.';
+  var owner = await ownerPinAsk(said, 'Money check');
+  if (!owner) return false;
+  var reason = String(await ask('Why is this bill right? (required)', '', 'Reason', 'Money check') || '').trim();
+  if (!reason) { say('A reason is required to let a bill that does not add up through.\n\nNothing was billed.'); return false; }
+  return { by: String(owner.by.id), by_name: owner.by.name, at: new Date().toISOString(), why: reason, step: stop.step, unexplained_minor: stop.unexplained_minor };
+}
+/** the line on a slip that says the owner let an unbalanced bill through, and who */
+function slipCheckedHTML(bill){
+  var held = bill && bill.money_override;
+  return held ? '<div data-testid="till-slip-moneychecked" style="font-size:.9em">Money checked by ' + esc(String(held.by_name || held.by)) + '</div>' : '';
 }
 /** the sentence finish() stops a sale with when there is no invoice */
 function saleStopWords(bill){
@@ -21770,11 +21812,8 @@ async function finish(){
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
   if (!m.invoice) { saleStop(saleStopWords(m)); return { ok: false }; }
-  /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
-     a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
-  var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
-  /* ⭐ CX1 (T1): …and a bill the shop's law says must name its buyer, with nobody named (buyerWarnWords) — the same honest title, not a stop */
-  var noBuyer = !clash && !!buyerWarnWords(m);
+  var moneyOver = await moneyStopAsk(m.stop); if (moneyOver === false) return { ok: false };   /* ACC-206 H: a bill the engine says does not add up stops unless the owner lets it through */
+  var notInvoice = notInvoiceWhy(m);
   var tendered = Number(document.getElementById('tendered').value) || 0;
   /* parts if any were taken; otherwise the one mode and what was handed over — the ordinary case stays one keystroke */
   var parts = PARTS.slice();
@@ -21848,12 +21887,12 @@ async function finish(){
                             cust && cust.gstin && invoiceRule(m.net, cust.gstin) ? { gstin: cust.gstin } : {}),
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
-    credit_override: override,
+    credit_override: override, money_override: moneyOver || undefined,   /* ACC-206 H: the owner let a bill that does not add up through */
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
     /* ⭐ WHY THIS TAX BILL IS NOT A TAX INVOICE, recorded with it (M41): a reprint after the shop is fixed must not turn it into one */
-    not_invoice: clash ? 'shop_details' : (noBuyer ? 'buyer_identity' : null),
+    not_invoice: notInvoice,
     /* ⭐ WHO CHECKED WHAT, AND WHEN. A shop that is inspected must be able to show the check happened. */
     age_checks: ageRecord(),
     /* ⭐ where the order went, recorded WITH the bill — a reprint months later has to say Table 6, not guess
@@ -23473,7 +23512,7 @@ function slipHTML(bill, m){
     + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
     /* ⭐ DINE-IN (table 4) / TAKEAWAY / DELIVERY — the bill already carries it (BF8) */
     + billOrderRow(bill, t)
-    + slipBuyerHTML(bill, t)
+    + slipBuyerHTML(bill, t) + slipCheckedHTML(bill)
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
     + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
     /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
