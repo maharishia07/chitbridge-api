@@ -40,3 +40,8 @@ for (const url of ['/api/tax/compute', '/api/invoice/build']) {
     assert.equal(r.body.invoice.ValDtls.TotInvVal, 3000);
   });
 }
+test('a body.seller saying RegType regular with no number cannot override the shop\'s said-no (/tax/compute)', async () => {
+  as('AU', null, 'unregistered');
+  const r = await X.call('POST', '/api/tax/compute', { lines: LINES, priceIncludesTax: false, seller: { name: 'My shop', RegType: 'regular', country: 'AU' } });
+  assert.equal(r.body.invoice.ValDtls.TotInvVal, 3000);
+});
