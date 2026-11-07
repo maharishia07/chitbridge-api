@@ -27,8 +27,9 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/signin';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-/** the three routes that read no body, no query and no path value: no operation, so the refusals are the door's alone (a key 403, the owner's 403, a fault 500) */
-const NO_INPUT = { 'POST /api/signin/logout': [401, 403, 500], 'GET /api/signin/sessions': [401, 403, 500], 'GET /api/signin/devices': [401, 403, 500] };
+/** the two routes that read no body, no query and no path value: no operation, so the refusals are the door's alone (the owner's 403, a fault 500). POST /logout has a closed empty body since API-47 (LOGOUT, below) */
+const NO_INPUT = { 'GET /api/signin/sessions': [401, 403, 500], 'GET /api/signin/devices': [401, 403, 500] };
+const LOGOUT = { 'POST /api/signin/logout': [400, 401, 403, 500] }; /* the one write with no field: an empty closed body, an unknown key is a 400 */
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -52,7 +53,7 @@ function checkContract(routes) {
   const operations = Object.keys(contractModule().contract.OPERATIONS);
   const withInput = Object.keys(routes).filter((key) => !NO_INPUT[key]);
   check('every route that reads an input has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), withInput.sort()), { operations, withInput });
-  check('the three routes that read no input have none (' + Object.keys(NO_INPUT).length + ')', Object.keys(NO_INPUT).every((key) => routes[key] && !operations.includes(key)));
+  check('the two routes that read no input have none (' + Object.keys(NO_INPUT).length + ')', Object.keys(NO_INPUT).every((key) => routes[key] && !operations.includes(key)));
   const problems = operations.every((key) => Object.keys(contractModule().contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contractModule().contract.OPERATIONS[key].responses[status]).includes('Problem')));
   check('every refusal an operation declares is a Problem response', problems);
 }
@@ -76,7 +77,7 @@ function checkJunkAsUnknown(recording, scenes) {
   const server = lab.appOf([{ mount: MOUNT, router }, { mount: '/api/entities', router: entities }]).listen(0);
   const recording = {};
   const declared = contractModule().contract.allowedStatuses();
-  const allowed = (route) => NO_INPUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
+  const allowed = (route) => NO_INPUT[route] || LOGOUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
   const scenes = S.extras();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.filter((one) => routes[one.route]), {}).concat(lab.scenariosOf(registerRoutes, [], scenes.filter((one) => registerRoutes[one.route]), {}));
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, modules);

@@ -44,7 +44,7 @@ const { OTP_HASH_COL } = require('../lib/otp');
 const SIGNIN_ASK_TTL_MS = 60 * 60 * 1000; // a code made by a sign-in ask lives one hour, as identity-auth issueOtp always gave it (the owner's issue is 24 h)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { failed } = require('../lib/products-contract'); // a fault of ours: a 500 that says nothing of its cause (the old body kept: the screen's label and the safe sentence)
-const { contract } = require('../lib/signin-contract'); // the operations of the routes that read an input
+const { contract, schemaOptions } = require('../lib/signin-contract'); // the operations of the routes that read an input
 const owner = require('../lib/owner');
 const { isOwner } = owner;
 
@@ -74,7 +74,7 @@ const claimsOf = (req) => jwt.decode(String(req.headers.authorization || '').rep
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
 
-router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), async (req, res) => {
+router.post('/renew', auth, personOnly, ...contract.checked('POST /renew', schemaOptions), async (req, res) => {
   try {
     const shop = shopOf(req);
     let s;
@@ -98,7 +98,7 @@ router.post('/renew', auth, personOnly, ...contract.checked('POST /renew'), asyn
   }
 });
 
-router.post('/logout', auth, personOnly, async (req, res) => {
+router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', schemaOptions), async (req, res) => {
   try {
     if (!req.session) return res.json({ ok: true, removed: false, legacy: true });
     const out = await sessions.close(withTransaction, shopOf(req), req.session.device_id, req.session.jti);
@@ -157,7 +157,7 @@ router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
   }
 });
 
-router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke'), async (req, res) => {
+router.post('/sessions/revoke', auth, personOnly, ...contract.checked('POST /sessions/revoke', schemaOptions), async (req, res) => {
   try {
     const b = req.body || {},
       shop = shopOf(req);
@@ -953,9 +953,9 @@ const padded = (handler) => (req, res, next) => {
   return handler(req, res, next);
 };
 const verifyDoor = padded(junkAsUnknown(verify, typedByVerify));
-router.post('/ask', door('signin'), ...contract.checked('POST /ask'), askChecks, validate, askDoor);
-router.post('/verify', door('signin'), ...contract.checked('POST /verify'), verifyChecks, validate, verifyDoor);
-router.post('/pin', auth, ...contract.checked('POST /pin'), pinChecks, validate, pin);
+router.post('/ask', door('signin'), ...contract.checked('POST /ask', schemaOptions), askChecks, validate, askDoor);
+router.post('/verify', door('signin'), ...contract.checked('POST /verify', schemaOptions), verifyChecks, validate, verifyDoor);
+router.post('/pin', auth, ...contract.checked('POST /pin', schemaOptions), pinChecks, validate, pin);
 router.openapi = { paths: contract.pathsOf(), schemas: {} }; // S9: the five routes that read an input (lib/signin-contract.js)
 
 router.handlers = { ask: askDoor, verify: verifyDoor, pin, checkLogin };
