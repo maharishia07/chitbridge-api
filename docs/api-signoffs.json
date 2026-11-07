@@ -2763,11 +2763,11 @@
    "lifecycle": "stable"
   },
   "POST /api/entities/register": {
-   "hash": "6f33e5526ce8ba8e",
+   "hash": "0684924c4d8ce659",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#917",
    "lifecycle": "stable"
   },
   "POST /api/entities/verify": {

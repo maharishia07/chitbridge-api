@@ -56,6 +56,8 @@ function extras(tools) {
     X('register-made', 'POST ' + at('/register'), 200, { body: { email: 'new@example.com', display_name: 'Brand New Shop' } }),
     X('register-made-with-a-chosen-id', 'POST ' + at('/register'), 200, { body: { email: 'new2@example.com', display_name: 'Brand New Shop', user_id: 'chosen-id' } }),
     X('register-insert-fails', 'POST ' + at('/register'), 500, { body: { email: 'new@example.com', display_name: 'Brand New Shop' }, setup: { sqlRows: raising(/INSERT INTO identities/, '23505') } }),
+    /* SEC-130 (A): an e-mail a shop's party holds (no account): the same words as a free address, one notice mail, nothing made */
+    N('register-email-held-by-a-party', 'POST ' + at('/register'), 200, { body: { email: 'held@example.com', display_name: 'Held Probe Shop', user_id: 'held-probe-shop' }, setup: { sqlRows: (sql) => { if (/INSERT INTO identities/.test(sql)) throw Object.assign(new Error('duplicate key'), { code: '23505', constraint: 'identities_email_key' }); return null; } } }),
     X('register-login-of-unknown', 'POST ' + at('/register'), 200, { body: { email: 'ghost@example.com', mode: 'login' } }),
     X('verify-needs-an-id', 'POST ' + at('/verify'), 400, { body: {} }),
     X('verify-short-code', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '12' } }),
