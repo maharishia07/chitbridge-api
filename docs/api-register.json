@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 223,
+  "meets": 414,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -192,7 +192,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2397,
+   "line": 2398,
    "hash": "995d3386a23c0085",
    "does": "",
    "errors": {
@@ -4443,7 +4443,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2448,
+   "line": 2449,
    "hash": "8b75d91ef31f4602",
    "does": "",
    "errors": {
@@ -5092,7 +5092,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2149,
+   "line": 2150,
    "hash": "d9ff2645f0a73015",
    "does": "",
    "errors": {
@@ -5205,7 +5205,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2157,
+   "line": 2158,
    "hash": "4c3448af6a2b5ce3",
    "does": "",
    "errors": {
@@ -5649,7 +5649,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2518,
+   "line": 2519,
    "hash": "c9bfdc8ac640cf30",
    "does": "",
    "errors": {
@@ -5758,7 +5758,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2565,
+   "line": 2566,
    "hash": "dc47d5ce7ab5a294",
    "does": "",
    "errors": {
@@ -6196,7 +6196,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2249,
+   "line": 2250,
    "hash": "8588a456a55569eb",
    "does": "",
    "errors": {
@@ -6301,7 +6301,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2287,
+   "line": 2288,
    "hash": "6f8afb2e64d5acc2",
    "does": "",
    "errors": {
@@ -6408,7 +6408,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2316,
+   "line": 2317,
    "hash": "eab6f7f4c79c78d9",
    "does": "",
    "errors": {
@@ -6744,7 +6744,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2213,
+   "line": 2214,
    "hash": "a025e197a54c16cc",
    "does": "",
    "errors": {
@@ -6952,7 +6952,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2369,
+   "line": 2370,
    "hash": "3531bce9d5ea96a8",
    "does": "",
    "errors": {
@@ -7056,7 +7056,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2479,
+   "line": 2480,
    "hash": "86ac77872e8da2ec",
    "does": "",
    "errors": {
@@ -7372,7 +7372,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2426,
+   "line": 2427,
    "hash": "084f040c2a23476b",
    "does": "",
    "errors": {
@@ -7581,7 +7581,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2196,
+   "line": 2197,
    "hash": "ed20d7411dd0c93e",
    "does": "",
    "errors": {
@@ -24914,8 +24914,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 84,
-   "hash": "c5a40c1567d877bd",
+   "line": 85,
+   "hash": "512bf7caaa451fcd",
    "does": "",
    "errors": {
     "count": 0,
@@ -24983,8 +24983,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "512bf7caaa451fcd"
    },
    "status": "partial",
    "callers": [
@@ -25116,7 +25117,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "be22b8f5a8198528",
+   "hash": "6b87355c3c51546d",
    "does": "",
    "errors": {
     "count": 0,
@@ -25184,10 +25185,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6b87355c3c51546d"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -28888,7 +28890,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "0e48a0105a3e73d4",
+   "hash": "a1fcb628914fc8e6",
    "does": "",
    "errors": {
     "count": 0,
@@ -28947,10 +28949,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: public uptime probe; 200 whatever the database says; no input; no internal text in any answer; only a 500 Problem from the one handler; summary plain",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "a1fcb628914fc8e6"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -29291,7 +29294,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2387,
+   "line": 2388,
    "hash": "da15e2c5df750548",
    "does": "",
    "errors": {
@@ -35052,7 +35055,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2538,
+   "line": 2539,
    "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
@@ -35159,7 +35162,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2547,
+   "line": 2548,
    "hash": "c185bb01296cb2ce",
    "does": "",
    "errors": {
@@ -35266,7 +35269,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2592,
+   "line": 2593,
    "hash": "8a8fe2f889e3128e",
    "does": "",
    "errors": {
@@ -36460,7 +36463,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2271,
+   "line": 2272,
    "hash": "61e8d612485ebf8d",
    "does": "",
    "errors": {
@@ -36566,7 +36569,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2346,
+   "line": 2347,
    "hash": "f295ae85c796a7e7",
    "does": "",
    "errors": {
@@ -37238,7 +37241,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2168,
+   "line": 2169,
    "hash": "92a8304b6bb46be8",
    "does": "",
    "errors": {
@@ -37451,7 +37454,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2377,
+   "line": 2378,
    "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
@@ -37557,7 +37560,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2407,
+   "line": 2408,
    "hash": "a9a8fedb79f55b44",
    "does": "",
    "errors": {
@@ -37664,7 +37667,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2416,
+   "line": 2417,
    "hash": "c51214ebf2d96a82",
    "does": "",
    "errors": {
@@ -38107,7 +38110,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2181,
+   "line": 2182,
    "hash": "ecce20760c8f63c3",
    "does": "",
    "errors": {
@@ -57414,7 +57417,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 165,
+   "line": 168,
    "hash": "cf1ed74ea06db463",
    "does": "",
    "errors": {
@@ -57517,7 +57520,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 128,
+   "line": 131,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {
