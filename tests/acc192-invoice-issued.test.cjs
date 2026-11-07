@@ -117,6 +117,28 @@ const pump = (more) => Object.assign({ particulars: 'Pump seal', quantity: 10, u
     assert.ok(reg && reg.status === '409');
   });
 
+  console.log('\n== T · ACC-281 parameter types (one parameter, one type; Postgres refuses uuid = text) ==\n');
+  await t('issuedOn: every parameter has one type in each statement and the chit id is uuid (the offline stand-in cannot catch this; the real proof is a SIT rerun)', async () => {
+    const seen = [];
+    const spy = { query: async (sql) => { seen.push(String(sql).replace(/\s+/g, ' ')); return { rows: [] }; } };
+    const hasTable = require(root('lib/schema')).hasTable;
+    for (const books of [true, false]) {
+      require(root('lib/schema')).hasTable = async () => books;
+      await issued.issuedOn(spy, 'e1', 'c1');
+    }
+    require(root('lib/schema')).hasTable = hasTable;
+    assert.strictEqual(seen.length, 2);
+    for (const sql of seen) {
+      for (const n of new Set(sql.match(/\$\d+/g) || [])) {
+        const uses = sql.match(new RegExp('\\' + n + '(::\\w+)?(?!\\d)', 'g')) || [];
+        const types = new Set(uses.map((u) => (u.match(/::(\w+)/) || [, 'bare'])[1]));
+        assert.ok(types.size === 1, n + ' is used with more than one type (' + [...types] + '): ' + sql);
+      }
+      assert.ok(/chit_id = \$2::uuid/.test(sql), 'the uuid column is compared with a uuid parameter: ' + sql);
+      assert.ok(!/\$2::text/.test(sql), '$2 must not be typed text: ' + sql);
+    }
+  });
+
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
