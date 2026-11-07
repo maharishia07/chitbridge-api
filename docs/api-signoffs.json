@@ -2482,6 +2482,14 @@
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
    "lifecycle": "stable"
   },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
+   "hash": "2c8e87092cf5f3aa",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#960: handler and 13 machine columns read; answer allow-list holds, no behaviour changed",
+   "lifecycle": "stable"
+  },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
    "hash": "df3447cbe93e0f0f",
    "names_clear": true,

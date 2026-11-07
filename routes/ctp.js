@@ -52,6 +52,9 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the body is
 const contract = require('../lib/ctp-contract');
 const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL, QUERY_REFUSAL, MANIFEST_FAILED, STORE_FAILED, QUERY_FAILED } = contract;
 /** refusalTo(req, res, flag) → refuse({ status, code, why }): a Problem that keeps the keys a peer reads — `<flag>: false` and `why`, word for word */
+/** the door's success answer as an allow-list: the closed 200 schema of its own operation (lib/ctp-contract.js; all three are closed, so the filter always exists) */
+/* S34: the answer is pruned to the keys its operation names (reported by default, dropped under OUTPUT_ALLOWLIST=enforce) */
+const namesItsAnswer = (operation, key) => require('../lib/output-allowlist').outputFilter({ status: '200', schema: operation.responses[200].content['application/json'].schema, observed: 1 }, key);
 const refusalTo = (req, res, flag) => ({ why, ...spec }) => problem(req, res, Object.assign(spec, { detail: why, legacy: { [flag]: false, why } }));
 
 /**
@@ -216,7 +219,7 @@ async function localParties(ctx) {
   return { header: remoteParty.localizeParties({ all_recipients: recipients }, { senderId: stub.identity_id, senderBridge: sender, toId: to.identity_id, toBridge, others }) };
 }
 
-router.get('/.well-known/ctp.json', async (req, res) => {
+router.get('/.well-known/ctp.json', namesItsAnswer(MANIFEST_OPERATION, 'GET /api/ctp/.well-known/ctp.json'), async (req, res) => {
   try {
     const read = await manifestRead();
     res.set('Cache-Control', read.whole ? 'public, max-age=900' : 'no-store'); /* RAIL-140 (b): never cache a blip */
@@ -313,7 +316,7 @@ async function deliverOnce(opened, copy, installationKey, recipientId) {
 }
 
 /* ── ② THE RECEIVING DOOR ───────────────────────────────────────────────────────────────────────────────────── */
-router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), readsVersion('accepted'), async (req, res) => {
+router.post('/deliver', ctpLimiter, schemaValidate(DELIVER_OPERATION, ENVELOPE_REFUSAL), namesItsAnswer(DELIVER_OPERATION, 'POST /api/ctp/deliver'), readsVersion('accepted'), async (req, res) => {
   const env = req.body; /* a CTP/1 envelope: the schema refused anything else, in the old words */
   const refuse = refusalTo(req, res, 'accepted');
 
@@ -554,7 +557,7 @@ const repeatMarks = (once) => (once.repeat ? { repeat: true, duplicate: true } :
  * /shop.html?s=<store> would. `resolve` answers only for a BUSINESS (entity or network store): an employee, a
  * customer or a minted party is refused by name, because none of them is a thing another installation may address.
  */
-router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), readsVersion('ok'), async (req, res) => {
+router.post('/query', ctpLimiter, schemaValidate(QUERY_OPERATION, QUERY_REFUSAL), namesItsAnswer(QUERY_OPERATION, 'POST /api/ctp/query'), readsVersion('ok'), async (req, res) => {
   const refuse = refusalTo(req, res, 'ok');
   try {
     const q = req.body; /* a CTP/1 query: the schema refused anything else, in the old words */
