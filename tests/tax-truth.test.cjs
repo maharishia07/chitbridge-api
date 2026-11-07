@@ -103,7 +103,7 @@ function fnText(src, sig) {
   return src.slice(at, end + 2);
 }
 /* STD-CATCH (14 Oct): the lifted functions' best-effort catches record through cbQuiet — lift the ring and the recorder with them */
-const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', 'function billMoney(', 'function moneyOf(', 'async function finish(', 'async function postRewardBehindBill(', 'function chitOf(',
+const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', 'function billMoney(', 'function moneyOf(', 'async function finish(', 'async function deliverAsk(', 'function deliverTo(', 'function paintDeliver(', 'async function postRewardBehindBill(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
   'function reprintOld(', 'function slipHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
@@ -134,7 +134,7 @@ async function ring(o) {
          policy: { price_includes_tax: o.inclusive === false ? 'no' : 'yes' } },
     STATE: { till: { name: 'Counter 2' } }, ls: { get: (k, d) => d }, WHO: { id: 'u1', name: 'Athi', kind: 'entity' },
     CART: o.cart.map((c) => Object.assign({}, c)), PARTS: [], PAY_ASKED: false, PICKED: o.cust ? 'On credit' : 'Cash',
-    BILL_DELIVERY: o.delivery || null, BILL_ORDER: null, orderBilledDone: function(){}, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
+    BILL_DELIVERY: o.delivery || null, BILL_DELIVERY_ASKED: false, packSplitsByState: () => true, sure: async () => false /* CTR-186: over the counter */, paintTotals() {}, draftSave() {}, BILL_ORDER: null, orderBilledDone: function(){}, RW: { holder: null, points: 0, worth: 0, spend: 0, says: null, seq: 0 }, LAST: null, LASTNO: null, EARLIER: [],
     shopTax: () => ({ charges: true, kind: 'tax' }), shopStateClash: () => null, counterName: () => 'Counter 2', O: () => ({ kindLabel: (k) => k }), modWordsPlain: (m) => m.map((x) => x.option).join(' · '), tillStopped: async () => false, dayReopenAsk: async () => true, booksOn: () => true,
     custKnown: () => (o.cust ? { identity_id: CUST, entity_id: CUST, name: o.cust.name, gstin: '29BBBBB0000B1Z5' } : null),
     creditSinceRefresh: async () => {}, creditLimitCheck: () => ({ known: false }), ownerApprove: async () => null,
