@@ -88,6 +88,16 @@ function create() {
       const mine = T.entries.filter((x) => x.entity_id === e && x.source_ref && x.source_ref.indexOf('chit:' + chit_id) === 0 && !x.reverses_entry_id);
       return mine.filter((x) => !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id)).map((x) => x.entry_id);
     },
+    async inputTaxOfChit(db, e, chit_id, roles) {
+      const out = {};
+      for (const x of T.entries.filter((y) => y.entity_id === e && y.source_ref && y.source_ref.indexOf('chit:' + chit_id) === 0 && !y.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === y.entry_id))) {
+        for (const l of T.lines.filter((z) => z.entry_id === x.entry_id)) {
+          const a = T.accounts.find((acc) => acc.account_id === l.account_id);
+          if (a && roles.indexOf(a.role) >= 0) out[a.role] = (out[a.role] || 0) + Number(l.dr_minor || 0) - Number(l.cr_minor || 0);
+        }
+      }
+      return out;
+    },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
