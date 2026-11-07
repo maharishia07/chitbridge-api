@@ -1,4 +1,5 @@
 'use strict';
+// CTRY-94: an Indian seller says so — the engines no longer read India when no country is said.
 /**
  * tax.test.js — GST determination: two addresses in, INV-01 vocabulary out.
  *
@@ -15,7 +16,7 @@ function t(name, fn) {
   catch (e) { console.log('  ✗ ' + name + '\n      ' + e.message); fail++; }
 }
 
-const SELLER = { Gstin: '29ABCDE1234F1Z5', LglNm: 'Alpha Traders', State: '29', Loc: 'Bengaluru', Pin: 560001 };
+const SELLER = { Gstin: '29ABCDE1234F1Z5', LglNm: 'Alpha Traders', State: '29', Country: 'IN', Loc: 'Bengaluru', Pin: 560001 };
 const LINE = { id: 'L1', name: 'Tea, 250g', hsn: '09024090', qty: 10, unit_price: 180, rate: 5, unit: 'PAC' };
 
 console.log('\ntax · the one decision GST turns on');
@@ -44,7 +45,7 @@ t('⚠️ PLACE OF SUPPLY beats the buyer\'s address — a Karnataka buyer, deli
 });
 
 t('⚠️ NO PLACE OF SUPPLY IS AN ANSWER — nothing is assumed, and it says so', () => {
-  const r = T.determine({ seller: { LglNm: 'X' }, buyer: {}, lines: [LINE] });
+  const r = T.determine({ seller: { Country: 'IN', LglNm: 'X' }, buyer: {}, lines: [LINE] });
   assert.strictEqual(r._cb.supply, 'unknown');
   assert.strictEqual(r.ItemList[0].IgstAmt + r.ItemList[0].CgstAmt + r.ItemList[0].SgstAmt, 0);
   assert.ok(/cannot be decided/i.test(r._cb.notes.join(' ')), 'silence here is how the wrong tax gets charged');

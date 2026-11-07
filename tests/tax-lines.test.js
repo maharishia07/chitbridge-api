@@ -1,4 +1,5 @@
 // tests/tax-lines.test.js — the engine reaches the chit: lines rated at send, the invoice per copy, the month's ledger.
+// CTRY-94: an Indian seller says so — the engines no longer read India when no country is said.
 // CARD      15-tax-and-country-packs/tax-compute-rate-invoice-tax
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -30,7 +31,7 @@ test('partyOf: GSTIN gives the state; policy flag gives the registration', () =>
 
 test('invoiceFor: rated lines produce the INV-01 block; unrated lines are counted, not invented', () => {
   const lines = [{ name: 'Ponni Rice', quantity: 2, price: 620, gst_rate: 5 }, { name: 'Bag', quantity: 1, price: 10 }];
-  const r = T.invoiceFor({ lines, seller: { Gstin: '33A', State: '33' }, buyer: { Gstin: '29B', Pos: '29' }, chit_id: 'c1', at: '2026-09-04' });
+  const r = T.invoiceFor({ lines, seller: { Country: 'IN', Gstin: '33A', State: '33' }, buyer: { Gstin: '29B', Pos: '29' }, chit_id: 'c1', at: '2026-09-04' });
   assert.equal(r.rated, 1); assert.equal(r.unrated, 1); assert.equal(r.provisional, true);
   assert.equal(r.invoice.ItemList[0].IgstAmt, 62);
   assert.equal(r.invoice.TranDtls.SupTyp, 'B2B');
@@ -38,8 +39,8 @@ test('invoiceFor: rated lines produce the INV-01 block; unrated lines are counte
 
 test('⭐ ledger: output on my sent copies, ITC on my received copies from a regular seller, net = output − ITC; a self-chit is not a supply', () => {
   const mk = (dir, sellerId, buyerId, sellerReg, rate, at) => {
-    const r = T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 1000, gst_rate: rate }], seller: { Gstin: '33S', State: '33', RegType: sellerReg }, buyer: { Gstin: '33B', Pos: '33' }, chit_id: 'c' + at, at });
-    return { chit_id: 'c' + at, direction: dir, invoice: r.invoice, provisional: false, seller: { entity_id: sellerId, RegType: sellerReg }, buyer: { entity_id: buyerId }, at };
+    const r = T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 1000, gst_rate: rate }], seller: { Country: 'IN', Gstin: '33S', State: '33', RegType: sellerReg }, buyer: { Gstin: '33B', Pos: '33' }, chit_id: 'c' + at, at });
+    return { chit_id: 'c' + at, direction: dir, invoice: r.invoice, provisional: false, seller: { Country: 'IN', entity_id: sellerId, RegType: sellerReg }, buyer: { entity_id: buyerId }, at };
   };
   const led = T.ledger([
     mk('sent', 'me', 'them', 'regular', 18, '2026-09-01'),        // output 180
@@ -56,10 +57,10 @@ test('⭐ ledger: output on my sent copies, ITC on my received copies from a reg
 /* ACC-225 (2026-11-05): gstr1 is the adopted engine's (gst-returns.gstr1) — it asks a real 15-character GSTIN on me and refuses in words without one */
 const ME_GSTIN = '33AAAAA0000A1Z5';
 test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; gstr3b carries the totals and says it is provisional', () => {
-  const inv = (buyer, rate) => T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 100, gst_rate: rate, hsn: '1006' }], seller: { Gstin: '33S', State: '33' }, buyer, chit_id: 'c1', at: '2026-09-04' }).invoice;
+  const inv = (buyer, rate) => T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price: 100, gst_rate: rate, hsn: '1006' }], seller: { Country: 'IN', Gstin: '33S', State: '33' }, buyer, chit_id: 'c1', at: '2026-09-04' }).invoice;
   const led = T.ledger([
-    { chit_id: 'a', direction: 'sent', invoice: inv({ Gstin: '29B', Pos: '29' }, 18), provisional: true, seller: { entity_id: 'me' }, buyer: { entity_id: 'b' }, at: '2026-09-04' },
-    { chit_id: 'b', direction: 'sent', invoice: inv({ Pos: '33' }, 5), provisional: false, seller: { entity_id: 'me' }, buyer: { entity_id: 'c' }, at: '2026-09-04' },
+    { chit_id: 'a', direction: 'sent', invoice: inv({ Gstin: '29B', Pos: '29' }, 18), provisional: true, seller: { Country: 'IN', entity_id: 'me' }, buyer: { entity_id: 'b' }, at: '2026-09-04' },
+    { chit_id: 'b', direction: 'sent', invoice: inv({ Pos: '33' }, 5), provisional: false, seller: { Country: 'IN', entity_id: 'me' }, buyer: { entity_id: 'c' }, at: '2026-09-04' },
   ], { RegType: 'regular' });
   const g1 = T.gstr1(led, { Gstin: ME_GSTIN }, '092026');
   assert.equal(g1.b2b.length, 1); assert.equal(g1.b2b[0].ctin, '29B'); assert.equal(g1.b2b[0].inv[0].itms[0].itm_det.iamt, 18);
@@ -75,11 +76,11 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
 /* ⚠️⚠️ 2026-09-28: a counter return is a self chit with a customer, so it arrived as the shop's SALE and was ADDED to output */
 {
   const inv = (buyer, rate, price, supply) => {
-    const r = T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price, gst_rate: rate, hsn: '1006' }], seller: { Gstin: '33S', State: '33' }, buyer, chit_id: 'c', at: '2026-09-04' }).invoice;
+    const r = T.invoiceFor({ lines: [{ name: 'x', quantity: 1, price, gst_rate: rate, hsn: '1006' }], seller: { Country: 'IN', Gstin: '33S', State: '33' }, buyer, chit_id: 'c', at: '2026-09-04' }).invoice;
     if (supply) r._cb = Object.assign({}, r._cb, { supply });
     return r;
   };
-  const sale = (id, buyer, rate, price, no) => ({ chit_id: id, doc_no: no, direction: 'sent', sells: true, purpose: 'general', invoice: inv(buyer, rate, price), provisional: false, seller: { entity_id: 'me' }, buyer: { entity_id: null }, at: '2026-09-04' });
+  const sale = (id, buyer, rate, price, no) => ({ chit_id: id, doc_no: no, direction: 'sent', sells: true, purpose: 'general', invoice: inv(buyer, rate, price), provisional: false, seller: { Country: 'IN', entity_id: 'me' }, buyer: { entity_id: null }, at: '2026-09-04' });
   const ret = (id, buyer, rate, price, no, supply) => Object.assign(sale(id, buyer, rate, price, no), { purpose: 'credit_note', invoice: inv(buyer, rate, price, supply) });
 
   test('⭐⭐⭐ ledger: a credit note REDUCES output tax — it is not another sale', () => {
@@ -90,7 +91,7 @@ test('gstr1 groups B2B by counterparty GSTIN and B2C by place-of-supply + rate; 
   });
 
   test('⭐ a supplier\'s credit note to me gives back input credit — ITC goes DOWN', () => {
-    const buy = { chit_id: 'p1', direction: 'received', purpose: 'general', invoice: inv({ Gstin: '33M', Pos: '33' }, 18, 1000), provisional: false, seller: { entity_id: 'sup', RegType: 'regular' }, buyer: { entity_id: 'me' }, at: '2026-09-04' };
+    const buy = { chit_id: 'p1', direction: 'received', purpose: 'general', invoice: inv({ Gstin: '33M', Pos: '33' }, 18, 1000), provisional: false, seller: { Country: 'IN', entity_id: 'sup', RegType: 'regular' }, buyer: { entity_id: 'me' }, at: '2026-09-04' };
     const cn = Object.assign({}, buy, { chit_id: 'p2', purpose: 'credit_note', invoice: inv({ Gstin: '33M', Pos: '33' }, 18, 100) });
     const led = T.ledger([buy, cn], { RegType: 'regular' });
     assert.equal(led.itc.tax, 162); assert.equal(led.rows.find((r) => r.chit_id === 'p2').side, 'itc_cn');

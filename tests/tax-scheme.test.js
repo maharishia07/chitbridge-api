@@ -1,4 +1,5 @@
 /* tax-scheme.test.js — A VAT-type scheme (b202: DE-VAT-19 …) goes through the SAME engine as GST: one head, border decides. */
+// CTRY-94: an Indian seller says so — the engines no longer read India when no country is said.
 const assert = require('assert');
 const tax = require('../lib/tax');
 const lines = require('../lib/tax-lines');
@@ -29,7 +30,7 @@ t('discount first under VAT too', () => {
   assert.strictEqual(v.ItemList[0].AssAmt, 80); assert.strictEqual(v.ItemList[0].TaxAmt, 16);
 });
 t('GST is untouched: TaxVal 0, TaxSch GST, split by state', () => {
-  const v = tax.determine({ seller: { State: '29' }, buyer: { Pos: '27' }, lines: [{ qty: 1, price: 100, rate: 18 }] });
+  const v = tax.determine({ seller: { Country: 'IN', State: '29' }, buyer: { Pos: '27' }, lines: [{ qty: 1, price: 100, rate: 18 }] });
   assert.strictEqual(v.ValDtls.TaxVal, 0); assert.strictEqual(v.ValDtls.IgstVal, 18); assert.strictEqual(v.TranDtls.TaxSch, 'GST');
 });
 t('the slab carries its scheme through resolve → decorate → invoiceFor → heads', () => {

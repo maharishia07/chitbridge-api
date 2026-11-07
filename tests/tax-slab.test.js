@@ -1,4 +1,5 @@
 /**
+// CTRY-94: an Indian seller says so — the engines no longer read India when no country is said.
  * tax-slab.test.js — the product answers, else its category, else the catalogue, and we know which.
  *
  * Athi, 2026-09-03: *"in india tax is not simple, each product has different tax criteria, so it has to be
@@ -220,7 +221,7 @@ test('applyToLine carries the SOURCE onto the line, so a dispute can tell inheri
 
 test('⭐⭐ a resolved slab → tax.js → the INTRA-state split is the rate halved', () => {
   const line = ts.applyToLine({ name: 'Rice', qty: 10, unit_price: 100 }, R({ categories: ['cGrain'] }));
-  const out = tax.determine({ seller: { State: '29' }, buyer: { Pos: '29' }, lines: [line] });
+  const out = tax.determine({ seller: { Country: 'IN', State: '29' }, buyer: { Pos: '29' }, lines: [line] });
   const it = out.ItemList[0];
   assert.strictEqual(out._cb.supply, 'intra');
   assert.strictEqual(it.AssAmt, 1000);
@@ -233,7 +234,7 @@ test('⭐⭐ a resolved slab → tax.js → the INTRA-state split is the rate ha
 
 test('⭐⭐ the same line to another state is IGST at the FULL rate — the slab did not change', () => {
   const line = ts.applyToLine({ name: 'Rice', qty: 10, unit_price: 100 }, R({ categories: ['cGrain'] }));
-  const out = tax.determine({ seller: { State: '29' }, buyer: { Pos: '27' }, lines: [line] });
+  const out = tax.determine({ seller: { Country: 'IN', State: '29' }, buyer: { Pos: '27' }, lines: [line] });
   const it = out.ItemList[0];
   assert.strictEqual(out._cb.supply, 'inter');
   assert.strictEqual(it.IgstAmt, 50);
@@ -246,7 +247,7 @@ test('cess from the slab reaches the invoice line', () => {
   /* ⚠️ tax.js already emits CesRt/CesAmt per line and CesVal in the totals — nothing had to be added there. The
      only missing half was getting the rate ONTO the line, which is what applyToLine does. */
   const line = ts.applyToLine({ name: 'Cola', qty: 1, unit_price: 100 }, R({ tax_slab: 's28' }));
-  const out = tax.determine({ seller: { State: '29' }, buyer: { Pos: '27' }, lines: [line] });
+  const out = tax.determine({ seller: { Country: 'IN', State: '29' }, buyer: { Pos: '27' }, lines: [line] });
   const it = out.ItemList[0];
   assert.strictEqual(it.IgstAmt, 28);
   assert.strictEqual(it.CesRt, 12);
@@ -261,7 +262,7 @@ test('an odd rate halves exactly across CGST and SGST, and the two still sum to 
   const slab = [{ definition_id: 'x', name: 'GST 12%', rules: { rate: 12 } }];
   const line = ts.applyToLine({ qty: 3, unit_price: 33.33 },
     ts.resolve({ item_data: { tax_slab: 'x' }, face: {}, slabs: slab, categories: [] }));
-  const it = tax.determine({ seller: { State: '29' }, buyer: { Pos: '29' }, lines: [line] }).ItemList[0];
+  const it = tax.determine({ seller: { Country: 'IN', State: '29' }, buyer: { Pos: '29' }, lines: [line] }).ItemList[0];
   assert.strictEqual(Math.round((it.CgstAmt + it.SgstAmt) * 100) / 100, Math.round(it.AssAmt * 12) / 100);
 });
 
