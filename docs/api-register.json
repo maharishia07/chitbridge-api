@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 349,
-    "failing": 71
+    "failing": 72
    },
    "output_allowlist": {
     "applies": 637,
@@ -38916,7 +38916,7 @@
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
    "line": 251,
-   "hash": "7aabecbdcc6f2df5",
+   "hash": "3a8844ba3a2cf7e9",
    "does": "",
    "errors": {
     "count": 1,
@@ -38952,7 +38952,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,

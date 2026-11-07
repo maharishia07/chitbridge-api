@@ -229,7 +229,7 @@ function extras(tools) {
     wa('wa-capture-fails', 200, oneMessage, { setup: world(failing(/INSERT INTO capture/)) }),
     wa('wa-nothing-in-it', 200, '{}'),
     /* the contract pass (7 Nov): a signed body the schema refuses, and a fault in the signature step, are Problems (new answers: not frozen) */
-    wa('wa-unknown-key-refused', 400, JSON.stringify({ object: 'whatsapp_business_account', entry: [], colour: 'red' }), { after: true }),
+    wa('wa-extra-top-level-key-taken', 200, JSON.stringify({ object: 'whatsapp_business_account', entry: [], colour: 'red' }), { after: true }),
     wa('wa-body-is-a-list', 400, '[]', { after: true }),
     wa('wa-gate-fault', 500, oneMessage, { patch: { crypto: { createHmac: () => { throw new Error(SECRET_TEXT); } } }, after: true })
   ];
