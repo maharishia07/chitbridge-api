@@ -6150,7 +6150,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-07.idem3';
+var TILL_BUILD = '2026-11-08.nocountry';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -18986,6 +18986,7 @@ async function deliverAsk(){
  */
 function billMoney(){
   var sh = (S && S.shop) || {}, taxed = shopTax().charges;
+  if (!String(sh.country || '').trim()) return noCountryMoney();   /* CTRY-94: the engine refuses a seller with no country, so a no-country shop never reaches it (never India) */
   /* ⚠️ WHICH WAY THE PRICE IS QUOTED. Inclusive (the Indian retail norm, and the default) splits the tax OUT of the shelf price;
      exclusive ADDS it on top. Getting this backwards is wrong by exactly the tax on every bill, in silence. */
   var inclusive = taxIncluded();   /* ⭐ one answer, shared with the shelf row — they must never disagree */
@@ -19001,8 +19002,7 @@ function billMoney(){
      UAE shop billed tax-free. The goods are handed over at the counter, inside the shop's country: the same rule placeOfSupply
      already applies to the state (IGST Act s.10(1)(a)), now applied to the country. The engine is right to refuse the guess; the
      counter knows the shop. The server's seam is lib/tax-lines walkIn (the same rule, the same note). */
-  var shopCountry = String(sh.country || '').trim().toUpperCase();
-  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
+  var shopCountry = String(sh.country || '').trim().toUpperCase();  var inv = (window.CBTax && CBTax.determine) ? CBTax.determine({
     seller: { Gstin: sh.gstin || '', LglNm: sh.legal_name || sh.name || '', TrdNm: sh.name || '', Addr1: sh.address || '',
               Ph: sh.phone || '', State: sc, Country: shopCountry, RegType: sh.reg_type || 'regular' },
     buyer: { LglNm: (cust && cust.name) || String((document.getElementById('cname') || {}).value || '').trim() || 'Walk-in',
@@ -19016,9 +19016,7 @@ function billMoney(){
   }) : null;
   /* ⭐ BUY1: when the BORDER decided (supply 'domestic' — never a state pack's intra/inter), the frozen invoice SAYS the buyer was
      taxed as inside the shop's country; the note travels on the chit (business_json.invoice) like every engine note */
-  if (inv && inv._cb && inv._cb.supply === 'domestic' && shopCountry) {
-    inv._cb.notes = (inv._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + shopCountry + '.');
-  }
+  walkInNote(inv, shopCountry);
   var m = moneyOf(inv);
   /* ⭐ each cart line shows its own figures — READ off its ItemList entry, the same row the invoice carries */
   CART.forEach(function(c, n){ var l = m.lines[n] || {}; c.taxable = l.taxable; c.tax = l.tax; c.cgst = l.cgst; c.sgst = l.sgst; c.igst = l.igst; });
@@ -19034,6 +19032,26 @@ function billMoney(){
  *   row on the slip) · heads, supply, pos_state and each line's figures as the engine names them
  * ⚠️ No engine (or no invoice) → zeros and no lines, never a figure of its own; finish() then refuses the sale.
  */
+/** BUY1: a border-decided invoice (supply 'domestic') says the walk-in was taxed as inside the shop's country; the note rides the chit */
+function walkInNote(invoice, country){
+  if (!invoice || !invoice._cb || invoice._cb.supply !== 'domestic') return;
+  invoice._cb.notes = (invoice._cb.notes || []).concat('Walk-in: taxed as a sale inside ' + country + '.');
+}
+/** a shop with no country stated has no invoice: zeros, no engine call, and the engines' own NO_COUNTRY words (CBRegulation.status(null).why) */
+function noCountryMoney(){
+  var money = moneyOf(null), status = (window.CBRegulation && CBRegulation.status) ? CBRegulation.status(null) : null;
+  money.noCountry = true; money.why = (status && status.why) || 'Set the shop country first.';
+  money.taxed = false; money.inclusive = false; money.invoice = null;
+  return money;
+}
+/** the totals row that says why nothing can be billed yet; '' for a shop with a country */
+function noCountryRow(bill){
+  return bill.noCountry ? '<div class="t warnrow" data-testid="till-no-country"><span>' + esc(bill.why) + '</span><span></span></div>' : '';
+}
+/** the sentence finish() stops a sale with when there is no invoice */
+function saleStopWords(bill){
+  return bill.noCountry ? bill.why : 'Prices cannot be worked out on this counter right now.\n\nPress refresh while online.';
+}
 function moneyOf(inv){
   var e = (inv && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(inv) : null;
   if (!e) return { gross:0, save:0, net:0, base:0, tax:0, round:0, byRate:{}, heads:[], supply:'unknown', pos_state:null, lines:[] };
@@ -21000,7 +21018,7 @@ function paintTotals(){
   var toggle = detail.trim()
     ? '<div class="t foldrow"><button type="button" class="foldbtn" data-testid="till-sum-fold" onclick="toggleSum()">'
       + (SUMFOLD ? '▸ tax &amp; offer breakdown' : '▾ hide breakdown') + '</button></div>' : '';
-  document.getElementById('totals').innerHTML = (CART.length ? billWarnHTML(m) : '')
+  document.getElementById('totals').innerHTML = noCountryRow(m) + (CART.length ? billWarnHTML(m) : '')
     + '<div class="totdetail" data-testid="till-sum-detail"' + (SUMFOLD ? ' hidden' : '') + '>' + detail + '</div>'
     + toggle
     + savedHead
@@ -21746,7 +21764,7 @@ async function finish(){
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
-  if (!m.invoice) { saleStop('Prices cannot be worked out on this counter right now.\n\nPress refresh while online.'); return { ok: false }; }
+  if (!m.invoice) { saleStop(saleStopWords(m)); return { ok: false }; }
   /* ⚠️ A SELF-CONTRADICTING TAX INVOICE NEVER GOES OUT (BF2) — BUT THE SALE ALWAYS DOES (M41: a details mismatch never costs
      a sale). A taxed bill saves as NOT a tax invoice (not_invoice, slipHTML); an untaxed one has nothing to contradict. */
   var clash = (shopTax().charges && Number(m.tax) > 0) ? shopStateClash() : null;
