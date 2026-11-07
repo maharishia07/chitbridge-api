@@ -180,7 +180,8 @@
   },
   "POST /api/chits/:chit_id/payment": {
    "strict_input": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "idempotent_money_write": true
   },
   "DELETE /api/chits/:chit_id/payment": {
    "output_allowlist": true,
@@ -306,7 +307,11 @@
   "POST /api/pricing/price": {
    "output_allowlist": true
   },
+  "POST /api/invoice/build": {
+   "output_allowlist": true
+  },
   "GET /api/invoice/:chit_id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/integrations/kit": {
@@ -1373,6 +1378,7 @@
    "output_allowlist": true
   },
   "GET /api/tax/invoice/:chit_id": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/tax/ledger": {
@@ -1381,11 +1387,15 @@
   "POST /api/tax/rate": {
    "output_allowlist": true
   },
+  "POST /api/tax/compute": {
+   "output_allowlist": true
+  },
   "GET /api/books/status": {
    "output_allowlist": true
   },
   "POST /api/books/enable": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/books/setting": {
    "strict_input": true
