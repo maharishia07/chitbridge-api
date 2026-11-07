@@ -65,6 +65,16 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     r = await patch('/me/prefs/ui', { product_rows: [] });
     t('a key outside the set cannot be written or erased through /me/prefs', same(row.ui_prefs.product_rows, ['pricing', 'product', 'stock']));
 
+    /* API-48: each kind takes only its OWN keys (the schema closes against both lists, the handler holds the kind to one) */
+    const keep = JSON.stringify(row);
+    r = await patch('/me/prefs/ui', { lang: 'en' });
+    t('a locale key on the ui kind is a 400 naming the key, nothing written', r.status === 400 && /lang/.test(JSON.stringify(r.j)) && writes.length === 0 && JSON.stringify(row) === keep, r.status + ' ' + JSON.stringify(r.j));
+    r = await patch('/me/prefs/locale', { theme: 'dark' });
+    t('a ui key on the locale kind is a 400 naming the key, nothing written', r.status === 400 && /theme/.test(JSON.stringify(r.j)) && writes.length === 0 && JSON.stringify(row) === keep, r.status + ' ' + JSON.stringify(r.j));
+    r = await patch('/me/prefs/locale', { tz: 'Asia/Kolkata' });
+    t('a locale key on the locale kind is still saved', r.status === 200 && row.locale_prefs && row.locale_prefs.tz === 'Asia/Kolkata', r.status);
+    delete row.locale_prefs;
+
     row.locale_prefs = { lang: 'ta', nu: 'tamldec', langs_seen: ['ta', 'en'] };
     r = await patch('/me/prefs/locale', { hc: 'h12' });
     t('a locale save keeps the keys it did not send', row.locale_prefs.lang === 'ta' && row.locale_prefs.nu === 'tamldec' && row.locale_prefs.hc === 'h12', JSON.stringify(row.locale_prefs));

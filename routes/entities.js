@@ -307,6 +307,9 @@ const prefSetRoute = (fixedKind) =>
     const kind = prefKindOf(fixedKind, req);
     const set = prefSetOf(kind);
     if (!set || !set.column) return problem(req, res, contract.words.unknownPrefSet());
+    /* API-48: the schema closes the body against the union of both lists; each kind is held to its OWN list here (a locale key on the ui kind, and the reverse, is refused by name) */
+    const foreign = Object.keys(req.body || {}).find((key) => !set.keys.includes(key));
+    if (foreign) return problem(req, res, contract.words.badPreference(`${foreign} is not a ${kind} preference`));
     try {
       const p = prefPatch(set, req.body || {});
       if (p.error) return problem(req, res, contract.words.badPreference(p.error));

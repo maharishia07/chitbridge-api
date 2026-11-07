@@ -41,7 +41,7 @@ const ok = (name, cond, why) => {
 };
 
 /** what the route's schema check does with a body: { status: 200 } when it lets it on, else the refusal's status and json */
-function answerTo(operation, body, route) {
+function answerTo(operation, body, route, options) {
   let out = { status: 200 };
   const params = /:kind/.test(route) ? { kind: 'ui' } : {};
   const res = {
@@ -51,7 +51,7 @@ function answerTo(operation, body, route) {
     send(value) { out = { status: this.statusCode, json: value }; return this; }
   };
   const req = { body, query: {}, params, headers: {}, id: 'test', method: route.split(' ')[0], originalUrl: route.split(' ')[1], get() { return ''; } };
-  schemaValidate(operation)(req, res, () => { out = { status: 200 }; });
+  schemaValidate(operation, options)(req, res, () => { out = { status: 200 }; });
   return out;
 }
 
@@ -79,6 +79,10 @@ for (const [route, keys, bodies] of CASES) {
 /* a key of the OTHER set is not this door's: /me/locale is the locale list only */
 const crossed = answerTo(OPERATIONS['PATCH /api/entities/me/locale'], { theme: 'dark' }, 'PATCH /api/entities/me/locale');
 ok('PATCH /api/entities/me/locale: a ui key (theme) is refused, it is not a locale key', crossed.status === 400 || crossed.status === 422, JSON.stringify(crossed));
+
+/* the frozen words of a flag the policy does not know survive the closing (docs/contracts/api-legacy.json policy-unknown-flag) */
+const unknownFlag = answerTo(OPERATIONS['PATCH /api/entities/policy'], { nope: 1 }, 'PATCH /api/entities/policy', require(path.join(ROOT, 'lib', 'entities-contract')).policySchemaOptions);
+ok('PATCH /api/entities/policy: an unknown flag keeps its frozen words', unknownFlag.status === 400 && unknownFlag.json.error === 'Policy update failed' && unknownFlag.json.message === 'Unknown or invalid policy flag: nope', JSON.stringify(unknownFlag));
 
 console.log('\n' + pass + ' ok, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

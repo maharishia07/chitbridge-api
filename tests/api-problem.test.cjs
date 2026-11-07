@@ -68,7 +68,7 @@ function installStubs() {
   const db = { query: async (sql, params) => rows(params), withTransaction: async (run) => (rows(), run(client)), withEntity: async (id, run) => run(client), readBatch: async () => [{ rows: [], rowCount: 0 }] };
   mock('db', db);
   mock('db/index', db);
-  mock('lib/policy', { patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
+  mock('lib/policy', { FLAGS: { trade_side: { type: 'enum' }, stream_owner: { type: 'map', keys: ['products', 'stock', 'profile', 'order', 'purchase', 'receipt', 'party'] } }, BOUND: { dispute_scope: 'per-party' }, patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
   mock('lib/platformroot', { isPlatform: () => world.platform, isRoot: () => false });
 }
 
