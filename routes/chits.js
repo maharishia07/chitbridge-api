@@ -15,6 +15,7 @@ const { waiting } = require('../lib/not-migrated');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, stampCancelRequested, stampCancelConfirmed, ringStatus } = require('../lib/chit-move'); // the ONE status writer (and the two cancel flags its legs stamp, the bell of a move) (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
 const { definersReady, crossing, crossingIn, postMessageCopies } = require('../lib/chit-crossing'); // how a chit write reaches the other copies (lifted with moveStatus)
@@ -5414,22 +5415,11 @@ router.post(
          chit, so it keeps the plain-external audience. null = not a roster-scoped message (plain external, or chit_wide). */
       let disputeRoster = null;
       if (isDispute && disputeId) {
-        const party = await withEntity(entity_id, (db) =>
-          db.query(`SELECT scope FROM chit_disputes WHERE dispute_id = $1 AND chit_id = $2 AND entity_id = $3 LIMIT 1`, [disputeId, chit_id, entity_id])
-        );
-        if (party.rows.length === 0) {
+        const audience = await disputeAudience.audienceOf(entity_id, chit_id, disputeId); /* RAIL-187: the one reading of the audience, shared with the file route */
+        if (!audience) {
           return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Not a party to this dispute' }, 'CHIT_NOT_PERMITTED') });
         }
-        if ((party.rows[0].scope || 'targeted') !== 'chit_wide') {
-          // fail closed: a roster that cannot be read means the poster's own timeline only, and no bell
-          disputeRoster = [entity_id];
-          try {
-            const rr = await withEntity(entity_id, (db) => db.query(`SELECT entity_id, role, status FROM chit_dispute_roster($1)`, [disputeId]));
-            disputeRoster = [...new Set([entity_id].concat(rr.rows.map((item) => String(item.entity_id))))];
-          } catch (e) {
-            cbLog.fellBack('chits POST /:chit_id/messages: the read failed — carried on without it', e); /* keep [me] */
-          }
-        }
+        disputeRoster = audience.ids; /* null for a chit-wide dispute */
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
       let senderName = display_name;
