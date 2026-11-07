@@ -38,9 +38,9 @@ of file each thing is; this says what already does the job.
 | 58 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 55 | `record` | `access-events.js` |  |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 52 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 51 | `pack` | `books-store.js` |  |
-| 51 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `count` | `money-check.js` | the count /health reads |
