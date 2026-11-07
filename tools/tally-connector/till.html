@@ -5292,11 +5292,13 @@ var CloudHost = {
     var t = (window.CBRollup && CBRollup.totals) ? CBRollup.totals(mine) : (function(){
       /* [till expenses] the identical fallback rule as the engine's own totals() — an expense is not counted
        * as a sale and leaves whatever tender it was paid from, same reasoning as a credit note two lines up. */
-      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, exp2 = 0;
+      var by2 = {}, total2 = 0, count2 = 0, back2 = 0, red2 = 0, exp2 = 0;
       mine.forEach(function(b){
         total2 = r2(total2 + (b.total||0));
         if (b.kind === 'credit_note') {
-          back2 = r2(back2 + Math.abs(Number(b.total)||0));
+          /* CTR-196: refunded = the parts handed back; the rest of the note only reduced what is owed (a note with no refunds field keeps counting wholly as a refund) */
+          var whole2 = Math.abs(Number(b.total)||0), paid2 = Array.isArray(b.refunds) ? Math.min(r2(b.refunds.reduce(function(s,x){ return s + (Number(x.amount)||0); }, 0)), whole2) : whole2;
+          back2 = r2(back2 + paid2); red2 = r2(red2 + whole2 - paid2);
           (b.refunds||[]).forEach(function(x){ by2[x.how] = r2((by2[x.how]||0) - (Number(x.amount)||0)); });
         } else if (b.kind === 'expense') {
           exp2 = r2(exp2 + Math.abs(Number(b.total)||0));
@@ -5306,7 +5308,7 @@ var CloudHost = {
           (b.payments||[]).forEach(function(p){ by2[p.how] = r2((by2[p.how]||0) + (p.amount||0)); });
         }
       });
-      return { count: count2, total: total2, by: by2, refunds: back2, expenses: exp2 };
+      return { count: count2, total: total2, by: by2, refunds: back2, reduced: red2, expenses: exp2 };
     })();
     var by = t.by, total = t.total, count = t.count, back = t.refunds;
     return { snapshot: snap || null, online: lineUp() && !!this.cred(), queued: queue.length,
@@ -21900,13 +21902,14 @@ function dayCloseSheet(rows){
             first:null, last:null, gross:0, saved:0, total:0, taxable:0, tax:0,
             rate:{}, modes:{}, people:{}, items:{}, taxed:false,
             /* ⭐ said out loud, never folded away — a day with returns in it is a different day */
-            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, refunded: {},
+            returns: rt0 ? rt0.returns : back.length, returned: rt0 ? rt0.refunds : 0, reduced: rt0 ? (rt0.reduced || 0) : 0, refunded: {},
             /* ⭐ [till expenses] the identical treatment, one column over — a day with expenses in it is also
              * a different day, and pretending the drawer only ever loses money to refunds would be exactly
              * the bug this whole engine exists to prevent, just for a different cause. */
             expenses: rt0 ? rt0.expenseCount : spent.length, expensed: rt0 ? rt0.expenses : 0, spentby: {} };
   back.forEach(function(b){
-    if (!rt0) d.returned = r2(d.returned + Math.abs(Number(b.total) || 0));
+    if (!rt0) { var whole = Math.abs(Number(b.total) || 0), paid = Array.isArray(b.refunds) ? Math.min(r2(b.refunds.reduce(function(s, x){ return s + (Number(x.amount) || 0); }, 0)), whole) : whole;
+      d.returned = r2(d.returned + paid); d.reduced = r2(d.reduced + whole - paid); }
     /* ⚠️ per-tender refunds are this sheet's own — the engine nets them into `by`, and a drawer count must not */
     ((b.refunds) || []).forEach(function(x){
       d.refunded[x.how] = r2((d.refunded[x.how] || 0) + (Number(x.amount) || 0));
@@ -21971,7 +21974,8 @@ function dayCloseHTML(d){
   /* ⭐ a returns block, only when there were returns — a line of zeroes every day trains people to skip it */
   var backBlock = d.returns
     ? '<hr><div><b>RETURNS</b></div>'
-      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(d.returned) + '</span></div>'
+      + '<div>' + d.returns + ' credit note(s)<span style="float:right">' + money(r2(d.returned + d.reduced)) + '</span></div>'
+      + (d.reduced ? '<div>taken off what customers owe<span style="float:right">' + money(d.reduced) + '</span></div>' : '')
       + Object.keys(d.refunded).sort().map(function(how){
           return '<div>back in ' + esc(how) + '<span style="float:right">' + money(d.refunded[how]) + '</span></div>';
         }).join('')
