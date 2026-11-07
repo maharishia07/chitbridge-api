@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * ctr182-gstin-owner-only.test.cjs — CTR-182 (P1, 7 Nov 2026): the shop's GSTIN (a tax identity) is changed by the OWNER only.
+ * ctr182-gstin-owner-only.test.cjs — CTR-182 (P1, 7 Nov 2026): the shop's GSTIN (a tax identity) is changed by the OWNER or a MANAGER.
  * @type regression
  * OWNS      the proof that on every door that writes the shop's tax number — POST /api/till/shop · PATCH /api/entities/profile ·
- *           PUT /api/governance/profile/vault · POST /api/integrations/profile — a signed-in clerk (hat act, editor) and a manager are refused
- *           403 OWNER_ONLY in plain words with NOTHING written; the owner and a till/connector KEY (not a person) pass; a clerk that echoes
+ *           PUT /api/governance/profile/vault · POST /api/integrations/profile — a signed-in clerk (hat act, editor) and an auditor are refused
+ *           403 OWNER_ONLY in plain words with NOTHING written; the owner, a manager and a till/connector KEY (not a person) pass; a clerk that echoes
  *           the stored number back changes nothing and is not refused; GET /entities/me/can-see-costs says may_set_tax_id (the action stays shown).
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the real routes over a stand-in db and auth (the shape of tests/till-rate-door.test.cjs).
  * FLOW      world (who · key · stored number) → real route → status, body, and whether any INSERT/UPDATE reached the db
@@ -26,7 +26,8 @@ const NEW_ONE = '27AAPFU0939F1ZV';
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Kaveri Mess' };
 const CLERK = { identity_id: '44444444-4444-4444-8444-444444444444', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', hat: 'act' };
 const MANAGER = { identity_id: '55555555-5555-4555-8555-555555555555', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', hat: 'manager' };
-const PLAIN_WORDS = 'Only the owner can change the shop’s tax number. Ask the owner to change it.';
+const AUDITOR = { identity_id: '66666666-6666-4666-8666-666666666666', parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', hat: 'audit' };
+const PLAIN_WORDS = 'Ask the owner or a manager to change the shop’s tax number.';
 
 const world = { who: OWNER, key: null, writes: [] };
 const isWrite = (sql) => /^\s*(UPDATE|INSERT|DELETE)/i.test(String(sql));
@@ -85,10 +86,12 @@ function whole(number) { return { vault: { sections: [{ type: 'identity', label:
   const run = async (door, body, who, key) => { Object.assign(world, { who, key: key || null, writes: [] }); return call(port, door.method, door.url, body); };
   try {
     for (const door of DOORS) {
-      for (const [who, label] of [[CLERK, 'a clerk (act, editor)'], [MANAGER, 'a manager']]) {
+      for (const [who, label] of [[CLERK, 'a clerk (act, editor)'], [AUDITOR, 'an auditor (editor, hat audit)']]) {
         const r = await run(door, door.change, who);
         ok(door.name + ' — ' + label + ' changing the GSTIN is refused 403 in plain words, nothing written', refused(r) && world.writes.length === 0, JSON.stringify(r) + ' writes=' + world.writes.length);
       }
+      const mgr = await run(door, door.change, MANAGER);
+      ok(door.name + ' — a manager changing the GSTIN passes the door and reaches the write', mgr.status !== 403 && world.writes.length > 0, JSON.stringify(mgr) + ' writes=' + world.writes.length);
       const owner = await run(door, door.change, OWNER);
       ok(door.name + ' — the owner changing the GSTIN passes the door and reaches the write', owner.status !== 403 && world.writes.length > 0, JSON.stringify(owner) + ' writes=' + world.writes.length);
       {
@@ -101,12 +104,12 @@ function whole(number) { return { vault: { sections: [{ type: 'identity', label:
     const till = await run(DOORS[0], { gstin: '27AAACR5055K1Z8' }, CLERK);
     ok('POST /api/till/shop — a clerk is refused BEFORE the number is checked (a bad number answers 403, not 400)', refused(till), JSON.stringify(till));
     const may = async (who) => { Object.assign(world, { who, key: null }); return (await call(port, 'GET', '/api/entities/me/can-see-costs')).body.may_set_tax_id; };
-    ok('GET /entities/me/can-see-costs says may_set_tax_id: owner true, manager false, clerk false (the action stays shown, the server answers)',
-      (await may(OWNER)) === true && (await may(MANAGER)) === false && (await may(CLERK)) === false);
+    ok('GET /entities/me/can-see-costs says may_set_tax_id: owner true, manager true, clerk false (the action stays shown, the server answers)',
+      (await may(OWNER)) === true && (await may(MANAGER)) === true && (await may(CLERK)) === false);
     /* the door itself (lib/tax-id-door): one predicate per role, one comparison, one sentence, and it fails closed */
     const door = require(path.join(HERE, 'lib', 'tax-id-door'));
-    ok('mayChangeTaxId: the owner and a key yes; a clerk, a manager and a viewer no', door.mayChangeTaxId({ identity: OWNER }) && door.mayChangeTaxId({ identity: CLERK, api_key: { jti: 'k' } })
-      && !door.mayChangeTaxId({ identity: CLERK }) && !door.mayChangeTaxId({ identity: MANAGER }) && !door.mayChangeTaxId({ identity: Object.assign({}, CLERK, { access_level: 'viewer' }) }));
+    ok('mayChangeTaxId: the owner and a key yes; a manager yes; a clerk and a viewer no', door.mayChangeTaxId({ identity: OWNER }) && door.mayChangeTaxId({ identity: CLERK, api_key: { jti: 'k' } })
+      && door.mayChangeTaxId({ identity: MANAGER }) && !door.mayChangeTaxId({ identity: CLERK }) && !door.mayChangeTaxId({ identity: Object.assign({}, CLERK, { access_level: 'viewer' }) }));
     ok('taxIdDiffers: case and spaces ignored; a blank sent is nobody saying anything', !door.taxIdDiffers(STORED, ' ' + STORED.toLowerCase() + ' ') && !door.taxIdDiffers(STORED, '') && !door.taxIdDiffers(STORED, null) && door.taxIdDiffers(STORED, NEW_ONE) && door.taxIdDiffers(null, NEW_ONE));
     ok('refusal: 403 OWNER_ONLY in plain words, may false, why = the sentence', door.refusal().status === 403 && door.refusal().code === 'OWNER_ONLY' && door.refusal().legacy.may === false && door.refusal().detail === door.TAX_ID_ASK_OWNER);
     let nexted = 0, answered = null;
