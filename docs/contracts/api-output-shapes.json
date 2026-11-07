@@ -6876,7 +6876,8 @@
                 "words": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           },
           "not_in_books": {
@@ -6912,7 +6913,8 @@
                 "words": {
                   "type": "string"
                 }
-              }
+              },
+              "additionalProperties": false
             }
           }
         },
