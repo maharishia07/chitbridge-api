@@ -493,6 +493,7 @@ const GUARDS = [
   'settings-owner-gate.test.cjs', // T3-SETTINGS: ONE owner gate (lib/owner.gate) on every counters write - a co-assist 403 OWNER_ONLY, db never asked; GET /counters + GET /entities/policy say may/why with the refusal's own sentence
   'chit-crossing.test.cjs', // LEAN-PLAN §8 #3: lib/chit-crossing (lifted with moveStatus) - definer vs legacy fallback, 9-arg retry only when no line was named
   'chits-files.test.cjs', // LEAN-PLAN §8 #4: tools/chits-files.cjs is the ONE list of chits files; no test or script reads routes/chits.js by a literal path
+  'timeout-idempotency.test.cjs', // PLT-69: a keyed request past REQUEST_TIMEOUT_MS gets its 503 (problem shape); retry = 409 while it runs, the stored answer after; the handler runs once
   'stuck-close.test.cjs', // round 2: a counter sale / summary chit sent to its own shop closes when the books hold it - through moveStatus, only an open own copy
   'governance-report.test.cjs', // E04: the nightly governance report is red for each failing line; never green while main is unprotected or /health says development
   'iso8601.test.cjs', // N11: every moment that leaves storage or transport (sent chit, copies, pack, Tally, JUnit) is RFC 3339 UTC
