@@ -375,11 +375,16 @@ function wrapperLineOf(lines, route) {
 /** a route( wrapper route: its own text holds no res.json at all */
 const answeredByWrapper = (wrapperLine, answers) => wrapperLine > 0 && !answers.node && answers.calls === 0;
 
+/** where a route( wrapper route sits, 0 when the route is not one: the register gives a route( route its real line (API-11), so it is known by its line being a route( line; wrapperLineOf stays for a register not yet regenerated */
+function wrapperLineFor(lines, route) {
+  if (/^\s*route\(/.test(lines[route.line - 1] || '')) return route.line;
+  return route.line ? 0 : wrapperLineOf(lines, route);
+}
+
 /** one route's shape entry { status, schema, observed, open, closed_by?, example? } from its recorded answers and its handler's text; a route( wrapper route (its own text holds no res.json) closes from recordings */
 function shapeEntry(route, { byStatus, lines, captures, fromRecordings }) {
   const statuses = Object.keys(byStatus);
-  /* the register now gives a route( route its real line (API-11), so a wrapper route is known by its line being a route( line; wrapperLineOf stays for a register not yet regenerated */
-  const wrapperLine = /^\s*route\(/.test(lines[route.line - 1] || '') ? route.line : route.line ? 0 : wrapperLineOf(lines, route);
+  const wrapperLine = wrapperLineFor(lines, route);
   const answers = handlerAnswers(handlerText(lines, route.line || wrapperLine));
   const status = statuses.includes('200') ? '200' : statuses[0] || '200';
   const derived = deriveShape({ samples: byStatus[status] || [], source: answers.node, recordings: answeredByWrapper(wrapperLine, answers) || !!fromRecordings });
