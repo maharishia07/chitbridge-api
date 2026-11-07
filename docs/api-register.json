@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 221,
-  "meets": 416,
+  "partial": 228,
+  "meets": 409,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -712,7 +712,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6424,
-   "hash": "fc31a63bfe103fc8",
+   "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
     "count": 0,
@@ -796,10 +796,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4a17b9d60cbb5078"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "core.js"
@@ -1040,7 +1041,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 421,
+   "line": 419,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1144,7 +1145,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 701,
+   "line": 699,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1246,7 +1247,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 437,
+   "line": 435,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -9579,7 +9580,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5903,
-   "hash": "d314b7303243841c",
+   "hash": "e1d82593a96de058",
    "does": "",
    "errors": {
     "count": 0,
@@ -9680,7 +9681,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5857,
-   "hash": "3d7ed7659b7e4ede",
+   "hash": "f8f800ad89880f0c",
    "does": "",
    "errors": {
     "count": 0,
@@ -10619,7 +10620,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3301,
-   "hash": "043cd9e70f06789d",
+   "hash": "b29d0408daaea305",
    "does": "",
    "errors": {
     "count": 0,
@@ -10692,10 +10693,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b29d0408daaea305"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -11310,7 +11312,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3200,
-   "hash": "ad6796f3a4111cb6",
+   "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
     "count": 0,
@@ -11380,10 +11382,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "717bda3d3a5a7b88"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "till.html"
@@ -11412,7 +11415,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3038,
-   "hash": "81a3de9166377e50",
+   "hash": "4fb72caa3f81d69c",
    "does": "",
    "errors": {
     "count": 0,
@@ -11489,10 +11492,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "4fb72caa3f81d69c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -12742,7 +12746,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 487,
+   "line": 485,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -12840,7 +12844,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 381,
+   "line": 379,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -13145,7 +13149,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 609,
+   "line": 607,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13249,7 +13253,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 179,
-   "hash": "6cbf9daf9774ff55",
+   "hash": "620e6978a139f9e5",
    "does": "",
    "errors": {
     "count": 0,
@@ -13330,10 +13334,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "620e6978a139f9e5"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -13361,7 +13366,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 639,
+   "line": 637,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13461,7 +13466,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 680,
+   "line": 678,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -29708,7 +29713,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 411,
+   "line": 409,
    "hash": "236c464e6aa84b3e",
    "does": "",
    "errors": {
@@ -40666,7 +40671,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 6316,
-   "hash": "b9353130dc633b3d",
+   "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
     "count": 0,
@@ -40738,10 +40743,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b01be72f3b0a508b"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-chit2.js",
@@ -41195,7 +41201,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5673,
-   "hash": "af03af9e31a2886c",
+   "hash": "6d084a7304301f0c",
    "does": "",
    "errors": {
     "count": 0,
@@ -41317,7 +41323,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5278,
-   "hash": "907837f4841fdfde",
+   "hash": "361ec7c5adc2da98",
    "does": "",
    "errors": {
     "count": 0,
@@ -45107,7 +45113,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 395,
+   "line": 393,
    "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
@@ -45214,7 +45220,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 688,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45316,7 +45322,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 453,
+   "line": 451,
    "hash": "5de81a35731a3e0b",
    "does": "",
    "errors": {
@@ -45422,7 +45428,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 521,
+   "line": 519,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -45520,7 +45526,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 626,
+   "line": 624,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -45622,7 +45628,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 359,
+   "line": 357,
    "hash": "785eb787c08de857",
    "does": "",
    "errors": {
@@ -45731,7 +45737,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 502,
+   "line": 500,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -45831,7 +45837,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 534,
+   "line": 532,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -45937,7 +45943,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 649,
+   "line": 647,
    "hash": "21948004b6ff4f9d",
    "does": "",
    "errors": {
@@ -46039,7 +46045,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 663,
+   "line": 661,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46143,7 +46149,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 712,
+   "line": 710,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -46243,7 +46249,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 560,
+   "line": 558,
    "hash": "bfd12e4bf3f5c6ca",
    "does": "",
    "errors": {
@@ -62673,7 +62679,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5982,
-   "hash": "8d1af83e23757398",
+   "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
     "count": 1,
@@ -62752,10 +62758,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0db505edd6bea9db"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-dispute.js",
     "core.js",
