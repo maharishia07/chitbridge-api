@@ -2819,6 +2819,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "NETWORK_REMOTE_NOT_YET",
+   "status": "409",
+   "title": "Business on another installation",
+   "shopkeeper": "That business is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.",
+   "hint": "Add them as a supplier for now; connecting across installations is coming.",
+   "owner_area": "network",
+   "since": "2026-11-07"
+  },
+  {
    "code": "NETWORK_REQUEST_INVALID",
    "status": "400",
    "title": "Network request not valid",

@@ -6,6 +6,7 @@
  */
 const { pool, withTx } = require('../db');
 const bridge = require('../lib/bridgeId');
+const ctpaddress = require('../../lib/ctpaddress'); // NET-77: the one reader of "is this business on another installation"
 const chit = require('./chit'); // NET-02 §F: real in-flight check
 const err = (status, message, code) => Object.assign(new Error(message), { status, code });
 /**
@@ -144,6 +145,22 @@ const _checkEdge = (operation, edge, actor) => {
 
 // ---- LINK ----
 /**
+ * NET-77 · a business on ANOTHER installation is only a stub row here. An edge to it would live on this server alone (the far server answers
+ * EDGE_NOT_FOUND; this one would list it as asked forever, the RAIL-112 pattern). So the ask is refused in words and nothing is saved.
+ * ⚠️ TEMPORARY: NET-79 is the real fix (the ask travels as a CTP event and the far side holds its copy). When it lands, delete this refusal.
+ * The remote test is the one reader ctpaddress.resolve (the stamp, inactive installations included); a local business answers local.
+ */
+async function refuseRemote(nodes) {
+  for (const node of nodes) {
+    const {
+      rows: [who]
+    } = await pool.query(`select identity_id from identities where upper(bridge_id) = upper($1) and identity_type = 'entity'`, [node.bridge_id]);
+    if (who && !(await ctpaddress.resolve(who.identity_id)).local) {
+      throw err(409, `${node.name || 'That business'} is on another ChitBridge installation, and a connection across installations cannot be asked yet. Nothing was saved.`, 'NETWORK_REMOTE_NOT_YET');
+    }
+  }
+}
+/**
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
  * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
  */
@@ -164,6 +181,7 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   if (!child) throw err(404, 'business not found — check the handle', 'CHILD_NOT_FOUND');
   if (child.id === parent.id) throw err(400, 'cannot connect to self', 'SELF');
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
+  await refuseRemote([parent, child]);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   const {
     rows: [open]

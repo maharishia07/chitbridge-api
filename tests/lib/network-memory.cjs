@@ -65,6 +65,7 @@ function memory(options) {
   /** each rule: [pattern on the normalised statement, (params, sql) → rows] — the first that matches answers */
   const RULES = [
     [/^select identity_id, bridge_id, display_name from identities where identity_id = \$1 and identity_type = 'entity'/, (p) => [identity(p[0])].filter(Boolean)],
+    [/^select identity_id from identities where upper\(bridge_id\) = upper\(\$1\) and identity_type = 'entity'/, (p) => data.identities.filter((one) => same(one.bridge_id, p[0])).map((one) => ({ identity_id: one.identity_id }))],
     [/^select \* from cb_entity where bridge_id\s*=\s*\$1/, (p) => data.entities.filter((one) => same(one.bridge_id, p[0]))],
     [/^insert into cb_entity\(bridge_id,name,mode,owner_scope,path,claimed,app_ref\)/, (p) => [{ id: FIXED_NEW_NODE, bridge_id: 'REGISTERED1', name: p[1], mode: p[2], claimed: p[5], path: 'REGISTERED1' }]],
     [/^insert into cb_entity/, () => []],
