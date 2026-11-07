@@ -356,6 +356,8 @@ function inlineSql(text, params) {
   if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
   return out;
 }
+/** OPS-27: true when the statement runs under a bound shop (batch entity or its own) — set_config rides in front of it, so RLS applies and the context-free tripwire must stay quiet; a null/empty entity stays guarded */
+const scopedStatement = (entityId, s) => !!(String((s && s.entity) != null ? s.entity : '').trim() || String(entityId == null ? '' : entityId).trim());
 /**
  * ⭐ EFF-TRIPS (2026-10-15): a statement may name its OWN `entity` — `{ text, params, entity }`. A `SELECT set_config(
  * 'app.current_entity', <entity>, true)` rides in front of it (SET LOCAL, same transaction, one more statement on the
@@ -371,7 +373,7 @@ const readBatch = async (entityId, actorId, statements) => {
   const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
   const texts = [], at = [];
   statements.forEach((s) => {
-    rlsGuardCheck(s.text);
+    if (!scopedStatement(entityId, s)) rlsGuardCheck(s.text);   /* OPS-27: a scoped statement is not context-free */
     if (s.entity !== undefined && s.entity !== null) texts.push("SELECT set_config('app.current_entity', " + inlineLiteral(String(s.entity)) + ', true)');
     at.push(texts.length);
     texts.push(inlineSql(s.text, s.params));
