@@ -6696,7 +6696,7 @@
     "noHeader": 1
   },
   "tools/tally-connector/prove.js": {
-    "score": 56,
+    "score": 55,
     "long40": 0,
     "long80": 0,
     "complex10": 0,
@@ -6706,7 +6706,7 @@
     "cryptic": 52,
     "noWhatLine": 0,
     "emptyCatch": 3,
-    "noHeader": 1
+    "noHeader": 0
   },
   "tools/tally-connector/seed.cjs": {
     "score": 9,
