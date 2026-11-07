@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6224,
+   "line": 6235,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5087,
+   "line": 5098,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -710,7 +710,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6485,
+   "line": 6496,
    "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
@@ -9228,7 +9228,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3601,
+   "line": 3602,
    "hash": "6cba303a3817793d",
    "does": "",
    "errors": {
@@ -9376,7 +9376,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4903,
+   "line": 4914,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9478,7 +9478,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4152,
+   "line": 4153,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9578,7 +9578,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5964,
+   "line": 5975,
    "hash": "e1d82593a96de058",
    "does": "",
    "errors": {
@@ -9679,7 +9679,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5918,
+   "line": 5929,
    "hash": "f8f800ad89880f0c",
    "does": "",
    "errors": {
@@ -9791,7 +9791,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5491,
+   "line": 5502,
    "hash": "837d644d48e9aa1d",
    "does": "",
    "errors": {
@@ -10008,7 +10008,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4359,
+   "line": 4360,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10108,7 +10108,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4470,
+   "line": 4471,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10407,7 +10407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6125,
+   "line": 6136,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10515,7 +10515,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3156,
+   "line": 3157,
    "hash": "54b00476fd18ef9d",
    "does": "",
    "errors": {
@@ -10618,7 +10618,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3352,
+   "line": 3353,
    "hash": "130ced1d0eda9241",
    "does": "",
    "errors": {
@@ -10725,7 +10725,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3539,
+   "line": 3540,
    "hash": "54cb3e4dc8ed64b1",
    "does": "",
    "errors": {
@@ -10822,7 +10822,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4341,
+   "line": 4342,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10920,7 +10920,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4181,
+   "line": 4182,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -11016,7 +11016,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4191,
+   "line": 4192,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11114,7 +11114,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4233,
+   "line": 4234,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11209,7 +11209,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4298,
+   "line": 4299,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11309,7 +11309,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3251,
+   "line": 3252,
    "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
@@ -11411,7 +11411,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3089,
+   "line": 3090,
    "hash": "4fb72caa3f81d69c",
    "does": "",
    "errors": {
@@ -11831,7 +11831,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3566,
+   "line": 3567,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -40540,8 +40540,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4793,
-   "hash": "604864a3e8107a0d",
+   "line": 4828,
+   "hash": "cc87fa820d46eda1",
    "does": "",
    "errors": {
     "count": 0,
@@ -40619,7 +40619,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#961: handler re-read; 409 INVOICE_MONEY_LOCKED registered, one problem shape, shopkeeper sentence, error test in chit-proposals; non-money amends pass; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40650,7 +40650,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6377,
+   "line": 6388,
    "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
@@ -40758,7 +40758,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4694,
+   "line": 4695,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40864,7 +40864,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5138,
+   "line": 5149,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40970,7 +40970,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4134,
+   "line": 4135,
    "hash": "f07c1d1194dee405",
    "does": "",
    "errors": {
@@ -41067,7 +41067,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4504,
+   "line": 4505,
    "hash": "4896e7d335ee37ca",
    "does": "",
    "errors": {
@@ -41179,7 +41179,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5734,
+   "line": 5745,
    "hash": "6d084a7304301f0c",
    "does": "",
    "errors": {
@@ -41301,7 +41301,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5339,
+   "line": 5350,
    "hash": "361ec7c5adc2da98",
    "does": "",
    "errors": {
@@ -41409,7 +41409,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5049,
+   "line": 5060,
    "hash": "10046b55f800d3dc",
    "does": "",
    "errors": {
@@ -41908,7 +41908,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4373,
+   "line": 4374,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -42008,7 +42008,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4429,
+   "line": 4430,
    "hash": "19bcedf0e932c932",
    "does": "",
    "errors": {
@@ -42108,7 +42108,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4449,
+   "line": 4450,
    "hash": "9250618eaade5a10",
    "does": "",
    "errors": {
@@ -42204,7 +42204,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4095,
+   "line": 4096,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -42304,7 +42304,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6456,
+   "line": 6467,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -42409,7 +42409,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6435,
+   "line": 6446,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -42513,7 +42513,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6417,
+   "line": 6428,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -42617,7 +42617,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6696,
+   "line": 6707,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -42723,7 +42723,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4319,
+   "line": 4320,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42819,7 +42819,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4288,
+   "line": 4289,
    "hash": "90c66f0cfb0c470f",
    "does": "",
    "errors": {
@@ -42919,7 +42919,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4309,
+   "line": 4310,
    "hash": "d3bcaba8227c7630",
    "does": "",
    "errors": {
@@ -43019,7 +43019,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4205,
+   "line": 4206,
    "hash": "1899c9cfdf06ac32",
    "does": "",
    "errors": {
@@ -43120,7 +43120,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4223,
+   "line": 4224,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -43220,7 +43220,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4265,
+   "line": 4266,
    "hash": "9ce79b392b49494f",
    "does": "",
    "errors": {
@@ -43320,7 +43320,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4244,
+   "line": 4245,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -43415,7 +43415,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 402,
+   "line": 403,
    "hash": "0f58eecaca6bb7d1",
    "does": "",
    "errors": {
@@ -62681,7 +62681,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6043,
+   "line": 6054,
    "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
@@ -62794,7 +62794,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6269,
+   "line": 6280,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62899,7 +62899,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6325,
+   "line": 6336,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -63006,7 +63006,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6400,
+   "line": 6411,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -63111,7 +63111,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5182,
+   "line": 5193,
    "hash": "bca557ce84285e48",
    "does": "",
    "errors": {
@@ -63267,7 +63267,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4493,
+   "line": 4494,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -63371,7 +63371,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6543,
+   "line": 6554,
    "hash": "66977b3f37bccaf4",
    "does": "",
    "errors": {
