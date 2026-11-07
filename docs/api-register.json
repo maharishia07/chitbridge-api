@@ -24982,9 +24982,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "13eb044abdeba057"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
