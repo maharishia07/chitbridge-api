@@ -213,9 +213,9 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     v = await verify('9876543210', { pin: '2580' });
     t('   ⭐ 4 misses, a sign-in (pays back one), 2 misses = 5 on the books: the contact is shut, even for the right PIN', v.status === 400 && v.body.code === 'SIGNIN_REFUSED', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
     await dev.contactGuessReset('9876543210'); reset();
-    let cycles = 0, shut = false;
-    while (cycles < 12 && !shut) { cycles++; await miss(2); shut = (await verify('9876543210', { pin: '2580' })).status === 400; }
-    t('   ⭐ guessing twice between sign-ins cannot go on for ever: the contact shuts within ' + cycles + ' cycles (budget 5 + 1 refunded each)', shut && cycles <= 6, 'cycles ' + cycles);
+    let misses = 0, shut = false;
+    while (misses < 12 && !shut) { await miss(1); misses++; shut = (await verify('9876543210', { pin: '2580' })).status === 400; }
+    t('   ⭐ one wrong guess, one own sign-in, repeated: only the FIRST sign-in of the window pays a miss back, so the contact shuts within 6 misses (took ' + misses + ')', shut && misses <= 6, 'misses ' + misses);
     await dev.contactGuessReset('9876543210');
 
     /* SEC-143 round 2: a wrong PIN costs the same time with no account, 1, 2 or 3 PIN holders behind the contact (and for a code) */
