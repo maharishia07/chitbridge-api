@@ -731,6 +731,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
    "lifecycle": "stable"
   },
+  "GET /api/ctp/.well-known/ctp.json": {
+   "hash": "e581982c3c888b49",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "lifecycle": "stable"
+  },
   "GET /api/entities/entitlements": {
    "hash": "30f43a715550a15a",
    "names_clear": true,
@@ -1331,6 +1339,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "lifecycle": "stable"
+  },
+  "GET /api/relationships/customers/groups": {
+   "hash": "e85807898c5889e2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
    "lifecycle": "stable"
   },
   "GET /api/relationships/scorecard": {
@@ -2356,6 +2372,30 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/proposals": {
+   "hash": "c6da9c003f425c7b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
+   "hash": "df3447cbe93e0f0f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "lifecycle": "stable"
+  },
+  "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
+   "hash": "b19815fc99ad6843",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
