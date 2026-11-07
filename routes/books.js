@@ -53,7 +53,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
    (18:30–24:00 UTC) was ahead of asOf and vanished from Payables / Receivables until the next UTC day — "You owe nobody" beside
    a supplier chip saying you owe lakhs. One day, from one helper, everywhere this file says today. */
 const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf of a moment is never null */
-const dateQ = (value, fallback) => (DATE.test(String(value || '').slice(0, 10)) ? String(value).slice(0, 10) : fallback);
+/* ACC-274: a date the caller GIVES must be a real day or it is a 400 DATE_INVALID (refusalOf names the field); absent → the fallback. The one reader is books-period.dateGiven (dateOf is its body twin). */
+const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
    currency's own decimals). ⚠️ ACC-179: it was × 100 for every currency — a JPY amount came out 100× too big. */
 const cashflow = () => require('../lib/books-cashflow');

@@ -396,6 +396,7 @@
   500
  ],
  "GET /api/books/trial-balance": [
+  400,
   401,
   404,
   500
@@ -1834,6 +1835,7 @@
   500
  ],
  "POST /api/books/entries": [
+  400,
   401,
   403,
   404,

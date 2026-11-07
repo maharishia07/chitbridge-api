@@ -1658,6 +1658,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "DATE_INVALID",
+   "status": "400",
+   "title": "Date not valid",
+   "shopkeeper": "That date is not a real day.",
+   "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+   "owner_area": "books",
+   "since": "2026-11-08"
+  },
+  {
    "code": "DB_CONNECTION_LOST",
    "status": "503",
    "title": "Database unavailable",
