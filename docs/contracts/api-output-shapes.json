@@ -6752,8 +6752,12 @@
           "net",
           "count",
           "provisional",
+          "dropped",
           "rows",
-          "note"
+          "note",
+          "prior_period",
+          "not_in_books",
+          "reversed"
         ],
         "properties": {
           "month": {
@@ -6786,9 +6790,132 @@
           "provisional": {
             "type": "boolean"
           },
+          "dropped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "rows": {},
           "note": {
             "type": "string"
+          },
+          "prior_period": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "cause",
+                "invoice_day",
+                "invoice_month",
+                "booked_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "cause": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "booked_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "reversed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "not_in_books": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -7975,7 +8102,8 @@
         "required": [
           "can_see_costs",
           "is_owner",
-          "may_set_rate"
+          "may_set_rate",
+          "may_set_tax_id"
         ],
         "properties": {
           "can_see_costs": {
@@ -7985,6 +8113,9 @@
             "type": "boolean"
           },
           "may_set_rate": {
+            "type": "boolean"
+          },
+          "may_set_tax_id": {
             "type": "boolean"
           }
         },
@@ -13642,6 +13773,7 @@
             "type": "number"
           },
           "bills": {},
+          "withdrawn": {},
           "total": {
             "type": "number"
           },
@@ -25514,9 +25646,29 @@
     },
     "GET /api/relationships/customers/groups": {
       "status": "200",
-      "schema": {},
+      "schema": {
+        "type": "object",
+        "required": [
+          "names",
+          "migrated"
+        ],
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "migrated": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
       "observed": 5,
       "open": [],
+      "closed_by": "recordings",
       "example": {
         "url": "/api/relationships/customers/groups"
       }
@@ -40689,6 +40841,18 @@
           },
           "total": {
             "type": "number"
+          },
+          "total_partial": {
+            "type": "boolean"
+          },
+          "unpriced_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "total_words": {
+            "type": "string"
           }
         },
         "additionalProperties": false

@@ -1646,7 +1646,8 @@
       "reopen": {
        "may": false,
        "why": null
-      }
+      },
+      "lock_trail": []
      }
     ]
    },

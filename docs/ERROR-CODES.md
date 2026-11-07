@@ -39,9 +39,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_FLAG | 400 | Flag not true or false | priceIncludesTax must be true or false. | Send true or false. | tax | 2026-10-23 |
 | BAD_PERIOD | 400 | Bad period | Ask for a week, a month, a quarter or a year. | Pick one of those and try again. | till-summary | 2026-10-22 |
 | BAD_PHONE | 400 | Bad phone | Type the mobile number with its country code, 10 to 15 digits. | Check the number and try again. | counters | 2026-10-22 |
-| BAD_PRICE | 400 | Price below zero | A line has a price below 0. | Send a price of 0 or more. | tax | 2026-10-23 |
-| BAD_QTY | 400 | Quantity not above zero | A line needs a quantity above 0. | Send a quantity above 0 on every line. | tax | 2026-10-23 |
-| BAD_RATE | 400 | Tax rate out of range | A line has a tax rate outside 0 to 100 percent. | Send a rate from 0 to 100. | tax | 2026-10-23 |
+| BAD_PRICE | 400 | Price below zero or not a number | A line, on a quote or on a chit being sent, has a price below 0, or a price or discount that is not a number. | Send a price of 0 or more, as a number. | tax | 2026-10-23 |
+| BAD_QTY | 400 | Quantity not above zero or not a number | A line, on a quote or on a chit being sent, needs a quantity above 0, as a number. | Send a quantity above 0 on every line, as a number. | tax | 2026-10-23 |
+| BAD_RATE | 400 | Tax rate out of range or not a number | A line has a tax rate outside 0 to 100 percent, a cess below 0, or a rate that is not a number (on a chit being sent, a blank rate the shelf cannot fill too). | Send a rate from 0 to 100 (cess 0 or more), as a number. | tax | 2026-10-23 |
 | BAD_STATE | 409 | Not in that state | This connection is not in a state where that can be done. | Refresh the list and look at where it stands. | network | 2026-10-23 |
 | BAD_TYPE | 400 | Unknown connection type | A connection is either governance or commercial. | Send one of those two words. | network | 2026-10-23 |
 | BILL_NOT_RECORDED | varies | Bill not recorded | That bill has not reached ChitBridge yet. | It is tried again once the bill arrives. | till | 2026-10-22 |
@@ -165,6 +165,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CURRENCY_NOT_ALLOWED | varies | Currency not available | That currency is not available for this business. | Choose one of the currencies listed. | govresolve | 2026-10-22 |
 | CURRENCY_NOT_THE_LEDGERS | 422 | Wrong money for this ledger | This payment is in a different money from the ledger's. | Use the ledger's own money. | books | 2026-10-23 |
 | CYCLE | 409 | Would loop | A network cannot sit under one of its own members. | Choose a different network to join. | network | 2026-10-23 |
+| DB_CONNECTION_LOST | 503 | Database unavailable | The connection to the database was lost while this was being done. Nothing was saved. | Try again in a moment. | platform | 2026-11-07 |
 | DEFINITIONS_NOT_MIGRATED | 503 | Definitions not set up | Definitions arrive after the next update. Nothing was saved. | Try again after the next update. | definitions | 2026-11-07 |
 | DEFINITION_CITED | 409 | Slab still in use | Products or categories still use this slab. | Choose the slab that takes over, then retire this one. | definitions | 2026-10-23 |
 | DEFINITION_GOVERNED | 403 | Set by the country | This slab is set by your country and cannot be changed here. | To differ from it, add a slab of your own. | definitions | 2026-10-23 |
@@ -269,7 +270,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MIGRATION | 409 | Not switched on yet | Unit and source arrive after the next update. Type, label and required still work. | Type, label and required still work; try again after the next update. | schemas | 2026-11-07 |
 | MINT_FAILED | 500 | Could not make an id | We could not make an id for this business just now. | Try again in a moment. | network | 2026-10-23 |
 | MISSING_FIELD | 422 | Field missing | A needed field was left out. | Fill in the field named and send it again. | validate | 2026-10-22 |
-| MONEY_INPUT_UNREADABLE | 422 | A line could not be read | A line has a price or quantity that is not a number, so the money could not be worked out. | Fix that line and send again. | chits | 2026-10-30 |
+| MONEY_INPUT_UNREADABLE | 422 | Retired: a line could not be read | Retired 2026-11-07 (ACC-271): a chit line with a figure that is not a number is now answered BAD_QTY, BAD_PRICE or BAD_RATE (400). | Fix that line and send again. | chits | 2026-10-30 |
 | MONEY_NOT_COMPUTED | 503 | The money could not be worked out | The money could not be worked out. | Try again; if it repeats, tell us. | chits | 2026-10-30 |
 | MONEY_UNBALANCED | 409 | The money does not add up | The bill does not add up, so it was not sent. | Check the bill, or the owner can let it through and say why. | chits | 2026-10-30 |
 | R132 (re-walk) | Counter › F7 › Asha Devi, 16:50 | Picking a name asks that person's PIN | HALF: once Asha has a counter PIN, re-picking her opens "Counter PIN" and 2468 signs her in ✅. Still open: (1) her mobile 9000000004 is still refused ("That sign-in didn't work"); (2) a first pick asks to TYPE the user ID although her name was just picked; (3) first sign-in asks for a PIN twice ("Choose a PIN", then "Counter PIN"); (4) the signed-in box also says "Sign in to connect this counter to a shop", contradicting itself. | w741-w746 | P1 (1,2) · P2 (3) · P3 (4) | cb-counter (api kit till master) |
@@ -508,6 +509,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | disputes_unknown | 503 | Could not check disputes | Could not check for open disputes. | Try again in a moment. | chits | 2026-10-23 |
 | reason_required | 400 | A reason is needed to reject | Say why you are rejecting this bill. | Write the reason and try again. | chits | 2026-10-23 |
 | status_conflict | 409 | Status changed under you | Someone else just changed this chit. | Look at it again, then try once more. | chits | 2026-10-23 |
+| taken_back | 409 | Bill was taken back | This bill was cancelled or rejected after it was booked, so it cannot be reopened. | Ask the sender to send it again as a new bill. | chits | 2026-11-07 |
 | ANSWERED | 409 | Already answered | Not found, or already answered: an answer is given once. | Refresh the list. | crm | 2026-10-23 |
 | BAD_AFTER | 400 | Bad day word | Pick one of the days offered. | Choose a day from the list. | crm | 2026-10-23 |
 | BAD_ASSIGNEE | 400 | Not on your team | That person is not on your team. | Pick someone from your team. | crm | 2026-10-23 |

@@ -48,7 +48,7 @@ router.get('/invoice/:chit_id', auth, ...checked('GET /invoice/:chit_id'), async
 router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   try {
     const me = ctx(req);
-    const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped } = await C.ledgerFor(me, req.query.month);
     res.json({
       month: bounds.month,
       period: bounds.period,
@@ -59,6 +59,10 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
       net: ledger.net,
       count: ledger.count,
       provisional: ledger.provisional,
+      prior_period: T.priorPeriodOf(ledger), // ACC-224: late bills of an earlier month the books hold in this one, each with its words
+      reversed: T.reversedOf(ledger), // ACC-270: bills reversed this month after an earlier month held them, with words
+      not_in_books: T.notInBooksOf(ledger), // ACC-270: counter bills the books hold no entry for, with words
+      dropped: dropped, // ACC-266 C5: copies that could not be read just now — non-empty means the month above is SHORT
       rows: ledger.rows.map((item) => ({
         chit_id: item.chit_id,
         subject: item.subject,
@@ -80,11 +84,22 @@ router.get('/ledger', auth, ...checked('GET /ledger'), async (req, res) => {
   }
 });
 
+/* ACC-266 C5: a copy that fails to read fails every time until it is repaired, so the refusal names the bills and says they need repair; it does not promise a retry */
+const DROPPED_NAMED = 5;
+function droppedWords(dropped, reasons) {
+  /* ACC-268: each named bill says why, in words (ledgerFor dropped_why); the ids alone when a caller gave no reasons */
+  const said = (reasons || []).length ? reasons.slice(0, DROPPED_NAMED).map((item) => item.why).join(' ') : dropped.slice(0, DROPPED_NAMED).join(', ');
+  const more = dropped.length > DROPPED_NAMED ? ' and ' + (dropped.length - DROPPED_NAMED) + ' more' : '';
+  return dropped.length + ' bill(s) of this month could not be read, so the file would be short and was not made. These bills need repair: ' + said + more + '. Ask support to repair them, then ask for the file again.';
+}
+
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
   try {
     const me = ctx(req);
-    const { bounds, me: meParty, ledger } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
+    /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
+    if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped, droppedWhy), { dropped: dropped.slice(0, DROPPED_NAMED) }));
     const form = String(req.query.form || 'gstr1').toLowerCase();
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
     /* the engine refuses in words (no 15-character GSTIN on this shop): 422, the shop's facts cannot answer a return */
@@ -116,6 +131,8 @@ function refuse(req, res, status, code, message, extra) {
 const nameOf = (l) => '"' + String(l.name || l.item_id || l.code || 'line ' + l.key).slice(0, 60) + '"';
 /** the first malformed line, said — qty above 0, a price that is not negative, a rate 0–100 */
 function badLine(lines) {
+  const unread = S.unreadSaid(lines, nameOf); /* ACC-221: a figure that is not a number is named first — never read as 0 */
+  if (unread) return unread;
   for (const l of lines) {
     if (!(l.qty > 0)) return ['BAD_QTY', 'Line ' + nameOf(l) + ' needs a quantity above 0.'];
     if (l.listPrice != null && l.listPrice < 0) return ['BAD_PRICE', 'Line ' + nameOf(l) + ' has a price below 0.'];
@@ -172,7 +189,7 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
     const said = S.saidInclusive(body);
     if (said === null) return refuse(req, res, 400, 'BAD_FLAG', 'priceIncludesTax must be true or false.');
     const entity_id = auth.entityOf(req);
-    const shop = await S.shopOf(entity_id);
+    const shop = await S.askedShopOf(entity_id, body); /* ACC-272: a shop that never said its registration is asked (409), not priced at no tax */
     const seller = S.party(body.seller, shop.party);
     const st = regulation.status(seller.Country);
     if (st.code === 'NO_COUNTRY') return refuse(req, res, 422, 'NO_COUNTRY', st.why);
@@ -187,13 +204,10 @@ router.post('/compute', auth, auth.requireScope('tax'), ...checked('POST /comput
       const prod = sh && sh.productOf(l);
       if (!prod) return refuse(req, res, 422, 'ITEM_NOT_FOUND', 'Line ' + nameOf(l) + ' names an item this shop does not sell.', { line: l.key });
       const p = S.priceLine(l, prod);
-      if (p.unit_price == null)
-        return refuse(req, res,
-          422,
-          'NO_PRICE',
-          (prod.name ? '"' + String(prod.name).slice(0, 60) + '"' : 'Line ' + nameOf(l)) + ' has no price on the shelf. Set its price, or send one.',
-          { line: l.key }
-        );
+      if (p.unit_price == null) {
+        const [code, words] = S.unpricedSaid(l, prod, nameOf);
+        return refuse(req, res, 422, code, words, { line: l.key });
+      }
       l.listPrice = p.unit_price;
       l.name = l.name || p.name;
       l.item_id = l.item_id || sh.idOf(l);
