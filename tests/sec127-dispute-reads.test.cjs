@@ -18,6 +18,7 @@ const fs = require('fs');
 const { harness, SHOP } = require('./lib/problem-world.cjs');
 
 const HERE = path.join(__dirname, '..');
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
@@ -67,7 +68,7 @@ async function openCountCase() {
 }
 
 function listSqlCase() {
-  const text = fs.readFileSync(path.join(HERE, 'routes', 'chits.js'), 'utf8') + fs.readFileSync(path.join(HERE, 'lib', 'select.js'), 'utf8');
+  const text = CF.read(HERE) + fs.readFileSync(path.join(HERE, 'lib', 'select.js'), 'utf8');
   const bare = text.match(/FROM chit_disputes cd\s+WHERE cd\.chit_id = (ch|cs)\.chit_id AND cd\.status/g) || [];
   check('chit-list dispute counts/filters: none left without cd.entity_id (' + bare.length + ' bare)', bare.length === 0, bare.join(' | '));
   check('chit-list SQL names cd.entity_id in the counts', (text.match(/cd\.entity_id = (ch|cs)\.entity_id/g) || []).length >= 8);
