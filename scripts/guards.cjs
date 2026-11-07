@@ -156,6 +156,8 @@ const GUARDS = [
   'docnumber-scheme.test.cjs', // the bill number's shape: what the date says vs when the run restarts
   'ctr-177-bill-number-unique.test.cjs', // CTR-177: the till's real takeNumber never issues a number twice across a roll (needs the engines pin that carries the period label)
   'ctr-187-return-on-credit.test.cjs', // CTR-187: a return on an On-credit bill offers Reduce what they owe first, whole note or nothing, refund.parts []
+  'ctr-197-cancelled-bill.test.cjs', // CTR-197: GET /till/bills and the day close leave a cancelled or rejected bill out
+  'ctr-197-day-check-withdrawn.test.cjs', // CTR-197: the counter's day check knows a bill cancelled elsewhere (withdrawn), so Close the day is not held
   'bell-param.test.cjs', // every page opens the bell with the name the stream reads (2026-09-17: counters never heard it)
   'network-storefront.test.cjs', // a member storefront shows its network's offers and its checkout charges them — one key
   'network-catalogue.test.cjs', // a brand publishes product changes; a store's own price is only ever suggested to

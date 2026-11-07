@@ -13653,6 +13653,7 @@
             "type": "number"
           },
           "bills": {},
+          "withdrawn": {},
           "total": {
             "type": "number"
           },
