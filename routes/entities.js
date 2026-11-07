@@ -87,7 +87,7 @@ function userIdVerdict(wanted, display_name) {
 /**
  * ⭐ SEC-130 (A) · mailAlreadyOnFile(email): the held address gets ONE mail through the same mailer, awaited like a new address's code, so the two paths do the same
  * work and take the same time (a faster refusal would be the timing signal). It carries no code and no shop name: it says the address is already on file, how to sign
- * in, and where to get help. The per-address ask limits (signin.askChecks, before registerNew) cap both paths alike. Best effort: sendEmail never throws.
+ * in, and where to get help. Both paths sit behind the same app-level per-IP authLimiter (signin.askChecks is field validation, not a limit; no per-address cap yet, SEC-148). Best effort: sendEmail never throws.
  */
 function mailAlreadyOnFile(email) {
   const html =
