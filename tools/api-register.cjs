@@ -144,8 +144,13 @@ function ownFunctions(handlers, fileText, shared, otherTexts) {
 
 /** the text of every routes file but this one, read once */
 const routeTexts = new Map();
+function readRouteTexts() {
+  const found = ROUTER_DIRS.filter((dir) => fs.existsSync(path.join(ROOT, dir)));
+  found.forEach((dir) => fs.readdirSync(path.join(ROOT, dir)).filter((name) => name.endsWith('.js')).forEach((name) => routeTexts.set(dir + '/' + name, fs.readFileSync(path.join(ROOT, dir, name), 'utf8'))));
+}
 function otherRouteTexts(file) {
-  if (!routeTexts.size) ROUTER_DIRS.forEach((dir) => fs.existsSync(path.join(ROOT, dir)) && fs.readdirSync(path.join(ROOT, dir)).filter((name) => name.endsWith('.js')).forEach((name) => routeTexts.set(dir + '/' + name, fs.readFileSync(path.join(ROOT, dir, name), 'utf8'))));
+  if (file === 'unknown') return [];
+  if (!routeTexts.size) readRouteTexts();
   return [...routeTexts.entries()].filter(([name]) => name !== file).map(([, text]) => text);
 }
 
@@ -352,7 +357,7 @@ function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
   const fileText = info.file === 'unknown' ? '' : fs.readFileSync(path.join(ROOT, info.file), 'utf8');
   const key = leaf.method + ' ' + leaf.path;
-  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, info.file === 'unknown' ? [] : otherRouteTexts(info.file));
+  const ownHandlers = ownFunctions(leaf.fns, fileText, context.shared, otherRouteTexts(info.file));
   const source = ownHandlers.map((fn) => fn.toString()).join('\n');
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */

@@ -89,10 +89,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/books/todo | books | routes/books.js:2425 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/trial-balance | books | routes/books.js:996 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/year/:fy/status | books | routes/books.js:2195 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/capture/consolidate | capture | routes/capture.js:330 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/capture/pending | capture | routes/capture.js:108 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/capture/stores | capture | routes/capture.js:354 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:176 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/capture/consolidate | capture | routes/capture.js:332 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| GET | /api/capture/pending | capture | routes/capture.js:110 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| GET | /api/capture/stores | capture | routes/capture.js:356 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| GET | /api/capture/webhook/whatsapp | capture | routes/capture.js:178 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/catalogue/:bridge_id | catalogue | routes/catalogue.js:1150 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/catalogue/:bridge_id/capture-fields | catalogue | routes/catalogue.js:1168 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
@@ -303,7 +303,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/work/:chit_id | work | routes/work.js:67 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/work/facts | work | routes/work.js:56 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/work/list | work | routes/work.js:43 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /health | health | routes/health.js:14 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /health | health | routes/health.js:15 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | OPTIONS | * | preflight | routes/preflight.js:16 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PATCH | /api/actors/:id | actors | routes/actors.js:518 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PATCH | /api/books/payments/:id | books | routes/books.js:1397 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -391,14 +391,14 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/books/terms | books | routes/books.js:252 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/books/write-off | books | routes/books.js:1790 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/books/year/:fy/close | books | routes/books.js:2180 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/:id/convert | capture | routes/capture.js:142 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/:id/dismiss | capture | routes/capture.js:152 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/:id/raise | capture | routes/capture.js:132 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/:id/structure | capture | routes/capture.js:117 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/simulate | capture | routes/capture.js:90 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/capture/stores | capture | routes/capture.js:363 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/capture/webhook/email | capture | routes/capture.js:285 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:249 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/capture/:id/convert | capture | routes/capture.js:144 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/capture/:id/dismiss | capture | routes/capture.js:154 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/capture/:id/raise | capture | routes/capture.js:134 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/capture/:id/structure | capture | routes/capture.js:119 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/capture/simulate | capture | routes/capture.js:92 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/capture/stores | capture | routes/capture.js:365 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/capture/webhook/email | capture | routes/capture.js:287 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/capture/webhook/whatsapp | capture | routes/capture.js:251 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/catalogue/:bridge_id/login/verify | catalogue | routes/catalogue.js:1888 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/catalogue/:bridge_id/order/confirm | catalogue | routes/catalogue.js:1398 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/catalogue/:bridge_id/order/start | catalogue | routes/catalogue.js:1180 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
@@ -3018,9 +3018,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline queueable · round trips 6 (wire null; share cap-print.js 6/16, cap-shop.js 6/17, core.js 6/107) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): identities · writes (derived): entity_profile, identities · callers: cap-print.js, cap-shop.js, core.js · actions: -
 
-### health (unassigned, 0 of 1 with a description)
+### health (cb-platform, 0 of 1 with a description)
 
-**GET /health** · health · unassigned · partial
+**GET /health** · health · cb-platform · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
@@ -3460,9 +3460,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 1; share app.html 1/155, cap-books.js 1/43, cap-employees.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): access_events, identities · writes (derived): - · callers: app.html, cap-books.js, cap-employees.js, cap-tasks.js, employees.html, screen-id.js, shell.js · actions: -
 
-### preflight (unassigned, 0 of 1 with a description)
+### preflight (cb-platform, 0 of 1 with a description)
 
-**OPTIONS *** · preflight · unassigned · partial
+**OPTIONS *** · preflight · cb-platform · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)

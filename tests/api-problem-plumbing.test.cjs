@@ -6,6 +6,7 @@
  * OWNS      the proof that each door still answers what its caller expects (the uptime probe: 200 and status "OK", whatever the database says; a browser: the 204 and the Access-Control headers,
  *           and the app's 403 for a refused origin; a tool: the OpenAPI JSON with its six service paths), that a fault of ours is a Problem 500 that says nothing of its cause, and this file's
  *           three rows of docs/contracts/api-error-tests.json (500, which the register's error_tests column reads). All three stay PUBLIC: no sign-in is asked.
+ *           Also lib/plumbing-contract.js as a unit: one rule per door (public, no input, 500 the only own refusal), the refusal-path of a preflight (403 documented, not written) and every fault fail-closed (no cause in the body).
  * CALLED BY scripts/guards.cjs · CI. No database, no network beyond 127.0.0.1: the real server.js with a stand-in db (tools/load-app.cjs).
  * FLOW      /health 200 (db down still 200) · a forced fault (500) · OPTIONS with an allowed origin (204 + headers) and a refused one (403 ORIGIN_NOT_ALLOWED) · the router alone with a throwing allow-list (500) ·
  *           /api/openapi.json 200 and a forced fault (500) → the Problem fields · no cause → manifest
@@ -74,6 +75,8 @@ function checkProblem(label, answer, status, code, causes) {
 (async () => {
   stubDatabase();
   const app = loadApp();
+  const plumbing = require('../lib/plumbing-contract');
+  check('unit: each of the three contracts holds exactly one public operation with no input', [plumbing.HEALTH, plumbing.PREFLIGHT, plumbing.OPENAPI].every((one) => Object.keys(one.OPERATIONS).length === 1 && Object.values(one.OPERATIONS)[0].security.length === 0 && !Object.values(one.OPERATIONS)[0].requestBody && !Object.values(one.OPERATIONS)[0].parameters));
   const server = http.createServer(app);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port;

@@ -357,7 +357,6 @@ function harness(options) {
     });
     app.use(express.json({ limit: '12mb' }));
     mountedRouters.forEach((one) => app.use(one.mount, one.router));
-    app.use((err, req, res, next) => require('../../lib/problem').fromError(req, res, err)); /* the app's last resort (server.js error handler): a route that passes a fault on with next(err) answers a Problem 500, never the framework's page */
     return app;
   }
 

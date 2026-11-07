@@ -7685,7 +7685,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 330,
+   "line": 332,
    "hash": "2c754880414516a4",
    "does": "",
    "errors": {
@@ -7778,7 +7778,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 108,
+   "line": 110,
    "hash": "6617cb1ca9a06c8a",
    "does": "",
    "errors": {
@@ -7877,7 +7877,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 354,
+   "line": 356,
    "hash": "99aa450700b1fb37",
    "does": "",
    "errors": {
@@ -7970,7 +7970,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 176,
+   "line": 178,
    "hash": "0a50596c571c6882",
    "does": "",
    "errors": {
@@ -28887,10 +28887,10 @@
    "method": "GET",
    "path": "/health",
    "owner_area": "health",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-platform",
    "file": "routes/health.js",
-   "line": 14,
-   "hash": "a68d6882ceaebe1f",
+   "line": 15,
+   "hash": "0e48a0105a3e73d4",
    "does": "",
    "errors": {
     "count": 0,
@@ -28972,7 +28972,7 @@
    "method": "OPTIONS",
    "path": "*",
    "owner_area": "preflight",
-   "owner_agent": "unassigned",
+   "owner_agent": "cb-platform",
    "file": "routes/preflight.js",
    "line": 16,
    "hash": "935cfbf551c234cf",
@@ -38222,7 +38222,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 142,
+   "line": 144,
    "hash": "fae0d72b43d1bf93",
    "does": "",
    "errors": {
@@ -38325,7 +38325,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 152,
+   "line": 154,
    "hash": "6198a417da1c810c",
    "does": "",
    "errors": {
@@ -38428,7 +38428,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 132,
+   "line": 134,
    "hash": "6119468e82f68823",
    "does": "",
    "errors": {
@@ -38527,7 +38527,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 117,
+   "line": 119,
    "hash": "316b36b697a0b6cf",
    "does": "",
    "errors": {
@@ -38630,7 +38630,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 90,
+   "line": 92,
    "hash": "332e360cbe8c6666",
    "does": "",
    "errors": {
@@ -38729,7 +38729,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 363,
+   "line": 365,
    "hash": "25e15eef7eb38b4d",
    "does": "",
    "errors": {
@@ -38822,7 +38822,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 285,
+   "line": 287,
    "hash": "a462ab6d9b3687be",
    "does": "",
    "errors": {
@@ -38915,7 +38915,7 @@
    "owner_area": "capture",
    "owner_agent": "cb-connect",
    "file": "routes/capture.js",
-   "line": 249,
+   "line": 251,
    "hash": "7aabecbdcc6f2df5",
    "does": "",
    "errors": {

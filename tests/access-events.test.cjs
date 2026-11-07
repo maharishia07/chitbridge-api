@@ -78,8 +78,8 @@ const ok = (n, c, x) => { if (c) { pass++; console.log('  ✓ ' + n); } else { f
   ok('⭐ and no PII: no subject id, no changed_by, no reason, no message text',
      logged.every((l) => !/subject|changed_by|reason|row-level security/.test(l)) && lines.every((j) => j && !('why' in j)), JSON.stringify(logged));
   ok('⭐ the counter /health exposes counts both (lostCount)', ev.lostCount() === 2, String(ev.lostCount()));
-  ok('/health carries it as audit_lost', /audit_lost: require\('\.\/lib\/access-events'\)\.lostCount\(\)/.test(
-    require('fs').readFileSync(require('path').join(__dirname, '..', 'server.js'), 'utf8')));
+  ok('/health carries it as audit_lost', /audit_lost: require\('\.\.\/lib\/access-events'\)\.lostCount\(\)/.test(
+    require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'health.js'), 'utf8')));
   ok('the route puts it in its answer (routes/actors.js)', /audit: \{ recorded: \(audit && audit\.written\)/.test(
     require('fs').readFileSync(require('path').join(__dirname, '..', 'routes', 'actors.js'), 'utf8')));
 

@@ -8,6 +8,7 @@
  */
 const express = require('express');
 const { HEALTH } = require('../lib/plumbing-contract');
+const log = require('../lib/logger');
 
 const router = express.Router();
 
@@ -18,12 +19,12 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
     let db = 'down',
       db_ms = null;
     try {
-      const t0 = Date.now();
+      const askedAt = Date.now();
       await Promise.race([require('../db').query('SELECT 1'), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 2000).unref())]);
-      db_ms = Date.now() - t0;
+      db_ms = Date.now() - askedAt;
       db = db_ms > require('../lib/dbwatch').slowMs() ? 'slow' : 'ok';
-    } catch (_) {
-      /* 'down' */
+    } catch (failure) {
+      log.fellBack('health: the database did not answer SELECT 1 - reported as down', failure, 'debug'); /* the probe still gets its 200; db says down */
     }
     res.json({
       status: 'OK',

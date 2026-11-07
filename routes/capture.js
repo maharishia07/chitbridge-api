@@ -41,6 +41,7 @@ function hmacOk(rawBuf, secret, header, prefix) {
  * an unsigned or wrongly signed body is 401 and nothing is read from it. The body must still be the raw bytes the signature was made over.
  */
 const webhookGate = (secretName, signatureOf, prefix, notConfigured) =>
+  /** the signature step: inert with no secret, 401 on a bad signature, else on to the parser */
   function webhookSigned(req, res, next) {
     try {
       const secret = process.env[secretName];
@@ -58,6 +59,7 @@ const webhookGate = (secretName, signatureOf, prefix, notConfigured) =>
  * A body that cannot be read answers the 200 a signed delivery always got (the provider must not retry it); an e-mail provider that posts form fields is read as a form.
  */
 const inboundBody = (asForm) =>
+  /** the parse step: the signed raw bytes become the body the schema reads */
   function inboundParsed(req, res, next) {
     const text = req.body.toString('utf8');
     let body;

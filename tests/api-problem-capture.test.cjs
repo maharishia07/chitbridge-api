@@ -278,7 +278,9 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   standInTheReader();
   const router = require(path.join(HERE, ROUTE_FILE));
   const routes = lab.routesOf(router, MOUNT);
-  const server = lab.appOf([{ mount: MOUNT, router }]).listen(0);
+  const app = lab.appOf([{ mount: MOUNT, router }]);
+  app.use((err, req, res, next) => require(path.join(HERE, 'lib', 'problem')).fromError(req, res, err)); /* the app's last resort (server.js error handler): a webhook gate that passes a fault on with next(err) answers a Problem 500 */
+  const server = app.listen(0);
   const port = server.address().port;
   const recording = {};
   const capturing = lab.flagValue('--capture') || lab.flagValue('--compare');

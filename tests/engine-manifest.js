@@ -306,6 +306,7 @@ const INFRA_LIBS = [
   'adopt-contract.js',
   'people-contract.js',
   'csp-report-contract.js',
+  'plumbing-contract.js',
   /* Lane B2 (4 Nov 2026): the contract of routes/network-offers.js (its OpenAPI operations and the words of its refusals) — the contract of a door, not a rule of the platform */
   'network-offers-contract.js',
   /* Lane B2 (4 Nov 2026): the contract of routes/signin.js — the contract of a door, not a rule of the platform */
