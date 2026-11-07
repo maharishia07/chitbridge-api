@@ -36,7 +36,7 @@ of file each thing is; this says what already does the job.
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `items` | `books-store.js` | PERF1: |
 | 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
+| 56 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 53 | `pack` | `books-store.js` |  |
@@ -76,7 +76,7 @@ of file each thing is; this says what already does the job.
 | 33 | `closeModal` | `app.html` |  |
 | 33 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 33 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
-| 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
+| 34 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
