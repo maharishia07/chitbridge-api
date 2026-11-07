@@ -563,10 +563,10 @@
    "code": "BOOKS_NOT_MIGRATED",
    "status": "503",
    "title": "Ledger update pending",
-   "shopkeeper": "This cannot be saved yet: a database update is still to arrive.",
+   "shopkeeper": "Ledger entries arrive after the next update. This entry was NOT recorded in the books. Keep the paper record and enter it again after the update.",
    "hint": "Try again after the next update.",
    "owner_area": "books",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "BOOKS_REFUSED",
@@ -617,10 +617,10 @@
    "code": "CAPTURE_STORE_MISSING",
    "status": "503",
    "title": "Inbox not ready",
-   "shopkeeper": "The inbox is not set up on this system yet.",
+   "shopkeeper": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update.",
    "hint": "Ask your administrator to finish the update.",
    "owner_area": "capture",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "CATALOGUE_NOT_EMPTY",
@@ -635,10 +635,10 @@
    "code": "CATALOGUE_STORE_MISSING",
    "status": "503",
    "title": "Saved catalogues not ready",
-   "shopkeeper": "Saved catalogues are not ready on this server yet.",
+   "shopkeeper": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "CATEGORIES_NOT_SET_UP",
@@ -698,10 +698,10 @@
    "code": "CHANNEL_STORE_MISSING",
    "status": "503",
    "title": "Channels not ready",
-   "shopkeeper": "Channels are not ready on this system yet.",
+   "shopkeeper": "Channels arrive after the next update. Nothing was changed.",
    "hint": "Try again after the next update.",
    "owner_area": "channels",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "CHILD_NOT_FOUND",
@@ -1103,10 +1103,10 @@
    "code": "CONTAINER_STORE_MISSING",
    "status": "503",
    "title": "Product containers not ready",
-   "shopkeeper": "Product containers are not ready on this server yet.",
+   "shopkeeper": "The container model arrives after the next update. Nothing was saved.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "COST_BLIND",
@@ -1211,10 +1211,10 @@
    "code": "CRM_NOT_MIGRATED",
    "status": "503",
    "title": "Crm not migrated",
-   "shopkeeper": "Follow-ups and call notes are not set up here yet.",
+   "shopkeeper": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update.",
    "hint": "Try again after the next update.",
    "owner_area": "crm",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "CTP_ADDRESS_CLASH",
@@ -1643,10 +1643,10 @@
    "code": "DEFINITIONS_NOT_MIGRATED",
    "status": "503",
    "title": "Definitions not set up",
-   "shopkeeper": "Your saved offers, slabs and models are not set up here yet.",
+   "shopkeeper": "Definitions arrive after the next update. Nothing was saved.",
    "hint": "Try again after the next update.",
    "owner_area": "definitions",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "DEFINITION_CITED",
@@ -2021,10 +2021,10 @@
    "code": "FORMS_STORE_MISSING",
    "status": "503",
    "title": "Forms not set up",
-   "shopkeeper": "Forms are not available here yet.",
+   "shopkeeper": "Forms arrive after the next update. No form can be issued or read yet.",
    "hint": "Ask the platform operator to set them up.",
    "owner_area": "forms",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "FORM_NOT_READY",
@@ -2093,10 +2093,10 @@
    "code": "GROUPS_NOT_MIGRATED",
    "status": "409",
    "title": "Groups not set up",
-   "shopkeeper": "Named groups are not set up here yet.",
+   "shopkeeper": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
    "hint": "Try again after the next update.",
    "owner_area": "crm",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "GSTR_REFUSED",
@@ -2111,10 +2111,10 @@
    "code": "HANDOFF_STORE_MISSING",
    "status": "503",
    "title": "ERP handoffs not ready",
-   "shopkeeper": "ERP handoffs are not ready on this server yet.",
+   "shopkeeper": "The ERP handoff arrives after the next update. Nothing was sent.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "HAS_DUES",
@@ -2210,10 +2210,10 @@
    "code": "IDOC_NOT_MIGRATED",
    "status": "503",
    "title": "Idoc not migrated",
-   "shopkeeper": "Identity records are not switched on yet.",
+   "shopkeeper": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail.",
    "hint": "Try again later.",
    "owner_area": "identity-docs",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "IDOC_NO_CODE",
@@ -2597,10 +2597,10 @@
    "code": "MIGRATION",
    "status": "409",
    "title": "Not switched on yet",
-   "shopkeeper": "Unit and source are not switched on for your account yet.",
+   "shopkeeper": "Unit and source arrive after the next update. Type, label and required still work.",
    "hint": "Type, label and required still work; try again after the next update.",
    "owner_area": "schemas",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "MINT_FAILED",
@@ -2849,10 +2849,10 @@
    "code": "NOTIF_DISMISS_NOT_MIGRATED",
    "status": "503",
    "title": "Activity clearing update pending",
-   "shopkeeper": "Activity cannot be cleared yet: a database update is still to arrive.",
+   "shopkeeper": "The Activity clear-out arrives after the next update. Activity stays as it is.",
    "hint": "Try again after the next update.",
    "owner_area": "notifications",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "NOTIF_NOTHING_TO_CLEAR",
@@ -2867,10 +2867,10 @@
    "code": "NOTIF_SEEN_NOT_MIGRATED",
    "status": "503",
    "title": "Unread count update pending",
-   "shopkeeper": "The unread count cannot be cleared yet: a database update is still to arrive.",
+   "shopkeeper": "The notification badge reset arrives after the next update. The badge stays as it is.",
    "hint": "Try again after the next update.",
    "owner_area": "notifications",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "NOT_ALLOWED",
@@ -3461,10 +3461,10 @@
    "code": "PENETRATION_STORE_MISSING",
    "status": "503",
    "title": "Reach figures not ready",
-   "shopkeeper": "Reach figures are not ready on this server yet.",
+   "shopkeeper": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "PERIOD_LOCKED",
@@ -3560,10 +3560,10 @@
    "code": "PRIVACY_NOT_MIGRATED",
    "status": "503",
    "title": "Privacy not set up",
-   "shopkeeper": "Consent and privacy requests are not set up here yet.",
+   "shopkeeper": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update.",
    "hint": "Try again after the next update.",
    "owner_area": "crm",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "PRODUCT_BAD_REQUEST",
@@ -3812,10 +3812,10 @@
    "code": "REGION_STORE_MISSING",
    "status": "503",
    "title": "Regions not ready",
-   "shopkeeper": "Regional overrides are not ready on this server yet.",
+   "shopkeeper": "Regional scatter arrives after the next update. No regional figures are shown meanwhile.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "REG_KIND_NOT_OFFERED",
@@ -4280,10 +4280,10 @@
    "code": "SOURCE_STORE_MISSING",
    "status": "503",
    "title": "Source authoring not ready",
-   "shopkeeper": "Catalogue source authoring is not ready on this server yet.",
+   "shopkeeper": "Source authoring arrives after the next update. Nothing was saved.",
    "hint": "Try again after the next update.",
    "owner_area": "assist",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "SRA_NOT_MIGRATED",
@@ -4316,10 +4316,10 @@
    "code": "STORES_NOT_MIGRATED",
    "status": "503",
    "title": "Shop list not ready",
-   "shopkeeper": "The shop list is not set up on this system yet.",
+   "shopkeeper": "Stores arrive after the next update. Nothing was changed.",
    "hint": "Ask your administrator to finish the update.",
    "owner_area": "capture",
-   "since": "2026-10-23"
+   "since": "2026-11-07"
   },
   {
    "code": "SUBMISSION_REJECTED",
@@ -4379,10 +4379,10 @@
    "code": "SUPPLIES_NOT_MIGRATED",
    "status": "503",
    "title": "Supplies not switched on",
-   "shopkeeper": "Supplies are not switched on yet.",
+   "shopkeeper": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet.",
    "hint": "Ask the operator to run the update, then try again.",
    "owner_area": "supplies",
-   "since": "2026-10-24"
+   "since": "2026-11-07"
   },
   {
    "code": "SUPPLY_BILL_DIFFERS",
@@ -4802,10 +4802,10 @@
    "code": "VISIBILITY_NOT_MIGRATED",
    "status": "409",
    "title": "Visibility not migrated",
-   "shopkeeper": "This database does not accept network visibility yet.",
+   "shopkeeper": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
    "hint": "Apply the pending database update, then build again.",
    "owner_area": "entities",
-   "since": "2026-10-22"
+   "since": "2026-11-07"
   },
   {
    "code": "WITHDRAWN",

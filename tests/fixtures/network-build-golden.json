@@ -2055,11 +2055,11 @@
   "body": {
    "error": "Migration needed",
    "code": "VISIBILITY_NOT_MIGRATED",
-   "message": "Network visibility arrives after the next update. Everything else works meanwhile.",
+   "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
    "type": "https://chitbridge.com/problems/visibility_not_migrated",
    "title": "Visibility not migrated",
    "status": 409,
-   "detail": "Network visibility arrives after the next update. Everything else works meanwhile.",
+   "detail": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
    "hint": "Apply the pending database update, then build again.",
    "request_id": null
   },

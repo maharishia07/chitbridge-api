@@ -1708,13 +1708,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
-      "message": "Comparing arrives after the next update. Everything else works meanwhile."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
-      "message": "Comparing arrives after the next update. Everything else works meanwhile."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -1796,13 +1796,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
-      "message": "Comparing arrives after the next update. Everything else works meanwhile."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Comparing arrives after the next update. Everything else works meanwhile.",
-      "message": "Comparing arrives after the next update. Everything else works meanwhile."
+      "error": "The books comparison arrives after the next update. It was not run and nothing was posted.",
+      "message": "The books comparison arrives after the next update. It was not run and nothing was posted."
      }
     }
    ]
@@ -3495,13 +3495,13 @@
      "scenario": "advice-not-ready",
      "status": 503,
      "body_keys": {
-      "error": "Advice arrives after the next update. Everything else works meanwhile.",
-      "message": "Advice arrives after the next update. Everything else works meanwhile.",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
      },
      "fixture": {
-      "error": "Advice arrives after the next update. Everything else works meanwhile.",
-      "message": "Advice arrives after the next update. Everything else works meanwhile.",
+      "error": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
+      "message": "Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.",
       "code": "BOOKS_NOT_MIGRATED"
      }
     },
@@ -4932,13 +4932,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
-      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
-      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -5008,13 +5008,13 @@
      "status": 503,
      "body_keys": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
-      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      },
      "fixture": {
       "code": "BOOKS_NOT_MIGRATED",
-      "error": "Exchange rates arrive after the next update. Everything else works meanwhile.",
-      "message": "Exchange rates arrive after the next update. Everything else works meanwhile."
+      "error": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update.",
+      "message": "Exchange rates arrive after the next update. No rate was saved and no foreign amount can be recorded; record it after the update."
      }
     }
    ]
@@ -7862,11 +7862,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule delete failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule delete failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -8740,11 +8740,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule update failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule update failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -9078,11 +9078,11 @@
      "status": 503,
      "body_keys": {
       "error": "Rule create failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Rule create failed",
-      "message": "Folder rules arrive after the next update. Everything else works meanwhile."
+      "message": "Folder rules arrive after the next update. Nothing was changed."
      }
     }
    ]
@@ -9818,11 +9818,11 @@
      "status": 503,
      "body_keys": {
       "error": "Switch failed",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Switch failed",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     }
    ]
@@ -14836,11 +14836,11 @@
      "status": 503,
      "body_keys": {
       "error": "validation",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "validation",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -17398,11 +17398,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Item versions arrive after the next update. Everything else works meanwhile."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Item versions arrive after the next update. Everything else works meanwhile."
+      "message": "Item versions arrive after the next update. Version history is not shown meanwhile."
      }
     }
    ]
@@ -20216,11 +20216,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Product enquiries arrive after the next update. Everything else works meanwhile."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Product enquiries arrive after the next update. Everything else works meanwhile."
+      "message": "Product enquiries arrive after the next update. This enquiry was not recorded; ask the customer to try again after the update."
      }
     },
     {
@@ -20904,11 +20904,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Cost arrives after the next update. Everything else works meanwhile."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Cost arrives after the next update. Everything else works meanwhile."
+      "message": "Cost and margin arrives after the next update. They are not shown meanwhile."
      }
     }
    ]
@@ -27101,12 +27101,12 @@
      "body_keys": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "Network visibility arrives after the next update. Everything else works meanwhile."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      },
      "fixture": {
       "error": "Migration needed",
       "code": "VISIBILITY_NOT_MIGRATED",
-      "message": "Network visibility arrives after the next update. Everything else works meanwhile."
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility."
      }
     },
     {
@@ -33441,12 +33441,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -33485,12 +33485,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -33687,12 +33687,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -33817,12 +33817,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -34119,12 +34119,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -34260,13 +34260,13 @@
      "status": 409,
      "body_keys": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups arrive after the next update. Everything else works meanwhile.",
-      "message": "Named groups arrive after the next update. Everything else works meanwhile."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      },
      "fixture": {
       "code": "GROUPS_NOT_MIGRATED",
-      "error": "Named groups arrive after the next update. Everything else works meanwhile.",
-      "message": "Named groups arrive after the next update. Everything else works meanwhile."
+      "error": "Named groups arrive after the next update. Groups cannot be named or listed yet.",
+      "message": "Named groups arrive after the next update. Groups cannot be named or listed yet."
      }
     },
     {
@@ -34727,12 +34727,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -34899,12 +34899,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     }
    ]
@@ -35043,12 +35043,12 @@
      "body_keys": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      },
      "fixture": {
       "code": "CRM_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Follow-ups and call notes arrive after the next update. Everything else works meanwhile."
+      "message": "Follow-ups and call notes arrive after the next update. Nothing was saved; write it down and add it after the update."
      }
     },
     {
@@ -35353,12 +35353,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -35509,12 +35509,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     }
    ]
@@ -36718,11 +36718,11 @@
      "status": 503,
      "body_keys": {
       "error": "Policy update failed",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      },
      "fixture": {
       "error": "Policy update failed",
-      "message": "Policy flags arrive after the next update. Everything else works meanwhile."
+      "message": "Policy flags arrive after the next update. Nothing was changed; the shop keeps its current settings."
      }
     },
     {
@@ -36972,12 +36972,12 @@
      "status": 409,
      "body_keys": {
       "error": "Not stored",
-      "message": "Network visibility arrives after the next update. Everything else works meanwhile.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not stored",
-      "message": "Network visibility arrives after the next update. Everything else works meanwhile.",
+      "message": "Network visibility arrives after the next update. Nothing was changed; the item keeps its current visibility.",
       "code": "VISIBILITY_NOT_MIGRATED"
      }
     },
@@ -37164,11 +37164,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "The population registry arrives after the next update. Everything else works meanwhile."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "The population registry arrives after the next update. Everything else works meanwhile."
+      "message": "The population registry arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37294,11 +37294,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "The desk setting arrives after the next update. Everything else works meanwhile."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "The desk setting arrives after the next update. Everything else works meanwhile."
+      "message": "The desk setting arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37422,11 +37422,11 @@
      "status": 409,
      "body_keys": {
       "error": "Not available yet",
-      "message": "The routing table arrives after the next update. Everything else works meanwhile."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Not available yet",
-      "message": "The routing table arrives after the next update. Everything else works meanwhile."
+      "message": "The routing table arrives after the next update. Nothing was changed."
      }
     },
     {
@@ -37550,11 +37550,11 @@
      "status": 503,
      "body_keys": {
       "error": "Unbind failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Unbind failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38008,11 +38008,11 @@
      "status": 503,
      "body_keys": {
       "error": "Approve failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Approve failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38108,11 +38108,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise arrives after the next update. Everything else works meanwhile."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Auto-raise arrives after the next update. Everything else works meanwhile."
+      "message": "Auto-raise arrives after the next update. Nothing was raised automatically; raise the chit by hand."
      }
     },
     {
@@ -38120,11 +38120,11 @@
      "status": 503,
      "body_keys": {
       "error": "Auto-raise update failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Auto-raise update failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38272,11 +38272,11 @@
      "status": 503,
      "body_keys": {
       "error": "Update failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Update failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -38470,11 +38470,11 @@
      "status": 503,
      "body_keys": {
       "error": "Revoke failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Revoke failed",
-      "message": "Channels arrive after the next update. Everything else works meanwhile."
+      "message": "Channels arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -41727,12 +41727,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -41741,12 +41741,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -41971,12 +41971,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -41985,12 +41985,12 @@
      "body_keys": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      },
      "fixture": {
       "ok": false,
       "code": "HANDOFF_STORE_MISSING",
-      "error": "The ERP handoff arrives after the next update. Everything else works meanwhile."
+      "error": "The ERP handoff arrives after the next update. Nothing was sent."
      }
     },
     {
@@ -42015,12 +42015,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -42029,12 +42029,12 @@
      "body_keys": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "PENETRATION_STORE_MISSING",
-      "error": "Penetration figures arrive after the next update. Everything else works meanwhile."
+      "error": "Penetration figures arrive after the next update. No penetration figures are shown meanwhile."
      }
     },
     {
@@ -42431,12 +42431,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -42457,12 +42457,12 @@
      "body_keys": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      },
      "fixture": {
       "ok": false,
       "code": "CATALOGUE_STORE_MISSING",
-      "error": "Saving the catalogue arrives after the next update. Everything else works meanwhile."
+      "error": "Catalogue saving arrives after the next update. Nothing was saved; the catalogue stays as it is."
      }
     },
     {
@@ -43073,12 +43073,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43087,12 +43087,12 @@
      "body_keys": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "SOURCE_STORE_MISSING",
-      "error": "Source authoring arrives after the next update. Everything else works meanwhile."
+      "error": "Source authoring arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43189,12 +43189,12 @@
      "body_keys": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "The container model arrives after the next update. Everything else works meanwhile."
+      "error": "The container model arrives after the next update. Nothing was saved."
      },
      "fixture": {
       "ok": false,
       "code": "CONTAINER_STORE_MISSING",
-      "error": "The container model arrives after the next update. Everything else works meanwhile."
+      "error": "The container model arrives after the next update. Nothing was saved."
      }
     },
     {
@@ -43303,12 +43303,12 @@
      "body_keys": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter arrives after the next update. Everything else works meanwhile."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      },
      "fixture": {
       "ok": false,
       "code": "REGION_STORE_MISSING",
-      "error": "Regional scatter arrives after the next update. Everything else works meanwhile."
+      "error": "Regional scatter arrives after the next update. No regional figures are shown meanwhile."
      }
     },
     {
@@ -48270,12 +48270,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48284,12 +48284,12 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing Activity arrives after the next update. Everything else works meanwhile.",
+      "message": "The Activity clear-out arrives after the next update. Activity stays as it is.",
       "code": "NOTIF_DISMISS_NOT_MIGRATED"
      }
     },
@@ -48388,11 +48388,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not migrated",
-      "message": "Clearing the badge arrives after the next update. Everything else works meanwhile."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      },
      "fixture": {
       "error": "Not migrated",
-      "message": "Clearing the badge arrives after the next update. Everything else works meanwhile."
+      "message": "The notification badge reset arrives after the next update. The badge stays as it is."
      }
     },
     {
@@ -48730,11 +48730,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "Supplies arrive after the next update. Everything else works meanwhile."
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "Supplies arrive after the next update. Everything else works meanwhile."
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -49110,11 +49110,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not ready",
-      "message": "Supplies arrive after the next update. Everything else works meanwhile."
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      },
      "fixture": {
       "error": "Not ready",
-      "message": "Supplies arrive after the next update. Everything else works meanwhile."
+      "message": "Supplies arrive after the next update. Supplies cannot be recorded or listed yet."
      }
     },
     {
@@ -49479,12 +49479,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -49647,12 +49647,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -50003,12 +50003,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -50115,12 +50115,12 @@
      "body_keys": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      },
      "fixture": {
       "code": "PRIVACY_NOT_MIGRATED",
       "error": "Not migrated yet",
-      "message": "Privacy records arrive after the next update. Everything else works meanwhile."
+      "message": "Privacy records arrive after the next update. A request to stop messages, and a privacy request, cannot be recorded yet. Do not message that customer; write the request down and record it after the update."
      }
     },
     {
@@ -51185,12 +51185,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -51199,12 +51199,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -51385,12 +51385,12 @@
      "body_keys": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      },
      "fixture": {
       "error": "Not enabled",
       "code": "IDOC_NOT_MIGRATED",
-      "message": "Identity records arrive after the next update. Everything else works meanwhile."
+      "message": "Identity records arrive after the next update. Nothing was saved; the owner can still sign in by e-mail."
      }
     },
     {
@@ -52898,11 +52898,11 @@
      "status": 503,
      "body_keys": {
       "error": "Capture failed",
-      "message": "Capture arrives after the next update. Everything else works meanwhile."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      },
      "fixture": {
       "error": "Capture failed",
-      "message": "Capture arrives after the next update. Everything else works meanwhile."
+      "message": "Capture arrives after the next update. Nothing was stored; ask the sender to send it again after the update."
      }
     },
     {
@@ -53038,11 +53038,11 @@
      "status": 503,
      "body_keys": {
       "error": "Store save failed",
-      "message": "Stores arrive after the next update. Everything else works meanwhile."
+      "message": "Stores arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Store save failed",
-      "message": "Stores arrive after the next update. Everything else works meanwhile."
+      "message": "Stores arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -53688,11 +53688,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields arrive after the next update. Everything else works meanwhile."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields arrive after the next update. Everything else works meanwhile."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -53914,11 +53914,11 @@
      "status": 409,
      "body_keys": {
       "error": "Conflict",
-      "message": "The party fields arrive after the next update. Everything else works meanwhile."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      },
      "fixture": {
       "error": "Conflict",
-      "message": "The party fields arrive after the next update. Everything else works meanwhile."
+      "message": "The party fields arrive after the next update. Nothing was changed."
      }
     },
     {
@@ -57172,11 +57172,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57246,11 +57246,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57306,11 +57306,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57784,11 +57784,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -57980,11 +57980,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {
@@ -58140,11 +58140,11 @@
      "status": 503,
      "body_keys": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      },
      "fixture": {
       "error": "Not provisioned",
-      "message": "Definitions arrive after the next update. Everything else works meanwhile."
+      "message": "Definitions arrive after the next update. Nothing was saved."
      }
     },
     {

@@ -4103,7 +4103,7 @@ router.get('/:chit_id/costs', auth, ...checked('GET /:chit_id/costs'), async (re
     const entity_id = entityId(req);
     const permitted = await cost.canRead(req, entity_id);
     const out = await cost.read(entity_id, req.params.chit_id, { permitted, actor_id: req.identity.identity_id });
-    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: waiting('Cost') }, 'CHIT_NOT_MIGRATED') });
+    if (out === null) return problem(req, res, { status: 503, ...said({ error: 'Not migrated', message: waiting('Cost and margin', false, 'They are not shown meanwhile.') }, 'CHIT_NOT_MIGRATED') });
     /* S34: the owner's answer holds the totals; a worker's holds only the rows (mine_only), and mixed_currency appears only when two currencies were summed */
     res.json({ costs: out.costs, mine_only: out.mine_only, can_see_totals: out.can_see_totals, by_kind: out.by_kind, by_currency: out.by_currency, invoiced: out.invoiced, currency: out.currency, spent: out.spent, margin: out.margin, margin_pct: out.margin_pct, mixed_currency: out.mixed_currency });
   } catch (err) {

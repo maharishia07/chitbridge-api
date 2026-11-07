@@ -691,9 +691,9 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
     X.T.adviceReady = false;
     const na = await q('GET', '/payments/' + payId + '/advice');
     eq('before b285: the read answers state none and may.*.why not_available with its words (no 42703, no 500)', [na.status, na.body.advice, na.body.may.send_advice.why, na.body.may.send_advice.say, na.body.body],
-      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Advice arrives after the next update. Everything else works meanwhile.', null]);
+      [200, { chit_id: null, state: 'none', shared_at: null }, 'not_available', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.', null]);
     const nb = await q('PATCH', '/payments/' + payId, { advice_chit_id: CH1 });
-    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Advice arrives after the next update. Everything else works meanwhile.']);
+    eq('…the PATCH answers 503 BOOKS_NOT_MIGRATED in the same words', [nb.status, nb.body.code, nb.body.message], [503, 'BOOKS_NOT_MIGRATED', 'Payment advice arrives after the next update. The payment itself is recorded; the advice cannot be sent or shown yet.']);
     const ns = (await q('GET', '/party/' + TT + '/statement?from=2026-04-01&to=2027-03-31')).body.lines.filter((l) => l.payment_id);
     ok('…every statement payment line reads advice none (the shape is kept)', ns.length >= 2 && ns.every((l) => l.advice && l.advice.state === 'none' && l.advice.chit_id === null), JSON.stringify(ns.map((l) => l.advice)));
     const nr = await q('POST', '/payments', { party_id: TT, direction: 'out', amount_minor: 100, currency: 'INR', mode: 'cash', received_at: '2026-10-06', allocate: 'none', client_ref: 'adv-na', acknowledge: ACK });

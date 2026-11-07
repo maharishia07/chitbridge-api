@@ -72,7 +72,7 @@ function checkWords() {
   const missing = words.words.notFound();
   check('notFound: the old body is { error: "Not found" } and nothing else', sameValue(missing.legacy, { error: 'Not found' }) && missing.code === 'NOT_FOUND', missing);
   const later = words.words.notReady();
-  check('notReady: the 503 sentence is the old one (Not ready, Supplies arrive after the next update. Everything else works meanwhile.)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'Supplies arrive after the next update. Everything else works meanwhile.' }), later);
+  check('notReady: the 503 sentence is the old one (Not ready, Supplies arrive after the next update. Supplies cannot be recorded or listed yet.)', later.code === 'SUPPLIES_NOT_MIGRATED' && sameValue(later.legacy, { error: 'Not ready', message: 'Supplies arrive after the next update. Supplies cannot be recorded or listed yet.' }), later);
   const lost = words.faultOf(new Error(SECRET_SQL), req, 'Could not record the purchase');
   check('faultOf: the screen\'s own label and the safe sentence, never the cause', lost.status === 500 && lost.legacy.error === 'Could not record the purchase' && !THROWN.test(JSON.stringify(lost)), lost);
   check('faultOf: text the database cannot store (22021, and 22P05 in a jsonb value) is a 400 in the old validation keys and plain words, nothing of the database in it', ['22021', '22P05'].every((code) => { const one = words.faultOf(Object.assign(new Error(SECRET_SQL), { code }), req, 'Could not add the supply'); return one.status === 400 && one.code === 'SUPPLY_INVALID' && sameValue(one.legacy, { error: 'validation', message: 'Cannot save this text. Type it again.' }) && !THROWN.test(JSON.stringify(one)); }));

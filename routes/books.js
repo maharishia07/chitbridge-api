@@ -1954,7 +1954,7 @@ router.get('/move-in/imports', auth, owner, on, ...checked('GET /move-in/imports
    files, kept insert-only (b309 books_compare_part), NEVER posted. Who may: the owner, or the shop's auditor (a whole-entity login that may see money —
    lib/access seesWholeEntity + lib/cost canRead); the server answers may + why, the screen greys with the sentence. ── */
 const PR = require('../lib/parallel-run');
-const COMPARE_NOT_READY = waiting('Comparing');
+const COMPARE_NOT_READY = waiting('The books comparison', false, 'It was not run and nothing was posted.');
 async function compareMay(req, e) {
   if (req.api_key) return { may: false, why: 'Sign in to compare the books.' };
   if (isOwner(req)) return { may: true, why: null };
@@ -2508,7 +2508,7 @@ route('post', '/contra', (req, e, setting, body, by) => P().contra(e, setting, b
 /* ── FX1 · EXCHANGE RATES AND FOREIGN BALANCES (lib/fx-rates; b391 fx_rate, b392 journal_line txn_currency). A rate is evidence the OWNER types or imports —
    never fetched, never assumed. Everyone who may read the books may read the rates (an auditor checks them); only the owner adds one or revalues. ── */
 const FXR = require('../lib/fx-rates');
-const FX_NOT_READY = 'Exchange rates need a database update (b391) that is still to run.';
+const FX_NOT_READY = FXR.WAITS.rates;
 const FX_OWNER_ONLY = 'Only the owner may add a rate.';
 function fxMay(req, ready) {
   if (!ready) return { may: false, why: FX_NOT_READY };
@@ -2568,7 +2568,7 @@ router.get('/fx-revalue', auth, noKey, on, owner, ...checked('GET /fx-revalue'),
       { fy, p } = fxPeriod(req.query || {});
     const v = await withEntity(e, (h) => FXR.revaluation(h, e, req.books, fy, p));
     const why = !v.ready
-      ? 'Foreign balances need database updates (b391, b392) that are still to run.'
+      ? FXR.WAITS.balances
       : v.posted
         ? 'Revalued — ' + v.posted.entry_no + '.'
         : v.missing[0] || (v.event ? null : 'Nothing to revalue.');
