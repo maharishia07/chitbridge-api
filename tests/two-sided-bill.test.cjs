@@ -157,7 +157,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     /* ⭐ ACC-252: bill_received.total is WHAT THE BILL COMES TO (the engine's figure, picked by counter-bill.pickOf), never what was paid.
        Old code summed the payment parts, so a part-paid bill (₹50 of ₹118) and a cash-rounded one read wrong on the buyer's list row. */
     const owedOn = async (no, payment, invoice) => {
-      const r = await send(bill(no, chola, { recipients: [SELF, toCust], business_json: Object.assign({}, bill(no, chola).business_json, { payment }, invoice ? { invoice } : {}) }));
+      const r = await send(bill(no, chola, { recipients: [SELF, toCust], business_json: Object.assign({}, bill(no, chola).business_json, { payment }, invoice ? { invoice } : invoice === false ? { invoice: undefined } : {}) }));
       const tcopy = (COPIES || []).find((c) => c.entity_id === CUST) || {};
       return { status: r.status, total: ((tcopy.summary_json || {}).bill_received || {}).total, theirs: tcopy };
     };
@@ -169,6 +169,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     const au = await owedOn('C1/26-27/0062', { mode: 'Cash', paid: 105, parts: [{ how: 'Cash', amount: 105 }] }, { ValDtls: { TotInvVal: 105.05 } });
     ROWS[SHOP].country = 'IN';
     ok('ACC-252 · AU · a carried invoice of $105.05 paid $105.00 (5c cash rounding): the row says the invoice\'s 105.05', au.status === 200 && au.total === 105.05, au.status + ' ' + au.total);
+    const none = await owedOn('C1/26-27/0064', { mode: 'On credit', paid: 0, parts: [{ how: 'On credit', amount: 118 }] }, false);
+    ok('ACC-252 · a bill with NO engine figure (no invoice, no money block) says total null: unknown stays unknown, never the parts or 0', none.status === 200 && none.total === null, none.status + ' ' + none.total);
     const noParts = await owedOn('C1/26-27/0063', { mode: 'On credit', paid: 0, parts: [] });
     ok('ACC-252 · …a bill with NO payment parts still says what it comes to (118), not 0', noParts.status === 200 && noParts.total === 118, noParts.status + ' ' + noParts.total);
 
