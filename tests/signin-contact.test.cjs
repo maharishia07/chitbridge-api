@@ -198,15 +198,24 @@ const verify = (id, cred) => call('POST', '/api/signin/verify', Object.assign({ 
     reset();
     v = await verify('athi@alpha-timers.br', { pin: '2580' });
     t('   …and the chosen id signs him in at Alpha (the stored-id door has its own budget)', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 120));
-    /* SEC-143 round 2: the contact's misses start again after a proven secret (4 misses, a sign-in, 4 misses: still open) */
+    /* SEC-143 round 4: a proven secret pays back exactly ONE miss (budget 5): 4 misses, a sign-in, 2 misses shuts; it never washes the count out */
     const dev = require(path.join(API, 'lib', 'dev-otp'));
+    const miss = (n) => (async () => { for (let k = 0; k < n; k++) await verify('9876543210', { pin: '1111' }); })();
     await dev.contactGuessReset('9876543210'); reset();
-    for (let i = 0; i < 4; i++) await verify('9876543210', { pin: '1111' });
+    await miss(4);
     v = await verify('9876543210', { pin: '2580' });
-    t('   4 misses, then the right PIN: signed in', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
-    for (let i = 0; i < 4; i++) await verify('9876543210', { pin: '1111' });
+    t('   4 misses, then the right PIN: signed in (and one miss paid back: 3 left on the books)', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status);
+    await miss(1);
     v = await verify('9876543210', { pin: '2580' });
-    t('   ⭐ then 4 more misses and the contact still opens (the success reset the budget; 8 in a row would have shut it)', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
+    t('   ⭐ …4 on the books after one more miss: the contact still opens', v.status === 200 && claims(v.body.token).identity_id === 'athiAtAlpha', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
+    await dev.contactGuessReset('9876543210');
+    await miss(4); await verify('9876543210', { pin: '2580' }); await miss(2);
+    v = await verify('9876543210', { pin: '2580' });
+    t('   ⭐ 4 misses, a sign-in (pays back one), 2 misses = 5 on the books: the contact is shut, even for the right PIN', v.status === 400 && v.body.code === 'SIGNIN_REFUSED', v.status + ' ' + JSON.stringify(v.body).slice(0, 80));
+    await dev.contactGuessReset('9876543210'); reset();
+    let cycles = 0, shut = false;
+    while (cycles < 12 && !shut) { cycles++; await miss(2); shut = (await verify('9876543210', { pin: '2580' })).status === 400; }
+    t('   ⭐ guessing twice between sign-ins cannot go on for ever: the contact shuts within ' + cycles + ' cycles (budget 5 + 1 refunded each)', shut && cycles <= 6, 'cycles ' + cycles);
     await dev.contactGuessReset('9876543210');
 
     /* SEC-143 round 2: a wrong PIN costs the same time with no account, 1, 2 or 3 PIN holders behind the contact (and for a code) */
