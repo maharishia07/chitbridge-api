@@ -1,6 +1,6 @@
 -- b839_party_contact.sql — SEC-130 residual (7 Nov 2026): the e-mail a shop keeps for a party gets its own shop-scoped home.
 --
--- ⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres), BEFORE b840. Run once (a second run stops at CREATE TABLE, harmlessly). Touches no existing row.
+-- ⚠️ DRAFT — NOT RUN · Athi runs it (Supabase SQL editor, AS postgres). ORDER: b839 → deploy → b840 (never b840 first: it makes the old code fail with 23514). Run once (a second run stops at CREATE TABLE, harmlessly). Touches no existing row.
 --    The code deploys before or after it: while the table is absent nothing is written to identities either (lib/party-contact.js ready()), and the
 --    party e-mail reads fall back to identities.email.
 --

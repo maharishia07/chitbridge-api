@@ -137,19 +137,19 @@ const attempt = async (fn) => { try { return { ok: true, value: await fn() }; } 
 
   /* 4 ── the backfill predicate IS handle.isMinted */
   const b840 = read('migrations/b840_party_contact_backfill.sql');
-  const sqlText = `LEFT(BTRIM(user_id), 1) = '${H.MINTED}'`;
-  t('MINTED_SQL, b840 (backfill, update, CHECK) and handle.MINTED are the same text', PC.MINTED_SQL === sqlText && (b840.match(new RegExp(sqlText.replace(/[()]/g, '\\$&'), 'g')) || []).length >= 4, String((b840.match(new RegExp(sqlText.replace(/[()]/g, '\\$&'), 'g')) || []).length));
+  const sqlText = `user_id ~ '^[[:space:]]*${H.MINTED}'`;
+  t('MINTED_SQL, b840 (backfill, update, CHECK twice, rollback) and handle.MINTED are the same text', PC.MINTED_SQL === sqlText && (b840.split(sqlText).length - 1) >= 4, String(b840.split(sqlText).length - 1));
   /* the SQL predicate evaluated in JS over handles: same answer as isMinted */
-  const sqlMinted = (u) => (u == null ? null : String(u).replace(/^ +| +$/g, '').charAt(0) === H.MINTED);
-  const samples = ['~shop.cus-0001', ' ~x.sup-1', '~', 'realshop', 'ravi@acme.br', '9876@shop.cr', '', null, 'a~b', '~~'];
+  const sqlMinted = (u) => (u == null ? null : /^[ \t\n\r\f\v]*~/.test(String(u))); /* user_id ~ '^[[:space:]]*~' */
+  const samples = ['~shop.cus-0001', ' ~x.sup-1', '~', 'realshop', 'ravi@acme.br', '9876@shop.cr', '', null, 'a~b', '~~', '\t~x', '\n~x.cus-1', ' \r\n~y', 'x\t~'];
   t('predicate agrees with handle.isMinted on every sample', samples.every((u) => (sqlMinted(u) || false) === H.isMinted(u)), samples.filter((u) => (sqlMinted(u) || false) !== H.isMinted(u)).join(','));
-  t('b840: one transaction, backfill → clear → CHECK NOT VALID → VALIDATE, a dry-run count', /^BEGIN;/m.test(b840) && /NOT VALID;/.test(b840) && /VALIDATE CONSTRAINT identities_minted_no_email/.test(b840) && /COMMIT;/.test(b840) && /DRY RUN FIRST/.test(b840) && b840.indexOf('INSERT INTO party_contact') < b840.indexOf('SET email = NULL') && b840.indexOf('SET email = NULL') < b840.indexOf('ADD CONSTRAINT'));
+  t('b840: two transactions (backfill → clear → CHECK NOT VALID, then VALIDATE alone), the order warning, a three-number dry run', (b840.match(/^BEGIN;/gm) || []).length === 2 && (b840.match(/^COMMIT;/gm) || []).length === 2 && b840.indexOf('NOT VALID;') < b840.indexOf('COMMIT;') && b840.indexOf('COMMIT;') < b840.indexOf('VALIDATE CONSTRAINT identities_minted_no_email') && /ORDER, ALWAYS: b839/.test(b840) && /orphans_nulled_without_copy/.test(b840) && b840.indexOf('INSERT INTO party_contact') < b840.indexOf('SET email = NULL') && b840.indexOf('SET email = NULL') < b840.indexOf('ADD CONSTRAINT identities_minted_no_email CHECK'));
 
   /* 5 ── the CHECK's meaning: NOT (minted AND email IS NOT NULL) — NULL passes, as Postgres treats a CHECK */
   const checkPasses = (row) => { const m = sqlMinted(row.user_id); return !(m === true && row.email != null); };
   t('CHECK: a minted party with an e-mail is refused', checkPasses({ user_id: '~shopa.cus-1', email: 'a@b.test' }) === false);
   t('CHECK: a minted party without one, a real account with one, a user-less shopper row with a .cr handle all pass', checkPasses({ user_id: '~shopa.cus-1', email: null }) && checkPasses({ user_id: 'realshop', email: 'o@r.test' }) && checkPasses({ user_id: null, email: '9876@shop.cr' }));
-  t('b840 states the CHECK as that predicate', /CHECK \(NOT \(LEFT\(BTRIM\(user_id\), 1\) = '~' AND email IS NOT NULL\)\) NOT VALID/.test(b840));
+  t('b840 states the CHECK as that predicate', b840.includes("CHECK (NOT (" + sqlText + " AND email IS NOT NULL)) NOT VALID"));
 
   /* 6 ── sign-in never reads party_contact */
   const signin = ['routes/signin.js', 'lib/identity-auth.js', 'lib/resolveuserid.js', 'lib/iddoc-verify.js', 'routes/identity-docs.js', 'lib/otp.js'].filter((f) => fs.existsSync(path.join(API, f)));

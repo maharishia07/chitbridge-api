@@ -301,6 +301,10 @@ async function signIn(email, display_name) {
           await db.query('DELETE FROM schema_fields');
         } catch (_) {}
         for (const { table_name } of cols.rows) await db.query(`DELETE FROM public."${table_name}"`);
+        /* party_tax_id and party_contact reference identities with no cascade: clear them first (a table not migrated yet is skipped) */
+        for (const owned of ['party_tax_id', 'party_contact']) {
+          if ((await db.query('SELECT to_regclass($1) AS t', ['public.' + owned])).rows[0].t) await db.query(`DELETE FROM public.${owned}`);
+        }
         await db.query('DELETE FROM identities WHERE parent_entity_id IS NOT NULL');
         await db.query('DELETE FROM identities');
         await db.query('UPDATE catalogue_source SET owner_entity_id = NULL WHERE owner_entity_id IS NOT NULL');
