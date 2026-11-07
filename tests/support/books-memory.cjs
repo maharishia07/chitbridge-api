@@ -266,7 +266,7 @@ function create() {
     async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
-    async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))); },
+    async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))).map((c) => { const i = T.identities.find((x) => x.identity_id === c.by); return Object.assign({}, c, { by_name: i ? i.display_name || null : null }); }); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
     async parties(db, e, ids) { return clone(T.parties.filter((p) => p.owner === e && (!Array.isArray(ids) || ids.map(String).indexOf(String(p.party_id)) >= 0))).map((p) => Object.assign(p, { on_rail: p.on_rail === true })); },
     async partyOn(db, e, party) { const p = T.parties.find((x) => x.owner === e && x.party_id === party); return { customer: !!(p && p.customer), supplier: !!(p && p.supplier) }; },

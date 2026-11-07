@@ -72,6 +72,7 @@ const call = (port, method, p, body) => new Promise((done) => {
       ['locked', 'open', 'soft_locked', 'bill posted, signed off again']]);
     ok(country + ': every row says who and when', jul.lock_trail.every((x) => x.by && x.at), JSON.stringify(jul.lock_trail));
     eq(country + ': …who is the owner who acted (the same name the change log holds)', jul.lock_trail.map((x) => x.by), X.T.changes.filter((c) => c.entity_id === shop && c.row_id === FY + '/1').map((c) => c.by));
+    eq(country + ': …and `by_name` is the display name beside the id (never only a UUID)', jul.lock_trail.map((x) => x.by_name), [NAMES[country], NAMES[country], NAMES[country]]);
     eq(country + ': August, never touched, has an empty trail (no bleed between months)', aug.lock_trail, []);
     eq(country + ': July is soft_locked now (the trail agrees with the state)', jul.status, 'soft_locked');
   }
