@@ -42,6 +42,23 @@ eq('a bill with no tender → nothing', CS.refusalOf({ country: 'AU', business_j
 ok('the step is the pack\'s, read not typed', CS.ruleOf('AU').step === require('../lib/country').packFor('AU').cashRounding.step_minor && CS.ruleOf('IN') === null);
 ok('lib/cash-step.js types no step number', !/\b5\b/.test(fs.readFileSync(path.join(ROOT, 'lib', 'cash-step.js'), 'utf8').split('\n').filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l)).join('\n')));
 
+/* ── an offline replay of a printed sale is accepted and said, never wedged ── */
+{
+  const now = Date.parse('2026-11-07T10:00:00Z');
+  ok('replay · billed 2 hours before it arrives (ISO) → a replay', CS.replayOf({ billed_at: '2026-11-07T08:00:00Z' }, now) === true);
+  ok('replay · billed in ms, 1 day before → a replay', CS.replayOf({ billed_at: now - 86400000 }, now) === true);
+  ok('live · billed 30 seconds before → NOT a replay (refused)', CS.replayOf({ billed_at: '2026-11-07T09:59:30Z' }, now) === false);
+  ok('live · no billed_at or unreadable → NOT a replay (refused)', CS.replayOf({}, now) === false && CS.replayOf({ billed_at: 'soon' }, now) === false);
+}
+
+{
+  const now = Date.parse('2026-11-07T10:00:00Z');
+  const at = (when) => CS.verdictOf({ country: 'AU', business_json: Object.assign(bill(['Cash', 10.02]), { billed_at: when }), currency: 'AUD' }, now);
+  eq('verdict · queued 2 hours, AU cash 10.02 → accepted as replay, still named', [at('2026-11-07T08:00:00Z').accepted, at('2026-11-07T08:00:00Z').code], ['replay', 'CASH_ROUNDING_STEP']);
+  eq('verdict · live (30 s), AU cash 10.02 → refused (no accepted flag)', at('2026-11-07T09:59:30Z').accepted, undefined);
+  eq('verdict · queued, IN cash 10.02 → nothing', CS.verdictOf({ country: 'IN', business_json: Object.assign(bill(['Cash', 10.02]), { billed_at: '2026-11-07T08:00:00Z' }), currency: 'INR' }, now), null);
+}
+
 /* ── the wire in routes/chits.js ── */
 {
   const src = require('../tools/chits-files.cjs').read(ROOT);
@@ -49,6 +66,7 @@ ok('lib/cash-step.js types no step number', !/\b5\b/.test(fs.readFileSync(path.j
   ok('SEND_STEPS runs sendCashStep right after sendPaper', /sendPaper,\s*sendCashStep,/.test(steps));
   const fn = src.slice(src.indexOf('async function sendCashStep('), src.indexOf('/** which copies a self-chit'));
   ok('sendCashStep has no try/catch — the refusal reaches the counter', fn.length > 0 && !/\btry\s*\{/.test(fn));
+  ok("sendCashStep accepts an offline replay and says so on the answer (cash_step)", fn.includes("cashStep.verdictOf(") && src.includes("cash_step: sendState.cashStep"));
   ok('sendCashStep answers 400 and skips a draft', /status: 400/.test(fn) && /is_draft/.test(fn));
   const reg = fs.readFileSync(path.join(ROOT, 'docs', 'ERROR-CODES.md'), 'utf8');
   ok('CASH_ROUNDING_STEP is a row of the register, 400', /\| CASH_ROUNDING_STEP \| 400 \|/.test(reg));

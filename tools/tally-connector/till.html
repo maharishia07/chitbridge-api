@@ -20979,7 +20979,8 @@ function addPart(){
   var m = billMoney(), taken = PARTS.reduce(function(a,p){ return r2(a + p.amount); }, 0);
   var left = r2(m.net - taken);
   if (!(amt > 0)) { say('Type the amount taken in ' + PICKED + ' first.'); return; }
-  PARTS.push({ how: PICKED, amount: r2(Math.min(amt, left > 0 ? left : amt)) });
+  /* CTRY-77: a CASH part is TAKEN at the pack's coin step like the part that pays the rest (cashDue) — typed 10.02 on a 10.02 bill goes out 10.00, cash_round -0.02 follows from cashRoundOf */
+  PARTS.push({ how: PICKED, amount: cashDue(r2(Math.min(amt, left > 0 ? left : amt)), payWayId(PICKED)) });
   PAY_ASKED = true;                                  /* taking a part IS saying how it was paid */
   document.getElementById('tendered').value = '';
   paintParts(); paintTotals(); draftSave();          /* R1 · a part payment is part of the bill */
@@ -23285,7 +23286,7 @@ function tenderParts(parts, billNet, tendered){
     }
     return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];
   }
-  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: Math.min(tendered, rest) });
+  if (tendered > 0 && taken < billNet) parts.push({ how: PICKED, amount: cashDue(Math.min(tendered, rest), payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
   return parts;
 }
 function slipHeadHTML(kind){

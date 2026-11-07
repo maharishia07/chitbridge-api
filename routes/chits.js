@@ -1663,13 +1663,19 @@ async function sendPaper(sendState, req, res) {
  * ⭐ CTRY-77 (AU-02b; Athi 5 Nov: REFUSE) — a CASH part the shop's pack says no coin can make is refused by name: 400 CASH_ROUNDING_STEP with the
  * pack's cite (lib/cash-step: pack.cashRounding step_minor, AU 5c). The till rounds before it sends (TILL-B2); this is the door for a caller that
  * did not. Card, UPI and every other tender are exact; a shop whose pack has no cashRounding (India, UAE) is untouched. A draft or a chit without
- * a counter tender: nothing. Its own step, outside any try, because a refusal must reach the counter.
+ * a counter tender: nothing. A bill struck more than 15 minutes before it arrives is an OFFLINE REPLAY of a printed sale: accepted and said (cash_step on
+ * the answer), so a queued bill is never wedged. Its own step, outside any try, because a refusal must reach the counter.
  */
 async function sendCashStep(sendState, req, res) {
   const { sender_id, business_json, currency_code, is_draft } = sendState;
   if (is_draft || !business_json || !business_json.payment) return;
-  const refusal = cashStep.refusalOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code });
+  const refusal = cashStep.verdictOf({ country: await countryOfEntity(sender_id), business_json, currency: currency_code }, Date.now());
   if (!refusal) return;
+  /* an OFFLINE REPLAY of a bill already printed is accepted, said on the answer (cash_step) - never a wedged queue; the books take the gap as round-off */
+  if (refusal.accepted) {
+    sendState.cashStep = { code: refusal.code, accepted: refusal.accepted, why: refusal.why, cite: refusal.cite };
+    return;
+  }
   res.locals.code = refusal.code;
   return problem(req, res, {
     status: 400,
@@ -2857,7 +2863,9 @@ async function sendAnswer(sendState, req, res) {
     /* ⭐ present only when the customer's copy was not sent — the counter shows it on the bill */
     one_sided: oneSided || undefined,
     /* ⭐ CTRY-76: present only when this bill went out as NOT a tax invoice because the buyer is not named (sendPaper) — the counter asks for the buyer */
-    not_invoice: sendState.paper || undefined
+    not_invoice: sendState.paper || undefined,
+    /* ⭐ CTRY-77: present only when an OFFLINE REPLAY carried a cash part off the pack's step and was accepted (sendCashStep) - the books take the gap as round-off */
+    cash_step: sendState.cashStep // undefined (absent) unless an offline replay was let through
   }));
 
   /**
