@@ -102,7 +102,7 @@ const lines = [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59
 const bill = (no, customer, extra) => Object.assign({
   purpose: 'order', subject: 'Counter sale ' + no, manual_subject: 'Counter sale ' + no, client_ref: no,
   business_json: { customer, till: { id: 'C1', name: 'Counter 1', host: 'browser' }, bill_no: no, billed_at: '2026-10-01T05:00:00.000Z',
-    payment: { mode: 'On credit', paid: 0, parts: [{ how: 'On credit', amount: 118 }] }, slip: 'cash', terms: { credit_days: 15, due_date: '2026-10-16' } },
+    payment: { mode: 'On credit', paid: 0, parts: [{ how: 'On credit', amount: 118 }] }, invoice: { ValDtls: { TotInvVal: 118 } }, slip: 'cash', terms: { credit_days: 15, due_date: '2026-10-16' } },
   line_items: lines.map((l) => Object.assign({}, l)),
 }, extra || {});
 const chola = { name: 'Chola Auto Care', phone: '9840012345', identity_id: CUST, entity_id: CUST };
@@ -153,6 +153,24 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…the ledger hears from BOTH sides (the shop\'s sale, the customer\'s purchase-waiting)', HEARD.indexOf(SHOP) >= 0 && HEARD.indexOf(CUST) >= 0, JSON.stringify(HEARD));
     ok('…the SHOP sells it: only the shop\'s shelf is read for rates, never the customer\'s', SHELVES.length >= 1 && SHELVES.every((e) => e === SHOP), JSON.stringify(SHELVES));
     ok('…and the shop is never written into the CUSTOMER\'s customer list (that is what an order to a seller does)', !LISTED.some((x) => x[0] === CUST), JSON.stringify(LISTED));
+
+    /* ⭐ ACC-252: bill_received.total is WHAT THE BILL COMES TO (the engine's figure, picked by counter-bill.pickOf), never what was paid.
+       Old code summed the payment parts, so a part-paid bill (₹50 of ₹118) and a cash-rounded one read wrong on the buyer's list row. */
+    const owedOn = async (no, payment, invoice) => {
+      const r = await send(bill(no, chola, { recipients: [SELF, toCust], business_json: Object.assign({}, bill(no, chola).business_json, { payment }, invoice ? { invoice } : {}) }));
+      const tcopy = (COPIES || []).find((c) => c.entity_id === CUST) || {};
+      return { status: r.status, total: ((tcopy.summary_json || {}).bill_received || {}).total, theirs: tcopy };
+    };
+    const part = await owedOn('C1/26-27/0060', { mode: 'Cash', paid: 50, parts: [{ how: 'Cash', amount: 50 }] });
+    ok('ACC-252 · IN · a part-paid bill (₹50 of ₹118): the buyer\'s row says the BILL (118), not what was paid (50)', part.status === 200 && part.total === 118, part.status + ' ' + part.total);
+    const carriedIN = await owedOn('C1/26-27/0061', { mode: 'Cash', paid: 1118, parts: [{ how: 'Cash', amount: 1118 }] }, { ValDtls: { TotInvVal: 1118.16 } });
+    ok('ACC-252 · IN · a carried invoice of ₹1,118.16 paid ₹1,118 in cash: the row says the invoice\'s 1118.16', carriedIN.status === 200 && carriedIN.total === 1118.16, carriedIN.status + ' ' + carriedIN.total);
+    ROWS[SHOP].country = 'AU';
+    const au = await owedOn('C1/26-27/0062', { mode: 'Cash', paid: 105, parts: [{ how: 'Cash', amount: 105 }] }, { ValDtls: { TotInvVal: 105.05 } });
+    ROWS[SHOP].country = 'IN';
+    ok('ACC-252 · AU · a carried invoice of $105.05 paid $105.00 (5c cash rounding): the row says the invoice\'s 105.05', au.status === 200 && au.total === 105.05, au.status + ' ' + au.total);
+    const noParts = await owedOn('C1/26-27/0063', { mode: 'On credit', paid: 0, parts: [] });
+    ok('ACC-252 · …a bill with NO payment parts still says what it comes to (118), not 0', noParts.status === 200 && noParts.total === 118, noParts.status + ' ' + noParts.total);
 
     /* the gate: a till key sends a bill's COPY to its own customer on the rail, and to nobody else.
        ⭐ ONE-SIDED, NOT REFUSED (Athi, 2026-10-02): when the copy cannot go, the sale is still the shop's own record and is
