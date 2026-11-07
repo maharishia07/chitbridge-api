@@ -3347,6 +3347,8 @@
       <button class="pill" id="micphone" data-testid="till-mic-phone" onclick="listen('cphone')" title="speak the number">🎤</button>
       <!-- ⭐ BOOKS v2 — money received from a KNOWN customer; hidden until exactly one customer matches (custKnown) -->
       <button class="pill" id="rcvpaybtn" data-testid="till-receive-pay" onclick="rcvPayOpen()" hidden>Received</button>
+      <!-- ⭐ CTR-186: where the goods go. Another state = IGST (s10(1)(a)); left alone, the bill is over the counter. Shown for a state-split pack only (paintDeliver). -->
+      <button class="pill" id="deliverbtn" data-testid="till-deliver-to" onclick="deliverPick()" title="goods sent to another state">Deliver to</button>
     </div>
     <!-- ⭐⭐ what this customer holds, and what this bill will add. Empty and invisible for a shop with no programme,
          which is most shops — nothing on the counter is spent on a feature nobody switched on. -->
@@ -18917,10 +18919,46 @@ function rwEncash(){
 
 /**
  * ⚠️ A DELIVERY THIS BILL RECORDS ({ state_code, address }) — the one thing that moves its place of supply off the shop.
- * The counter has no screen that takes a delivery address yet, so this stays null and every bill is over the counter;
- * whatever records one sets it here, and it travels on the bill (finish) and the chit (chitOf).
+ * CTR-186: "Deliver to" (deliverbtn) and, for a registered buyer of another state, the finish() question "over the counter or despatched?"
+ * set it through deliverTo(); with none, every bill is over the counter. It travels on the bill (finish) and the chit (chitOf).
  */
-var BILL_DELIVERY = null;
+var BILL_DELIVERY = null, BILL_DELIVERY_ASKED = false;   /* ASKED: the despatch question is put once per bill */
+/** deliverTo(code) → records where the goods go (a 2-digit state code; nothing clears it). placeOfSupply is still the engine's: only the fact is recorded here. */
+function deliverTo(code){
+  var stateCode = String(code == null ? '' : code).trim();
+  BILL_DELIVERY = /^\d{2}$/.test(stateCode) ? { state_code: stateCode } : null;
+  paintTotals(); draftSave();   /* paintTotals repaints the button too */
+}
+/** the button says where the bill goes, once it goes somewhere */
+function paintDeliver(){
+  var button = document.getElementById('deliverbtn'); if (!button) return;
+  button.hidden = !packSplitsByState();   /* a border pack (AU, AE) has no state to deliver to */
+  var stateName = BILL_DELIVERY && ((window.CBProfileMap || {}).STATE_NAMES || {})[BILL_DELIVERY.state_code];
+  button.textContent = BILL_DELIVERY ? 'To ' + (stateName || BILL_DELIVERY.state_code) : 'Deliver to';
+  button.title = BILL_DELIVERY ? 'goods go to state ' + BILL_DELIVERY.state_code + ' — tap to change' : 'goods sent to another state';
+}
+/** the Deliver-to popup (the page's own ask): a state name or its 2-digit code; empty = over the counter again */
+async function deliverPick(){
+  var maps = window.CBProfileMap || {};
+  var typed = await ask('State name or code. Empty = over the counter.', BILL_DELIVERY ? BILL_DELIVERY.state_code : '', 'State', 'Deliver to');
+  if (typed == null) return;
+  typed = String(typed).trim();
+  if (!typed) { deliverTo(null); return; }
+  var code = maps.stateCodeOfName ? maps.stateCodeOfName(typed) : null;
+  if (!code || !(maps.STATE_NAMES || {})[code]) { say('That is not a state.'); return; }
+  deliverTo(code);
+}
+/** a registered buyer of ANOTHER state, no delivery chosen: over the counter or despatched? (asked once per bill; despatched = their state) */
+async function deliverAsk(){
+  if (BILL_DELIVERY || BILL_DELIVERY_ASKED || !packSplitsByState()) return true;
+  var cust = custKnown(), buyerTax = cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '';
+  var shopRec = (S && S.shop) || {}, mine = String(shopRec.state_code || String(shopRec.gstin || '').trim().slice(0, 2) || '');
+  if (!/^\d{2}/.test(buyerTax) || buyerTax.slice(0, 2) === mine) return true;
+  BILL_DELIVERY_ASKED = true;
+  var sent = await sure('Taken over the counter, or despatched to their state?', 'Despatched', 'Delivery', 'Over the counter');
+  if (sent) deliverTo(buyerTax.slice(0, 2));
+  return true;
+}
 /**
  * ⭐⭐⭐ THE BILL IS COMPUTED ONCE, BY THE ENGINE — CBTax.determine(), the INV-01 invoice (Athi, 2026-10-02: "the computation
  * should happen in only one place like billing, rest all the places the value has to only read, no recomputation").
@@ -20884,7 +20922,7 @@ var SUMFOLD = (function(){ try { return localStorage.getItem('till_sumfold') !==
 function toggleSum(){ SUMFOLD = !SUMFOLD; try { localStorage.setItem('till_sumfold', SUMFOLD ? '1' : '0'); } catch (e) { cbQuiet('toggleSum:1', e); } paintTotals(); }
 function paintTotals(){
   var m = billMoney();
-  try { paintStepBar(); } catch (e) { cbQuiet('paintTotals:1', e); }
+  try { paintStepBar(); paintDeliver(); } catch (e) { cbQuiet('paintTotals:1', e); }   /* CTR-186: paintDeliver rides the step bar's repaint */
   /* ⭐ the Pay button carries the amount, so it has to move when the amount does */
   try { payGo(); } catch (e) { cbQuiet('paintTotals:2', e); }
   /* ⚠️ BEFORE the markup is assembled, because it decides whether the Saved row carries a * — a string already
@@ -21695,7 +21733,7 @@ async function postRewardBehindBill(bill){
 async function finish(){
   if (!CART.length) return { ok: false };
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
-  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */
+  if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */ await deliverAsk();   /* CTR-186: another state's registered buyer — over the counter or despatched? — before the tax */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
@@ -21809,7 +21847,7 @@ async function finish(){
   showSlip(r.bill, m);
   autoPrint(r.bill);
   if (BILL_ORDER) { var boDone = BILL_ORDER; BILL_ORDER = null; paintOrderBar(); orderBilledDone(boDone, r.bill); }   /* M126 + M129 + M169 */
-  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; paintParts();
+  ageClear(); CART = []; PARTS = []; BILL_DELIVERY = null; BILL_DELIVERY_ASKED = false; paintDeliver(); paintParts();
   /* ⚠️ the balance on screen belonged to the customer who just left */
   RW = { holder:null, points:0, worth:0, spend:0, says:null, seq: RW.seq + 1 }; paintRw();
   document.getElementById('tendered').value=''; document.getElementById('cname').value=''; document.getElementById('cphone').value='';
