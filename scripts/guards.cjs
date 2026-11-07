@@ -303,6 +303,7 @@ const GUARDS = [
   'page-limit.test.cjs', // ⭐ LIM2: the ONE pager — limitOf · pageOf · pageArgs (not asked = every row) · pageOut (the envelope), every rule and edge
   'idempotency.test.cjs', // ⭐ LIM2: idempotency off is never silent — warn + held in memory; a retry replayed or 409, another body 422, X-Idempotency: unverified
   'idempotency-after-auth.test.cjs', // SEC (finding 2, 23 Oct): a replay answers only after the route's own auth — revoked session / removed device / deactivated actor get the fresh refusal; a 401 is never recorded; public money doors unchanged
+  'fin51-payment-safe-repeat.test.cjs', // FIN-51 (7 Nov): Mark paid on a chit REQUIRES an Idempotency-Key - same key+body = one payment and the first answer; another body = IDEMPOTENCY_CONFLICT; two at once = one runs, the other 409
   'canon-depth.test.js', // a 2000-deep body: the canon throws cleanly and the idempotency gate self-heals (calls next) — it had failed unseen, in no list
   'books-tally.test.cjs', // ⭐⭐ the pack's Tally files come from the connector's adapter — one Tally writer, Receipt byte-identical
   'books-collections.test.cjs', // ⭐ CB Finance F1: /dues?finance=1 — limit · over_limit · interest SHOWN · owner only; plain /dues untouched
@@ -776,6 +777,7 @@ const files = all
  * without it they ran with no engine and failed with 0 checks (CI run 37414852968, red since 2026-10-06). Measured
  * the same way: these are exactly the CI failures, and each passes locally with the engines present. */
 const NEEDS_ENGINES = [
+  'fin51-payment-safe-repeat.test.cjs',
   'books-close-country.test.cjs',
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
@@ -800,6 +802,8 @@ const NEEDS_ENGINES = [
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness
   'change-pin-lock.test.cjs', // PPL-30: change-pin counts a wrong current PIN and honours the lock like sign-in (verifyCredential, 5 tries, ASVS V2.2.1)
   'change-pin-lock-mutation.test.cjs', // PPL-30: with the count-and-lock removed the test above goes red
+  'itemmatch-corpus.test.cjs', // CAT-75: the itemmatch tolerance per product family on a hand-computed corpus; CAT-261: numbers, units, sizes, grades exact, a near-miss ASKS
+  'itemmatch-corpus-mutation.test.cjs', // CAT-75: the corpus goes red under exact-match and under the old per-token tolerance on numbers and sizes
   'db-error-survives.test.cjs', // PLT-86: a pool error and a held-client error are logged, the process lives, the next query gets a fresh connection
   'db-error-survives-mutation.test.cjs' // PLT-86: with each handler removed the test above goes red
 ];

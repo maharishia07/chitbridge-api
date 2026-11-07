@@ -147,6 +147,87 @@ t('  ...and b765 carries its REVOKE', grants.all.indexOf(B765) >= 0 && grants.un
 t('  ...and the baseline names nothing since fixed or gone', ACCEPTED_GRANTS.every((x) => grants.unrevoked.indexOf(x) >= 0),
   ACCEPTED_GRANTS.filter((x) => grants.unrevoked.indexOf(x) < 0).join(' | '));
 
+console.log('\n-- ⚠️ DB-86: a table meant to be insert-only must END with no UPDATE / DELETE / TRUNCATE for cb_app --');
+/* ⭐ The rule above sees only a GRANT that names INSERT without UPDATE. The 18 Oct finding (b765-3) was wider: the old default privileges gave
+   every table born before DB-78 SELECT, INSERT, UPDATE, DELETE, and a table whose migration wrote the full four (b138, b143, b144, b172,
+   b185, b262) was never "insert-only" in the first place, though its file says append-only / immutable / audit. The truth is the EFFECTIVE
+   right: production's own schema (the baseline, a pg_dump) plus every GRANT / REVOKE in the numbered chain after it, in number order.
+   INSERT_ONLY is the register of tables meant to be insert-only (`says` is the file or comment that says so); a table in it must end with no
+   write right. `fix` names the one-table file that revokes it (census of 7 Nov 2026, read from the baseline, hand-computed first).
+   NOT in the register, on purpose: definition_version, ops.population (the app UPDATEs them: lib/slab-cites.js:33, routes/entities.js:1511),
+   and register_entry (b185 says append-only, but lib/raida.js:789 runs UPDATE ${s.table} SET dispute_id on it from the dispute route: HELD, DB-86 follow-up). */
+const WRITE_PRIVS = ['UPDATE', 'DELETE', 'TRUNCATE'];
+const ALL_PRIVS = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER'];
+const INSERT_ONLY = {
+  access_events: { fix: 'b834_revoke_write_access_events.sql', says: 'b172 / b282:3 "the append-only record of GRANTS"' },
+  chit_line_assignment: { fix: 'b835_revoke_write_chit_line_assignment.sql', says: 'b143 + b154:8 "append-only with seq and created_at"' },
+  chit_line_amendment: { fix: 'b836_revoke_write_chit_line_amendment.sql', says: 'b138:76 "append-only by construction"' },
+  chit_line_delivery: { fix: 'b837_revoke_write_chit_line_delivery.sql', says: 'b144:25 "AND IT IS IMMUTABLE"' },
+  quick_key_audit: { fix: 'b838_revoke_write_quick_key_audit.sql', says: 'b262:151 "who changed what" audit' },
+  source_penetration: { says: 'b767' }, product_version: { says: 'b767' }, resolved_blueprint: { says: 'b767' }, erp_handoff: { says: 'b767' },
+  usage_ledger: { says: 'b767' }, kyb_field_cache: { says: 'b767' }, definition_status_log: { says: 'b767' }, ai_usage: { says: 'b767' },
+  books_compare_part: { says: 'b767' }, fx_rate: { says: 'b767' }, move_in_import: { says: 'b765 / b767' },
+  party_contact_pref: { says: 'b306 append-only' }, signup_context: { says: 'b264 append-only' }, memberships: { says: 'b297 append-only' },
+  reward_ledger: { says: 'b213 append-only by grant' }, stock_movement: { says: 'b214 append-only by grant' }, test_result: { says: 'b219 append-only by grant' },
+};
+/** the table-level rights cb_app ends with, from SQL sources applied in order → Map(table → Set of privileges). Reads GRANT / REVOKE with one or several tables,
+ *  quoted and schema-qualified names, ON ALL TABLES IN SCHEMA, and ignores -- and block comments. Role membership and PUBLIC are NOT read (DB-86 follow-up). */
+function effectiveRights(sources) {
+  const rights = new Map();
+  const re = /\b(GRANT|REVOKE)\s+([A-Z ,]+?)\s+ON\s+(ALL\s+TABLES\s+IN\s+SCHEMA\s+|TABLE\s+)?([^;]*?)\s+(?:TO|FROM)\s+"?cb_app"?(?=[\s;,]|$)/gi;
+  for (const src of sources) {
+    const code = src.replace(/\r\n/g, '\n').replace(/\/\*[\s\S]*?\*\//g, ' ').split('\n').map((l) => l.replace(/--.*$/, '')).join('\n');
+    let m;
+    while ((m = re.exec(code))) {
+      const privs = m[2].toUpperCase().split(/\s*,\s*/).map((x) => x.trim()).flatMap((x) => (x === 'ALL' || x === 'ALL PRIVILEGES' ? ALL_PRIVS : [x]));
+      const names = /ALL/i.test(m[3] || '') ? [...rights.keys()] : m[4].split(',').map((x) => x.replace(/"/g, '').trim().replace(/^public\./i, '')).filter(Boolean);
+      for (const table of names) {
+        const have = rights.get(table) || new Set();
+        for (const p of privs) m[1].toUpperCase() === 'GRANT' ? have.add(p) : have.delete(p);
+        rights.set(table, have);
+      }
+    }
+  }
+  return rights;
+}
+/** tables of `registry` that end holding a write right (or are unknown to the sources) → ['name (UPDATE,DELETE)'] */
+const writable = (rights, registry) => Object.keys(registry).filter((n) => !rights.has(n) || WRITE_PRIVS.some((p) => rights.get(n).has(p)))
+  .map((n) => n + ' (' + (rights.has(n) ? WRITE_PRIVS.filter((p) => rights.get(n).has(p)).join(',') : 'not in the baseline') + ')');
+const BASELINE_SQL = fs.readFileSync(path.join(DIR, require('../tools/migrate.cjs').BASELINE[0]), 'utf8');
+const chain = require('../tools/migrate.cjs').chainFiles();
+const endRights = effectiveRights([BASELINE_SQL].concat(chain.map((f) => fs.readFileSync(path.join(DIR, f), 'utf8'))));
+const stillWritable = writable(endRights, INSERT_ONLY);
+t('every table meant to be insert-only ends with no UPDATE / DELETE / TRUNCATE for cb_app', stillWritable.length === 0, stillWritable.join(' | '));
+const declared = [...BASELINE_SQL.matchAll(/^COMMENT ON TABLE public\.(\w+) IS '[^']*(?:insert-only|append-only)/gim)].map((m) => m[1]);
+t('  ...and every baseline table COMMENTed insert-only / append-only is in the register', declared.length >= 4 && declared.every((n) => INSERT_ONLY[n]),
+  declared.filter((n) => !INSERT_ONLY[n]).join(' | ') + ' (' + declared.length + ' comments read)');
+const fixes = Object.entries(INSERT_ONLY).filter(([, v]) => v.fix);
+t('  ...each census hit has ONE fix file in the chain', fixes.length === 5 && fixes.every(([, v]) => chain.indexOf(v.fix) >= 0), fixes.map(([n]) => n).join(', '));
+const oneTable = fixes.filter(([n, v]) => {
+  const code = fs.readFileSync(path.join(DIR, v.fix), 'utf8').replace(/--.*$/gm, '');
+  const stmts = code.match(/\bREVOKE\b[^;]*;/gi) || [];
+  return stmts.length === 1 && new RegExp('^REVOKE\\s+UPDATE,\\s*DELETE,\\s*TRUNCATE\\s+ON\\s+' + n + '\\s+FROM\\s+cb_app;$', 'i').test(stmts[0].replace(/\s+/g, ' ').trim())
+    && !/\b(DO|DELETE|DROP|TRUNCATE\s+TABLE|GRANT)\b/i.test(code.replace(/REVOKE[^;]*;/i, ''));
+});
+t('  ...and each fix file is one REVOKE UPDATE, DELETE, TRUNCATE on its own table and nothing else', oneTable.length === fixes.length,
+  fixes.filter((f) => oneTable.indexOf(f) < 0).map(([n]) => n).join(', '));
+t('  ...and each fix file says WHY in its header (DB-86)', fixes.every(([, v]) => {
+  const src = fs.readFileSync(path.join(DIR, v.fix), 'utf8');
+  return /^-- b83\d_[a-z_]+\.sql[^\n]*DB-86/.test(src) && /\bWHY\b/.test(src);
+}));
+/* the rule itself, on planted SQL: it must fire, and go quiet only for a REVOKE of THAT table that takes all of UPDATE, DELETE */
+const planted = 'GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.t_log TO cb_app;';
+const plantedRegistry = { t_log: {} };
+t('  ...the rule fires on a full-rights table with no REVOKE (planted)', writable(effectiveRights([planted]), plantedRegistry).length === 1);
+t('  ...goes quiet on its REVOKE', writable(effectiveRights([planted, 'REVOKE UPDATE, DELETE, TRUNCATE ON t_log FROM cb_app;']), plantedRegistry).length === 0);
+t('  ...but not on a REVOKE of another table, or of only DELETE', writable(effectiveRights([planted, 'REVOKE UPDATE, DELETE ON other FROM cb_app;', 'REVOKE DELETE ON t_log FROM cb_app;']), plantedRegistry).length === 1);
+t('  ...and fires on a REVOKE that a later GRANT undoes', writable(effectiveRights([planted, 'REVOKE UPDATE, DELETE ON t_log FROM cb_app;', 'GRANT UPDATE ON t_log TO cb_app;']), plantedRegistry).length === 1);
+
+t('  ...the rule reads a multi-table REVOKE (planted)', writable(effectiveRights([planted, 'REVOKE UPDATE, DELETE ON t_log, other FROM cb_app;']), plantedRegistry).length === 0);
+t('  ...quoted and schema-qualified names (planted)', writable(effectiveRights(['GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE "public"."t_log" TO cb_app;', 'REVOKE UPDATE, DELETE ON "t_log" FROM cb_app;']), plantedRegistry).length === 0);
+t('  ...a block comment cannot fake a REVOKE (planted)', writable(effectiveRights([planted, '/* REVOKE UPDATE, DELETE ON t_log FROM cb_app; */']), plantedRegistry).length === 1);
+t('  ...GRANT ALL ON ALL TABLES IN SCHEMA re-opens a revoked table (planted)', writable(effectiveRights([planted, 'REVOKE UPDATE, DELETE ON t_log FROM cb_app;', 'GRANT ALL ON ALL TABLES IN SCHEMA public TO cb_app;']), plantedRegistry).length === 1);
+
 console.log('\n-- b189 repairs the silent-empty-table class --');
 const rd = (f) => fs.existsSync(at(f)) ? fs.readFileSync(at(f), 'utf8').replace(/\r\n/g, '\n') : '';
 const b189dry = rd('b189_rls_without_policy_dryrun.sql');
