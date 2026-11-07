@@ -3671,7 +3671,15 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
+   ]
+  },
+  "POST /api/signin/logout": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
    ]
   },
   "POST /api/signin/pin": {
@@ -3679,7 +3687,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/renew": {
@@ -3687,7 +3695,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/sessions/revoke": {
@@ -3695,7 +3703,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/signin/verify": {
@@ -3703,7 +3711,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/simulator/feedback": {
@@ -3711,7 +3719,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/simulator/lead": {
@@ -3719,7 +3727,7 @@
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
-    422
+    400
    ]
   },
   "POST /api/supplies": {

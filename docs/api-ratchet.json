@@ -3,23 +3,38 @@
  "stage": "2",
  "updated": "2026-11-07",
  "total": 637,
- "not_meeting": 214,
+ "not_meeting": 187,
  "codes_total": 558,
  "codes_pending": 0,
  "raw_error_writes": 2,
  "routes_without_does": 627,
  "columns_failing": {
-  "strict_input": 72,
+  "strict_input": 61,
   "output_allowlist": 60,
   "foreign_id_404": 20,
   "idempotent_money_write": 3,
   "inbound_validated": 0,
-  "trips_budgeted": 46
+  "trips_budgeted": 36
  },
  "reported_failing": {
   "bfla_role_check": 0,
   "parameterised_query": 39,
   "rate_limited": 479
  },
- "debt": []
+ "debt": [
+  {
+   "route": "POST /api/signin/ask",
+   "opened": "2026-11-07",
+   "expires": "2026-11-21",
+   "pr": "API-47",
+   "reason": "closed body (S33) changed the row hash of a route signed at PR#883 while these core columns were already red at base (error_shape, codes_registered); the cure is in routes/signin.js (a raw 400/500 write in ask; the verify refusals 403/409/503 named by a gate and tested), outside API-47 scope; not re-signed"
+  },
+  {
+   "route": "POST /api/signin/verify",
+   "opened": "2026-11-07",
+   "expires": "2026-11-21",
+   "pr": "API-47",
+   "reason": "closed body (S33) changed the row hash of a route signed at PR#883 while these core columns were already red at base (error_tests, status_codes); the cure is in routes/signin.js (a raw 400/500 write in ask; the verify refusals 403/409/503 named by a gate and tested), outside API-47 scope; not re-signed"
+  }
+ ]
 }

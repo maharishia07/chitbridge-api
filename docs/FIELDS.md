@@ -1280,3 +1280,11 @@ One mechanism on ONE chit for the seller's pro-forma, the buyer's counter, an am
 |---|---|---|
 | `business_json.delivery.state_code` | 2-digit GST state code (the counter's existing key; `'7'` reads as `'07'`; a bad code is ignored) | Where the goods move to (IGST Act s.10(1)(a)). `lib/tax-copy.deliveredPos` hands it to the engine's `placeOfSupply`, so a composed chit is supplied there on ANY chit, not only a counter bill. Written by the counter today; the composer's writer is a follow-up (CTRY-82). Read by `partiesFor` only. |
 | `business_json.delivery.bill_to_ship_to` | `true` or absent | Bill-to-ship-to (s.10(1)(b)): the place of supply is the bill-to party's state, whatever `state_code` says. With neither key the engine's labelled buyer-GSTIN fallback stays ("Place of supply was not given, so the buyer's state was used"). A hard "undecided" is option B, only after a delivery writer exists. |
+
+## FIN-58 · an unconfirmed UPI part waits as a receivable (api slice, 2026-11-07)
+
+| Where | Key | Meaning |
+|---|---|---|
+| a counter bill's `business_json.payment.parts[]` (write: the till, CTR-156 later) | `confirmed` | `false` on a UPI part = the shop has not yet seen the money arrive: the bill posts as a `sale_bill` to the shop's system party "UPI waiting" (Dr Debtors / Cr Sales / Cr Output tax), `paid` = the confirmed parts only. Absent or `true` = taken as received, exactly as before (the till sets none yet). Only UPI; any other tender ignores it. |
+| the same part | `confirmed_at` | ISO moment the flip (`lib/upi-waiting.confirmArrived`) stamped `confirmed = true`; written with it, never by a client. |
+| `GET /api/books/dues` (a `parties[]` row) | `system` | `'upi_waiting'` on the shop's one system party's row (named "UPI waiting"); absent on every other row. With `?finance=1` that row also carries `follow_up: null`, `interest_minor: null`, `interest_state: 'off'`, no limit and `over_limit: false`: it is aged once but never reminded, charged interest or limited. The screen reads `system`, never the name. The party has no list row, so it is not in the CRM party list, search or exports. |

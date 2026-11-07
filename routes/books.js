@@ -957,7 +957,7 @@ router.get('/dues', auth, noKey, on, ...checked('GET /dues'), async (req, res) =
         for (const r of rows.values()) r.payable = v.by_party[String(r.party_id)] || null;
         payables = { total_minor: v.total_minor };
       }
-      return Array.from(rows.values()).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
+      return require('../lib/upi-waiting').quietRows(Array.from(rows.values()), e, fin).sort((first, second) => Math.abs(second.balance_minor) - Math.abs(first.balance_minor));
     });
     res.json(
       await forReader(req, e, {
