@@ -13,7 +13,7 @@ function grab(n) {
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
   return h.slice(at, i + 1);
 }
-const FNS = ['billMoney', 'moneyOf', 'noCountryMoney'];
+const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote'];
 function page(shop) {
   const ctx = {
     window: { CBTax: require('../lib/tax'), CBRegulation: require('../lib/regulation') },
@@ -50,7 +50,13 @@ ok('country IN: totals as before (an invoice, no no-country flag)', () => {
   assert.ok(m.invoice && m.net > 0, 'IN shop must total');
 });
 ok('the guard sits in billMoney, not the paint: paintTotals/finish read m.noCountry', () => {
-  assert.ok(/m\.noCountry \? '<div class="t warnrow" data-testid="till-no-country"/.test(h));
-  assert.ok(/saleStop\(m\.noCountry \? m\.why/.test(h));
+  assert.ok(/innerHTML = noCountryRow\(m\)/.test(h), 'paintTotals shows the row');
+  assert.ok(/saleStop\(saleStopWords\(m\)\)/.test(h), 'finish() stops with the words');
+  const p = page({ name: 'Fresh' }); p.esc = String;
+  vm.runInContext(['noCountryRow', 'saleStopWords'].map(grab).join('\n'), p);
+  const m = p.billMoney();
+  assert.ok(p.noCountryRow(m).includes('till-no-country') && p.noCountryRow(m).includes(m.why));
+  assert.strictEqual(p.saleStopWords(m), m.why);
+  assert.strictEqual(p.noCountryRow({}), '');
 });
 console.log(n + ' passed');
