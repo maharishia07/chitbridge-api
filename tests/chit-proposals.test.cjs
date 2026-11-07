@@ -790,6 +790,28 @@ const call = (method, url, id, body) =>
     assert.deepStrictEqual([verdict.kind, verdict.event && verdict.event.type, verdict.event && verdict.event.party], ['post', 'purchase_return', SELL_STUB]);
     assert.strictEqual(A.taxCalls.length, taxA, 'posting it ran no tax engine either');
   });
+  await t('REVIEW: the seller applied but its confirmation was never queued → the buyer’s replayed decision makes the seller say it again (once per replay), applies nothing twice, and the buyer applies on it', async () => {
+    const { A, B } = twoInstallations();
+    issueInvoice(A);
+    issueInvoice(B);
+    const r = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 90 }]), SELLER));
+    await ship(B, A);
+    await as(A, () => proposals.decide(BUY, CH, r.proposal_id, 'accept', BUYER));
+    await ship(A, B);
+    const queued = B.out.filter((x) => x.kind === 'proposal_decide').length; /* the first confirmation is still unsent here, standing for one that never reached the buyer */
+    const notes = NOTES.length;
+    const replay = await as(B, () => proposals.receiveDecision(SELL, { identity_id: BUY_STUB, bridge_id: B_BUY, display_name: 'Chennai Stores' }, CH, { proposal_id: r.proposal_id, decision: 'accept', by_name: 'Chennai Stores' }));
+    assert.strictEqual(replay.applied, false, 'nothing is applied twice');
+    assert.strictEqual(NOTES.length, notes, 'and no second note');
+    assert.strictEqual(B.out.filter((x) => x.kind === 'proposal_decide').length, queued + 1, 'the seller confirms again');
+    const back = await ship(B, A);
+    assert.ok(back.length === 2 && back.every((x) => x.ok), JSON.stringify(back));
+    assert.strictEqual(A.amend.length, 1, 'the line moved ONCE at the buyer although the confirmation arrived twice');
+    assert.strictEqual(rowsOf(A, BUY).find((x) => x.proposal_id === r.proposal_id).status, 'accepted');
+    const again = await as(A, () => proposals.receiveDecision(BUY, { identity_id: SELL_STUB, bridge_id: 'x', display_name: 'Seller' }, CH, { proposal_id: r.proposal_id, decision: 'accept', by_name: 'Seller' }));
+    assert.strictEqual(again.applied, false, 'a repeated confirmation at the buyer is a no-op');
+    assert.strictEqual(A.out.filter((x) => x.kind === 'proposal_decide').length, 1, 'and the buyer never echoes (no loop)');
+  });
   await t('DIVERGENCE: the seller cannot issue the note → the decision is refused at the seller in words, the seller applies nothing, the buyer applied nothing (one truth)', async () => {
     const { A, B } = twoInstallations();
     issueInvoice(A);

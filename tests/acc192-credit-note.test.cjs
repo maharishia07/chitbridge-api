@@ -111,6 +111,21 @@ const edit = (line_index, replacement) => ({ line_index, line: replacement });
     });
   }
 
+  console.log('\n== N · the number is unique per issuer ==\n');
+  await t('N the number, the replay check and the send run inside ONE session advisory lock on a dedicated connection, released after (also when the send throws)', async () => {
+    const log = [];
+    const real = Object.getOwnPropertyDescriptor(db, 'pool');
+    const fake = { connect: async () => ({ query: async (q, a) => log.push(q.split('(')[0] + (a ? ':' + a[0] : '')), release: () => log.push('release') }) };
+    Object.defineProperty(db, 'pool', { get: () => fake, configurable: true });
+    try {
+      await creditNote.underSeriesLock('ent-1', async () => log.push('work'));
+      await assert.rejects(creditNote.underSeriesLock('ent-1', async () => { throw new Error('send refused'); }), /send refused/);
+    } finally {
+      Object.defineProperty(db, 'pool', real);
+    }
+    assert.deepStrictEqual(log, ['SELECT pg_advisory_lock:credit-note-series|ent-1', 'work', 'SELECT pg_advisory_unlock:credit-note-series|ent-1', 'release', 'SELECT pg_advisory_lock:credit-note-series|ent-1', 'SELECT pg_advisory_unlock:credit-note-series|ent-1', 'release']);
+  });
+
   console.log('\n== B · the books ==\n');
   const books = H.load();
   const K = require('../lib/books-hooks');
