@@ -829,9 +829,6 @@
   "POST /api/products": {
    "strict_input": true
   },
-  "POST /api/products/bulk": {
-   "strict_input": true
-  },
   "POST /api/products/status/bulk": {
    "strict_input": true,
    "output_allowlist": true
@@ -849,11 +846,9 @@
    "output_allowlist": true
   },
   "POST /api/products/import/preflight": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/products/import": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/products/starter-columns": {
@@ -864,7 +859,6 @@
    "output_allowlist": true
   },
   "PATCH /api/products/:id": {
-   "strict_input": true,
    "foreign_id_404": true
   },
   "POST /api/products/:id/schedule": {
@@ -875,7 +869,6 @@
    "output_allowlist": true
   },
   "POST /api/products/availability/bulk": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {

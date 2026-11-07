@@ -9,8 +9,8 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 156 | `list` | `amend.js` |  |
-| 123 | `rows` | `crm.js` | still in them: |
+| 155 | `list` | `amend.js` |  |
+| 124 | `rows` | `crm.js` | still in them: |
 | 115 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 112 | `withEntity` | `books-hooks.js` |  |
@@ -31,15 +31,15 @@ of file each thing is; this says what already does the job.
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 64 | `failed` | `service.js` | what every catch answers: |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
-| 62 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 64 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 58 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
-| 55 | `record` | `access-events.js` |  |
+| 54 | `record` | `access-events.js` |  |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 53 | `pack` | `books-store.js` |  |
-| 53 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
@@ -58,7 +58,7 @@ of file each thing is; this says what already does the job.
 | 40 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 40 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 40 | `rules` | `docnumber.js` | the rule set for a country — |
-| 40 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 41 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `gate` | `country-setup.js` | gate(h, entity): |
 | 39 | `missing` | `variant.browser.js` | refusing with no reason. |
@@ -80,7 +80,7 @@ of file each thing is; this says what already does the job.
 | 32 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
-| 32 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
+| 33 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 31 | `changes` | `books-store.js` |  |
 | 30 | `ensureCap` | `app.html` |  |
@@ -88,9 +88,9 @@ of file each thing is; this says what already does the job.
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
 | 30 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
-| 29 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 30 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 29 | `account` | `home-facts.js` | OMITTED: |
+| 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `hold` | `orders.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
@@ -119,7 +119,7 @@ of file each thing is; this says what already does the job.
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
-| 22 | `update` | `folder-rules.js` |  |
+| 24 | `update` | `folder-rules.js` |  |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
@@ -178,7 +178,7 @@ of file each thing is; this says what already does the job.
 | 15 | `offers` | `network-app.js` |  |
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
-| 15 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `series` | `gst-returns.js` | `paid_on`: |

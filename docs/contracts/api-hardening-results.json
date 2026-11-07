@@ -2624,7 +2624,8 @@
   },
   "POST /api/products/bulk": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2671,7 +2672,8 @@
   },
   "POST /api/products/import/preflight": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -2679,7 +2681,8 @@
   },
   "POST /api/products/import": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
@@ -2700,7 +2703,8 @@
   },
   "PATCH /api/products/:id": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": false,
@@ -2743,7 +2747,8 @@
   },
   "POST /api/products/availability/bulk": {
    "strict_input": {
-    "pass": true
+    "pass": false,
+    "why": "let zz_unknown_field through"
    },
    "output_allowlist": {
     "pass": true
