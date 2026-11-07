@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 154 | `list` | `amend.js` |  |
+| 155 | `list` | `amend.js` |  |
 | 123 | `rows` | `crm.js` | still in them: |
 | 115 | `words` | `variant.browser.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 108 | `read` | `books-cashflow.js` | Trips: |
 | 97 | `answer` | `availability.js` | from March; then nearest. |
 | 89 | `money` | `bill-privacy.js` |  |
-| 79 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 80 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
 | 76 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 75 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -40,7 +40,7 @@ of file each thing is; this says what already does the job.
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 52 | `pack` | `books-store.js` |  |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 51 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 52 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `count` | `money-check.js` | the count /health reads |
