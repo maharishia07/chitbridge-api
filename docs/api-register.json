@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 222,
-  "meets": 415,
+  "partial": 217,
+  "meets": 420,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 637,
-    "failing": 66
+    "failing": 60
    },
    "foreign_id_404": {
     "applies": 203,
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 119
+  "output_allowlist_from_recordings": 120
  },
  "machine_columns": [
   "schema_in",
@@ -192,7 +192,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2397,
+   "line": 2398,
    "hash": "995d3386a23c0085",
    "does": "",
    "errors": {
@@ -499,7 +499,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6163,
+   "line": 6160,
    "hash": "696cfc274508482e",
    "does": "",
    "errors": {
@@ -607,7 +607,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5026,
+   "line": 5023,
    "hash": "42d31fa87e8d8a95",
    "does": "",
    "errors": {
@@ -711,8 +711,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6424,
-   "hash": "fc31a63bfe103fc8",
+   "line": 6421,
+   "hash": "4a17b9d60cbb5078",
    "does": "",
    "errors": {
     "count": 0,
@@ -796,7 +796,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -1040,7 +1040,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 421,
+   "line": 431,
    "hash": "4684ff50ad88ec07",
    "does": "",
    "errors": {
@@ -1144,7 +1144,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 701,
+   "line": 711,
    "hash": "7001297d46e5ab68",
    "does": "",
    "errors": {
@@ -1246,7 +1246,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 437,
+   "line": 447,
    "hash": "f4d14e5eef58c55b",
    "does": "",
    "errors": {
@@ -1778,7 +1778,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1776,
+   "line": 1777,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1886,7 +1886,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1926,
+   "line": 1927,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1990,7 +1990,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1657,
+   "line": 1658,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -4441,7 +4441,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2448,
+   "line": 2449,
    "hash": "8b75d91ef31f4602",
    "does": "",
    "errors": {
@@ -5090,7 +5090,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2149,
+   "line": 2150,
    "hash": "d9ff2645f0a73015",
    "does": "",
    "errors": {
@@ -5203,7 +5203,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2157,
+   "line": 2158,
    "hash": "4c3448af6a2b5ce3",
    "does": "",
    "errors": {
@@ -5647,7 +5647,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2518,
+   "line": 2519,
    "hash": "c9bfdc8ac640cf30",
    "does": "",
    "errors": {
@@ -5756,7 +5756,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2565,
+   "line": 2566,
    "hash": "dc47d5ce7ab5a294",
    "does": "",
    "errors": {
@@ -6194,7 +6194,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2249,
+   "line": 2250,
    "hash": "8588a456a55569eb",
    "does": "",
    "errors": {
@@ -6299,7 +6299,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2287,
+   "line": 2288,
    "hash": "6f8afb2e64d5acc2",
    "does": "",
    "errors": {
@@ -6406,7 +6406,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2316,
+   "line": 2317,
    "hash": "eab6f7f4c79c78d9",
    "does": "",
    "errors": {
@@ -6742,7 +6742,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2213,
+   "line": 2214,
    "hash": "a025e197a54c16cc",
    "does": "",
    "errors": {
@@ -6950,7 +6950,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2369,
+   "line": 2370,
    "hash": "3531bce9d5ea96a8",
    "does": "",
    "errors": {
@@ -7054,7 +7054,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2479,
+   "line": 2480,
    "hash": "86ac77872e8da2ec",
    "does": "",
    "errors": {
@@ -7370,7 +7370,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2426,
+   "line": 2427,
    "hash": "084f040c2a23476b",
    "does": "",
    "errors": {
@@ -7579,7 +7579,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2196,
+   "line": 2197,
    "hash": "ed20d7411dd0c93e",
    "does": "",
    "errors": {
@@ -9228,7 +9228,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3550,
+   "line": 3547,
    "hash": "6cba303a3817793d",
    "does": "",
    "errors": {
@@ -9376,7 +9376,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4852,
+   "line": 4849,
    "hash": "8c5c87ac7afd70af",
    "does": "",
    "errors": {
@@ -9478,7 +9478,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4101,
+   "line": 4098,
    "hash": "f308778e43b196af",
    "does": "",
    "errors": {
@@ -9578,8 +9578,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5903,
-   "hash": "d314b7303243841c",
+   "line": 5900,
+   "hash": "e1d82593a96de058",
    "does": "",
    "errors": {
     "count": 0,
@@ -9679,8 +9679,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5857,
-   "hash": "3d7ed7659b7e4ede",
+   "line": 5854,
+   "hash": "f8f800ad89880f0c",
    "does": "",
    "errors": {
     "count": 0,
@@ -9791,7 +9791,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5430,
+   "line": 5427,
    "hash": "92b767d1356f7beb",
    "does": "",
    "errors": {
@@ -10008,7 +10008,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4308,
+   "line": 4305,
    "hash": "ed19d2977593cc08",
    "does": "",
    "errors": {
@@ -10108,7 +10108,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4419,
+   "line": 4416,
    "hash": "48686d79860a87fc",
    "does": "",
    "errors": {
@@ -10407,7 +10407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6064,
+   "line": 6061,
    "hash": "447d15bd5a3a6945",
    "does": "",
    "errors": {
@@ -10515,7 +10515,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3105,
+   "line": 3102,
    "hash": "55d4d0593ffb2a8c",
    "does": "",
    "errors": {
@@ -10618,8 +10618,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3301,
-   "hash": "043cd9e70f06789d",
+   "line": 3298,
+   "hash": "b29d0408daaea305",
    "does": "",
    "errors": {
     "count": 0,
@@ -10692,7 +10692,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -10725,7 +10725,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3488,
+   "line": 3485,
    "hash": "54cb3e4dc8ed64b1",
    "does": "",
    "errors": {
@@ -10822,7 +10822,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4290,
+   "line": 4287,
    "hash": "da017925ba4b62d2",
    "does": "",
    "errors": {
@@ -10920,7 +10920,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4130,
+   "line": 4127,
    "hash": "6c723ef8908ee772",
    "does": "",
    "errors": {
@@ -11016,7 +11016,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4140,
+   "line": 4137,
    "hash": "211750c4fabb452d",
    "does": "",
    "errors": {
@@ -11114,7 +11114,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4182,
+   "line": 4179,
    "hash": "077c4a340f489f7d",
    "does": "",
    "errors": {
@@ -11209,7 +11209,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4247,
+   "line": 4244,
    "hash": "ac296de840414378",
    "does": "",
    "errors": {
@@ -11309,8 +11309,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3200,
-   "hash": "ad6796f3a4111cb6",
+   "line": 3197,
+   "hash": "717bda3d3a5a7b88",
    "does": "",
    "errors": {
     "count": 0,
@@ -11380,7 +11380,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-31 PR#640 stage2 (sit/run6 re-sign)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11411,8 +11411,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3038,
-   "hash": "81a3de9166377e50",
+   "line": 3035,
+   "hash": "4fb72caa3f81d69c",
    "does": "",
    "errors": {
     "count": 0,
@@ -11489,7 +11489,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -11831,7 +11831,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 3515,
+   "line": 3512,
    "hash": "1524b1fea6fa0ce1",
    "does": "",
    "errors": {
@@ -12742,7 +12742,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 487,
+   "line": 497,
    "hash": "13508e79399781eb",
    "does": "",
    "errors": {
@@ -12840,7 +12840,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 381,
+   "line": 391,
    "hash": "b0ff2a933d7638b5",
    "does": "",
    "errors": {
@@ -13145,7 +13145,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 609,
+   "line": 619,
    "hash": "e66b014ff4cfc9a3",
    "does": "",
    "errors": {
@@ -13248,8 +13248,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 179,
-   "hash": "6cbf9daf9774ff55",
+   "line": 211,
+   "hash": "1d3706ef33c106b7",
    "does": "",
    "errors": {
     "count": 0,
@@ -13330,10 +13330,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1d3706ef33c106b7"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -13361,7 +13362,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 639,
+   "line": 649,
    "hash": "136ea55e4853f93d",
    "does": "",
    "errors": {
@@ -13461,7 +13462,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 680,
+   "line": 690,
    "hash": "1f991ac5f33714b8",
    "does": "",
    "errors": {
@@ -13562,7 +13563,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 219,
-   "hash": "59e047fa21d05e3f",
+   "hash": "e581982c3c888b49",
    "does": "",
    "errors": {
     "count": 1,
@@ -13594,7 +13595,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -13628,13 +13629,13 @@
     "/.well-known/ctp.json"
    ],
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -13870,7 +13871,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 357,
+   "line": 358,
    "hash": "b4f32940f2822490",
    "does": "",
    "errors": {
@@ -13964,7 +13965,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2373,
+   "line": 2385,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14060,7 +14061,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 464,
+   "line": 465,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -14154,7 +14155,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 491,
+   "line": 492,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -14274,8 +14275,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 848,
-   "hash": "b43d5b8b4da152b9",
+   "line": 849,
+   "hash": "f12cd611fc9dc327",
    "does": "",
    "errors": {
     "count": 0,
@@ -14341,7 +14342,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -14372,7 +14373,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1688,
+   "line": 1700,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14477,7 +14478,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 435,
+   "line": 436,
    "hash": "b266e6cd0e2948a9",
    "does": "",
    "errors": {
@@ -14579,7 +14580,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1574,
+   "line": 1586,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14680,7 +14681,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1438,
+   "line": 1450,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14779,7 +14780,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1422,
+   "line": 1434,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -14877,7 +14878,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 385,
+   "line": 386,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14977,7 +14978,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 402,
+   "line": 403,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -15066,7 +15067,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 480,
+   "line": 481,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -15160,7 +15161,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1245,
+   "line": 1257,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -17230,7 +17231,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 590,
+   "line": 591,
    "hash": "cf1d3b18bbcc525b",
    "does": "",
    "errors": {
@@ -17320,7 +17321,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 576,
+   "line": 577,
    "hash": "328373386394ebd9",
    "does": "",
    "errors": {
@@ -17410,7 +17411,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 258,
+   "line": 259,
    "hash": "8df62bfce68a955b",
    "does": "",
    "errors": {
@@ -17508,7 +17509,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 394,
+   "line": 395,
    "hash": "4345a64878ef69f5",
    "does": "",
    "errors": {
@@ -17598,7 +17599,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 521,
+   "line": 522,
    "hash": "334f5920ce6e77df",
    "does": "",
    "errors": {
@@ -17692,7 +17693,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 88,
+   "line": 89,
    "hash": "91f0cb25a0a8fdbf",
    "does": "",
    "errors": {
@@ -17794,7 +17795,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 374,
+   "line": 375,
    "hash": "0bce9d98503ac909",
    "does": "",
    "errors": {
@@ -17890,7 +17891,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 384,
+   "line": 385,
    "hash": "31b9ee010d1c6425",
    "does": "",
    "errors": {
@@ -17982,7 +17983,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 346,
+   "line": 347,
    "hash": "ed18220df1d5093b",
    "does": "",
    "errors": {
@@ -18078,7 +18079,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 404,
+   "line": 405,
    "hash": "094e8e3e410dcf65",
    "does": "",
    "errors": {
@@ -18178,7 +18179,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 500,
+   "line": 501,
    "hash": "16ad5c28a4f1437c",
    "does": "",
    "errors": {
@@ -18268,7 +18269,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 490,
+   "line": 491,
    "hash": "f5ab03811ab83248",
    "does": "",
    "errors": {
@@ -18358,7 +18359,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 328,
+   "line": 329,
    "hash": "bf302810e657e9d2",
    "does": "",
    "errors": {
@@ -18460,7 +18461,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 608,
+   "line": 609,
    "hash": "247f6375ed55e55e",
    "does": "",
    "errors": {
@@ -18562,7 +18563,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 314,
+   "line": 315,
    "hash": "4a4d526df2fabfe7",
    "does": "",
    "errors": {
@@ -18658,7 +18659,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 764,
+   "line": 765,
    "hash": "f61bf679b70b755a",
    "does": "",
    "errors": {
@@ -18759,7 +18760,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 360,
+   "line": 361,
    "hash": "c62ac0e212831a25",
    "does": "",
    "errors": {
@@ -18849,7 +18850,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 442,
+   "line": 443,
    "hash": "4f285b6f37f32fe8",
    "does": "",
    "errors": {
@@ -19044,7 +19045,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 362,
+   "line": 363,
    "hash": "4f975cefee8013c8",
    "does": "",
    "errors": {
@@ -19141,7 +19142,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 275,
+   "line": 276,
    "hash": "597a2e449ca230ab",
    "does": "",
    "errors": {
@@ -19234,7 +19235,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 380,
+   "line": 381,
    "hash": "e7f0f4d5bc085ea8",
    "does": "",
    "errors": {
@@ -19338,7 +19339,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 249,
+   "line": 250,
    "hash": "833e8fa6a4263243",
    "does": "",
    "errors": {
@@ -19428,7 +19429,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 258,
+   "line": 259,
    "hash": "d3fac63fc6b983c4",
    "does": "",
    "errors": {
@@ -19525,7 +19526,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 982,
+   "line": 983,
    "hash": "621e2f2f391396f3",
    "does": "",
    "errors": {
@@ -19621,7 +19622,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 832,
+   "line": 833,
    "hash": "457ba6a1ba37fd28",
    "does": "",
    "errors": {
@@ -19719,7 +19720,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 717,
+   "line": 718,
    "hash": "70de3a5a5b1f6993",
    "does": "",
    "errors": {
@@ -19817,7 +19818,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 960,
+   "line": 961,
    "hash": "af4a542c64bc4085",
    "does": "",
    "errors": {
@@ -19913,7 +19914,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 750,
+   "line": 751,
    "hash": "f97d3783abe3f0d1",
    "does": "",
    "errors": {
@@ -20007,7 +20008,7 @@
    "owner_area": "invoice",
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
-   "line": 124,
+   "line": 122,
    "hash": "3409e79df1fdaaf3",
    "does": "",
    "errors": {
@@ -22142,7 +22143,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 695,
+   "line": 696,
    "hash": "a85c20451df4101f",
    "does": "",
    "errors": {
@@ -22252,7 +22253,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1607,
+   "line": 1608,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22350,7 +22351,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1962,
+   "line": 1963,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22456,7 +22457,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1054,
+   "line": 1055,
    "hash": "e6c365a0051bb1fc",
    "does": "",
    "errors": {
@@ -22556,7 +22557,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2077,
+   "line": 2078,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22653,7 +22654,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1821,
+   "line": 1822,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -22755,7 +22756,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1385,
+   "line": 1386,
    "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
@@ -22855,7 +22856,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1083,
+   "line": 1084,
    "hash": "450991b1787aac03",
    "does": "",
    "errors": {
@@ -22955,7 +22956,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 983,
+   "line": 984,
    "hash": "f926495a5d767afd",
    "does": "",
    "errors": {
@@ -23453,7 +23454,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 733,
-   "hash": "d18c205627345524",
+   "hash": "e85807898c5889e2",
    "does": "",
    "errors": {
     "count": 0,
@@ -23481,7 +23482,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23503,6 +23504,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -23514,13 +23516,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -24912,8 +24914,8 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 84,
-   "hash": "c5a40c1567d877bd",
+   "line": 93,
+   "hash": "dbe67c282f6983e0",
    "does": "",
    "errors": {
     "count": 0,
@@ -24981,7 +24983,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
     "lifecycle": "stable"
    },
    "status": "partial",
@@ -25114,7 +25116,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 48,
-   "hash": "be22b8f5a8198528",
+   "hash": "8c9251a891a20a4a",
    "does": "",
    "errors": {
     "count": 0,
@@ -25182,7 +25184,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -26901,7 +26903,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3435,
+   "line": 3438,
    "hash": "65e21f5bc15efa97",
    "does": "",
    "errors": {
@@ -26997,7 +26999,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3323,
+   "line": 3326,
    "hash": "580dd67ae75db296",
    "does": "",
    "errors": {
@@ -27093,7 +27095,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1809,
+   "line": 1810,
    "hash": "73bccfc6825b5345",
    "does": "",
    "errors": {
@@ -27189,7 +27191,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3992,
+   "line": 3995,
    "hash": "6300606e4b8b2243",
    "does": "",
    "errors": {
@@ -27288,7 +27290,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3630,
+   "line": 3633,
    "hash": "af2833a77603a9f8",
    "does": "",
    "errors": {
@@ -27389,7 +27391,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1818,
+   "line": 1819,
    "hash": "0bff2e63e7484466",
    "does": "",
    "errors": {
@@ -27489,7 +27491,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1858,
+   "line": 1859,
    "hash": "7740ad9694b51c90",
    "does": "",
    "errors": {
@@ -27587,7 +27589,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1905,
+   "line": 1906,
    "hash": "48d6577e91db52fc",
    "does": "",
    "errors": {
@@ -27685,7 +27687,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1828,
+   "line": 1829,
    "hash": "33abfecde62a9004",
    "does": "",
    "errors": {
@@ -27785,7 +27787,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2349,
+   "line": 2350,
    "hash": "aa600c76b31c1ee2",
    "does": "",
    "errors": {
@@ -27886,7 +27888,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2700,
+   "line": 2701,
    "hash": "e3553ae3b95bfdec",
    "does": "",
    "errors": {
@@ -27984,7 +27986,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 204,
+   "line": 205,
    "hash": "c11004366487df50",
    "does": "",
    "errors": {
@@ -28095,7 +28097,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3128,
+   "line": 3131,
    "hash": "3f644a8715faf625",
    "does": "",
    "errors": {
@@ -28195,7 +28197,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3391,
+   "line": 3394,
    "hash": "fe841dc4231d7c51",
    "does": "",
    "errors": {
@@ -28295,7 +28297,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3600,
+   "line": 3603,
    "hash": "148bb0dcf8de88b9",
    "does": "",
    "errors": {
@@ -28391,7 +28393,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2875,
+   "line": 2876,
    "hash": "46d43e49b67a6e84",
    "does": "",
    "errors": {
@@ -28491,7 +28493,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1970,
+   "line": 1971,
    "hash": "eb4695b2dc715bd6",
    "does": "",
    "errors": {
@@ -28886,7 +28888,7 @@
    "owner_agent": "cb-platform",
    "file": "routes/health.js",
    "line": 15,
-   "hash": "0e48a0105a3e73d4",
+   "hash": "a1fcb628914fc8e6",
    "does": "",
    "errors": {
     "count": 0,
@@ -28945,7 +28947,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 k38 sign-off: public uptime probe; 200 whatever the database says; no input; no internal text in any answer; only a 500 Problem from the one handler; summary plain",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#879",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29289,7 +29291,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2387,
+   "line": 2388,
    "hash": "da15e2c5df750548",
    "does": "",
    "errors": {
@@ -29708,7 +29710,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 411,
+   "line": 421,
    "hash": "236c464e6aa84b3e",
    "does": "",
    "errors": {
@@ -29810,7 +29812,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1215,
+   "line": 1227,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29912,7 +29914,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 821,
+   "line": 822,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -30012,7 +30014,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 861,
+   "line": 862,
    "hash": "e55ea05cc2141a4a",
    "does": "",
    "errors": {
@@ -30106,7 +30108,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 815,
+   "line": 816,
    "hash": "3a7c9f99a608bfbf",
    "does": "",
    "errors": {
@@ -30208,7 +30210,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 446,
+   "line": 447,
    "hash": "e9d9068c4e8b13ae",
    "does": "",
    "errors": {
@@ -30317,8 +30319,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 894,
-   "hash": "bb90f2791c17bec0",
+   "line": 905,
+   "hash": "a452dc1b95bd6bba",
    "does": "",
    "errors": {
     "count": 0,
@@ -30393,7 +30395,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30634,7 +30636,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1527,
+   "line": 1528,
    "hash": "2b44e4f050d7693b",
    "does": "",
    "errors": {
@@ -32093,7 +32095,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 809,
-   "hash": "1d103dfb77678668",
+   "hash": "4a792d6a3f9ffc26",
    "does": "",
    "errors": {
     "count": 0,
@@ -32157,11 +32159,11 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -33976,12 +33978,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
@@ -34738,13 +34736,9 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
     "journal_entry",
-    "journal_line",
-    "ledger_account",
-    "party_item",
-    "supplier_list"
+    "ledger_account"
    ],
    "writes": [
     "party_item"
@@ -35050,7 +35044,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2538,
+   "line": 2539,
    "hash": "e3bbffd0a43845a4",
    "does": "",
    "errors": {
@@ -35157,7 +35151,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2547,
+   "line": 2548,
    "hash": "c185bb01296cb2ce",
    "does": "",
    "errors": {
@@ -35264,7 +35258,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2592,
+   "line": 2593,
    "hash": "8a8fe2f889e3128e",
    "does": "",
    "errors": {
@@ -36458,7 +36452,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2271,
+   "line": 2272,
    "hash": "61e8d612485ebf8d",
    "does": "",
    "errors": {
@@ -36564,7 +36558,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2346,
+   "line": 2347,
    "hash": "f295ae85c796a7e7",
    "does": "",
    "errors": {
@@ -36697,12 +36691,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
@@ -36930,12 +36920,9 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
     "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "party_item"
    ],
    "writes": [
     "party_item",
@@ -37236,7 +37223,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2168,
+   "line": 2169,
    "hash": "92a8304b6bb46be8",
    "does": "",
    "errors": {
@@ -37449,7 +37436,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2377,
+   "line": 2378,
    "hash": "678cbb0c1ba116dc",
    "does": "",
    "errors": {
@@ -37555,7 +37542,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2407,
+   "line": 2408,
    "hash": "a9a8fedb79f55b44",
    "does": "",
    "errors": {
@@ -37662,7 +37649,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2416,
+   "line": 2417,
    "hash": "c51214ebf2d96a82",
    "does": "",
    "errors": {
@@ -38013,12 +38000,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
@@ -38105,7 +38088,7 @@
    "owner_area": "books",
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
-   "line": 2181,
+   "line": 2182,
    "hash": "ecce20760c8f63c3",
    "does": "",
    "errors": {
@@ -40555,7 +40538,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4742,
+   "line": 4739,
    "hash": "604864a3e8107a0d",
    "does": "",
    "errors": {
@@ -40665,8 +40648,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6316,
-   "hash": "b9353130dc633b3d",
+   "line": 6313,
+   "hash": "b01be72f3b0a508b",
    "does": "",
    "errors": {
     "count": 0,
@@ -40738,7 +40721,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40773,7 +40756,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4643,
+   "line": 4640,
    "hash": "ee1d4525d1f5137e",
    "does": "",
    "errors": {
@@ -40879,7 +40862,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5077,
+   "line": 5074,
    "hash": "bc689fc0cbbafac5",
    "does": "",
    "errors": {
@@ -40985,7 +40968,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4083,
+   "line": 4080,
    "hash": "f07c1d1194dee405",
    "does": "",
    "errors": {
@@ -41082,7 +41065,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4453,
+   "line": 4450,
    "hash": "4896e7d335ee37ca",
    "does": "",
    "errors": {
@@ -41194,8 +41177,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5673,
-   "hash": "af03af9e31a2886c",
+   "line": 5670,
+   "hash": "6d084a7304301f0c",
    "does": "",
    "errors": {
     "count": 0,
@@ -41316,8 +41299,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5278,
-   "hash": "907837f4841fdfde",
+   "line": 5275,
+   "hash": "361ec7c5adc2da98",
    "does": "",
    "errors": {
     "count": 0,
@@ -41424,7 +41407,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4989,
+   "line": 4986,
    "hash": "10046b55f800d3dc",
    "does": "",
    "errors": {
@@ -41565,7 +41548,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41602,13 +41585,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41763,7 +41746,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41800,13 +41783,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41860,7 +41843,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -41896,13 +41879,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -41924,7 +41907,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4322,
+   "line": 4319,
    "hash": "311169405940eae0",
    "does": "",
    "errors": {
@@ -42024,7 +42007,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4378,
+   "line": 4375,
    "hash": "19bcedf0e932c932",
    "does": "",
    "errors": {
@@ -42124,7 +42107,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4398,
+   "line": 4395,
    "hash": "9250618eaade5a10",
    "does": "",
    "errors": {
@@ -42220,7 +42203,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4044,
+   "line": 4041,
    "hash": "e85b09ed8ef50acb",
    "does": "",
    "errors": {
@@ -42320,7 +42303,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6395,
+   "line": 6392,
    "hash": "8bedf386ef4eb682",
    "does": "",
    "errors": {
@@ -42425,7 +42408,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6374,
+   "line": 6371,
    "hash": "286bf4488547c3bb",
    "does": "",
    "errors": {
@@ -42529,7 +42512,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6356,
+   "line": 6353,
    "hash": "fa69ca4bf89ef8a3",
    "does": "",
    "errors": {
@@ -42633,7 +42616,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6635,
+   "line": 6632,
    "hash": "e8a8e5f640b02b78",
    "does": "",
    "errors": {
@@ -42739,7 +42722,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4268,
+   "line": 4265,
    "hash": "51520b6d4514f37c",
    "does": "",
    "errors": {
@@ -42835,7 +42818,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4237,
+   "line": 4234,
    "hash": "90c66f0cfb0c470f",
    "does": "",
    "errors": {
@@ -42935,7 +42918,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4258,
+   "line": 4255,
    "hash": "d3bcaba8227c7630",
    "does": "",
    "errors": {
@@ -43035,7 +43018,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4154,
+   "line": 4151,
    "hash": "1899c9cfdf06ac32",
    "does": "",
    "errors": {
@@ -43136,7 +43119,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4172,
+   "line": 4169,
    "hash": "f7a13c995a2cd802",
    "does": "",
    "errors": {
@@ -43236,7 +43219,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4214,
+   "line": 4211,
    "hash": "9ce79b392b49494f",
    "does": "",
    "errors": {
@@ -43336,7 +43319,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4193,
+   "line": 4190,
    "hash": "5342aa1379665464",
    "does": "",
    "errors": {
@@ -43431,7 +43414,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 403,
+   "line": 400,
    "hash": "3c76bd61695c1790",
    "does": "",
    "errors": {
@@ -45107,7 +45090,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 395,
+   "line": 405,
    "hash": "a8a53cba6b45d665",
    "does": "",
    "errors": {
@@ -45214,7 +45197,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 690,
+   "line": 700,
    "hash": "dc7d46a6e3e12747",
    "does": "",
    "errors": {
@@ -45228,6 +45211,8 @@
     "codes": []
    },
    "reads": [
+    "chit_disputes",
+    "chit_messages",
     "customer_list"
    ],
    "writes": [
@@ -45316,7 +45301,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 453,
+   "line": 463,
    "hash": "5de81a35731a3e0b",
    "does": "",
    "errors": {
@@ -45422,7 +45407,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 521,
+   "line": 531,
    "hash": "1b98e6ce8b06db3b",
    "does": "",
    "errors": {
@@ -45520,7 +45505,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 626,
+   "line": 636,
    "hash": "6fbedfc518079d24",
    "does": "",
    "errors": {
@@ -45622,7 +45607,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 359,
+   "line": 369,
    "hash": "785eb787c08de857",
    "does": "",
    "errors": {
@@ -45731,7 +45716,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 502,
+   "line": 512,
    "hash": "9bd2e77e454eb27a",
    "does": "",
    "errors": {
@@ -45831,7 +45816,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 534,
+   "line": 544,
    "hash": "223d8dd816903a6c",
    "does": "",
    "errors": {
@@ -45937,7 +45922,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 649,
+   "line": 659,
    "hash": "21948004b6ff4f9d",
    "does": "",
    "errors": {
@@ -46039,7 +46024,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 663,
+   "line": 673,
    "hash": "e02413e2974eb23c",
    "does": "",
    "errors": {
@@ -46143,7 +46128,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 712,
+   "line": 722,
    "hash": "405b8d8947bd2693",
    "does": "",
    "errors": {
@@ -46243,7 +46228,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 560,
+   "line": 570,
    "hash": "bfd12e4bf3f5c6ca",
    "does": "",
    "errors": {
@@ -46441,7 +46426,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/ctp.js",
    "line": 316,
-   "hash": "5c520fe73951ec52",
+   "hash": "71a3e009f85ce3c7",
    "does": "",
    "errors": {
     "count": 8,
@@ -46487,7 +46472,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -46529,8 +46514,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "71a3e009f85ce3c7"
    },
    "status": "partial",
    "callers": [],
@@ -46883,7 +46869,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1662,
+   "line": 1674,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -46987,8 +46973,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 346,
-   "hash": "dfcc09f3956e0bc2",
+   "line": 347,
+   "hash": "6f33e5526ce8ba8e",
    "does": "",
    "errors": {
     "count": 0,
@@ -47045,11 +47031,11 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -47087,8 +47073,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 347,
-   "hash": "1d7aab67142b501d",
+   "line": 348,
+   "hash": "fe7072cdd634a673",
    "does": "",
    "errors": {
     "count": 0,
@@ -47154,11 +47140,11 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -48200,7 +48186,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 561,
+   "line": 562,
    "hash": "1c0a1ffa765719c6",
    "does": "",
    "errors": {
@@ -48304,7 +48290,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 272,
+   "line": 273,
    "hash": "1e62a3126825dff1",
    "does": "",
    "errors": {
@@ -48406,7 +48392,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 650,
+   "line": 651,
    "hash": "916eec995709c93c",
    "does": "",
    "errors": {
@@ -48506,7 +48492,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 245,
+   "line": 246,
    "hash": "7369a8d143536622",
    "does": "",
    "errors": {
@@ -48601,7 +48587,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 133,
+   "line": 134,
    "hash": "6c868ccf8cbde546",
    "does": "",
    "errors": {
@@ -48713,7 +48699,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 181,
+   "line": 182,
    "hash": "42a7f44ffff1d51c",
    "does": "",
    "errors": {
@@ -48819,7 +48805,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 296,
+   "line": 297,
    "hash": "8efbaa16c9d5a5de",
    "does": "",
    "errors": {
@@ -48915,7 +48901,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 724,
+   "line": 725,
    "hash": "d062ba577b50a0de",
    "does": "",
    "errors": {
@@ -49027,7 +49013,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 675,
+   "line": 676,
    "hash": "876bdac3f761d56c",
    "does": "",
    "errors": {
@@ -49359,7 +49345,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 634,
+   "line": 635,
    "hash": "50f239c79eda159f",
    "does": "",
    "errors": {
@@ -49472,7 +49458,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 939,
+   "line": 940,
    "hash": "2ef735f570ed04cc",
    "does": "",
    "errors": {
@@ -49567,7 +49553,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 671,
+   "line": 672,
    "hash": "afb388714ad3d9af",
    "does": "",
    "errors": {
@@ -49667,7 +49653,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 800,
+   "line": 801,
    "hash": "0b96999e34365e2d",
    "does": "",
    "errors": {
@@ -49773,7 +49759,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 458,
+   "line": 459,
    "hash": "e65d217d5aa946c5",
    "does": "",
    "errors": {
@@ -49872,7 +49858,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1011,
+   "line": 1019,
    "hash": "144599f781125548",
    "does": "",
    "errors": {
@@ -49947,7 +49933,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
     "lifecycle": "stable"
    },
    "status": "partial",
@@ -49973,7 +49959,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/invoice.js",
    "line": 35,
-   "hash": "4398af0a939aea6e",
+   "hash": "3538084d1c14fdc9",
    "does": "",
    "errors": {
     "count": 1,
@@ -50049,7 +50035,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#761 Wave M output shape, nulls widened 8d030de8",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#901",
     "lifecycle": "stable"
    },
    "status": "partial",
@@ -52870,7 +52856,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 424,
+   "line": 425,
    "hash": "914d6553a1cbbf4e",
    "does": "",
    "errors": {
@@ -52974,7 +52960,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1861,
+   "line": 1862,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53081,7 +53067,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1625,
+   "line": 1626,
    "hash": "ec834b16142998da",
    "does": "",
    "errors": {
@@ -53192,7 +53178,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1671,
+   "line": 1672,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53293,7 +53279,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 488,
+   "line": 489,
    "hash": "d01d6bef91d31044",
    "does": "",
    "errors": {
@@ -53396,7 +53382,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 642,
+   "line": 643,
    "hash": "366d97c351174a18",
    "does": "",
    "errors": {
@@ -53502,7 +53488,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1180,
+   "line": 1181,
    "hash": "666b6537800e318e",
    "does": "",
    "errors": {
@@ -53617,7 +53603,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1107,
+   "line": 1108,
    "hash": "39622ebf11654c79",
    "does": "",
    "errors": {
@@ -53722,7 +53708,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2179,
+   "line": 2180,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -53827,7 +53813,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1396,
+   "line": 1397,
    "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
@@ -53930,7 +53916,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 539,
+   "line": 540,
    "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
@@ -56339,14 +56325,13 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 934,
-   "hash": "1619118ca55a191c",
+   "line": 956,
+   "hash": "08511a0cb859c596",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
-     409,
      500
     ],
     "codes": []
@@ -56385,7 +56370,6 @@
    },
    "declared": [
     400,
-    409,
     500
    ],
    "notes": [],
@@ -56400,11 +56384,11 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -56517,7 +56501,7 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 936,
+   "line": 958,
    "hash": "bc129aaa67f2fc10",
    "does": "",
    "errors": {
@@ -56819,8 +56803,8 @@
    "owner_area": "signin",
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
-   "line": 935,
-   "hash": "009c20842cd7b499",
+   "line": 957,
+   "hash": "8638009db812fb3e",
    "does": "",
    "errors": {
     "count": 0,
@@ -56833,8 +56817,17 @@
     ],
     "codes": []
    },
-   "reads": [],
-   "writes": [],
+   "reads": [
+    "constitution",
+    "entity_governance",
+    "identities",
+    "installation"
+   ],
+   "writes": [
+    "entity_governance",
+    "identities",
+    "signup_context"
+   ],
    "money": false,
    "actions": [],
    "derived": [
@@ -56884,11 +56877,11 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -57412,7 +57405,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 165,
+   "line": 176,
    "hash": "cf1ed74ea06db463",
    "does": "",
    "errors": {
@@ -57515,7 +57508,7 @@
    "owner_area": "tax",
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
-   "line": 128,
+   "line": 139,
    "hash": "49a51c284f6fbf44",
    "does": "",
    "errors": {
@@ -58922,7 +58915,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3865,
+   "line": 3868,
    "hash": "7f57a63b3c02d9b5",
    "does": "",
    "errors": {
@@ -59025,7 +59018,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3202,
+   "line": 3205,
    "hash": "c2fcf94d63ba8662",
    "does": "",
    "errors": {
@@ -59136,7 +59129,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1625,
+   "line": 1626,
    "hash": "3d4156e8d5761ea1",
    "does": "",
    "errors": {
@@ -59239,7 +59232,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1555,
+   "line": 1556,
    "hash": "d1919560973396d0",
    "does": "",
    "errors": {
@@ -59340,7 +59333,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2595,
+   "line": 2596,
    "hash": "e2e1042ea6d178f8",
    "does": "",
    "errors": {
@@ -59441,7 +59434,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1720,
+   "line": 1721,
    "hash": "e9d78734c2d72a27",
    "does": "",
    "errors": {
@@ -59546,7 +59539,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3926,
+   "line": 3929,
    "hash": "734d38d90b89c85f",
    "does": "",
    "errors": {
@@ -59646,7 +59639,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2096,
+   "line": 2097,
    "hash": "1d9130b0517f5ff5",
    "does": "",
    "errors": {
@@ -59753,7 +59746,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2528,
+   "line": 2529,
    "hash": "975031f9e6f3132f",
    "does": "",
    "errors": {
@@ -59856,7 +59849,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2637,
+   "line": 2638,
    "hash": "8b9badf062074f20",
    "does": "",
    "errors": {
@@ -59960,7 +59953,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2169,
+   "line": 2170,
    "hash": "6fec02b5eceaa360",
    "does": "",
    "errors": {
@@ -60070,7 +60063,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1874,
+   "line": 1875,
    "hash": "904f8b69d4b83d11",
    "does": "",
    "errors": {
@@ -60171,7 +60164,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1916,
+   "line": 1917,
    "hash": "283e393814d50723",
    "does": "",
    "errors": {
@@ -60272,7 +60265,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1842,
+   "line": 1843,
    "hash": "5230ea984d547e38",
    "does": "",
    "errors": {
@@ -60373,7 +60366,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1891,
+   "line": 1892,
    "hash": "e5d1a467750c1412",
    "does": "",
    "errors": {
@@ -60476,7 +60469,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2291,
+   "line": 2292,
    "hash": "7c92d0283563bc5a",
    "does": "",
    "errors": {
@@ -60585,7 +60578,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2823,
+   "line": 2824,
    "hash": "7f41c36afe975fa0",
    "does": "",
    "errors": {
@@ -60686,7 +60679,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2389,
+   "line": 2390,
    "hash": "e642cdc099e3ff92",
    "does": "",
    "errors": {
@@ -60792,7 +60785,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2461,
+   "line": 2462,
    "hash": "3feb8aa60d1ccdf7",
    "does": "",
    "errors": {
@@ -60896,7 +60889,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2767,
+   "line": 2768,
    "hash": "e109663d0e9f925f",
    "does": "",
    "errors": {
@@ -61001,7 +60994,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2747,
+   "line": 2748,
    "hash": "7b0c71c3c783dc7c",
    "does": "",
    "errors": {
@@ -61106,8 +61099,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2973,
-   "hash": "b44c17f20fe86803",
+   "line": 2974,
+   "hash": "ccac90af562b2eeb",
    "does": "",
    "errors": {
     "count": 0,
@@ -61181,9 +61174,8 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b44c17f20fe86803"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+    "lifecycle": "stable"
    },
    "status": "partial",
    "callers": [
@@ -61211,7 +61203,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1691,
+   "line": 1692,
    "hash": "bb7f77e7a12dfc72",
    "does": "",
    "errors": {
@@ -61312,7 +61304,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1424,
+   "line": 1425,
    "hash": "cf0146e11b0b4f1e",
    "does": "",
    "errors": {
@@ -61415,7 +61407,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1482,
+   "line": 1483,
    "hash": "dc8cf5329bd6be6b",
    "does": "",
    "errors": {
@@ -62675,8 +62667,8 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5982,
-   "hash": "8d1af83e23757398",
+   "line": 5979,
+   "hash": "0db505edd6bea9db",
    "does": "",
    "errors": {
     "count": 1,
@@ -62755,7 +62747,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -62788,7 +62780,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6208,
+   "line": 6205,
    "hash": "d105bc72cd618d86",
    "does": "",
    "errors": {
@@ -62893,7 +62885,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6264,
+   "line": 6261,
    "hash": "40d8bf50c2425779",
    "does": "",
    "errors": {
@@ -63000,7 +62992,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6339,
+   "line": 6336,
    "hash": "e98258687776f959",
    "does": "",
    "errors": {
@@ -63105,7 +63097,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 5121,
+   "line": 5118,
    "hash": "bca557ce84285e48",
    "does": "",
    "errors": {
@@ -63261,7 +63253,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 4442,
+   "line": 4439,
    "hash": "66fd0df7d138de7e",
    "does": "",
    "errors": {
@@ -63365,7 +63357,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
-   "line": 6482,
+   "line": 6479,
    "hash": "66977b3f37bccaf4",
    "does": "",
    "errors": {
@@ -63698,7 +63690,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1629,
+   "line": 1641,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63804,7 +63796,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1548,
+   "line": 1560,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
@@ -64015,7 +64007,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 533,
+   "line": 534,
    "hash": "084ac684a6c0b7b2",
    "does": "",
    "errors": {
@@ -64118,7 +64110,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 420,
+   "line": 421,
    "hash": "dd00a6537ec84cf8",
    "does": "",
    "errors": {
@@ -64218,7 +64210,7 @@
    "owner_area": "governance",
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
-   "line": 471,
+   "line": 472,
    "hash": "3956541db49b2344",
    "does": "",
    "errors": {
@@ -64296,11 +64288,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3956541db49b2344"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-print.js",
     "cap-shop.js",
@@ -64447,7 +64438,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 759,
+   "line": 760,
    "hash": "1d8791f0df7ece41",
    "does": "",
    "errors": {
@@ -64761,7 +64752,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1716,
+   "line": 1717,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -64863,7 +64854,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1746,
+   "line": 1747,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {

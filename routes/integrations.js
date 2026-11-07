@@ -21,6 +21,7 @@
  * counters, so the SAME health(last_seen) answers here and there. The API key stays the kit's credential (scoped,
  * revocable); the actor row is its identity. No migration: the columns b62 gave connectors.
  */
+const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: only the owner changes the shop's tax number */
 const { shopCountrySql } = require('../lib/country-setup'); /* GOV-AU1 #164 · STD2: the owning shop's country, one fragment */
 const { problem, fromError, uuidParam, textParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
@@ -1008,7 +1009,14 @@ router.get('/profile-map', auth, ...filterFor('/profile-map'), async (req, res) 
     fromError(req, res, e, FAILED_LEGACY);
   }
 });
-router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), async (req, res) => {
+/** CTR-182: does this connector profile post carry a tax number that differs from the shop's stored one? */
+async function sendsOtherTaxId(req) {
+  const sent = req.body && req.body.fields && req.body.fields.gstin;
+  if (!sent) return false;
+  const current = await require('../lib/profile').profileValues(auth.entityOf(req));
+  return taxIdDoor.taxIdDiffers(current.gstin && current.gstin.value, sent);
+}
+router.post('/profile', auth, auth.requireScope('connector'), schemaValidate(PROFILE_OPERATION, KIT_REFUSAL(PROFILE_FIELDS_SAID())), taxIdDoor.gate(sendsOtherTaxId) /* CTR-182: the tax number is the owner's; a connector key is not a person */, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const b = req.body || {};
