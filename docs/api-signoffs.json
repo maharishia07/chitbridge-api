@@ -719,7 +719,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: whole handler re-read after RAIL-146h (cost-blind reader gets null money, same keys); caller-scoped 404 for a foreign party; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: whole handler re-read after RAIL-146h (cost-blind reader gets null money, same keys); caller-scoped 404 for a foreign party; 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/crm/privacy-requests": {
@@ -2007,7 +2007,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/accruals/:ref/reverse": {
@@ -2015,7 +2015,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets": {
@@ -2023,7 +2023,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/assets/:id/dispose": {
@@ -2031,7 +2031,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/check": {
@@ -2055,7 +2055,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/compare/preflight": {
@@ -2079,7 +2079,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/depreciation/run": {
@@ -2087,7 +2087,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/enable": {
@@ -2151,7 +2151,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/gst/pay": {
@@ -2167,7 +2167,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/loans/:ref/emi": {
@@ -2175,7 +2175,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/move-in/import": {
@@ -2303,7 +2303,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/recurring/:id/skip": {
@@ -2311,7 +2311,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/setting": {
@@ -2335,7 +2335,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: wrapper unchanged, bodies now closed (S33, every web caller key in cap-period.js is declared, tests/books-strict-input green), waiting sentence plain, ledger refusals mapped by refusalOf; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/books/year/:fy/close": {
@@ -2447,7 +2447,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
@@ -2551,7 +2551,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: holder-checked, library 400 words reach the person only below 500, 5xx is the one safe sentence; 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/send": {
@@ -3687,7 +3687,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/assist/container": {
@@ -3695,7 +3695,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#PRNUM stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#951 stage2 contract pass 1: handler re-read: owner-scoped writes, another brand reads as not found/refused, 503 words plain, answer keys closed from recordings; 13 columns pass",
    "lifecycle": "stable"
   },
   "PUT /api/catalogue-face": {
