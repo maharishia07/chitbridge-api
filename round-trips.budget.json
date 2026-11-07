@@ -958,10 +958,10 @@
     "GET /api/crm/parties": {
       "file": "crm.js",
       "trips": 4,
-      "wire": 14,
+      "wire": 15,
       "fired": true,
       "status": 200,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-in 2026-11-06; wire +1 on 7 Nov 2026 (SEC-130 residual): the party_contact schema ask, cached after the first call"
     },
     "GET /api/crm/parties/:id": {
       "file": "crm.js",
