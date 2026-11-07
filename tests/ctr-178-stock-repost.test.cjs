@@ -38,7 +38,7 @@ const bill = (n, extra) =>
     extra
   );
 
-const world = { chits: [], ledger: new Map(), failIssue: 0, issued: 0, failLine: null };
+const world = { chits: [], ledger: new Map(), failIssue: 0, issued: 0, failLine: null, reads: [] };
 const refOf = (chit) => String(chit.business_json.client_ref || chit.business_json.bill_no || chit.chit_id).slice(0, 64);
 const stockLines = (chit) => chit.line_items.map((line, i) => ({ line_ref: String(line.line_id || i + 1), id: line.item_id, qty: line.quantity })).filter((line) => line.id && line.qty > 0);
 const moved = (chit, lineRef) => world.ledger.has([refOf(chit), lineRef, 'sale'].join('|'));
@@ -47,8 +47,9 @@ const withEntity = async (_entity, fn) =>
     query: async (text, params) => {
       const sql = String(text);
       if (/FROM chit_header h JOIN chit_detail d/.test(sql)) {
-        const open = world.chits.filter((chit) => !params[4].includes(chit.chit_id) && stockLines(chit).some((line) => !moved(chit, line.line_ref)));
-        if (sql.includes("count(*)")) return { rows: [{ n: open.length, oldest: open.length ? open[0].created_at : null }] };
+        const open = world.chits.filter((chit) => !(params[4] && chit.created_at >= params[4]) && stockLines(chit).some((line) => !moved(chit, line.line_ref)));
+        world.reads.push(sql.includes('LIMIT 200') ? 'open' : 'page');
+        if (sql.includes('LIMIT 200')) return { rows: open.sort((x, y) => (x.created_at < y.created_at ? 1 : -1)) };
         return { rows: open.sort((x, y) => (x.created_at < y.created_at ? 1 : -1)).slice(0, params[3]) };
       }
       return { rows: [] };
@@ -148,11 +149,11 @@ logger.info = (what, data) => said.push(['info', what, data]);
   /* 6c — STARVATION: 60 newer bills that move no stock (made to order) cannot hide the one real gap behind them */
   world.chits = [];
   world.ledger.clear();
-  sweep.settled.clear();
+  sweep.memo.clear();
   for (let n = 0; n < 60; n++)
     world.chits.push(bill(10 + n, { created_at: '2026-11-07T09:' + String(10 + (n % 50)) + ':00Z', line_items: [{ line_id: 'M' + n, item_id: MADE_TO_ORDER, quantity: 1, unit: 'pc' }] }));
   world.chits.push(bill(9, { created_at: '2026-11-06T08:00:00Z' }));
-  const hidden = await sweep.healShop(SHOP, withEntity, { grace: 0 });
+  const hidden = await sweep.healShop(SHOP, withEntity, { grace: 0, say: true });
   assert.strictEqual(hidden.moved, 1, 'the real gap behind 60 no-stock bills is healed');
   assert.ok(hidden.found >= 61, 'the pass went on past the first full page');
   let posts = 0;
@@ -162,15 +163,47 @@ logger.info = (what, data) => said.push(['info', what, data]);
   /* 6d — the gap still open after a pass is said, with a count over 30 days */
   world.chits = [bill(70)];
   world.failIssue = 9;
-  sweep.settled.clear();
+  sweep.memo.clear();
   said.length = 0;
-  const openSaid = await sweep.healShop(SHOP, withEntity, { grace: 0 });
+  const openSaid = await sweep.healShop(SHOP, withEntity, { grace: 0, say: true });
   assert.strictEqual(openSaid.open, 1, 'one bill still open');
   assert.ok(said.some((s) => s[1] === 'stock.repost.open' && s[2].bills === 1), 'stock.repost.open names the count');
   world.failIssue = 0;
 
+  /* 6e — a shop with only made-to-order lines is not alarmed: the 60 bills of 6c, memoed as not_stocked, give no stock.repost.open */
+  world.chits = [];
+  world.ledger.clear();
+  sweep.memo.clear();
+  for (let n = 0; n < 5; n++) world.chits.push(bill(80 + n, { line_items: [{ line_id: 'D' + n, item_id: MADE_TO_ORDER, quantity: 1, unit: 'pc' }] }));
+  said.length = 0;
+  const calm = await sweep.healShop(SHOP, withEntity, { grace: 0, say: true });
+  assert.strictEqual(calm.open, 0, 'no open gap for a made-to-order shop');
+  assert.ok(!said.some((s) => s[1] === 'stock.repost.open'), 'nothing is warned about');
+
+  /* 6f — the memo holds only what can not heal: a no_cost skip is read again, never memoed */
+  sweep.memo.clear();
+  world.chits = [bill(90)];
+  const noCost = await sweep.healShop(SHOP, withEntity, { grace: 0, say: true, post: async () => ({ moved: 0, failed: [], skipped: [{ code: 'no_cost' }] }) });
+  assert.strictEqual((sweep.memo.get(SHOP) || new Map()).size, 0, 'a no_cost bill is not memoed');
+  assert.strictEqual(noCost.open, 1, 'and it stays an open gap');
+
+  /* 6g — the 30-day count is not run by a plain heal (a replay): only the throttled pass says */
+  world.reads.length = 0;
+  await sweep.healShop(SHOP, withEntity, { grace: 0 });
+  assert.ok(!world.reads.includes('open'), 'a replay heal does not read the 30 days');
+
+  /* 6h — the memo is per shop and capped: 600 remembered bills keep MEMO_CAP, the newest, and another shop's memo is its own */
+  sweep.memo.clear();
+  for (let n = 0; n < sweep.MEMO_CAP + 100; n++) sweep.remember('MEMO-SHOP', 'chit-' + n);
+  sweep.remember('OTHER-SHOP', 'chit-0');
+  assert.strictEqual(sweep.memo.get('MEMO-SHOP').size, sweep.MEMO_CAP, 'a shop keeps at most MEMO_CAP');
+  assert.ok(sweep.memo.get('MEMO-SHOP').has('chit-' + (sweep.MEMO_CAP + 99)) && !sweep.memo.get('MEMO-SHOP').has('chit-0'), 'the oldest goes first');
+  assert.strictEqual(sweep.memo.get('OTHER-SHOP').size, 1, 'another shop is its own memo');
+
   /* 7 — the SQL asks what the JS posts under: the ref chain, drafts and cancelled bills out, a bound */
   assert.ok(/m\.ref = left\(COALESCE[\s\S]*client_ref[\s\S]*bill_no[\s\S]*doc_no[\s\S]*chit_id::text\), 64\)/.test(sweep.GAPS_SQL), 'the SQL ref is movementsFor ref');
+  assert.ok(/stocked' = 'false'/.test(sweep.GAPS_SQL) && /stocked' = 'false'/.test(sweep.OPEN_SQL), 'a product marked not stocked is out by SQL, in the page and in the count');
+  assert.ok(!/[$][45]/.test(sweep.OPEN_SQL) && /[$]3/.test(sweep.OPEN_SQL), 'the count uses only its own three parameters');
   assert.ok(/ORDER BY h.created_at DESC/.test(sweep.GAPS_SQL) && /line_ref/.test(sweep.GAPS_SQL), 'newest first, judged per line');
   assert.ok(/m.line_ref = x.line_ref/.test(sweep.GAPS_SQL) && /#top-up/.test(sweep.GAPS_SQL), 'a movement counts for its own line_ref (and its top-up), not for the whole bill');
   assert.ok(/cancelled', 'rejected'/.test(sweep.GAPS_SQL) && /<> 'Draft'/.test(sweep.GAPS_SQL) && /LIMIT \$4/.test(sweep.GAPS_SQL), 'cancelled, draft and a limit');

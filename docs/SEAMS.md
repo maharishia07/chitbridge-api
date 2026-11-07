@@ -29,21 +29,21 @@ of file each thing is; this says what already does the job.
 | 64 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 64 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
+| 62 | `failed` | `service.js` | what every catch answers: |
 | 61 | `here` | `screen-id.js` |  |
 | 61 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 61 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 61 | `failed` | `service.js` | what every catch answers: |
 | 59 | `entry` | `books-store.js` |  |
 | 59 | `items` | `books-store.js` | PERF1: |
 | 57 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 55 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
+| 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 51 | `pack` | `books-store.js` |  |
-| 51 | `count` | `money-check.js` | the count /health reads |
 | 50 | `toast` | `accounts-shell.js` |  |
 | 50 | `rows` | `cap-settings.js` |  |
-| 50 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
+| 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
 | 49 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 47 | `again` | `signin-ui.js` |  |
@@ -93,11 +93,11 @@ of file each thing is; this says what already does the job.
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the DEFAULT one marked { fallback: |
 | 28 | `refuse` | `books-pack.js` | const sha = (text) => |
 | 28 | `guess` | `move-in.js` | `table` (optional, PR1): |
+| 28 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 27 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 27 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 27 | `sheet` | `cap-employees.js` |  |
 | 27 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
-| 27 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 26 | `money` | `cart.js` |  |
 | 26 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 26 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
@@ -152,7 +152,6 @@ of file each thing is; this says what already does the job.
 | 18 | `notMigrated` | `crm-followups.js` |  |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 18 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
@@ -160,6 +159,7 @@ of file each thing is; this says what already does the job.
 | 17 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
 | 17 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
+| 17 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 16 | `message` | `cap-print.js` | the one message: |
