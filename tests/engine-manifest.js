@@ -770,6 +770,7 @@ const ENGINE_OTHER = [
   'ctpreturn.js',
   'chit-proposal.js',
   'invoice-issued.js',   /* ACC-192: what "issued" means for an invoice, and the one refusal of a money change on it */
+  'credit-note.js',   /* ACC-192 1b: the credit note an accepted decrease on an issued invoice issues (changed lines only, idempotent, through the one send path) */
   /**
    * ⭐ ENGINE, and an ASSET — see docs/SOFTWARE-ASSETS.md. What a quantity is WORTH: a currency rate, or a
    * market price per unit and then a currency. lib/money refuses to convert because an amount is labelled;
