@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 225,
-  "meets": 412,
+  "partial": 224,
+  "meets": 413,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -5843,11 +5843,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dc47d5ce7ab5a294"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-07 PR#869: not-ready line is the read-only balancesView sentence, plain, true, no migration id, on a 200; writes keep their own. Prior: cb-api (reviewer, non-builder; 13 columns read in the row, closed schema checked against handler and lib, ready and not-ready branches) 2026-10-28 PR#451",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
