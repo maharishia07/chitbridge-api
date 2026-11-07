@@ -799,6 +799,8 @@ async function sendReplay(sendState, req, res) {
   if (!client_ref) return;
   try {
     const seen = await sameRefLook(sender_id, client_ref);
+    /* CTR-178: the till's replay of a bill the server holds is answered duplicate:true — before sendStock — so the stock a lost post left behind is posted here, at once */
+    if (seen) setImmediate(() => require('../lib/stock-sweep').healShop(sender_id, withEntity, { grace: 0 }));
     if (seen) return answerReplay(req, res, seen, client_ref);
   } catch (e) {
     cbLog.fellBack(
@@ -2752,9 +2754,8 @@ async function sendMeter(sendState, req, res) {
  *
  * ⚠️⚠️ AFTER THE COMMIT, AND NOT AWAITED — the same posture as the meter above, for the same reason: this
  * is the hottest path in the product and a sale that has already happened must not fail because a stock
- * row could not be written. The trade is real and worth naming: a failure here is LOST until somebody
- * notices. It is survivable only because the movements are re-derivable from the chit at any time, with
- * the same ref and the same idempotency, so a backfill heals it — and because the balance is a cache that
+ * row could not be written. The trade is real and worth naming: a failure here is posted again by lib/stock-sweep
+ * (CTR-178: derived from the chit at any time, with the same ref and the same idempotency — retried, healed by the shop's next sale or the till's replay, SAID if it still fails) — and because the balance is a cache that
  * rebuild() can check against the log.
  *
  * ⚠️ Idempotent by (entity, ref, line_ref, reason), so the counter replaying its queue moves nothing twice.
@@ -2768,6 +2769,9 @@ async function sendStock(sendState, req, res) {
           actor_id: req.identity && req.identity.identity_id
         })
         .then((reply) => {
+          /* CTR-178: a line that failed is posted again (lib/stock-sweep: derived from the chit, idempotent) and any older gap of this shop heals with it */
+          if (reply && reply.failed.length) require('../lib/stock-sweep').retryLater(sender_id, withEntity);
+          require('../lib/stock-sweep').healSoon(sender_id, withEntity);
           if (!reply || (!reply.failed.length && !reply.skipped.length)) return;
           /* ⚠️ SAID, NOT SWALLOWED. "Half the lines silently did nothing" is exactly how a stock ledger rots,
              and a skipped line is usually legitimate (labour, delivery) — so it is logged, never guessed at. */
