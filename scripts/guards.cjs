@@ -497,6 +497,7 @@ const GUARDS = [
   'agent-signin-body.test.cjs', // M01: the shop-PC agent sends mode:'login' via CBSignin.ask()/verify() — a login never creates an identity
   'employee-code.test.cjs', // M02: first code e-mailed, never shown in a sealed env (Resend required), single-use, 24 h
   'offer-clash.test.cjs', // T2-LABS: an offer saved LIVE that overlaps another live discount → 409 OFFER_CLASH in words (CBOffers.clashes); drafts · pauses · renames · basket offers untouched
+  'ctr-191-till-money-stop.test.cjs', // CTR-191 (ACC-206 H): the till stops a bill whose engine bridge is not ok; the owner PIN + a typed reason write business_json.money_override
   'ctr-157-offer-live-signal.test.cjs', // CTR-157: PUT /api/definitions/:id (an offer made live, paused, changed) rings the shop-changed bell so every open counter hears it; a refused save rings nothing
   'auth-first.test.cjs', // M04: POST /api/chits/send — auth before the body is read (401 not 400/413, validators never run); before/after matrix: no allow/deny change
   'person-session.test.cjs', // M05: a person session is listed, bound to one device (DEVICE_MISMATCH), revocable within 60 s (fake clock); sign-in on B never revokes A; legacy tokens unchanged
