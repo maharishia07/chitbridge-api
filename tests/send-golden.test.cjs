@@ -82,6 +82,8 @@ const LINES = [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59
 const to = (id, extra) => Object.assign({ entity_id: id, role: 'to' }, extra || {});
 const order = (extra) => Object.assign({ purpose: 'order', manual_subject: 'Brake pads', recipients: [to(CUST)], line_items: LINES }, extra || {});
 const INVOICE = { ValDtls: { AssVal: 1000, CgstVal: 90, SgstVal: 90, IgstVal: 0, TotInvVal: 1180, RndOffAmt: 0 }, ItemList: [], DocDtls: { No: 'C1/26-27/0041' } };
+/* ACC-191: a bill whose place of supply is not decided — a rate above 0, no head figure, supply 'unknown'; the header's tax must read null (not decided), the total stays the price */
+const UNDECIDED_INVOICE = { ValDtls: { AssVal: 1000, CgstVal: 0, SgstVal: 0, IgstVal: 0, CesVal: 0, TotInvVal: 1000, RndOffAmt: 0 }, ItemList: [{ SlNo: '1', PrdDesc: 'Brake pad', Qty: 1, UnitPrice: 1000, TotAmt: 1000, AssAmt: 1000, GstRt: 18, CgstAmt: 0, SgstAmt: 0, IgstAmt: 0, CesAmt: 0, TotItemVal: 1000 }], DocDtls: { No: 'C1/26-27/0045' }, _cb: { supply: 'unknown', slabs: [{ GstRt: 18, AssVal: 1000, CgstVal: 0, SgstVal: 0, IgstVal: 0, CesVal: 0 }] } };
 const counterBj = (extra) => Object.assign({ till: { id: 'C1' }, bill_no: 'C1/26-27/0041', billed_at: '2026-10-01T10:00:00.000Z',
   customer: { entity_id: CUST, name: 'Chola Auto Care' }, payment: { parts: [{ mode: 'cash', amount: 1180 }] },
   series: { prefix: 'C1', period: '26-27', seq: 41 }, invoice: INVOICE }, extra || {});
@@ -100,6 +102,7 @@ const SCENARIOS = [
   ['self-chit, pref both + a numbered document', { body: order({ purpose: 'general', recipients: [{ self: true }], client_ref: 'R-1' }), ctx: { pref: 'both' } }],
   ['self-chit, pref both, no number', { body: order({ purpose: 'general', recipients: [{ entity_id: SHOP }] }), ctx: { pref: 'both' } }],
   ['counter bill to self + customer (two-sided, issued invoice)', { body: order({ client_ref: 'C1/26-27/0041', recipients: [{ self: true }, to(CUST)], business_json: counterBj() }) }],
+  ['counter bill with an undecided tax (no place of supply) — money.tax is null, total stays the price', { body: order({ client_ref: 'C1/26-27/0045', recipients: [{ self: true }], business_json: counterBj({ bill_no: 'C1/26-27/0045', invoice: UNDECIDED_INVOICE }) }) }],
   ['a replay of the same bill → the chit that exists', { body: order({ client_ref: 'C1/26-27/0041', recipients: [{ self: true }], business_json: counterBj() }), ctx: { seen: { chit_id: OP, till_id: 'C1', billed_at: '2026-10-01T10:00:00.000Z' } } }],
   ['two counters on one number → 409 collision', { body: order({ client_ref: 'C1/26-27/0041', recipients: [{ self: true }], business_json: counterBj() }), ctx: { seen: { chit_id: OP, till_id: 'C1', billed_at: '2026-10-01T09:00:00.000Z' } } }],
   ['an over-long counter number is recorded on the chit', { body: order({ client_ref: 'C1/26-27/00000000000000000000000041', recipients: [{ self: true }], business_json: counterBj() }) }],

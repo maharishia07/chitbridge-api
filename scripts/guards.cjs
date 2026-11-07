@@ -156,6 +156,8 @@ const GUARDS = [
   'one-name-one-function.test.cjs', // two functions, one name: the loser hoists away in silence
   'docnumber-scheme.test.cjs', // the bill number's shape: what the date says vs when the run restarts
   'ctr-177-bill-number-unique.test.cjs', // CTR-177: the till's real takeNumber never issues a number twice across a roll (needs the engines pin that carries the period label)
+  'acc-191-undecided-tax-null.test.cjs', // ACC-191: an undecided tax is null (not decided) in moneyOf and the send header, the total stays the price
+  'acc-191-till-not-decided.test.cjs', // ACC-191 till twin: the slip foot, the credit note and the stored bill say not decided, never 0.00 / NaN / -0
   'ctr-187-return-on-credit.test.cjs', // CTR-187: a return on an On-credit bill offers Reduce what they owe first, whole note or nothing, refund.parts []
   'ctr-197-cancelled-bill.test.cjs', // CTR-197: GET /till/bills and the day close leave a cancelled or rejected bill out
   'ctr-197-day-check-withdrawn.test.cjs', // CTR-197: the counter's day check knows a bill cancelled elsewhere (withdrawn), so Close the day is not held

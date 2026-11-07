@@ -5998,6 +5998,11 @@ function taxIdLabel(){
 /** the shop's country words from the registry (CBCountries.meta — AU/AE's legacy words included): taxName · taxId · postcode · region; {} when none */
 function countryWords(){ try { var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return (meta && meta.words) || {}; } catch (e) { cbQuiet('countryWords:1', e); return {}; } }   /* {} → the form's own words */
 /** the tax's own word — "Sales tax", "Consumption tax", "GST", "VAT" — the pack's words before its scheme code ("STAX", "JCT" were printed, 17 Oct audit) */
+/** ACC-191: a tax figure the engine could not decide (moneyOf gives null: supply unknown, a rate above 0, no head) says so in words — never 0.00, NaN or -0 */
+var NOT_DECIDED = 'not decided';
+function taxFigure(amount){ return amount == null ? NOT_DECIDED : money(amount); }
+/** ACC-191: the negative of a tax figure for a credit note; null (not decided) stays null, never -0 */
+function negatedTax(amount){ return amount == null ? null : -amount; }
 function schemeWord(){ var pack = shopPack(); return countryWords().taxName || (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
@@ -6150,7 +6155,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-08.nocountry';
+var TILL_BUILD = '2026-11-08.acc191c';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -21011,7 +21016,7 @@ function paintTotals(){
         /* ⚠️ SAY WHY, do not silently show one figure. A bill headed TAX INVOICE with an unsplit GST line is not a
            formatting choice — the buyer cannot claim the credit off it. */
         + (m.supply === 'unknown'
-            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + money(m.tax) + '</span></div>'
+            ? '<div class="t warnrow"><span>' + schemeWord() + '</span><span>' + taxFigure(m.tax) + '</span></div>'
               + '<div class="t warnrow"><span colspan="2">No state on the ' + taxIdLabel() + ', so CGST/SGST cannot be split</span><span></span></div>'
             : '<div class="t"><span>' + schemeWord() + ' total</span><span>' + money(m.tax) + '</span></div>') : '');
   /* the toggle appears only when there IS detail to fold — an empty cart or a plain cash sale needs no control */
@@ -21823,7 +21828,7 @@ async function finish(){
        server's unique index makes a replay a no-op — so a bill that syncs twice does not award twice. */
     reward: RW.holder ? { holder: RW.holder, spend: RW.spend || 0 } : null,
     payment_asked: PAY_ASKED, change: changeOf(tendered, m.net, parts), cash_round: cashRoundOf(parts, m.net) || undefined,
-    total: m.net, taxable: m.base, tax: m.tax, saved: m.save,
+    total: m.net, taxable: m.base, tax: m.tax /* ACC-191: null = not decided (supply unknown), stored as the engine said it, never 0 */, saved: m.save,
     /* ⚠️ THE SPLIT IS RECORDED, NOT RE-DERIVED. A reprint months later must show the heads this bill was ISSUED with —
        the shop's registration can change, and a slip that recomputes would quietly restate a filed return. */
     heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round, delivery: BILL_DELIVERY || null,
@@ -23596,16 +23601,16 @@ function domesticFootHTML(bill, row){
   return row('Taxable', money(bill.taxable))
     + ((bill.heads && bill.heads.length)
         ? bill.heads.map(function(head){ return row(taxHeadWord(head) + ' ' + head.rate + '%', money(head.amount)); }).join('')
-          + row(schemeWord() + ' total', money(bill.tax))
-        : row(schemeWord(), money(bill.tax)));
+          + row(schemeWord() + ' total', taxFigure(bill.tax))
+        : row(schemeWord(), taxFigure(bill.tax)));
 }
 /** one row per rate — the base and the tax as the bill STORED them (base, or taxable; a credit note's are negative), then the tax total */
 function perRateFootHTML(bill, row){
   var issued = bill.by_rate;
   return Object.keys(issued).sort(function(left, right){ return Number(left) - Number(right); }).map(function(rate){
     var figures = issued[rate] || {}, base = figures.base != null ? figures.base : figures.taxable;
-    return '<div data-testid="till-slip-rate-' + esc(rate) + '">' + row(esc(rate) + '% on ' + money(Number(base) || 0), money(Number(figures.tax) || 0)) + '</div>';
-  }).join('') + row(schemeWord() + ' total', money(bill.tax));
+    return '<div data-testid="till-slip-rate-' + esc(rate) + '">' + row(esc(rate) + '% on ' + money(Number(base) || 0), figures.tax == null ? NOT_DECIDED : money(Number(figures.tax) || 0)) + '</div>';
+  }).join('') + row(schemeWord() + ' total', taxFigure(bill.tax));
 }
 /**
  * ⭐ THE FOOT OF A TAX INVOICE: one row per rate, with the taxable value and the tax split the way this bill was
@@ -25558,6 +25563,8 @@ function retMoney(){
       return r2(Math.max(0, v)) * ((Number(l[k]) || 0) < 0 ? -1 : 1);
     };
     var net = part('net'), taxable = part('taxable'), tax = part('tax'), save = part('save');
+    var taxUndecided = l.tax === null; /* ACC-191: the original line carried tax null = not decided; its return does too */
+    if (taxUndecided) out.taxUndecided = true;
     /**
      * ⚠️⚠️ from_line IS NOT DECORATION. A credit note holds only the lines actually coming back, so its line 0
      * may be the original's line 3. retLeft() first matched prior credit notes BY ARRAY INDEX and would have
@@ -25567,7 +25574,7 @@ function retMoney(){
      */
     out.lines.push(Object.assign({}, l, { from_line: n, qty: -q, net: -net,
                                           gross: -part('gross'),
-                                          taxable: -taxable, tax: -tax, save: -save }));
+                                          taxable: -taxable, tax: taxUndecided ? null : -tax, save: -save }));
     out.total = r2(out.total + net); out.taxable = r2(out.taxable + taxable);
     out.tax = r2(out.tax + tax); out.saved = r2(out.saved + save);
     out.count = r2(out.count + q);
@@ -25578,6 +25585,7 @@ function retMoney(){
       out.byRate[rt].tax = r2(out.byRate[rt].tax + tax);
     }
   });
+  if (out.taxUndecided) { out.tax = null; Object.keys(out.byRate).forEach(function(rate){ out.byRate[rate].tax = null; }); }
   return out;
 }
 function retPaint(){
@@ -25988,9 +25996,9 @@ async function retIssue(){
     reason: why, reason_words: words,
     lines: m.lines,
     /* ⚠️ NEGATIVE, so every accumulator that adds up a day nets this without being taught about returns */
-    total: -m.total, taxable: -m.taxable, tax: -m.tax, saved: -m.saved,
+    total: -m.total, taxable: -m.taxable, tax: negatedTax(m.tax), saved: -m.saved, /* ACC-191: null = not decided, never -0 */
     by_rate: (function(){ var o = {}; Object.keys(m.byRate).forEach(function(k){
-        o[k] = { taxable: -m.byRate[k].taxable, tax: -m.byRate[k].tax }; }); return o; })(),
+        o[k] = { taxable: -m.byRate[k].taxable, tax: negatedTax(m.byRate[k].tax) }; }); return o; })(),
     /* ⚠️ THE HEADS AS ISSUED. A shop's registration can change; a credit note states what the ORIGINAL bill
        was issued under, or it would reverse a tax under a head nobody charged. */
     heads: against.heads || null, supply: against.supply || null,
@@ -26392,7 +26400,7 @@ function slipOfRow(b){
   var inv = (b && b.invoice && typeof b.invoice === 'object' && b.invoice.ValDtls) ? b.invoice : null;
   if (!inv) return Object.assign({}, b, { tax_lost: true });
   var m = moneyOf(inv);
-  return Object.assign({}, b, { total: m.net, taxable: m.base, tax: m.tax, saved: m.save, gross: m.gross, by_rate: m.byRate,
+  return Object.assign({}, b, { total: m.net, taxable: m.base, tax: m.tax /* ACC-191: null stays null = not decided */, saved: m.save, gross: m.gross, by_rate: m.byRate,
                                 heads: m.heads, supply: m.supply, pos_state: m.pos_state, round_off: m.round,
                                 lines: (b.lines || []).map(function(l, n){ return Object.assign({}, l, m.lines[n] || {}); }) });
 }
