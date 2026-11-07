@@ -40,10 +40,17 @@ app.post('/api/people', shape, async (req, res) => {
   res.status(201).json({ id: 'p-' + runs, internal_note: 'secret' });
 });
 
-function call(port, key, body, extra) {
+/* PLT-69 (SIT, customers route): an answer by plain res.json (no res.status, so 200) after the deadline */
+app.post('/api/plain', async (req, res) => {
+  runs++;
+  await wait(400);
+  res.json({ id: 'q-' + runs });
+});
+
+function call(port, key, body, extra, route) {
   return new Promise((resolve) => {
     const t0 = Date.now(), data = Buffer.from(JSON.stringify(body || { n: 'a' }));
-    const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: '/api/people', headers: { 'content-type': 'application/json', 'content-length': data.length, authorization: 'Bearer ' + token, 'idempotency-key': key, ...(extra || {}) } }, (r) => {
+    const q = http.request({ host: '127.0.0.1', port, method: 'POST', path: route || '/api/people', headers: { 'content-type': 'application/json', 'content-length': data.length, authorization: 'Bearer ' + token, 'idempotency-key': key, ...(extra || {}) } }, (r) => {
       let b = ''; r.on('data', (c) => { b += c; });
       r.on('end', () => { let j = null; try { j = JSON.parse(b); } catch (_) {} resolve({ status: r.statusCode, type: r.headers['content-type'], replay: r.headers['x-idempotent-replay'], body: j, ms: Date.now() - t0 }); });
     });
@@ -81,6 +88,16 @@ function call(port, key, body, extra) {
   await wait(500);
   r = await call(port, 'k3');
   ok(r.status === 201 && r.replay === 'true' && r.body.id === 'p-1' && runs === 1 && !('internal_note' in r.body), 'k3: a key claimed after the deadline settled: the retry replays the pruned answer, one run (runs=' + runs + ')');
+
+  /* the SIT repro: a route that answers with a plain res.json after the 503. Its 200 is the outcome; the 503 we sent must not be read as it */
+  runs = 0;
+  r = await call(port, 'k4', null, null, '/api/plain');
+  ok(r.status === 503, 'k4: plain res.json route, 503 at the deadline (got ' + r.status + ')');
+  r = await call(port, 'k4', null, null, '/api/plain');
+  ok(r.status === 409 && r.body && r.body.code === 'IDEMPOTENCY_IN_PROGRESS' && runs === 1, 'k4: a retry while it runs gets 409 IN_PROGRESS (got ' + r.status + ', runs=' + runs + ')');
+  await wait(450);
+  r = await call(port, 'k4', null, null, '/api/plain');
+  ok(r.status === 200 && r.replay === 'true' && r.body && r.body.id === 'q-1' && runs === 1, 'k4: after it finished the retry replays its stored 200; the handler ran once (got ' + r.status + ', runs=' + runs + ')');
 
   runs = 0; mode = 'fail';
   r = await call(port, 'k2');

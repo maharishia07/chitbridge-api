@@ -6755,7 +6755,9 @@
           "dropped",
           "rows",
           "note",
-          "prior_period"
+          "prior_period",
+          "not_in_books",
+          "reversed"
         ],
         "properties": {
           "month": {
@@ -6829,6 +6831,80 @@
                   "type": "string"
                 },
                 "booked_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "reversed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
+                  "type": "string"
+                },
+                "month": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "not_in_books": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "chit_id",
+                "kind",
+                "invoice_day",
+                "month",
+                "words"
+              ],
+              "properties": {
+                "chit_id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "invoice_day": {
+                  "type": "string"
+                },
+                "invoice_month": {
+                  "type": "string"
+                },
+                "reversed_day": {
                   "type": "string"
                 },
                 "month": {
