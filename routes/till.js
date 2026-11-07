@@ -78,6 +78,7 @@ function taxFactsOf(item_data) {
  */
 const categories = require('../lib/categories');
 const regional = require('../lib/regional');
+const taxIdDoor = require('../lib/tax-id-door'); /* CTR-182: who may change the shop's tax number (owner, or a key) */
 const countrySetup = require('../lib/country-setup'); /* W1-TILL: shopMoney + MONEY_UNSTATED — the one reader of a shop's money */
 const policy = require('../lib/policy');
 const itemstatus = require('../lib/itemstatus'); /* "may somebody take one NOW?" — one definition, the storefront's */
@@ -2985,6 +2986,8 @@ router.post('/shop', auth, auth.requireScope('till'), ...checked('POST /shop'), 
     const source = 'counter' + (await namedCounter(req));
     const as_of = new Date().toISOString();
 
+    /* ⭐ CTR-182: the tax number is the owner's — a person under the owner is refused FIRST (before the number is even checked), nothing written; a till key keeps its right */
+    if (taxIdDoor.taxIdDiffers(before.gstin, body.gstin) && !taxIdDoor.mayChangeTaxId(req)) return problem(req, res, taxIdDoor.refusal());
     const refusal = checkSentTaxId(body, before);
     if (refusal) return problem(req, res, { status: 400, ...refusal });
 
