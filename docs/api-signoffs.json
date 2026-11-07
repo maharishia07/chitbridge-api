@@ -1571,15 +1571,15 @@
    "lifecycle": "stable"
   },
   "GET /api/till/bills": {
-   "hash": "f2b71a82e07db13e",
+   "hash": "e394ff0b0e21e9d3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#904, re-signed PR#935 2026-11-07",
    "lifecycle": "stable"
   },
   "GET /api/till/catalogue/blueprints": {
-   "hash": "580dd67ae75db296",
+   "hash": "13e313233f2183a5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1587,7 +1587,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/counters": {
-   "hash": "73bccfc6825b5345",
+   "hash": "065ab1b31029b6be",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1603,7 +1603,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/match": {
-   "hash": "af2833a77603a9f8",
+   "hash": "917b5f2623190141",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1611,7 +1611,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/groups": {
-   "hash": "0bff2e63e7484466",
+   "hash": "a93949be98bda80d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1619,7 +1619,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/hidden": {
-   "hash": "7740ad9694b51c90",
+   "hash": "a21ada102b689cf4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1627,7 +1627,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/screen-config": {
-   "hash": "48d6577e91db52fc",
+   "hash": "84d5f66acbc70ed4",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1635,7 +1635,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/quick-keys/state": {
-   "hash": "33abfecde62a9004",
+   "hash": "7b700a57f90e53b5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1643,7 +1643,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/reward": {
-   "hash": "aa600c76b31c1ee2",
+   "hash": "b7945b493fc90536",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1651,7 +1651,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/screens": {
-   "hash": "e3553ae3b95bfdec",
+   "hash": "34ca27a7c7ac2723",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1659,7 +1659,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/snapshot": {
-   "hash": "c11004366487df50",
+   "hash": "8d7990b747431ba7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1667,7 +1667,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/stock": {
-   "hash": "3f644a8715faf625",
+   "hash": "f88e8f612e3e98a5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1675,7 +1675,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/summary": {
-   "hash": "fe841dc4231d7c51",
+   "hash": "7c470871e76779bc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1683,7 +1683,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/tasks": {
-   "hash": "148bb0dcf8de88b9",
+   "hash": "750f4ada473ad2b1",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1691,7 +1691,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/verify": {
-   "hash": "46d43e49b67a6e84",
+   "hash": "8822f90ab44821bf",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -1699,7 +1699,7 @@
    "lifecycle": "stable"
   },
   "GET /api/till/worth-an-offer": {
-   "hash": "eb4695b2dc715bd6",
+   "hash": "18e4e4e233adf0d5",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
@@ -3547,7 +3547,7 @@
    "lifecycle": "stable"
   },
   "POST /api/till/rate": {
-   "hash": "7c92d0283563bc5a",
+   "hash": "ce2b954bd9af8e16",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
