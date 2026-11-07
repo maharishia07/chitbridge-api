@@ -47,27 +47,28 @@ const ITEMS = [
   const X = H.load({ auth: authFor(mk(SHOP)) });
   const E = require(path.join(H.API, 'lib', 'books-engines'));
   const CF = require(path.join(H.API, 'lib', 'books-cashflow'));
+  const IN_PACK = require(path.join(H.API, 'lib', 'regulation')).packFor('IN');   /* CTRY-94: the ageing is the shop's pack — the engine ages as no country when none is handed in */
 
   /* ── 1 · the one reader ── */
   const n = E.netOpen(ITEMS);
   ok('the bill is due ₹490.00: ₹8,370 − ₹3,880 allocated − ₹4,000 on account (covered, oldest due first)', n.by_ref[BILL] && n.by_ref[BILL].outstanding_minor === 49000 && n.by_ref[BILL].covered_minor === 400000, JSON.stringify(n.by_ref));
   ok('nothing stays on account once the bill is covered; only bills are open documents', Object.keys(n.unapplied_by_party).length === 0 && Object.keys(n.by_ref).join() === BILL, JSON.stringify(n));
   ok('the view carries the virtual allocation for a caller proposing a cheque on top', n.view.allocations.some((a) => a.credit === 'unapplied:' + VENKAT && a.debit === BILL && a.amount === 4000), JSON.stringify(n.view.allocations));
-  const d = E.dues(ITEMS, ASOF, 'receivable');
+  const d = E.dues(ITEMS, ASOF, 'receivable', { pack: IN_PACK });
   ok('the party balance is the engine\'s ₹490 (the Collections list was right)', d.outstanding.by_party[VENKAT] === 49000, JSON.stringify(d.outstanding.by_party));
   const ag = d.ageing.by_party[VENKAT];
   ok('the age bucket is ₹490 · not_due (due today, the edge stays in the lower bucket), total ₹490', ag && ag.undisputed.not_due === 49000 && ag.total_minor === 49000 && d.ageing.total_minor === 49000, JSON.stringify(d.ageing));
   ok('/dues reads the netted open documents from `open`', d.open.by_ref[BILL].outstanding_minor === 49000, JSON.stringify(d.open.by_ref));
   /* a receipt larger than every bill: the rest is an advance, aged as unapplied, never a due */
   const big = ITEMS.concat([row({ ref_kind: 'advance', kind: 'payment', ref: 'pay:rv-9', against_ref: 'pay:rv-9', amount_minor: -100000, date: '2026-10-20' })]);
-  const nb = E.netOpen(big), db = E.dues(big, ASOF, 'receivable');
+  const nb = E.netOpen(big), db = E.dues(big, ASOF, 'receivable', { pack: IN_PACK });
   ok('a receipt beyond the bills: the bill is covered (₹0 due) and ₹510 stays on account (unapplied_minor), no bucket', Object.keys(nb.by_ref).length === 1 && nb.by_ref[BILL].outstanding_minor === 0 && nb.unapplied_by_party[VENKAT] === 51000 && db.ageing.total_minor === 0 && db.ageing.unapplied_minor === -51000, JSON.stringify([nb.unapplied_by_party, db.ageing.total_minor, db.ageing.unapplied_minor]));
   /* a disputed receipt may not reduce a bill (C4); an uncleared cheque pays nothing (C3) */
   const disputed = ITEMS.concat([row({ ref_kind: 'status', ref: CHQ, against_ref: CHQ, amount_minor: 0, status: 'disputed', date: '2026-10-13' })]);
   ok('a DISPUTED receipt nets nothing: the bill stays ₹4,490 due', E.netOpen(disputed).by_ref[BILL].outstanding_minor === 449000, JSON.stringify(E.netOpen(disputed).by_ref));
   const held = ITEMS.slice(0, 5);
   ok('a cheque still in hand (received, not cleared) nets nothing: ₹4,490 due', E.netOpen(held).by_ref[BILL].outstanding_minor === 449000, JSON.stringify(E.netOpen(held).by_ref));
-  ok('no rows → empty, never a throw', Object.keys(E.netOpen([]).by_ref).length === 0 && E.dues([], ASOF, 'receivable').open.view.allocations.length === 0);
+  ok('no rows → empty, never a throw', Object.keys(E.netOpen([]).by_ref).length === 0 && E.dues([], ASOF, 'receivable', { pack: IN_PACK }).open.view.allocations.length === 0);
 
   /* ── 2 · the three consumers, pure first: the Cash view ── */
   const names = new Map([[VENKAT, { name: 'Venkat Traders', party_no: 'P-00007' }]]);

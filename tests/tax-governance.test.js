@@ -1,4 +1,5 @@
 // tests/tax-governance.test.js — the jurisdiction's slabs, served as read-only definitions.  node tests/tax-governance.test.js
+// CTRY-94: an Indian seller says so — the engines no longer read India when no country is said.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const G = require('../lib/tax-governance');
@@ -54,8 +55,8 @@ test('the governed rate reaches lib/tax.js unchanged — intra halves it, inter 
   const slabs = G.slabsFromLayer(IN, 'IN');
   const r = S.resolve({ item_data: { tax_slab: 'IN-GST-18' }, face: {}, slabs, categories: [] });
   const line = S.applyToLine({ qty: 1, price: 100 }, r);
-  const intra = tax.determine({ lines: [line], seller: { State: '33' }, buyer: { Pos: '33' } });
-  const inter = tax.determine({ lines: [line], seller: { State: '33' }, buyer: { Pos: '29' } });
+  const intra = tax.determine({ lines: [line], seller: { Country: 'IN', State: '33' }, buyer: { Pos: '33' } });
+  const inter = tax.determine({ lines: [line], seller: { Country: 'IN', State: '33' }, buyer: { Pos: '29' } });
   const li = intra.ItemList[0], le = inter.ItemList[0];
   assert.equal(li.CgstAmt, 9); assert.equal(li.SgstAmt, 9); assert.equal(li.IgstAmt, 0);
   assert.equal(le.IgstAmt, 18); assert.equal(le.CgstAmt, 0);

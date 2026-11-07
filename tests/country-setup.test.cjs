@@ -69,7 +69,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   /* ── the words come from the engine, once ── */
   const R = require(path.join(API, 'lib', 'regulation'));
   ok('engines v1.36.0 adopted: regulation.status is there and says the BR sentence', typeof R.status === 'function' && R.status('BR', { name: 'Brazil' }).why === SENTENCE_BR);
-  ok('lookup() still falls back to India for READING old chits, and says so', R.lookup('BR').fallback === true && R.lookup('BR').id === 'IN');
+  ok('lookup() no longer falls back to India (CTRY-94): a country with no pack is the UNKNOWN answer, `unknown` and `fallback` true, no id', R.lookup('BR').fallback === true && R.lookup('BR').unknown === true && R.lookup('BR').id === null);
   ok('AU1 came with it: Australia has its pack — books open, AUD, the year starts in July', R.status('AU').books === true && R.packFor('AU').currency === 'AUD' && R.packFor('AU').fiscalYear.startMonth === 7);
   /* AE1 (engines v1.37.0): the UAE pack — books open, AED, the calendar year, one `vat` head; verified: false until a UAE accountant reads it */
   ok('AE1 (v1.37.0): the UAE has its pack — books open, AED, the calendar year, the vat head, not yet verified', R.status('AE').books === true && R.packFor('AE').currency === 'AED' && R.packFor('AE').fiscalYear.label === 'single' && R.packFor('AE').taxHeads.join() === 'vat' && R.packFor('AE').verified === false);

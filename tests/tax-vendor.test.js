@@ -54,7 +54,7 @@ const both = (input) => {
   assert.strictEqual(JSON.stringify(b), JSON.stringify(a), 'the two engines answered differently');
   return a;
 };
-const TN = { Gstin: '33AABCK1234F1Z6', State: '33', RegType: 'regular' };
+const TN = { Gstin: '33AABCK1234F1Z6', State: '33', RegType: 'regular', Country: 'IN' }; /* CTRY-94: the seller says its country; neither side reads India on a guess now */
 const KA = { Gstin: '29ABCDE1234F1Z5', State: '29', RegType: 'regular' };
 const TN2 = { Gstin: '33XYZAB1234F1Z9', State: '33', RegType: 'regular' };
 

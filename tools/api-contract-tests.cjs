@@ -195,6 +195,9 @@ const COLUMN_KINDS = [
 
 /** one column's value: the owner for a shop column, the answer schema's sample for a declared field, else a value of the kind its name says */
 function columnValue(name, schema, owner) {
+  /* CTRY-94: no India default, so the stand-in shop NAMES its country (an unknown one is refused 422 NO_COUNTRY_PACK / ends 500, and the generated cases never reached their answer) */
+  if (name === 'country') return 'IN';
+  if (name === 'currency') return 'INR';
   const kind = COLUMN_KINDS.find(([pattern]) => pattern.test(name));
   if (kind && kind[0] === COLUMN_KINDS[0][0]) return owner;
   if (schema) return fittingValue(schema);

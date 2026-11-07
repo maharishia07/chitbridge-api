@@ -45,7 +45,7 @@ const minor = (rupees) => Math.round(rupees * 100);
   const T = require(path.join(H.API, 'lib', 'tax'));
   const TL = require(path.join(H.API, 'lib', 'tax-lines'));
 
-  const party = (id) => ({ Gstin: IDS[id].gstn, LglNm: IDS[id].display_name, State: '33', Pos: '33', RegType: 'regular' });
+  const party = (id) => ({ Gstin: IDS[id].gstn, LglNm: IDS[id].display_name, State: '33', Pos: '33', RegType: 'regular', Country: 'IN' });
   const rows = [];
   const sale = (n, price, at, billedAt) =>
     rows.push({
