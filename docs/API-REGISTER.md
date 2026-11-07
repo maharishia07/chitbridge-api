@@ -1188,7 +1188,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): party_item · callers: cap-books.js · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: cap-books.js · actions: -
 
 **POST /api/books/closing-stock** · books · cb-accounting · partial
 - does: _not yet written_
@@ -1230,7 +1230,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-books.js 1/43) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, ledger_account, party_item, supplier_list · writes (derived): party_item · callers: cap-books.js · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry, ledger_account · writes (derived): party_item · callers: cap-books.js · actions: -
 
 **POST /api/books/entries/:id/reverse** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1332,7 +1332,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 1 code(s) [LEDGER_OFF] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-finance-pay.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): party_item · callers: cap-finance-pay.js · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: cap-finance-pay.js · actions: -
 
 **POST /api/books/payments** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1344,7 +1344,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, SIGN_IN_FOR_LEDGER] · statuses 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline idempotent · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): party_item, state_log · callers: - · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry, party_item · writes (derived): party_item, state_log · callers: - · actions: -
 
 **POST /api/books/payments/:id/propose** · books · cb-accounting · meets standard
 - does: _not yet written_
@@ -1404,7 +1404,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 2 code(s) [LEDGER_OFF, OWNER_ONLY] · statuses 400, 401, 403, 404, 422, 500 · money y (derived)
 - effect: offline online-only · round trips 4 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): books_payment, books_setting, customer_list, identities, journal_entry, journal_line, party_item, supplier_list · writes (derived): party_item · callers: - · actions: -
+- reads (derived): books_payment, books_setting, identities, journal_entry · writes (derived): party_item · callers: - · actions: -
 
 **POST /api/books/year/:fy/close** · books · cb-accounting · meets standard
 - does: _not yet written_

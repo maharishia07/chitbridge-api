@@ -33976,12 +33976,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
@@ -34738,13 +34734,9 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
     "journal_entry",
-    "journal_line",
-    "ledger_account",
-    "party_item",
-    "supplier_list"
+    "ledger_account"
    ],
    "writes": [
     "party_item"
@@ -36697,12 +36689,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
@@ -36930,12 +36918,9 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
     "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "party_item"
    ],
    "writes": [
     "party_item",
@@ -38013,12 +37998,8 @@
    "reads": [
     "books_payment",
     "books_setting",
-    "customer_list",
     "identities",
-    "journal_entry",
-    "journal_line",
-    "party_item",
-    "supplier_list"
+    "journal_entry"
    ],
    "writes": [
     "party_item"
