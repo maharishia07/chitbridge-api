@@ -26028,6 +26028,22 @@
      }
     },
     {
+     "scenario": "status-taken-back",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be accepted again. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     },
+     "fixture": {
+      "error": "Bill was taken back",
+      "code": "taken_back",
+      "message": "This bill was cancelled after it was booked, so it cannot be accepted again. Ask the sender to send it again as a new bill.",
+      "why": "taken_back"
+     }
+    },
+    {
      "scenario": "status-reject-needs-a-reason",
      "status": 400,
      "body_keys": {

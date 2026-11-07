@@ -206,9 +206,9 @@ const COUNTRY = {
     const afterCancel = netByRole(shop);
     use(rec('accepted'), buyEntry); const a2 = await K.postChit(shop, 'ra', {});
     const rail = require(path.join(H.API, 'lib', 'rail-actions')).move({ held: true, received: 'cancelled' }, { level: 'editor', holder: null }, 'accepted');
-    eq(cc + ' (iv) accept → cancel → accept again: ONE purchase entry ever (chit:<id> once-ever), ONE reversal; the 2nd accept is a duplicate, books unchanged',
+    eq(cc + ' (iv) accept → cancel → accept again: ONE purchase entry ever (chit:<id> once-ever), ONE reversal; the books alone would answer the 2nd post a duplicate (RAIL-173: the status door never lets it get that far, see the door cases)',
       [!!a1.ok, !!pe, reversalsOf(shop, pe).length, entriesOf(shop, 'ra').length, a2.duplicate === true, JSON.stringify(netByRole(shop)) === JSON.stringify(afterCancel)], [true, true, 1, 1, true, true]);
-    ok(cc + ' (iv) the forward walk, asserted from the rail engine: cancelled → accepted is ' + (rail.ok ? 'allowed' : 'refused (' + rail.why + ')'), typeof rail.ok === 'boolean', JSON.stringify(rail));
+    eq(cc + ' (iv) RAIL-173: lib/rail.js TRANSITIONS are UNCHANGED (cancelled → accepted still allowed by the table: an order or a never-posted bill reopens; the refusal is the status doors, below)', rail.ok, true);
   }
 
   /* ── T6 · THE RACE: the cancel door and the post path both reverse at the same time (4 ms db latency) — one reversal, the loser answers duplicate, nobody throws ── */
@@ -343,9 +343,51 @@ const COUNTRY = {
     const tx = { query: q };
     Object.assign(X.dbStub, { query: q, pool: { query: q, connect: async () => Object.assign({ release() {} }, tx) }, withEntity: async (id, fn) => fn(tx), withTransaction: async (fn) => fn(tx), onEntity: async (id, db, fn) => fn(tx), readBatch: async () => ({}) });
     const sc = require(path.join(H.API, 'lib', 'schema')); sc.hasColumn = async () => false; sc.hasTable = async () => false;
-    const { moveStatus } = require(path.join(H.API, 'lib', 'chit-move'));
+    const { moveStatus } = require(path.join(H.API, process.env.RAIL173_CHIT_MOVE || 'lib/chit-move'));   /* the mutation test points this at a copy without the RAIL-173 guard */
     const viewer = { level: 'editor', holder: null }, by = { id: 'u1', name: 'Owner' };
     const origErr = console.error; console.error = () => {};
+    /* ── RAIL-173 · a bill the buyer cancelled / rejected AFTER it posted (the books hold its reversal) is never moved back; the sender sends it again as a NEW chit ── */
+    const rec173 = (id, st) => ({ chit_id: id, purpose: 'invoice', created_at: AT, current_status: st, sender_entity_id: SUPP, business_json: { invoice_no: 'KT/' + id } });
+    const stat = (id) => (STATUS.find((x) => x.chit_id === id && x.direction === 'received') || {}).current_status;
+    const rail173 = async (cc, C, shop) => {
+      const buyEntry = { sells: false, seller: { entity_id: SUPP, LglNm: 'Kumar Traders' }, me: { entity_id: shop }, invoice: C.bill.invoice };
+      const took = async (id, how) => {   /* accepted + posted, then cancelled / rejected through the real door: the books take it back */
+        SENDER = SUPP; STATUS = [{ chit_id: id, entity_id: shop, direction: 'received', current_status: 'accepted' }];
+        use(rec173(id, 'accepted'), buyEntry); await K.postChit(shop, id, {});
+        use(rec173(id, how), buyEntry); await moveStatus(shop, id, how, by, 'wrong bill', viewer); await sleep(30);
+        return entriesOf(shop, id)[0];
+      };
+      const ask = async (id, to) => { use(rec173(id, to), buyEntry); const r = await moveStatus(shop, id, to, by, null, viewer); await sleep(30); return r; };
+      /* hand-computed: one purchase entry + one reversal = every account 0; a refused move writes nothing, so entries, reversals, net and status stay exactly so */
+      for (const how of ['cancelled', 'rejected']) {
+        const id = 'tb-' + how + '-' + cc, purchase = await took(id, how), netThen = JSON.stringify(netByRole(shop));
+        const got = [];
+        for (const to of ['accepted', 'pending', 'in_progress', 'completed']) { const r = await ask(id, to); got.push([r.code, r.body.code, r.moved === true]); }
+        const words = (await ask(id, 'accepted')).body.message;
+        eq(cc + ' RAIL-173 (' + how + ' after post) · accepted, pending, in progress, completed: each 409 taken_back, nothing moved', got, ['accepted', 'pending', 'in_progress', 'completed'].map(() => [409, 'taken_back', false]));
+        eq(cc + ' RAIL-173 (' + how + ') · status stays ' + how + '; books unchanged: 1 purchase, 1 reversal, every account 0', [stat(id), entriesOf(shop, id).length, reversalsOf(shop, purchase).length, JSON.stringify(netByRole(shop)) === netThen, chitNet(purchase)], [how, 1, 1, true, 'every account 0']);
+        ok(cc + ' RAIL-173 (' + how + ') · the words tell the sender to send it again as a new bill', /^This bill was .* after it was booked/.test(words) && /send it again as a new bill/.test(words), words);
+      }
+      /* never posted: a cancelled bill nobody booked still reopens, and posts once */
+      SENDER = SUPP; STATUS = [{ chit_id: 'nv-' + cc, entity_id: shop, direction: 'received', current_status: 'cancelled' }];
+      const nv = await ask('nv-' + cc, 'accepted');
+      eq(cc + ' RAIL-173 · cancelled but NEVER posted: reopens to accepted (200, moved) and posts once', [nv.code, nv.moved, stat('nv-' + cc), entriesOf(shop, 'nv-' + cc).length], [200, true, 'accepted', 1]);
+      /* books off: the guard is skipped (and the journal is not even read), the rail table decides alone */
+      const offId = 'tb-cancelled-' + cc, wasEntry = X.store.entryBySource; let reads = 0;
+      SENDER = SUPP; STATUS = [{ chit_id: offId, entity_id: shop, direction: 'received', current_status: 'cancelled' }];   /* its posting AND reversal are still in the journal */
+      X.store.entryBySource = (...a) => { reads++; return wasEntry(...a); };
+      await X.store.saveSetting(X.db, shop, Object.assign({}, C.setting, { enabled: false })); K.forget(shop);
+      const off = await ask(offId, 'accepted');
+      X.store.entryBySource = wasEntry; await X.store.saveSetting(X.db, shop, C.setting); K.forget(shop);
+      eq(cc + ' RAIL-173 · books OFF: the move is not refused (200, moved) and the journal was not read before the status write', [off.code, off.moved, stat(offId), reads], [200, true, 'accepted', 0]);
+      /* seller side: a sale I issued and then cancelled holds only a SENT copy; the door never reads it (not_received), so the refusal is the buyer's alone */
+      const sale = 'sl-' + cc, sellEntry = { sells: true, invoice: C.bill.invoice };
+      SENDER = shop; STATUS = [{ chit_id: sale, entity_id: shop, direction: 'sent', current_status: 'delivered' }];
+      use(creditBill(C, sale, 'delivered'), sellEntry); await K.postChit(shop, sale, {});
+      const soldEntry = entriesOf(shop, sale)[0]; use(creditBill(C, sale, 'cancelled'), sellEntry); await K.takeBackCancelled(shop, sale, 'u1');
+      const sold = await moveStatus(shop, sale, 'accepted', by, null, viewer);
+      eq(cc + ' RAIL-173 · seller side: no received copy, so 404 not taken_back; its sale and reversal are untouched', [sold.code, sold.body.code === 'taken_back', reversalsOf(shop, soldEntry).length, chitNet(soldEntry)], [404, false, 1, 'every account 0']);
+    };
     for (const cc of ['IN', 'AU']) {
       const C = COUNTRY[cc], shop = SHOPS[cc], sellEntry = { sells: true, invoice: C.bill.invoice };
       const shapes = [
@@ -366,6 +408,7 @@ const COUNTRY = {
         const second = await moveStatus(shop, id, 'cancelled', by, 'again', viewer);
         eq(cc + ' door · ' + label + ': pressing cancel again is a noop 200, still one reversal', [second.code, second.noop === true, reversalsOf(shop, sale).length], [200, true, 1]);
       }
+      await rail173(cc, C, shop);
       /* a cancel of a bill that never posted answers { none } (books on, nothing to take back) */
       SENDER = OTHER; STATUS = [{ chit_id: 'door-n-' + cc, entity_id: shop, direction: 'received', current_status: 'accepted' }];
       use(creditBill(C, 'door-n-' + cc, 'cancelled'), sellEntry);

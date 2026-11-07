@@ -637,6 +637,7 @@ const GUARDS = [
   'channels.test.js', // b123 channel map; the webhook gets the RAW body (a probe in the real app: Buffer, not an object)
   'whatsapp-out.test.js', // b126 outbound: every refusal with a recipient leaves a receipt (fake handle), one bare exception; the window, templates
   'acc-223-238-cancel.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
+  'rail-173-mutation.test.cjs', // RAIL-173: with the taken-back guard removed from lib/chit-move.js the cancel test goes red on the RAIL-173 cases
   'acc-231-move-in-role-ledgers.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'acc-232-parallel-run.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'acc-234-actor-tester-code.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
