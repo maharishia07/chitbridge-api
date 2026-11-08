@@ -1531,7 +1531,7 @@ const server = http.createServer(async (req, res) => {
       let o = {}; try { o = JSON.parse(body || '{}'); } catch (_) {}
       /* ⚠️ AN EXPLICIT LIST, NOT A PATTERN. This is an allow-list for what a page may ask its own agent to POST upstream, and a
          pattern is one careless edit away from letting through a path nobody meant. Two operations, named. */
-      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price',
+      var ALLOW = ['/api/till/stock', '/api/till/stock/bulk', '/api/till/price', '/api/till/recheck' /* CTR-212: read-only, before a bill */,
                    /* ⭐ a TV from the counter's menu: a SCREEN code, and switching a shop screen off (2026-09-27) */
                    '/api/till/pair', '/api/till/screens/revoke', '/api/till/screens/rename', '/api/till/flags', '/api/till/offer-item',
                    /* ⭐ points earned and encashed on a bill, and the claim that moves a walk-in's balance onto an account */
