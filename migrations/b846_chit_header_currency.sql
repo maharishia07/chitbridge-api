@@ -34,6 +34,7 @@ ALTER TABLE chit_header ADD  CONSTRAINT chit_header_currency_source_chk CHECK (
 CREATE TABLE IF NOT EXISTS chit_currency_review (
   chit_id       uuid        NOT NULL,
   entity_id     uuid        NOT NULL,
+  direction     varchar(10) NOT NULL,      -- chit_header's key is (chit_id, entity_id, direction): a sent and a received copy are listed separately
   reason        text        NOT NULL CHECK (reason IN ('stated_disagrees','detail_rows_disagree','detail_vs_stated',
                                                        'detail_partly_null','copies_disagree','money_without_currency')),
   stated_codes  text[],
@@ -42,7 +43,8 @@ CREATE TABLE IF NOT EXISTS chit_currency_review (
   resolved_at   timestamptz,
   resolved_by   text,
   resolution    text,
-  PRIMARY KEY (chit_id, entity_id));
+  PRIMARY KEY (chit_id, entity_id, direction));
+-- WHY: the owner's review screen lists one shop's unresolved rows newest first (entity_id leads for RLS); the primary key leads with chit_id so it cannot serve that read
 CREATE INDEX IF NOT EXISTS chit_currency_review_entity_idx ON chit_currency_review (entity_id, found_at);
 
 CREATE TABLE IF NOT EXISTS chit_currency_violation (
@@ -53,6 +55,7 @@ CREATE TABLE IF NOT EXISTS chit_currency_violation (
   kind            text        NOT NULL CHECK (kind IN ('detail_mismatch','money_without_currency','in_place_change')),
   detail_currency text,
   header_currency text);
+-- WHY: slice 8's daily counter reads one shop's violations by time (entity_id leads for RLS); the bigserial key cannot serve that read
 CREATE INDEX IF NOT EXISTS chit_currency_violation_entity_idx ON chit_currency_violation (entity_id, seen_at);
 
 ALTER TABLE chit_currency_review    ENABLE ROW LEVEL SECURITY;  ALTER TABLE chit_currency_review    FORCE ROW LEVEL SECURITY;

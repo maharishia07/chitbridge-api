@@ -26,7 +26,8 @@ const BAD_MONEY_TYPE =
   /^(text|varchar(\(\d+\))?|character varying(\(\d+\))?|real|float\d*|double precision|numeric\(\s*\d+\s*,\s*2\s*\)|decimal\(\s*\d+\s*,\s*2\s*\))$/i;
 /** CUR-1 R18: a new money column (a number named like an amount) must carry its own currency: a sibling `<stem>_currency` (stem = the name without `_minor`),
  *  or sit under a header line `-- money-group: <currency column> covers a, b` (one row currency for a declared group, e.g. journal_line dr, cr). */
-const MONEY_COLUMN_NAME = /(^|_)(amount|price|total|cost|fee|balance|paid|due|limit|value)(_minor)?$/;
+/* `limit` and `due` alone are not money (rate_limit, retry_limit, page_limit, days_due are counts): only credit_limit, amount_due, balance_due are */
+const MONEY_COLUMN_NAME = /(^|_)(amount|price|total|cost|fee|balance|paid|value|credit_limit|amount_due|balance_due)(_minor)?$/;
 const NUMBER_TYPE = /^(numeric|decimal|bigint|integer|int|int4|int8|smallint|money|real|float\d*|double precision)\b/i;
 const TIMESTAMP_WITHOUT_ZONE = /^timestamp(\s+without\s+time\s+zone)?(\(\d\))?(\s+without\s+time\s+zone)?$/;
 /** a check that can only pass on production rows: IF NOT FOUND / IF count(…) <> n … THEN RAISE EXCEPTION */

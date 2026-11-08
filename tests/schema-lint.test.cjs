@@ -69,6 +69,8 @@ check('R18 a currency beside ANOTHER amount does not cover this one', r18('CREAT
 check('R18 an ALTER ADD COLUMN of an amount with no currency is caught', r18('CREATE TABLE a (id int); ALTER TABLE a ADD COLUMN fee_minor bigint;'));
 check('R18 a declared money-group covers its columns with the row currency', !r18('CREATE TABLE a (id int, total_minor bigint, fee_minor bigint, ccy varchar(3));', '-- money-group: ccy covers total_minor, fee_minor\n'));
 check('R18 a group naming a currency column the table lacks does not excuse', r18('CREATE TABLE a (id int, total_minor bigint);', '-- money-group: ccy covers total_minor\n'));
+check('R18 rate_limit, retry_limit, page_limit and days_due (integers) are counts, not money', !r18('CREATE TABLE a (id int, rate_limit int, retry_limit int, page_limit int, days_due int);'));
+check('R18 credit_limit and amount_due ARE money', r18('CREATE TABLE a (id int, credit_limit_minor bigint);') && r18('CREATE TABLE a (id int, amount_due bigint);'));
 check('R18 a count, a rate or a sentence is not money', !r18('CREATE TABLE a (id int, item_count int, gst_rate numeric(5,2), amount_note text);'));
 
 console.log('\n── migrations/ replayed in chain order ──');
