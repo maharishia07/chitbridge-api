@@ -70425,6 +70425,37 @@
    "changed_at": "2026-11-07T14:58:30+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/set86-country-setup-merge.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "SET-86 (P1, money): PUT /governance/country-setup is a merge-patch; an omitted tax block keeps the registration, de-registering needs the owner's confirm.",
+   "claim": "SET-86 (P1, money): PUT /governance/country-setup is a merge-patch; an omitted tax block keeps the registration, de-registering needs the owner's confirm.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 175 lines. Run: node chitbridge-api/tests/set86-country-setup-merge.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 114,
+   "step": "",
+   "areas": [
+    "api",
+    "database",
+    "engine",
+    "middleware"
+   ],
+   "subjects": [
+    "lib/country-setup.js",
+    "lib/governance-contract.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-09T06:00:00+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/crm-204-contact-email.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
