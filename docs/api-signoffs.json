@@ -1867,11 +1867,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
-   "hash": "a452dc1b95bd6bba",
+   "hash": "ca5638cd28bcf812",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
    "lifecycle": "stable"
   },
   "PATCH /api/folders/:id": {
@@ -3899,11 +3899,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/governance/country-setup": {
-   "hash": "084ac684a6c0b7b2",
+   "hash": "9727085818d155d3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
    "lifecycle": "stable"
   },
   "PUT /api/governance/profile": {
