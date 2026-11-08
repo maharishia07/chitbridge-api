@@ -20166,6 +20166,1264 @@
         }
       }
     },
+    "POST /api/integrations/:actor_id/approve": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "enrol"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "enrol": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "enrol",
+          "reason": "a value passed through (a name: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/integrations/44444444-4444-4444-8444-444444444444/approve",
+        "body": {}
+      }
+    },
+    "POST /api/integrations/profile": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "written",
+          "kept",
+          "rows",
+          "fields",
+          "order",
+          "issues",
+          "filled",
+          "total",
+          "rungs",
+          "state_name"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "written": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "kept": {},
+          "rows": {
+            "type": "number"
+          },
+          "fields": {
+            "type": "object",
+            "required": [
+              "legal_name",
+              "trade_name",
+              "gstin",
+              "pan",
+              "reg_type",
+              "state",
+              "address",
+              "city",
+              "pincode",
+              "country",
+              "phone",
+              "email",
+              "currency",
+              "upi_id",
+              "bank_account",
+              "ifsc"
+            ],
+            "properties": {
+              "legal_name": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "trade_name": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "gstin": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "pan": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "reg_type": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "state": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "address": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "city": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "pincode": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {
+                    "type": "string"
+                  },
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "country": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "phone": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "email": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "currency": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "rung": {
+                    "type": "string"
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "upi_id": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "bank_account": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              },
+              "ifsc": {
+                "type": "object",
+                "required": [
+                  "key",
+                  "label",
+                  "layer",
+                  "why",
+                  "sources",
+                  "value",
+                  "rung",
+                  "source",
+                  "as_of",
+                  "derived",
+                  "issues",
+                  "missing"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "label": {
+                    "type": "string"
+                  },
+                  "layer": {
+                    "type": "string"
+                  },
+                  "why": {
+                    "type": "string"
+                  },
+                  "sources": {
+                    "type": "object",
+                    "required": [
+                      "tally",
+                      "zoho",
+                      "csv"
+                    ],
+                    "properties": {
+                      "tally": {
+                        "type": "string"
+                      },
+                      "zoho": {
+                        "type": "string"
+                      },
+                      "csv": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "x-closed-by": "recordings"
+                  },
+                  "value": {},
+                  "rung": {},
+                  "source": {},
+                  "as_of": {},
+                  "derived": {
+                    "type": "boolean"
+                  },
+                  "issues": {},
+                  "missing": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "key",
+                "issue"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "issue": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "filled": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "rungs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "state_name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/integrations/profile",
+        "body": {
+          "source": "tally",
+          "fields": {
+            "legal_name": "Acme Pvt Ltd",
+            "state": "Delhi"
+          }
+        }
+      }
+    },
     "POST /api/invoice/build": {
       "status": "200",
       "schema": {
@@ -23614,6 +24872,39 @@
         "url": "/api/folders/inventory/RT-4090",
         "body": {
           "msg": "none"
+        }
+      }
+    },
+    "PUT /api/integrations/streams": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "owner"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "owner": {
+            "type": "object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 1,
+      "open": [
+        {
+          "path": "owner",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        }
+      ],
+      "example": {
+        "url": "/api/integrations/streams",
+        "body": {
+          "order": "kit@pc",
+          "stock": null
         }
       }
     },
@@ -44769,6 +46060,7 @@
     "POST /api/governance/conformance": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/code": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/identity/documents/:scheme/verify": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
+    "POST /api/integrations/:actor_id/approve": "open at enrol — a value passed through (a name: its keys are not written in the handler)",
     "POST /api/invoice/build": "open at invoice — a value passed through (a name: its keys are not written in the handler); heads — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/credential": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "POST /api/kyb/field": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
@@ -44798,6 +46090,7 @@
     "PUT /api/folders/inventory/:code": "open at rows[] — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/governance/profile": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/identity/documents/:scheme": "open at document — a value passed through (an expression: its keys are not written in the handler)",
+    "PUT /api/integrations/streams": "open at owner — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/products/:id/availability": "open at availability — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/quick-keys/screen-config/default": "open at (answer) — a value passed through (an expression: its keys are not written in the handler)",
     "PUT /api/service/:chit_id": "open at record — a value passed through (an expression: its keys are not written in the handler)"

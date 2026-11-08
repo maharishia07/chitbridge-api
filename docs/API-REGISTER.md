@@ -206,10 +206,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/governance/vault-schema | governance | routes/governance.js:443 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/identity/documents | identity-docs | routes/identity-docs.js:137 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/integrations/catalogue | integrations | routes/integrations.js:363 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:276 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/integrations/download/:id | integrations | routes/integrations.js:381 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/integrations/docs/:id | integrations | routes/integrations.js:276 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/integrations/download/:id | integrations | routes/integrations.js:381 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/integrations/kit | integrations | routes/integrations.js:250 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/integrations/kit/* | integrations | routes/integrations.js:259 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/integrations/kit/* | integrations | routes/integrations.js:259 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/integrations/profile-map | integrations | routes/integrations.js:983 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/integrations/reconcile | integrations | routes/integrations.js:833 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/integrations/status | integrations | routes/integrations.js:718 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -502,10 +502,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/identity/documents/:scheme/code | identity-docs | routes/identity-docs.js:405 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:424 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:635 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:940 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:940 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/integrations/books | integrations | routes/integrations.js:672 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/integrations/books/skip | integrations | routes/integrations.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/integrations/heartbeat | integrations | routes/integrations.js:459 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | no | yes |
+| POST | /api/integrations/heartbeat | integrations | routes/integrations.js:459 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | no | yes |
 | POST | /api/integrations/profile | integrations | routes/integrations.js:1019 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/invoice/build | invoice | routes/invoice.js:54 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/keys | keys | routes/keys.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
@@ -648,7 +648,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PUT | /api/governance/profile | governance | routes/governance.js:421 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/governance/profile/vault | governance | routes/governance.js:472 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/identity/documents/:scheme | identity-docs | routes/identity-docs.js:237 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| PUT | /api/integrations/streams | integrations | routes/integrations.js:760 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| PUT | /api/integrations/streams | integrations | routes/integrations.js:760 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/network-design | network-design | routes/network-design.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/network-offers/policy | network-offers | routes/network-offers.js:277 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/products/:id/availability | products | routes/products.js:1724 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
