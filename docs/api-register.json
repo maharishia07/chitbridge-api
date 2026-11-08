@@ -17600,7 +17600,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 522,
-   "hash": "ee69f1b369fceee2",
+   "hash": "434d4f6db9e00d4a",
    "does": "",
    "errors": {
     "count": 0,
@@ -17666,7 +17666,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "ee69f1b369fceee2"
+    "stale_since": "434d4f6db9e00d4a"
    },
    "status": "partial",
    "callers": [
