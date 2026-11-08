@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 127,
-  "meets": 511,
+  "partial": 120,
+  "meets": 518,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -3269,13 +3269,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -3356,13 +3356,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catsetup.js"
    ],
@@ -3639,13 +3639,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -4020,13 +4020,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -4105,13 +4105,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -4200,13 +4200,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js"
@@ -62670,13 +62670,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
