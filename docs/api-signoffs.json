@@ -1442,6 +1442,30 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
    "lifecycle": "stable"
   },
+  "GET /api/service/:chit_id": {
+   "hash": "52a1290b0254fe61",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/signin/devices": {
+   "hash": "edb76b75208461bd",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/signin/sessions": {
+   "hash": "c6f20bf2d163747a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
   "GET /api/tax/gstr": {
    "hash": "3113f5dee04bf883",
    "names_clear": true,
@@ -3402,20 +3426,92 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
    "lifecycle": "stable"
   },
-  "POST /api/signin/ask": {
-   "hash": "08511a0cb859c596",
+  "POST /api/service/:chit_id/pause": {
+   "hash": "bf0d8392fdfe8dfd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "hash": "48dc47a6c9199cc6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "hash": "5daa1bf9f9753153",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "hash": "e07f8ecdff81287f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/service/:chit_id/respond": {
+   "hash": "f8dd6871dea9f5fb",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/ask": {
+   "hash": "662e39b351cedc07",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/logout": {
+   "hash": "ad13be02969e3299",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/pin": {
+   "hash": "0c5f298180a45c18",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/renew": {
+   "hash": "c5769b1ea95958a8",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "POST /api/signin/sessions/revoke": {
+   "hash": "885f42d5770569ce",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
    "lifecycle": "stable"
   },
   "POST /api/signin/verify": {
-   "hash": "8638009db812fb3e",
+   "hash": "1405487d7309082d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
    "lifecycle": "stable"
   },
   "POST /api/supplies": {
@@ -4520,6 +4616,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "PUT /api/service/:chit_id": {
+   "hash": "4c3d96246619a71b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
    "lifecycle": "stable"
   }
  }

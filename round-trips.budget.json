@@ -4246,10 +4246,14 @@
     },
     "POST /api/signin/ask": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 7,
+      "wire": 7,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "id": "a@x.com"
+      }
     },
     "POST /api/signin/logout": {
       "file": "signin.js",
@@ -4261,17 +4265,37 @@
     },
     "POST /api/signin/pin": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 5,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "pin": "1234",
+        "confirm_pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "entity",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {}
+      }
     },
     "POST /api/signin/renew": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {},
+      "fixture_row": {
+        "policy_flags": {}
+      }
     },
     "POST /api/signin/sessions/revoke": {
       "file": "signin.js",
@@ -4282,10 +4306,32 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 6,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "username": "till@shop",
+        "pin": "1234"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "identity_type": "actor",
+        "email": "a@x.com",
+        "display_name": "Shop",
+        "bridge_id": "shop",
+        "pin_hash": "$2a$04$8CFT04WOcd2HCI4LRRgE7.THJArlYjwRAyZF4Jrim9VFvdPmSMtDS",
+        "status": "active",
+        "policy_flags": {},
+        "actor_key": "till",
+        "break_status": null,
+        "pin_attempts": 0,
+        "pin_locked_at": null,
+        "parent_entity_id": "00000000-0000-4000-8000-000000000001",
+        "user_id": "shop",
+        "actor_role": "cashier"
+      }
     },
     "POST /api/simulator/feedback": {
       "file": "simulator.js",

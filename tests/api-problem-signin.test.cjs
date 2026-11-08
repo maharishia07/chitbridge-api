@@ -20,6 +20,7 @@ const path = require('path');
 const fs = require('fs');
 const { harness, SECRET_SQL, sameValue } = require('./lib/problem-world.cjs');
 const S = require('./lib/signin-scenes.cjs');
+const allow = require('./lib/allowlist-world.cjs');
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
@@ -27,9 +28,7 @@ process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL = '';
 const MOUNT = '/api/signin';
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
-/** the two routes that read no body, no query and no path value: no operation, so the refusals are the door's alone (the owner's 403, a fault 500). POST /logout has a closed empty body since API-47 (LOGOUT, below) */
-const NO_INPUT = { 'GET /api/signin/sessions': [401, 403, 500], 'GET /api/signin/devices': [401, 403, 500] };
-const LOGOUT = { 'POST /api/signin/logout': [400, 401, 403, 500] }; /* the one write with no field: an empty closed body, an unknown key is a 400 */
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const lab = harness({
   here: HERE,
   mounts: [MOUNT],
@@ -47,13 +46,11 @@ const WORLDS = [
 const contractModule = () => require(path.join(HERE, 'lib', 'signin-contract.js'));
 const modules = () => ({ identityAuth: require(path.join(HERE, 'lib', 'identity-auth.js')) });
 
-/** the contract and the router agree: every route that reads an input has an operation, and no operation is for a route the file does not hold */
+/** the contract and the router agree: every route has an operation (the two reads declare no input, only their answer), and no operation is for a route the file does not hold */
 function checkContract(routes) {
   console.log('\n-- the contract and the router agree --');
   const operations = Object.keys(contractModule().contract.OPERATIONS);
-  const withInput = Object.keys(routes).filter((key) => !NO_INPUT[key]);
-  check('every route that reads an input has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), withInput.sort()), { operations, withInput });
-  check('the two routes that read no input have none (' + Object.keys(NO_INPUT).length + ')', Object.keys(NO_INPUT).every((key) => routes[key] && !operations.includes(key)));
+  check('every route has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), { operations, routes: Object.keys(routes) });
   const problems = operations.every((key) => Object.keys(contractModule().contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contractModule().contract.OPERATIONS[key].responses[status]).includes('Problem')));
   check('every refusal an operation declares is a Problem response', problems);
 }
@@ -77,12 +74,19 @@ function checkJunkAsUnknown(recording, scenes) {
   const server = lab.appOf([{ mount: MOUNT, router }, { mount: '/api/entities', router: entities }]).listen(0);
   const recording = {};
   const declared = contractModule().contract.allowedStatuses();
-  const allowed = (route) => NO_INPUT[route] || LOGOUT[route] || (route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
+  const capturing = lab.flagValue('--capture');
+  const allowed = (route) => (capturing ? [] : route.includes('/api/entities/') ? [400, 409, 500] : declared(route));
   const scenes = S.extras();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.filter((one) => routes[one.route]), {}).concat(lab.scenariosOf(registerRoutes, [], scenes.filter((one) => registerRoutes[one.route]), {}));
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, modules);
   server.close();
+  if (capturing) {
+    fs.writeFileSync(capturing, JSON.stringify(recording, null, 1));
+    console.log('captured ' + Object.keys(recording).length + ' answers over ' + Object.keys(routes).length + ' routes');
+    process.exit(0);
+  }
   checkContract(routes);
+  const closedHeld = allow.checkAllowList(recording, contractModule().contract.OPERATIONS, check);
   checkJunkAsUnknown(recording, scenes);
   check('a caller who is not signed in is refused with 401 on every route that asks for it', ['POST /api/signin/renew', 'POST /api/signin/logout', 'GET /api/signin/sessions', 'GET /api/signin/devices', 'POST /api/signin/sessions/revoke', 'POST /api/signin/pin'].every((key) => recording[key + '|signed-out'].status === 401));
   /* the shape, which the sweep above leaves to the doors (inherited): every refusal is a Problem naming its own status, with a code and the old error word beside it. The express-validator 400s of ask, verify and pin (middleware/validate.js validate; bodies frozen byte for byte by tests/signin-routes.test.cjs) are the one open gap: skipped here, not judged */
@@ -97,7 +101,11 @@ function checkJunkAsUnknown(recording, scenes) {
     const others = Object.fromEntries(Object.keys(onDisk).filter((route) => !lab.mine(route)).map((route) => [route, onDisk[route]]));
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
-  } else check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/signin.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+    allow.writeEvidence(EVIDENCE_FILE, lab.mine, closedHeld);
+  } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the sign-in routes whose success answers held closed here', sameValue(allow.evidenceOf(EVIDENCE_FILE, lab.mine), closedHeld), closedHeld);
+    check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/signin.js', sameValue(mine, coverage), { onDisk: mine, covered: coverage });
+  }
   console.log('\n  ' + lab.count.passed + ' checks, ' + lab.count.failed + ' failed');
   process.exit(lab.count.failed ? 1 : 0);
 })().catch((failure) => {

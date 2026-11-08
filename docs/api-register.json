@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 149,
-  "meets": 489,
+  "partial": 134,
+  "meets": 504,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 32
+    "failing": 24
    },
    "foreign_id_404": {
     "applies": 203,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 34
+    "failing": 30
    }
   },
   "reported": {
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 133
+  "output_allowlist_from_recordings": 140
  },
  "machine_columns": [
   "schema_in",
@@ -591,7 +591,7 @@
     "screens": [
      "app.html 1/155",
      "core.js 1/57",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -1869,7 +1869,7 @@
      "catalogue-lines.js 1/136",
      "combo-mode.js 1/15",
      "core.js 1/57",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -9360,7 +9360,7 @@
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
      "tasks.html 1/2",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -11394,7 +11394,7 @@
     "wire": 5,
     "screens": [
      "app.html 1/155",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -11523,7 +11523,7 @@
      "cap-repeat.js 1/7",
      "rail-advice.js 1/3",
      "screen-id.js 1/5",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -14257,7 +14257,7 @@
      "cap-shop.js 6/17",
      "cap-workforce.js 6/19",
      "catalogue.html 6/6",
-     "till.html 6/366"
+     "till.html 6/317"
     ]
    },
    "measured": {
@@ -15348,7 +15348,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -15449,7 +15449,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -23039,7 +23039,7 @@
     "wire": 13,
     "screens": [
      "catalogue-lines.js 6/136",
-     "till.html 6/366"
+     "till.html 6/317"
     ]
    },
    "measured": {
@@ -24438,11 +24438,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 74,
-   "hash": "db15a671e7964c53",
+   "line": 79,
+   "hash": "52a1290b0254fe61",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      401,
      404,
@@ -24450,7 +24450,9 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND"
+    ]
    },
    "reads": [
     "chit_header",
@@ -24469,10 +24471,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -24496,7 +24498,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -24509,13 +24512,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -24542,11 +24545,15 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 138,
-   "hash": "f53ed6b7d04efa0c",
+   "hash": "edb76b75208461bd",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     401,
+     403,
+     500
+    ],
     "codes": []
    },
    "reads": [
@@ -24561,15 +24568,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -24583,10 +24590,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -24598,13 +24610,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -24631,11 +24643,15 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 111,
-   "hash": "15cacd36218bf9a1",
+   "hash": "c6f20bf2d163747a",
    "does": "",
    "errors": {
     "count": 0,
-    "statuses": [],
+    "statuses": [
+     401,
+     403,
+     500
+    ],
     "codes": []
    },
    "reads": [
@@ -24650,15 +24666,15 @@
     "money"
    ],
    "columns": {
-    "schema_in": false,
-    "schema_out": false,
-    "missing_input_answer": false,
-    "error_shape": false,
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -24672,10 +24688,15 @@
     "inbound_validated": false,
     "trips_budgeted": true
    },
-   "declared": [],
+   "declared": [
+    401,
+    403,
+    500
+   ],
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -24687,13 +24708,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -26981,7 +27002,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27077,7 +27098,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27173,7 +27194,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27272,7 +27293,7 @@
     "trips": 0,
     "wire": null,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -27373,7 +27394,7 @@
     "wire": 11,
     "screens": [
      "cap-match.js 3/3",
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -27473,7 +27494,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27571,7 +27592,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -27669,7 +27690,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27769,7 +27790,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/366"
+     "till.html 4/317"
     ]
    },
    "measured": {
@@ -27870,7 +27891,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -27968,7 +27989,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -28079,7 +28100,7 @@
     "wire": 46,
     "screens": [
      "promo.html 17/67",
-     "till.html 17/366"
+     "till.html 17/317"
     ]
    },
    "measured": {
@@ -28179,7 +28200,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -28279,7 +28300,7 @@
     "wire": 4,
     "screens": [
      "cap-mis-trend.js 1/1",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -28375,7 +28396,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "till.html 2/366"
+     "till.html 2/317"
     ]
    },
    "measured": {
@@ -28475,7 +28496,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -28573,7 +28594,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -30740,7 +30761,7 @@
      "catalogue-lines.js 0/136",
      "combo-mode.js 0/15",
      "core.js 0/57",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -41139,7 +41160,7 @@
      "cap-chit2.js 1/15",
      "cap-tasks.js 1/7",
      "cap-worklist.js 1/12",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -43484,7 +43505,7 @@
      "cap-tasks.js 0/7",
      "intake.html 0/5",
      "rail-advice.js 0/3",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -47040,7 +47061,7 @@
      "cap-worklist.js 0/12",
      "intake.html 0/5",
      "register-form.js 0/3",
-     "signin-ui.js 0/150"
+     "signin-ui.js 0/15"
     ]
    },
    "measured": {
@@ -47245,7 +47266,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -53579,7 +53600,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/136",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -53684,7 +53705,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/136",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -55791,11 +55812,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 265,
-   "hash": "744dd2369f4e606a",
+   "line": 269,
+   "hash": "bf0d8392fdfe8dfd",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -55805,7 +55826,11 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_ALREADY_PAUSED",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header",
@@ -55823,10 +55848,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -55852,7 +55877,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -55865,13 +55891,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -55897,11 +55923,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 347,
-   "hash": "2c312512a8db6bca",
+   "line": 351,
+   "hash": "48dc47a6c9199cc6",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -55911,7 +55937,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_OWN_CLAIM"
+    ]
    },
    "reads": [
     "chit_header"
@@ -55928,10 +55957,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -55957,7 +55986,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -55970,13 +56000,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56002,11 +56032,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 323,
-   "hash": "a8a3f837aa7c2033",
+   "line": 327,
+   "hash": "5daa1bf9f9753153",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -56017,6 +56047,8 @@
      503
     ],
     "codes": [
+     "NOT_FOUND",
+     "SERVICE_PAUSE_ENDED",
      "VALIDATION_FAILED"
     ]
    },
@@ -56035,10 +56067,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56064,7 +56096,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -56077,13 +56110,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56109,11 +56142,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 236,
-   "hash": "2d63e20423489086",
+   "line": 240,
+   "hash": "e07f8ecdff81287f",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -56122,7 +56155,11 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_NOT_TRACKED",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -56141,10 +56178,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56169,7 +56206,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
@@ -56183,13 +56221,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56215,11 +56253,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 215,
-   "hash": "fdbc2231053356fa",
+   "line": 219,
+   "hash": "f8dd6871dea9f5fb",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      401,
      404,
@@ -56227,7 +56265,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_NOT_TRACKED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -56246,10 +56287,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56273,7 +56314,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -56286,13 +56328,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56319,7 +56361,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 957,
-   "hash": "57fa3237159ed111",
+   "hash": "662e39b351cedc07",
    "does": "",
    "errors": {
     "count": 0,
@@ -56351,11 +56393,11 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -56370,6 +56412,7 @@
     500
    ],
    "notes": [],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -56384,20 +56427,19 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "57fa3237159ed111"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 7,
+    "wire": 7,
     "screens": [
-     "signin-ui.js 50/150"
+     "signin-ui.js 7/15"
     ]
    },
    "measured": {
@@ -56415,7 +56457,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 101,
-   "hash": "28e1fee605a143d4",
+   "hash": "ad13be02969e3299",
    "does": "",
    "errors": {
     "count": 0,
@@ -56445,7 +56487,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -56468,6 +56510,7 @@
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -56479,13 +56522,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -56508,7 +56551,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 959,
-   "hash": "72a9eff6dcbdd722",
+   "hash": "0c5f298180a45c18",
    "does": "",
    "errors": {
     "count": 0,
@@ -56539,11 +56582,11 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -56561,6 +56604,7 @@
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -56572,22 +56616,22 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 5,
     "screens": [
-     "signin-ui.js 50/150"
+     "signin-ui.js 2/15"
     ]
    },
    "measured": {
@@ -56605,7 +56649,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 75,
-   "hash": "f5e438728da7984d",
+   "hash": "c5769b1ea95958a8",
    "does": "",
    "errors": {
     "count": 0,
@@ -56635,11 +56679,11 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -56669,22 +56713,22 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 4,
     "screens": [
-     "till.html 50/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -56702,7 +56746,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 160,
-   "hash": "b20908a1dcb72216",
+   "hash": "885f42d5770569ce",
    "does": "",
    "errors": {
     "count": 0,
@@ -56735,7 +56779,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -56759,6 +56803,7 @@
    "notes": [
     "auth middleware answers 401 in the old body"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -56770,13 +56815,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -56803,7 +56848,7 @@
    "owner_agent": "cb-security",
    "file": "routes/signin.js",
    "line": 958,
-   "hash": "627cc129f2130eeb",
+   "hash": "1405487d7309082d",
    "does": "",
    "errors": {
     "count": 0,
@@ -56843,11 +56888,11 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -56865,6 +56910,7 @@
     503
    ],
    "notes": [],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -56879,20 +56925,19 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "627cc129f2130eeb"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 6,
+    "wire": 9,
     "screens": [
-     "signin-ui.js 50/150"
+     "signin-ui.js 6/15"
     ]
    },
    "measured": {
@@ -59000,7 +59045,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -59111,7 +59156,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "till.html 50/366"
+     "till.html 50/317"
     ]
    },
    "measured": {
@@ -59214,7 +59259,7 @@
     "trips": 7,
     "wire": null,
     "screens": [
-     "till.html 7/366"
+     "till.html 7/317"
     ]
    },
    "measured": {
@@ -59315,7 +59360,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/366"
+     "till.html 6/317"
     ]
    },
    "measured": {
@@ -59416,7 +59461,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/366"
+     "till.html 6/317"
     ]
    },
    "measured": {
@@ -59521,7 +59566,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -59621,7 +59666,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -59728,7 +59773,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "till.html 50/366"
+     "till.html 50/317"
     ]
    },
    "measured": {
@@ -59831,7 +59876,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/155",
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -59935,7 +59980,7 @@
     "wire": null,
     "screens": [
      "promo.html 50/67",
-     "till.html 50/366"
+     "till.html 50/317"
     ]
    },
    "measured": {
@@ -60044,7 +60089,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -60145,7 +60190,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/366"
+     "till.html 6/317"
     ]
    },
    "measured": {
@@ -60246,7 +60291,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/366"
+     "till.html 4/317"
     ]
    },
    "measured": {
@@ -60347,7 +60392,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/366"
+     "till.html 4/317"
     ]
    },
    "measured": {
@@ -60450,7 +60495,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/366"
+     "till.html 4/317"
     ]
    },
    "measured": {
@@ -60559,7 +60604,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -60761,7 +60806,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -60867,7 +60912,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -60971,7 +61016,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "till.html 50/366"
+     "till.html 50/317"
     ]
    },
    "measured": {
@@ -61076,7 +61121,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -61181,7 +61226,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -61286,7 +61331,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "till.html 2/366"
+     "till.html 2/317"
     ]
    },
    "measured": {
@@ -61387,7 +61432,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/366"
+     "till.html 1/317"
     ]
    },
    "measured": {
@@ -61490,7 +61535,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -61591,7 +61636,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/366"
+     "till.html 3/317"
     ]
    },
    "measured": {
@@ -63332,7 +63377,7 @@
      "core.js 0/57",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
-     "till.html 0/366"
+     "till.html 0/317"
     ]
    },
    "measured": {
@@ -65153,11 +65198,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 169,
-   "hash": "59627dd6cb6ae644",
+   "line": 174,
+   "hash": "4c3d96246619a71b",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -65166,7 +65211,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -65185,10 +65233,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -65213,7 +65261,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -65226,13 +65275,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
