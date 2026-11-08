@@ -60,7 +60,7 @@ const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Test 
 const STAFF = { identity_id: STAFF_ID, parent_entity_id: SHOP, identity_type: 'actor', access_level: 'editor', display_name: 'Test staff', bridge_id: 'TESTSHOP' };
 const VIEWER = Object.assign({}, STAFF, { access_level: 'viewer' });
 const SECRET_SQL = 'relation "chit_header" does not exist -- SELECT secret FROM vault';
-const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null };
+const FRESH = { realAuth: false, who: OWNER, asKey: false, keyScopes: ['till'], db: 'ok', sqlRows: null, jsonThrows: false, migrated: false, till: null, moved: null };
 const world = Object.assign({}, FRESH);
 
 /** the rows a statement gets: a scenario's own rows first, then nothing (or the secret failure when the db is down) */
@@ -115,6 +115,8 @@ function installStubs() {
     return next();
   };
   mock('middleware/auth', Object.assign(stubAuth, realAuth, { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id }));
+  const chitMove = require(path.join(HERE, 'lib', 'chit-move.js'));
+  mock('lib/chit-move', Object.assign({}, chitMove, { moveStatus: (...asked) => (world.moved ? world.moved(...asked) : chitMove.moveStatus(...asked)) })); /* the ONE status writer is real unless a scene hands the answer it built (movedAnswer, refusalOf: its own functions) */
   console.error = () => undefined; /* the routes log a 5xx here; the scenarios read the answer */
   const say = console.log;
   console.log = (...parts) => (typeof parts[0] === 'string' && parts[0].startsWith('{"t":') ? undefined : say(...parts)); /* the structured log lines (lib/logger) are not this test's output */
@@ -281,7 +283,17 @@ const ENTRY_ROW = { chit_id: PARTY, line_id: null, subject_id: PARTY, kind: 'ris
 /** a copy of a bill I received, as lib/tax-copy copyOf gives it: the buyer's choice rides in business_json.use */
 const BILL_COPY = (use) => ({ current_status: 'pending', line_items: [{ line_id: PARTY, particulars: 'Rice' }, { line_id: OTHER, particulars: 'Pallet' }], business_json: { use } });
 
+/** PUT /:chit_id/status answers what the ONE status writer built (lib/chit-move): the scenes below hand it the bodies its own movedAnswer and refusalOf make, one per branch, so the allow-list is closed from what it really answers */
+const MOVED = (done) => async () => require(path.join(HERE, 'lib', 'chit-move.js')).movedAnswer(Object.assign({ chit_id: PARTY, previous_status: 'pending', new_status: 'accepted', disputeWarning: null, booksOnCancel: null, crossed: null }, done));
+const NOOP = async () => require(path.join(HERE, 'lib', 'chit-move.js')).refusalOf({ stop: 'noop' }, PARTY, 'accepted');
 const EXTRAS = [
+  X('status-moved', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({}) } }),
+  X('status-moved-over-a-dispute', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'completed' }, setup: { moved: MOVED({ new_status: 'completed', previous_status: 'accepted', disputeWarning: 'Chit closed with an OPEN dispute — by Test shop.' }) } }),
+  X('status-moved-and-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 1, seq: 4 } }) } }),
+  X('status-moved-not-told-elsewhere', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: MOVED({ crossed: { queued: 0, why: 'The other installation could not be reached yet — it tries again.' } }) } }),
+  X('status-cancelled-reversal-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { ok: true, entry_id: PARTY, entry_no: 'JV-9', posting_date: '2026-10-01', moved: false, reverses: 'SI-7', reverses_entry_id: OTHER, words: 'Reversed SI-7 by JV-9.' } }) } }),
+  X('status-cancelled-nothing-posted', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'cancelled' }, setup: { moved: MOVED({ new_status: 'cancelled', booksOnCancel: { none: true } }) } }),
+  X('status-already', 'PUT ' + C + '/:chit_id/status', 200, { body: { status: 'accepted' }, setup: { moved: NOOP } }),
   /* ── the lists and the read ── */
   X('a-chit-is-listed', 'GET ' + C + '/sent', 200, { setup: { sqlRows: answering(/SELECT ch.chit_id, ch.all_recipients/, [CHIT_ROW]) } }),
   X('a-chit-is-in-the-inbox', 'GET ' + C + '/inbox', 200, { url: C + '/inbox?status=pending&q=tea&folder_id=' + PARTY, setup: { sqlRows: answering(/SELECT ch.chit_id/, [CHIT_ROW]) } }),
@@ -820,6 +832,7 @@ const ALLOWLIST_BY_AREA_TEST = [
   'POST /api/chits/send',
   'PUT /api/chits/:chit_id/disputes/:dispute_id/resolve',
   'PUT /api/chits/:chit_id/priority-flag',
+  'PUT /api/chits/:chit_id/status',
   'PUT /api/chits/:chit_id/use',
   'PUT /api/chits/:chit_id/void'
 ];

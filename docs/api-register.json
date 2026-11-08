@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 32
+    "failing": 31
    },
    "foreign_id_404": {
     "applies": 202,
@@ -48,7 +48,7 @@
    }
   },
   "tolerant_outward": 3,
-  "output_allowlist_from_recordings": 133
+  "output_allowlist_from_recordings": 134
  },
  "machine_columns": [
   "schema_in",
@@ -63196,7 +63196,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5237,
-   "hash": "bca557ce84285e48",
+   "hash": "65ca95ae6160ac3b",
    "does": "",
    "errors": {
     "count": 0,
@@ -63228,7 +63228,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -63252,6 +63252,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -63266,8 +63267,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#903",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "65ca95ae6160ac3b"
    },
    "status": "partial",
    "callers": [

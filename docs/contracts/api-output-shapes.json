@@ -22798,6 +22798,106 @@
         "url": "/api/chits/22222222-2222-4222-8222-222222222222/star"
       }
     },
+    "PUT /api/chits/:chit_id/status": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "chit_id"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "warning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "chit_id": {
+            "type": "string"
+          },
+          "previous_status": {
+            "type": "string"
+          },
+          "new_status": {
+            "type": "string"
+          },
+          "ctp": {
+            "type": "object",
+            "required": [
+              "queued"
+            ],
+            "properties": {
+              "queued": {
+                "type": "number"
+              },
+              "seq": {
+                "type": "number"
+              },
+              "why": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "books": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean"
+              },
+              "entry_id": {
+                "type": "string"
+              },
+              "entry_no": {
+                "type": "string"
+              },
+              "posting_date": {
+                "type": "string"
+              },
+              "moved": {
+                "type": "boolean"
+              },
+              "reverses": {
+                "type": "string"
+              },
+              "reverses_entry_id": {
+                "type": "string"
+              },
+              "words": {
+                "type": "string"
+              },
+              "none": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "status": {
+            "type": "string"
+          },
+          "noop": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 8,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/chits/22222222-2222-4222-8222-222222222222/status",
+        "body": {
+          "status": "accepted"
+        }
+      }
+    },
     "PUT /api/chits/:chit_id/use": {
       "status": "200",
       "schema": {

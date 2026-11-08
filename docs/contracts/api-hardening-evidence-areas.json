@@ -1743,6 +1743,9 @@
   "PUT /api/chits/:chit_id/priority-flag": {
    "output_allowlist": true
   },
+  "PUT /api/chits/:chit_id/status": {
+   "output_allowlist": true
+  },
   "PUT /api/chits/:chit_id/use": {
    "output_allowlist": true
   },
