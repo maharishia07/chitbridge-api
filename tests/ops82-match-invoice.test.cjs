@@ -77,6 +77,11 @@ const get = (port, p) => new Promise((ok, bad) => http.get({ host: '127.0.0.1', 
   INVOICES = [inv(16, S, 1000, PO1, 'INV-A'), inv(17, S, 900, PO1, 'INV-B')];
   m = await read();
   t('two invoices naming one order: neither is picked, both are named, the figure stays unknown', [m[PO1].invoiced_total, m[PO1].money_gap, m[PO1].invoiced_from], [null, null, 'several invoices name this order: INV-A, INV-B']);
+  /* CTR-191: a rail invoice states its engine total in money.total (gross) beside the route's old net in total_value: the pick reads the engine's, so no false 'differs' */
+  const rail = inv(18, S, 900, PO1, 'INV-RAIL'); rail.summary_json = { total_value: 900, money: { total: 1000 } };
+  INVOICES = [rail];
+  m = await read();
+  t('a rail invoice (money.total 1000, old net 900) is read through the one pick: 1000, gap 0, agreed', [m[PO1].invoiced_total, m[PO1].money_gap, m[PO1].verdict], [1000, 0, 'agreed']);
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);
