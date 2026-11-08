@@ -282,6 +282,11 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/cat-264a-commercial-stamp.realstack.cjs
+      - name: CAT-313/314 · GET /api/products?q= searches the named visible fields only (a hidden cost is never a search hit) and % _ \ match themselves (real Postgres)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-313-search-blind.realstack.cjs
       - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
