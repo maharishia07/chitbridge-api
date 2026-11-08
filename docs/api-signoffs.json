@@ -2531,11 +2531,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/deliver-lines": {
-   "hash": "4896e7d335ee37ca",
+   "hash": "2230812987fb9ca7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1063 RAIL-191/192/193: new 400 CHIT_AMOUNT_TOO_LARGE (was 500) and two 409 CHIT_CONFLICT (correction under zero; rejected or cancelled copy, why wrong_step like withdraw) are additive, thrown inside lib/deliverline.record before any write so every caller is covered; replayed client_ref skipped; inline [409], 3 error scenes, 3 frozen answers, error-tests row; truth test runs in the T2 loop; 13 columns pass; deliveryOn in rail-actions is a stopgap until an engines deliver action",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/payment": {
