@@ -1172,6 +1172,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "COUNTRY_CHANGE_IS_NEW_ENTITY",
+   "status": "409",
+   "title": "Country and money are fixed",
+   "shopkeeper": "This business has already traded, so its country and currency cannot change.",
+   "hint": "Register a new business for the other country or currency.",
+   "owner_area": "country-setup",
+   "since": "2026-11-08"
+  },
+  {
    "code": "COUNTRY_SETUP_BAD",
    "status": "400",
    "title": "Country setup answer not accepted",

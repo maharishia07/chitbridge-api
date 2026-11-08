@@ -25,6 +25,9 @@ require.cache[require.resolve(API + '/db')] = { exports: { query: async (sql, p)
   if (/INSERT INTO identities/.test(sql)) { DB.inserted = p[4]; return { rows: [] }; }
   return { rows: [] };
 } } };
+/* SET-80: a currency sent is written inside withEntity (the lock reads the shop in the write's transaction) — the stub hands the same query to the handle */
+const stubDb = require.cache[require.resolve(API + '/db')].exports;
+stubDb.withEntity = async (entity, fn) => fn(stubDb);
 
 const express = require('express');
 const app = express();
