@@ -103,17 +103,12 @@ app.use('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 let PORT = 0;
 let N = 0;
-/** the warn lines the send logs (money.pair.not-carried) */
-const WARNS = [];
-const cbLog = require(path.join(API, 'lib', 'logger'));
-const realWarn = cbLog.warn;
-cbLog.warn = function (msg, fields) {
-  WARNS.push({ msg, fields });
-  return realWarn.apply(cbLog, [msg, fields]);
-};
 async function send(body, keep) {
   COPIES = null;
-  if (!keep) TICKETS.length = 0;
+  if (!keep) {
+    TICKETS.length = 0;
+    FILED.clear();
+  }
   const res = await fetch(`http://127.0.0.1:${PORT}/api/chits/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: J(Object.assign({ client_ref: 'c211-' + ++N }, body)) });
   return { status: res.status, answer: await res.json().catch(() => ({})), copies: COPIES, tickets: TICKETS.slice() };
 }
@@ -152,7 +147,7 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     const h22 = await send(body(invoiceWith((i) => { i.ValDtls.CgstVal = 10; })));
     console.log('   OPEN H22 (needs an engines change, see the PR): CGST 10 under 236 answered ' + h22.status + ', tickets ' + h22.tickets.length + ' - no bridge step carries CGST alone to compare; not counted, not claimed');
 
-    const h20 = await send(body(invoiceWith((i) => { i._cb.bridge = { ok: false, step: 'total', unexplained_minor: 6400, words: 'Does not add up at total', steps: [{ name: 'total', amount_minor: 23600 }] }; })));
+    const h20 = await send(body(invoiceWith((i) => { i._cb.bridge = { ok: false, step: 'total', unexplained_minor: 6400, words: 'Does not add up at total', steps: [{ name: 'taxable', amount: i.ValDtls.AssVal, amount_minor: 20000 }, { name: 'round_off', amount: 0, amount_minor: 0 }, { name: 'total', amount: i.ValDtls.TotInvVal, amount_minor: 23600 }] }; })));
     ok('H20: a bridge that says ok:false still stops 409 MONEY_UNBALANCED', h20.status === 409 && h20.answer.code === 'MONEY_UNBALANCED' && h20.copies === null, J(h20.answer));
     const bad = invoiceWith((i) => { i._cb.bridge = { ok: false, step: 'offers', unexplained_minor: 5000, words: 'Does not add up at offers', steps: [{ name: 'gross', amount_minor: 20000 }, { name: 'taxable', amount: i.ValDtls.AssVal, amount_minor: 20000 }, { name: 'round_off', amount: 0, amount_minor: 0 }, { name: 'total', amount: i.ValDtls.TotInvVal, amount_minor: 23600 }] }; });
     const h23 = await send(body(bad));
@@ -224,14 +219,27 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     ok('two unnumbered bills without a reference each raise their own ticket', u1 === 409 && u2 === 409 && TICKETS.length === 2 && TICKETS[0].t.client_ref !== TICKETS[1].t.client_ref, J(TICKETS.map((x) => x.t.client_ref)));
     FILED.clear();
 
-    /* a bridge whose figure is stripped is not compared (old tills) but is LOGGED, countable */
-    WARNS.length = 0;
-    const stripped = await send(body(invoiceWith((i) => { delete i.ValDtls.RndOffAmt; })));
-    const warned = WARNS.filter((w) => w.msg === 'money.pair.not-carried');
-    ok('a bridge with a figure missing still sends (200) and logs money.pair.not-carried naming round_off, shop and bill', stripped.status === 200 && warned.length === 1 && warned[0].fields.pairs.join() === 'round_off' && warned[0].fields.shop === SHOP && warned[0].fields.bill === 'C1-0001', J([stripped.status, warned]));
-    WARNS.length = 0;
-    await send(body(invoiceWith()));
-    ok('a complete invoice logs nothing about missing figures', WARNS.filter((w) => w.msg === 'money.pair.not-carried').length === 0);
+    /* the same bill retried under a NEW client_ref is the same bill: ONE ticket (the key is the hash of shop, bill, pair and both minor values) */
+    FILED.clear();
+    TICKETS.length = 0;
+    const r1 = await send({ ...same, client_ref: 'c211-retry-a' }, true);
+    const r2 = await send({ ...same, client_ref: 'c211-retry-b' }, true);
+    ok('a retry under a new client_ref raises no second ticket; client_ref rides the ticket as a fact', r1.status === 409 && r2.status === 409 && TICKETS.length === 1 && TICKETS[0].t.money_mismatch.client_ref === 'c211-retry-a', J(TICKETS.map((x) => x.t.client_ref)));
+    FILED.clear();
+
+    /* a bridge that CARRIES its steps but lacks a figure or a step is a stripped invoice: refused like a disagreement, not overridable, one ticket */
+    const strip = async (what, edit, extra) => {
+      const res = await send(body(invoiceWith(edit), extra));
+      ok(what, res.status === 409 && res.answer.code === 'MONEY_UNBALANCED' && res.copies === null && res.tickets.length === 1 && /missing its e-invoice/.test(res.answer.words) && !new RegExp('_cb|ValDtls').test(res.answer.words), J([res.status, res.answer, res.tickets.length]));
+      return res;
+    };
+    await strip('ValDtls.TotInvVal deleted → 409, "missing its e-invoice total", one ticket', (i) => { delete i.ValDtls.TotInvVal; });
+    const gone = await strip('ValDtls.RndOffAmt deleted → 409 round-off missing', (i) => { delete i.ValDtls.RndOffAmt; });
+    ok('…the answer names the pair, and the ticket says which side is missing', gone.answer.pair === 'round_off' && /figure missing/.test(gone.tickets[0].t.subject), J(gone.answer));
+    await strip('a bridge step deleted (no taxable step) → 409', (i) => { i._cb.bridge.steps = i._cb.bridge.steps.filter((x) => x.name !== 'taxable'); });
+    await strip('a missing figure cannot be overridden by a typed reason', (i) => { delete i.ValDtls.AssVal; }, { money_override: { by: 'Asha', why: 'owner says it is right' } });
+    const noBridge = await send(body(invoiceWith((i) => { delete i._cb.bridge; delete i.ValDtls.TotInvVal; })));
+    ok('NO bridge at all (an old till) still sends: 200, no ticket', noBridge.status === 200 && noBridge.tickets.length === 0, J([noBridge.status, noBridge.answer]));
 
     const draft = await send({ ...body(invoiceWith((i) => { i.ValDtls.TotInvVal = 300; })), is_draft: true });
     ok('a draft is never stopped, no ticket', draft.status === 200 && draft.tickets.length === 0, J([draft.status, draft.answer]));

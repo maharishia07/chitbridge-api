@@ -1641,7 +1641,6 @@ async function sendBridge(sendState, req, res) {
   const invoice = business_json.invoice || sendState.originInvoice;
   const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code);
   if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
-  logPairsNotCarried(sendState, invoice);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1658,12 +1657,6 @@ async function sendBridge(sendState, req, res) {
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
   cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
-}
-
-/** CTR-211 — a bridge whose step or figure is missing is not compared (old tills still send), but it is logged so it can be counted, never silent */
-function logPairsNotCarried(sendState, invoice) {
-  const missing = sendState.is_draft ? [] : sendMoneyScope.pairsNotCarried(invoice);
-  if (missing.length) cbLog.warn('money.pair.not-carried', { shop: sendState.sender_id, bill: sendState.business_json.bill_no, client_ref: sendState.client_ref, pairs: missing });
 }
 
 /**
@@ -1683,9 +1676,10 @@ async function sendPairRefusal(sendState, pair, req, res) {
 
 /** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
 function pairWords(pair, filed) {
-  const name = { total: 'bill total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || 'amount';
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || 'amount';
   const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
-  return 'The ' + name + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
+  if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
+  return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
 }
 
 /**
