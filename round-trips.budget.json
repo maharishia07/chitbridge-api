@@ -18,10 +18,14 @@
     },
     "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 401 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true,
+      "fixture_row": {
+        "id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "DELETE /api/channels/:id": {
       "file": "channels.js",
@@ -664,10 +668,11 @@
     },
     "GET /api/catalogue/:bridge_id/my-documents": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 401 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "fixture_customer": true
     },
     "GET /api/catalogue/:bridge_id/my-orders": {
       "file": "catalogue.js",
@@ -705,10 +710,16 @@
     },
     "GET /api/catalogue/network-store/:networkId": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 26,
+      "wire": 56,
+      "fired": true,
+      "status": 200,
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "GET /api/catalogue/network/:bridge_id": {
       "file": "catalogue.js",
@@ -3038,24 +3049,58 @@
     },
     "POST /api/catalogue/:bridge_id/order/start": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 422 (a floor); needs a live measure on sit-in"
+      "trips": 5,
+      "wire": 12,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_headers": {
+        "idempotency-key": "rt-order-start-1"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "POST /api/catalogue/:bridge_id/support": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 12,
+      "wire": 38,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com",
+        "otp": "123456",
+        "observed": "It would not open"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop",
+        "otp_code": "123456",
+        "otp_expires_at": "2999-01-01T00:00:00Z"
+      }
     },
     "POST /api/catalogue/:bridge_id/support/start": {
       "file": "catalogue.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "fixture_body": {
+        "email": "a@x.com"
+      },
+      "fixture_row": {
+        "identity_id": "00000000-0000-4000-8000-000000000001",
+        "display_name": "Shop",
+        "business_status": "open",
+        "bridge_id": "shop"
+      }
     },
     "POST /api/catalogue/enquiry/:item_id": {
       "file": "catalogue.js",

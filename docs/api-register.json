@@ -371,9 +371,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "a60976f3208018cd"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped delete, non-uuid and foreign id both 404 in one sentence; no handler change in the PR",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -8324,9 +8323,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "9ff18aab5c5a8c64"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, unknown shop 404 in words; no handler change in the PR",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -8417,11 +8415,11 @@
         "rate_limited": true
       },
       "human": {
-        "names_clear": null,
-        "sentence_plain": null,
-        "backward_compatible": null,
-        "signed_off_by_date": null,
-        "lifecycle": null
+        "names_clear": true,
+        "sentence_plain": true,
+        "backward_compatible": true,
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped list, paged, one 401/404 sentence; no handler change in the PR",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -8906,9 +8904,8 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": null,
-        "lifecycle": "stable",
-        "stale_since": "f7ae322fc1cc3543"
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, no node attribution, 404/503 in words; no handler change in the PR",
+        "lifecycle": "stable"
       },
       "status": "partial",
       "callers": [],
@@ -39303,7 +39300,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
         "lifecycle": "stable"
       },
       "status": "partial",
@@ -39507,7 +39504,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+        "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
         "lifecycle": "stable"
       },
       "status": "partial",
