@@ -478,9 +478,21 @@ router.post(
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
+/**
+ * ⭐ ACC-192: A DEBIT NOTE IS NEVER SENT BY HAND. It is a raise of an issued invoice and exists only when the payer accepts the proposed change (lib/price-note.issue sends it over the shop's own
+ * loopback token, kind auto). Any other caller naming purpose debit_note is refused in words (409 DEBIT_NOTE_NEEDS_ACCEPT): nothing here can raise a bill the payer never confirmed.
+ */
+async function sendDebitNoteGate(sendState, req, res) {
+  if (String((req.body && req.body.purpose) || '') !== 'debit_note') return;
+  if (require('../lib/price-note').isShopOwnSend(req)) return;
+  res.locals.code = 'DEBIT_NOTE_NEEDS_ACCEPT';
+  return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
+}
+
 const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
+  sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
   sendTillClaim,
@@ -1639,6 +1651,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code);
+  if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1655,6 +1669,29 @@ async function sendBridge(sendState, req, res) {
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
   cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+}
+
+/**
+ * CTR-211 — the carried invoice says one engine figure two ways (a bridge step and its ValDtls figure): a FAULT, so refused before anything is stored, with
+ * NO override, and ONE service ticket (lib/money-check.raisePair). Both values are read, never worked out.
+ */
+async function sendPairRefusal(sendState, pair, req, res) {
+  const { sender_id, business_json } = sendState;
+  const filed = await require('../lib/money-check').raisePair(sender_id, pair, { bill: business_json.bill_no, client_ref: sendState.client_ref, engine: 'tax@' + sendMoneyScope.engineVersion() });
+  const words = pairWords(pair, filed);
+  res.locals.code = 'MONEY_UNBALANCED';
+  return problem(req, res, {
+    status: 409,
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+  });
+}
+
+/** CTR-211 — the shopkeeper sentence of a refused pair: plain names, both figures, what happened to the bill and whether we know (field paths stay on the ticket) */
+function pairWords(pair, filed) {
+  const name = { total: 'total', taxable: 'taxable amount', round_off: 'round-off' }[pair.pair] || 'amount';
+  const told = filed && filed.raised ? 'We have been told.' : filed && filed.duplicate ? 'We were already told about this bill.' : 'We could not tell our team automatically, please contact support.';
+  if (pair.missing) return 'This bill is missing its e-invoice ' + name + ', so it was not sent. Make the bill again. ' + told;
+  return 'The ' + (pair.pair === 'total' ? 'bill total' : name) + ' does not agree with the same figure on the invoice (' + pair.bridge + ' and ' + pair.carried + '). This bill was not saved. ' + told;
 }
 
 /**
@@ -6800,5 +6837,6 @@ router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
+module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

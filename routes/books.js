@@ -69,7 +69,7 @@ const WORD = {
   expense: 'Expense',
   other_income: 'Income',
   return: 'Return',
-  credit_note: 'Credit note',
+  credit_note: 'Credit note', debit_note: 'Debit note',
   purchase_return: 'Returned to supplier',
   write_off: 'Written off',
   opening: 'Opening balance',

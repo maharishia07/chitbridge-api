@@ -160,7 +160,7 @@ const SCENARIOS = [
   { id: 'streams-policy-fails', route: 'GET /api/integrations/streams', status: 500, setup: { policyFails: true } },
   { id: 'putstreams-no-token', route: 'PUT /api/integrations/streams', status: 401, setup: { realAuth: true }, body: {}, inherited: true },
   { id: 'putstreams-key-asks', route: 'PUT /api/integrations/streams', status: 403, setup: { asKey: true }, body: { order: 'kit@pc' } },
-  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: { colour: 'red' } },
+  { id: 'putstreams-none-named', route: 'PUT /api/integrations/streams', status: 400, body: {} },
   { id: 'putstreams-policy-refuses', route: 'PUT /api/integrations/streams', status: 400, setup: { policyRefuses: true }, body: { order: 'kit@pc' } },
   { id: 'putstreams-bad-body', route: 'PUT /api/integrations/streams', status: 422, body: { order: 12345 }, fresh: true },
   { id: 'putstreams-policy-fails', route: 'PUT /api/integrations/streams', status: 500, setup: { policyFails: true }, body: { order: 'kit@pc' } },

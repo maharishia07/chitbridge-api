@@ -373,7 +373,9 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       const iv = c.business_json.invoice, it = iv.ItemList[0], sl = iv._cb.slabs.find((x) => x.GstRt === 12), v = iv.ValDtls;
       it.CgstAmt = r2(it.CgstAmt + 0.01); it.SgstAmt = r2(it.SgstAmt + 0.01); it.TotItemVal = r2(it.TotItemVal + 0.02);
       sl.CgstVal = r2(sl.CgstVal + 0.01); sl.SgstVal = r2(sl.SgstVal + 0.01);
-      v.CgstVal = r2(v.CgstVal + 0.01); v.SgstVal = r2(v.SgstVal + 0.01); v.TotInvVal = r2(v.TotInvVal + 0.02); return c; } });
+      v.CgstVal = r2(v.CgstVal + 0.01); v.SgstVal = r2(v.SgstVal + 0.01); v.TotInvVal = r2(v.TotInvVal + 0.02);
+      /* CTR-211: the engine writes the total TWICE (bridge step and TotInvVal); a stored figure the engine itself issued carries both, or the send refuses it as a pair mismatch */
+      const tot = iv._cb.bridge.steps.find((x) => x.name === 'total'); tot.amount = v.TotInvVal; tot.amount_minor = Math.round(v.TotInvVal * 100); return c; } });
     const zf = figOfInv(Z.sEntry.invoice);
     ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.96, total 1118.17) on both copies, the money and the reprint',
       zf.tax === 119.96 && zf.total === 1118.17 && figOfInv(Z.cEntry.invoice).tax === 119.96 && Z.shopCopy.total_value === 1118.17
