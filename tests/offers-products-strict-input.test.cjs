@@ -56,6 +56,9 @@ const CASES = [
   ['POST /api/network-offers/catalogue/price', 'routes/network-offers.js', [{ source_key: 'k', name: 'n', key: 'x', choice: 'use' }]],
   ['POST /api/network-offers/:id/release', 'routes/network-offers.js', [{}, { at: 'now' }, { at: 'x', until: 'y' }]],
   ['POST /api/network-offers/:id/withdraw', 'routes/network-offers.js', [{}, { at: 'now' }]],
+  /* CAT-284: the offer engine as a service; the bodies another system sends (web e2e api-keys.spec.js, services.spec.js) */
+  ['POST /api/offers/evaluate', 'routes/offers.js', [{ lines: [{ key: 'a', qty: 1, unitPrice: 10 }] }, { lines: [{ key: 'a', qty: 1, unitPrice: 10 }], offers: [], ctx: { currency: 'AUD', now: '2026-11-06T10:00:00Z' } }]],
+  ['POST /api/offers/explain', 'routes/offers.js', [{ lines: [{ key: 'a', qty: 1, unitPrice: 10 }] }, { lines: [{ key: 'a', qty: 1, unitPrice: 10 }], offers: [], ctx: { currency: 'AUD', now: '2026-11-06T10:00:00Z' } }]],
   ['POST /api/network-offers/:id/choice', 'routes/network-offers.js', [{ choice: 'in' }, { choice: null }]]
 ];
 const IGNORED_READS = new Set(['length', 'map', 'filter', 'slice', 'trim', 'toString', 'forEach', 'some', 'every', 'join', 'split', 'includes', 'hasOwnProperty']);

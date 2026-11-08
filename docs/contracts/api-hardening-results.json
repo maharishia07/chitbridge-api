@@ -804,8 +804,7 @@
     "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
+    "pass": true
    }
   },
   "GET /api/chits/:id/trace": {
@@ -917,8 +916,7 @@
   },
   "POST /api/offers/evaluate": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -927,8 +925,7 @@
   },
   "POST /api/offers/explain": {
    "strict_input": {
-    "pass": false,
-    "why": "let zz_unknown_field through"
+    "pass": true
    },
    "output_allowlist": {
     "pass": false,
@@ -5329,8 +5326,7 @@
     "pass": true
    },
    "idempotent_money_write": {
-    "pass": false,
-    "why": "no key answered 400, not 422 IDEMPOTENCY_KEY_REQUIRED"
+    "pass": true
    }
   },
   "POST /api/supplies/:id/issue": {
@@ -5341,8 +5337,7 @@
     "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 400, not 404"
+    "pass": true
    }
   },
   "GET /api/adopt/:chit_id": {

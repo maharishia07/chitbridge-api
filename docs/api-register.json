@@ -10,7 +10,7 @@
   "columns": {
    "strict_input": {
     "applies": 350,
-    "failing": 46
+    "failing": 44
    },
    "output_allowlist": {
     "applies": 638,
@@ -18,11 +18,11 @@
    },
    "foreign_id_404": {
     "applies": 203,
-    "failing": 20
+    "failing": 18
    },
    "idempotent_money_write": {
     "applies": 11,
-    "failing": 3
+    "failing": 2
    },
    "inbound_validated": {
     "applies": 6,
@@ -10208,7 +10208,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
    "line": 41,
-   "hash": "e0f68ab161a07cc0",
+   "hash": "e0208c65b6d7d905",
    "does": "",
    "errors": {
     "count": 0,
@@ -10238,11 +10238,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -10305,7 +10305,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 68,
+   "line": 72,
    "hash": "bddc64e2800083d8",
    "does": "",
    "errors": {
@@ -11540,7 +11540,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 259,
+   "line": 263,
    "hash": "e4d84f8cefe1d1a4",
    "does": "",
    "errors": {
@@ -11638,7 +11638,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 303,
+   "line": 307,
    "hash": "f15e538c4e88a8b4",
    "does": "",
    "errors": {
@@ -11739,7 +11739,7 @@
    "owner_area": "chits",
    "owner_agent": "cb-rail",
    "file": "routes/chits-trace.js",
-   "line": 475,
+   "line": 479,
    "hash": "8f9238406a761e84",
    "does": "",
    "errors": {
@@ -24813,7 +24813,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 40,
+   "line": 43,
    "hash": "59f8df87e6c03a6f",
    "does": "",
    "errors": {
@@ -31487,7 +31487,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 82,
+   "line": 85,
    "hash": "11c5de3b07e9af43",
    "does": "",
    "errors": {
@@ -50712,7 +50712,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -52336,7 +52336,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 105,
-   "hash": "c28a1c5efa74f6c4",
+   "hash": "ce984632c8dfd572",
    "does": "",
    "errors": {
     "count": 1,
@@ -52368,7 +52368,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -52434,7 +52434,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 106,
-   "hash": "8389ffdbe820ed19",
+   "hash": "4c32846515476914",
    "does": "",
    "errors": {
     "count": 1,
@@ -52466,7 +52466,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -57083,7 +57083,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 58,
+   "line": 61,
    "hash": "3b16aa55740768ab",
    "does": "",
    "errors": {
@@ -57187,8 +57187,8 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 129,
-   "hash": "f9eb6f6c08a77034",
+   "line": 132,
+   "hash": "062ce99b9f77f313",
    "does": "",
    "errors": {
     "count": 0,
@@ -57222,7 +57222,7 @@
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -57289,7 +57289,7 @@
    "owner_area": "supplies",
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
-   "line": 116,
+   "line": 119,
    "hash": "bd2e466d1f7552ff",
    "does": "",
    "errors": {
@@ -57328,7 +57328,7 @@
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
-    "idempotent_money_write": false,
+    "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
    },
@@ -57373,7 +57373,7 @@
    "callers": [
     "cap-supplies.js"
    ],
-   "offline": "online-only",
+   "offline": "idempotent",
    "round_trips": {
     "trips": 0,
     "wire": 0,

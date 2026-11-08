@@ -534,6 +534,7 @@
  "GET /api/chits/:id/children": [
   400,
   401,
+  404,
   500
  ],
  "GET /api/chits/:id/trace": [

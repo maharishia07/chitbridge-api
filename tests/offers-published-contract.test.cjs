@@ -20,7 +20,8 @@ const check = (name, fn) => {
   fn();
   passed++;
 };
-const LOOSE = { content: { 'application/json': { schema: { type: 'object', properties: { lines: {}, offers: {}, ctx: {} } } } } };
+/* CAT-284: names only, nothing required, nothing narrowed — and an unknown key refused */
+const LOOSE = { content: { 'application/json': { schema: { type: 'object', additionalProperties: false, properties: { lines: {}, offers: {}, ctx: {} } } } } };
 const published = (route) => router.openapi.paths['/api/offers/' + route].post;
 const enforced = (route) => {
   const layer = router.stack.find((item) => item.route && item.route.path === '/' + route && item.route.methods.post);
@@ -32,7 +33,9 @@ const enforced = (route) => {
   check(route + ': the published body is the typed EvaluateBody and required', () => {
     const body = published(route).requestBody;
     assert.strictEqual(body.required, true);
-    assert.strictEqual(body.content['application/json'].schema.$ref, '#/components/schemas/EvaluateBody');
+    /* CAT-284: the body is the closed EvaluateBody itself (a $ref the register cannot read would hide that unknown keys are refused) */
+    assert.strictEqual(body.content['application/json'].schema, router.openapi.schemas.EvaluateBody);
+    assert.strictEqual(body.content['application/json'].schema.additionalProperties, false);
   });
   check(route + ': the published document carries the 429 of the per-key limit', () => {
     assert.ok(/240\/min per key/.test(published(route).responses[429].description));
@@ -40,7 +43,7 @@ const enforced = (route) => {
   check(route + ': the published document keeps its Problem refusals', () => {
     [401, 403, 500].forEach((status) => assert.ok(published(route).responses[status], 'status ' + status));
   });
-  check(route + ': the enforced schema is unchanged (names only, nothing required)', () => {
+  check(route + ': the enforced schema holds names only, nothing required, and refuses an unknown key', () => {
     assert.deepStrictEqual(enforced(route).requestBody, LOOSE);
     assert.strictEqual(enforced(route).responses[429], undefined);
     assert.deepStrictEqual(contract.operationFor('POST /' + route).requestBody, LOOSE);

@@ -269,6 +269,9 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "GET /api/chits/:id/children": {
+   "foreign_id_404": true
+  },
   "GET /api/chits/:id/trace": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -305,6 +308,12 @@
   },
   "GET /api/offers/kinds": {
    "output_allowlist": true
+  },
+  "POST /api/offers/evaluate": {
+   "strict_input": true
+  },
+  "POST /api/offers/explain": {
+   "strict_input": true
   },
   "GET /api/offers/openapi.json": {
    "output_allowlist": true
@@ -1770,11 +1779,13 @@
   },
   "POST /api/supplies/purchase": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "idempotent_money_write": true
   },
   "POST /api/supplies/:id/issue": {
    "strict_input": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/adopt/:chit_id": {
    "output_allowlist": true,
