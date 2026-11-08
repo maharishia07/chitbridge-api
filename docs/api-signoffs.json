@@ -1259,11 +1259,11 @@
    "lifecycle": "stable"
   },
   "GET /api/network/entities/:id/subtree": {
-   "hash": "c48427150f65026b",
+   "hash": "26ec7c352ead04da",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#364",
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
    "lifecycle": "stable"
   },
   "GET /api/network/entities/lookup": {
@@ -4330,6 +4330,46 @@
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
    "lifecycle": "stable"
   },
+  "POST /api/network-offers/:id/release": {
+   "hash": "541db4f71e91011d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "hash": "82ef9190340340a4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "hash": "cf6a90fd7197dad6",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "hash": "a15d2437c4075e3a",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+   "lifecycle": "stable"
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "hash": "e8cfb81fec41c36b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+   "lifecycle": "stable"
+  },
   "POST /api/notifications/dismiss": {
    "hash": "e8e590e17a17c1da",
    "names_clear": true,
@@ -4352,6 +4392,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "PUT /api/network-offers/policy": {
+   "hash": "a63f82874ea89e8f",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
    "lifecycle": "stable"
   },
   "PUT /api/quick-keys/screen-config/default": {
