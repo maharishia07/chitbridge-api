@@ -23622,6 +23622,60 @@
       "error": "Failed to record delivery",
       "message": "Nothing to record"
      }
+    },
+    {
+     "scenario": "delivery-past-the-column",
+     "status": 400,
+     "body_keys": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     },
+     "fixture": {
+      "error": "Amount too large",
+      "code": "CHIT_AMOUNT_TOO_LARGE",
+      "message": "A line quantity on line 1 is too large: the most a chit can hold is 999,999,999,999,999.999. Nothing was saved — split it into smaller chits, or lower the amount.",
+      "field": "quantity",
+      "line": 1,
+      "max": "999999999999999.999",
+      "currency_code": null
+     }
+    },
+    {
+     "scenario": "delivery-correction-too-large",
+     "status": 409,
+     "body_keys": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     },
+     "fixture": {
+      "error": "Correction too large",
+      "message": "Line 1 has only 1 kg delivered, so a correction of 3 is too much. Nothing was saved — correct by 1 or less.",
+      "line": 1,
+      "delivered": 1
+     }
+    },
+    {
+     "scenario": "delivery-on-a-rejected-copy",
+     "status": 409,
+     "body_keys": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
+     },
+     "fixture": {
+      "error": "Order closed",
+      "message": "This order is rejected, so no delivery can be recorded on it. Nothing was saved. If the order is back on, move it out of rejected first.",
+      "why": "wrong_step",
+      "from": "rejected"
+     }
     }
    ]
   },

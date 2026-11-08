@@ -1891,7 +1891,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/chits/:chit_id/deliver-lines** · chits · cb-rail · meets standard
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
+- errors: 0 code(s) [-] · statuses 401, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-chit2.js 1/15, cap-tasks.js 1/7, cap-worklist.js 1/12) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): state_log · callers: cap-chit2.js, cap-tasks.js, cap-worklist.js, till.html · actions: -
 
