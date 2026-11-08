@@ -966,17 +966,17 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
 }
 
 /**
- * clearDisputeHandler(entity_id, actor_id) → how many open disputes stopped being routed to this (gone) person — 0 when the write fails (said in the log).
- * B1 RLS (b68): chit_disputes is per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain query would fail closed and silently leave the gone actor as handler.
+ * clearDisputeHandler(entity_id, actor_id) → 1 when the shop's dispute handler was this (gone) person and is now cleared, else 0 — 0 too when the write fails (logged as an error; the status change has committed, so it cannot be unwound).
+ * The handler is identities.dispute_handler_actor_id of the shop's own row (CMP-54 sweep, PPL-45) — chit_disputes has no such column.
  */
 async function clearDisputeHandler(entity_id, actor_id) {
   try {
     const cleared = await withEntity(entity_id, (client) =>
-      client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id])
+      client.query(`UPDATE identities SET dispute_handler_actor_id = NULL WHERE identity_id = $1 AND dispute_handler_actor_id = $2`, [entity_id, actor_id])
     );
     return (cleared && cleared.rowCount) || 0;
   } catch (e) {
-    logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e);
+    logger.error('actors PUT /:id/status: the dispute handler was NOT cleared — the removed person may still be routed disputes', { err: e && e.message, entity_id, actor_id });
     return 0;
   }
 }
