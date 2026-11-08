@@ -277,7 +277,7 @@ jobs:
           S41_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/isolation-s41.test.cjs
-      - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on): a traded store is refused for a product, a chit and a books entry
+      - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
