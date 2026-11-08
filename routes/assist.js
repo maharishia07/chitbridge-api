@@ -19,7 +19,7 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
@@ -180,10 +180,22 @@ router.post('/conform', ...contract.checked('POST /conform'), async (req, res) =
 });
 
 // GET /api/assist/standards — the conform-check standards available to check against (drives the UI picker).
-router.get('/standards', (req, res) => res.json({ ok: true, data: compliance.listTemplates() }));
+router.get('/standards', (req, res) => {
+  try {
+    res.json({ ok: true, data: compliance.listTemplates() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // GET /api/assist/catalogue-sources — the catalogue sources the handler can structure (drives the UI picker).
-router.get('/catalogue-sources', async (req, res) => res.json({ ok: true, data: await catalogueBuild.listSources() }));
+router.get('/catalogue-sources', async (req, res) => {
+  try {
+    res.json({ ok: true, data: await catalogueBuild.listSources() });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
+});
 
 // POST /api/assist/catalogue-structure — the `ai:catalogue-structure@v1` slot. Body: { source }. Returns the
 // DETERMINISTIC structured PROPOSAL (schema + coloured items — the AI handler's "interpret once" output), plus a
@@ -725,7 +737,11 @@ router.post('/publish', auth, ...contract.checked('POST /publish'), async (req, 
 // as CHITS in GOV-01-Help's Task inbox (not as catalogue drafts), so there are no catalogue "gaps" to list. Returns
 // empty and reads nothing (the cross-read of the help catalogue is no longer needed).
 router.get('/gaps', auth, ...contract.checked('GET /gaps'), async (req, res) => {
-  res.json({ ok: true, data: [], deprecated: true });
+  try {
+    res.json({ ok: true, data: [], deprecated: true });
+  } catch (err) {
+    problem(req, res, failed(err, req, FAULTS.plain));
+  }
 });
 
 // POST /api/assist/resolve — DEPRECATED under B1 RLS. It updated the HELP entity's catalogue from an outside caller
@@ -745,7 +761,7 @@ router.get('/whoami', auth, ...contract.checked('GET /whoami'), async (req, res)
     /* T3-DISPUTES-ASSIST: may I publish an answer — the SAME test POST /publish refuses with (403 below), as a code the CB Assist screen greys on */
     res.json({ ok: true, is_helpdesk: hd, actions: { publish: hd ? { ok: true } : { ok: false, why: 'not_helpdesk', say: PUBLISH_NO } } });
   } catch (err) {
-    log.warn('assist/whoami could not read the help-desk schema — answered as not a help desk', { id: req.id, err: err.message });
+    softFault(req, err); /* the read failed: logged with the request id; the answer below is 200 'not a help desk' by design (never 500) */
     res.json({ ok: true, is_helpdesk: false, actions: { publish: { ok: false, why: 'not_read', say: 'Could not check who may publish. Try again.' } } });
   }
 });

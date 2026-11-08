@@ -188,6 +188,9 @@
   404,
   500
  ],
+ "GET /api/assist/catalogue-sources": [
+  500
+ ],
  "GET /api/assist/container/:id": [
   404,
   500
@@ -214,6 +217,9 @@
  "GET /api/assist/resolve": [
   400,
   404,
+  500
+ ],
+ "GET /api/assist/standards": [
   500
  ],
  "GET /api/assist/whoami": [
