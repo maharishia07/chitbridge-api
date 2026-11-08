@@ -6680,7 +6680,7 @@ function chitOf(bill){
       not_invoice: bill.not_invoice || undefined,
       /* ⭐ BOOKS v2 — a credit bill's terms and any owner override, on the record both copies hold */
       terms: bill.terms || null,
-      credit_override: bill.credit_override || null, money_override: bill.money_override,   /* ACC-206 H */
+      credit_override: bill.credit_override || null, price_basis: bill.price_basis, money_override: bill.money_override,   /* ACC-206 H */
       /* ⭐⭐⭐ THE INVOICE — CBTax.determine()'s result from billMoney(), carried UNCHANGED: this is the frozen invoice both
          ledgers post from (lib/tax-copy entryFor). A bill saved before it existed carries none; the server keeps its old path. */
       invoice: bill.invoice || undefined,
@@ -17363,9 +17363,213 @@ function unpark(n){
   PICKED = pp.picked || 'Cash'; PAY_ASKED = !!pp.asked; PARTS = Array.isArray(pp.parts) ? pp.parts : [];
   try { setOrderKind(pp.otype || 'dine'); setOrderTable(pp.table || ''); } catch (e) { cbQuiet('unpark:1', e); }
   try { paintParts(); } catch (e) { cbQuiet('unpark:2', e); }
-  PARKED.splice(n, 1); parkedSave(); price(); focusSearch();
+  PARKED.splice(n, 1); parkedSave(); price(); focusSearch(); recheckAfterUnpark(p.at).catch(function(e){ cbQuiet('unpark:3', e); });   /* CTR-212: parked past the timer, or the owner said every bill → read the catalogue again */
 }
 function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
+/* ═══ CTR-212 · PRICES ARE READ AGAIN BEFORE A BILL IS FINISHED ═══════════════════════════════════════════════════
+ * A bill is RE-PRICED only while it is still the shopkeeper's to change: before its number is taken (finish) and when a parked bill is picked up (unpark). After that the figures are
+ * the sale (REV-02, TILL-41). The recheck refreshes the cart's INPUTS from the catalogue (POST /api/till/recheck: price, rate facts, status, whether the product still exists, and the
+ * slabs / categories / face the rate is resolved with) and then runs THE SAME engine path once (price() then billMoney()); no second formula lives here. What is compared is carried
+ * values and the engine's own totals before and after, never a recomputation.
+ * DUE when the owner said "yes, every bill" (policy.recheck_prices === 'on') OR the bill was parked longer than policy.park_max_hours (12; whatever the setting says, even unanswered).
+ * The popup (ui id till-recheck-popup · path till.html › unpark/finish › recheckAsk) says what changed, line by line, and the bill before → after. "Use new prices" is the default;
+ * "Keep as quoted" is only for price moves, needs the owner's PIN and records price_basis.kept; a RATE move has no Keep (the rate in force is the law's); a product that is deleted or no
+ * longer sold can only be removed or the bill left (never billed, never dropped silently). No line, no line of money is ever changed while the answer is waiting.
+ * ⚠️ Offline, or the door fails: the bill is NEVER blocked (TILL-41): it sells at the prices it has and price_basis says why (offline · recheck_failed).
+ * price_basis → business_json.price_basis { checked, at, snapshot_at, parked_at, reason, kept[] }; each line carries catalogue_stamp (the row's price_changed_at when known; only a hint, see CTR-212 R2).
+ */
+var RECHECK_FIELDS = ['price', 'mrp', 'hsn', 'tax_slab', 'tax_slab_name', 'gst_rate', 'cess_rate', 'categories', 'category', 'status'];
+/** the owner's answer to "check prices again before every bill?": 'on' | 'off' | null (nobody answered: the optional every-bill check is off, the parked-too-long check still runs) */
+function recheckSetting(){ return (S && S.policy && S.policy.recheck_prices) || null; }
+/** hours since a moment (0 when it is not a date) */
+function parkHoursOf(at){ var moment = Date.parse(at); return isNaN(moment) ? 0 : (Date.now() - moment) / 3600000; }
+/** was this bill parked longer than the platform timer (the snapshot's policy.park_max_hours, 12)? A server that sends no timer has none: false */
+function parkedTooLong(at){
+  var max = Number(S && S.policy && S.policy.park_max_hours);
+  return !!at && max > 0 && parkHoursOf(at) > max;
+}
+/** the oldest moment a line of this cart was parked, or null (a bill that was never parked) */
+function cartParkedAt(){
+  var times = CART.map(function(cartLine){ return cartLine.parked_at; }).filter(Boolean).sort();
+  return times.length ? times[0] : null;
+}
+/** is a recheck due on this cart: every bill when the owner said yes, or a bill parked past the timer whatever the setting says */
+function recheckDue(){ return recheckSetting() === 'on' || parkedTooLong(cartParkedAt()); }
+/** the one door: the cart's product ids in, the catalogue's current rows out → the answer, or { ok:false } (logged, never thrown) */
+async function recheckRead(){
+  var ids = [];
+  CART.forEach(function(cartLine){ if (cartLine.item_id && ids.indexOf(String(cartLine.item_id)) < 0) ids.push(String(cartLine.item_id)); });
+  if (!ids.length) return { ok: true, items: [] };
+  var answer = null;
+  try { answer = await HOST.tillPost('/api/till/recheck', { item_ids: ids }, { noQueue: true }); }
+  catch (e) { cbQuiet('recheckRead:1', e); }
+  if (answer && answer.ok && Array.isArray(answer.items)) return answer;
+  cbQuiet('recheckRead:2', new Error((answer && answer.why) || 'no answer'));
+  return { ok: false };
+}
+/** a product the shop has taken off for good (retired · redundant) or an inactive row: not sold any more */
+function recheckGone(answerRow){ return answerRow.found === false ? 'deleted' : (answerRow.active === false || answerRow.status === 'retired' || answerRow.status === 'redundant') ? 'withdrawn' : null; }
+/** the tax context a rate is resolved in: the answer's own slabs / categories / face when it carried them (an empty set is "could not read", never "no slabs") */
+function recheckContext(answer){
+  var current = { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] };
+  var carried = answer && Array.isArray(answer.slabs) && answer.slabs.length > 0;
+  if (!carried) return current;
+  return { face: answer.face || current.face, slabs: answer.slabs, categories: Array.isArray(answer.categories) ? answer.categories : current.categories };
+}
+/** the rate CBTax.slab.resolve gives a product's tax facts in a context (the same call price() makes at sale), or null */
+function recheckRateOf(itemData, ctx){
+  try { var resolved = CBTax.slab.resolve({ item_data: itemData || {}, face: ctx.face, slabs: ctx.slabs, categories: ctx.categories }); return resolved && resolved.rate != null ? Number(resolved.rate) : null; }
+  catch (e) { cbQuiet('recheckRateOf:1', e); return null; }
+}
+/** the shelf price of a cart line without the choices added on top of it (modAdd is added once, at the line) */
+function recheckBaseOf(cartLine){ return r2((Number(cartLine.price) || 0) - (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0)); }
+/** what moved on one cart line against the catalogue's answer → { c, it, gone, price: [from, to]|null, rate: [from, to]|null } or null */
+function recheckLineChange(cartLine, answerRow, ctx){
+  if (!answerRow || answerRow.checked === false) return null;
+  var gone = recheckGone(answerRow), change = { cartLine: cartLine, answerRow: answerRow, gone: gone, price: null, rate: null };
+  if (gone) return change;
+  change.price = recheckPriceMove(cartLine, answerRow);
+  change.rate = recheckRateMove(cartLine, answerRow, ctx);
+  return (change.price || change.rate) ? change : null;
+}
+/** the shelf price moved? → [from, to], or null (the same price, or the very price the owner already chose to keep) */
+function recheckPriceMove(cartLine, answerRow){
+  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
+  return from === to || keptAt === to ? null : [from, to];
+}
+/** the rate in force moved? → [was, now] through CBTax.slab.resolve in the old and the new tax context, or null */
+function recheckRateMove(cartLine, answerRow, ctx){
+  var rateWas = recheckRateOf(cartLine.item_data, { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] });
+  var rateNow = recheckRateOf(Object.assign({ name: answerRow.name }, taxInputOf(answerRow)), ctx);
+  return rateWas === rateNow ? null : [rateWas, rateNow];
+}
+/** every line that moved: the changes, in cart order */
+function recheckChanges(answer){
+  var by = {}, ctx = recheckContext(answer);
+  (answer.items || []).forEach(function(answerRow){ by[String(answerRow.item_id)] = answerRow; });
+  return CART.map(function(cartLine){ return recheckLineChange(cartLine, by[String(cartLine.item_id)], ctx); }).filter(Boolean);
+}
+/** put a line on the catalogue's current facts (price with its choices, mrp, hsn, the rate facts); the stamp rides the line */
+function recheckRefresh(cartLine, answerRow){
+  cartLine.price = r2((Number(answerRow.price) || 0) + (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0));
+  cartLine.mrp = Number(answerRow.mrp) > 0 ? Number(answerRow.mrp) : null;
+  cartLine.hsn = answerRow.hsn || null;
+  cartLine.item_data = Object.assign({ name: answerRow.name }, taxInputOf(answerRow));
+  cartLine.catalogue_stamp = answerRow.stamp || null;
+  delete cartLine.kept;
+}
+/** make the answer the cart's truth: the tax context, each moved line refreshed, the gone lines left to the caller */
+function recheckApply(answer, changes){
+  var ctx = recheckContext(answer);
+  S.face = ctx.face; S.slabs = ctx.slabs; S.categories = ctx.categories;
+  changes.forEach(function(change){ if (!change.gone) recheckRefresh(change.cartLine, change.answerRow); });
+}
+/** this bill's total through the ONE engine path (price() then billMoney()), with the gone lines left out when asked */
+function recheckTotal(leaveGone, changes){
+  var held = CART;
+  if (leaveGone) CART = CART.filter(function(cartLine){ return !changes.some(function(change){ return change.gone && change.cartLine === cartLine; }); });
+  try { price(); return billMoney().net; }
+  finally { CART = held; }
+}
+/** the whole picture before the cashier chooses: the total before, the total after the new facts, and a way back — nothing is committed until a choice is made */
+function recheckTrial(answer, changes){
+  var snap = { cart: JSON.parse(JSON.stringify(CART)), face: S.face, slabs: S.slabs, categories: S.categories };
+  var before = (price(), billMoney().net);
+  recheckApply(answer, changes);
+  var after = recheckTotal(true, changes);
+  /* back IN PLACE: the changes hold these very line objects, so a restore may not swap them for copies */
+  var undo = function(){
+    CART.forEach(function(cartLine, index){ Object.keys(cartLine).forEach(function(key){ delete cartLine[key]; }); Object.assign(cartLine, snap.cart[index]); });
+    S.face = snap.face; S.slabs = snap.slabs; S.categories = snap.categories; price();
+  };
+  return { before: before, after: after, undo: undo };
+}
+/** one line of the popup, in the shopkeeper's words */
+function recheckWords(change){
+  var name = change.cartLine.name || 'Item';
+  if (change.gone) return name + ': ' + (change.gone === 'deleted' ? 'no longer in your catalogue' : 'no longer sold');
+  var bits = [];
+  if (change.price) bits.push(money(change.price[0]) + ' → ' + money(change.price[1]));
+  if (change.rate) bits.push(schemeWord() + ' ' + (change.rate[0] == null ? '?' : change.rate[0]) + '% → ' + (change.rate[1] == null ? '?' : change.rate[1]) + '%');
+  return name + ': ' + bits.join(' · ');
+}
+/**
+ * the popup → 'use' | 'keep' | 'remove' | 'back'. MONEY PROMISE: the bill before → after, this bill only, never silent.
+ * A gone line: Remove or Go back. A rate move: Use or Go back (no Keep). Price only: Use, or Keep as quoted (owner PIN).
+ */
+async function recheckAsk(changes, trial){
+  var gone = changes.some(function(change){ return change.gone; });
+  var keepAllowed = !gone && changes.every(function(change){ return change.price && !change.rate; });
+  var said = changes.map(recheckWords).join('\n') + '\n\nThis bill: ' + money(trial.before) + ' → ' + money(trial.after);
+  var yes = await sure(said, gone ? 'Remove them' : 'Use new prices', gone ? 'No longer sold' : 'Prices changed', keepAllowed ? 'Keep as quoted' : 'Go back');
+  if (yes) return gone ? 'remove' : 'use';
+  return keepAllowed ? 'keep' : 'back';
+}
+/** "Keep as quoted": the owner's PIN, then each moved line keeps the price it was rung at and says so (price_basis.kept) → true, or false when the owner did not agree */
+async function recheckKeep(changes){
+  var owner = await ownerPinAsk('Keep the old prices on this bill?\n\nOnly the owner can.', 'Keep as quoted');
+  if (!owner) return false;
+  var at = new Date().toISOString();
+  changes.forEach(function(change){
+    change.cartLine.kept = { by: String(owner.by.id), by_name: owner.by.name, at: at, why: 'price kept', carried: change.price[0], current: change.price[1] };
+  });
+  return true;
+}
+/** a line the catalogue answered for is marked checked now and no longer counts as parked */
+function recheckStamp(answer){
+  var at = answer.at || new Date().toISOString();
+  CART.forEach(function(cartLine){ cartLine.rechecked_at = at; delete cartLine.parked_at; });
+  return at;
+}
+/** a product that is gone leaves the bill only by the cashier's Remove */
+function recheckRemoveGone(changes){
+  CART = CART.filter(function(cartLine){ return !changes.some(function(change){ return change.gone && change.cartLine === cartLine; }); });
+}
+/**
+ * read, compare, ask, apply: true when the bill may go on (changes accepted, kept, or none), false when the cashier went back. The cart is only changed by an explicit choice.
+ */
+async function recheckResolve(answer){
+  var changes = recheckChanges(answer);
+  if (!changes.length) { recheckStamp(answer); return true; }
+  var trial = recheckTrial(answer, changes), choice = await recheckAsk(changes, trial);
+  trial.undo();
+  if (choice === 'back') return false;
+  if (choice === 'keep') { if (!(await recheckKeep(changes))) return false; price(); return !!recheckStamp(answer); }
+  recheckApply(answer, changes);
+  if (choice === 'remove') recheckRemoveGone(changes);
+  price(); recheckStamp(answer);
+  return true;
+}
+/** the fact stored with the bill: was the catalogue read again, when, against which snapshot, and why not when it was not */
+function recheckBasis(reason, checkedAt, kept, parkedAt){
+  var basis = { checked: !!checkedAt, at: checkedAt || null, snapshot_at: (S && S.at) || null, parked_at: parkedAt || null, reason: reason };
+  if (kept && kept.length) basis.kept = kept;
+  return basis;
+}
+/** the lines that kept their old price, as the bill records them */
+function recheckKeptList(){
+  return CART.filter(function(cartLine){ return cartLine.kept; }).map(function(cartLine){ return { item_id: cartLine.item_id, by: cartLine.kept.by, by_name: cartLine.kept.by_name, at: cartLine.kept.at, why: cartLine.kept.why, carried: cartLine.kept.carried, current: cartLine.kept.current }; });
+}
+/**
+ * before a bill's number is taken: → the price_basis to store, or false when the cashier went back. Not due: snapshot_fresh. Offline or the door failing: the sale goes on at the prices it has (reason says so).
+ */
+async function recheckBeforeBill(){
+  var parked = cartParkedAt();   /* read before a check clears answerRow: the bill says answerRow WAS parked */
+  if (!recheckDue()) return recheckBasis('snapshot_fresh', null, recheckKeptList(), parked);
+  if (!lineUp()) return recheckBasis('offline', null, recheckKeptList(), parked);
+  var answer = await recheckRead();
+  if (!answer.ok) { toastLine('Prices could not be checked just now. This bill uses the prices on screen.'); return recheckBasis('recheck_failed', null, recheckKeptList(), parked); }
+  if (!(await recheckResolve(answer))) return false;
+  return recheckBasis('recheck', answer.at || new Date().toISOString(), recheckKeptList(), parked);
+}
+/** a parked bill picked up: every line remembers when it was parked; if a check is due and the line is up, it runs now (offline: the bill is checked at finish) */
+async function recheckAfterUnpark(parkedAt){
+  CART.forEach(function(cartLine){ cartLine.parked_at = cartLine.parked_at || parkedAt; });
+  if (!recheckDue() || !lineUp()) return;
+  var answer = await recheckRead();
+  if (!answer.ok) { toastLine('Prices could not be checked just now. They are checked again when the bill is finished.'); return; }
+  await recheckResolve(answer);
+}
 /* ═══ R1 · THE BILL BEING RUNG SURVIVES THE DEVICE ══════════════════════════════════════ */
 /**
  * ── ⭐⭐⭐ A BILL CAN NEVER BE LOST ([TILL-41], 2026-09-18) ────────────────────────────────
@@ -21809,6 +22013,7 @@ async function finish(){
   if (!CART.length) return { ok: false };
   if (await tillStopped()) { saleStopNote('The counter has no bill number to give'); return { ok: false }; }   /* ⚠️ no number given yet, or two counters on one series — see tillStopped() */
   if (!(await dayReopenAsk())) return { ok: false };   /* M115 — the day was closed on this counter */ await deliverAsk();   /* CTR-186: another state's registered buyer — over the counter or despatched? — before the tax */
+  var basis = await recheckBeforeBill(); if (basis === false) return { ok: false };   /* CTR-212: prices read again before the number is taken; the cashier going back stops here, nothing billed */
   var m = billMoney();
   /* ⚠️⚠️ NO INVOICE, NO SALE (2026-10-02). With the tax engine missing billMoney() has nothing to read and answers zeros —
      a bill saved now would be a ₹0 sale. Refused here, before any payment is taken or a number is used. */
@@ -21839,28 +22044,7 @@ async function finish(){
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
        decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
-    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit,
-                                          price:(c.unitPrice != null ? c.unitPrice : c.price), list_price:c.price,
-                                          priced_by:(c.priced && c.priced.kind) || null,
-                                          priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
-                                          mrp:c.mrp || null,
-                                          /* ⭐ the line's own taxable value and tax, so a reprint prints the same
-                                             breakdown without recomputing it against today's slabs */
-                                          taxable:c.taxable != null ? c.taxable : null, tax:c.tax != null ? c.tax : null,
-                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label,
-                                          /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over
-                                             a `save` that is the sum of all of them — tolerable on a screen you
-                                             can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a
-                                             reprint, a dispute and the shop all read a year later, and by then
-                                             nobody can re-derive which offers applied. Kept beside off_label
-                                             rather than replacing it, so every existing reader keeps working. */
-                                          offers:(c.offs||[]).map(function(a){
-                                            return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
-                                                     off:r2(Math.abs(a.amount)), why:a.why||null }; }),
-                                          save_unnamed:c.save_unnamed || 0,
-                                          /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
-                                          mods:(c.mods && c.mods.length ? c.mods : null),
-                                          hsn:c.hsn, gst_rate:c.gst_rate }; }),
+    lines: CART.map(billLineOf),   /* CTR-212: each line as the bill records it, one function (billLineOf, below) */
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
@@ -21878,17 +22062,10 @@ async function finish(){
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
-    customer: Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
-                            cust ? { identity_id: cust.identity_id } : {},
-                            /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
-                               the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
-                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
-                            /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
-                               The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
-                            cust && cust.gstin && invoiceRule(m.net, cust.gstin) ? { gstin: cust.gstin } : {}),
+    customer: billCustomerOf(cust, m.net),   /* CTR-212: the buyer as the bill records it, one function (billCustomerOf, below) */
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
-    credit_override: override, money_override: moneyOver || undefined,   /* ACC-206 H: the owner let a bill that does not add up through */
+    credit_override: override, price_basis: basis, money_override: moneyOver || undefined,   /* ACC-206 H: the owner let a bill that does not add up through */
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
     by: WHO ? { id: WHO.id, name: WHO.name, kind: WHO.kind || 'coassist' } : null,
     kind: shopTax().kind,
@@ -21928,6 +22105,39 @@ async function finish(){
   menuFresh();
   load(); loadQuick();
   stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
+}
+/** the buyer as the bill stores it: name and phone as typed (Walk-in when blank), the known customer by id, a business on the rail by entity, and the buyer's ABN / TRN where the pack's tax invoice names it */
+function billCustomerOf(cust, billTotal){
+  return Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+  cust ? { identity_id: cust.identity_id } : {},
+  /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
+     the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
+  cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
+  /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
+     The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
+  cust && cust.gstin && invoiceRule(billTotal, cust.gstin) ? { gstin: cust.gstin } : {});
+}
+/** one cart line as the bill stores it: who it is and what decided its price (billLineFigures), every offer on the record, the chosen modifiers, hsn · rate · catalogue_stamp */
+function billLineOf(cartLine){
+  return Object.assign({ item_id:cartLine.item_id, name:cartLine.name, unit:cartLine.unit }, billLineFigures(cartLine), {
+    /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over a `save` that is the sum of all of them — tolerable on a screen you
+       can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a reprint, a dispute and the shop all read a year later, and by then
+       nobody can re-derive which offers applied. Kept beside off_label rather than replacing it, so every existing reader keeps working. */
+    offers:(cartLine.offs||[]).map(function(a){
+      return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
+               off:r2(Math.abs(a.amount)), why:a.why||null }; }),
+    save_unnamed:cartLine.save_unnamed || 0,
+    /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
+    mods:(cartLine.mods && cartLine.mods.length ? cartLine.mods : null),
+    hsn:cartLine.hsn, gst_rate:cartLine.gst_rate, catalogue_stamp:cartLine.catalogue_stamp || null });
+}
+/** a line's charge and what decided it: price (after the structure, before offers), list_price, priced_by · priced_why, qty, mrp, and the line's own taxable value and tax so a reprint prints the same breakdown without recomputing it against today's slabs */
+function billLineFigures(cartLine){
+  return { price:(cartLine.unitPrice != null ? cartLine.unitPrice : cartLine.price), list_price:cartLine.price,
+    priced_by:(cartLine.priced && cartLine.priced.kind) || null, priced_why:(cartLine.priced && cartLine.priced.why) || null,
+    qty:cartLine.qty, mrp:cartLine.mrp || null,
+    taxable:cartLine.taxable != null ? cartLine.taxable : null, tax:cartLine.tax != null ? cartLine.tax : null,
+    gross:cartLine.gross, save:cartLine.save, net:cartLine.net, off:cartLine.off, off_label:cartLine.off_label };
 }
 
 /**
