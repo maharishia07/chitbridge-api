@@ -85,5 +85,11 @@
   {"route": "GET /api/assist/gaps", "status": 500, "reason": "deprecated route that reads nothing and cannot fail"},
   {"route": "GET /api/assist/whoami", "status": 500, "reason": "fails soft by design: a database error answers 200 is_helpdesk:false with a sentence, never 500"},
   {"route": "POST /api/assist/resolve", "status": 500, "reason": "retired route that always answers 410 and reads nothing"}
- ]
+ ],
+ "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",
+ "tolerant_outward": {
+  "POST /api/pricing/price": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+  "POST /api/offers/evaluate": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md",
+  "POST /api/offers/explain": "API-43 (Athi 6 Nov, restated 8 Nov): unknown keys ignored until /v2 with notice; decision PM/ATHI-DECISIONS.md"
+ }
 }

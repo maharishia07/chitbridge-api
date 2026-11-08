@@ -8,8 +8,9 @@
  "codes_pending": 0,
  "raw_error_writes": 1,
  "routes_without_does": 628,
+ "tolerant_outward": 3,
  "columns_failing": {
-  "strict_input": 46,
+  "strict_input": 44,
   "output_allowlist": 32,
   "foreign_id_404": 20,
   "idempotent_money_write": 3,
