@@ -1355,11 +1355,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products/export.csv": {
-   "hash": "e6c365a0051bb1fc",
+   "hash": "699e33f654a66cd9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys is honest: text/csv, no JSON keys), failures through problem(); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/products/lists": {
@@ -1395,11 +1395,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products/workbook.xlsx": {
-   "hash": "f926495a5d767afd",
+   "hash": "36bec6618ba3d688",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys honest: xlsx, no JSON keys), failures through problem(); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/relationships/customers/groups": {
@@ -4744,6 +4744,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+   "lifecycle": "stable"
+  },
+  "DELETE /api/products/:id/schedule/:sid": {
+   "hash": "287f08d2f52034c4",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
    "lifecycle": "stable"
   }
  }

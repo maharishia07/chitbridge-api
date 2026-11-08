@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 113,
-  "meets": 525,
+  "partial": 110,
+  "meets": 528,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -14,11 +14,11 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 20
+    "failing": 17
    },
    "foreign_id_404": {
     "applies": 202,
-    "failing": 14
+    "failing": 13
    },
    "idempotent_money_write": {
     "applies": 11,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 23
+    "failing": 22
    }
   },
   "reported": {
@@ -1866,7 +1866,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "catalogue-lines.js 1/136",
+     "catalogue-lines.js 1/89",
      "combo-mode.js 1/15",
      "core.js 1/57",
      "till.html 1/225"
@@ -1973,7 +1973,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/136"
+     "catalogue-lines.js 1/89"
     ]
    },
    "measured": {
@@ -2018,11 +2018,11 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
-    "foreign_id_404": false,
+    "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
     "trips_budgeted": true
@@ -2056,13 +2056,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -2073,7 +2073,7 @@
     "wire": 5,
     "screens": [
      "app.html 2/155",
-     "catalogue-lines.js 2/136"
+     "catalogue-lines.js 2/89"
     ]
    },
    "measured": {
@@ -22333,7 +22333,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "catalogue-lines.js 1/136"
+     "catalogue-lines.js 1/89"
     ]
    },
    "measured": {
@@ -22439,7 +22439,7 @@
     "wire": 4,
     "screens": [
      "app.html 1/155",
-     "catalogue-lines.js 1/136"
+     "catalogue-lines.js 1/89"
     ]
    },
    "measured": {
@@ -22457,7 +22457,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1056,
-   "hash": "e6c365a0051bb1fc",
+   "hash": "699e33f654a66cd9",
    "does": "",
    "errors": {
     "count": 0,
@@ -22489,7 +22489,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -22525,10 +22525,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys is honest: text/csv, no JSON keys), failures through problem(); 13 columns pass",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -22539,7 +22539,7 @@
     "wire": 9,
     "screens": [
      "app.html 5/155",
-     "catalogue-lines.js 5/136"
+     "catalogue-lines.js 5/89"
     ]
    },
    "measured": {
@@ -22636,7 +22636,7 @@
     "trips": 3,
     "wire": 6,
     "screens": [
-     "catalogue-lines.js 3/136"
+     "catalogue-lines.js 3/89"
     ]
    },
    "measured": {
@@ -22654,7 +22654,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 1829,
-   "hash": "37dfa7e57774ac5a",
+   "hash": "6552c50215b46546",
    "does": "",
    "errors": {
     "count": 0,
@@ -22687,7 +22687,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -22724,8 +22724,9 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "6552c50215b46546"
    },
    "status": "partial",
    "callers": [
@@ -22738,7 +22739,7 @@
     "wire": null,
     "screens": [
      "app.html 50/155",
-     "catalogue-lines.js 50/136"
+     "catalogue-lines.js 50/89"
     ]
    },
    "measured": {
@@ -22838,7 +22839,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -22938,7 +22939,7 @@
     "wire": 13,
     "screens": [
      "cap-catalogue.js 5/13",
-     "catalogue-lines.js 5/136"
+     "catalogue-lines.js 5/89"
     ]
    },
    "measured": {
@@ -22956,7 +22957,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 985,
-   "hash": "f926495a5d767afd",
+   "hash": "36bec6618ba3d688",
    "does": "",
    "errors": {
     "count": 0,
@@ -22988,7 +22989,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -23024,10 +23025,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys honest: xlsx, no JSON keys), failures through problem(); 13 columns pass",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js",
     "till.html"
@@ -23037,7 +23038,7 @@
     "trips": 6,
     "wire": 13,
     "screens": [
-     "catalogue-lines.js 6/136",
+     "catalogue-lines.js 6/89",
      "till.html 6/225"
     ]
    },
@@ -30754,7 +30755,7 @@
      "app.html 0/155",
      "cap-catalogue.js 0/13",
      "cap-categories.js 0/6",
-     "catalogue-lines.js 0/136",
+     "catalogue-lines.js 0/89",
      "combo-mode.js 0/15",
      "core.js 0/57",
      "till.html 0/225"
@@ -53060,7 +53061,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -53171,7 +53172,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -53272,7 +53273,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 3/136"
+     "catalogue-lines.js 3/89"
     ]
    },
    "measured": {
@@ -53375,7 +53376,7 @@
     "trips": 8,
     "wire": null,
     "screens": [
-     "catalogue-lines.js 8/136"
+     "catalogue-lines.js 8/89"
     ]
    },
    "measured": {
@@ -53481,7 +53482,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -53595,7 +53596,7 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/136",
+     "catalogue-lines.js 0/89",
      "till.html 0/225"
     ]
    },
@@ -53700,7 +53701,7 @@
     "wire": 0,
     "screens": [
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/136",
+     "catalogue-lines.js 0/89",
      "till.html 0/225"
     ]
    },
@@ -53760,7 +53761,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -53803,10 +53804,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 3,
+    "wire": 9,
     "screens": [
-     "catalogue-lines.js 50/136"
+     "catalogue-lines.js 3/89"
     ]
    },
    "measured": {
@@ -53909,7 +53910,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catsetup.js 0/14",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -54009,7 +54010,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -64978,7 +64979,7 @@
     "wire": 0,
     "screens": [
      "app.html 0/155",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {
@@ -65082,7 +65083,7 @@
     "screens": [
      "app.html 0/155",
      "cap-catalogue.js 0/13",
-     "catalogue-lines.js 0/136"
+     "catalogue-lines.js 0/89"
     ]
    },
    "measured": {

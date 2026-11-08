@@ -201,7 +201,31 @@ async function checkScheduleIds(port) {
     schema.hasTable = was;
   }
 }
-const scheduleEvidenceOnDisk = () => FOREIGN.evidenceOf(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE);
+/* ── the same weaker reading for DELETE /:id/schedule/:sid: shop B cancels shop A's parked change by its id → exactly what an unknown id answers (200, cancelled:false), and shop A's own cancel answers true ── */
+const CANCEL_ROUTE = 'DELETE ' + MOUNT + '/:id/schedule/:sid';
+/** the stand-in db: the UPDATE cancels a row only for a statement that names shop A as the owner (as WHERE entity_id = $2 and RLS would) */
+const cancelFor = (planted) => (sql, params) => (planted && /UPDATE catalogue_item_schedule/.test(sql) && (params || [])[1] === OWNER.identity_id ? { rows: [], rowCount: 1 } : null);
+async function checkCancelIds(port) {
+  console.log(String.fromCharCode(10) + '-- signed in as another shop: cancelling a foreign parked change answers as an unknown one (S35, weaker reading: this route answers 200 cancelled:false, not 404) --');
+  const schema = sources().schema;
+  const was = schema.hasTable;
+  schema.hasTable = async () => true;
+  const play = async (who, planted) => {
+    Object.assign(lab.world, { realAuth: false, who: who === 'owner' ? OWNER : STRANGER, asKey: false, db: 'ok', sqlRows: cancelFor(planted), jsonThrows: false, noCustomer: false });
+    return lab.send(port, 'DELETE', MOUNT + '/' + PARTY + '/schedule/' + PARTY);
+  };
+  try {
+    const sentence = await FOREIGN.sameAsUnknownCase(play);
+    check(CANCEL_ROUTE + ": another shop's parked change answers byte for byte as an unknown one, and the owner cancels its own", sentence === null, sentence);
+    const bite = await FOREIGN.biteCase(play, FOREIGN.sameAsUnknownCase);
+    check(CANCEL_ROUTE + ': the case can FAIL (a store that ignores the owner is caught)', bite === null, bite);
+    return sentence === null ? { [CANCEL_ROUTE]: { foreign_id_404: true } } : {};
+  } finally {
+    schema.hasTable = was;
+  }
+}
+const isScheduleRoute = (route) => route === SCHEDULE_ROUTE || route === CANCEL_ROUTE;
+const scheduleEvidenceOnDisk = () => FOREIGN.evidenceOf(EVIDENCE_FILE, isScheduleRoute);
 /* ── Slice 1 (critic 6 Nov, class C): the foreign-id world of the three item-id writes whose store call is entity-scoped (catwrite.patchItems / the media read): shop A holds the item,
    shop B asks for it (the stand-in answers the row only to a statement that names shop A) → exactly the unknown id's 404 ── */
 const WRITE_STRANGER = { identity_id: '33333333-3333-4333-8333-333333333333', identity_type: 'entity', display_name: 'Another shop' };
@@ -240,7 +264,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const allowed = capturing ? () => [] : contractModule().allowedStatuses();
   const scenarios = lab.scenariosOf(routes, WORLDS, scenes.extras({ PARTY, OWNER, STAFF, SECRET_SQL, raising, answering, firstOf }), {});
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, sources);
-  const scheduleProved = await checkScheduleIds(server.address().port);
+  const scheduleHeld = Object.assign(await checkScheduleIds(server.address().port), await checkCancelIds(server.address().port));
+  const scheduleProved = Object.fromEntries(Object.keys(scheduleHeld).sort().map((route) => [route, scheduleHeld[route]])); /* the order the evidence file keeps */
   const foreignProved = await checkForeignIds(server.address().port);
   server.close();
   const allowed200 = checkAllowList(recording);
@@ -271,7 +296,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     writeAllowList(allowed200);
-    FOREIGN.writeEvidence(EVIDENCE_FILE, (route) => route === SCHEDULE_ROUTE, scheduleProved);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, isScheduleRoute, scheduleProved);
     FOREIGN.writeEvidence(EVIDENCE_FILE, heldByThisWorld, foreignProved);
   } else {
     check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the item-id writes that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, heldByThisWorld), foreignProved), foreignProved);
