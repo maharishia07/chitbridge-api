@@ -57092,14 +57092,13 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 58,
-   "hash": "72aebccb3570376f",
+   "hash": "3b16aa55740768ab",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
-     409,
      422,
      500,
      503
@@ -57125,7 +57124,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -57145,7 +57144,6 @@
    "declared": [
     400,
     401,
-    409,
     422,
     500,
     503
@@ -57333,7 +57331,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,

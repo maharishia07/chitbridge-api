@@ -575,9 +575,9 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/signin/verify | signin | routes/signin.js:958 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/simulator/feedback | simulator | routes/simulator.js:107 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/simulator/lead | simulator | routes/simulator.js:82 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/supplies/purchase | supplies | routes/supplies.js:116 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
+| POST | /api/supplies/purchase | supplies | routes/supplies.js:116 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
 | POST | /api/tax/compute | tax | routes/tax.js:183 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/tax/rate | tax | routes/tax.js:146 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/testing/cases/close | testing | routes/testing.js:286 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -4069,7 +4069,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/supplies** · supplies · cb-operations · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 409, 422, 500, 503 · money n (derived)
+- errors: 0 code(s) [-] · statuses 400, 401, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-supplies.js 0/2) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): supply_item · writes (derived): supply_item · callers: cap-supplies.js · actions: -
 
