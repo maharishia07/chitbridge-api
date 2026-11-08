@@ -47,18 +47,18 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/actors/check-login | actors | routes/actors.js:700 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/actors/settings | actors | routes/actors.js:1516 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/assist/catalogue-mine | assist | routes/assist.js:327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:605 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
-| GET | /api/assist/catalogue-sources | assist | routes/assist.js:186 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/assist/container/:id | assist | routes/assist.js:478 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/erp-handoffs | assist | routes/assist.js:490 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/gaps | assist | routes/assist.js:727 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/assist/penetration | assist | routes/assist.js:572 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/questions | assist | routes/assist.js:619 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | yes |
-| GET | /api/assist/regions | assist | routes/assist.js:538 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| GET | /api/assist/resolve | assist | routes/assist.js:556 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
-| GET | /api/assist/standards | assist | routes/assist.js:183 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| GET | /api/assist/whoami | assist | routes/assist.js:740 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/catalogue-mine | assist | routes/assist.js:339 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:617 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/catalogue-sources | assist | routes/assist.js:192 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/container/:id | assist | routes/assist.js:490 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/assist/erp-handoffs | assist | routes/assist.js:502 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/assist/gaps | assist | routes/assist.js:739 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/penetration | assist | routes/assist.js:584 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/assist/questions | assist | routes/assist.js:631 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | yes |
+| GET | /api/assist/regions | assist | routes/assist.js:550 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| GET | /api/assist/resolve | assist | routes/assist.js:568 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/standards | assist | routes/assist.js:183 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| GET | /api/assist/whoami | assist | routes/assist.js:756 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/attachments/:id | attachments | routes/attachments.js:111 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/books/accounts | books | routes/books.js:324 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/books/assets | books | routes/books.js:2457 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -341,12 +341,12 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/actors/suggest-key | actors | routes/actors.js:194 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/adopt/:chit_id | adopt | routes/adopt.js:188 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/assist | assist | routes/assist.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/catalogue-adopt | assist | routes/assist.js:248 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/catalogue-structure | assist | routes/assist.js:192 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/assist/catalogue-adopt | assist | routes/assist.js:260 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/assist/catalogue-structure | assist | routes/assist.js:204 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/assist/conform | assist | routes/assist.js:128 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/gap | assist | routes/assist.js:655 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/publish | assist | routes/assist.js:672 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/assist/resolve | assist | routes/assist.js:734 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/assist/gap | assist | routes/assist.js:667 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/assist/publish | assist | routes/assist.js:684 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| POST | /api/assist/resolve | assist | routes/assist.js:750 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/attachments | attachments | routes/attachments.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/books/accounts | books | routes/books.js:353 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/books/accruals | books | routes/books.js:0 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -628,9 +628,9 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PUT | /api/actors/break | actors | routes/actors.js:1204 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | PUT | /api/actors/change-pin | actors | routes/actors.js:707 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/actors/settings | actors | routes/actors.js:1537 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| PUT | /api/assist/catalogue-source | assist | routes/assist.js:386 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| PUT | /api/assist/container | assist | routes/assist.js:448 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| PUT | /api/assist/region-override | assist | routes/assist.js:516 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| PUT | /api/assist/catalogue-source | assist | routes/assist.js:398 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| PUT | /api/assist/container | assist | routes/assist.js:460 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
+| PUT | /api/assist/region-override | assist | routes/assist.js:528 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | PUT | /api/catalogue-face | catalogue-face | routes/catalogue-face.js:74 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/chits/:chit_id/disputes/:dispute_id/resolve | chits | routes/chits.js:6087 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | PUT | /api/chits/:chit_id/priority | chits | routes/chits.js:6313 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -808,7 +808,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/assist/catalogue-source/:key** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 404, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_source, identities · writes (derived): - · callers: - · actions: -
 
 **GET /api/assist/catalogue-sources** · assist · cb-ai · partial
@@ -856,7 +856,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/assist/resolve** · assist · cb-ai · partial
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 50 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): container_region_override, product_version, resolved_blueprint · writes (derived): resolved_blueprint · callers: - · actions: -
 
 **GET /api/assist/standards** · assist · cb-ai · partial

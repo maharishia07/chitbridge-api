@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 28
+    "failing": 26
    }
   },
   "reported": {
@@ -3100,7 +3100,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 327,
+   "line": 339,
    "hash": "0c2c7c81bc7f741b",
    "does": "",
    "errors": {
@@ -3202,7 +3202,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 605,
+   "line": 617,
    "hash": "ac97e40e210c820c",
    "does": "",
    "errors": {
@@ -3239,7 +3239,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -3279,8 +3279,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -3297,8 +3297,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 186,
-   "hash": "89e9e2e28d556f48",
+   "line": 192,
+   "hash": "23a86ac3e2eae4f4",
    "does": "",
    "errors": {
     "count": 0,
@@ -3322,9 +3322,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -3388,7 +3388,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 478,
+   "line": 490,
    "hash": "4800ee1d9af92ecc",
    "does": "",
    "errors": {
@@ -3482,7 +3482,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 490,
+   "line": 502,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3578,8 +3578,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 727,
-   "hash": "d8cba703bbee9a55",
+   "line": 739,
+   "hash": "ce58ab833cb528f2",
    "does": "",
    "errors": {
     "count": 0,
@@ -3602,8 +3602,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -3667,7 +3667,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 572,
+   "line": 584,
    "hash": "eb2cb4eb1a353c68",
    "does": "",
    "errors": {
@@ -3762,7 +3762,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 619,
+   "line": 631,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3861,7 +3861,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 538,
+   "line": 550,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3950,7 +3950,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 556,
+   "line": 568,
    "hash": "c6cf6f259a29b007",
    "does": "",
    "errors": {
@@ -3990,7 +3990,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -4030,8 +4030,8 @@
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 3,
+    "wire": 3,
     "screens": []
    },
    "measured": {
@@ -4049,7 +4049,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 183,
-   "hash": "b36c489344b0d879",
+   "hash": "37abe18e7e11e8b6",
    "does": "",
    "errors": {
     "count": 0,
@@ -4071,9 +4071,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -4137,8 +4137,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 740,
-   "hash": "330f509bff08f482",
+   "line": 756,
+   "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
     "count": 0,
@@ -4163,8 +4163,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -32621,7 +32621,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 248,
+   "line": 260,
    "hash": "89946324f32549b9",
    "does": "",
    "errors": {
@@ -32727,7 +32727,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 192,
+   "line": 204,
    "hash": "2cf1be4ee2eeae1f",
    "does": "",
    "errors": {
@@ -32929,7 +32929,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 655,
+   "line": 667,
    "hash": "f35cc44639c74477",
    "does": "",
    "errors": {
@@ -33018,7 +33018,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 672,
+   "line": 684,
    "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
@@ -33126,7 +33126,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 734,
+   "line": 750,
    "hash": "9f02935797a24cbc",
    "does": "",
    "errors": {
@@ -62398,7 +62398,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 386,
+   "line": 398,
    "hash": "e8f1198436967af4",
    "does": "",
    "errors": {
@@ -62501,7 +62501,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 448,
+   "line": 460,
    "hash": "0a70997c357d3b62",
    "does": "",
    "errors": {
@@ -62598,7 +62598,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 516,
+   "line": 528,
    "hash": "5899c1359da94cf9",
    "does": "",
    "errors": {
