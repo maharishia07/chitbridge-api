@@ -4691,6 +4691,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "TAX_DEREGISTER_UNCONFIRMED",
+   "status": "409",
+   "title": "Taking the shop off its tax needs a confirm",
+   "shopkeeper": "This takes the shop off its tax: from now on every invoice carries no tax, and an open till keeps the old answer until it next refreshes.",
+   "hint": "Confirm it in Settings → Country setup, or leave the tax answer as it is.",
+   "owner_area": "country-setup",
+   "since": "2026-11-09"
+  },
+  {
    "code": "TAX_FAILED",
    "status": "500",
    "title": "Tax could not be worked out",

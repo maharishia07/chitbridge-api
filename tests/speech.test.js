@@ -58,6 +58,28 @@ it('silence is an answer, not an error', async () => {
   assert.ok(r.why.indexOf('nothing was recorded') >= 0, r.why);
 });
 
+
+it('⚠️ a provider fault answers ONE fixed sentence; its own text (a key, a path) never reaches the caller', async () => {
+  const had = process.env.OPENAI_API_KEY, realFetch = global.fetch;
+  process.env.OPENAI_API_KEY = 'sk-test-not-real';
+  const SECRET = 'sk-proj-SECRETVALUE123 at /srv/app/openai.js';
+  const asked = [['refused', async () => ({ ok: false, status: 401, text: async () => JSON.stringify({ error: { message: 'Incorrect API key ' + SECRET } }) })],
+                 ['refused, not JSON', async () => ({ ok: false, status: 500, text: async () => 'boom ' + SECRET })],
+                 ['unreachable', async () => { throw new Error('ECONNRESET ' + SECRET); }]];
+  try {
+    for (const [name, f] of asked) {
+      global.fetch = f;
+      const r = await speech.transcribe(Buffer.from('audio'), {});
+      assert.strictEqual(r.ok, false, name);
+      assert.strictEqual(r.why, speech.SPEECH_FAULT, name);
+      assert.ok(JSON.stringify(r).indexOf('SECRETVALUE') < 0 && JSON.stringify(r).indexOf('/srv/') < 0, name + ' leaked the provider text');
+    }
+  } finally {
+    global.fetch = realFetch;
+    if (had) process.env.OPENAI_API_KEY = had; else delete process.env.OPENAI_API_KEY;
+  }
+});
+
 say('— what must be true of the code itself —');
 
 it('⚠️⚠️ THE AUDIO IS NEVER STORED — nothing here writes a file, a row or a log line', () => {
