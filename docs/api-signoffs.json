@@ -1863,7 +1863,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed; re-read 2026-11-08 batch k75 (9ff8c2dd) after #1006/#1014: the owner gate (403 for a non-owner) now covers chit_expiry_days as well as the money/tax flags, 403 already declared and answered through the existing refusal, backward_compatible for owners, a non-owner write of that flag was a gap not a contract",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
