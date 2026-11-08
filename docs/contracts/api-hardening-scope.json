@@ -101,6 +101,16 @@
    "reason": "a collection under the caller's own items: [] for unknown and foreign ids alike, never 404"
   },
   {
+   "route": "DELETE /api/products/:id/schedule/:sid",
+   "status": 404,
+   "reason": "K-1: a cancel that finds nothing (an unknown, a foreign or an already applied sid) answers 200 cancelled:false by design; the item id in the path is never read, so it never answers 404"
+  },
+  {
+   "route": "DELETE /api/products/:id/schedule/:sid",
+   "status": 400,
+   "reason": "K-1: a sid that is not a uuid names no parked change and answers 200 cancelled:false by design; the handler holds no refusal, so it never answers 400"
+  },
+  {
    "route": "PUT /api/identity/documents/:scheme",
    "status": 404,
    "reason": "an unknown scheme answers 400 IDOC_UNKNOWN_DOCUMENT by design (routes/identity-docs.js); the scheme is a name, not a row, so it never answers 404"
