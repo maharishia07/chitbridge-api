@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1777,
+   "line": 1783,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1927,
+   "line": 1933,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1658,
+   "line": 1664,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -22252,7 +22252,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1608,
+   "line": 1614,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22350,7 +22350,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1963,
+   "line": 1969,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22556,7 +22556,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2078,
+   "line": 2084,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22653,7 +22653,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1822,
+   "line": 1828,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -30634,8 +30634,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1528,
-   "hash": "2b44e4f050d7693b",
+   "line": 1555,
+   "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
     "count": 0,
@@ -30715,7 +30715,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2b44e4f050d7693b"
+    "stale_since": "6a5797d12ad93b40"
    },
    "status": "partial",
    "callers": [
@@ -52943,7 +52943,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1862,
+   "line": 1868,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53050,7 +53050,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1626,
+   "line": 1632,
    "hash": "ec834b16142998da",
    "does": "",
    "errors": {
@@ -53161,7 +53161,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1672,
+   "line": 1678,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53691,7 +53691,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2180,
+   "line": 2186,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -64842,7 +64842,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1717,
+   "line": 1723,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -64944,7 +64944,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1747,
+   "line": 1753,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {
