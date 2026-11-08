@@ -4682,6 +4682,15 @@
    "since": "2026-10-24"
   },
   {
+   "code": "TILL_RECHECK_UNAVAILABLE",
+   "status": "503",
+   "title": "Prices could not be checked",
+   "shopkeeper": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+   "hint": "Finish the bill, or check again in a moment.",
+   "owner_area": "till",
+   "since": "2026-11-08"
+  },
+  {
    "code": "TILL_REFUSED",
    "status": "varies",
    "title": "Counter request refused",

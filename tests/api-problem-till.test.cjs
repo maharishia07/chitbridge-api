@@ -244,6 +244,8 @@ const EXTRAS = [
   X('recheck-unknown-key', 'POST /api/till/recheck', 400, { body: { item_ids: [ITEM], price: 1 } }),
   X('recheck-too-many', 'POST /api/till/recheck', 400, { body: { item_ids: Array.from({ length: 201 }, (_, i) => '7' + String(i).padStart(7, '0') + '-7777-4777-8777-777777777777') }, said: 'At most 200 products in one check.' }),
   X('recheck-read-breaks', 'POST /api/till/recheck', 500, { body: { item_ids: [ITEM] }, setup: { db: 'fail' } }),
+  /* the tax shelf cannot be read for a shop that HAS a tax number (readShelf answers null): 503 TILL_RECHECK_UNAVAILABLE, never a 200 with empty slabs */
+  X('recheck-unreadable', 'POST /api/till/recheck', 503, { body: { item_ids: [ITEM] }, setup: { sqlRows: (sql) => RECHECK_ROWS(sql) || RATE_SHOP('regular')(sql) }, patch: [['lib/tax-shelf.js', 'readShelf', async () => null]], said: 'The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.' }),
   X('recheck-answers', 'POST /api/till/recheck', 200, { body: { item_ids: [ITEM, ITEM2] }, setup: { sqlRows: RECHECK_ROWS } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),

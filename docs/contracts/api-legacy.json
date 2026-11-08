@@ -63330,6 +63330,32 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "recheck-unreadable",
+     "status": 503,
+     "body_keys": {
+      "error": "Unavailable",
+      "message": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "type": "https://chitbridge.com/problems/till_recheck_unavailable",
+      "title": "Prices could not be checked",
+      "status": 503,
+      "code": "TILL_RECHECK_UNAVAILABLE",
+      "detail": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "hint": "Finish the bill, or check again in a moment.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unavailable",
+      "message": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "type": "https://chitbridge.com/problems/till_recheck_unavailable",
+      "title": "Prices could not be checked",
+      "status": 503,
+      "code": "TILL_RECHECK_UNAVAILABLE",
+      "detail": "The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.",
+      "hint": "Finish the bill, or check again in a moment.",
+      "request_id": "req-test"
+     }
     }
    ]
   }

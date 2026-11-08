@@ -34,7 +34,7 @@ const D = '55555555-5555-4555-8555-555555555555'; /* Cap: inactive */
 const GONE = '66666666-6666-4666-8666-666666666666'; /* deleted here: only another shop has a row by this id */
 const OWNER = { identity_id: SHOP, identity_type: 'entity', display_name: 'Kaveri Stores' };
 
-const world = { rows: [], reads: [], transactions: 0, adoption: [], brand: null };
+const world = { rows: [], reads: [], transactions: 0, adoption: [], brand: null, slabs: [], shelfThrows: false };
 const rowOf = (entity_id, item_id, item_data, is_active) => ({ entity_id, item_id, item_data, is_active: is_active !== false });
 
 function rowsFor(sql, params) {
@@ -43,6 +43,8 @@ function rowsFor(sql, params) {
     world.reads.push({ text, params });
     return { rows: world.rows.filter((r) => r.entity_id === params[0] && params[1].indexOf(r.item_id) >= 0) };
   }
+  if (/FROM identities WHERE identity_id = [$]1/.test(text)) return { rows: [{ display_name: 'Kaveri Stores', identity_id: SHOP, gstn: '33AAAAA0000A1Z5', country: 'IN', policy_flags: { gst_registration: 'regular' } }] };
+  if (/FROM definition d/.test(text)) { if (world.shelfThrows) throw new Error('the shelf read broke'); return { rows: world.slabs }; }
   if (/FROM catalogue_adoption WHERE entity_id = [$]1/.test(text)) return { rows: world.adoption };
   return { rows: [], rowCount: 0 };
 }
@@ -69,7 +71,7 @@ const call = (port, method, p, body) => new Promise((done) => {
 });
 let pass = 0, fail = 0;
 const ok = (name, fn) => { try { fn(); pass++; console.log('   ok   ' + name); } catch (e) { fail++; console.log('   FAIL ' + name + '\n          ' + e.message); } };
-const reset = (rows) => { world.rows = rows || []; world.reads = []; world.transactions = 0; world.adoption = []; world.brand = null; };
+const reset = (rows) => { world.rows = rows || []; world.reads = []; world.transactions = 0; world.adoption = []; world.brand = null; world.slabs = []; world.shelfThrows = false; };
 const byId = (answer, id) => ((answer.body && answer.body.items) || []).find((x) => x.item_id === id);
 
 (async () => {
@@ -112,6 +114,11 @@ const byId = (answer, id) => ((answer.body && answer.body.items) || []).find((x)
     assert.strictEqual(byId(all, 'not-an-id').found, false);
     assert.ok(Array.isArray(all.body.slabs) && Array.isArray(all.body.categories) && all.body.face && typeof all.body.face === 'object');
   });
+  ok('an item carries ONLY the closed key list the counter reads (no aliases, picture, modifiers or search words), for own rows and network lines alike', () => {
+    const allowed = new Set(require(path.join(HERE, 'lib', 'till-contract')).RECHECK_ITEM_KEYS);
+    for (const item of all.body.items) for (const key of Object.keys(item)) assert.ok(allowed.has(key), 'stray key ' + key);
+    assert.ok(!('aliases' in byId(all, A)) && !('image' in byId(all, A)));
+  });
   ok('ONE read of the rows inside ONE transaction, whatever the number of ids (no per-row query)', () => {
     assert.strictEqual(world.reads.length, 1); assert.ok(world.transactions <= 5, 'transactions ' + world.transactions);
     assert.deepStrictEqual(world.reads[0].params[1].slice().sort(), [A, B, C, D, GONE].sort());
@@ -131,6 +138,32 @@ const byId = (answer, id) => ((answer.body && answer.body.items) || []).find((x)
     assert.strictEqual(byId(before, 'src:brand:pen').price, 100); assert.strictEqual(byId(after, 'src:brand:pen').price, 120); assert.strictEqual(byId(after, 'src:brand:pen').found, true);
     assert.strictEqual(byId(withdrawn, 'src:brand:pen').found, false); assert.strictEqual(withdrawn.status, 200);
   });
+
+  /* a slab rate moved: the product row is untouched (it cites gst-18), the answer carries the slab as it is NOW, so the counter reports the move BY VALUE. A door answering [] fails this. */
+  const seat = (rate) => [{ definition_id: 'gst-18', kind: 'tax', name: 'GST ' + rate + '%', current_version: 1, status: 'live', rules: { rate } }];
+  reset([rowOf(SHOP, A, { name: 'Pen', price: 100, tax_slab: 'gst-18', tax_slab_name: 'GST 18%' })]); world.slabs = seat(18);
+  const seated18 = await q('/recheck', { item_ids: [A] });
+  world.slabs = seat(12);
+  const seated12 = await q('/recheck', { item_ids: [A] });
+  const rateOf = (answer) => ((answer.body.slabs || []).find((slab) => slab.id === 'gst-18') || {}).rate;
+  ok('a seated slab whose rate moved 18 to 12 is answered by value (slabs carry gst-18 at 12 now); the product row is unchanged; the slab list is NOT empty', () => {
+    assert.strictEqual(seated18.status, 200); assert.strictEqual(seated12.status, 200);
+    assert.ok(seated12.body.slabs.length > 0, 'a door that answers [] must fail here');
+    assert.strictEqual(rateOf(seated18), 18); assert.strictEqual(rateOf(seated12), 12);
+    assert.strictEqual(byId(seated12, A).tax_slab, 'gst-18');
+  });
+
+  /* the shelf read throws: the door must NOT answer 200 with empty slabs ("nothing moved"); it answers the one problem shape, a registered code, words that say the check could not run */
+  reset([rowOf(SHOP, A, { name: 'Pen', price: 100, tax_slab: 'gst-18' })]); world.slabs = seat(18); world.shelfThrows = true;
+  const shelfBroke = await q('/recheck', { item_ids: [A] });
+  ok('the tax shelf read throws: 503 TILL_RECHECK_UNAVAILABLE in words (not 200, no items, no empty slabs)', () => {
+    assert.strictEqual(shelfBroke.status, 503); assert.strictEqual(shelfBroke.body.code, 'TILL_RECHECK_UNAVAILABLE');
+    assert.match(shelfBroke.body.message, /could not be checked/); assert.ok(!('slabs' in shelfBroke.body) && !('items' in shelfBroke.body));
+  });
+  reset(); world.adoption = [{ source_key: 'brand', commercials: {} }]; world.brand = { price: 100 };
+  require(path.join(HERE, 'lib', 'catalogue-build')).resolve = async () => { throw new Error('brand read broke'); };
+  const netBroke = await q('/recheck', { item_ids: ['src:brand:pen'] });
+  ok('the network read fails: the same 503, never found:false (a brand line is not "gone" because it could not be read)', () => { assert.strictEqual(netBroke.status, 503); assert.strictEqual(netBroke.body.code, 'TILL_RECHECK_UNAVAILABLE'); });
 
   reset();
   const none = await q('/recheck', { item_ids: [] });

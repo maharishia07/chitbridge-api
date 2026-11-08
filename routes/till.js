@@ -32,7 +32,7 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
+const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
@@ -1115,7 +1115,7 @@ async function addNetworkLines(entity_id, ownRead, items, network, project) {
 }
 
 /** resolve the adopted sources, read their lines the way the shopfront does, and push each priced, sellable one onto the counter's items */
-async function pushNetworkLines(entity_id, adoptedRows, items, network, project) {
+async function pushNetworkLines(entity_id, adoptedRows, items, network, project, resolvedSources) {
   const catalogueRead = require('../lib/catalogue-read');
   let container = null;
   try {
@@ -1123,7 +1123,7 @@ async function pushNetworkLines(entity_id, adoptedRows, items, network, project)
   } catch (e) {
     log.fellBack('till GET /snapshot: the helper failed — carried on without it', e);
   }
-  const sources = await resolveSources(entity_id, adoptedRows);
+  const sources = resolvedSources || (await resolveSources(entity_id, adoptedRows));
   const containers = await resolveContainers(container, sources);
   const lines = catalogueRead.lines({
     owned: [],
@@ -2224,14 +2224,37 @@ router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /reche
     const found = shopIds.length ? await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, shopIds])) : { rows: [] };
     const master = await readCategoryMaster(entity_id);
     const rows = new Map(found.rows.map((row) => [String(row.item_id), row]));
-    const network = await recheckNetwork(entity_id, ids, master.catNames);
-    const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false }).catch(log.orElse('till POST /recheck: the tax shelf could not be read — answered with none', null));
-    res.json({ at: new Date().toISOString(), items: ids.map((id) => recheckAnswer(id, rows.get(id), master.catNames, network)), ...taxBlock(shelf) });
+    const reads = await recheckReads(entity_id, ids, master.catNames, req);
+    if (!reads) return problem(req, res, { status: 503, ...said('TILL_RECHECK_UNAVAILABLE', 'Unavailable', RECHECK_UNAVAILABLE) });
+    res.json({ at: new Date().toISOString(), items: ids.map((id) => recheckAnswer(id, rows.get(id), master.catNames, reads.network)), ...taxBlock(reads.shelf) });
   } catch (e) {
     problem(req, res, failed(e, req));
   }
 });
 
+/** the sentence a counter shows when the check could not run: it must never read as "nothing moved" */
+const RECHECK_UNAVAILABLE = 'The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.';
+/**
+ * the two reads beyond the rows (the brand's lines, the tax shelf) → { network, shelf }, or null when EITHER failed (logged with the request id): a door that cannot read the
+ * rate context must not answer 200 with empty slabs (the counter would read that as "nothing moved"); the counter treats the bill as unchecked. A shop with no tax number has a null
+ * shelf BY DESIGN (taxShelf.readShelf answers null), which is not a failure.
+ */
+async function recheckReads(entity_id, ids, catNames, req) {
+  try {
+    const network = await recheckNetwork(entity_id, ids, catNames);
+    const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false });
+    if (!shelf && (await shopHasTaxNumber(entity_id))) throw new Error('the tax shelf could not be read'); /* readShelf answers null for a read that failed AND for a shop with no tax number; only the second is by design */
+    return { network, shelf };
+  } catch (e) {
+    log.warn('till.recheck.unreadable', { entity_id, request_id: req && req.id, why: String(e && e.message) });
+    return null;
+  }
+}
+/** does this shop hold a tax number? (a null tax shelf is by design only when it does not) */
+async function shopHasTaxNumber(entity_id) {
+  const found = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]);
+  return !!String((found.rows[0] || {}).gstn || '').trim();
+}
 /** the network lines among the asked ids, as the snapshot would send them now → Map(item_id → counter row), or null when none was asked (no adoption read then) */
 async function recheckNetwork(entity_id, ids, catNames) {
   if (!ids.some((id) => /^src:/.test(id))) return null;
@@ -2239,7 +2262,10 @@ async function recheckNetwork(entity_id, ids, catNames) {
   const reads = ownReads(entity_id, null);
   const ownRead = (name) => withEntity(entity_id, reads[name]);
   const adopted = await ownRead('adoption'); /* ⚠️ not addNetworkLines: it swallows a failed read, and a brand line that could not be read must not be answered "gone" */
-  if (adopted.rows.length) await pushNetworkLines(entity_id, adopted.rows, lines, { unpriced: 0 }, (id, data) => tillItem(id, data, [], catNames));
+  if (!adopted.rows.length) return new Map();
+  const sources = await resolveSources(entity_id, adopted.rows);
+  if (sources.length < adopted.rows.length) throw new Error('a brand source could not be read'); /* resolveSources leaves an unreadable source OUT: that must not read as "the line is gone" */
+  await pushNetworkLines(entity_id, adopted.rows, lines, { unpriced: 0 }, (id, data) => tillItem(id, data, [], catNames), sources);
   return new Map(lines.map((line) => [line.item_id, line]));
 }
 
@@ -2250,12 +2276,18 @@ function recheckIds(body) {
   return Array.from(new Set(asked));
 }
 
+/** an answer cut to the closed key list the counter reads (lib/till-contract RECHECK_ITEM_KEYS): nothing else of the shelf row travels */
+function recheckPick(answer) {
+  const out = {};
+  for (const key of RECHECK_ITEM_KEYS) if (key in answer) out[key] = answer[key];
+  return out;
+}
 /** a network line's answer: its counter row as the snapshot would send it now, or found:false (withdrawn by the brand, unpriced here); a failed read throws, so the counter treats the whole check as failed, never as a deletion */
 function networkAnswer(item_id, network) {
   if (!network) return { item_id, found: null, checked: false, why: 'network_not_read' };
   const line = network.get(item_id);
   if (!line) return { item_id, found: false, checked: true };
-  return Object.assign({}, line, { found: true, checked: true, active: true, stamp: null });
+  return recheckPick(Object.assign({}, line, { found: true, checked: true, active: true, stamp: null }));
 }
 
 /**
@@ -2267,7 +2299,7 @@ function recheckAnswer(item_id, row, catNames, network) {
   if (!row) return { item_id, found: false, checked: true };
   const data = row.item_data || {};
   const projected = tillItem(item_id, data, [], catNames);
-  return Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null });
+  return recheckPick(Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null }));
 }
 
 /**
