@@ -79,9 +79,9 @@ function recorder(file, router, mount, scenarioPrefix) {
 function build(out, inputs) {
   const answers = {};
   inputs.forEach((file) => Object.assign(answers, JSON.parse(fs.readFileSync(file, 'utf8'))));
-  const about = 'The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs and tests/books-close-country.test.cjs (every answer branch of the period routes, the ledger-off writer included). '
-    + 'PRODUCED, never typed, on ' + new Date().toISOString().slice(0, 10) + ' with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json . '
-    + 'Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). Both recording tests compare the keys they answer now with this file and fail until it is rebuilt.';
+  const about = 'The 2xx JSON answers the period-end books routes gave to the real router over the in-memory ledger, recorded by tests/books-period.test.cjs, tests/books-close-country.test.cjs and tests/move-in-country-gate.test.cjs (every answer branch of the period routes, the ledger-off writer included, and the two move-in doors). '
+    + 'PRODUCED, never typed, on ' + new Date().toISOString().slice(0, 10) + ' with: node tests/books-period.test.cjs --capture period.json && node tests/books-close-country.test.cjs --capture close.json && node tests/move-in-country-gate.test.cjs --capture movein.json && node tests/support/books-capture.cjs --build docs/contracts/books-answers.json period.json close.json movein.json . '
+    + 'Read by tests/api-problem-books.test.cjs (checkAllowList: the no-DB sweep never reaches these) and by tools/api-allowlist.cjs (--capture docs/contracts/books-answers.json). The three recording tests compare the keys they answer now with this file and fail until it is rebuilt.';
   fs.writeFileSync(out, JSON.stringify({ about, answers: Object.fromEntries(Object.keys(answers).sort().map((key) => [key, answers[key]])) }, null, 1) + '\n');
   console.log('wrote ' + out + ': ' + Object.keys(answers).length + ' answers');
 }

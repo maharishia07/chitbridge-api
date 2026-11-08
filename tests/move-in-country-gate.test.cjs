@@ -15,6 +15,7 @@
  * No database, no network. Run: node tests/move-in-country-gate.test.cjs
  */
 const assert = require('assert');
+const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const MI = require('../lib/move-in');
@@ -220,10 +221,12 @@ t('⭐ the proof holds the stated country, the company id, each held item with c
   const express = require('express');
   const app = express(); app.use(express.json({ limit: '5mb' })); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0), port = srv.address().port;
+  const Capture = require('./support/books-capture.cjs');
+  const rec = Capture.recorder(Capture.captureFile(process.argv), require(path.join(H.API, 'routes', 'books')), '/api/books', 'movein'); /* S34: the 2xx answers of the two doors, recorded for docs/contracts/books-answers.json */
   const call = (method, p, body) => new Promise((ok) => {
     const b = JSON.stringify(body || {});
     const r = http.request({ host: '127.0.0.1', port, path: '/api/books' + p, method, headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(b) } },
-      (res) => { let raw = ''; res.on('data', (c) => { raw += c; }); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) { j = { raw }; } ok({ status: res.statusCode, body: j }); }); });
+      (res) => { let raw = ''; res.on('data', (c) => { raw += c; }); res.on('end', () => { let j = {}; try { j = JSON.parse(raw || '{}'); } catch (_) { j = { raw }; } rec.note(method, p.replace(/^/, '/api/books'), res.statusCode, j, !j.raw); ok({ status: res.statusCode, body: j }); }); });
     r.end(b);
   });
   await X.store.saveSetting(X.db, SHOP, { enabled: false, country: 'AU' });
@@ -265,11 +268,23 @@ t('⭐ the proof holds the stated country, the company id, each held item with c
       assert.strictEqual(b.status, 422, JSON.stringify(b.body)); assert.strictEqual(b.body.code, 'MOVE_IN_COUNTRY'); assert.ok(/not ready for India/.test(b.body.message), b.body.message);
     } finally { await X.store.saveSetting(X.db, SHOP, { enabled: true, country: 'AU' }); }
   });
+  await ta('⭐ API-8: a chart moved in through the door, confirmed: 200 with what it added and merged (the answer the allow-list is proved on)', async () => {
+    const MI = require(path.join(H.API, 'lib', 'move-in.js'));
+    const chartCsv = fs.readFileSync(path.join(__dirname, 'fixtures', 'move-in', 'xero-accounts.csv'), 'utf8');
+    const chartDec = MI.guess('accounts', MI.readFile({ csv: chartCsv }).headers).guess.filter((g) => g.field).map((g) => ({ incoming: g.incoming, field: g.field }));
+    const asked = { kind: 'accounts', source: 'xero', csv: chartCsv, decisions: chartDec, source_country: 'AU' };
+    const preview = await call('POST', '/move-in/preview', asked);
+    assert.strictEqual(preview.status, 200, JSON.stringify(preview.body));
+    const r = await call('POST', '/move-in/import', Object.assign({ confirm: true }, asked));
+    assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.ok(r.body.added > 0, JSON.stringify(r.body));
+  });
   await ta('GET /move-in/imports before b765: ready false, with the sentence (never a 500)', async () => {
     const r = await call('GET', '/move-in/imports');
     assert.strictEqual(r.status, 200, JSON.stringify(r.body)); assert.strictEqual(r.body.ready, false); assert.ok(!/b765/.test(r.body.why) && /after the next update/.test(r.body.why), r.body.why);
   });
   srv.close();
+  rec.save();
+  { const drift = rec.differences(path.join(H.API, 'docs', 'contracts', 'books-answers.json')); await ta('the answers this test gets hold exactly the keys of docs/contracts/books-answers.json (rebuild: tests/support/books-capture.cjs --build)', async () => { assert.deepStrictEqual(drift, []); }); }
   done();
 })().catch((e) => { console.error(e); process.exit(1); });
 

@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 168,
-  "meets": 470,
+  "partial": 153,
+  "meets": 485,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 48
+    "failing": 32
    },
    "foreign_id_404": {
     "applies": 203,
@@ -35,7 +35,7 @@
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 31,
+    "applies": 37,
     "failing": 0
    },
    "parameterised_query": {
@@ -47,7 +47,7 @@
     "failing": 479
    }
   },
-  "output_allowlist_from_recordings": 128
+  "output_allowlist_from_recordings": 133
  },
  "machine_columns": [
   "schema_in",
@@ -827,7 +827,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 258,
-   "hash": "e72ad7c32f415e59",
+   "hash": "86df410a8511ad98",
    "does": "",
    "errors": {
     "count": 1,
@@ -863,7 +863,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -898,13 +898,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "combo-mode.js"
    ],
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1777,
+   "line": 1783,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1927,
+   "line": 1933,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1658,
+   "line": 1664,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -5090,7 +5090,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2158,
-   "hash": "d9ff2645f0a73015",
+   "hash": "012408655020a240",
    "does": "",
    "errors": {
     "count": 3,
@@ -5134,7 +5134,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5159,6 +5159,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -5173,10 +5174,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-compare.js"
    ],
@@ -5203,7 +5204,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2166,
-   "hash": "4c3448af6a2b5ce3",
+   "hash": "7ca455cbd821c7a8",
    "does": "",
    "errors": {
     "count": 3,
@@ -5247,7 +5248,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -5286,10 +5287,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -6407,7 +6408,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2325,
-   "hash": "eab6f7f4c79c78d9",
+   "hash": "5ae00d5c8173ec3d",
    "does": "",
    "errors": {
     "count": 3,
@@ -6446,7 +6447,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -6486,10 +6487,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -7372,7 +7373,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2435,
-   "hash": "084f040c2a23476b",
+   "hash": "3cffdda5474f29a9",
    "does": "",
    "errors": {
     "count": 2,
@@ -7408,7 +7409,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -7446,10 +7447,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts.html",
     "cap-period.js"
@@ -11933,7 +11934,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 63,
-   "hash": "c0dd4ca7465ccd30",
+   "hash": "d066c4975f3d38a9",
    "does": "",
    "errors": {
     "count": 0,
@@ -11964,7 +11965,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -11998,13 +11999,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "combo-mode.js"
    ],
@@ -20905,7 +20906,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 216,
+   "line": 219,
    "hash": "86729110d085f141",
    "does": "",
    "errors": {
@@ -21589,7 +21590,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 109,
-   "hash": "699612b806de2926",
+   "hash": "0fea4ab2374ff23d",
    "does": "",
    "errors": {
     "count": 0,
@@ -21616,7 +21617,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -21645,13 +21646,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -22252,7 +22253,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1608,
+   "line": 1614,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22350,7 +22351,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1963,
+   "line": 1969,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22556,7 +22557,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2078,
+   "line": 2084,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22653,7 +22654,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1822,
+   "line": 1828,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -24911,7 +24912,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/tax.js",
    "line": 98,
-   "hash": "13eb044abdeba057",
+   "hash": "3113f5dee04bf883",
    "does": "",
    "errors": {
     "count": 0,
@@ -24943,7 +24944,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -24966,6 +24967,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -24980,10 +24982,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "helpers.js"
@@ -29395,7 +29397,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 106,
-   "hash": "794b8d56fae0fc19",
+   "hash": "4cd3bd5191856987",
    "does": "",
    "errors": {
     "count": 1,
@@ -29431,7 +29433,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -29466,13 +29468,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "combo-mode.js"
    ],
@@ -30634,8 +30636,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1528,
-   "hash": "2b44e4f050d7693b",
+   "line": 1555,
+   "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
     "count": 0,
@@ -30715,7 +30717,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2b44e4f050d7693b"
+    "stale_since": "6a5797d12ad93b40"
    },
    "status": "partial",
    "callers": [
@@ -33850,7 +33852,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 306,
-   "hash": "867e5ec2ee699edf",
+   "hash": "aabf384ec7ec5ff7",
    "does": "",
    "errors": {
     "count": 2,
@@ -33887,7 +33889,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -33912,6 +33914,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -33926,11 +33929,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "867e5ec2ee699edf"
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -35885,7 +35887,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1934,
-   "hash": "9b2e840b9557f355",
+   "hash": "e312a8dc229e0276",
    "does": "",
    "errors": {
     "count": 2,
@@ -35932,7 +35934,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -35958,6 +35960,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -35972,11 +35975,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9b2e840b9557f355"
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-move-in.js"
    ],
@@ -36109,7 +36111,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1924,
-   "hash": "33e170893cfe51d1",
+   "hash": "2a118fb7e3c1cec9",
    "does": "",
    "errors": {
     "count": 2,
@@ -36150,7 +36152,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -36175,6 +36177,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -36189,11 +36192,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "33e170893cfe51d1"
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2 (after the open-key fixes, head 1e85e8a4): handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-move-in.js"
    ],
@@ -43501,7 +43503,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 80,
-   "hash": "0036f2dc4d7099aa",
+   "hash": "3111294cdf4c538b",
    "does": "",
    "errors": {
     "count": 0,
@@ -43534,7 +43536,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -43568,13 +43570,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "combo-mode.js"
    ],
@@ -43601,7 +43603,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/combo-templates.js",
    "line": 214,
-   "hash": "9fd6e0f06c12c538",
+   "hash": "b461b339dcb523ca",
    "does": "",
    "errors": {
     "count": 3,
@@ -43642,7 +43644,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -43678,13 +43680,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "combo-mode.js"
    ],
@@ -50677,7 +50679,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 400,
+   "line": 403,
    "hash": "9b205221f9671f4f",
    "does": "",
    "errors": {
@@ -50784,7 +50786,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 360,
+   "line": 363,
    "hash": "541db4f71e91011d",
    "does": "",
    "errors": {
@@ -50860,7 +50862,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -50868,7 +50870,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -50897,7 +50899,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 382,
+   "line": 385,
    "hash": "82ef9190340340a4",
    "does": "",
    "errors": {
@@ -50970,7 +50972,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -50978,7 +50980,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51007,7 +51009,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 311,
+   "line": 314,
    "hash": "cf6a90fd7197dad6",
    "does": "",
    "errors": {
@@ -51075,7 +51077,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51083,7 +51085,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51112,7 +51114,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 321,
+   "line": 324,
    "hash": "a15d2437c4075e3a",
    "does": "",
    "errors": {
@@ -51178,7 +51180,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51186,7 +51188,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51215,7 +51217,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 293,
+   "line": 296,
    "hash": "e8cfb81fec41c36b",
    "does": "",
    "errors": {
@@ -51284,7 +51286,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51292,7 +51294,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52334,7 +52336,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 105,
-   "hash": "2f0bb2cc89371ee4",
+   "hash": "c28a1c5efa74f6c4",
    "does": "",
    "errors": {
     "count": 1,
@@ -52367,7 +52369,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -52432,7 +52434,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 106,
-   "hash": "81d39817228da29a",
+   "hash": "8389ffdbe820ed19",
    "does": "",
    "errors": {
     "count": 1,
@@ -52465,7 +52467,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": false,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -52943,7 +52945,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1862,
+   "line": 1868,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53050,7 +53052,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1626,
+   "line": 1632,
    "hash": "ec834b16142998da",
    "does": "",
    "errors": {
@@ -53161,7 +53163,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1672,
+   "line": 1678,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53691,7 +53693,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2180,
+   "line": 2186,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -57082,14 +57084,13 @@
    "owner_agent": "cb-operations",
    "file": "routes/supplies.js",
    "line": 58,
-   "hash": "72aebccb3570376f",
+   "hash": "3b16aa55740768ab",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
-     409,
      422,
      500,
      503
@@ -57115,7 +57116,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -57135,7 +57136,6 @@
    "declared": [
     400,
     401,
-    409,
     422,
     500,
     503
@@ -57155,13 +57155,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -57323,7 +57323,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -64738,7 +64738,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 274,
+   "line": 277,
    "hash": "a63f82874ea89e8f",
    "does": "",
    "errors": {
@@ -64805,7 +64805,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -64813,7 +64813,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64842,7 +64842,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1717,
+   "line": 1723,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -64944,7 +64944,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1747,
+   "line": 1753,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {
