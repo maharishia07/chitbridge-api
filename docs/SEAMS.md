@@ -45,8 +45,8 @@ of file each thing is; this says what already does the job.
 | 50 | `rows` | `cap-settings.js` |  |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
-| 47 | `again` | `signin-ui.js` |  |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
+| 47 | `again` | `signin-ui.js` |  |
 | 46 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
 | 46 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 44 | `read` | `cap-print.js` |  |
@@ -151,13 +151,13 @@ of file each thing is; this says what already does the job.
 | 18 | `parties` | `books-store.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 18 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 18 | `notMigrated` | `crm-followups.js` |  |
+| 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
-| 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 17 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
@@ -165,6 +165,7 @@ of file each thing is; this says what already does the job.
 | 16 | `head` | `list-ctl.js` |  |
 | 16 | `panel` | `sides.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
+| 16 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 16 | `terms` | `books-store.js` | the party's credit terms, from whichever list holds them (a customer's for a sale, a supplier's for a purchase |
 | 16 | `series` | `gst-returns.js` | `paid_on`: |
 | 16 | `orders` | `home-facts.js` | the till said 2 — |
@@ -178,11 +179,11 @@ of file each thing is; this says what already does the job.
 | 15 | `offers` | `network-app.js` |  |
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
-| 16 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 15 | `where` | `istest.js` | READING is_test is fine and stays — |
+| 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
@@ -197,14 +198,13 @@ of file each thing is; this says what already does the job.
 | 14 | `edit` | `person-session.js` |  |
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
-| 15 | `heads` | `tax-lines.js` | The heads, summed. |
 | 13 | `save` | `app.html` |  |
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `confirm` | `lab-kit.js` | opts: |
 | 13 | `verdict` | `rail-thread.js` |  |
 | 13 | `tables` | `bookpack.js` | the CSV parts: |
 | 13 | `payment` | `books-store.js` |  |
+| 13 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 13 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 13 | `minor` | `ledger.js` | minor(v, where) → the stored amount as a safe integer, or a refusal naming where — |
 | 13 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
-| 12 | `units` | `cart.js` |  |
