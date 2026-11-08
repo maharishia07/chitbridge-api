@@ -1914,7 +1914,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): chit_header, chit_line, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): chit_header, chit_line · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/:chit_id/proposals/:proposal_id/accept** · chits · cb-rail · meets standard
 - does: _not yet written_
@@ -1926,7 +1926,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): chit_header, chit_line, identities · writes (derived): - · callers: - · actions: -
+- reads (derived): chit_header, chit_line · writes (derived): - · callers: - · actions: -
 
 **POST /api/chits/:chit_id/proposals/:proposal_id/reject** · chits · cb-rail · meets standard
 - does: _not yet written_

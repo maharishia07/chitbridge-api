@@ -41505,8 +41505,7 @@
    },
    "reads": [
     "chit_header",
-    "chit_line",
-    "identities"
+    "chit_line"
    ],
    "writes": [],
    "money": false,
@@ -41703,8 +41702,7 @@
    },
    "reads": [
     "chit_header",
-    "chit_line",
-    "identities"
+    "chit_line"
    ],
    "writes": [],
    "money": false,
@@ -43391,7 +43389,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 404,
-   "hash": "0f58eecaca6bb7d1",
+   "hash": "d43294ebda426ddd",
    "does": "",
    "errors": {
     "count": 0,
@@ -43465,7 +43463,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "0f58eecaca6bb7d1"
+    "stale_since": "d43294ebda426ddd"
    },
    "status": "partial",
    "callers": [

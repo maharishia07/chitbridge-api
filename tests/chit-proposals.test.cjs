@@ -678,7 +678,7 @@ const call = (method, url, id, body) =>
   });
 
   console.log('\n== I · ACC-192: an issued invoice is never rewritten by an amendment ==\n');
-  const WORDS = 'This bill is already invoiced. A change in price needs a credit or debit note.';
+  const WORDS = 'This bill is already invoiced. A change in price needs a credit or debit note. Propose the change; the note is issued when the other side accepts.';
   const sealed = (w) => JSON.stringify([w.header, w.detail, w.amend]);
   /* ── ACC-192 1b: a stand-in for the ONE send path (lib/autoraise.sendAs). It records the body and mints the note on the issuer's copy; a buyer on another installation gets the SAME JSON over the wire ── */
   const creditNote = require(root('lib/price-note'));

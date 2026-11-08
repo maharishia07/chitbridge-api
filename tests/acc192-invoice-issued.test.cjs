@@ -104,7 +104,7 @@ const pump = (more) => Object.assign({ particulars: 'Pump seal', quantity: 10, u
   console.log('\n== R · the refusal ==\n');
   await t('refuseMoneyAmend: issued + a money edit throws 409 INVOICE_MONEY_LOCKED in the registered words; issued + a comment passes; not issued + a price passes', async () => {
     HEADER = row({ posted: true });
-    await assert.rejects(issued.refuseMoneyAmend('e1', 'c1', [edit(0, pump({ price: 96 }))]), (e) => e.status === 409 && e.code === 'INVOICE_MONEY_LOCKED' && e.refused === true && e.message === 'This bill is already invoiced. A change in price needs a credit or debit note.');
+    await assert.rejects(issued.refuseMoneyAmend('e1', 'c1', [edit(0, pump({ price: 96 }))]), (e) => e.status === 409 && e.code === 'INVOICE_MONEY_LOCKED' && e.refused === true && e.message === 'This bill is already invoiced. A change in price needs a credit or debit note. Propose the change; the note is issued when the other side accepts.');
     await issued.refuseMoneyAmend('e1', 'c1', [edit(0, pump({ comment: 'x' }))]);
     HEADER = row({ has_invoice: true, document: 'pro_forma' });
     await issued.refuseMoneyAmend('e1', 'c1', [edit(0, pump({ price: 96 }))]);
