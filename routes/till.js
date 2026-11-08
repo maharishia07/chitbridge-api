@@ -1385,6 +1385,9 @@ function policyBlock(row, flags) {
   return {
     books_at: flags.books_at || 'accepted',
     qty_zero_hides: flags.qty_zero_hides || 'off',
+    /* ⭐ CTR-212 S0: 'on' | 'off' | null: null = the owner has not answered (askedOf; never 'off'). The counter treats null as off for the OPTIONAL recheck only; a bill parked past park_max_hours is checked whatever this says. */
+    recheck_prices: policy.askedOf(row.policy_flags, 'recheck_prices').value,
+    park_max_hours: policy.PARK_MAX_HOURS /* one platform constant: the counter holds no copy of the timer */,
     /* ⭐ how much difference is not a dispute — set once by the trade, applied at the door (lib/lotfields) */
     price_includes_tax: policy.flagOf(row.policy_flags, 'price_includes_tax', row.country) /* TILL-B2: unset → the country's convention (US: excluded) */,
     /* ⭐ CAN THIS SERVER TRANSCRIBE? The counter picks a recogniser without a round trip to find out. */
