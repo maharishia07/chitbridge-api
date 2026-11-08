@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 157 | `list` | `amend.js` |  |
 | 125 | `rows` | `crm.js` | still in them: |
-| 116 | `words` | `variant.browser.js` |  |
+| 117 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 109 | `read` | `books-cashflow.js` | Trips: |
@@ -24,7 +24,7 @@ of file each thing is; this says what already does the job.
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 69 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 67 | `list` | `cap-settings.js` |  |
 | 66 | `entry` | `books-store.js` |  |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
@@ -37,7 +37,7 @@ of file each thing is; this says what already does the job.
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 60 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
-| 54 | `record` | `access-events.js` |  |
+| 55 | `record` | `access-events.js` |  |
 | 54 | `pack` | `books-store.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -89,7 +89,7 @@ of file each thing is; this says what already does the job.
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
-| 30 | `note` | `dbwatch.js` |  |
+| 31 | `note` | `dbwatch.js` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 29 | `hold` | `orders.js` |  |
