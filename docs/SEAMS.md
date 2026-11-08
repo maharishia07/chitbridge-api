@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 157 | `list` | `amend.js` |  |
+| 158 | `list` | `amend.js` |  |
 | 126 | `rows` | `crm.js` | still in them: |
 | 117 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
@@ -118,13 +118,13 @@ of file each thing is; this says what already does the job.
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
+| 23 | `keep` | `signin.js` | see. |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
 | 22 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 22 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
-| 23 | `keep` | `signin.js` | see. |
 | 21 | `says` | `adopt.js` |  |
 | 21 | `entries` | `books-store.js` |  |
 | 21 | `chart` | `fx-rates.js` |  |
@@ -165,6 +165,7 @@ of file each thing is; this says what already does the job.
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 16 | `message` | `cap-print.js` | the one message: |
 | 16 | `head` | `list-ctl.js` |  |
+| 16 | `resolve` | `page.js` |  |
 | 16 | `verdict` | `rail-thread.js` |  |
 | 16 | `clean` | `amend.js` | Rejecting the shape in one place beats tolerating it in four. |
 | 16 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
@@ -179,7 +180,6 @@ of file each thing is; this says what already does the job.
 | 15 | `frame` | `cap-settings.js` |  |
 | 15 | `fmtMoney` | `helpers.js` |  |
 | 15 | `offers` | `network-app.js` |  |
-| 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
 | 15 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 15 | `post` | `books-manual.js` | POST /events — |
@@ -206,6 +206,6 @@ of file each thing is; this says what already does the job.
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `link` | `chit-sheet.js` |  |
 | 13 | `confirm` | `lab-kit.js` | opts: |
+| 13 | `dialog` | `ui.js` | modal(); the corner X is modal()'s own .mx. |
+| 13 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 13 | `tables` | `bookpack.js` | the CSV parts: |
-| 13 | `payment` | `books-store.js` |  |
-| 13 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
