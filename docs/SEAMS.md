@@ -61,7 +61,7 @@ of file each thing is; this says what already does the job.
 | 39 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 39 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 39 | `gate` | `country-setup.js` | gate(h, entity): |
+| 40 | `gate` | `country-setup.js` | gate(h, entity): |
 | 39 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
