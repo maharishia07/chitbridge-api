@@ -45,6 +45,8 @@ function extras(tools) {
 
   /* a person (a co-assist, so the shop's onboarding steps are not run) found by the User ID typed, with a PIN; issueToken is the one thing a scene changes */
   const PERSON_BY_HANDLE = answering(/LOWER\(user_id\) = LOWER/, [{ identity_id: '22222222-2222-4222-8222-222222222222', bridge_id: 'AAAA1111', display_name: 'Ravi Kumar', email: null, user_id: 'ravik.shop-a.br', identity_type: 'actor', pin_hash: 'x', parent_entity_id: SHOP, break_status: 'active' }]);
+  /* one contact on two accounts that the same secret opens: the chooser, 409 (SEC-143, M14; the same stand-in tests/lib/signin-scenes.cjs uses) */
+  const choosing = () => ({ identityAuth: { findLoginIdentity: async () => ({ ambiguous: true, via: 'contact', candidates: [{ identity_id: 'a' }, { identity_id: 'b' }], contact: 'tea@x.com' }), proveOnContact: async () => ({ opens: [{ identity_id: 'a' }, { identity_id: 'b' }], hashes: 1 }), choicesOf: async () => [{ id: 'a', label: 'Tea Shop' }, { id: 'b', label: 'Tea Shop' }] } });
   const verifying = (issueToken) => ({ identityAuth: { verifyCredential: async () => ({ ok: true }), issueToken } });
   const TWO_SHOPS = answering(/LOWER\(display_name\) = LOWER/, [{ identity_id: 'a', bridge_id: 'A', email: 'a@x.com', display_name: 'Tea Shop' }, { identity_id: 'b', bridge_id: 'B', email: 'b@x.com', display_name: 'Tea Shop' }]);
   /* ── sign-in and sign-up (POST /register is recorded, never judged; POST /verify is judged) ── */
@@ -66,6 +68,7 @@ function extras(tools) {
     N('verify-unknown-key-refused', 'POST ' + at('/verify'), 400, { body: { email: 'a@example.com', otp: '123456', colour: 'red' } }),
     N('verify-ok', 'POST ' + at('/verify'), 200, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => 'token-of-ravik'), setup: { sqlRows: PERSON_BY_HANDLE } }),
     N('verify-two-businesses-of-one-name', 'POST ' + at('/verify'), 400, { body: { id: 'ravik@Tea Shop', otp: '123456' }, setup: { sqlRows: TWO_SHOPS } }),
+    N('verify-contact-on-two-accounts', 'POST ' + at('/verify'), 409, { body: { id: 'tea@x.com', otp: '123456' }, patch: choosing() }),
     N('verify-device-removed', 'POST ' + at('/verify'), 403, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('DEVICE_REVOKED'), { code: 'DEVICE_REVOKED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
     N('verify-session-not-listed', 'POST ' + at('/verify'), 503, { body: { user_id: 'ravik.shop-a.br', pin: '1234' }, patch: verifying(async () => { throw Object.assign(new Error('SESSION_NOT_LISTED'), { code: 'SESSION_NOT_LISTED' }); }), setup: { sqlRows: PERSON_BY_HANDLE } }),
     N('verify-db-fails', 'POST ' + at('/verify'), 500, { body: { email: 'ghost@example.com', otp: '123456' }, setup: failing })
@@ -76,6 +79,8 @@ function extras(tools) {
     X('constitutions-listed', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: answering(/FROM constitution/, [{ key: 'general', version: 1, label: 'General', vertical: 'general', capabilities: [], is_default: true }]) } }),
     X('constitutions-with-a-zone', 'GET ' + at('/constitutions'), 200, { url: at('/constitutions?tz=Asia/Kolkata') }),
     N('constitutions-zone-twice', 'GET ' + at('/constitutions'), 400, { url: at('/constitutions?tz=Asia/Kolkata&tz=Asia/Dubai') }),
+    /* the installation or the country packs cannot be read (before: no answer at all): the route's own 500, nothing of the cause */
+    N('constitutions-fault', 'GET ' + at('/constitutions'), 500, { patch: { countrySetup: { atSignup: async () => { throw new Error(SECRET_SQL); } } } }),
     X('constitutions-catalogue-unread', 'GET ' + at('/constitutions'), 200, { setup: { sqlRows: raising(/FROM constitution/, '42P01') } }),
     X('search-too-short', 'GET ' + at('/search'), 400, { url: at('/search?q=a') }),
     X('search-nothing-asked', 'GET ' + at('/search'), 400, {}),

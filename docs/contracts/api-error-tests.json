@@ -732,7 +732,8 @@
   503
  ],
  "GET /api/entities/constitutions": [
-  400
+  400,
+  500
  ],
  "GET /api/entities/entitlements": [
   401,
@@ -2665,6 +2666,7 @@
  "POST /api/entities/verify": [
   400,
   403,
+  409,
   500,
   503
  ],

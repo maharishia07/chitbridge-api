@@ -2332,10 +2332,21 @@
     },
     "PATCH /api/entities/:id/erase": {
       "file": "entities.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "trips": 2,
+      "wire": 2,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_identity": {
+        "identity_id": "e1",
+        "identity_type": "entity",
+        "entity_id": "e1",
+        "owner_scope": "platform"
+      },
+      "fixture_row": {
+        "sealed": false,
+        "identity_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "PATCH /api/entities/me/exposure": {
       "file": "entities.js",

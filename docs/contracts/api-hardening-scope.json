@@ -224,6 +224,11 @@
    "route": "POST /api/chits/register/subjects/:subject_id/entries",
    "status": 404,
    "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "GET /api/entities/routing/preview",
+   "status": 500,
+   "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault is never a 500 (a preview never red-boxes a form)"
   }
  ],
  "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",
