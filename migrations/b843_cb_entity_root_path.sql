@@ -1,7 +1,5 @@
 -- b843_cb_entity_root_path.sql — DB-88 / DB-3 rehearsal (8 Nov 2026): cb_entity.root_path and its immutability trigger, missing from a baseline-built database.
 --
--- (9 Nov, NET-93: the trigger has one consented door, see the function below. Not on production yet, so edited in place; sit-au re-runs it, safe to repeat.)
---
 -- ⚠️ NOT RUN on production · Athi runs it (Supabase SQL editor, AS postgres), one step, after the DB-3 rehearsal file says so. Safe to repeat. Touches no rows
 --    (the column is generated from path; the table has a handful of rows).
 --
@@ -32,19 +30,12 @@ CREATE INDEX IF NOT EXISTS cb_entity_root_path_idx ON cb_entity (root_path);
 COMMENT ON COLUMN cb_entity.root_path IS
   'The network this entity belongs to: the first label of `path`, generated. A root''s root_path is itself. Never written by application code.';
 
--- NET-93: the ONE door through the rule. A business joins a network (a governance edge the child approved) or leaves it (disconnect) only inside the
--- transaction that names ITS OWN root in the setting cb.net_reroot (src/services/network.js reRootGuard). The setting is local to the transaction, and the
--- rule lets through only rows whose old root or new root IS that label: a shop can never be walked into another network by naming a third root.
 CREATE OR REPLACE FUNCTION cb_entity_root_is_immutable() RETURNS trigger
 LANGUAGE plpgsql AS $fn$
-DECLARE
-  old_root ltree := subpath(OLD.path, 0, 1);
-  new_root ltree := subpath(NEW.path, 0, 1);
-  consented text := nullif(current_setting('cb.net_reroot', true), '');
 BEGIN
-  IF new_root IS DISTINCT FROM old_root AND consented IS DISTINCT FROM old_root::text AND consented IS DISTINCT FROM new_root::text THEN
-    RAISE EXCEPTION 'an entity cannot change networks: % → % (entity %)', old_root, new_root, OLD.bridge_id
-      USING HINT = 'Moving WITHIN a network is allowed. Joining or leaving one goes through the approved connection (NET-93), never a bare path update.', ERRCODE = 'check_violation';
+  IF subpath(NEW.path, 0, 1) IS DISTINCT FROM subpath(OLD.path, 0, 1) THEN
+    RAISE EXCEPTION 'an entity cannot change networks: % → % (entity %)', subpath(OLD.path, 0, 1), subpath(NEW.path, 0, 1), OLD.bridge_id
+      USING HINT = 'Moving WITHIN a network is allowed. Leaving one is a separation: create a new entity.', ERRCODE = 'check_violation';
   END IF;
   RETURN NEW;
 END

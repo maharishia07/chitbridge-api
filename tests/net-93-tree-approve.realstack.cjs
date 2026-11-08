@@ -5,13 +5,13 @@
  * Migration b843's trigger says an entity never changes network (its root label), yet approving a tree edge moves the child's subtree under the parent:
  * the approve answered 500 ("an entity cannot change networks"), so an existing business could never join a network, and the second of two crossed
  * requests (the cycle) answered 500 instead of 409. A stub db cannot show it: the refusal is the trigger's. The fix is ONE consented door
- * (src/services/network.js reRootGuard sets cb.net_reroot for the transaction; b843 reads it).
+ * (src/services/network.js reRootGuard sets cb.net_reroot for the transaction; b848 reads it).
  * HAND-COMPUTED  S asks to join B (S has its own root S, with one branch S.S1): B approves-side is S (the child consents). After: S.path = B.S, S1.path = B.S.S1,
  *           root_path of both = B; the edge is active. Disconnect: both back under root S, edge disconnected.
  *           Two roots X and Y ask each other: approve X-parent edge → Y is X.Y; approve Y-parent edge → 409 CYCLE (X.Y is under X).
  *           A bare UPDATE of path to another root is refused (23514); naming a THIRD root in cb.net_reroot is refused too.
  *           A node already inside a tree (path P.Q, no live edge) cannot walk out by approve: 409 HAS_PARENT and its path is unchanged.
- * Run: DATABASE_URL=postgres://cb_app:cbapp@localhost:5432/cb_s41 node tests/net-93-tree-approve.realstack.cjs   (CI: the integration S41 job; needs b843 run)
+ * Run: DATABASE_URL=postgres://cb_app:cbapp@localhost:5432/cb_s41 node tests/net-93-tree-approve.realstack.cjs   (CI: the integration S41 job; needs b843 + b848 run)
  * CARD      04-network/connections-and-invitations
  */
 const url = process.env.DATABASE_URL || '';

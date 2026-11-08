@@ -226,10 +226,10 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   return rows[0];
 }
 /**
- * NET-93 · the ONE door through migration b843's root-immutable trigger. Joining a network (approve a governance edge) and leaving it (disconnect)
+ * NET-93 · the ONE door through b843's root-immutable trigger (opened by b848). Joining a network (approve a governance edge) and leaving it (disconnect)
  * move a whole subtree to another root, which the trigger refuses unless this transaction names the business's OWN root (its label) in cb.net_reroot.
  * Called only after the edge's rule (mayAct: the child consented, or a party disconnects); the setting lasts for this transaction alone.
- * Before b843 is run the setting is simply never read, so this is safe on a database without the trigger.
+ * Before b843 and b848 are run the setting is simply never read, so this is safe on a database without the trigger.
  */
 async function reRootGuard(dbClient, ownPath) {
   await dbClient.query(`select set_config('cb.net_reroot', subpath($1::ltree, 0, 1)::text, true)`, [ownPath]);
