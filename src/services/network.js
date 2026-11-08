@@ -196,10 +196,6 @@ async function _askedChild({ childId, childHandle, childBridgeId }, parent, acto
   return String(parent.id) !== String(actor.id) ? actor : null;
 }
 /**
- * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
- * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
- */
-/**
  * NET-93 · the ONE tree-place check, read by the ask (fail early, nothing saved) and by approve (the safety): is the parent already inside the child's own tree
  * (a business cannot become the child of its own member)? Throws 409 CYCLE in a plain sentence; answers { deep }: the child is itself inside another tree.
  */
@@ -210,6 +206,10 @@ async function refuseCycle(client, parent, child) {
   if (bad) throw err(409, 'That would put a network under one of its own members, which loops. Nothing was saved.', 'CYCLE');
   return { deep };
 }
+/**
+ * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
+ * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
+ */
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
