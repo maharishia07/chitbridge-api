@@ -333,6 +333,7 @@ const GUARDS = [
   'books-recurring.test.cjs', // ⭐ b281 draft: recurring entries — 503 until migrated, proposed by default, a re-run never posts twice, the daily sweep reverses a due accrual once
   'books-todo.test.cjs', // ⭐ the To-do feed: each kind from a real check, only what needs doing, and each row gone when it is done
   'cat210-rate-owner-only.test.cjs', // CAT-210: a tax rate is owner or manager only on every door (PATCH · bulk-update · create · schedule), one rule in lib/rate-door, the whole request refused in words, may_set_rate on the payload
+  'cat282-parallel-merge.test.cjs', // CAT-282: three parallel merge PATCHes of one product keep every edit (row lock on the write's transaction), one version per real change
   'cat211-rate-doors.test.cjs', // CAT-211: a category's rate (PUT/POST /definitions, the retire takeover) and the shop default (PUT /catalogue-face) are owner or manager only, the whole request refused in the one rate sentence, nothing written; no other writer of the two defaults
   'ctr182-gstin-owner-only.test.cjs', // CTR-182: the shop's GSTIN is the owner's on every door (till POST /shop · PATCH /entities/profile · PUT /governance/profile/vault · POST /integrations/profile): a clerk and a manager refused 403 OWNER_ONLY with nothing written, owner and a key pass, may_set_tax_id on can-see-costs
   'ctr-212-recheck-door.test.cjs', // ⭐ CTR-212 S1: POST /till/recheck answers every id with the catalogue's CURRENT row (deleted = found:false, soft-removed = active:false, a brand line read as the snapshot reads it)
