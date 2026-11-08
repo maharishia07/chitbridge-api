@@ -547,11 +547,11 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/use": {
-   "hash": "be91d2bc805731af",
+   "hash": "48686d79860a87fc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
    "lifecycle": "stable"
   },
   "GET /api/chits/:id/trace": {
@@ -4520,6 +4520,38 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/costs": {
+   "hash": "f308778e43b196af",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/raida": {
+   "hash": "ed19d2977593cc08",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/register/walk/:from": {
+   "hash": "ac296de840414378",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/pulse": {
+   "hash": "77f9463c104b2ef9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
    "lifecycle": "stable"
   }
  }
