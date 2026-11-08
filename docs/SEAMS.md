@@ -14,9 +14,9 @@ of file each thing is; this says what already does the job.
 | 117 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 110 | `read` | `books-cashflow.js` | Trips: |
+| 111 | `read` | `books-cashflow.js` | Trips: |
 | 102 | `answer` | `availability.js` | from March; then nearest. |
-| 93 | `money` | `bill-privacy.js` |  |
+| 94 | `money` | `bill-privacy.js` |  |
 | 83 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 77 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 76 | `next` | `dayopen.js` | the next thing to do — |
@@ -54,7 +54,7 @@ of file each thing is; this says what already does the job.
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
-| 43 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 44 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 42 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 41 | `rules` | `docnumber.js` | the rule set for a country — |
 | 40 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -113,7 +113,7 @@ of file each thing is; this says what already does the job.
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
-| 24 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
+| 25 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
