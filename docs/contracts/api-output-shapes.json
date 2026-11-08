@@ -6310,7 +6310,13 @@
             },
             "depth": {
               "type": "number"
-            }
+            },
+            "purpose": {},
+            "sort_order": {},
+            "city": {},
+            "lat": {},
+            "lng": {},
+            "service_km": {}
           },
           "additionalProperties": false,
           "x-closed-by": "recordings"
@@ -19068,15 +19074,32 @@
           "rec": {
             "type": "object",
             "required": [
+              "id",
               "source_key",
-              "at"
+              "at",
+              "published_at",
+              "published_by",
+              "changes"
             ],
             "properties": {
+              "id": {
+                "type": "string"
+              },
               "source_key": {
                 "type": "string"
               },
               "at": {
                 "type": "string"
+              },
+              "published_at": {
+                "type": "string"
+              },
+              "published_by": {
+                "type": "string"
+              },
+              "changes": {
+                "type": "array",
+                "items": {}
               }
             },
             "additionalProperties": false,
