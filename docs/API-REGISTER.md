@@ -501,11 +501,11 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/identity/documents/:scheme/verify | identity-docs | routes/identity-docs.js:424 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/integrations/:actor_id/approve | integrations | routes/integrations.js:635 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/integrations/ask/:handle/stock | integrations | routes/integrations.js:940 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/integrations/books | integrations | routes/integrations.js:672 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/integrations/books/skip | integrations | routes/integrations.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/integrations/books | integrations | routes/integrations.js:672 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/integrations/books/skip | integrations | routes/integrations.js:801 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/integrations/heartbeat | integrations | routes/integrations.js:459 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | no | yes |
 | POST | /api/integrations/profile | integrations | routes/integrations.js:1019 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/invoice/build | invoice | routes/invoice.js:54 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/invoice/build | invoice | routes/invoice.js:54 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/keys | keys | routes/keys.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/kyb/credential | kyb | routes/kyb.js:25 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/kyb/field | kyb | routes/kyb.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -530,7 +530,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/notifications/seen | notifications | routes/notifications.js:184 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/offers/evaluate | offers | routes/offers.js:105 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/offers/explain | offers | routes/offers.js:106 | yes | yes | yes | yes | yes | yes | yes | no | no | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/pricing/price | pricing | routes/pricing.js:58 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/pricing/price | pricing | routes/pricing.js:58 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/privacy/me/consent | privacy | routes/privacy.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/privacy/me/requests | privacy | routes/privacy.js:85 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/products | products | routes/products.js:425 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -578,8 +578,8 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/supplies | supplies | routes/supplies.js:58 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:116 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/compute | tax | routes/tax.js:183 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/tax/rate | tax | routes/tax.js:146 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/compute | tax | routes/tax.js:183 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/tax/rate | tax | routes/tax.js:146 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/testing/cases/close | testing | routes/testing.js:286 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/testing/cases/gherkin | testing | routes/testing.js:1752 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | no |
 | POST | /api/testing/cases/import | testing | routes/testing.js:865 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
@@ -600,10 +600,10 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/till/enrol | till | routes/till.js:2598 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/flags | till | routes/till.js:1721 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/listen | till | routes/till.js:3968 | yes | yes | no | no | yes | no | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
-| POST | /api/till/offer-item | till | routes/till.js:2097 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
+| POST | /api/till/offer-item | till | routes/till.js:2097 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/till/pair | till | routes/till.js:2531 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/pair/claim | till | routes/till.js:2640 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |
-| POST | /api/till/price | till | routes/till.js:2170 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
+| POST | /api/till/price | till | routes/till.js:2170 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/quick-keys/hide | till | routes/till.js:1875 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/quick-keys/screen-config | till | routes/till.js:1917 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/quick-keys/state | till | routes/till.js:1843 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
