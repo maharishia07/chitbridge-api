@@ -4,7 +4,7 @@
  * error into "empty" (night hunt 5, 9 Nov). On a real Postgres as cb_app (RLS on), through the routes; the database is only read.
  *   CMP-54  POST /api/forms/:key/resolve   a form fills its invoice number (the chit's subject) and total from the order named in context_ref
  *   CMP-55  GET  /api/kyb/risk             the risk section reads the shop's trade (chit_detail.total_value, currency) — never "no trade" for a shop that traded
- *   PPL-45  PUT  /api/actors/:id/status    removing the shop's dispute handler clears identities.dispute_handler_actor_id (the shop's own row)
+ *   PPL-45  PUT  /api/actors/:id/status    removing or deactivating the shop's dispute handler clears identities.dispute_handler_actor_id (the shop's own row)
  * Before the fix each case reads the empty answer the swallowed error gave; after it, the real one. LOCAL ONLY. Run: node tests/cmp-54-55-ppl-45-swallowed-sql-truth.realstack.cjs
  * CARD 21-compliance-attestation-and-trade/README · 17-people-employees-hr-and-payroll/README
  */
@@ -48,16 +48,20 @@ async function select(sql, args) {
     expect(c.chits >= 1 && cur && Number(cur.total) === PRICE * QTY, 'concentration read ' + JSON.stringify(c).slice(0, 240));
   });
 
-  await kase('PPL-45', 'removing the dispute handler clears the shop\'s handler (identities.dispute_handler_actor_id)', async () => {
-    const key = ('k' + RUN).slice(0, 12);
-    const added = ok(await j('/api/actors', { method: 'POST', token: A.token, body: { display_name: 'Handler ' + RUN, actor_key: key, email: key + '@local.test', access_level: 'editor' } }), 'add').b.actor;
-    ok(await j('/api/entities/profile', { method: 'PATCH', token: A.token, body: { dispute_handler_actor_id: added.identity_id || added.actor_id } }), 'set handler');
+  /** the shop's dispute handler is set to a new person, then that person is switched off by `action`: the handler must be cleared on both paths */
+  const handlerGone = async (id, action, tag) => {
+    const key = ('k' + tag + RUN).slice(0, 12);
+    const added = ok(await j('/api/actors', { method: 'POST', token: A.token, body: { display_name: 'Handler ' + tag + RUN, actor_key: key, email: key + '@local.test', access_level: 'editor' } }), 'add').b.actor;
+    const who = added.identity_id || added.actor_id;
+    ok(await j('/api/entities/profile', { method: 'PATCH', token: A.token, body: { dispute_handler_actor_id: who } }), 'set handler');
     const before = await select('SELECT dispute_handler_actor_id AS h FROM identities WHERE identity_id = $1', [A.entity]);
     expect(before[0].h, 'premise: the handler was set, saw ' + JSON.stringify(before));
-    const gone = ok(await j('/api/actors/' + (added.identity_id || added.actor_id) + '/status', { method: 'PUT', token: A.token, body: { action: 'remove', confirm: 'REMOVE' } }), 'remove').b;
+    const gone = ok(await j('/api/actors/' + who + '/status', { method: 'PUT', token: A.token, body: action === 'remove' ? { action, confirm: 'REMOVE' } : { action } }), action).b;
     const after = await select('SELECT dispute_handler_actor_id AS h FROM identities WHERE identity_id = $1', [A.entity]);
-    expect(after[0].h === null && gone.disputes_cleared === 1, 'handler after remove ' + JSON.stringify(after) + ', disputes_cleared ' + gone.disputes_cleared);
-  });
+    expect(after[0].h === null && gone.disputes_cleared === 1, id + ': handler after ' + action + ' ' + JSON.stringify(after) + ', disputes_cleared ' + gone.disputes_cleared);
+  };
+  await kase('PPL-45', 'removing the dispute handler clears the shop handler (identities.dispute_handler_actor_id)', () => handlerGone('PPL-45', 'remove', 'r'));
+  await kase('PPL-45b', 'deactivating the dispute handler clears it too (hunt 7: the same column error on every deactivate)', () => handlerGone('PPL-45b', 'deactivate', 'd'));
 
   finish('cmp-54-55-ppl-45');
 })().catch((e) => { console.error(e); process.exit(1); });
