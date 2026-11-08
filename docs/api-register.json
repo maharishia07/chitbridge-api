@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 169,
-  "meets": 468,
+  "partial": 168,
+  "meets": 469,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -14541,7 +14541,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-08 PR#996 stage2 (CTR-212 S0: asked map added, additive)",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: the builder had typed a cb-api line on this row; re-read by cb-api: additive optional asked map {flag: bool}, closed in api-output-shapes, 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30280,11 +30280,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8eabcd83c4aa4b87"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",

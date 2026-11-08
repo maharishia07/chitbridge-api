@@ -799,7 +799,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-11-08 PR#996 stage2 (CTR-212 S0: asked map added, additive)",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: the builder had typed a cb-api line on this row; re-read by cb-api: additive optional asked map {flag: bool}, closed in api-output-shapes, 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/entities/populations": {
@@ -1827,11 +1827,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/policy": {
-   "hash": "19d19443442b003b",
+   "hash": "8eabcd83c4aa4b87",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#996 head 2e2b116c: hash moved after merging main; handler and contract re-read, 13 columns pass; new flag recheck_prices (enum off|on) is taken by the existing flag path, a bad value is refused by the existing refusal; no key or status changed",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
