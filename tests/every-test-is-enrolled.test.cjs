@@ -92,7 +92,9 @@ check('every GUARDS name is a file', missing.length === 0, missing.join(', '));
 
 /* 5. RETIRED.md: a test file it names must be gone, and every line states a reason */
 const retired = read(path.join(API, 'RETIRED.md'));
-const retiredTests = (retired.match(/tests\/[\w.-]+\.test\.(?:js|cjs)/g) || []).map((item) => item.replace('tests/', ''));
+/* only the part of a line BEFORE its arrow names what was retired; after the arrow the line names the replacement, which must stay */
+const beforeArrows = retired.split('\n').map((line) => line.split('→')[0]).join('\n');
+const retiredTests = (beforeArrows.match(/tests\/[\w.-]+\.test\.(?:js|cjs)/g) || []).map((item) => item.replace('tests/', ''));
 const stillThere = [...new Set(retiredTests)].filter((name) => files.includes(name) && !retired.split('\n').some((line) => line.includes(name) && /todo|marked/.test(line)));
 check('a test file listed in RETIRED.md is gone (or is marked todo there)', stillThere.length === 0, stillThere.join(', '));
 
