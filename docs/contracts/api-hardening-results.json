@@ -555,10 +555,6 @@
   "GET /api/chits/:chit_id/catalogue-overlay": {
    "output_allowlist": {
     "pass": true
-   },
-   "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 200, not 404"
    }
   },
   "POST /api/chits/:chit_id/payment": {
