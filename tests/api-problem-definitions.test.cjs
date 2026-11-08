@@ -109,7 +109,7 @@ function checkContractShape(routes) {
   const created = contract.OPERATIONS['POST /api/definitions'];
   check('a created definition answers 201 and a body needs a text kind and name, as the chain did', '201' in created.responses && !('200' in created.responses) && sameValue(created.requestBody.content['application/json'].schema.required, ['kind', 'name']), created);
   check('POST /freeze needs a list of ids', sameValue(contract.OPERATIONS['POST /api/definitions/freeze'].requestBody.content['application/json'].schema.required, ['definition_ids']));
-  check('no body refuses an unknown key (strict_input is not claimed: the Offer Lab sends what its form holds)', Object.values(contract.OPERATIONS).filter((one) => one.requestBody).every((one) => one.requestBody.content['application/json'].schema.additionalProperties === undefined));
+  check('the three write bodies are closed: an unknown key is refused by name (tests/platform-strict-input.test.cjs holds the keys the Offer Lab, the screens and the seed send)', ['POST /api/definitions', 'PUT /api/definitions/:id', 'POST /api/definitions/freeze'].every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.additionalProperties === false));
   const ids = ['GET', 'PUT', 'DELETE'].map((method) => contract.OPERATIONS[method + ' /api/definitions/:id']);
   check('the three id routes declare a 404; the writes declare the 403, 409 and 422 their handlers write', ids.every((one) => '404' in one.responses) && '403' in ids[1].responses && '409' in ids[2].responses && '422' in contract.OPERATIONS['POST /api/definitions'].responses);
   const router = require(path.join(HERE, 'routes', 'definitions.js'));
