@@ -60,7 +60,8 @@
   "PATCH /api/entities/me/prefs/:kind": "label: the kind is a preference name on the caller's own row, the same in every shop",
   "POST /api/forms/:key/issue": "platform reference: the key names a form template, shared reference data the same in every shop; the issue is written to the caller's own shop",
   "PUT /api/identity/documents/:scheme": "label: the scheme names a kind of document for the shop's own country (PAN, GSTIN, ABN), shared reference data, not a row of any shop; an unknown scheme answers 400 by design (routes/identity-docs.js)",
-  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop"
+  "POST /api/forms/:key/resolve": "platform reference: the key names a form template, shared reference data the same in every shop",
+  "GET /api/chits/:chit_id/catalogue-overlay": "label: the chit id is not read by the handler; the overlay is the caller's own catalogue (itemmatch.loadCatalogue by entity), so the path value names no row of any shop"
  },
  "platform_only_about": "platform_only: routes only the platform (admin key, rootGate, platformGate) or the builder can call, each with its reason. They are NOT public: no shop ever reaches the id, so foreign_id_404 (S35) does not apply, exactly as for public_ids. Read by tools/api-register.cjs hardeningScope; tools/api-register.cjs --check holds the same rules as public_ids (reason of 20+ characters, a route that exists).",
  "platform_only": {
@@ -133,6 +134,91 @@
    "route": "POST /api/network-offers/:id/choice",
    "status": 404,
    "reason": "RAIL-207: the id is checked for its shape only (400 OFFER_UNKNOWN) and the choice is written to the caller's own flags; the route reads no offer row, so a well-formed unknown id answers 200 and never 404 (whether it should is cb-network's, foreign_id_404 stays open)"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/costs",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/raida",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/register/walk/:from",
+   "status": 404,
+   "reason": "an unknown chit id, or another shop's, reads none of the caller's own rows and answers 200 with the empty answer; it never answers 404 (a 404 there would be a behaviour change, cb-rail)"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/catalogue-overlay",
+   "status": 404,
+   "reason": "the chit id is not read: the overlay is the caller's own catalogue and answers 200 with has_catalogue false when there is none, so there is no missing chit to answer 404"
+  },
+  {
+   "route": "GET /api/chits/pulse",
+   "status": 500,
+   "reason": "a pulse that fails must not silence the screen: the route answers 200 with w null (\"cannot tell\") by design and logs the fault with the request id"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/diagnosis",
+   "status": 404,
+   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/disputes",
+   "status": 404,
+   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "GET /api/chits/:chit_id/messages",
+   "status": 404,
+   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/:chit_id/disputes",
+   "status": 404,
+   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/:chit_id/messages",
+   "status": 404,
+   "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/:chit_id/raida/:raida_id/close",
+   "status": 404,
+   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/:chit_id/raida/:raida_id/dispute",
+   "status": 404,
+   "reason": "lib/raida linkDispute answers an issue the shop does not hold with 400 CHIT_BAD_REQUEST (\"No issue with that id.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/register/entries/:raida_id/accept",
+   "status": 404,
+   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/register/entries/:raida_id/close",
+   "status": 404,
+   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/register/entries/:raida_id/revise",
+   "status": 404,
+   "reason": "lib/raida answers an entry or register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such entry\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/register/subjects/:subject_id/close",
+   "status": 404,
+   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
+  },
+  {
+   "route": "POST /api/chits/register/subjects/:subject_id/entries",
+   "status": 404,
+   "reason": "lib/raida answers a register the shop does not hold with 400 CHIT_BAD_REQUEST (\"No such register.\"), the same for an unknown id and another shop's; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"
   }
  ],
  "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",

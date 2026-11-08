@@ -4,9 +4,35 @@
  "type": "Field ledger",
  "system": "ChitBridge API · catalogue_items",
  "source": "hand",
- "summary": "Part 2 of the product field ledger: 50 fields (schema_fields.field_type … item_data.sla_hours). Index: CAP-FIELDS-PRODUCT.",
+ "summary": "Part 2 of the product field ledger: 51 fields (schema_fields.field_key … item_data.sla_hours). Index: CAP-FIELDS-PRODUCT.",
  "raised_by": "Athi, 2026-10-09",
  "fields": [
+  {
+   "key": "schema_fields.field_key",
+   "kinds": [
+    "dish",
+    "packed good",
+    "service",
+    "made-to-order"
+   ],
+   "origin": "keyed",
+   "origin_detail": "a row of schema_fields; written by routes/schemas.js and lib/catalogue-columns.ensureDeclared",
+   "means": "The key written into item_data.",
+   "source": "schema_fields.field_key",
+   "set_by": "Catalogue setup › Columns (owner), ensureDeclared on writes",
+   "validated_by": "column-rules (LOCKED name/unit/price; retypeWhy/why tighten on use)",
+   "shown_in": [
+    "Catalogue setup › Columns"
+   ],
+   "used_by": [
+    "everything"
+   ],
+   "test": "api: column-rules.test.cjs, schemas-scenes.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
+  },
   {
    "key": "schema_fields.field_type",
    "kinds": [
@@ -28,7 +54,7 @@
     "form input type",
     "validateAgainst"
    ],
-   "test": "api: catalogue-columns.test.js, column-parity.test.js",
+   "test": "api: schemas-scenes.cjs, api-problem-schemas.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -55,7 +81,7 @@
     "validateAgainst",
     "column-rules.why"
    ],
-   "test": "api: column-rules.test.cjs, column-parity.test.js",
+   "test": "api: schemas-scenes.cjs, column-rules.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -204,7 +230,7 @@
     "form order",
     "till facts (first 3)"
    ],
-   "test": "api: column-parity.test.js, column-rules.test.cjs",
+   "test": "api: schemas-scenes.cjs, column-parity.test.js",
    "status": "ok",
    "also": [
     "untested"
@@ -276,7 +302,7 @@
    "used_by": [
     "export headers (?)"
    ],
-   "test": "api: column-rules.test.cjs, column-parity.test.js",
+   "test": "api: schemas-scenes.cjs, api-problem-schemas.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -302,7 +328,7 @@
    "used_by": [
     "catalogue-model routeChain (?)"
    ],
-   "test": "api: column-rules.test.cjs",
+   "test": "api: schemas-scenes.cjs, api-problem-schemas.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -328,7 +354,7 @@
    "used_by": [
     "catalogue-model routeChain (?)"
    ],
-   "test": "api: column-rules.test.cjs",
+   "test": "api: schemas-scenes.cjs, api-problem-schemas.test.cjs",
    "status": "ok",
    "also": [
     "untested"
@@ -352,7 +378,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -376,7 +402,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -400,7 +426,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -426,9 +452,11 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
-   "status": "untested",
-   "also": []
+   "test": "api: schedule-apply.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
   },
   {
    "key": "catalogue_item_schedule.patch",
@@ -450,9 +478,11 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
-   "status": "untested",
-   "also": []
+   "test": "api: schedule-apply.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
   },
   {
    "key": "catalogue_item_schedule.created_by",
@@ -472,7 +502,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -496,7 +526,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -522,9 +552,11 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
-   "status": "untested",
-   "also": [],
+   "test": "api: schedule-apply.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ],
    "finding": "Applied rows are kept as history, never purged (garbage G3)."
   },
   {
@@ -545,7 +577,7 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
+   "test": "api: schedule-apply.test.cjs",
    "status": "shown-nowhere",
    "also": [
     "untested"
@@ -571,9 +603,11 @@
    "used_by": [
     "schedule.applyDue"
    ],
-   "test": "none found",
-   "status": "untested",
-   "also": []
+   "test": "api: schedule-apply.test.cjs",
+   "status": "ok",
+   "also": [
+    "untested"
+   ]
   },
   {
    "key": "quick_key_group_item.product_id",
@@ -620,7 +654,7 @@
    "used_by": [
     "till snapshot filter"
    ],
-   "test": "api: till-hidden.test.js · web: till-lock.cjs, till-netsim.cjs",
+   "test": "api: till-hidden.test.js, till-t2a.test.cjs · web: till-lock.cjs, till-netsim.cjs",
    "status": "ok",
    "also": [],
    "finding": "Soft delete never fires the CASCADE; rows for removed products stay (garbage G4)."
@@ -671,7 +705,7 @@
     "availability",
     "books"
    ],
-   "test": "api: stock-cycle.test.js",
+   "test": "api: ops-stock.test.cjs, storefront-stock-ledger.test.js",
    "status": "ok",
    "also": [],
    "finding": "Polymorphic id (item_kind catalogue|supply): a dangling id cannot be caught by an FK."
@@ -696,7 +730,7 @@
    "used_by": [
     "stock_balance fold"
    ],
-   "test": "api: stock-cycle.test.js",
+   "test": "api: ctr-178-stock-repost.test.cjs, ops-stock.test.cjs",
    "status": "ok",
    "also": []
   },
@@ -746,7 +780,7 @@
     "Export CSV/XLSX"
    ],
    "used_by": [],
-   "test": "api: column-rules.test.cjs, csv-preflight.test.js · web: cat03-probe.cjs, catalogue.spec.js",
+   "test": "api: column-rules.test.cjs, csv-preflight.test.js · web: rate-sources.test.cjs, cat03-probe.cjs",
    "status": "ok",
    "also": [],
    "finding": "Descriptive only: shown and exported, nothing decides on it. Fine if intended; the till never shows it (facts = first 3 columns)."
