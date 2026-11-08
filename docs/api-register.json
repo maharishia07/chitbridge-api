@@ -41564,7 +41564,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41660,7 +41660,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#960: handler and 13 machine columns read; answer allow-list holds, no behaviour changed",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41761,7 +41761,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41857,7 +41857,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
