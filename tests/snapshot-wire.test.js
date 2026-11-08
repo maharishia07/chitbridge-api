@@ -1113,7 +1113,7 @@ it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
   for (const k of ['pricing_kind', 'pricing_tiers', 'pricing_amount', 'pricing_min', 'pricing_max', 'pricing_def_name'])
     assert.ok(src.indexOf(k + ':') > 0, 'the snapshot does not send ' + k);
   /* and the bill records what priced it, so a reprint explains itself without the definition */
-  assert.ok(page.indexOf('priced_by:') > 0 && page.indexOf('list_price:c.price') > 0,
+  assert.ok(page.indexOf('priced_by:') > 0 && page.indexOf('list_price:cartLine.price') > 0,
     'the bill records what it charged but not what decided it');
 });
 
@@ -1491,8 +1491,8 @@ it('⭐⭐⭐ every place a saving is shown names the offer behind it', () => {
     'the printed line does not state MRP, so a customer cannot see what the price is a discount FROM');
 
   /* the stored record — a reprint or a dispute next year cannot re-derive which offers applied */
-  assert.ok(/offers:\(c\.offs\|\|\[\]\)\.map|offers:\s*\(c\.offs\s*\|\|\s*\[\]\)\.map/.test(till.replace(/\s+/g, ' ').replace(/ /g, '')) ||
-            /offers:\(c\.offs\|\|\[\]\)/.test(till.replace(/\s/g, '')),
+  assert.ok(/offers:\(cartLine\.offs\|\|\[\]\)\.map|offers:\s*\(cartLine\.offs\s*\|\|\s*\[\]\)\.map/.test(till.replace(/\s+/g, ' ').replace(/ /g, '')) ||
+            /offers:\(cartLine\.offs\|\|\[\]\)/.test(till.replace(/\s/g, '')),
     'the saved bill line no longer carries every offer — a stored line is evidence, and one label over a sum '
     + 'cannot be checked once the offers have changed');
 
