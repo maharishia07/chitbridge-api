@@ -8,7 +8,8 @@
  *          · R5 money in text/float/numeric(p,2) · R6 DEFAULT 'IN'/'INR'/… · R7 once-only key without a unique · R8 index repeats/prefixes another
  *          · R9 CREATE TABLE IF NOT EXISTS with a foreign key · R10 unterminated $$ · R11 alter of a table no earlier file creates
  *          · R12 a DO block that raises on missing production data · R13 CONCURRENTLY inside BEGIN · R14 jsonb column with no FIELDS.md row
- *          · R15 DROP/TRUNCATE/DELETE without `-- DESTRUCTIVE: approved <who> <date>` · R16 new table without `-- OWNER: <module>` · R17 file name.
+ *          · R15 DROP/TRUNCATE/DELETE without `-- DESTRUCTIVE: approved <who> <date>` · R16 new table without `-- OWNER: <module>` · R17 file name
+ *          · R18 a new money column with no currency of its own (`<stem>_currency` beside it, or a declared `-- money-group:`; CUR-1).
  *          The fresh-database proof of R11 is the CI job `fresh-db` (an empty Postgres), not this file.
  * BASELINE migrations/schema-lint.baseline.json: the files that existed on 16 Oct and `file|rule|object` for each violation in them. A file
  *          NOT in the baseline is new and must pass every rule. The violation list may only SHRINK: a fixed entry that is still listed fails
@@ -49,7 +50,8 @@ const SELF_TESTS = [
   ['R14', 'ALTER TABLE users ADD COLUMN zzz_unlisted jsonb;', 'ALTER TABLE users ADD COLUMN x int;'],
   ['R15', 'DROP TABLE users;', 'SELECT 1;'],
   ['R16', 'CREATE TABLE a (id int);', 'CREATE TABLE a (id int);', '-- OWNER: lib/x.js\n'],
-  ['R17', 'SELECT 1;', 'SELECT 1;']
+  ['R17', 'SELECT 1;', 'SELECT 1;'],
+  ['R18', 'CREATE TABLE a (id int, total_minor bigint);', 'CREATE TABLE a (id int, total_minor bigint, total_currency varchar(3));']
 ];
 console.log('\n── each rule fires on its own bad snippet, and stays quiet on the good one ──');
 for (const [rule, bad, good, header] of SELF_TESTS) {
@@ -59,6 +61,15 @@ for (const [rule, bad, good, header] of SELF_TESTS) {
   check(rule + ' is quiet on the good one', !clean.includes(rule), 'fired: ' + clean.join(' '));
 }
 check('an allow header names the rules it excuses', [...allowedRules('-- schema-lint: allow R5 R6 because\nSELECT 1;').rules].join() === 'R5,R6');
+
+console.log('\n── R18 (CUR-1): a money column is judged by its own currency, one declared group excepted ──');
+const r18 = (sql, header) => rulesFiredBy(sql, header).includes('R18');
+check('R18 a _minor amount with its own _currency passes', !r18('CREATE TABLE a (id int, price_minor bigint, price_currency varchar(3));'));
+check('R18 a currency beside ANOTHER amount does not cover this one', r18('CREATE TABLE a (id int, price_minor bigint, cost_minor bigint, price_currency varchar(3));'));
+check('R18 an ALTER ADD COLUMN of an amount with no currency is caught', r18('CREATE TABLE a (id int); ALTER TABLE a ADD COLUMN fee_minor bigint;'));
+check('R18 a declared money-group covers its columns with the row currency', !r18('CREATE TABLE a (id int, total_minor bigint, fee_minor bigint, ccy varchar(3));', '-- money-group: ccy covers total_minor, fee_minor\n'));
+check('R18 a group naming a currency column the table lacks does not excuse', r18('CREATE TABLE a (id int, total_minor bigint);', '-- money-group: ccy covers total_minor\n'));
+check('R18 a count, a rate or a sentence is not money', !r18('CREATE TABLE a (id int, item_count int, gst_rate numeric(5,2), amount_note text);'));
 
 console.log('\n── migrations/ replayed in chain order ──');
 const { files, violations, allows, baselineTables } = replay();

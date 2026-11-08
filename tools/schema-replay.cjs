@@ -1,5 +1,5 @@
 /**
- * tools/schema-replay.cjs — READS migrations/ IN CHAIN ORDER AND JUDGES EACH FILE AGAINST THE SCHEMA RULES R1–R17 (SCHEMA-FIX1, 16 Oct).
+ * tools/schema-replay.cjs — READS migrations/ IN CHAIN ORDER AND JUDGES EACH FILE AGAINST THE SCHEMA RULES R1–R18 (SCHEMA-FIX1, 16 Oct; R18 CUR-1, 8 Nov).
  * CARD 28-platform-and-operations/schema-lint
  *
  * OWNS       the offline replay (no database): comment and dollar-quote stripping, statement splitting, a running model of tables ·
@@ -8,7 +8,7 @@
  * CHAIN      the order and the skip rules are tools/migrate.cjs's (chainFiles) — never a third list.
  * LIMITS     it reads top-level statements. A DO block or EXECUTE format(...) is opaque to the rules (R11 still sees a table NAMED in one),
  *            so a file that builds indexes in a loop says so with `-- schema-lint: allow R1 <reason>`. R14 judges new jsonb COLUMNS only.
- * FLOW       chain order → per file: strip → split → fold into the model → judge R1–R17 → { file, rule, object, allowed }[]
+ * FLOW       chain order → per file: strip → split → fold into the model → judge R1–R18 → { file, rule, object, allowed }[]
  */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -24,6 +24,10 @@ const ONCE_ONLY_KEY = /^(client_ref|source_ref|external_id|idempotency_key|provi
 const MONEY_NAME = /(^|_)(amount|price|total|cost|fee|tax|balance|paid|due|rate)(_|$)/;
 const BAD_MONEY_TYPE =
   /^(text|varchar(\(\d+\))?|character varying(\(\d+\))?|real|float\d*|double precision|numeric\(\s*\d+\s*,\s*2\s*\)|decimal\(\s*\d+\s*,\s*2\s*\))$/i;
+/** CUR-1 R18: a new money column (a number named like an amount) must carry its own currency: a sibling `<stem>_currency` (stem = the name without `_minor`),
+ *  or sit under a header line `-- money-group: <currency column> covers a, b` (one row currency for a declared group, e.g. journal_line dr, cr). */
+const MONEY_COLUMN_NAME = /(^|_)(amount|price|total|cost|fee|balance|paid|due|limit|value)(_minor)?$/;
+const NUMBER_TYPE = /^(numeric|decimal|bigint|integer|int|int4|int8|smallint|money|real|float\d*|double precision)\b/i;
 const TIMESTAMP_WITHOUT_ZONE = /^timestamp(\s+without\s+time\s+zone)?(\(\d\))?(\s+without\s+time\s+zone)?$/;
 /** a check that can only pass on production rows: IF NOT FOUND / IF count(…) <> n … THEN RAISE EXCEPTION */
 const DATA_ASSERT = /(NOT\s+FOUND|count\s*\([^)]*\)\s*(<>|!=|=|<|>)\s*\d+)[^;]{0,200}?THEN\s+RAISE\s+EXCEPTION/i;
@@ -337,11 +341,32 @@ const RULES = {
     ),
   R15: (facts, model, ctx) => (facts.destructive.length && !header(ctx.source, /^--\s*DESTRUCTIVE:\s*approved\s+\S+\s+\S+/m) ? objects(facts.destructive) : []),
   R16: (facts, model, ctx) => (facts.created.length && !header(ctx.source, /^--\s*OWNER:\s*\S+/m) ? objects(facts.created.map((made) => made.table)) : []),
+  R18: (facts, model, ctx) => objects(moneyWithoutCurrency(facts, model, ctx.source)),
   R17: (facts, model, ctx) =>
     /^(000_baseline|migration_b|net0|sim0|purge_|READ-|RUN-)/.test(ctx.fileName) || /^b\d+[a-z]?_[A-Za-z0-9_]+\.sql$/.test(ctx.fileName)
       ? []
       : objects([ctx.fileName])
 };
+/** the columns a file's `-- money-group: <currency col> covers a, b` lines cover → Map(column → currency column) */
+function moneyGroups(source) {
+  const covered = new Map();
+  for (const line of source.matchAll(/^--[ \t]*money-group:[ \t]*(\w+)[ \t]+covers[ \t]+([\w \t,]+)$/gim)) {
+    for (const name of line[2].split(/[ \t,]+/).filter(Boolean)) covered.set(name, line[1]);
+  }
+  return covered;
+}
+/** a new money column with no currency beside it: neither `<stem>_currency` in its table nor a money-group naming a currency column that exists */
+function moneyWithoutCurrency(facts, model, source) {
+  const groups = moneyGroups(source);
+  return facts.columns
+    .filter((column) => MONEY_COLUMN_NAME.test(column.name) && NUMBER_TYPE.test(column.type))
+    .filter((column) => {
+      const columns = model.table(column.table).columns, stem = column.name.replace(/_minor$/, '');
+      if (columns.has(stem + '_currency') || columns.has(column.name + '_currency')) return false;
+      return !(groups.has(column.name) && columns.has(groups.get(column.name)));
+    })
+    .map((column) => column.table + '.' + column.name);
+}
 /** a plain, non-unique, full index that is the same as, or a leading part of, one the table already had */
 function repeatsAnEarlierIndex(index) {
   if (index.partial || index.unique || index.hasExpression || !index.columns.length) return false;
