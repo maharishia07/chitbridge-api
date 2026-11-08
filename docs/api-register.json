@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 127,
-  "meets": 511,
+  "partial": 125,
+  "meets": 513,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 23
+    "failing": 22
    },
    "foreign_id_404": {
     "applies": 202,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 28
+    "failing": 26
    }
   },
   "reported": {
@@ -591,7 +591,7 @@
     "screens": [
      "app.html 1/155",
      "core.js 1/57",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -1869,7 +1869,7 @@
      "catalogue-lines.js 1/136",
      "combo-mode.js 1/15",
      "core.js 1/57",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -9360,7 +9360,7 @@
      "rail-thread.js 1/2",
      "screen-id.js 1/5",
      "tasks.html 1/2",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -11393,7 +11393,7 @@
     "wire": 5,
     "screens": [
      "app.html 1/155",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -11522,7 +11522,7 @@
      "cap-repeat.js 1/7",
      "rail-advice.js 1/3",
      "screen-id.js 1/5",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -14256,7 +14256,7 @@
      "cap-shop.js 6/17",
      "cap-workforce.js 6/19",
      "catalogue.html 6/6",
-     "till.html 6/317"
+     "till.html 6/225"
     ]
    },
    "measured": {
@@ -15347,7 +15347,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -15448,7 +15448,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -23038,7 +23038,7 @@
     "wire": 13,
     "screens": [
      "catalogue-lines.js 6/136",
-     "till.html 6/317"
+     "till.html 6/225"
     ]
    },
    "measured": {
@@ -26922,7 +26922,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3548,
+   "line": 3547,
    "hash": "e394ff0b0e21e9d3",
    "does": "",
    "errors": {
@@ -27001,7 +27001,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27018,7 +27018,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3436,
+   "line": 3435,
    "hash": "13e313233f2183a5",
    "does": "",
    "errors": {
@@ -27097,7 +27097,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27114,7 +27114,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1813,
+   "line": 1812,
    "hash": "065ab1b31029b6be",
    "does": "",
    "errors": {
@@ -27193,7 +27193,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27210,8 +27210,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4142,
-   "hash": "e145433dc0e2114e",
+   "line": 4141,
+   "hash": "6188ec56258d1181",
    "does": "",
    "errors": {
     "count": 0,
@@ -27241,7 +27241,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -27279,11 +27279,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e145433dc0e2114e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -27292,7 +27291,7 @@
     "trips": 0,
     "wire": null,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -27309,7 +27308,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3764,
+   "line": 3763,
    "hash": "917b5f2623190141",
    "does": "",
    "errors": {
@@ -27393,7 +27392,7 @@
     "wire": 11,
     "screens": [
      "cap-match.js 3/3",
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -27410,7 +27409,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1822,
+   "line": 1821,
    "hash": "a93949be98bda80d",
    "does": "",
    "errors": {
@@ -27493,7 +27492,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27510,7 +27509,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1862,
+   "line": 1861,
    "hash": "a21ada102b689cf4",
    "does": "",
    "errors": {
@@ -27591,7 +27590,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -27608,7 +27607,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1909,
+   "line": 1908,
    "hash": "84d5f66acbc70ed4",
    "does": "",
    "errors": {
@@ -27689,7 +27688,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27706,7 +27705,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1832,
+   "line": 1831,
    "hash": "7b700a57f90e53b5",
    "does": "",
    "errors": {
@@ -27789,7 +27788,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/317"
+     "till.html 4/225"
     ]
    },
    "measured": {
@@ -27806,7 +27805,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2460,
+   "line": 2459,
    "hash": "b7945b493fc90536",
    "does": "",
    "errors": {
@@ -27890,7 +27889,7 @@
     "trips": 1,
     "wire": null,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -27907,7 +27906,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2811,
+   "line": 2810,
    "hash": "34ca27a7c7ac2723",
    "does": "",
    "errors": {
@@ -27988,7 +27987,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -28005,7 +28004,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 205,
+   "line": 204,
    "hash": "8d7990b747431ba7",
    "does": "",
    "errors": {
@@ -28099,7 +28098,7 @@
     "wire": 46,
     "screens": [
      "promo.html 17/67",
-     "till.html 17/317"
+     "till.html 17/225"
     ]
    },
    "measured": {
@@ -28116,7 +28115,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3241,
+   "line": 3240,
    "hash": "f88e8f612e3e98a5",
    "does": "",
    "errors": {
@@ -28199,7 +28198,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -28216,7 +28215,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3504,
+   "line": 3503,
    "hash": "7c470871e76779bc",
    "does": "",
    "errors": {
@@ -28299,7 +28298,7 @@
     "wire": 4,
     "screens": [
      "cap-mis-trend.js 1/1",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -28316,7 +28315,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3734,
+   "line": 3733,
    "hash": "750f4ada473ad2b1",
    "does": "",
    "errors": {
@@ -28395,7 +28394,7 @@
     "trips": 2,
     "wire": 10,
     "screens": [
-     "till.html 2/317"
+     "till.html 2/225"
     ]
    },
    "measured": {
@@ -28412,7 +28411,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2986,
+   "line": 2985,
    "hash": "8822f90ab44821bf",
    "does": "",
    "errors": {
@@ -28495,7 +28494,7 @@
     "trips": 3,
     "wire": 9,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -28512,7 +28511,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1974,
+   "line": 1973,
    "hash": "18e4e4e233adf0d5",
    "does": "",
    "errors": {
@@ -28593,7 +28592,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -30760,7 +30759,7 @@
      "catalogue-lines.js 0/136",
      "combo-mode.js 0/15",
      "core.js 0/57",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -41159,7 +41158,7 @@
      "cap-chit2.js 1/15",
      "cap-tasks.js 1/7",
      "cap-worklist.js 1/12",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -43504,7 +43503,7 @@
      "cap-tasks.js 0/7",
      "intake.html 0/5",
      "rail-advice.js 0/3",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -47265,7 +47264,7 @@
      "core.js 0/57",
      "promo.html 0/67",
      "rail-bell.js 0/4",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -53599,7 +53598,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/136",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -53704,7 +53703,7 @@
     "screens": [
      "cap-catalogue.js 0/13",
      "catalogue-lines.js 0/136",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -56727,7 +56726,7 @@
     "trips": 1,
     "wire": 4,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -58958,7 +58957,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4015,
+   "line": 4014,
    "hash": "48bf07faa83414fb",
    "does": "",
    "errors": {
@@ -59044,7 +59043,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -59061,7 +59060,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3315,
+   "line": 3314,
    "hash": "502a3548b902ab91",
    "does": "",
    "errors": {
@@ -59106,7 +59105,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -59152,10 +59151,10 @@
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 7,
+    "wire": 19,
     "screens": [
-     "till.html 50/317"
+     "till.html 7/225"
     ]
    },
    "measured": {
@@ -59172,7 +59171,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1629,
+   "line": 1628,
    "hash": "bbf59d5ac7b12389",
    "does": "",
    "errors": {
@@ -59258,7 +59257,7 @@
     "trips": 7,
     "wire": null,
     "screens": [
-     "till.html 7/317"
+     "till.html 7/225"
     ]
    },
    "measured": {
@@ -59275,7 +59274,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1559,
+   "line": 1558,
    "hash": "4600d328835a649e",
    "does": "",
    "errors": {
@@ -59359,7 +59358,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/317"
+     "till.html 6/225"
     ]
    },
    "measured": {
@@ -59376,7 +59375,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2706,
+   "line": 2705,
    "hash": "9242863f3369467c",
    "does": "",
    "errors": {
@@ -59460,7 +59459,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/317"
+     "till.html 6/225"
     ]
    },
    "measured": {
@@ -59477,7 +59476,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1724,
+   "line": 1723,
    "hash": "cfd441c55258aa17",
    "does": "",
    "errors": {
@@ -59565,7 +59564,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -59582,8 +59581,8 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4076,
-   "hash": "9a071dd2a9221305",
+   "line": 4075,
+   "hash": "8978b6a9067b56ef",
    "does": "",
    "errors": {
     "count": 0,
@@ -59612,9 +59611,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": false,
     "output_allowlist": true,
@@ -59637,7 +59636,8 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -59665,7 +59665,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -59682,7 +59682,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2100,
+   "line": 2099,
    "hash": "247f38ec08cf16aa",
    "does": "",
    "errors": {
@@ -59724,7 +59724,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -59759,20 +59759,19 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "247f38ec08cf16aa"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 6,
     "screens": [
-     "till.html 50/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -59789,7 +59788,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2639,
+   "line": 2638,
    "hash": "d76bb418bb672a62",
    "does": "",
    "errors": {
@@ -59875,7 +59874,7 @@
     "wire": 1,
     "screens": [
      "app.html 1/155",
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -59892,7 +59891,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2748,
+   "line": 2747,
    "hash": "ff9b7d89fcff7688",
    "does": "",
    "errors": {
@@ -59979,7 +59978,7 @@
     "wire": null,
     "screens": [
      "promo.html 50/67",
-     "till.html 50/317"
+     "till.html 50/225"
     ]
    },
    "measured": {
@@ -59996,7 +59995,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2173,
+   "line": 2172,
    "hash": "8801009fddb9db3b",
    "does": "",
    "errors": {
@@ -60088,7 +60087,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -60105,7 +60104,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1878,
+   "line": 1877,
    "hash": "34064662721f1383",
    "does": "",
    "errors": {
@@ -60189,7 +60188,7 @@
     "trips": 6,
     "wire": null,
     "screens": [
-     "till.html 6/317"
+     "till.html 6/225"
     ]
    },
    "measured": {
@@ -60206,7 +60205,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1920,
+   "line": 1919,
    "hash": "f0ac99570fb42ce8",
    "does": "",
    "errors": {
@@ -60290,7 +60289,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/317"
+     "till.html 4/225"
     ]
    },
    "measured": {
@@ -60307,7 +60306,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1846,
+   "line": 1845,
    "hash": "9a446ad0d889e1ce",
    "does": "",
    "errors": {
@@ -60391,7 +60390,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/317"
+     "till.html 4/225"
     ]
    },
    "measured": {
@@ -60408,7 +60407,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1895,
+   "line": 1894,
    "hash": "ca798a7ef2ec7587",
    "does": "",
    "errors": {
@@ -60494,7 +60493,7 @@
     "trips": 4,
     "wire": null,
     "screens": [
-     "till.html 4/317"
+     "till.html 4/225"
     ]
    },
    "measured": {
@@ -60511,7 +60510,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2400,
+   "line": 2399,
    "hash": "ce2b954bd9af8e16",
    "does": "",
    "errors": {
@@ -60603,7 +60602,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -60620,7 +60619,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2220,
+   "line": 2219,
    "hash": "dbafba055729b52d",
    "does": "",
    "errors": {
@@ -60721,7 +60720,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2934,
+   "line": 2933,
    "hash": "f5e45027c5926f0b",
    "does": "",
    "errors": {
@@ -60805,7 +60804,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -60822,7 +60821,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2500,
+   "line": 2499,
    "hash": "7196a974ea9a5407",
    "does": "",
    "errors": {
@@ -60911,7 +60910,7 @@
     "trips": 0,
     "wire": 0,
     "screens": [
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {
@@ -60928,7 +60927,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2572,
+   "line": 2571,
    "hash": "ff484e15d9eaba2b",
    "does": "",
    "errors": {
@@ -61015,7 +61014,7 @@
     "trips": 50,
     "wire": null,
     "screens": [
-     "till.html 50/317"
+     "till.html 50/225"
     ]
    },
    "measured": {
@@ -61032,7 +61031,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2878,
+   "line": 2877,
    "hash": "62336062684c7182",
    "does": "",
    "errors": {
@@ -61120,7 +61119,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -61137,7 +61136,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2858,
+   "line": 2857,
    "hash": "16aae6edbabde12f",
    "does": "",
    "errors": {
@@ -61225,7 +61224,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -61242,7 +61241,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3084,
+   "line": 3083,
    "hash": "19e732f3c16c5ec5",
    "does": "",
    "errors": {
@@ -61330,7 +61329,7 @@
     "trips": 2,
     "wire": 5,
     "screens": [
-     "till.html 2/317"
+     "till.html 2/225"
     ]
    },
    "measured": {
@@ -61347,7 +61346,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1695,
+   "line": 1694,
    "hash": "783af1003d29a9e0",
    "does": "",
    "errors": {
@@ -61431,7 +61430,7 @@
     "trips": 1,
     "wire": 1,
     "screens": [
-     "till.html 1/317"
+     "till.html 1/225"
     ]
    },
    "measured": {
@@ -61448,7 +61447,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1428,
+   "line": 1427,
    "hash": "1a63be59250ac195",
    "does": "",
    "errors": {
@@ -61534,7 +61533,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -61551,7 +61550,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1486,
+   "line": 1485,
    "hash": "e34ab5fcd8e26898",
    "does": "",
    "errors": {
@@ -61635,7 +61634,7 @@
     "trips": 3,
     "wire": null,
     "screens": [
-     "till.html 3/317"
+     "till.html 3/225"
     ]
    },
    "measured": {
@@ -63377,7 +63376,7 @@
      "core.js 0/57",
      "country-profiles.js 0/0",
      "shop-privacy.js 0/0",
-     "till.html 0/317"
+     "till.html 0/225"
     ]
    },
    "measured": {

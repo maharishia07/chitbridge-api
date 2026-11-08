@@ -214,6 +214,8 @@ const EXTRAS = [
   X('not-an-offer', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('reward', 'live') } }),
   X('offer-not-live', 'POST /api/till/offer-item', 400, { body: { offer_id: ITEM, item_id: ITEM, on: true }, setup: { sqlRows: OFFER_ROW('offer', 'draft') } }),
   X('offer-item-write-breaks', 'POST /api/till/offer-item', 500, { setup: { db: 'fail' }, body: { offer_id: ITEM, item_id: ITEM, on: true } }),
+  X('listen-body-not-an-object', 'POST /api/till/listen', 400, { body: ['AAAA'] }),
+  X('listen-transcriber-breaks', 'POST /api/till/listen', 200, { body: { audio: 'AAAA' }, patch: [['lib/speech.js', 'transcribe', throwsLater]] }),
   X('price-no-item', 'POST /api/till/price', 400, { body: {} }),
   X('price-not-a-number', 'POST /api/till/price', 400, { body: { item_id: ITEM, price: -1 } }),
   /* CTR-168: no number at all is refused in PATCH /products' words, never read as 0 or 1 */
