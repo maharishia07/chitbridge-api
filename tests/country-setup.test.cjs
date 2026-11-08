@@ -52,9 +52,9 @@ const GOV_H = { query: async (sql, params) => {
   if (/FROM books_setting/.test(t)) throw Object.assign(new Error('relation "books_setting" does not exist'), { code: '42P01' });
   if (/FROM identities/.test(t)) return { rows: ID ? [ID] : [], rowCount: ID ? 1 : 0 };
   if (/FROM entity_governance/.test(t)) return { rows: GOV ? [GOV] : [], rowCount: GOV ? 1 : 0 };
-  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); ID.timezone = params[5] || ID.timezone; } return { rows: [], rowCount: ID ? 1 : 0 }; }
-  if (/^UPDATE entity_governance/.test(t.trim())) { WRITES.push('entity_governance'); if (GOV) { GOV.fy_start_month = params[1]; GOV.tax_registration = JSON.parse(params[2]); GOV.setup_source = JSON.parse(params[3]); GOV.country_setup_at = new Date(); } return { rows: [], rowCount: GOV ? 1 : 0 }; }
-  if (/^INSERT INTO entity_governance/.test(t.trim())) { WRITES.push('insert'); GOV = { fy_start_month: params[1], tax_registration: JSON.parse(params[2]), setup_source: JSON.parse(params[3]), country_setup_at: new Date() }; return { rows: [], rowCount: 1 }; }
+  if (/^UPDATE identities/.test(t.trim())) { WRITES.push('identities'); if (ID) { ID.country = params[1]; ID.currency_code = params[2]; if (/gstn = /.test(t)) { ID.gstn = params[3]; ID.policy_flags = Object.assign({}, ID.policy_flags || {}, JSON.parse(params[4])); } ID.timezone = params[params.length - 1] || ID.timezone; /* SET-86: the tax part is in the statement only when the body carried a tax answer; the zone is always the last parameter */ } return { rows: [], rowCount: ID ? 1 : 0 }; }
+  if (/^UPDATE entity_governance/.test(t.trim())) { WRITES.push('entity_governance'); if (GOV) { GOV.fy_start_month = params[1]; if (/tax_registration = /.test(t)) GOV.tax_registration = params[3] == null ? null : JSON.parse(params[3]); GOV.setup_source = JSON.parse(params[2]); GOV.country_setup_at = new Date(); } return { rows: [], rowCount: GOV ? 1 : 0 }; }
+  if (/^INSERT INTO entity_governance/.test(t.trim())) { WRITES.push('insert'); GOV = { fy_start_month: params[1], tax_registration: params[3] == null ? null : JSON.parse(params[3]), setup_source: JSON.parse(params[2]), country_setup_at: new Date() }; return { rows: [], rowCount: 1 }; }
   throw new Error('country-setup test ran unexpected SQL: ' + t.slice(0, 80));
 } };
 const call = (port, method, p, body) => new Promise((done) => {
@@ -164,8 +164,17 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('PUT with a zone Intl does not know → 400 in words (it must never reach identities.timezone, where it would blank every date)', r.status === 400 && /time zone/.test(r.body.message), JSON.stringify(r.body));
   r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51 824 753 556' }, timezone: 'Australia/Perth', source: { timezone: 'picked' } });
   ok('PUT AU with Australia/Perth → 200: the zone the owner picked is written to identities.timezone and said back with its source', r.status === 200 && ID.timezone === 'Australia/Perth' && r.body.timezone === 'Australia/Perth' && r.body.source.timezone === 'picked' && r.body.pack.id === 'AU', JSON.stringify(r.body));
-  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false }, confirm_deregister: true });
   ok('a later re-save of the same country without a zone keeps the one chosen (never asks twice)', r.status === 200 && ID.timezone === 'Australia/Perth', JSON.stringify(r.body));
+  /* SET-86: the contract is CLOSED, so an unknown top-level key is refused by name; a registered shop is not de-registered without the confirm; an omitted tax block changes nothing */
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: true, number: '51 824 753 556' } });
+  const heldTax = JSON.stringify([ID.gstn, GOV.tax_registration]);
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax_rate: 0 });
+  ok('SET-86: an unknown top-level key (tax_rate) is refused by name (the CLOSED contract: 422 INVALID_INPUT, field tax_rate), nothing written', r.status === 422 && r.body.field === 'tax_rate' && /tax_rate/.test(JSON.stringify(r.body)) && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7 });
+  ok('SET-86: the tax block omitted → 200 and the registration (number, answer) is exactly as it was', r.status === 200 && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
+  r = await g('PUT', '/country-setup', { country: 'AU', currency: 'AUD', fy_start_month: 7, tax: { registered: false } });
+  ok('SET-86: registered false on a registered shop without the confirm → 409 TAX_DEREGISTER_UNCONFIRMED, nothing written', r.status === 409 && r.body.code === 'TAX_DEREGISTER_UNCONFIRMED' && JSON.stringify([ID.gstn, GOV.tax_registration]) === heldTax, JSON.stringify(r.body));
   /* the chart the switch will seed: from the PACK, through accounts-packs (the engines' facade, v1.42.0) — never a second chart table */
   const E = require(path.join(API, 'lib', 'books-engines'));
   const au = E.chartRows(E.packs().packFor('AU')), ae = E.chartRows(E.packs().packFor('AE')), ind = E.chartRows(E.packs().packFor('IN'));

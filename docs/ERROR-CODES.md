@@ -445,6 +445,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TARGET_ACTOR_NOT_ACTIVE | 400 | Colleague cannot take tasks | That colleague cannot take tasks right now. | Pick someone who is active. | actors | 2026-10-23 |
 | TARGET_ACTOR_REQUIRED | 400 | Colleague needed | Say which colleague gets the tasks. | Pick a colleague. | actors | 2026-10-23 |
 | TASKS_TO_ROUTE | 400 | Tasks to route | This person still has open tasks. | Send them to the pool or to a colleague first. | actors | 2026-10-22 |
+| TAX_DEREGISTER_UNCONFIRMED | 409 | Taking the shop off its tax needs a confirm | This takes the shop off its tax: from now on every invoice carries no tax, and an open till keeps the old answer until it next refreshes. | Confirm it in Settings → Country setup, or leave the tax answer as it is. | country-setup | 2026-11-09 |
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
 | TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |

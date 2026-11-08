@@ -26,6 +26,7 @@ const csv = require('../lib/csv'); // catalogue export — a merchant can leave 
 const catcols = require('../lib/catalogue-columns');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ the one path that writes products */
 const schedule = require('../lib/schedule');
+const catSearch = require('../lib/catalogue-search'); /* CAT-313: the one search condition for GET / */
 /* ⭐ the catalogue declares, a row overrides — a reader sees the resolved value. */
 const defaults = require('../lib/defaults');
 /* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
@@ -730,7 +731,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     } else if (wantRaw) return problem(req, res, { status: 400, ...words.listStatus() });
 
     const base = q
-      ? { where: `entity_id=$1 AND is_active=true AND item_data::text ILIKE $2`, params: [entity_id, `%${q}%`] }
+      ? catSearch.shelfWhere(entity_id, q) /* CAT-313/314: named visible fields only, % _ \ literal — never the whole record */
       : { where: `entity_id=$1 AND is_active=true`, params: [entity_id] };
     const listParams = base.params.concat(statusParams);
     const listSql = {

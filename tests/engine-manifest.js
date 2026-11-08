@@ -212,6 +212,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  /* CAT-313 (2026-11-09): the SQL condition of the product search (named visible fields, literal LIKE). Decides no money, tax or rule. */
+  'catalogue-search.js',
   /* SEC-130 residual (2026-11-07): the shop's own store of a party's e-mail (party_contact) and its one read fragment. Decides nothing. */
   'party-contact.js',
   /* sit/run6 (SIT network work, 2026-10-25): plumbing of the network between installations (certificates, membership, the master's pulls, the installer's one-time token),
