@@ -519,6 +519,7 @@ const INFRA_LIBS = [
      Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
   'bill-paper.js',         // the buyer line of a counter bill at send — the pack's rule, the one tax-id check
   'cash-step.js',          // CTRY-77: a cash part off the pack's cashRounding step is refused at send — reads the SHOP's pack, no rule typed here
+  'credit-cap.js',        // ACC-286: a counter credit note cannot credit more than its bill — figures picked and compared, no rule typed here
   'groupsum.js',           // aggregation for a pane
   'itemmatch.js',          // fuzzy matching a text line to a catalogue item
   'itemstatus.js',         // derives a display status
