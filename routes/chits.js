@@ -491,8 +491,8 @@ async function sendDebitNoteGate(sendState, req, res) {
 
 const SEND_STEPS = [
   sendSender,
-  sendDebitNoteGate,
   sendMoneyStated,
+  sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
   sendTillClaim,
