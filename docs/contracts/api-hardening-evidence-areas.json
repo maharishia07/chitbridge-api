@@ -275,7 +275,8 @@
    "output_allowlist": true
   },
   "GET /api/chits/:chit_id/costs": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "GET /api/chits/:chit_id/disputes": {
    "output_allowlist": true
@@ -287,11 +288,17 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "GET /api/chits/:chit_id/raida": {
+   "foreign_id_404": true
+  },
   "GET /api/chits/:chit_id/use": {
    "output_allowlist": true
   },
   "GET /api/chits/:id/children": {
    "output_allowlist": true
+  },
+  "GET /api/chits/register/walk/:from": {
+   "foreign_id_404": true
   },
   "GET /api/combo-templates": {
    "output_allowlist": true

@@ -837,6 +837,34 @@ function checkAllowList(recording) {
   });
   return FOREIGN.ownedBy(proved, MINE); /* only the routes this test owns: another area's routes it happens to call are proved in that area's test */
 }
+/* ── the foreign-id world (API-STANDARD S35): shop B asks for shop A's chit by its id ──
+   Three chit reads answer under the caller's OWN rows and never 404 (an unknown or another shop's chit id reads nothing, so the answer is the empty one). For them the
+   proof is the weaker reading the products schedule route has (tests/lib/foreign-id-world.cjs sameAsUnknownCase): another shop's id answers byte for byte as an unknown id,
+   and the owner sees the planted rows. The routes that answer 403 or 400 for a chit that is not the caller's are NOT proved here: a 404 there is a behaviour change (cb-rail). */
+const STRANGER = { identity_id: OTHER, identity_type: 'entity', display_name: 'Another shop', bridge_id: 'OTHERSHOP' };
+const SAME_AS_UNKNOWN = [
+  { route: 'GET ' + C + '/:chit_id/costs', url: C + '/' + PARTY + '/costs', setup: { sqlRows: answeringAll([[/FROM chit_line_cost WHERE/, [COST_ROW]], [/FROM chit_detail WHERE/, [{ total_value: '360.00', currency_code: 'INR' }]]]) } },
+  { route: 'GET ' + C + '/:chit_id/raida', url: C + '/' + PARTY + '/raida', setup: { migrated: true, sqlRows: answering(/FROM register_entry a/, RAIDA_ROWS) } },
+  { route: 'GET ' + C + '/register/walk/:from', url: C + '/register/walk/' + PARTY + '?depth=3&backwards=0', setup: { migrated: true, sqlRows: answering(/to_id IS NOT NULL/, EDGE_ROWS) } }
+];
+async function checkForeignIds(port) {
+  console.log('\n-- signed in as another shop: a chit read answers a foreign id as an unknown one (S35, the reading for a read under the caller\'s own rows) --');
+  const proved = {};
+  for (const item of SAME_AS_UNKNOWN) {
+    const play = async (who, planted) => {
+      const rows = item.setup.sqlRows;
+      Object.assign(world, FRESH, item.setup, { who: who === 'owner' ? OWNER : STRANGER, sqlRows: planted && who === 'owner' ? rows : null }); /* the stand-in db answers a planted row to its owner only, as RLS and WHERE entity_id = $1 do */
+      require(path.join(HERE, 'lib', 'schema'))._reset();
+      return send(port, 'GET', item.url);
+    };
+    const sentence = await FOREIGN.sameAsUnknownCase(play);
+    check(item.route + ': another shop\'s id answers byte for byte as an unknown id, and the owner sees the planted rows', sentence === null, sentence);
+    const bite = await FOREIGN.biteCase(play, FOREIGN.sameAsUnknownCase);
+    check(item.route + ': the case can FAIL (a store that ignores the owner is caught)', bite === null, bite);
+    if (sentence === null && bite === null) proved[item.route] = { foreign_id_404: true };
+  }
+  return proved;
+}
 /** the chit routes the evidence file says output_allowlist for */
 function allowListEvidenceOnDisk() {
   const routes = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
@@ -1051,6 +1079,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const held = replaying ? null : heldRoutes();
   const mine = replaying ? routes : Object.fromEntries(Object.keys(routes).filter((route) => held.has(route)).map((route) => [route, routes[route]]));
   const tested = await checkRoutes(server.address().port, scenariosOf(mine), recording, held);
+  const foreignProved = replaying ? {} : await checkForeignIds(server.address().port);
   server.close();
   if (flagValue('--capture')) {
     fs.writeFileSync(flagValue('--capture'), JSON.stringify(recording, null, 1));
@@ -1080,10 +1109,12 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(TESTED_FILE, JSON.stringify(Object.fromEntries(Object.keys(merged).sort().map((route) => [route, merged[route]])), null, 1) + '\n');
     writeAllowList(allowed);
+    FOREIGN.writeEvidence(EVIDENCE_FILE, MINE, foreignProved);
   } else {
     check('docs/contracts/api-error-tests.json lists exactly the statuses these scenarios cover for routes/chits.js', sameValue(rows, coverage), { onDisk: Object.keys(rows).length, covered: Object.keys(coverage).length });
     check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the chit routes whose 200 held closed here', sameValue(allowListEvidenceOnDisk(), allowed), { onDisk: Object.keys(allowListEvidenceOnDisk()).length, held: Object.keys(allowed).length });
   }
+  if (!argv.includes('--write')) check('docs/contracts/api-hardening-evidence-areas.json says foreign_id_404 for exactly the chit reads that held here', sameValue(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE), foreignProved), { onDisk: Object.keys(FOREIGN.evidenceOf(EVIDENCE_FILE, MINE)).length, held: Object.keys(foreignProved).length });
   console.log('\n  ' + passed + ' checks, ' + failed + ' failed');
   process.exit(failed ? 1 : 0);
 })();
