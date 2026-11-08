@@ -24,7 +24,8 @@ const err = (status, message, code) => Object.assign(new Error(message), { statu
  *   disconnect       the parent or the child
  *
  * ⭐ TWO KINDS OF EDGE. `governance` is the tree: one live parent, and approving it moves the child's subtree under the
- * parent. `commercial` is a brand's network of stores: a store may hold many (one per brand — b261), and it never moves
+ * parent (and disconnecting it moves the subtree back to its own root): the one consented door through the root-immutable trigger, NET-93 reRootGuard.
+ * `commercial` is a brand's network of stores: a store may hold many (one per brand — b261), and it never moves
  * the tree. Membership reads both (lib/network-membership.js).
  */
 const TREE = 'governance';
@@ -224,6 +225,36 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   );
   return rows[0];
 }
+/**
+ * NET-93 · the ONE door through migration b843's root-immutable trigger. Joining a network (approve a governance edge) and leaving it (disconnect)
+ * move a whole subtree to another root, which the trigger refuses unless this transaction names the business's OWN root (its label) in cb.net_reroot.
+ * Called only after the edge's rule (mayAct: the child consented, or a party disconnects); the setting lasts for this transaction alone.
+ * Before b843 is run the setting is simply never read, so this is safe on a database without the trigger.
+ */
+async function reRootGuard(dbClient, ownPath) {
+  await dbClient.query(`select set_config('cb.net_reroot', subpath($1::ltree, 0, 1)::text, true)`, [ownPath]);
+}
+/** approve, tree edge: the child (a claimed root with no live parent) and its subtree move under the parent; a cycle or a node already inside a tree is a 409 with its code */
+async function joinTree(dbClient, edge) {
+  const parent = await getById(edge.parent_id, dbClient);
+  const {
+    rows: [child]
+  } = await dbClient.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
+  if (!child.claimed) throw err(409, 'child is an unclaimed stub — cannot consent', 'UNCLAIMED');
+  if (await hasLiveParent(child.id, dbClient)) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  const {
+    rows: [{ bad, deep }]
+  } = await dbClient.query(`select (($1::ltree) <@ ($2::ltree)) as bad, nlevel($2::ltree) > 1 as deep`, [parent.path, child.path]);
+  if (bad) throw err(409, 'would create a cycle (parent under child)', 'CYCLE');
+  // NET-93: only a business that is its own network can join one; a node already inside a tree (a stale edge) never walks out of it by this door
+  if (deep) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  await reRootGuard(dbClient, child.path);
+  await dbClient.query(
+    `update cb_entity set path = ($1::ltree) || subpath(path, nlevel($2::ltree)-1)
+     where path <@ ($2::ltree)`,
+    [parent.path, child.path]
+  );
+}
 async function approve({ edgeId }, actor) {
   return withTx(async (c) => {
     const {
@@ -232,24 +263,7 @@ async function approve({ edgeId }, actor) {
     if (!edge) throw _edgeGone();
     _checkEdge('approve', edge, actor);
     if (edge.state !== 'requested') throw err(409, `cannot approve from ${edge.state}`, 'BAD_STATE');
-    if (edge.type === TREE) {
-      const parent = await getById(edge.parent_id, c);
-      const {
-        rows: [child]
-      } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
-      if (!child.claimed) throw err(409, 'child is an unclaimed stub — cannot consent', 'UNCLAIMED');
-      if (await hasLiveParent(child.id, c)) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
-      const {
-        rows: [{ bad }]
-      } = await c.query(`select (($1::ltree) <@ ($2::ltree)) as bad`, [parent.path, child.path]);
-      if (bad) throw err(409, 'would create a cycle (parent under child)', 'CYCLE');
-      // reparent child subtree under parent (works whether child is a root or not)
-      await c.query(
-        `update cb_entity set path = ($1::ltree) || subpath(path, nlevel($2::ltree)-1)
-         where path <@ ($2::ltree)`,
-        [parent.path, child.path]
-      );
-    }
+    if (edge.type === TREE) await joinTree(c, edge);
     const {
       rows: [updated]
     } = await c.query(`update cb_edge set state='active', approved_by=$2, decided_at=now() where id=$1 returning *`, [edgeId, actor.id]);
@@ -328,6 +342,7 @@ async function disconnect({ edgeId, settle = false }, actor) {
         rows: [child]
       } = await c.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
       // detach: re-root the child subtree to its own root
+      await reRootGuard(c, child.path);
       await c.query(`update cb_entity set path = subpath(path, nlevel($1::ltree)-1) where path <@ ($1::ltree)`, [child.path]);
     }
     const {
