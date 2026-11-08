@@ -1670,7 +1670,7 @@ async function sendPairRefusal(sendState, pair, req, res) {
   res.locals.code = 'MONEY_UNBALANCED';
   return problem(req, res, {
     status: 409,
-    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, missing: pair.missing, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
   });
 }
 

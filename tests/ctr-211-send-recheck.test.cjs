@@ -235,7 +235,7 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     };
     await strip('ValDtls.TotInvVal deleted → 409, "missing its e-invoice total", one ticket', (i) => { delete i.ValDtls.TotInvVal; });
     const gone = await strip('ValDtls.RndOffAmt deleted → 409 round-off missing', (i) => { delete i.ValDtls.RndOffAmt; });
-    ok('…the answer names the pair, and the ticket says which side is missing', gone.answer.pair === 'round_off' && /figure missing/.test(gone.tickets[0].t.subject), J(gone.answer));
+    ok('…the answer names the pair and missing: figure, and the ticket says which side is missing', gone.answer.pair === 'round_off' && gone.answer.missing === 'figure' && /figure missing/.test(gone.tickets[0].t.subject), J(gone.answer));
     await strip('a bridge step deleted (no taxable step) → 409', (i) => { i._cb.bridge.steps = i._cb.bridge.steps.filter((x) => x.name !== 'taxable'); });
     await strip('a missing figure cannot be overridden by a typed reason', (i) => { delete i.ValDtls.AssVal; }, { money_override: { by: 'Asha', why: 'owner says it is right' } });
     const noBridge = await send(body(invoiceWith((i) => { delete i._cb.bridge; delete i.ValDtls.TotInvVal; })));
