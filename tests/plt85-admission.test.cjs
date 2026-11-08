@@ -2,7 +2,7 @@
 /**
  * plt85-admission.test.cjs — PLT-85 / SPD-45: the line is short and its end is at the door.
  *   · lib/limits admit: over API_MAX_INFLIGHT the answer is 503 SERVER_BUSY + Retry-After before any handler runs; the exempt doors pass; a request that
- *     is aborted by its client gives its place back ONCE (no leak); 0 = off; a non-number falls back to 64.
+ *     is aborted by its client gives its place back ONCE (no leak); 0 = off; a non-number falls back to 24.
  *   · middleware/idempotency: a busy POOL (pg-pool's timeout) at the claim answers 503 SERVER_BUSY and the handler runs 0 times, nothing in the memory
  *     store; a MISSING table (42P01) keeps the LIM2 path (the handler runs once, X-Idempotency: unverified).
  *   · lib/knownerr poolBusy: the pool's words from a pg stack → 503 SERVER_BUSY; the same words from anywhere else → null.
@@ -87,8 +87,8 @@ function call(port, method, urlPath, headers, abortAfter) {
   const many = await Promise.all(Array.from({ length: 100 }, () => call(port, 'GET', '/api/hold?ms=50')));
   ok(many.filter((x) => x.status === 200).length === 100, 'cap 0: 100 of 100 admitted');
   process.env.API_MAX_INFLIGHT = 'abc';
-  const sixtyFive = await Promise.all(Array.from({ length: 65 }, (_, i) => call(port, 'GET', '/api/hold?ms=' + (i < 64 ? 400 : 0))));
-  ok(sixtyFive.filter((x) => x.status === 200).length === 64 && sixtyFive.filter((x) => x.status === 503).length === 1, 'cap "abc": falls back to 64, so 64 admitted and the 65th turned away');
+  const twentyFive = await Promise.all(Array.from({ length: 25 }, (_, i) => call(port, 'GET', '/api/hold?ms=' + (i < 24 ? 400 : 0))));
+  ok(twentyFive.filter((x) => x.status === 200).length === 24 && twentyFive.filter((x) => x.status === 503).length === 1, 'cap "abc": falls back to 24, so 24 admitted and the 25th turned away');
   await wait(450);
 
   console.log('idempotency: a busy pool at the claim never runs the handler');
