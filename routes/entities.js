@@ -32,7 +32,7 @@ router.param('code', textParam((req) => ({ status: 404, ...contract.words.noSuch
 /** the schema check of one route, to spread after its gates (lib/entities-contract.js): a body that is not an object is refused 400 in the chains' own "Validation failed" body; a route with no input has none */
 const checked = (route) => {
   const operation = contract.entities.operationFor(route);
-  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.schemaOptions)] : [];
+  return operation.parameters || operation.requestBody ? [schemaValidate(operation, contract.optionsFor(route))] : [];
 };
 /** the platform doors as gates in front of a handler (they answer a Problem themselves and say which statuses they add): the root of the deployment, and the platform role */
 const rootGate = Object.assign((req, res, next) => (require('../lib/platformroot').refuseUnlessRoot(req, res) ? next() : undefined), { addsStatuses: [403, 404] });
