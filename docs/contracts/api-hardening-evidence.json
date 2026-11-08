@@ -26,6 +26,7 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/policy": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/entities/header": {
@@ -33,6 +34,9 @@
   },
   "GET /api/entities/sides": {
    "output_allowlist": true
+  },
+  "PATCH /api/entities/me/prefs/:kind": {
+   "strict_input": true
   },
   "PATCH /api/entities/me/exposure": {
    "strict_input": true,
@@ -42,6 +46,7 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/me/locale": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "PATCH /api/entities/profile": {
@@ -341,6 +346,9 @@
   },
   "GET /api/integrations/streams": {
    "output_allowlist": true
+  },
+  "PUT /api/integrations/streams": {
+   "strict_input": true
   },
   "POST /api/integrations/books/skip": {
    "strict_input": true,
@@ -990,6 +998,9 @@
   "GET /api/governance/supplier-acceptance/:handle": {
    "output_allowlist": true
   },
+  "POST /api/attachments": {
+   "strict_input": true
+  },
   "GET /api/attachments/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -1413,7 +1424,11 @@
   "GET /api/definitions/:id": {
    "foreign_id_404": true
   },
+  "POST /api/definitions": {
+   "strict_input": true
+  },
   "PUT /api/definitions/:id": {
+   "strict_input": true,
    "foreign_id_404": true
   },
   "DELETE /api/definitions/:id": {
@@ -1421,6 +1436,7 @@
    "foreign_id_404": true
   },
   "POST /api/definitions/freeze": {
+   "strict_input": true,
    "output_allowlist": true
   },
   "GET /api/tax/invoice/:chit_id": {
