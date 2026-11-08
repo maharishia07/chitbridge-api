@@ -979,9 +979,28 @@
    ]
   },
   "POST /api/books/gst/pay": {
-   "state": "unreached",
-   "group": "precondition",
-   "reason": "a challan can only pay tax OWED (422: more than the tax owed - CGST owed 0); the old empty period 2026-27/1 owes nothing and a period with tax owed is not an empty one (no tax posted on the load shop before November)"
+   "state": "measured",
+   "trips": 4,
+   "status": 200,
+   "url": "/api/books/gst/pay",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    },
+    {
+     "status": 200,
+     "trips": 4
+    }
+   ]
   },
   "POST /api/books/loans": {
    "state": "measured",
@@ -1032,9 +1051,28 @@
    ]
   },
   "POST /api/books/payments/:id/confirm": {
-   "state": "unreached",
-   "group": "fixture",
-   "reason": "allocates a payment to an open bill; a manual journal bill (Dr 1300 with the party) is refused as \"there is no bill\" by the confirm route (3 tries): needs a bill made by a real sale (counter/invoice chit), not a journal"
+   "state": "measured",
+   "trips": 5,
+   "status": 200,
+   "url": "/api/books/payments/16f001ee-7178-47d8-84de-33b07d5f4f10/confirm",
+   "calls": [
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    },
+    {
+     "status": 200,
+     "trips": 5
+    }
+   ]
   },
   "POST /api/books/payments/:id/propose": {
    "state": "measured",

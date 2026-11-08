@@ -115,7 +115,7 @@ function extras(tools) {
   const issues = [
     X('issue-recorded', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2, ref: 'USE-1' }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
     X('issue-recorded-without-a-ref', 'POST ' + at('/:id/issue'), 200, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: firstOf(looked(KEPT), stock()) } }),
-    X('issue-no-such-supply', 'POST ' + at('/:id/issue'), 400, { url: at('/' + UNKNOWN_ITEM + '/issue'), body: { qty: 2 } }),
+    X('issue-no-such-supply', 'POST ' + at('/:id/issue'), 404, { url: at('/' + UNKNOWN_ITEM + '/issue'), body: { qty: 2 } }),
     X('issue-expensed-supply', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 2 }, setup: { sqlRows: looked(EXPENSED) } }),
     X('issue-nothing', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: {}, setup: { sqlRows: looked(KEPT) } }),
     X('issue-not-a-number', 'POST ' + at('/:id/issue'), 400, { url: at('/' + ITEM + '/issue'), body: { qty: 'lots' }, setup: { sqlRows: looked(KEPT) } }),

@@ -121,6 +121,17 @@ async function explainSaysWhy() {
   check('explain with nothing applied: an empty list, and the skipped word is in skipped', Array.isArray(none.json.explain) && none.json.explain.length === 0 && none.json.skipped.length === 1, none.json);
 }
 
+/** CAT-284 per API-43 (tolerant until /v2): a keyed outward route ignores an unknown body key and answers exactly as without it */
+async function unknownKeyIgnored() {
+  console.log('\n── evaluate and explain: an unknown body key is ignored, the answer unchanged (API-43) ──\n');
+  const offers = [{ id: 'o1', label: '10 off', kind: 'percent_off', percent: 10 }];
+  for (const route of ['evaluate', 'explain']) {
+    const plain = await ask(route, { lines: LINES, offers, ctx: CTX });
+    const extra = await ask(route, { lines: LINES, offers, ctx: CTX, zz_unknown_field: 1 });
+    check(route + ': an unknown key answers 200 and the same body as without it', plain.status === 200 && extra.status === 200 && JSON.stringify(plain.json) === JSON.stringify(extra.json), [plain.status, extra.status, extra.json]);
+  }
+}
+
 async function keysAndInput() {
   console.log('\n── who may ask, and what a bad body says ──\n');
   const body = { lines: LINES, offers: [{ id: 'o1', label: '10 off', kind: 'percent_off', percent: 10 }], ctx: CTX };
@@ -160,6 +171,7 @@ async function keysAndInput() {
     await theShopsOwnShelf();
     await explainSaysWhy();
     await keysAndInput();
+    await unknownKeyIgnored();
   } finally {
     server.close();
   }

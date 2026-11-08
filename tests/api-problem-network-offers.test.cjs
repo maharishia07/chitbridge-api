@@ -94,6 +94,8 @@ const EXTRAS = [
 const PUSHED = async () => ({ stores: 2, clients: 3 });
 const WINDOW = { version: 1, at: '2026-11-09T04:00:00.000Z', until: null, released_at: '2026-11-08T00:00:00.000Z', released_by: 'Owner', prev: null };
 const SUCCESS = [
+  /* RAIL-207: a well-formed id the store has no offer row for is accepted and written to the caller's own flags (200), never a 404: the proof behind the cannot_answer entry of api-hardening-scope.json */
+  X('choice-saved-for-any-wellformed-id', 'POST /api/network-offers/:id/choice', 200, { body: { choice: 'in' }, patch: { net: { setIn: async () => ({}) } } }),
   X('policy-saved', 'PUT /api/network-offers/policy', 200, { body: { policy: 'opt_in' }, patch: { net: { mergeFlag: async () => ({}), pushToNetwork: PUSHED } } }),
   X('catalogue-published', 'POST /api/network-offers/catalogue/publish', 200, { body: { source_key: 's' }, patch: { ncat: { publish: async () => ({ rec: { id: 'p1', source_key: 's', at: WINDOW.at, published_at: WINDOW.released_at, published_by: 'Owner', changes: [] }, applied: false, followed: 2 }) } } }),
   X('catalogue-cancelled', 'POST /api/network-offers/catalogue/cancel', 200, { body: { source_key: 's' }, patch: { ncat: { cancel: async () => ({ ok: true, id: 'p1' }) } } }),

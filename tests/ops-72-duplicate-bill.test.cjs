@@ -66,7 +66,8 @@ function standIn() {
   const router = require(path.join(HERE, 'routes', 'supplies.js'));
   const server = lab.appOf([{ mount: '/api/supplies', router }]).listen(0);
   const port = server.address().port;
-  const buy = (ref, from, qty, name) => lab.send(port, 'POST', '/api/supplies/purchase', { ref, from, lines: [{ name: name || 'Tape', qty, cost: 10, keep_stock: true }] });
+  let attempts = 0; /* OPS-114: a purchase requires an Idempotency-Key; each call here is its own attempt (a repeated bill number is a different attempt, answered by the bill-number rule) */
+  const buy = (ref, from, qty, name) => lab.send(port, 'POST', '/api/supplies/purchase', { ref, from, lines: [{ name: name || 'Tape', qty, cost: 10, keep_stock: true }] }, null, { 'idempotency-key': 'ops72-' + ++attempts });
   const say = (a) => String((a.json && (a.json.says || a.json.message || a.json.detail)) || '');
   console.log('ops-72-duplicate-bill');
 

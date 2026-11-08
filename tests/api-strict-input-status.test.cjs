@@ -24,8 +24,7 @@ const PRICED_LINE = { qty: 1, listPrice: 5, pricing: { kind: 'fixed', amount: 4 
 const PINS = [
   ['POST /api/adopt/:chit_id answers the standard 422', 'POST', '/api/adopt/' + ADOPT_ID, { accept: [], zz_unknown_field: 1 }, 422, true],
   ['PUT /api/catalogue-face keeps its old 400', 'PUT', '/api/catalogue-face', { face: {}, zz_unknown_field: 1 }, 400, true],
-  /* API-8 (S33): POST /api/pricing/price left the S13 outward list when its money body became an allow-list (tests/api-8-strict-money.test.cjs pins it closed), so an extra key now answers 422 naming it */
-  ['POST /api/pricing/price (money body closed, API-8) answers the standard 422', 'POST', '/api/pricing/price', { lines: [PRICED_LINE], zz_unknown_field: 1 }, 422, true],
+  ['POST /api/pricing/price (S13 outward list, keyed) still ignores an extra key', 'POST', '/api/pricing/price', { lines: [PRICED_LINE], currency: 'INR' }, 200, false],
   /* contract bulk pass, batch 1: each body is the valid one the callers send plus zz_unknown_field */
   ['POST /api/events/ticket (keyed, KEY_ROUTES: till, screen and connector scopes) still ignores an extra key', 'POST', '/api/events/ticket', { zz_unknown_field: 1 }, 200, false],
   ['POST /api/notifications/seen answers the standard 422', 'POST', '/api/notifications/seen', { zz_unknown_field: 1 }, 422, true],
@@ -118,7 +117,7 @@ function ask(port, token, [, method, url, body]) {
   /* the token is the caller's: a shop's, or a shopper's for the routes only a shopper may call */
   const text = JSON.stringify(body);
   return new Promise((resolve) => {
-    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token } }, (answer) => {
+    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token, ...(url === '/api/supplies/purchase' ? { 'idempotency-key': 'strict-' + Date.now() } : {}) } }, (answer) => {
       let raw = '';
       answer.on('data', (part) => (raw += part));
       answer.on('end', () => resolve({ status: answer.statusCode, body: raw ? JSON.parse(raw) : null }));

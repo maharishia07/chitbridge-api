@@ -3171,11 +3171,11 @@
    "lifecycle": "stable"
   },
   "POST /api/pricing/price": {
-   "hash": "802889fd8570fa57",
+   "hash": "1a7ce6f875846cf0",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1023: API-43 tolerant outward (Athi 8 Nov); 13 columns read in the register row, strict_input exempt only while schema_in is true; backward compatible, a closed body is relaxed so no caller breaks; handler and contract unchanged otherwise",
    "lifecycle": "stable"
   },
   "POST /api/products": {
@@ -4496,6 +4496,30 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:id/children": {
+   "hash": "e0208c65b6d7d905",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: stranger and unknown id answer 404 NOT_FOUND, held chit with no child keeps 200 count 0, one statement; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies/:id/issue": {
+   "hash": "062ce99b9f77f313",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies/purchase": {
+   "hash": "bd2e466d1f7552ff",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
    "lifecycle": "stable"
   }
  }
