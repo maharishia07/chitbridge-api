@@ -771,10 +771,22 @@
     },
     "GET /api/chits/:chit_id/use": {
       "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_row": {
+        "chit_id": "00000000-0000-4000-8000-000000000001",
+        "sender_entity_id": "00000000-0000-4000-8000-0000000000aa",
+        "purpose": "invoice",
+        "current_status": "pending",
+        "all_recipients": [],
+        "business_json": {},
+        "line_items": [],
+        "summary_json": {},
+        "entity_id": "00000000-0000-4000-8000-000000000002"
+      }
     },
     "GET /api/chits/:id/children": {
       "file": "chits.js",
@@ -3197,10 +3209,22 @@
     },
     "POST /api/chits/:chit_id/raida/:raida_id/dispute": {
       "file": "chits.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 403 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_body": {
+        "dispute_id": "00000000-0000-4000-8000-000000000003"
+      },
+      "fixture_row": {
+        "capabilities": [
+          "register"
+        ],
+        "raida_id": "00000000-0000-4000-8000-000000000001",
+        "dispute_id": "00000000-0000-4000-8000-000000000003",
+        "chit_id": "00000000-0000-4000-8000-000000000001"
+      }
     },
     "POST /api/chits/:chit_id/reprice": {
       "file": "chits.js",

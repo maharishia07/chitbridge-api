@@ -547,11 +547,11 @@
    "lifecycle": "stable"
   },
   "GET /api/chits/:chit_id/use": {
-   "hash": "be91d2bc805731af",
+   "hash": "48686d79860a87fc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
    "lifecycle": "stable"
   },
   "GET /api/chits/:id/trace": {
@@ -3939,11 +3939,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/status": {
-   "hash": "bca557ce84285e48",
+   "hash": "b4028826f237799e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#903",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; every takeBackCancelled books branch recorded, prune() drops 0 keys on all 13 recorded 200s; replay unchanged (no route or lib change since 663/663)",
    "lifecycle": "stable"
   },
   "PUT /api/chits/:chit_id/use": {
@@ -4618,12 +4618,52 @@
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
    "lifecycle": "stable"
   },
+  "GET /api/chits/:chit_id/costs": {
+   "hash": "f308778e43b196af",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/raida": {
+   "hash": "ed19d2977593cc08",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/register/walk/:from": {
+   "hash": "ac296de840414378",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/pulse": {
+   "hash": "77f9463c104b2ef9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2: handler read, all 13 columns read true in the register row, same-as-unknown or cannot_answer reasons checked against the code, no leak in any answer, replay 663/663 identical",
+   "lifecycle": "stable"
+  },
   "PUT /api/service/:chit_id": {
    "hash": "4c3d96246619a71b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+   "lifecycle": "stable"
+  },
+  "GET /api/chits/:chit_id/catalogue-overlay": {
+   "hash": "8c5c87ac7afd70af",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1031 stage2 re-review c15cf4e8: all 13 columns true; overlay 500 scene reaches the catch with no database text, no false cannot_answer left; replay unchanged (no route or lib change since 663/663)",
    "lifecycle": "stable"
   }
  }
