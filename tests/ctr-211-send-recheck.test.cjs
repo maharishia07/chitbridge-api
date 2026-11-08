@@ -87,7 +87,10 @@ try {
 require(path.join(API, 'lib', 'tax-shelf')).readShelf = async () => null;
 /** the ONE service-ticket path (lib/raiseticket) — captured, never sent */
 const TICKETS = [];
+const FILED = new Set(); /* the real raiseticket dedupes on client_ref: the same key twice is ONE ticket */
 require(path.join(API, 'lib', 'raiseticket')).raise = async (from, who, t) => {
+  if (t.client_ref && FILED.has(t.client_ref)) return { raised: false, duplicate: true };
+  FILED.add(t.client_ref);
   TICKETS.push({ from, who, t });
   return { raised: true, chit_id: 'ticket-' + TICKETS.length };
 };
@@ -100,9 +103,17 @@ app.use('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 let PORT = 0;
 let N = 0;
-async function send(body) {
+/** the warn lines the send logs (money.pair.not-carried) */
+const WARNS = [];
+const cbLog = require(path.join(API, 'lib', 'logger'));
+const realWarn = cbLog.warn;
+cbLog.warn = function (msg, fields) {
+  WARNS.push({ msg, fields });
+  return realWarn.apply(cbLog, [msg, fields]);
+};
+async function send(body, keep) {
   COPIES = null;
-  TICKETS.length = 0;
+  if (!keep) TICKETS.length = 0;
   const res = await fetch(`http://127.0.0.1:${PORT}/api/chits/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: J(Object.assign({ client_ref: 'c211-' + ++N }, body)) });
   return { status: res.status, answer: await res.json().catch(() => ({})), copies: COPIES, tickets: TICKETS.slice() };
 }
@@ -151,6 +162,77 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
 
     const old = await send(body(invoiceWith((i) => { delete i._cb.bridge; i.ValDtls.TotInvVal = 300; })));
     ok('an invoice with NO bridge (frozen before v1.74.0) behaves as today: 200, no ticket', old.status === 200 && old.tickets.length === 0, J([old.status, old.answer]));
+    /* the shopkeeper sentence: plain names, both figures, no field path (the paths stay on the ticket) */
+    const fieldPath = new RegExp('_cb|ValDtls|bridge[.]steps');
+    ok('the words use plain names and no field path; the paths ride the ticket only', !fieldPath.test(h21.answer.words + h21.answer.message) && /bill total/.test(h21.answer.words) && /We have been told/.test(h21.answer.words) && facts.bridge_field === '_cb.bridge.steps.total' && facts.carried_field === 'ValDtls.TotInvVal', J(h21.answer));
+    const ro = await send(body(invoiceWith((i) => { i.ValDtls.RndOffAmt = 0.5; })));
+    ok('the round-off pair (bridge 0 vs RndOffAmt 0.5) → 409 naming round-off, one ticket', ro.status === 409 && ro.answer.pair === 'round_off' && /round-off/.test(ro.answer.words) && ro.copies === null && ro.tickets.length === 1, J(ro.answer));
+
+    /* the minor unit is the BRIDGE's own decimals (the seller pack's currency), never the chit's stated currency (here INR, 2 places) */
+    const inPlaces = (i, places, total, taxable) => {
+      i._cb.bridge.decimals = places;
+      i.ValDtls.TotInvVal = total;
+      i.ValDtls.AssVal = taxable;
+      i.ValDtls.RndOffAmt = 0;
+      const unit = Math.pow(10, places);
+      i._cb.bridge.steps.forEach((x) => {
+        if (x.name === 'total') { x.amount = total; x.amount_minor = total * unit; }
+        if (x.name === 'taxable') { x.amount = taxable; x.amount_minor = taxable * unit; }
+        if (x.name === 'round_off') { x.amount = 0; x.amount_minor = 0; }
+      });
+    };
+    const jpyGood = await send(body(invoiceWith((i) => inPlaces(i, 0, 236, 200))));
+    ok('a correct JPY (0 decimals) bill passes the send: 200, no ticket', jpyGood.status === 200 && jpyGood.tickets.length === 0, J([jpyGood.status, jpyGood.answer]));
+    const jpyBad = await send(body(invoiceWith((i) => { inPlaces(i, 0, 236, 200); i.ValDtls.TotInvVal = 237; })));
+    ok('a JPY bill whose figure differs by one yen is refused 409 (total), one ticket', jpyBad.status === 409 && jpyBad.answer.pair === 'total' && jpyBad.answer.bridge_minor === 236 && jpyBad.answer.carried_minor === 237 && jpyBad.tickets.length === 1, J(jpyBad.answer));
+    const kwdGood = await send(body(invoiceWith((i) => inPlaces(i, 3, 236, 200))));
+    ok('a correct KWD (3 decimals) bill passes the send: 200, no ticket', kwdGood.status === 200 && kwdGood.tickets.length === 0, J([kwdGood.status, kwdGood.answer]));
+    const kwdBad = await send(body(invoiceWith((i) => { inPlaces(i, 3, 236, 200); i.ValDtls.TotInvVal = 236.001; })));
+    ok('a KWD bill off by one fils is refused 409 (total 236000 vs 236001), one ticket', kwdBad.status === 409 && kwdBad.answer.bridge_minor === 236000 && kwdBad.answer.carried_minor === 236001 && kwdBad.tickets.length === 1, J(kwdBad.answer));
+
+    /* a credit note / negative total: the same equality on a negative figure */
+    const negative = (total) => invoiceWith((i) => {
+      i.ValDtls.TotInvVal = total;
+      i._cb.bridge.steps.forEach((x) => { if (x.name === 'total') { x.amount = -236; x.amount_minor = -23600; } });
+    });
+    const negGood = await send(body(negative(-236)));
+    ok('a negative total that agrees (-236 both ways) passes: 200, no ticket', negGood.status === 200 && negGood.tickets.length === 0, J([negGood.status, negGood.answer]));
+    const negBad = await send(body(negative(-237)));
+    ok('a negative total that differs (-236 vs -237) is refused 409', negBad.status === 409 && negBad.answer.bridge_minor === -23600 && negBad.answer.carried_minor === -23700 && negBad.tickets.length === 1, J(negBad.answer));
+
+    /* a replay of the same refused bill: ONE ticket, the second answer says we were already told */
+    const same = body(invoiceWith((i) => { i.ValDtls.TotInvVal = 300; }));
+    FILED.clear();
+    TICKETS.length = 0;
+    const first = await send({ ...same, client_ref: 'c211-replay' }, true);
+    const again = await send({ ...same, client_ref: 'c211-replay' }, true);
+    ok('the same refused bill sent twice raises ONE ticket (same key), both answers 409', first.status === 409 && again.status === 409 && TICKETS.length === 1 && /already told/.test(again.answer.words), J([TICKETS.length, again.answer.words]));
+    /* two different bills with no number and no reference do not dedupe into one ticket */
+    FILED.clear();
+    TICKETS.length = 0;
+    const noRef = (total) => {
+      const b = body(invoiceWith((i) => { i.ValDtls.TotInvVal = total; }));
+      delete b.business_json.bill_no;
+      return b;
+    };
+    const unRef = async (total) => {
+      const res = await fetch(`http://127.0.0.1:${PORT}/api/chits/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: J(noRef(total)) });
+      return res.status;
+    };
+    const u1 = await unRef(300);
+    const u2 = await unRef(310);
+    ok('two unnumbered bills without a reference each raise their own ticket', u1 === 409 && u2 === 409 && TICKETS.length === 2 && TICKETS[0].t.client_ref !== TICKETS[1].t.client_ref, J(TICKETS.map((x) => x.t.client_ref)));
+    FILED.clear();
+
+    /* a bridge whose figure is stripped is not compared (old tills) but is LOGGED, countable */
+    WARNS.length = 0;
+    const stripped = await send(body(invoiceWith((i) => { delete i.ValDtls.RndOffAmt; })));
+    const warned = WARNS.filter((w) => w.msg === 'money.pair.not-carried');
+    ok('a bridge with a figure missing still sends (200) and logs money.pair.not-carried naming round_off, shop and bill', stripped.status === 200 && warned.length === 1 && warned[0].fields.pairs.join() === 'round_off' && warned[0].fields.shop === SHOP && warned[0].fields.bill === 'C1-0001', J([stripped.status, warned]));
+    WARNS.length = 0;
+    await send(body(invoiceWith()));
+    ok('a complete invoice logs nothing about missing figures', WARNS.filter((w) => w.msg === 'money.pair.not-carried').length === 0);
+
     const draft = await send({ ...body(invoiceWith((i) => { i.ValDtls.TotInvVal = 300; })), is_draft: true });
     ok('a draft is never stopped, no ticket', draft.status === 200 && draft.tickets.length === 0, J([draft.status, draft.answer]));
   } catch (e) {
