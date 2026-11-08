@@ -215,6 +215,8 @@ function statusSafeMessage(e) {
  * every catch below answers `problem(req, res, faultOf(e, req, 'Add failed'))`.
  */
 const ctx = (req) => auth.entityOf(req);
+/** who the status stamp names (the signed-in person's display name; null for a till key with none) */
+const whoOf = (req) => ({ actor_name: req.identity && req.identity.display_name });
 /** the schema check of one route (its own operation in lib/products-contract.js), as a list to spread after the gates: a route that takes no input has none */
 function checked(route) {
   const operation = operationFor(route);
@@ -308,9 +310,9 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data) {
+async function validateItem(schema_id, item_data, stored) {
   if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data);
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -451,7 +453,8 @@ router.post('/', auth, ...checked('POST /'), async (req, res) => {
       item_data: req.body.item_data,
       rid: req.id,
       validate: (data, rows) => validateAgainst(rows, data),
-      watchKeys
+      watchKeys,
+      who: whoOf(req)
     });
     if (made.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(made.watched)) });
     if (made.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', made) });
@@ -506,7 +509,7 @@ router.post('/bulk', auth, bulkLimiter, ...checked('POST /bulk'), async (req, re
      * seven-step sequence copied into two files is seven decisions that will disagree later.
      * ⚠️ If this route and lib/catalogue-write.js ever differ, the library is right and this is a bug.
      */
-    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id) });
+    const w = await catwrite.writeItems({ entity_id, items, watchKeys: await costWatch(req, entity_id), who: whoOf(req) });
     if (w.watched) return problem(req, res, { status: 403, ...words.costBlind(cost.costBlindBody(w.watched)) });
     if (!w.ok) return problem(req, res, { status: w.status || 400, ...words.writeRefused(w) });
     const r = { rows: w.rows },
@@ -626,9 +629,8 @@ async function importRefusal(req, entity_id, applied, ident) {
   return blind ? { status: 403, ...words.costBlind(blind) } : null;
 }
 /** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
- *  (a co-assist, CAT-235); null for the owner, who is never compared and never pays the read */
+ *  (a co-assist, CAT-235) and the status check (CAT-323: a word the row already holds is not a change, so the owner needs the row too) */
 async function storedForEdits(req, entity_id, items) {
-  if (rateDoor.setsRate(req) && !isActor(req)) return null;
   const found = await withEntity(entity_id, (db) =>
     db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
   );
@@ -667,7 +669,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data);
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
@@ -681,7 +683,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
       catwrite.patchItems(
         db,
         entity_id,
-        items.map((item) => ({ item_id: item.id, replace: money.stampItem(item.item_data, currency) }))
+        items.map((item) => ({ item_id: item.id, replace: money.stampItem(itemstatus.stampInto(item.item_data, item.item_data, stored && stored.get(item.id), whoOf(req)), currency) }))
       )
     );
 
@@ -1343,7 +1345,7 @@ router.post(
           // The SAME validation the single-add form runs. Without this a bulk upload could create products that
           // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
           // not a rule at all.
-          const verr = validateAgainst(ruleRows, merged);
+          const verr = validateAgainst(ruleRows, merged, prior?.item_data);
           if (verr) {
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
@@ -1544,11 +1546,12 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
     item_data: read.bodyItem,
     stored: read.stored,
     ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-    validate: (data, rows) => validateAgainst(rows, data)
+    validate: (data, rows, stored) => validateAgainst(rows, data, stored)
   });
   if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
   /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
-  const item_data = money.stampItem(decl.item_data, currency);
+  /* CAT-316: a changed status is recorded by itemstatus.stamp (who, when, until, replaced_by), as PUT /:id/status does; an unchanged echo is left as it came */
+  const item_data = money.stampItem(itemstatus.stampInto(decl.item_data, req.body.item_data, read.stored, whoOf(req)), currency);
   return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
 }
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
@@ -1630,6 +1633,8 @@ async function writeRefusalOf(req, entity_id, item_data) {
   if (refused) return { status: 403, ...words.costBlind(refused) };
   return editorNamesRate(req, [item_data]) ? rateRefusal() : null;
 }
+/** the problem body for a parked change the catalogue's validator refused: its sentence at 400 (as PATCH answers), another status (a price in the wrong currency) as the library's own refusal */
+const changeRefusal = (req, verdict) => (verdict.status === 400 ? { status: 400, ...words.declined('Invalid change', { error: verdict.message }) } : faultOf(verdict, req, 'Invalid change'));
 router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req, res) => {
   try {
     const entity_id = ctx(req);
@@ -1650,10 +1655,12 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
       db.query(`SELECT item_data FROM catalogue_items WHERE item_id = $1 AND entity_id = $2 AND is_active = true`, [req.params.id, entity_id])
     );
     if (!cur.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
-    const patch = schedule.diff(
-      cur.rows[0].item_data,
-      money.stampItem(Object.assign({}, cur.rows[0].item_data, decl.item_data), await regional.currencyFor(entity_id))
-    );
+    /* CAT-317: the item as it will read once the change lands is judged by the SAME validator an edit answers to (catwrite.judgeItem), and parked changes are judged again when due (lib/schedule) */
+    const next = Object.assign({}, cur.rows[0].item_data, decl.item_data);
+    const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
+    if (verdict) return problem(req, res, changeRefusal(req, verdict));
+    itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
+    const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id)));
     const r = await schedule.schedule(entity_id, req.params.id, req.body.effective_at, patch, (req.identity && req.identity.identity_id) || null);
     if (r.error === 'not_enabled') return problem(req, res, { status: 409, ...words.scheduleRefused(r) });
     if (r.error) return problem(req, res, { status: 400, ...words.scheduleRefused(r) });
