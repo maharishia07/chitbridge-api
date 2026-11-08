@@ -1,11 +1,11 @@
 /**
- * acc-283-refund-gap.test.cjs — ACC-283: A CASH REFUND THAT IS NOT THE CREDIT NOTE'S TOTAL WAITS, IN WORDS, WITH THE GAP.
+ * acc-283-refund-gap.test.cjs — ACC-283: A CASH REFUND POSTS ITS ROUND-OFF INSIDE THE CASH STEP, AND WAITS IN WORDS, WITH THE GAP, BEYOND IT.
  *
  *   Before: AU credit note A$68.98 refunded in cash A$69.00 (5c step) reached the writer as a return whose refund (6900) was more than its lines (6871 + 627 = 6898); the
  *   engine's return rule has no round-off line, so it refused "the debits (68.98) do not equal the credits (69)" and parked the chit where only the Waiting list showed it.
  *   Now the verdict itself waits, naming both figures and the difference (gap_minor 2); equal refunds (the A$70.00 control) and credit-only refunds post as before.
  *   Hand figures (PM/SIT-HUNT-RUN-2026-11-08-c5.md, p4au.cjs): taxable 62.71 + GST 6.27 = 68.98; refund 69.00; gap 0.02 = 2 minor. Runs on the in-memory twin.
- *   NOT fixed here: posting the 2 minor through the pack's rounding ledger needs the engines return rule to take round_off (engines round, adopt in api and web).
+ *   ADOPT (engines v1.83.0): the return rule takes round_off, so A$68.98 refunded A$69.00 posts Dr sales returns 6271 + Dr GST 627 + Dr round-off 2 = Cr cash 6900; a gap beyond the half step (cashStepMinor) still waits.
  * Run: node tests/acc-283-refund-gap.test.cjs
  */
 'use strict';
@@ -31,8 +31,12 @@ const inNote = { currency: 'INR', ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 
   const run = (setting, invoice, parts) => K.classify({ chit: note(invoice.currency, parts), entry: { sells: true, invoice }, setting });
 
   const au = run(S_AU, auNote(62.71, 6.27), [{ how: 'Cash', amount: 69 }]);
-  eq('AU · A$68.98 note refunded A$69.00 in cash: waits, gap 2 minor', [au.kind, au.gap_minor], ['queue', 2]);
-  ok('AU · the sentence names both figures and the gap, not the engine words', /AUD 69.00 /.test(au.why) && /68\.98/.test(au.why) && /0\.02/.test(au.why) && !/debits/.test(au.why), au.why);
+  eq('AU · A$68.98 note refunded A$69.00 in cash: posts WITH round_off 0.02 (inside the half step)', [au.kind, au.event && au.event.round_off, au.event && au.event.refund], ['post', 0.02, { cash: 69 }]);
+  const auBig = run(S_AU, auNote(62.71, 6.27), [{ how: 'Cash', amount: 69.05 }]);
+  eq('AU · refunded A$69.05 (7 minor over, beyond the 2c half step): waits, gap 7', [auBig.kind, auBig.gap_minor], ['queue', 7]);
+  ok('AU · the sentence names both figures and the gap, not the engine words', /AUD 69.05 /.test(auBig.why) && /68.98/.test(auBig.why) && /0.07/.test(auBig.why) && !/debits/.test(auBig.why), auBig.why);
+  eq('AU · refunded A$68.95 (3 minor under the note): beyond the half step, waits', [run(S_AU, auNote(62.71, 6.27), [{ how: 'Cash', amount: 68.95 }]).gap_minor], [-3]);
+  eq('AU control · exact refund carries no round_off', run(S_AU, auNote(63.64, 6.36), [{ how: 'Cash', amount: 70 }]).event.round_off, undefined);
   const inShort = run(S_IN, inNote, [{ how: 'Cash', amount: 100 }]);
   eq('IN · ₹118 note refunded ₹100: waits, gap -1800 minor', [inShort.kind, inShort.gap_minor], ['queue', -1800]);
   eq('AU control · A$70.00 note refunded A$70.00: posts', run(S_AU, auNote(63.64, 6.36), [{ how: 'Cash', amount: 70 }]).kind, 'post');
@@ -45,10 +49,15 @@ const inNote = { currency: 'INR', ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 
   X.T.identities.push({ identity_id: AU_SHOP, display_name: 'Shop', country: 'AU', currency_code: 'AUD', timezone: 'Australia/Sydney', policy_flags: {} });
   await X.store.saveSetting(X.db, AU_SHOP, S_AU); await X.B.enable(X.db, AU_SHOP, { by: AU_SHOP, today: '2026-10-17' }); K.forget(AU_SHOP);
   X.T.parties.push({ owner: AU_SHOP, party_id: CUST, name: 'Ravi', customer: true });
-  now = note('AUD', [{ how: 'Cash', amount: 69 }]); delete now.business_json.against; entry = { sells: true, invoice: auNote(62.71, 6.27) };
+  now = note('AUD', [{ how: 'Cash', amount: 69.05 }]); delete now.business_json.against; entry = { sells: true, invoice: auNote(62.71, 6.27) };
   const posted = await K.postChit(AU_SHOP, 'n1', {});
   const row = X.T.outbox.filter((o) => o.source_chit_id === 'n1' && !o.done_at);
-  ok('postChit · queued, no entry, one waiting row carrying the sentence', posted.queued === true && X.T.entries.length === 0 && row.length === 1 && /0\.02/.test(row[0].why) && !/debits/.test(row[0].why), JSON.stringify([posted, row.map((o) => o.why)]));
+  ok('postChit · queued, no entry, one waiting row carrying the sentence', posted.queued === true && X.T.entries.length === 0 && row.length === 1 && /0[.]07/.test(row[0].why) && !/debits/.test(row[0].why), JSON.stringify([posted, row.map((o) => o.why)]));
+  /* the A$69.00 refund (inside the half step) posts with the round-off line, balanced */
+  now = note('AUD', [{ how: 'Cash', amount: 69 }]); now.chit_id = 'n2'; delete now.business_json.against;
+  const before = X.T.entries.length, posted2 = await K.postChit(AU_SHOP, 'n2', {});
+  const lines = JSON.stringify(X.T.lines.filter((l) => l.entry_id === (X.T.entries[before] && X.T.entries[before].entry_id)));
+  ok('postChit · A$69.00 for A$68.98 posts one entry with the 2-minor round-off line (needs engines v1.83.0)', !posted2.queued && X.T.entries.length === before + 1 && /round_off/.test(lines) && /6900/.test(lines), JSON.stringify(posted2) + lines.slice(0, 600));
   console.log('\n' + pass + ' passed, ' + fail + ' failed\n\n' + (pass + fail) + ' checks');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
