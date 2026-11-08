@@ -43,8 +43,8 @@ const sessionOnly = (req, res, next) => {
   next();
 };
 
-/** NET-91: the brand's policy and its release/withdraw push to every store, so only the brand's owner does them — the one owner gate (lib/owner), never a staff login */
-const brandOwnerOnly = require('../lib/owner').ownerOnly('Only the owner of the brand sets or releases its network offers.');
+/** NET-91: the brand's policy, release, withdraw and catalogue publish, cancel and price push to or answer every store, so only the brand's owner does them — the one owner gate (lib/owner), never a staff login */
+const brandOwnerOnly = require('../lib/owner').ownerOnly('Only the business owner may change network offers and catalogue prices.');
 
 /** the brand's own live offer, or null — nobody releases an offer that is not theirs */
 /** the shape of an offer id (36 hex and dashes); the database still has the last word on whether it is a uuid */
@@ -293,7 +293,7 @@ const who = (req) => (req.identity && (req.identity.display_name || req.identity
 /** a refused catalogue step: not_yours 404 · validation 400 · the rest 409, the old { error, message } kept */
 const fail = (res, out) => problem(res.req, res, refusalOf(out));
 
-router.post('/catalogue/publish', auth, sessionOnly, ...contract.checked('POST /catalogue/publish'), async (req, res) => {
+router.post('/catalogue/publish', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/publish'), async (req, res) => {
   try {
     const b = req.body || {};
     const out = await ncat.publish(auth.entityOf(req), String(b.source_key || ''), {
@@ -311,7 +311,7 @@ router.post('/catalogue/publish', auth, sessionOnly, ...contract.checked('POST /
   }
 });
 
-router.post('/catalogue/cancel', auth, sessionOnly, ...contract.checked('POST /catalogue/cancel'), async (req, res) => {
+router.post('/catalogue/cancel', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/cancel'), async (req, res) => {
   try {
     const out = await ncat.cancel(auth.entityOf(req), String((req.body || {}).source_key || ''));
     if (out.error) return fail(res, out);
@@ -321,7 +321,7 @@ router.post('/catalogue/cancel', auth, sessionOnly, ...contract.checked('POST /c
   }
 });
 
-router.post('/catalogue/price', auth, sessionOnly, ...contract.checked('POST /catalogue/price'), async (req, res) => {
+router.post('/catalogue/price', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /catalogue/price'), async (req, res) => {
   try {
     const b = req.body || {};
     const out = await ncat.answer(auth.entityOf(req), {

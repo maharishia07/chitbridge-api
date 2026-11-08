@@ -1346,13 +1346,16 @@
    "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/cancel": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/price": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network-offers/catalogue/publish": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
@@ -1602,6 +1605,9 @@
    "output_allowlist": true
   },
   "POST /api/till/rate": {
+   "output_allowlist": true
+  },
+  "POST /api/till/recheck": {
    "output_allowlist": true
   },
   "POST /api/till/reconcile": {

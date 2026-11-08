@@ -69,10 +69,14 @@ const RECORDS = (name, value) => async () => {
   return value;
 };
 const NETWORK_WRITES = { mergeFlag: RECORDS('mergeFlag', {}), setReleased: RECORDS('setReleased', {}), pushToNetwork: RECORDS('pushToNetwork', { stores: 0, clients: 0 }) };
+const CATALOGUE_WRITES = { publish: RECORDS('publish', {}), cancel: RECORDS('cancel', {}), answer: RECORDS('answer', {}) };
 const STAFF_REFUSED = [
   X('staff-policy', 'PUT /api/network-offers/policy', 403, { after: true, setup: { who: STAFF }, body: { policy: 'opt_out' }, patch: { net: NETWORK_WRITES } }),
   X('staff-release', 'POST /api/network-offers/:id/release', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
-  X('staff-withdraw', 'POST /api/network-offers/:id/withdraw', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } })
+  X('staff-withdraw', 'POST /api/network-offers/:id/withdraw', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
+  X('staff-publish', 'POST /api/network-offers/catalogue/publish', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-cancel', 'POST /api/network-offers/catalogue/cancel', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-price', 'POST /api/network-offers/catalogue/price', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: CATALOGUE_WRITES } })
 ];
 const EXTRAS = [
   X('network-read-breaks', 'GET /api/network-offers', 500, { patch: { net: { brandView: throwsLater } } }),
@@ -143,8 +147,8 @@ function checkCodesRegistered(recording) {
     process.exit(0);
   }
   checkContracts(routes);
-  const staffAnswers = ['PUT /api/network-offers/policy|staff-policy', 'POST /api/network-offers/:id/release|staff-release', 'POST /api/network-offers/:id/withdraw|staff-withdraw'].map((key) => recording[key]);
-  check('a staff login is refused 403 OWNER_ONLY on policy, release and withdraw, and nothing was written or pushed', staffAnswers.every((one) => one && one.status === 403 && one.body.code === 'OWNER_ONLY' && one.body.may === false) && STAFF_WROTE.length === 0, { staffAnswers, STAFF_WROTE });
+  const staffAnswers = ['PUT /api/network-offers/policy|staff-policy', 'POST /api/network-offers/:id/release|staff-release', 'POST /api/network-offers/:id/withdraw|staff-withdraw', 'POST /api/network-offers/catalogue/publish|staff-publish', 'POST /api/network-offers/catalogue/cancel|staff-cancel', 'POST /api/network-offers/catalogue/price|staff-price'].map((key) => recording[key]);
+  check('a staff login is refused 403 OWNER_ONLY on policy, release, withdraw and the three catalogue writes, and nothing was written or pushed', staffAnswers.every((one) => one && one.status === 403 && one.body.code === 'OWNER_ONLY' && one.body.may === false) && STAFF_WROTE.length === 0, { staffAnswers, STAFF_WROTE });
   checkCodesRegistered(recording);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   const allowHeld = ALLOW.checkAllowList(recording, Object.assign({}, ...MOUNTS.map((one) => contractOf(one).OPERATIONS)), check);
