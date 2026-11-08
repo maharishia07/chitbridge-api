@@ -3818,7 +3818,7 @@ function theirInvoice(head, receipts, invoices) {
     && String(((invoice.business_json || {}).order || {}).from || '') === String(head.chit_id));
   if (billing.length > 1) return { total: null, from: 'several invoices name this order: ' + billing.map(invoiceNo).join(', ') };
   if (billing.length) {
-    const stated = counterBill.pickOf(billing[0]).total; /* CTR-191: the one pick (invoice, then money.total, then total_value), never the route's old net */
+    const stated = counterBill.pickOf(billing[0]).total;
     if (stated != null) return { total: Number(stated), from: 'their invoice' };
   }
   const keyed = receipts

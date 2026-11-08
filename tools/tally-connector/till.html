@@ -5909,7 +5909,7 @@ var CloudHost = {
               var moved = await renumberBill(bill, said, rows);   /* H5: a row it moved leaves `rows`, so its old copy is never written back */
               if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
             }
-            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status); bill._code = code || null;
+            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status); bill._code = code;
             bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
             /* ⭐ R2's ladder — 2s, 4s, 8s … to five minutes, then five minutes for ever. See qBackoff(). */
             bill._nextAt = bill._at + qBackoff(bill._tries);
