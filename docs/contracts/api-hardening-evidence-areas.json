@@ -532,9 +532,11 @@
    "output_allowlist": true
   },
   "GET /api/network/entities/:id/connections": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/network/entities/:id/subtree": {
+   "output_allowlist": true,
    "foreign_id_404": true
   },
   "GET /api/network/entities/lookup": {
@@ -1335,6 +1337,21 @@
   "POST /api/network-offers/:id/choice": {
    "output_allowlist": true
   },
+  "POST /api/network-offers/:id/release": {
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/:id/withdraw": {
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/catalogue/cancel": {
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/catalogue/price": {
+   "output_allowlist": true
+  },
+  "POST /api/network-offers/catalogue/publish": {
+   "output_allowlist": true
+  },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
    "output_allowlist": true
@@ -1698,6 +1715,9 @@
    "output_allowlist": true
   },
   "PUT /api/network-design": {
+   "output_allowlist": true
+  },
+  "PUT /api/network-offers/policy": {
    "output_allowlist": true
   },
   "PUT /api/products/:id/availability": {

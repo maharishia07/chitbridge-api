@@ -241,7 +241,8 @@ function successSchemas(operation) {
 }
 
 /** a schema that lists its fields and refuses any other (the allow-list): an object with additionalProperties false */
-const refusesUnknownKeys = (schema) => !!schema && schema.additionalProperties === false;
+/** a schema that lists its keys and refuses the rest: an object itself, or a bare list whose items are such objects (the allow-list filter prunes a list at its rows) */
+const refusesUnknownKeys = (schema) => !!schema && (schema.additionalProperties === false || (schema.type === 'array' && !!schema.items && schema.items.additionalProperties === false));
 
 /** strict_input (S33): a route that takes a body declares it with additionalProperties false behind a schemaValidate check, AND its generated case (tools/api-contract-tests.cjs → api-hardening-evidence.json) saw an unknown key refused by name; a route with no body has nothing to refuse */
 function strictInputColumn(operation, leaf, facts, evidence) {
@@ -589,4 +590,4 @@ if (require.main === module) {
   main(process.argv.slice(2));
   process.exit(process.exitCode || 0); /* routers start no timers we need; do not wait for any a route file opened on load */
 }
-module.exports = { basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };
+module.exports = { refusesUnknownKeys, basisOf, addEffect, mergeHuman, humanFromEntry, signoffProblems, hardeningEvidence, evidenceUnion, evidenceOverrides, STAGE, operationsOfApp, successSchemas, hardeningApplies, hardeningScope, scopeProblems, tripsBudgetedColumn, HARDENING_COLUMNS, strictInputColumn, outputAllowlistColumn, foreignIdColumn, idempotentMoneyColumn, inboundColumn, unclassifiedMoney, buildRegister, renderMarkdown, normalise, check, schemaOutColumn };

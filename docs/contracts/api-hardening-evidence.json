@@ -489,7 +489,8 @@
    "output_allowlist": true
   },
   "PUT /api/network-offers/policy": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/network-offers/catalogue/publish": {
    "strict_input": true
@@ -1035,26 +1036,44 @@
   "POST /api/network/entities": {
    "strict_input": true
   },
+  "GET /api/network/entities/lookup": {
+   "output_allowlist": true
+  },
   "POST /api/network/entities/:id/claim": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
+  },
+  "GET /api/network/entities/:id/subtree": {
+   "foreign_id_404": true
+  },
+  "GET /api/network/entities/:id/connections": {
+   "foreign_id_404": true
   },
   "POST /api/network/connections": {
    "strict_input": true
   },
   "POST /api/network/connections/:id/approve": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/decline": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/suspend": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/resume": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/disconnect": {
-   "strict_input": true
+   "strict_input": true,
+   "foreign_id_404": true
   },
   "POST /api/simulator/lead": {
    "strict_input": true,

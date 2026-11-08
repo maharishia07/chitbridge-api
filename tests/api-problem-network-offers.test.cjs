@@ -74,6 +74,17 @@ const EXTRAS = [
   X('withdraw-breaks', 'POST /api/network-offers/:id/withdraw', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
   X('choice-write-breaks', 'POST /api/network-offers/:id/choice', 500, { body: { choice: 'in' }, patch: { net: { setIn: throwsLater } } })
 ];
+/** API-7: the success answer of each write the generic worlds cannot reach (the stand-in database has no brand): the recorded 2xx is what the allow-list shape and the output_allowlist evidence are made from */
+const PUSHED = async () => ({ stores: 2, clients: 3 });
+const WINDOW = { version: 1, at: '2026-11-09T04:00:00.000Z', until: null, released_at: '2026-11-08T00:00:00.000Z', released_by: 'Owner', prev: null };
+const SUCCESS = [
+  X('policy-saved', 'PUT /api/network-offers/policy', 200, { body: { policy: 'opt_in' }, patch: { net: { mergeFlag: async () => ({}), pushToNetwork: PUSHED } } }),
+  X('catalogue-published', 'POST /api/network-offers/catalogue/publish', 200, { body: { source_key: 's' }, patch: { ncat: { publish: async () => ({ rec: { id: 'p1', source_key: 's', at: WINDOW.at, published_at: WINDOW.released_at, published_by: 'Owner', changes: [] }, applied: false, followed: 2 }) } } }),
+  X('catalogue-cancelled', 'POST /api/network-offers/catalogue/cancel', 200, { body: { source_key: 's' }, patch: { ncat: { cancel: async () => ({ ok: true, id: 'p1' }) } } }),
+  X('price-answered', 'POST /api/network-offers/catalogue/price', 200, { body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: { answer: async () => ({ ok: true, choice: 'use' }) } } }),
+  X('offer-released', 'POST /api/network-offers/:id/release', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } }),
+  X('offer-withdrawn', 'POST /api/network-offers/:id/withdraw', 200, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: { network_offers: { released: { [OFFER]: WINDOW } } } }), nextOpeningFor: async () => WINDOW.at, setReleased: async () => ({}), pushToNetwork: PUSHED } } })
+];
 const contractOf = (one) => require(path.join(HERE, one.contract)).contract;
 
 /** the contracts as units: every route has an operation and every operation a route; every refusal an operation declares is a Problem; the words never carry a cause */
@@ -111,7 +122,7 @@ function checkCodesRegistered(recording) {
   const capturing = lab.flagValue('--capture');
   const allowedBy = Object.assign({}, ...MOUNTS.map((one) => Object.fromEntries(Object.keys(contractOf(one).OPERATIONS).map((key) => [key, contractOf(one).allowedStatuses()(key)]))));
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
-  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS, { id: OFFER });
+  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS), { id: OFFER });
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')) }));
   server.close();
   if (capturing) {
