@@ -276,9 +276,7 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     /* no heads: a COUNTER bill before the floor passes and is counted; on or after the floor it is refused; a bill built here (where 'send') with no heads is refused */
     const before = sendOf.headsAbsentCount();
     const oldTill = await send(body2(t1((i) => { delete i._cb.bridge.heads; })));
-    ok('a counter bill dated 8 Nov 2026 with no heads (an old till) → 200, no ticket, COUNTED', oldTill.status === 200 && oldTill.tickets.length === 0 && sendOf.headsAbsentCount() === before + 1, J([oldTill.status, oldTill.answer, before, sendOf.headsAbsentCount()]));
-    const afterFloor = await send(body2(t1((i) => { delete i._cb.bridge.heads; }), { billed_at: sendOf.HEADS_COUNTER_FLOOR + 'T05:00:00Z' }));
-    ok('a counter bill dated on the floor (' + sendOf.HEADS_COUNTER_FLOOR + ') with no heads → 409 pair heads, "tax amount", one ticket', afterFloor.status === 409 && afterFloor.answer.pair === 'heads' && afterFloor.answer.missing === 'rows' && /missing its e-invoice tax amount/.test(afterFloor.answer.words) && afterFloor.tickets.length === 1, J(afterFloor.answer));
+    ok('a counter bill with no heads and no engine stamp (an old till) → 200, no ticket, COUNTED', oldTill.status === 200 && oldTill.tickets.length === 0 && sendOf.headsAbsentCount() === before + 1, J([oldTill.status, oldTill.answer, before, sendOf.headsAbsentCount()]));
     const realBuild = taxLines.invoiceFor;
     taxLines.invoiceFor = (q) => { const out = realBuild(q); delete out.invoice._cb.bridge.heads; return out; };
     const atSend = await send({ ...body2(t1()), business_json: { bill_no: 'S1-0001', billed_at: '2026-11-08T05:00:00Z', customer: { name: 'Walk-in' } } });
@@ -307,6 +305,42 @@ const body = (inv, extra) => ({ purpose: 'order', subject: 'Bill', recipients: [
     const reRound = JSON.parse(J(T6));
     reRound.ValDtls.CgstVal = 0.02;
     ok('T6 round-off per line (3 x 0.30 @5%: CGST 0.01 each = 0.03 [3]): a later re-round to 0.02 is a disagreement, not rounding', T6._cb.bridge.heads[0].minor.CgstVal === 3 && sendOf.pairMismatchOf(T6, 'INR', send0) === null && (sendOf.pairMismatchOf(reRound, 'INR', send0) || {}).pair === 'total:CgstVal', J(T6._cb.bridge.heads));
+
+    /* ===== CTR-214 review: M6 cases (T5c, T9, a plant on a 0% slab) and the stamp rule for a missing `heads` ===== */
+    const t5c = await send(body2(t1((i) => { i.ValDtls.CgstVal = 0; i.ValDtls.SgstVal = 0; i.ValDtls.IgstVal = 45.18; })));
+    ok('T5c: IGST 45.18 in place of CGST 22.59 + SGST 22.59 (total, taxable, round-off and the sum untouched) → 409 total:CgstVal 2259 vs 0, nothing stored, ONE ticket', t5c.status === 409 && t5c.answer.pair === 'total:CgstVal' && t5c.answer.bridge_minor === 2259 && t5c.answer.carried_minor === 0 && t5c.copies === null && t5c.tickets.length === 1, J(t5c.answer));
+    /* T9: a 3-decimal bill. 1 x 100.000 @5%: CGST 2.500 [2500], SGST 2.500, base 100.000 [100000]; built from the engine's IN answer with every minor figure written in thousandths by hand */
+    const kwd = (edit) => {
+      const inv = JSON.parse(J(taxLines.invoiceFor({ lines: [line('K', 100, 1, 5)], seller: taxLines.partyOf(shopRow), buyer: {}, currency: 'INR', at: '2026-11-08T05:00:00Z', priceIncludesTax: false }).invoice));
+      inv._cb.bridge.decimals = 3;
+      inv._cb.bridge.steps.forEach((x) => { x.amount_minor = Math.round(x.amount * 1000); });
+      inv._cb.bridge.heads.forEach((row) => { row.currency = 'KWD'; Object.keys(row.minor).forEach((k) => { row.minor[k] *= 10; }); if (row.base_minor !== undefined) row.base_minor *= 10; });
+      if (edit) edit(inv);
+      return inv;
+    };
+    const kwdHeads = kwd()._cb.bridge.heads;
+    ok('T9: the KWD fixture carries CGST 2500, SGST 2500, base 100000 in thousandths', kwdHeads[0].minor.CgstVal === 2500 && kwdHeads[1].base_minor === 100000, J(kwdHeads));
+    const kwdOk = await send({ ...body(kwd()), line_items: [line('K', 100, 1, 5)], business_json: { ...body(kwd()).business_json, currency: 'KWD' } });
+    ok('T9: a correct 3-decimal bill with heads passes: 200, no ticket', kwdOk.status === 200 && kwdOk.tickets.length === 0, J([kwdOk.status, kwdOk.answer]));
+    const kwdBadHead = await send({ ...body(kwd((i) => { i.ValDtls.CgstVal = 2.501; })), line_items: [line('K', 100, 1, 5)] });
+    ok('T9: CGST 2.501 (one fils) → 409 total:CgstVal 2500 vs 2501, one ticket (thousandths, not hundredths)', kwdBadHead.status === 409 && kwdBadHead.answer.pair === 'total:CgstVal' && kwdBadHead.answer.bridge_minor === 2500 && kwdBadHead.answer.carried_minor === 2501 && kwdBadHead.tickets.length === 1, J(kwdBadHead.answer));
+    /* a head planted on a 0% slab: the AU GST-free slab carries no TaxVal (reads 0); 0.01 planted there disagrees with the engine's 0 */
+    const T3plant = JSON.parse(J(T3));
+    T3plant._cb.slabs.find((row) => Number(row.GstRt) === 0).TaxVal = 0.01;
+    const plantOn0 = sendOf.pairMismatchOf(T3plant, 'AUD', send0) || {};
+    ok('a head (0.01) planted on the 0% slab → refused slab:0:TaxVal, bridge 0 vs carried 1', plantOn0.pair === 'slab:0:TaxVal' && plantOn0.bridge_minor === 0 && plantOn0.carried_minor === 1, J(plantOn0));
+    /* a missing `heads` is refused only when the bill's OWN engine stamp is tax@1.84.0 or later; an older or unknown stamp is counted (log send.heads_absent), never refused */
+    const bare = t1((i) => { delete i._cb.bridge.heads; });
+    const seen = sendOf.headsAbsentCount();
+    ok('a 1.84.0 stamp without heads → refused (pair heads, rows missing)', (sendOf.pairMismatchOf(bare, 'INR', { where: 'send', engine: 'tax@1.84.0' }) || {}).missing === 'rows' && sendOf.headsAbsentCount() === seen, '');
+    ok('a 1.85.2 and a 2.0.0 stamp without heads → refused (later than 1.84)', (sendOf.pairMismatchOf(bare, 'INR', { where: 'send', engine: 'tax@1.85.2' }) || {}).missing === 'rows' && (sendOf.pairMismatchOf(bare, 'INR', { where: 'counter', engine: 'tax@2.0.0' }) || {}).missing === 'rows', '');
+    ok('a 1.83.0 stamp without heads → passes and is COUNTED', sendOf.pairMismatchOf(bare, 'INR', { where: 'send', engine: 'tax@1.83.0' }) === null && sendOf.headsAbsentCount() === seen + 1, J(sendOf.headsAbsentCount()));
+    ok('a 1.9.0 stamp (1.9 is below 1.84, numbers not text) and no stamp at all → pass and are COUNTED', sendOf.pairMismatchOf(bare, 'INR', { where: 'counter', engine: 'tax@1.9.0' }) === null && sendOf.pairMismatchOf(bare, 'INR', { where: 'counter' }) === null && sendOf.headsAbsentCount() === seen + 3, J(sendOf.headsAbsentCount()));
+    const stamped = (engine) => ({ stamps: { money: { by: 'chits send', engine, where: 'counter', at: 'TS' } } });
+    const s184 = await send(body2(bare, stamped('tax@1.84.0')));
+    ok('route: a carried bill stamped tax@1.84.0 with no heads → 409 pair heads, one ticket', s184.status === 409 && s184.answer.pair === 'heads' && s184.tickets.length === 1, J(s184.answer));
+    const s183 = await send(body2(bare, stamped('tax@1.83.0')));
+    ok('route: the same bill stamped tax@1.83.0 → 200, no ticket', s183.status === 200 && s183.tickets.length === 0, J([s183.status, s183.answer]));
 
     const draft = await send({ ...body(invoiceWith((i) => { i.ValDtls.TotInvVal = 300; })), is_draft: true });
     ok('a draft is never stopped, no ticket', draft.status === 200 && draft.tickets.length === 0, J([draft.status, draft.answer]));

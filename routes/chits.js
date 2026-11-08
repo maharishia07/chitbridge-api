@@ -1652,7 +1652,7 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
-  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), at: business_json.billed_at, bill: business_json.bill_no });
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code, { where: sendMoneyScope.whereOf(sendState.moneyScope), engine: sendMoneyScope.engineStampOf(business_json, sendState.moneyScope), bill: business_json.bill_no });
   if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
