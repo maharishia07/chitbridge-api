@@ -117,7 +117,7 @@ function ask(port, token, [, method, url, body]) {
   /* the token is the caller's: a shop's, or a shopper's for the routes only a shopper may call */
   const text = JSON.stringify(body);
   return new Promise((resolve) => {
-    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token } }, (answer) => {
+    const sent = require('http').request({ host: '127.0.0.1', port, method, path: url, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), authorization: 'Bearer ' + token, ...(url === '/api/supplies/purchase' ? { 'idempotency-key': 'strict-' + Date.now() } : {}) } }, (answer) => {
       let raw = '';
       answer.on('data', (part) => (raw += part));
       answer.on('end', () => resolve({ status: answer.statusCode, body: raw ? JSON.parse(raw) : null }));

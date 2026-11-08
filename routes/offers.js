@@ -190,7 +190,7 @@ router.openapi = (function () {
   };
   const body = {
     type: 'object',
-    additionalProperties: false /* CAT-284: closed, as the enforced schema is (lib/offers-contract.js rules) */,
+    additionalProperties: false /* CAT-284: the DOCUMENTED shape is closed; the route stays tolerant (an unknown key is ignored) until a /v2, Athi API-43 */,
     required: ['lines'],
     properties: {
       lines: { type: 'array', items: line },
@@ -198,14 +198,9 @@ router.openapi = (function () {
       ctx: { type: 'object', properties: { currency: { type: 'string' }, now: { type: 'string', format: 'date-time' } } }
     }
   };
-  const paths = contract.pathsOf();
-  /* the published request body is the closed EvaluateBody itself, not a $ref to it: the register and the generated cases read the body they are handed (CAT-284) */
-  ['evaluate', 'explain'].forEach((route) => {
-    paths['/api/offers/' + route].post.requestBody.content['application/json'].schema = body;
-  });
   return {
     schemas: { Line: line, Offer: offer, Adjustment: adjustment, Result: result, EvaluateBody: body },
-    paths
+    paths: contract.pathsOf()
   };
 })();
 module.exports = router;

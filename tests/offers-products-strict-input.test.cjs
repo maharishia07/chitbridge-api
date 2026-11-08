@@ -8,7 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the app is loaded offline and the route's schema check (middleware/validate.js schemaValidate) runs alone.
  * FLOW      tools/load-app.cjs → the route's operation (its own schema check, with its own refusal words) → a body → accepted, or refused with the field named
  * CARD      28-platform-and-operations/api-standard
- * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): POST /api/products/bulk · /availability/bulk · /import · /import/preflight and PATCH /api/products/:id (API-43: the connector and till key scopes in middleware/auth.js KEY_ROUTES; they keep unknown body keys ignored until /v2).
+ * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): POST /api/offers/evaluate and /explain (CAT-284 closed per API-43: keyed outward, tolerant until /v2; tests/api-problem-offers.test.cjs pins that an unknown key is ignored) · POST /api/products/bulk · /availability/bulk · /import · /import/preflight and PATCH /api/products/:id (API-43: the connector and till key scopes in middleware/auth.js KEY_ROUTES; they keep unknown body keys ignored until /v2).
  * Pass 2 (7 Nov 2026) closed the two books ＋ Entry doors (POST /events · /preview); the bodies cap-entry sends are replayed below.
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys.
  *
@@ -56,9 +56,6 @@ const CASES = [
   ['POST /api/network-offers/catalogue/price', 'routes/network-offers.js', [{ source_key: 'k', name: 'n', key: 'x', choice: 'use' }]],
   ['POST /api/network-offers/:id/release', 'routes/network-offers.js', [{}, { at: 'now' }, { at: 'x', until: 'y' }]],
   ['POST /api/network-offers/:id/withdraw', 'routes/network-offers.js', [{}, { at: 'now' }]],
-  /* CAT-284: the offer engine as a service; the bodies another system sends (web e2e api-keys.spec.js, services.spec.js) */
-  ['POST /api/offers/evaluate', 'routes/offers.js', [{ lines: [{ key: 'a', qty: 1, unitPrice: 10 }] }, { lines: [{ key: 'a', qty: 1, unitPrice: 10 }], offers: [], ctx: { currency: 'AUD', now: '2026-11-06T10:00:00Z' } }]],
-  ['POST /api/offers/explain', 'routes/offers.js', [{ lines: [{ key: 'a', qty: 1, unitPrice: 10 }] }, { lines: [{ key: 'a', qty: 1, unitPrice: 10 }], offers: [], ctx: { currency: 'AUD', now: '2026-11-06T10:00:00Z' } }]],
   ['POST /api/network-offers/:id/choice', 'routes/network-offers.js', [{ choice: 'in' }, { choice: null }]]
 ];
 const IGNORED_READS = new Set(['length', 'map', 'filter', 'slice', 'trim', 'toString', 'forEach', 'some', 'every', 'join', 'split', 'includes', 'hasOwnProperty']);
