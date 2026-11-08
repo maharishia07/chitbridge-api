@@ -93,7 +93,7 @@ const call = (port, method, p, body) => new Promise((ok) => {
   t('GET /entities/policy: the owner may switch folders', r.json.may.system_folders.ok, true);
 
   /* SEC-153: the shop's money and tax policy is the owner's — a plain editor (an actor, hat act) is refused for each flag and NOTHING is written; the owner still saves */
-  const MONEY_TAX = { price_includes_tax: 'no', gst_registration: 'unregistered', books_at: 'manual', tol_weight_bp: 100, tol_count_units: 1, tol_rate_bp: 1, retention_days: 30, retention_floor_days: 30, match_tolerance_pct: 5, units: ['kg'], unit_rules: {}, connectors_in_use: ['tally'], stream_owner: {}, recheck_prices: 'on' };
+  const MONEY_TAX = { price_includes_tax: 'no', gst_registration: 'unregistered', books_at: 'manual', tol_weight_bp: 100, tol_count_units: 1, tol_rate_bp: 1, retention_days: 30, chit_expiry_days: 1, retention_floor_days: 30, match_tolerance_pct: 5, units: ['kg'], unit_rules: {}, connectors_in_use: ['tally'], stream_owner: {}, recheck_prices: 'on' };
   const WORDS = "Only the owner may change the shop's money, tax and books settings.";
   let written = 0;
   policy.set = async (e, b) => { written++; return Object.assign(policy.defaults(), b); };
