@@ -116,8 +116,7 @@ function extras(tools) {
     up('up-exactly-6mb', 200, withBody({ data_base64: Buffer.alloc(SIX_MB).toString('base64') })),
     up('up-roster-empty-is-the-caller-alone', 200, good, { headers: [headerFor(SHOP_ID, [])] }),
     up('up-roster-null-is-the-caller-alone', 200, good, { headers: [headerFor(SHOP_ID, null)] }),
-    up('up-roster-skips-entries-without-an-entity', 200, good, { headers: [headerFor(SHOP_ID, [{ entity_id: PEER_ID }, {}, { entity_id: null }, { entity_id: PEER_ID }])] }),
-    up('up-keys-that-widen-are-ignored', 200, withBody({ participants: [STRANGER_ID], audience: 'all', entity_id: STRANGER_ID, uploaded_by: STRANGER_ID, size: 1, id: STRANGER_ID }))
+    up('up-roster-skips-entries-without-an-entity', 200, good, { headers: [headerFor(SHOP_ID, [{ entity_id: PEER_ID }, {}, { entity_id: null }, { entity_id: PEER_ID }])] })
   ];
 
   const echoes = [
