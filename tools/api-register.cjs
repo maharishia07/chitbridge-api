@@ -354,7 +354,8 @@ function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, re
   const key = leaf.method + ' ' + leaf.path;
   const codes = codesWritten(source);
   const usesProblem = /\bproblem\(|\bfromError\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
-  const legacyOk = !/legacy:/.test(source) || !!legacyEntry;
+  /* a `legacy:` that is a problem spec's frozen body needs its entry in api-legacy.json; a boolean ANSWER key of that name (GET /api/signin/sessions says legacy: !req.session, a token from before M05) is data, not a frozen body */
+  const legacyOk = !/\blegacy:(?!\s*(?:!|true\b|false\b))/.test(source) || !!legacyEntry;
   return {
     schema_in: schemaInColumn(operation, leaf, facts),
     schema_out: schemaOutColumn(operation),

@@ -46,6 +46,8 @@ process.env.DB_BOOT_WAIT_MS = '2000';
 let wire = 0;
 /* fixture_row: a budget line may name the one row every non-probe statement of THAT route finds, so the stub reaches the route's own work (an INSERT ... RETURNING id otherwise gives no row and the route answers 500) */
 let fixtureRow = null;
+/* fixture_identity: who signs in for THAT route when the route is for a kind of person the stub's shop is not (POST /api/signin/pin is for an actor) */
+let fixtureIdentity = null;
 const empty = () => ({ rows: [], rowCount: 0, fields: [], command: 'SELECT' });
 /**
  * ⭐ EFF-TRIPS (2026-10-15): THE STUB SAYS THE SCHEMA IS WHOLE. A route that is honest about an absent table (lib/schema hasTable ·
@@ -101,7 +103,7 @@ global.fetch = () => Promise.reject(new Error('offline test'));
 
 const authPath = require.resolve(path.join(API, 'middleware', 'auth'));
 require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: Object.assign(
-  (req, res, next) => { req.identity = { identity_id: 'e1', identity_type: 'entity', entity_id: 'e1' }; next(); },
+  (req, res, next) => { req.identity = fixtureIdentity || { identity_id: 'e1', identity_type: 'entity', entity_id: 'e1' }; next(); },
   { entityOf: (req) => req.identity.parent_entity_id || req.identity.identity_id,
     requireScope: () => (req, res, next) => next(), userOf: (req) => req.identity, forgetKey: () => {}, keyAlive: async () => true }) };
 
@@ -195,10 +197,11 @@ async function fire(port, route) {
   const method = route.slice(0, sp), url = ((budget.routes[route] && budget.routes[route].fixture_path) || route.slice(sp + 1)).replace(/:[A-Za-z_]+/g, ID).replace(/^[*]$/, '/'); /* OPTIONS * is the preflight of any path: fired at / */
   wire = 0;
   fixtureRow = (budget.routes[route] && budget.routes[route].fixture_row) || null;
+  fixtureIdentity = (budget.routes[route] && budget.routes[route].fixture_identity) || null;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 6000);
   try {
-    const opts = { method, signal: ac.signal, headers: { 'content-type': 'application/json' } };
+    const opts = { method, signal: ac.signal, headers: Object.assign({ 'content-type': 'application/json' }, (budget.routes[route] && budget.routes[route].fixture_headers) || {}) }; /* fixture_headers: a header the route needs to reach its own work (renew: the device a legacy token names) */
     if (method !== 'GET' && method !== 'DELETE') opts.body = JSON.stringify((budget.routes[route] && budget.routes[route].fixture_body) || {}); /* fixture_body: the smallest valid body, so the stub reaches the route's own work instead of a 400 */
     const r = await realFetch('http://127.0.0.1:' + port + url, opts);
     await r.text().catch(() => '');

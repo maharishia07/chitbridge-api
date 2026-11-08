@@ -14,6 +14,7 @@
  *
  *   node tests/api-problem-service.test.cjs            check
  *   node tests/api-problem-service.test.cjs --write    rewrite this file's rows of docs/contracts/api-error-tests.json
+ *   node tests/api-problem-service.test.cjs --freeze F   merge a capture F into docs/contracts/api-legacy.json (the frozen answers)
  *   node tests/api-problem-service.test.cjs --capture F / --compare F   record every answer to F (run on the code BEFORE a change), then say what moved
  */
 'use strict';
@@ -36,7 +37,8 @@ const lab = harness({
   mounts: [MOUNT],
   routeFiles: { [MOUNT]: 'routes/service.js' },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
-  inherited: () => true /* the bodies are the routes' own words, kept as they were: only the status is judged here */
+  inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out', /* the sign-in gate answers its own 401 */
+  notFrozen: (one, scenario) => (one.status === 401 && scenario === 'signed-out')
 });
 const { check } = lab;
 const WORLDS = [
@@ -100,6 +102,7 @@ async function checkForeignIds(port) {
 }
 
 (async () => {
+  if (lab.flagValue('--freeze')) return lab.freeze(lab.flagValue('--freeze'));
   lab.installStubs();
   const router = require(path.join(HERE, 'routes', 'service.js'));
   const routes = lab.routesOf(router, MOUNT);

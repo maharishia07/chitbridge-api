@@ -414,6 +414,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SENDING | varies | Sending | Not an error. Bills are on their way to the shop. | Wait a few seconds. | verdict | 2026-10-22 |
 | SERVER_BUSY | 503 | Server busy | ChitBridge is very busy right now. Nothing was saved. | Wait a couple of seconds, then send it again. | limits | 2026-11-08 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
+| SERVICE_ALREADY_PAUSED | 409 | Already paused | This request is already paused by you. End that pause before starting another. | End the open pause first. | service | 2026-11-08 |
+| SERVICE_NOT_MIGRATED | 503 | Service clock not migrated | The service clock arrives after the next update. Nothing was started. | Try again after the next update. | service | 2026-11-08 |
+| SERVICE_NOT_TRACKED | 404 | Not tracked yet | This request has no service clock yet. Start the clock first. | Start the service clock, then try again. | service | 2026-11-08 |
+| SERVICE_OWN_CLAIM | 409 | Your own claim | You raised this pause. The other party is the one who accepts or rejects it. | Wait for the other party to answer. | service | 2026-11-08 |
+| SERVICE_PAUSE_ENDED | 409 | Pause already ended | That pause is already ended and its end time cannot be moved. | Start a new pause if the clock must stop again. | service | 2026-11-08 |
 | SESSION_EXPIRED | 401 | Session expired | Your sign-in has ended. | Sign in again. | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | We could not sign you in just now. | Try again in a minute. | identity-auth | 2026-10-22 |
 | SESSION_ONLY | 403 | Sign in as a person | Network offers are managed by a signed-in person. | Sign in as a person, not with a key. | network-offers | 2026-10-23 |

@@ -22,10 +22,11 @@ const crypto = require('crypto');
 const router = express.Router();
 
 const auth = require('../middleware/auth');
-const { validate } = require('../middleware/validate'); // ⚠️ a NAMED export — the default is the module object
+const { validateAsProblem: validate } = require('../middleware/validate'); // ⚠️ a NAMED export — the default is the module object; the same verdict as validate(), answered as a Problem that keeps the old keys
 const { withEntity, onEntity } = require('../db');
 const sla = require('../lib/sla');
 const { problem, fromError } = require('../lib/problem');
+const { declaresStatuses } = require('../lib/contract-kit');
 const { contract } = require('../lib/service-contract'); // the operations of the seven routes (each reads the chit id in the address)
 const { UUID_RE } = require('../lib/trace');
 
@@ -33,11 +34,15 @@ const notMigrated = (e) => e && (e.code === '42P01' || e.code === '42703' || e.c
 /* K-1: Postgres refuses a NUL byte in text (22021; 22P05 inside a jsonb policy) and a time it cannot read (22007, 22008). That is the caller's value, not our fault: a 400 naming nothing of the database. */
 const BAD_TEXT = ['22021', '22P05'];
 const BAD_TIME = ['22007', '22008'];
-const gone = (res) => res.status(503).json({ error: 'Not migrated', message: waiting('The service clock', false, 'Nothing was started.') });
+/** a refusal's words: the sentence we say (detail) and the body this route always answered with, frozen in docs/contracts/api-legacy.json (error alone, or error and message) */
+const said = (error, message) => ({ detail: message || error, legacy: message ? { error, message } : { error } });
+/** every handler writes its refusals itself (a literal problem() with its status and code), so the register reads them from the handler's own text; only the not-migrated 503 of a catch is a gate's (declaresStatuses) */
+const NOT_MIGRATED = declaresStatuses([503]);
+const gone = (req, res) => problem(req, res, { status: 503, code: 'SERVICE_NOT_MIGRATED', ...said('Not migrated', waiting('The service clock', false, 'Nothing was started.')) });
 const ctx = (req) => auth.entityOf(req);
 /** what every catch answers: the migration not run (503), a value no column can hold (400), else the fault in no words of its cause (500). timeField names the time this route reads. */
 function failed(req, res, e, timeField) {
-  if (notMigrated(e)) return gone(res);
+  if (notMigrated(e)) return gone(req, res);
   if (BAD_TEXT.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'A value holds a character we cannot keep.', legacy: { error: 'Cannot save this text. Type it again.' } });
   if (timeField && BAD_TIME.includes(e && e.code)) return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'That time is not a time we can read.', field: timeField, legacy: { error: 'Cannot read this time. Pick it again.' } });
   return fromError(req, res, e, { error: 'Failed' });
@@ -71,7 +76,7 @@ async function mine(entity_id, chit_id, db) {
  * number when the parties happen to agree would have no place to put the second when they stop agreeing, and the
  * disagreement is the entire point of the feature.
  */
-router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, res) => {
+router.get('/:chit_id', auth, NOT_MIGRATED, ...contract.checked('GET /:chit_id'), async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
@@ -103,7 +108,7 @@ router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, 
       );
       return { rec: nestedRec, pauses: nestedPauses };
     });
-    if (!found) return res.status(404).json({ error: 'Not found' });
+    if (!found) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     const { rec, pauses } = found;
 
     const r = rec.rows[0] || null;
@@ -168,15 +173,14 @@ router.get('/:chit_id', auth, ...contract.checked('GET /:chit_id'), async (req, 
  */
 router.put(
   '/:chit_id',
-  auth,
-  ...contract.checked('PUT /:chit_id'),
+  auth, NOT_MIGRATED, ...contract.checked('PUT /:chit_id'),
   [body('impact').optional().isString(), body('urgency').optional().isString(), body('priority').optional().isString()],
   validate,
   async (req, res) => {
     try {
       const entity_id = ctx(req);
       const chit_id = req.params.chit_id;
-      if (!(await mine(entity_id, chit_id))) return res.status(404).json({ error: 'Not found' });
+      if (!(await mine(entity_id, chit_id))) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
 
       const impact = req.body.impact ? String(req.body.impact).toLowerCase() : null;
       const urgency = req.body.urgency ? String(req.body.urgency).toLowerCase() : null;
@@ -184,7 +188,7 @@ router.put(
       if (!priority && req.body.priority) {
         const p = String(req.body.priority).toUpperCase();
         if (!sla.PRIORITIES.includes(p))
-          return res.status(400).json({ error: 'Bad priority', message: 'priority must be one of: ' + sla.PRIORITIES.join(', ') });
+          return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', field: 'priority', ...said('Bad priority', 'priority must be one of: ' + sla.PRIORITIES.join(', ')) });
         priority = p;
       }
       /* ⚠️ NOT REFUSED WHEN THERE IS NO PRIORITY YET. Tracking a request before anyone has classified it is the
@@ -212,10 +216,10 @@ router.put(
 );
 
 /** POST /:chit_id/respond — someone picked it up. Idempotent: the FIRST response is the one that counts. */
-router.post('/:chit_id/respond', auth, ...contract.checked('POST /:chit_id/respond'), async (req, res) => {
+router.post('/:chit_id/respond', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/respond'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
+    if (!(await mine(entity_id, req.params.chit_id))) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     /* ⚠️ COALESCE, so a second tap does not move the response time later and quietly turn a met target into a
        breach — or the reverse. */
     const r = await withEntity(entity_id, (db) =>
@@ -225,7 +229,7 @@ router.post('/:chit_id/respond', auth, ...contract.checked('POST /:chit_id/respo
         [entity_id, req.params.chit_id]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not tracked', message: 'Start the service clock first.' });
+    if (!r.rows.length) return problem(req, res, { status: 404, code: 'SERVICE_NOT_TRACKED', ...said('Not tracked', 'Start the service clock first.') });
     res.json({ message: 'Response recorded', responded_at: r.rows[0].responded_at });
   } catch (e) {
     failed(req, res, e);
@@ -233,13 +237,13 @@ router.post('/:chit_id/respond', auth, ...contract.checked('POST /:chit_id/respo
 });
 
 /** POST /:chit_id/resolve — WHAT was done. Closure (did they accept it) is a separate act, deliberately. */
-router.post('/:chit_id/resolve', auth, ...contract.checked('POST /:chit_id/resolve'), [body('resolution_code').isString()], validate, async (req, res) => {
+router.post('/:chit_id/resolve', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/resolve'), [body('resolution_code').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
+    if (!(await mine(entity_id, req.params.chit_id))) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     const code = String(req.body.resolution_code);
     if (!sla.RESOLUTION_CODES.includes(code))
-      return res.status(400).json({ error: 'Bad resolution', message: 'resolution_code must be one of: ' + sla.RESOLUTION_CODES.join(', ') });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', field: 'resolution_code', ...said('Bad resolution', 'resolution_code must be one of: ' + sla.RESOLUTION_CODES.join(', ')) });
     const r = await withEntity(entity_id, (db) =>
       db.query(
         `UPDATE chit_sla SET resolved_at = COALESCE(resolved_at, now()), resolution_code = $3,
@@ -248,7 +252,7 @@ router.post('/:chit_id/resolve', auth, ...contract.checked('POST /:chit_id/resol
         [entity_id, req.params.chit_id, code, req.body.note ? String(req.body.note).slice(0, 500) : null]
       )
     );
-    if (!r.rows.length) return res.status(404).json({ error: 'Not tracked', message: 'Start the service clock first.' });
+    if (!r.rows.length) return problem(req, res, { status: 404, code: 'SERVICE_NOT_TRACKED', ...said('Not tracked', 'Start the service clock first.') });
     res.json({ message: 'Resolution recorded', ...r.rows[0] });
   } catch (e) {
     failed(req, res, e);
@@ -262,7 +266,7 @@ router.post('/:chit_id/resolve', auth, ...contract.checked('POST /:chit_id/resol
  * chit_line_deliver is. A pause only I can see is not a disputable fact — it is my private opinion about time,
  * which is what every other service desk already has.
  */
-router.post('/:chit_id/pause', auth, ...contract.checked('POST /:chit_id/pause'), [body('reason').isString()], validate, async (req, res) => {
+router.post('/:chit_id/pause', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause'), [body('reason').isString()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
     const chit_id = req.params.chit_id;
@@ -270,7 +274,7 @@ router.post('/:chit_id/pause', auth, ...contract.checked('POST /:chit_id/pause')
        connection is taken. Validating after opening a transaction pays for a round trip to say "no". */
     const reason = String(req.body.reason);
     if (!sla.PAUSE_REASONS.includes(reason))
-      return res.status(400).json({ error: 'Bad reason', message: 'reason must be one of: ' + sla.PAUSE_REASONS.join(', ') });
+      return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', field: 'reason', ...said('Bad reason', 'reason must be one of: ' + sla.PAUSE_REASONS.join(', ')) });
 
     const pause_id = crypto.randomUUID();
 
@@ -310,9 +314,9 @@ router.post('/:chit_id/pause', auth, ...contract.checked('POST /:chit_id/pause')
       return { copies: n.rows[0].copies };
     });
 
-    if (out.notFound) return res.status(404).json({ error: 'Not found' });
+    if (out.notFound) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     if (out.already)
-      return res.status(409).json({ error: 'Already paused', message: 'This request is already paused by you — end that pause before starting another.' });
+      return problem(req, res, { status: 409, code: 'SERVICE_ALREADY_PAUSED', ...said('Already paused', 'This request is already paused by you — end that pause before starting another.') });
     res.json({ message: 'Clock paused', pause_id, copies: out.copies });
   } catch (e) {
     failed(req, res, e, 'from');
@@ -320,10 +324,10 @@ router.post('/:chit_id/pause', auth, ...contract.checked('POST /:chit_id/pause')
 });
 
 /** POST /:chit_id/pause/:pause_id/end — restart the clock. */
-router.post('/:chit_id/pause/:pause_id/end', auth, ...contract.checked('POST /:chit_id/pause/:pause_id/end'), async (req, res) => {
+router.post('/:chit_id/pause/:pause_id/end', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause/:pause_id/end'), async (req, res) => {
   try {
     const entity_id = ctx(req);
-    if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
+    if (!(await mine(entity_id, req.params.chit_id))) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     const to = req.body.to || null;
     if (to !== null && (typeof to !== 'string' || Number.isNaN(Date.parse(to))))
       return problem(req, res, { status: 400, code: 'VALIDATION_FAILED', detail: 'The time the pause ended is not a time we can read.', field: 'to', legacy: { error: 'Cannot read this time. Pick it again.' } });
@@ -332,7 +336,7 @@ router.post('/:chit_id/pause/:pause_id/end', auth, ...contract.checked('POST /:c
     );
     /* ⚠️ ZERO COPIES MEANS THE PAUSE WAS ALREADY CLOSED — said plainly rather than reported as success. Re-ending
        silently would let someone believe they had corrected an end time that never moved. */
-    if (!Number(n.rows[0].copies)) return res.status(409).json({ error: 'Not open', message: 'That pause is already ended — its end time cannot be moved.' });
+    if (!Number(n.rows[0].copies)) return problem(req, res, { status: 409, code: 'SERVICE_PAUSE_ENDED', ...said('Not open', 'That pause is already ended — its end time cannot be moved.') });
     res.json({ message: 'Clock restarted', copies: n.rows[0].copies });
   } catch (e) {
     failed(req, res, e, 'to');
@@ -344,10 +348,10 @@ router.post('/:chit_id/pause/:pause_id/end', auth, ...contract.checked('POST /:c
  *
  * This is the disagreement, made into a fact. Everything else in this file is bookkeeping; this is the feature.
  */
-router.post('/:chit_id/pause/:pause_id/answer', auth, ...contract.checked('POST /:chit_id/pause/:pause_id/answer'), [body('accepted').isBoolean()], validate, async (req, res) => {
+router.post('/:chit_id/pause/:pause_id/answer', auth, NOT_MIGRATED, ...contract.checked('POST /:chit_id/pause/:pause_id/answer'), [body('accepted').isBoolean()], validate, async (req, res) => {
   try {
     const entity_id = ctx(req);
-    if (!(await mine(entity_id, req.params.chit_id))) return res.status(404).json({ error: 'Not found' });
+    if (!(await mine(entity_id, req.params.chit_id))) return problem(req, res, { status: 404, code: 'NOT_FOUND', ...said('Not found') });
     const n = await withEntity(entity_id, (db) =>
       db.query(`SELECT chit_sla_pause_answer($1,$2,$3,$4) AS copies`, [
         req.params.chit_id,
@@ -361,7 +365,7 @@ router.post('/:chit_id/pause/:pause_id/answer', auth, ...contract.checked('POST 
     /* The SQL refuses a party answering its own claim. That is a deliberate rule, not an internal failure, so it
        must not come back as a 500 the caller cannot act on. */
     if (/cannot answer its own/.test(e.message || '')) {
-      return res.status(409).json({ error: 'Your own claim', message: 'You raised this pause — the other party is the one who accepts or rejects it.' });
+      return problem(req, res, { status: 409, code: 'SERVICE_OWN_CLAIM', ...said('Your own claim', 'You raised this pause — the other party is the one who accepts or rejects it.') });
     }
     failed(req, res, e);
   }

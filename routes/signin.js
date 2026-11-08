@@ -108,7 +108,7 @@ router.post('/logout', auth, personOnly, ...contract.checked('POST /logout', sch
   }
 });
 
-router.get('/sessions', auth, personOnly, async (req, res) => {
+router.get('/sessions', auth, personOnly, ...contract.checked('GET /sessions', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
     const t = Math.floor(Date.now() / 1000),
@@ -135,7 +135,7 @@ router.get('/sessions', auth, personOnly, async (req, res) => {
   }
 });
 
-router.get('/devices', auth, personOnly, ownerOnly, async (req, res) => {
+router.get('/devices', auth, personOnly, ownerOnly, ...contract.checked('GET /devices', schemaOptions), async (req, res) => {
   try {
     const devices = await sessions.devicesOf(query, shopOf(req));
     const t = Math.floor(Date.now() / 1000);

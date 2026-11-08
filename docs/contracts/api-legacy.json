@@ -63436,6 +63436,1008 @@
      }
     }
    ]
+  },
+  "GET /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "get-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "reason",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "pause-reason-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     },
+     "fixture": {
+      "error": "Bad reason",
+      "message": "reason must be one of: waiting_on_counterparty, waiting_on_third_party, waiting_on_parts, outside_service_hours, scheduled, other"
+     }
+    },
+    {
+     "scenario": "pause-already-open",
+     "status": 409,
+     "body_keys": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     },
+     "fixture": {
+      "error": "Already paused",
+      "message": "This request is already paused by you — end that pause before starting another."
+     }
+    },
+    {
+     "scenario": "pause-note-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "pause-time-not-a-time",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "That time is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "from"
+     },
+     "fixture": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "That time is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "from"
+     }
+    },
+    {
+     "scenario": "pause-time-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "pause-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "pause-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/answer": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-not-yes-or-no",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "accepted",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "answer-own-claim",
+     "status": 409,
+     "body_keys": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     },
+     "fixture": {
+      "error": "Your own claim",
+      "message": "You raised this pause — the other party is the one who accepts or rejects it."
+     }
+    },
+    {
+     "scenario": "answer-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "answer-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/pause/:pause_id/end": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "end-time-not-a-time",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "The time the pause ended is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "to"
+     },
+     "fixture": {
+      "error": "Cannot read this time. Pick it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "The time the pause ended is not a time we can read.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test",
+      "field": "to"
+     }
+    },
+    {
+     "scenario": "end-time-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "end-already-ended",
+     "status": 409,
+     "body_keys": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     },
+     "fixture": {
+      "error": "Not open",
+      "message": "That pause is already ended — its end time cannot be moved."
+     }
+    },
+    {
+     "scenario": "end-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/resolve": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "resolve-names-no-code",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "resolution_code",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "resolve-code-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     },
+     "fixture": {
+      "error": "Bad resolution",
+      "message": "resolution_code must be one of: fixed, workaround_applied, not_reproducible, no_fault_found, withdrawn_by_requester, rejected, duplicate"
+     }
+    },
+    {
+     "scenario": "resolve-note-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "resolve-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "resolve-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    },
+    {
+     "scenario": "resolve-fault",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/service/:chit_id/respond": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "respond-not-tracked",
+     "status": 404,
+     "body_keys": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     },
+     "fixture": {
+      "error": "Not tracked",
+      "message": "Start the service clock first."
+     }
+    },
+    {
+     "scenario": "respond-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
+  },
+  "PUT /api/service/:chit_id": {
+   "answers": [
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "bad-id",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/not_found",
+      "title": "Not found",
+      "status": 404,
+      "code": "NOT_FOUND",
+      "detail": "We could not find that request.",
+      "hint": "Check the address or the name and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found"
+     },
+     "fixture": {
+      "error": "Not found"
+     }
+    },
+    {
+     "scenario": "put-priority-not-one-of-the-list",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     },
+     "fixture": {
+      "error": "Bad priority",
+      "message": "priority must be one of: P1, P2, P3, P4"
+     }
+    },
+    {
+     "scenario": "put-impact-not-text",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "impact",
+        "message": "Invalid value"
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "put-impact-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-urgency-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-policy-with-a-nul-byte",
+     "status": 400,
+     "body_keys": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Cannot save this text. Type it again.",
+      "type": "https://chitbridge.com/problems/validation_failed",
+      "title": "Fields not valid",
+      "status": 400,
+      "code": "VALIDATION_FAILED",
+      "detail": "A value holds a character we cannot keep.",
+      "hint": "Fix the fields listed and send again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "put-not-migrated",
+     "status": 503,
+     "body_keys": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     },
+     "fixture": {
+      "error": "Not migrated",
+      "message": "The service clock arrives after the next update. Nothing was started."
+     }
+    }
+   ]
   }
  },
  "global": {
