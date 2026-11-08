@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 142,
+  "long_functions": 141,
   "worst_complexity": 98,
   "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
   "long": {
@@ -49,9 +49,6 @@
     ],
     "lib/consolidate.js": [
       "consolidate"
-    ],
-    "lib/country-setup.js": [
-      "save"
     ],
     "lib/crm-leads.js": [
       "(anonymous)",

@@ -13964,7 +13964,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2417,
+   "line": 2438,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14372,7 +14372,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1732,
+   "line": 1753,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14579,7 +14579,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1618,
+   "line": 1639,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14680,7 +14680,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1482,
+   "line": 1503,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14779,7 +14779,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1466,
+   "line": 1487,
    "hash": "e155288025ed0727",
    "does": "",
    "errors": {
@@ -15160,7 +15160,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1289,
+   "line": 1310,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -17599,7 +17599,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 522,
-   "hash": "334f5920ce6e77df",
+   "hash": "434d4f6db9e00d4a",
    "does": "",
    "errors": {
     "count": 0,
@@ -17663,7 +17663,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29832,7 +29832,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1259,
+   "line": 1280,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -30340,8 +30340,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 937,
-   "hash": "a452dc1b95bd6bba",
+   "line": 979,
+   "hash": "ca5638cd28bcf812",
    "does": "",
    "errors": {
     "count": 0,
@@ -30416,7 +30416,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#892",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -46865,7 +46865,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1706,
+   "line": 1727,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -63831,7 +63831,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1673,
+   "line": 1694,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63937,7 +63937,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1592,
+   "line": 1613,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
@@ -64149,7 +64149,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 534,
-   "hash": "084ac684a6c0b7b2",
+   "hash": "9727085818d155d3",
    "does": "",
    "errors": {
     "count": 1,
@@ -64222,7 +64222,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#734 stage2",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",

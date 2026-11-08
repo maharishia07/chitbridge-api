@@ -894,6 +894,48 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
 router.patch('/me/locale', auth, ...checked('PATCH /me/locale'), prefSetRoute('locale'));
 
 // PATCH /entities/profile — set shop GSTN / logo / address (B3.9) + external user_id (ATH-114)
+/**
+ * writeProfileRow({ shop, body, userId, handler, currency, idSql }) → null once written, or the lock's refusal (SET-80). The ONE UPDATE of the shop's
+ * profile columns. A currency sent is asked of THE ONE LOCK (country-setup.currencyLockRefusal) inside the write's own transaction, so a product added
+ * between the read and the UPDATE cannot slip through; the same currency re-sent is no change. No currency sent: no lock, no extra trip.
+ */
+async function writeProfileRow({ shop, body, userId, handler, currency, idSql }) {
+  /* the one statement, run by whoever holds the connection: the pool, or the lock's own transaction */
+  const write = (runner) =>
+    runner(
+      `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
+                business_status=COALESCE($2,business_status),
+                user_id=COALESCE(user_id,$3),
+                self_copy_pref=COALESCE($4,self_copy_pref),
+                dispute_handler_actor_id=COALESCE($5,dispute_handler_actor_id),
+                currency_code=COALESCE($8,currency_code),
+                supplies=COALESCE($9,supplies)
+         WHERE identity_id=$6`,
+      [
+        body.logo_url || null,
+        body.business_status || null,
+        userId,
+        body.self_copy_pref || null,
+        handler,
+        shop,
+        /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
+        body.display_name ? sanitise(body.display_name) : null,
+        /* $8 — validated against the constitution above; null leaves it alone. */
+        currency,
+        body.supplies || null
+      ].concat(idSql.params)
+    );
+  if (!currency) {
+    await write(query);
+    return null;
+  }
+  return withEntity(shop, async (handle) => {
+    const refused = await require('../lib/country-setup').currencyLockRefusal(handle, shop, currency);
+    if (!refused) await write((sql, params) => handle.query(sql, params));
+    return refused;
+  });
+}
+
 
 /**
  * The cap on THIS entity's catalogue visibility — the operator who provisioned it, then the plan.
@@ -1107,29 +1149,8 @@ router.patch(
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);
-      await query(
-        `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
-                business_status=COALESCE($2,business_status),
-                user_id=COALESCE(user_id,$3),
-                self_copy_pref=COALESCE($4,self_copy_pref),
-                dispute_handler_actor_id=COALESCE($5,dispute_handler_actor_id),
-                currency_code=COALESCE($8,currency_code),
-                supplies=COALESCE($9,supplies)
-         WHERE identity_id=$6`,
-        [
-          req.body.logo_url || null,
-          req.body.business_status || null,
-          userId,
-          req.body.self_copy_pref || null,
-          handler,
-          id,
-          /* $7 — sanitised like every other free-text field. COALESCE means an absent name leaves it alone. */
-          req.body.display_name ? sanitise(req.body.display_name) : null,
-          /* $8 — validated against the constitution above; null leaves it alone. */
-          _cur,
-          req.body.supplies || null
-        ].concat(idSql.params)
-      );
+      const locked = await writeProfileRow({ shop: id, body: req.body, userId, handler, currency: _cur, idSql });
+      if (locked) return problem(req, res, { status: locked.status, ...contract.words.currencyLocked(locked) });
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) {
         try {

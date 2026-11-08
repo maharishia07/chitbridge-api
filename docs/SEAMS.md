@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 110 | `read` | `books-cashflow.js` | Trips: |
-| 101 | `answer` | `availability.js` | from March; then nearest. |
+| 102 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 83 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -48,15 +48,15 @@ of file each thing is; this says what already does the job.
 | 49 | `view` | `books-payables.js` | group: |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 47 | `again` | `signin-ui.js` |  |
+| 47 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 46 | `shape` | `cmdb.js` | The record comes back as given (validated, never rewritten), plus nothing — |
-| 46 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 44 | `read` | `cap-print.js` |  |
 | 44 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 43 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 42 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 41 | `rules` | `docnumber.js` | the rule set for a country — |
-| 41 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 40 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 40 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -82,8 +82,8 @@ of file each thing is; this says what already does the job.
 | 32 | `page` | `cap-catalogue.js` |  |
 | 32 | `shell` | `pick.js` |  |
 | 32 | `refuse` | `books-pack.js` | const sha = (text) => |
+| 32 | `changes` | `books-store.js` |  |
 | 31 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 31 | `changes` | `books-store.js` |  |
 | 31 | `note` | `dbwatch.js` |  |
 | 31 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 30 | `ensureCap` | `app.html` |  |
@@ -91,8 +91,8 @@ of file each thing is; this says what already does the job.
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
+| 30 | `hold` | `orders.js` |  |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 29 | `hold` | `orders.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
 | 28 | `money` | `cart.js` |  |
@@ -113,10 +113,10 @@ of file each thing is; this says what already does the job.
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
+| 24 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 24 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
-| 23 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 23 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 22 | `form` | `accounts-shell.js` |  |
 | 22 | `shown` | `country-compare.js` | one side's value for the line: |
@@ -156,11 +156,11 @@ of file each thing is; this says what already does the job.
 | 18 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 18 | `report` | `raida.js` | register at the one moment it must not. |
 | 18 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
+| 18 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `send` | `cap-quotes.js` |  |
 | 17 | `step` | `cart.js` |  |
 | 17 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 17 | `connectors` | `home-facts.js` | declare (said in words — |
-| 17 | `move` | `rail.js` | Order = the order the server refused in: |
 | 17 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 17 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 16 | `message` | `cap-print.js` | the one message: |

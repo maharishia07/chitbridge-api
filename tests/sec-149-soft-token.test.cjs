@@ -100,7 +100,9 @@ function get(port, urlPath, token) {
     for (const f of fs.readdirSync(path.join(API, dir))) {
       if (!f.endsWith('.js') && !f.endsWith('.cjs')) continue;
       const rel = dir + '/' + f;
-      if (!ALLOWED.has(rel) && /\bverifyJwt\(/.test(fs.readFileSync(path.join(API, rel), 'utf8').replace(/\/\/.*$/gm, ''))) found.push(rel);
+      /* a call THROUGH the one verifier (require('./jwt-verify').verifyJwt(, as lib/price-note.js does) is not a second reader: only a reader of its own is */
+      const text = fs.readFileSync(path.join(API, rel), 'utf8').replace(/\/\/.*$/gm, '').replace(/require\(['"]\.\.?\/(?:lib\/)?jwt-verify['"]\)\.verifyJwt\(/g, '');
+      if (!ALLOWED.has(rel) && /\bverifyJwt\(/.test(text)) found.push(rel);
     }
   }
   ok('(e) no route or lib file keeps its own verifyJwt( soft reader', found.length === 0, found);
