@@ -2413,140 +2413,7 @@
             "x-closed-by": "recordings"
           },
           "parts": {
-            "type": "object",
-            "required": [
-              "tb"
-            ],
-            "properties": {
-              "tb": {
-                "type": "object",
-                "required": [
-                  "part",
-                  "title",
-                  "from",
-                  "to",
-                  "file_name",
-                  "source",
-                  "lines",
-                  "counts",
-                  "error",
-                  "note",
-                  "form"
-                ],
-                "properties": {
-                  "part": {
-                    "type": "string"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "from": {
-                    "type": "string"
-                  },
-                  "to": {
-                    "type": "string"
-                  },
-                  "file_name": {},
-                  "source": {
-                    "type": "string"
-                  },
-                  "lines": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "required": [
-                        "key",
-                        "total",
-                        "their_line",
-                        "their_name",
-                        "their_code",
-                        "status",
-                        "name",
-                        "our_codes",
-                        "ours_minor",
-                        "theirs_minor",
-                        "diff_minor",
-                        "cause",
-                        "why",
-                        "entries",
-                        "entries_n",
-                        "open"
-                      ],
-                      "properties": {
-                        "key": {
-                          "type": "string"
-                        },
-                        "total": {
-                          "type": "boolean"
-                        },
-                        "their_line": {},
-                        "their_name": {
-                          "type": "string"
-                        },
-                        "their_code": {},
-                        "status": {
-                          "type": "string"
-                        },
-                        "name": {
-                          "type": "string"
-                        },
-                        "our_codes": {},
-                        "ours_minor": {
-                          "type": "number"
-                        },
-                        "theirs_minor": {
-                          "type": "number"
-                        },
-                        "diff_minor": {
-                          "type": "number"
-                        },
-                        "cause": {},
-                        "why": {},
-                        "entries": {},
-                        "entries_n": {
-                          "type": "number"
-                        },
-                        "open": {}
-                      },
-                      "additionalProperties": false,
-                      "x-closed-by": "recordings"
-                    }
-                  },
-                  "counts": {
-                    "type": "object",
-                    "required": [
-                      "equal",
-                      "different",
-                      "gap",
-                      "only_ours"
-                    ],
-                    "properties": {
-                      "equal": {
-                        "type": "number"
-                      },
-                      "different": {
-                        "type": "number"
-                      },
-                      "gap": {
-                        "type": "number"
-                      },
-                      "only_ours": {
-                        "type": "number"
-                      }
-                    },
-                    "additionalProperties": false,
-                    "x-closed-by": "recordings"
-                  },
-                  "error": {},
-                  "note": {},
-                  "form": {}
-                },
-                "additionalProperties": false,
-                "x-closed-by": "recordings"
-              }
-            },
-            "additionalProperties": false,
-            "x-closed-by": "recordings"
+            "type": "object"
           },
           "counts": {
             "type": "object",
@@ -2600,10 +2467,7 @@
                 "type": "number"
               },
               "by_kind": {
-                "type": "object",
-                "properties": {},
-                "additionalProperties": false,
-                "x-closed-by": "recordings"
+                "type": "object"
               }
             },
             "additionalProperties": false,
@@ -2614,7 +2478,16 @@
         "x-closed-by": "recordings"
       },
       "observed": 1,
-      "open": [],
+      "open": [
+        {
+          "path": "parts",
+          "reason": "a map keyed by part name"
+        },
+        {
+          "path": "effort.by_kind",
+          "reason": "a map keyed by data"
+        }
+      ],
       "closed_by": "recordings",
       "example": {
         "url": "/api/books/compare/22222222-2222-4222-8222-222222222222"
@@ -7947,6 +7820,9 @@
                 },
                 "why": {
                   "type": "string"
+                },
+                "code": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false,
@@ -8256,111 +8132,7 @@
                   "type": [
                     "object",
                     "null"
-                  ],
-                  "properties": {
-                    "rec": {
-                      "type": "object",
-                      "required": [
-                        "name",
-                        "code",
-                        "unit",
-                        "price",
-                        "gst_rate",
-                        "cost",
-                        "source_system",
-                        "source_ref",
-                        "description"
-                      ],
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "code": {
-                          "type": "string"
-                        },
-                        "unit": {
-                          "type": "string"
-                        },
-                        "price": {
-                          "type": "number"
-                        },
-                        "gst_rate": {
-                          "type": [
-                            "number",
-                            "null"
-                          ]
-                        },
-                        "cost": {},
-                        "source_system": {
-                          "type": "string"
-                        },
-                        "source_ref": {
-                          "type": "string"
-                        },
-                        "description": {}
-                      },
-                      "additionalProperties": false,
-                      "x-closed-by": "recordings"
-                    },
-                    "notes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "account_id": {
-                      "type": "string"
-                    },
-                    "code": {
-                      "type": "string"
-                    },
-                    "source_code": {
-                      "type": "string"
-                    },
-                    "note": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "group_code": {
-                      "type": "string"
-                    },
-                    "group_id": {
-                      "type": "string"
-                    },
-                    "group_name": {
-                      "type": "string"
-                    },
-                    "candidates": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": [
-                          "code",
-                          "name"
-                        ],
-                        "properties": {
-                          "code": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false,
-                        "x-closed-by": "recordings"
-                      }
-                    },
-                    "suggest": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "additionalProperties": false,
-                  "x-closed-by": "recordings"
+                  ]
                 },
                 "code": {
                   "type": "string"
@@ -8409,7 +8181,12 @@
         "x-closed-by": "recordings"
       },
       "observed": 3,
-      "open": [],
+      "open": [
+        {
+          "path": "rows[].data",
+          "reason": "keys vary by kind (lib/move-in.js 1022, 1210, 1275)"
+        }
+      ],
       "closed_by": "recordings"
     },
     "POST /api/catalogue/enquiry/:item_id": {
