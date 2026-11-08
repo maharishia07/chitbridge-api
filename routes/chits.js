@@ -1639,6 +1639,8 @@ async function sendBridge(sendState, req, res) {
   const { business_json, is_draft } = sendState;
   if (!business_json || typeof business_json !== 'object') return;
   const invoice = business_json.invoice || sendState.originInvoice;
+  const pairBroken = is_draft ? null : sendMoneyScope.pairMismatchOf(invoice, sendState.currency_code);
+  if (pairBroken) return sendPairRefusal(sendState, pairBroken, req, res);
   const stop = sendMoneyScope.stopOf(invoice);
   const asked = business_json.money_override;
   if (!stop || is_draft) {
@@ -1655,6 +1657,21 @@ async function sendBridge(sendState, req, res) {
   }
   business_json.money_override = { by: allowedBy, at: new Date().toISOString(), why: String(asked.why).trim().slice(0, 500), step: stop.step, unexplained_minor: stop.unexplained_minor };
   cbLog.warn('money.override', { entity_id: sendState.sender_id, step: stop.step, unexplained_minor: stop.unexplained_minor, by: allowedBy });
+}
+
+/**
+ * CTR-211 — the carried invoice says one engine figure two ways (a bridge step and its ValDtls figure): a FAULT, so refused before anything is stored, with
+ * NO override, and ONE service ticket (lib/money-check.raisePair). Both values are read, never worked out.
+ */
+async function sendPairRefusal(sendState, pair, req, res) {
+  const { sender_id, business_json } = sendState;
+  const words = 'The ' + pair.pair + ' disagrees: the engine wrote ' + pair.bridge + ' in ' + pair.bridge_field + ' and ' + pair.carried + ' in ' + pair.carried_field + '. This bill was not saved. We have been told.';
+  await require('../lib/money-check').raisePair(sender_id, pair, { bill: business_json.bill_no, client_ref: sendState.client_ref, engine: 'tax@' + sendMoneyScope.engineVersion() });
+  res.locals.code = 'MONEY_UNBALANCED';
+  return problem(req, res, {
+    status: 409,
+    ...said({ code: 'MONEY_UNBALANCED', error: 'The money does not add up.', message: words, pair: pair.pair, words, bridge_minor: pair.bridge_minor, carried_minor: pair.carried_minor }, 'CHIT_CONFLICT')
+  });
 }
 
 /**
