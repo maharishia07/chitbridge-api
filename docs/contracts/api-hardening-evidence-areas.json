@@ -25,6 +25,9 @@
   "DELETE /api/chits/:chit_id/purge": {
    "output_allowlist": true
   },
+  "DELETE /api/combo-templates/:id": {
+   "output_allowlist": true
+  },
   "DELETE /api/connectors/:actorId": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -136,6 +139,8 @@
    "output_allowlist": true
   },
   "GET /api/books/compare/:id": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings",
    "foreign_id_404": true
   },
   "GET /api/books/compare/:id/csv": {
@@ -200,6 +205,9 @@
    "output_allowlist": true
   },
   "GET /api/books/terms": {
+   "output_allowlist": true
+  },
+  "GET /api/books/todo": {
    "output_allowlist": true
   },
   "GET /api/books/trial-balance": {
@@ -283,6 +291,9 @@
    "output_allowlist": true
   },
   "GET /api/chits/:id/children": {
+   "output_allowlist": true
+  },
+  "GET /api/combo-templates": {
    "output_allowlist": true
   },
   "GET /api/connections/list": {
@@ -519,6 +530,9 @@
   "GET /api/kyb/yourself": {
    "output_allowlist": true
   },
+  "GET /api/marketing/came-back": {
+   "output_allowlist": true
+  },
   "GET /api/network-design": {
    "output_allowlist": true
   },
@@ -548,6 +562,12 @@
    "output_allowlist": true
   },
   "GET /api/notifications": {
+   "output_allowlist": true
+  },
+  "GET /api/offers/kinds": {
+   "output_allowlist": true
+  },
+  "GET /api/offers/openapi.json": {
    "output_allowlist": true
   },
   "GET /api/privacy/facts": {
@@ -641,6 +661,10 @@
   "GET /api/supplies": {
    "output_allowlist": true
   },
+  "GET /api/tax/gstr": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "GET /api/tax/invoice/:chit_id": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
@@ -721,6 +745,9 @@
   "PATCH /api/books/recurring/:id": {
    "output_allowlist": true,
    "foreign_id_404": true
+  },
+  "PATCH /api/combo-templates/:id": {
+   "output_allowlist": true
   },
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "output_allowlist_basis": "recordings",
@@ -845,6 +872,10 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/books/check": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/books/cheques/:id/status": {
    "output_allowlist": true,
    "foreign_id_404": true
@@ -908,8 +939,16 @@
   "POST /api/books/money-check/resolve": {
    "output_allowlist": true
   },
+  "POST /api/books/move-in/import": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/books/move-in/preflight": {
    "output_allowlist": true
+  },
+  "POST /api/books/move-in/preview": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/books/opening": {
    "output_allowlist": true
@@ -1119,6 +1158,12 @@
    "output_allowlist": true
   },
   "POST /api/chits/send": {
+   "output_allowlist": true
+  },
+  "POST /api/combo-templates": {
+   "output_allowlist": true
+  },
+  "POST /api/combo-templates/:id/push": {
    "output_allowlist": true
   },
   "POST /api/connections/request": {
@@ -1404,6 +1449,12 @@
    "output_allowlist": true
   },
   "POST /api/notifications/seen": {
+   "output_allowlist": true
+  },
+  "POST /api/offers/evaluate": {
+   "output_allowlist": true
+  },
+  "POST /api/offers/explain": {
    "output_allowlist": true
   },
   "POST /api/privacy/me/consent": {

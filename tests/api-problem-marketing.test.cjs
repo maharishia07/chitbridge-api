@@ -19,11 +19,13 @@ const path = require('path');
 const fs = require('fs');
 const express = require('express');
 const kit = require('./problem-sweep-kit.cjs');
+const ALLOW = require('./lib/allowlist-world.cjs'); /* S34: the 2xx answers these scenes record must fit the closed schemas */
 
 const HERE = path.join(__dirname, '..');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const LEGACY_FILE = path.join(HERE, 'docs', 'contracts', 'api-legacy.json');
+const EVIDENCE_FILE = path.join(HERE, 'docs', 'contracts', 'api-hardening-evidence-areas.json');
 const TESTED_FILE = path.join(HERE, 'docs', 'contracts', 'api-error-tests.json');
 /** the three routers: mount, route file (named in full so the graph links this test to each), and the contract module that declares its statuses */
 const AREAS = [
@@ -110,6 +112,17 @@ const refusal = (status, code, message) => async () => {
 };
 const COMBO_ROW = (sql) =>
   /FROM combo_templates WHERE id=\$1/.test(sql) ? { rows: [{ name: 'Combo', definition: [], price: null, product_item_id: null }], rowCount: 1 } : undefined;
+/** a saved combo as the table answers it (every column COLS names) and the statements that read and write it, so a success answer is recorded (S34) */
+const COMBO_FULL = { id: PARTY, name: 'Combo', definition: [{ name: 'Size', options: [{ name: 'Large', price: 10 }] }], price: '10', product_item_id: null, created_at: '2026-11-08T00:00:00Z', updated_at: '2026-11-08T00:00:00Z' };
+const COMBO_ROWS = (sql) =>
+  /INSERT INTO combo_templates|UPDATE combo_templates/.test(sql) || /FROM combo_templates\s+WHERE entity_id/.test(sql)
+    ? { rows: [COMBO_FULL], rowCount: 1 }
+    : /DELETE FROM combo_templates/.test(sql)
+      ? { rows: [{ id: PARTY }], rowCount: 1 }
+      : /FROM combo_templates WHERE id=\$1/.test(sql)
+        ? { rows: [{ name: 'Combo', definition: COMBO_FULL.definition, price: '10', product_item_id: null }], rowCount: 1 }
+        : undefined;
+const MINT = [['lib/mint-product.js', 'mintProduct', async () => ({ item: { item_id: 'item-1', item_data: { name: 'Combo' } } })]];
 const GOOD_COMBO = { name: 'Combo', definition: [{ name: 'Size', options: [{ name: 'Large', price: 10 }] }] };
 const LINES = { lines: [{ qty: 1, unitPrice: 5 }], offers: [{ kind: 'percent_off', percent: 10 }] };
 const DB_FAILS = { db: 'fail' };
@@ -125,6 +138,14 @@ const EXTRAS = [
   X('combo-push-unknown-key-refused', 'POST /api/combo-templates/:id/push', 400, { body: { colour: 'red' }, setup: { sqlRows: COMBO_ROW } }),
   X('db-fails-with-combo', 'POST /api/combo-templates', 500, { setup: DB_FAILS, body: GOOD_COMBO }),
   X('page-given-twice', 'GET /api/marketing/came-back', 422, { url: '/api/marketing/came-back?page=1&page=2' }),
+  X('openapi-answers', 'GET /api/offers/openapi.json', 200, {}),
+  X('evaluate-answers', 'POST /api/offers/evaluate', 200, { body: LINES }),
+  X('explain-answers', 'POST /api/offers/explain', 200, { body: LINES }),
+  X('combo-list-answers', 'GET /api/combo-templates', 200, { setup: { sqlRows: COMBO_ROWS } }),
+  X('combo-save-answers', 'POST /api/combo-templates', 200, { body: GOOD_COMBO, setup: { sqlRows: COMBO_ROWS } }),
+  X('combo-edit-answers', 'PATCH /api/combo-templates/:id', 200, { body: { name: 'Combo two' }, setup: { sqlRows: COMBO_ROWS } }),
+  X('combo-push-answers', 'POST /api/combo-templates/:id/push', 200, { body: {}, patch: MINT, setup: { sqlRows: COMBO_ROWS } }),
+  X('combo-delete-answers', 'DELETE /api/combo-templates/:id', 200, { setup: { sqlRows: COMBO_ROWS } }),
   X('saved-combo-has-no-groups', 'POST /api/combo-templates/:id/push', 400, { setup: { sqlRows: COMBO_ROW } })
 ];
 
@@ -236,6 +257,8 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
     process.exit(0);
   }
   checkKitStatus();
+  const operations = Object.assign({}, ...AREAS.map((area) => require(path.join(HERE, area.contract))[area.export].OPERATIONS));
+  const allowHeld = ALLOW.checkAllowList(recording, operations, check);
   const coverage = Object.fromEntries(
     Object.keys(tested)
       .sort()
@@ -248,6 +271,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
         .filter((route) => !MINE(route))
         .map((route) => [route, onDisk[route]])
     );
+    ALLOW.writeEvidence(EVIDENCE_FILE, MINE, allowHeld);
     const merged = Object.assign(others, coverage);
     fs.writeFileSync(
       TESTED_FILE,
@@ -262,6 +286,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
       ) + '\n'
     );
   } else {
+    check('docs/contracts/api-hardening-evidence-areas.json says output_allowlist for exactly the routes whose success answers held closed here', kit.sameValue(ALLOW.evidenceOf(EVIDENCE_FILE, MINE), allowHeld), allowHeld);
     const mine = Object.fromEntries(
       Object.keys(onDisk)
         .filter(MINE)

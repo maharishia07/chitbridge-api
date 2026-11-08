@@ -50456,6 +50456,18 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "buy-bill-number-reused-with-other-lines",
+     "status": 409,
+     "body_keys": {
+      "error": "Bill already recorded",
+      "message": "Bill BILL-1 from Corner Hardware is already recorded with different lines; record a correction or use a new bill number."
+     },
+     "fixture": {
+      "error": "Bill already recorded",
+      "message": "Bill BILL-1 from Corner Hardware is already recorded with different lines; record a correction or use a new bill number."
+     }
     }
    ]
   },

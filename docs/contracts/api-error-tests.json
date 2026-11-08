@@ -3353,6 +3353,7 @@
  "POST /api/supplies/purchase": [
   400,
   401,
+  409,
   422,
   500,
   503

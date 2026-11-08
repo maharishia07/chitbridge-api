@@ -382,6 +382,7 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, [
   X('built-non-india-seller', 'POST /api/invoice/build', 200, { setup: AU_SHOP, body: { lines: [{ name: 'tea', qty: 1, listPrice: 10, gst_rate: 10 }] } }),
   X('db-fails-with-lines', 'POST /api/invoice/build', 500, { setup: { db: 'fail' }, body: { lines: [{ name: 'tea', qty: 1, price: 10 }] } }),
   X('entry-already-reversed', 'POST /api/books/entries/:id/reverse', 409, { patch: { books: { reverseEntry: async () => ({ duplicate: true, entry_no: 'MJ/1', entry_id: PARTY }) } } }),
+  X('todo-things-to-do', 'GET /api/books/todo', 200, { patch: { todo: { todo: async () => [{ kind: 'bills_to_accept', count: 1, words: 'One bill to accept', action: { label: 'Accept', screen: 'bills', call: null }, items: [{ chit_id: PARTY }] }, { kind: 'months_unlocked', count: 2, words: 'Two months not locked', action: { label: 'Lock', screen: 'periods', call: null } }] } } }),
   X('pack-built-without-storage', 'GET /api/books/packs/:id/file', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
   X('pack-no-file-to-confirm', 'POST /api/books/packs/:id/ack', 409, { patch: { store: { pack: async () => PACK_ROW } } }),
   X('snapshot-part-twice', 'POST /api/books/compare/snapshots', 409, { body: { snapshot_id: PARTY, part: 'tb', source: 'tally' }, patch: { store: { compareReady: async () => true, compareParts: async () => [{ part: 'tb', label: 'x', source: 'tally' }] } }, who: 'auditor' }),
@@ -436,7 +437,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost') };
+  const modules = { books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -555,6 +556,7 @@ function checkRefusals() {
  * docs/contracts/api-output-shapes.json) and whose recorded success answers fit that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
  * ledger, so it never reaches these answers. → { route: { output_allowlist: true } } for the routes that held
  */
+const { refusesUnknownKeys } = require(path.join(HERE, 'tools', 'api-register.cjs')); /* the register's own rule for a closed answer: one definition */
 function checkAllowList(recording) {
   const proved = {};
   const fixture = require('./support/books-capture.cjs').answersOf(ANSWERS_FILE); /* the period-end answers the sweep cannot reach, recorded by the tests that do (docs/contracts/books-answers.json) */
@@ -565,7 +567,7 @@ function checkAllowList(recording) {
   Object.keys(words.OPERATIONS).sort().forEach((route) => {
     const status = Number(Object.keys(words.OPERATIONS[route].responses).find((code) => /^2\d\d$/.test(code)) || 200);
     const schema = (((words.OPERATIONS[route].responses[status] || {}).content || {})['application/json'] || {}).schema;
-    if (!schema || schema.additionalProperties !== false) return;
+    if (!refusesUnknownKeys(schema)) return; /* an object that lists its keys, or a list whose rows do (GET /todo) */
     const answers = Object.values(recorded).filter((one) => one.route === route && one.status === status && one.body);
     const fits = engine.compile(schema);
     const held = answers.length > 0 && answers.every((one) => fits(one.body) && prune(schema, one.body).dropped.length === 0);
