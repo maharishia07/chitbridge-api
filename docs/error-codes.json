@@ -1209,7 +1209,7 @@
   },
   {
    "code": "CREDIT_NOTE_NOT_CHECKED",
-   "status": "409",
+   "status": "503",
    "title": "Credit note not checked",
    "shopkeeper": "This credit note could not be checked against its bill, so it was not saved.",
    "hint": "Send it again; if it repeats, tell us.",

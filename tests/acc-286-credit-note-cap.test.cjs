@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const cap = require('../lib/credit-cap');
 const lock = require('../lib/xact-lock');
+const CF = require('../tools/chits-files.cjs'); /* the ONE list of chits files (tools/chits-files.cjs) */
 
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
@@ -131,12 +132,12 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   await world(3540).sendNote(10, { business_json: judgedState.business_json });
   ok('a judged note carries no warning', judgedState.creditCap === undefined);
   const broken = await cap.holdUnderLock({ query: async () => { throw Object.assign(new Error('column h.x does not exist'), { code: '42703' }); } }, stateOf()).then(() => null, (e) => e);
-  ok('a failed read is a refusal in words with a registered code (409 CREDIT_NOTE_NOT_CHECKED), not an internal error', broken && broken.refused === true && broken.status === 409 && broken.code === 'CREDIT_NOTE_NOT_CHECKED' && /could not be checked/.test(broken.message) && !/column/.test(broken.message), broken && broken.message);
-  const sendSrc = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  ok('a failed read is a refusal in words with a registered code (503 CREDIT_NOTE_NOT_CHECKED), not an internal error', broken && broken.refused === true && broken.status === 503 && broken.code === 'CREDIT_NOTE_NOT_CHECKED' && /could not be checked/.test(broken.message) && !/column/.test(broken.message), broken && broken.message);
+  const sendSrc = CF.read(path.join(__dirname, '..'));
   ok('the send answer carries credit_cap from sendState.creditCap', /credit_cap: sendState.creditCap/.test(sendSrc));
   ok('chit_detail holds the currency (as books-store reads it): the bill query joins it, never h.currency_code', /d.currency_code/.test(code) && !/h.currency_code/.test(code));
 
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = CF.read(path.join(__dirname, '..'));
   const write = src.indexOf('async function sendWrite'), legacy = src.indexOf('async function sendLegacyWrite');
   const inWrite = src.indexOf('creditCap.holdUnderLock(entityClient, sendState)', write), inLegacy = src.indexOf('creditCap.holdUnderLock(client, sendState)', legacy);
   ok('wiring · sendWrite asks the cap inside withEntity, before mint.deliver', write > 0 && inWrite > write && inWrite < src.indexOf('mint.deliver(sender_id', write), [write, inWrite].join(' '));
