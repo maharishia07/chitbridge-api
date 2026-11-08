@@ -4884,6 +4884,22 @@
       "request_id": "req-test",
       "field": "date"
      }
+    },
+    {
+     "scenario": "entry-line-other-currency",
+     "status": 409,
+     "body_keys": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     },
+     "fixture": {
+      "code": "CURRENCY_MISMATCH",
+      "error": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "message": "lines[0].currency says USD, but this shop’s money is INR. Nothing was saved. Use INR, or leave the currency out.",
+      "field": "lines[0].currency"
+     }
     }
    ]
   },

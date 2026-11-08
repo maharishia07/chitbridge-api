@@ -34803,7 +34803,7 @@
         "names_clear": true,
         "sentence_plain": true,
         "backward_compatible": true,
-        "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#731 stage2",
+        "signed_off_by_date": "cb-api-reviewer 2026-11-09 PR#1060 stage2",
         "lifecycle": "stable"
       },
       "status": "meets standard",
