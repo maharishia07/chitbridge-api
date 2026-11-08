@@ -4884,10 +4884,21 @@ async function logAmended(req, entity_id, chit_id, out) {
   }
 }
 
-/** RAIL-205: the amend door's refusal learns the chit's own currency (chit_header.currency_code) only now, after the line was refused; a read that fails leaves the refusal without one */
-async function amountTooLarge(refusal, req) {
-  const row = await withEntity(entityId(req), (db) => db.query('SELECT currency_code FROM chit_header WHERE chit_id = $1 AND entity_id = $2', [req.params.chit_id, entityId(req)])).catch(() => null);
-  return chitCeiling.inCurrency(refusal, (row && row.rows[0] && row.rows[0].currency_code) || null);
+/** RAIL-205: the amend door's refusal learns the chit's own currency (chit_detail.currency_code, the column every database has) only now, after the line was refused; a read that fails leaves the refusal without one */
+/** amendSpecOf(err, req) → the spec of a refusal the amend door knows by name (knownAmendSpec, then the too-large one), or null */
+async function amendSpecOf(err, req) {
+  return knownAmendSpec(err) || (await amountTooLargeSpec(err, req));
+}
+async function amountTooLargeSpec(refusal, req) {
+  if (!refusal || refusal.code !== 'CHIT_AMOUNT_TOO_LARGE') return null;
+  let currency = null;
+  try {
+    const row = await withEntity(entityId(req), (db) => db.query('SELECT currency_code FROM chit_detail WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [req.params.chit_id, entityId(req)]));
+    currency = (row.rows[0] && row.rows[0].currency_code) || null;
+  } catch (err) {
+    cbLog.warn('chits/amend: the chit currency was not read for the too-large refusal; it answers without one', { id: req.id, err: err.message });
+  }
+  return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
 }
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
@@ -4942,9 +4953,8 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    const known = knownAmendSpec(err);
+    const known = await amendSpecOf(err, req);
     if (known) return problem(req, res, known);
-    if (err && err.code === 'CHIT_AMOUNT_TOO_LARGE') return problem(req, res, faultOf(await amountTooLarge(err, req), req, 'Failed to amend', { words: true })); /* RAIL-205: a 400 naming the maximum, with this chit's currency beside it */
     if (err && err.code === '23514') {
       cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });
       return problem(req, res, { status: 409, ...said({

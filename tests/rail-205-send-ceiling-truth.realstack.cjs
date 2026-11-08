@@ -1,6 +1,6 @@
 'use strict';
 /**
- * tests/rail-205-send-ceiling.realstack.cjs — RAIL-205 · RAIL-191 on a REAL Postgres, the api running as cb_app (RLS on), every write through the doors.
+ * tests/rail-205-send-ceiling-truth.realstack.cjs — RAIL-205 · RAIL-191 on a REAL Postgres, the api running as cb_app (RLS on), every write through the doors.
  *
  * OWNS     the proof that a chit total, line quantity or line price past the width of its column is a 400 CHIT_AMOUNT_TOO_LARGE with the maximum and the currency named, never the 500 of
  *          the 22003 inside chit_deliver, and that the limit just under it still sends
@@ -13,7 +13,8 @@
  *   S-3  a quantity of 1e15 (numeric(18,3)) on a zero-priced line is the same 400, naming line 1 and no currency (a quantity is not money)
  *   A-1  amend: quantity 1e15 and price 1e16 are 400 CHIT_AMOUNT_TOO_LARGE with the chit's own currency, and the live line is unchanged
  *   A-2  amend: quantity 1e12 and price 1e12 are accepted (the control)
- * Run: API_BASE=http://127.0.0.1:3197 DATABASE_URL=postgres://cb_app:cblocal@127.0.0.1:55432/cb_local node tests/rail-205-send-ceiling.realstack.cjs
+ * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs (seeded api on :3000, TRUTH_DB cb_s41).
+ * Run: API_BASE=http://127.0.0.1:3197 DATABASE_URL=postgres://cb_app:cblocal@127.0.0.1:55432/cb_local node tests/rail-205-send-ceiling-truth.realstack.cjs
  */
 const H = require('./lib/truth-harness.cjs');
 const { Client } = require('pg');
