@@ -92,6 +92,28 @@ const call = (port, method, p, body) => new Promise((ok) => {
   r = await call(port, 'GET', '/api/entities/policy');
   t('GET /entities/policy: the owner may switch folders', r.json.may.system_folders.ok, true);
 
+  /* SEC-153: the shop's money and tax policy is the owner's — a plain editor (an actor, hat act) is refused for each flag and NOTHING is written; the owner still saves */
+  const MONEY_TAX = { price_includes_tax: 'no', gst_registration: 'unregistered', books_at: 'manual', tol_weight_bp: 100, tol_count_units: 1, tol_rate_bp: 1, retention_days: 30, retention_floor_days: 30, match_tolerance_pct: 5 };
+  const WORDS = "Only the owner may change the shop's money and tax settings.";
+  let written = 0;
+  policy.set = async (e, b) => { written++; return Object.assign(policy.defaults(), b); };
+  WHO = { identity_id: 'a2', identity_type: 'actor', parent_entity_id: 'e1', access_level: 'editor', hat: 'act' };
+  for (const k of Object.keys(MONEY_TAX)) {
+    r = await call(port, 'PATCH', '/api/entities/policy', { [k]: MONEY_TAX[k] });
+    t('SEC-153 PATCH /entities/policy ' + k + ' from a plain editor -> 403 OWNER_ONLY, in words', [r.status, r.json.code, r.json.message], [403, 'OWNER_ONLY', WORDS]);
+  }
+  r = await call(port, 'PATCH', '/api/entities/policy', { trade_side: 'receive', price_includes_tax: 'no' });
+  t('SEC-153 a patch mixing a free flag with a money flag is refused whole', r.status, 403);
+  t('SEC-153 nothing was written for any refused money or tax flag', written, 0);
+  r = await call(port, 'GET', '/api/entities/policy');
+  t('SEC-153 GET /entities/policy greys every money and tax flag for the editor, with the same words', Object.keys(MONEY_TAX).every((k) => r.json.may[k].ok === false && r.json.may[k].why === WORDS), true);
+  WHO = OWNER;
+  for (const k of Object.keys(MONEY_TAX)) {
+    r = await call(port, 'PATCH', '/api/entities/policy', { [k]: MONEY_TAX[k] });
+    t('SEC-153 PATCH /entities/policy ' + k + ' from the owner -> 200', r.status, 200);
+  }
+  t('SEC-153 the owner wrote each of them', written, Object.keys(MONEY_TAX).length);
+
   srv.close();
   console.log('\n  ' + pass + ' checks · ' + fail + ' failed\n');
   process.exit(fail ? 1 : 0);

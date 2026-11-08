@@ -43,6 +43,9 @@ const sessionOnly = (req, res, next) => {
   next();
 };
 
+/** NET-91: the brand's policy and its release/withdraw push to every store, so only the brand's owner does them — the one owner gate (lib/owner), never a staff login */
+const brandOwnerOnly = require('../lib/owner').ownerOnly('Only the owner of the brand sets or releases its network offers.');
+
 /** the brand's own live offer, or null — nobody releases an offer that is not theirs */
 /** the shape of an offer id (36 hex and dashes); the database still has the last word on whether it is a uuid */
 const OFFER_ID_SHAPE = /^[0-9a-f-]{36}$/i;
@@ -271,7 +274,7 @@ router.get('/', auth, sessionOnly, ...contract.checked('GET /'), async (req, res
   }
 });
 
-router.put('/policy', auth, sessionOnly, ...contract.checked('PUT /policy'), async (req, res) => {
+router.put('/policy', auth, sessionOnly, brandOwnerOnly, ...contract.checked('PUT /policy'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const policy = String((req.body && req.body.policy) || '');
@@ -357,7 +360,7 @@ async function releaseRecord(brandId, offer, at, until, req) {
   };
 }
 
-router.post('/:id/release', auth, sessionOnly, ...contract.checked('POST /:id/release'), async (req, res) => {
+router.post('/:id/release', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/release'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const o = await ownOffer(me, req.params.id);
@@ -379,7 +382,7 @@ router.post('/:id/release', auth, sessionOnly, ...contract.checked('POST /:id/re
   }
 });
 
-router.post('/:id/withdraw', auth, sessionOnly, ...contract.checked('POST /:id/withdraw'), async (req, res) => {
+router.post('/:id/withdraw', auth, sessionOnly, brandOwnerOnly, ...contract.checked('POST /:id/withdraw'), async (req, res) => {
   try {
     const me = auth.entityOf(req);
     const o = await ownOffer(me, req.params.id);

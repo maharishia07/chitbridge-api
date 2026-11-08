@@ -35,7 +35,7 @@
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 31,
+    "applies": 34,
     "failing": 0
    },
    "parameterised_query": {
@@ -20905,7 +20905,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 216,
+   "line": 219,
    "hash": "86729110d085f141",
    "does": "",
    "errors": {
@@ -50677,7 +50677,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 400,
+   "line": 403,
    "hash": "9b205221f9671f4f",
    "does": "",
    "errors": {
@@ -50784,7 +50784,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 360,
+   "line": 363,
    "hash": "541db4f71e91011d",
    "does": "",
    "errors": {
@@ -50860,7 +50860,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -50897,7 +50897,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 382,
+   "line": 385,
    "hash": "82ef9190340340a4",
    "does": "",
    "errors": {
@@ -50970,7 +50970,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -51007,7 +51007,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 311,
+   "line": 314,
    "hash": "cf6a90fd7197dad6",
    "does": "",
    "errors": {
@@ -51112,7 +51112,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 321,
+   "line": 324,
    "hash": "a15d2437c4075e3a",
    "does": "",
    "errors": {
@@ -51215,7 +51215,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 293,
+   "line": 296,
    "hash": "e8cfb81fec41c36b",
    "does": "",
    "errors": {
@@ -64637,7 +64637,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 274,
+   "line": 277,
    "hash": "a63f82874ea89e8f",
    "does": "",
    "errors": {
@@ -64704,7 +64704,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },

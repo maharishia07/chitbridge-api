@@ -62475,14 +62475,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      }
     },
     {
@@ -62575,14 +62581,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      }
     },
     {
@@ -62831,14 +62843,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      },
      "fixture": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the owner of the brand sets or releases its network offers.",
+      "message": "Only the owner of the brand sets or releases its network offers."
      }
     },
     {
