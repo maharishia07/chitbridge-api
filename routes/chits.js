@@ -512,6 +512,7 @@ const SEND_STEPS = [
   sendSeller,
   sendOffers,
   sendMoney,
+  sendPartCurrency,
   sendIssued,
   sendPaper,
   sendCashStep,
@@ -1535,6 +1536,22 @@ async function sendMoney(sendState, req, res) {
   }
   const block = moneyOfInvoice(invoice, sendState.currency_code);
   Object.assign(sendState, { originInvoice: invoice, moneyBlock: sendState.is_draft ? Object.assign(block, { provisional: true, issued: false }) : block });
+}
+
+/**
+ * ⭐ CUR-1 · ACC-331 — EVERY MONEY CELL OF THE BILL IS IN THE BILL'S MONEY. The bill-level currency was refused already; a payment, a payment part, a refund part or a line
+ * naming another currency was booked as the shop's. One check (lib/currency-cells), over the cells the chit carries, BEFORE anything is written: 409 CURRENCY_MISMATCH naming the field.
+ * A cell that names no currency is the bill's own (the till sends none). Runs on the final currency (sendSeller / sendMoney have spoken), a draft included: a wrong cell is wrong.
+ */
+async function sendPartCurrency(sendState, req, res) {
+  const cells = require('../lib/currency-cells');
+  try {
+    cells.assertSame(cells.billCellsOf(sendState.business_json, sendState.line_items), sendState.currency_code);
+  } catch (e) {
+    if (e.code !== 'CURRENCY_MISMATCH') throw e;
+    res.locals.code = 'CURRENCY_MISMATCH';
+    return problem(req, res, { status: 409, ...said({ code: 'CURRENCY_MISMATCH', error: 'Wrong currency', message: e.message, field: e.field, claimed: e.claimed, governed: e.governed }, 'CHIT_CONFLICT') });
+  }
 }
 
 /**
