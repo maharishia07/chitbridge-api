@@ -80,7 +80,7 @@ const buy = (server, line) =>
     posted.length = 0;
     stamped.length = 0;
     stampedCosts.length = 0;
-    const req = http.request({ port: server.address().port, method: 'POST', path: '/api/supplies/purchase', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data) } }, (res) => {
+    const req = http.request({ port: server.address().port, method: 'POST', path: '/api/supplies/purchase', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(data), 'idempotency-key': 'ops70-' + seq } /* OPS-114: a purchase requires its own key per attempt */ }, (res) => {
       let text = '';
       res.on('data', (c) => (text += c));
       res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(text) }));

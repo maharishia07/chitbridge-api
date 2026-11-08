@@ -39,3 +39,18 @@ test('an IN shop still builds an invoice with GST', async () => {
   assert.ok(r.body.invoice && r.body.invoice.ValDtls, 'an invoice block');
   assert.equal(r.body.seller.Country, 'IN');
 });
+
+/* CTRY-114: a shop whose country has no tax pack (HU, DK) is refused in words through the problem shape — 422 NO_COUNTRY_PACK, never a 500 "Something went wrong" from the engine's "no tax scheme" throw */
+for (const [country, name] of [['HU', 'Hungary'], ['DK', 'Denmark']]) {
+  test('a ' + country + ' shop: invoice/build is 422 NO_COUNTRY_PACK, "' + name + ' does not have a tax pack yet", no tax block', async () => {
+    SHOP.row = shopRow({ gstin: null, name: 'Bolt ' + country, country }); SHOP.items = [];
+    const r = await X.call('POST', '/api/invoice/build', { buyer: { Country: country }, lines: [{ name: 'Pie', qty: 1, price: 100, gst_rate: 18 }] });
+    assert.equal(r.status, 422, JSON.stringify(r.body));
+    assert.equal(r.body.code, 'NO_COUNTRY_PACK');
+    assert.match(r.body.message, new RegExp(name + ' does not have a tax pack yet'));
+    assert.equal(r.body.invoice, undefined, 'no invoice, so no tax of another country');
+    const compute = await X.call('POST', '/api/tax/compute', { buyer: { Country: country }, lines: [{ name: 'Pie', qty: 1, price: 100, gst_rate: 18 }] });
+    assert.equal(compute.status, 422, 'tax/compute reads the same engine and says the same: ' + JSON.stringify(compute.body));
+    assert.equal(compute.body.code, 'NO_COUNTRY_PACK');
+  });
+}
