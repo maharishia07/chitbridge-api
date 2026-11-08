@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 119,
-  "meets": 519,
+  "partial": 111,
+  "meets": 527,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 638,
-    "failing": 19
+    "failing": 17
    },
    "foreign_id_404": {
     "applies": 202,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 23
+    "failing": 22
    }
   },
   "reported": {
@@ -2056,13 +2056,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: cancel is scoped by entity_id from the token, so another shop sid answers byte for byte as an unknown one (200 cancelled:false, the same weaker reading the signed GET sibling holds, with a registered cannot_answer for 404/400); no existence oracle; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -13870,7 +13870,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 390,
-   "hash": "b4f32940f2822490",
+   "hash": "40fdcd90b8ecda55",
    "does": "",
    "errors": {
     "count": 0,
@@ -13895,9 +13895,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -13931,13 +13931,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "register-form.js"
    ],
@@ -13963,7 +13963,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2438,
+   "line": 2442,
    "hash": "30f43a715550a15a",
    "does": "",
    "errors": {
@@ -14059,7 +14059,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 497,
+   "line": 501,
    "hash": "1ecf5a03e800a3af",
    "does": "",
    "errors": {
@@ -14153,7 +14153,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 524,
+   "line": 528,
    "hash": "40a973d6ac8196e4",
    "does": "",
    "errors": {
@@ -14273,7 +14273,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 881,
+   "line": 885,
    "hash": "f12cd611fc9dc327",
    "does": "",
    "errors": {
@@ -14371,7 +14371,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1753,
+   "line": 1757,
    "hash": "ca8c0be09551b5a0",
    "does": "",
    "errors": {
@@ -14476,7 +14476,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 468,
+   "line": 472,
    "hash": "0485b6f18b7c36fc",
    "does": "",
    "errors": {
@@ -14578,7 +14578,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1639,
+   "line": 1643,
    "hash": "6a13bf4d7882b36c",
    "does": "",
    "errors": {
@@ -14679,7 +14679,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1503,
+   "line": 1507,
    "hash": "bd72f1910c24b423",
    "does": "",
    "errors": {
@@ -14778,8 +14778,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1487,
-   "hash": "e155288025ed0727",
+   "line": 1491,
+   "hash": "daf7f3e6e7033f84",
    "does": "",
    "errors": {
     "count": 0,
@@ -14805,9 +14805,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -14876,7 +14876,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 418,
+   "line": 422,
    "hash": "92a7ca7003f7abd3",
    "does": "",
    "errors": {
@@ -14976,7 +14976,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 435,
+   "line": 439,
    "hash": "65104f92f9bba64a",
    "does": "",
    "errors": {
@@ -15065,7 +15065,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 513,
+   "line": 517,
    "hash": "ff462dcb06f9ef9e",
    "does": "",
    "errors": {
@@ -15159,7 +15159,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1310,
+   "line": 1314,
    "hash": "c8f3bac19aea5610",
    "does": "",
    "errors": {
@@ -22525,11 +22525,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "699e33f654a66cd9"
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys is honest: text/csv, no JSON keys), failures through problem(); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -23026,11 +23025,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "36bec6618ba3d688"
+    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-09 PR#1050: handler read: entity from the token, cost columns stripped for a cost-blind caller, bytes only (noKeys honest: xlsx, no JSON keys), failures through problem(); 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js",
     "till.html"
@@ -29833,7 +29831,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1280,
+   "line": 1284,
    "hash": "4ba9104804d71d4e",
    "does": "",
    "errors": {
@@ -29875,7 +29873,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -29907,18 +29905,18 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 2,
+    "wire": 2,
     "screens": []
    },
    "measured": {
@@ -29935,7 +29933,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 854,
+   "line": 858,
    "hash": "efa0652b1d0f4de7",
    "does": "",
    "errors": {
@@ -30035,8 +30033,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 894,
-   "hash": "b0abeef6ee3cfb4e",
+   "line": 898,
+   "hash": "8c7f8667671d7623",
    "does": "",
    "errors": {
     "count": 0,
@@ -30067,7 +30065,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30104,11 +30102,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b0abeef6ee3cfb4e"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -30130,8 +30127,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 848,
-   "hash": "a64400f15f3dd548",
+   "line": 852,
+   "hash": "667cb4fea86280f3",
    "does": "",
    "errors": {
     "count": 0,
@@ -30163,7 +30160,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -30201,11 +30198,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a64400f15f3dd548"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "avatar.js",
     "core.js"
@@ -30233,7 +30229,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 479,
+   "line": 483,
    "hash": "8eabcd83c4aa4b87",
    "does": "",
    "errors": {
@@ -30341,7 +30337,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 979,
+   "line": 983,
    "hash": "ca5638cd28bcf812",
    "does": "",
    "errors": {
@@ -46866,7 +46862,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1727,
+   "line": 1731,
    "hash": "3c261678a79ac355",
    "does": "",
    "errors": {
@@ -47110,7 +47106,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -47152,7 +47148,7 @@
     "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "intake.html",
@@ -63833,7 +63829,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1694,
+   "line": 1698,
    "hash": "1e6bdde2d70a0960",
    "does": "",
    "errors": {
@@ -63939,7 +63935,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1613,
+   "line": 1617,
    "hash": "b0e5f4d41975080d",
    "does": "",
    "errors": {
