@@ -150,6 +150,8 @@ async function caseNoOfferOnReceipt() {
       const tag = RUN + 'n', email = tag + '@local.test';
       ok(await j('/api/entities/register', { method: 'POST', body: { email, display_name: 'No country ' + tag, user_id: tag } }), 'register');
       const v = ok(await j('/api/entities/verify', { method: 'POST', body: { email, otp: ENTITY_OTP } }), 'verify').b;
+      /* CTR-227: a spin that STATES its country hands it to a new shop at sign-up (offerOf), so a bare register is not country-less there; state the fact this case is about */
+      await pg.query("UPDATE identities SET country = NULL, currency_code = NULL WHERE lower(email) = $1", [email]);
       const r = await j('/api/chits/send', { method: 'POST', token: v.token, body: bill(RUN + '-BN', [[{ id: 'x', name: 'Thing', unit: 'piece', price: 10 }, 1]]) });
       expect(r.status >= 400 && r.status < 500 && /country/i.test(JSON.stringify(r.b)), 'HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
     });
