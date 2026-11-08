@@ -4884,11 +4884,11 @@ async function logAmended(req, entity_id, chit_id, out) {
   }
 }
 
-/** RAIL-205: the amend door's refusal learns the chit's own currency (chit_detail.currency_code, the column every database has) only now, after the line was refused; a read that fails leaves the refusal without one */
 /** amendSpecOf(err, req) → the spec of a refusal the amend door knows by name (knownAmendSpec, then the too-large one), or null */
 async function amendSpecOf(err, req) {
   return knownAmendSpec(err) || (await amountTooLargeSpec(err, req));
 }
+/** amountTooLargeSpec(refusal, req) → the 400 spec with this chit's currency (chit_detail.currency_code) beside the maximum, or null for any other error; the read is made only now because amend.prepare is pure and shared (change orders), and a failed read is logged and answers without a currency */
 async function amountTooLargeSpec(refusal, req) {
   if (!refusal || refusal.code !== 'CHIT_AMOUNT_TOO_LARGE') return null;
   let currency = null;
