@@ -32,7 +32,7 @@ const inNote = { currency: 'INR', ItemList: [{ GstRt: 18, AssAmt: 100, CgstAmt: 
 
   const au = run(S_AU, auNote(62.71, 6.27), [{ how: 'Cash', amount: 69 }]);
   eq('AU · A$68.98 note refunded A$69.00 in cash: waits, gap 2 minor', [au.kind, au.gap_minor], ['queue', 2]);
-  ok('AU · the sentence names both figures and the gap, not the engine words', /AUD 69 /.test(au.why) && /68\.98/.test(au.why) && /0\.02/.test(au.why) && !/debits/.test(au.why), au.why);
+  ok('AU · the sentence names both figures and the gap, not the engine words', /AUD 69.00 /.test(au.why) && /68\.98/.test(au.why) && /0\.02/.test(au.why) && !/debits/.test(au.why), au.why);
   const inShort = run(S_IN, inNote, [{ how: 'Cash', amount: 100 }]);
   eq('IN · ₹118 note refunded ₹100: waits, gap -1800 minor', [inShort.kind, inShort.gap_minor], ['queue', -1800]);
   eq('AU control · A$70.00 note refunded A$70.00: posts', run(S_AU, auNote(63.64, 6.36), [{ how: 'Cash', amount: 70 }]).kind, 'post');
