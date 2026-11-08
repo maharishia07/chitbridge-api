@@ -3,7 +3,7 @@
  "stage": "2",
  "updated": "2026-11-08",
  "total": 638,
- "not_meeting": 153,
+ "not_meeting": 149,
  "codes_total": 572,
  "codes_pending": 0,
  "raw_error_writes": 1,
@@ -15,7 +15,7 @@
   "foreign_id_404": 18,
   "idempotent_money_write": 2,
   "inbound_validated": 0,
-  "trips_budgeted": 36
+  "trips_budgeted": 34
  },
  "reported_failing": {
   "bfla_role_check": 0,
