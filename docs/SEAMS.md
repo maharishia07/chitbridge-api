@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 110 | `read` | `books-cashflow.js` | Trips: |
-| 100 | `answer` | `availability.js` | from March; then nearest. |
+| 101 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 83 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -24,8 +24,8 @@ of file each thing is; this says what already does the job.
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
+| 68 | `list` | `cap-settings.js` |  |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 67 | `list` | `cap-settings.js` |  |
 | 66 | `entry` | `books-store.js` |  |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 65 | `failed` | `service.js` | what every catch answers: |
@@ -41,9 +41,9 @@ of file each thing is; this says what already does the job.
 | 55 | `pack` | `books-store.js` |  |
 | 54 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 52 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
+| 51 | `rows` | `cap-settings.js` |  |
 | 51 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 50 | `toast` | `accounts-shell.js` |  |
-| 50 | `rows` | `cap-settings.js` |  |
 | 50 | `count` | `money-check.js` | the count /health reads |
 | 49 | `view` | `books-payables.js` | group: |
 | 48 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
@@ -181,6 +181,7 @@ of file each thing is; this says what already does the job.
 | 15 | `offers` | `network-app.js` |  |
 | 15 | `resolve` | `page.js` |  |
 | 15 | `label` | `screen-id.js` |  |
+| 15 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 15 | `post` | `books-manual.js` | POST /events — |
 | 15 | `setting` | `books-store.js` | const missingToNull = (value) => (value == null ? null : |
 | 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
@@ -191,7 +192,6 @@ of file each thing is; this says what already does the job.
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 14 | `chips` | `country-profiles.js` | words as chips; null when there are none |
 | 14 | `check` | `network-app.js` |  |
-| 14 | `validate` | `bill-use.js` | Only lines the copy has; only the three words; at least one thing said. |
 | 14 | `refuse_` | `bookpack.js` | an Error with status 422 — |
 | 14 | `apply` | `ctpreturn.js` | Apply one event the door has already verified (peer known, signature, membership, crossing). |
 | 14 | `declared` | `defaults.js` | The catalogue's declared defaults, from the face. |
@@ -201,6 +201,7 @@ of file each thing is; this says what already does the job.
 | 14 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 14 | `sheet` | `stock-store.js` | the shop's whole shelf, for a report — |
 | 13 | `save` | `app.html` |  |
+| 13 | `units` | `cart.js` |  |
 | 13 | `group` | `cart.js` | A heading's control adds ONE of each — |
 | 13 | `link` | `chit-sheet.js` |  |
 | 13 | `confirm` | `lab-kit.js` | opts: |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 13 | `payment` | `books-store.js` |  |
 | 13 | `members` | `crm-groups.js` | the customers (never a lead) in a segment or a group, from the list's own rows |
 | 13 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
-| 13 | `minor` | `ledger.js` | minor(v, where) → the stored amount as a safe integer, or a refusal naming where — |

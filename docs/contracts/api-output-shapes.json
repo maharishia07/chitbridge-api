@@ -6773,6 +6773,212 @@
         "url": "/api/relationships/suppliers/dddddddd-dddd-4ddd-8ddd-dddddddddddd/catalogue"
       }
     },
+    "GET /api/signin/devices": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "devices"
+        ],
+        "properties": {
+          "devices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "device_id",
+                "label",
+                "kind",
+                "by",
+                "first_seen",
+                "seen",
+                "revoked_at",
+                "till_prefix",
+                "sessions"
+              ],
+              "properties": {
+                "device_id": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "kind": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "first_seen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "seen": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "revoked_at": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "till_prefix": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "sessions": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/devices"
+      }
+    },
+    "GET /api/signin/sessions": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "sessions",
+          "legacy",
+          "may"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "jti",
+                "device_id",
+                "surface",
+                "iat",
+                "exp",
+                "current",
+                "device"
+              ],
+              "properties": {
+                "jti": {
+                  "type": "string"
+                },
+                "device_id": {
+                  "type": "string"
+                },
+                "surface": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "iat": {
+                  "type": "number"
+                },
+                "exp": {
+                  "type": "number"
+                },
+                "current": {
+                  "type": "boolean"
+                },
+                "device": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "kind",
+                    "seen"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "kind": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "seen": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "legacy": {
+            "type": "boolean"
+          },
+          "may": {
+            "type": "object",
+            "required": [
+              "devices"
+            ],
+            "properties": {
+              "devices": {
+                "type": "object",
+                "required": [
+                  "ok",
+                  "code",
+                  "why"
+                ],
+                "properties": {
+                  "ok": {
+                    "type": "boolean"
+                  },
+                  "code": {},
+                  "why": {}
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/sessions"
+      }
+    },
     "GET /api/tax/gstr": {
       "status": "200",
       "schema": {
@@ -21033,6 +21239,260 @@
         "body": {
           "resolution_code": "fixed",
           "note": "done"
+        }
+      }
+    },
+    "POST /api/signin/ask": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "need"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "need": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 6,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/ask",
+        "body": {
+          "email": "gh\u0000ost@x.com"
+        }
+      }
+    },
+    "POST /api/signin/logout": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "removed"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "removed": {
+            "type": "boolean"
+          },
+          "legacy": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/logout",
+        "body": {}
+      }
+    },
+    "POST /api/signin/pin": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/pin",
+        "body": {
+          "pin": "1234",
+          "confirm_pin": "1234"
+        }
+      }
+    },
+    "POST /api/signin/renew": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "token",
+          "jti",
+          "exp",
+          "device_id",
+          "surface"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "jti": {
+            "type": "string"
+          },
+          "exp": {
+            "type": "number"
+          },
+          "device_id": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/signin/renew",
+        "body": {}
+      }
+    },
+    "POST /api/signin/sessions/revoke": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "revoked": {
+            "type": "string"
+          },
+          "removed": {
+            "type": "boolean"
+          },
+          "device_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 3,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/sessions/revoke",
+        "body": {
+          "device_id": "device-aaaa-1111"
+        }
+      }
+    },
+    "POST /api/signin/verify": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "message",
+          "token",
+          "entity",
+          "identity",
+          "constitution"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "entity": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "email"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "identity": {
+            "type": "object",
+            "required": [
+              "identity_id",
+              "bridge_id",
+              "display_name",
+              "email",
+              "user_id",
+              "identity_type",
+              "entity_id",
+              "access_level"
+            ],
+            "properties": {
+              "identity_id": {
+                "type": "string"
+              },
+              "bridge_id": {
+                "type": "string"
+              },
+              "display_name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "user_id": {},
+              "identity_type": {
+                "type": "string"
+              },
+              "entity_id": {
+                "type": "string"
+              },
+              "access_level": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "x-closed-by": "recordings"
+          },
+          "constitution": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/signin/verify",
+        "body": {
+          "email": "a@x.com",
+          "otp": "482915"
         }
       }
     },

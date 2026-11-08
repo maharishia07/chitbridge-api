@@ -4340,6 +4340,51 @@
    "since": "2026-10-23"
   },
   {
+   "code": "SERVICE_ALREADY_PAUSED",
+   "status": "409",
+   "title": "Already paused",
+   "shopkeeper": "This request is already paused by you. End that pause before starting another.",
+   "hint": "End the open pause first.",
+   "owner_area": "service",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "SERVICE_NOT_MIGRATED",
+   "status": "503",
+   "title": "Service clock not migrated",
+   "shopkeeper": "The service clock arrives after the next update. Nothing was started.",
+   "hint": "Try again after the next update.",
+   "owner_area": "service",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "SERVICE_NOT_TRACKED",
+   "status": "404",
+   "title": "Not tracked yet",
+   "shopkeeper": "This request has no service clock yet. Start the clock first.",
+   "hint": "Start the service clock, then try again.",
+   "owner_area": "service",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "SERVICE_OWN_CLAIM",
+   "status": "409",
+   "title": "Your own claim",
+   "shopkeeper": "You raised this pause. The other party is the one who accepts or rejects it.",
+   "hint": "Wait for the other party to answer.",
+   "owner_area": "service",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "SERVICE_PAUSE_ENDED",
+   "status": "409",
+   "title": "Pause already ended",
+   "shopkeeper": "That pause is already ended and its end time cannot be moved.",
+   "hint": "Start a new pause if the clock must stop again.",
+   "owner_area": "service",
+   "since": "2026-11-08"
+  },
+  {
    "code": "SESSION_EXPIRED",
    "status": "401",
    "title": "Session expired",
