@@ -30,7 +30,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 (async () => {
   console.log('\n== CTR-227 · the country gate over express ==\n');
   ok('routes/chits.js exports the real sendMoneyStated', typeof chits.sendMoneyStated === 'function');
-  if (typeof chits.sendMoneyStated !== 'function') { console.log('\n' + pass + ' ok, ' + fail + ' failed'); process.exit(1); }
+  if (typeof chits.sendMoneyStated !== 'function') { console.log('\n' + pass + ' ok, ' + fail + ' failed'); process.exitCode = 1; return; }
   const app = express();
   app.use(express.json());
   app.post('/send', async (req, res) => {
@@ -53,7 +53,8 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('a draft of a country-less shop is the author\'s own copy: let through', r.status === 200, JSON.stringify(r));
   r = await post(bill(IN_SHOP));
   ok('an IN shop bills', r.status === 200, JSON.stringify(r));
-  server.close();
+  if (server.closeAllConnections) server.closeAllConnections();
+  await new Promise((resolve) => server.close(resolve));
   console.log('\n' + pass + ' ok, ' + fail + ' failed');
-  process.exit(fail ? 1 : 0);
-})().catch((e) => { console.error(e); process.exit(2); });
+  process.exitCode = fail ? 1 : 0;
+})().catch((e) => { console.error(e); process.exitCode = 2; });
