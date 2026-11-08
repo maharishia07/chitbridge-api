@@ -19,11 +19,11 @@
    "lifecycle": "stable"
   },
   "DELETE /api/catalogue/:bridge_id/my-documents/:id": {
-   "hash": "cb4788656770100d",
+   "hash": "a60976f3208018cd",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#358",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped delete, non-uuid and foreign id both 404 in one sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "DELETE /api/chits/:chit_id": {
@@ -499,11 +499,19 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/capture-fields": {
-   "hash": "d607d6f62eb7d0de",
+   "hash": "9ff18aab5c5a8c64",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, unknown shop 404 in words; no handler change in the PR",
+   "lifecycle": "stable"
+  },
+  "GET /api/catalogue/:bridge_id/my-documents": {
+   "hash": "fd244df69e65d2b2",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; caller-scoped list, paged, one 401/404 sentence; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/:bridge_id/support/preview": {
@@ -523,11 +531,11 @@
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network-store/:networkId": {
-   "hash": "985e2513117c90be",
+   "hash": "f7ae322fc1cc3543",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; public read, no node attribution, 404/503 in words; no handler change in the PR",
    "lifecycle": "stable"
   },
   "GET /api/catalogue/network/:bridge_id": {
@@ -2447,15 +2455,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#343",
-   "lifecycle": "stable"
-  },
-  "POST /api/catalogue/:bridge_id/support": {
-   "hash": "81696fd76afddafd",
-   "names_clear": true,
-   "sentence_plain": true,
-   "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text, onceOnly; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/support/start": {
@@ -2463,7 +2463,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-09 PR#1062 stage2: handler re-read against the 13 columns; sentences fixed, no relayed text; was a seven-column sign-off of 2026-10-23, no handler change",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/enquiry/:item_id": {
