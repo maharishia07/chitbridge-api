@@ -54,7 +54,7 @@ function counter(o) {
   const els = {}; const el = () => ({ value: '', textContent: '', className: '', innerHTML: '', classList: { remove() {}, add() {} } });
   const ctx = {
     window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date, Promise, isNaN,
-    CBTax: CBTAX, MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2),
+    CBTax: CBTAX, CBUnits: require('../lib/units'), MONEY: () => MONEY, r2, esc: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2),
     S: { shop: { name: 'Tally Test', gstin: '33AABCK1234F1Z6', state_code: '33', country: 'IN', reg_type: 'regular' }, slabs: [SLAB18], categories: [], face: {}, at: '2026-11-08T05:00:00.000Z', offers: [],
          policy: { price_includes_tax: world.inclusive ? 'yes' : 'no', recheck_prices: world.setting, park_max_hours: 12 } },
     CART: (world.cart || [line()]).map((c) => Object.assign({}, c)), BILL_DELIVERY: null,
@@ -97,6 +97,13 @@ const moneyOf = (c) => { const m = c.net(); return { net: minor(m.net), base: mi
     c.world.posts === 1 && c.world.lastPost.p === '/api/till/recheck' && c.world.lastPost.body.item_ids.join() === 'A' && /236\.00 → 283\.20/.test(c.world.asked[0].message) && m2.net === 28320 && m2.base === 24000 && m2.tax === 4320, JSON.stringify([c.world.asked, m2]));
   ok('the basis says it was checked (reason recheck, parked_at kept, snapshot_at carried) and a checked line is no longer parked', basis.checked === true && basis.reason === 'recheck' && basis.parked_at && basis.snapshot_at === '2026-11-08T05:00:00.000Z' && !c.ctx.CART[0].parked_at, JSON.stringify(basis));
 
+  /* 2b · CAT-264b: a unit move is shown (quantity stays), a spelling of the same unit is not (CBUnits.sameUnit folds case) */
+  c = counter({ setting: 'on', door: { ok: true, items: [row({ unit: 'kg' })] } });
+  await vm.runInContext('recheckBeforeBill()', c.ctx);
+  ok('unit piece to kg, price same: popup says sold per piece → per kg and the quantity stays 2, bill 236.00', c.world.asked.length === 1 && /sold per piece → per kg [(]the quantity stays 2[)]/.test(c.world.asked[0].message) && c.world.asked[0].cancelWord === 'Go back' && moneyOf(c).net === 23600);
+  c = counter({ setting: 'on', cart: [line({ unit: 'Kg' })], door: { ok: true, items: [row({ unit: 'kg' })] } });
+  await vm.runInContext('recheckBeforeBill()', c.ctx);
+  ok('unit Kg to kg: no popup (the same unit, hand: nothing moved), 236.00', c.world.asked.length === 0 && moneyOf(c).net === 23600);
   /* 3 · setting on, parked 1 minute, 100 to 120: 283.20 shown */
   c = counter({ setting: 'on', door: { ok: true, items: [row({ price: 120 })] } });
   c.ctx.CART.forEach((l) => { l.parked_at = minutesAgo(1); });

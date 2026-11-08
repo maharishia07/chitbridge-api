@@ -17438,10 +17438,10 @@ function recheckPriceMove(cartLine, answerRow){
   var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
   return from === to || keptAt === to ? null : [from, to];
 }
-/** the unit the product is sold in moved (CAT-264b: a unit change is a commercial change like price)? → [was, now], or null; an answer that names no unit is "unknown", never a move */
+/** the unit the product is sold in moved (CAT-264b: a unit change is a commercial change like price)? → [was, now], or null; an answer that names no unit is "unknown", never a move; sameness is the platform's CBUnits.sameUnit (case and plural folded), no second equality */
 function recheckUnitMove(cartLine, answerRow){
-  var was = cartLine.unit || 'piece', now = answerRow.unit ? String(answerRow.unit) : null;
-  return now && now !== was ? [was, now] : null;
+  var unitWas = cartLine.unit || 'piece', unitNow = answerRow.unit ? String(answerRow.unit) : null;
+  return unitNow && !CBUnits.sameUnit(unitWas, unitNow) ? [unitWas, unitNow] : null;
 }
 /** the rate in force moved? → [was, now] through CBTax.slab.resolve in the old and the new tax context, or null */
 function recheckRateMove(cartLine, answerRow, ctx){
@@ -17497,7 +17497,7 @@ function recheckWords(change){
   if (change.gone) return name + ': ' + (change.gone === 'deleted' ? 'no longer in your catalogue' : 'no longer sold');
   var bits = [];
   if (change.price) bits.push(money(change.price[0]) + ' → ' + money(change.price[1]));
-  if (change.unit) bits.push('sold per ' + change.unit[0] + ' → per ' + change.unit[1]);
+  if (change.unit) bits.push('sold per ' + change.unit[0] + ' → per ' + change.unit[1] + ' (the quantity stays ' + change.cartLine.qty + ')');
   if (change.rate) bits.push(schemeWord() + ' ' + (change.rate[0] == null ? '?' : change.rate[0]) + '% → ' + (change.rate[1] == null ? '?' : change.rate[1]) + '%');
   return name + ': ' + bits.join(' · ');
 }
