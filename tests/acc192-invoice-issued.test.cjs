@@ -112,7 +112,7 @@ const pump = (more) => Object.assign({ particulars: 'Pump seal', quantity: 10, u
   });
   await t('the code is a row of the register, with its sentence', () => {
     const md = fs.readFileSync(root('docs/ERROR-CODES.md'), 'utf8');
-    assert.ok(/\| INVOICE_MONEY_LOCKED \| 409 \| [^|]+\| This bill is already invoiced\. A change in price needs a credit or debit note\. \|/.test(md));
+    assert.ok(/\| INVOICE_MONEY_LOCKED \| 409 \| [^|]+\| This bill is already invoiced\. A change in price needs a credit or debit note\. Propose the change; the note is issued when the other side accepts\. \|/.test(md));
     const reg = require(root('docs/error-codes.json')).codes.find((c) => c.code === 'INVOICE_MONEY_LOCKED');
     assert.ok(reg && reg.status === '409');
   });
