@@ -1217,6 +1217,15 @@
    "since": "2026-11-08"
   },
   {
+   "code": "CREDIT_NOTE_OVER_BILL",
+   "status": "409",
+   "title": "Credit note too large",
+   "shopkeeper": "This credit note would credit more than the bill was for.",
+   "hint": "Credit no more than is left on the bill (the message says how much), or check the bill number.",
+   "owner_area": "chits",
+   "since": "2026-11-08"
+  },
+  {
    "code": "CRM_BAD_REQUEST",
    "status": "400",
    "title": "Bad request",

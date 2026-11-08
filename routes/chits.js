@@ -85,6 +85,7 @@ const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of a
 const taxCopy = require('../lib/tax-copy');
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
+const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
 const cashStep = require('../lib/cash-step'); /* CTRY-77: a cash part the shop pack's cashRounding step cannot make is refused CASH_ROUNDING_STEP */
 const localIdentity = require('../lib/local-identity'); /* mayTrade — may this party trade with this shop (onRail + population, b249's rule, at the door) */
 const istest = require('../lib/istest'); /* RAIL-LAB-SRV1: isLabChit · maySample — the one lab rule (b249's population axis), at the send door */
@@ -2447,6 +2448,7 @@ async function sendWrite(sendState, req, res) {
     const namedParty = !is_draft ? require('../lib/crm').namedParty(business_json) : null;
     const isRecipient = namedParty && receiverDetails.some((item) => String(item.entity_id) === String(namedParty));
     await withEntity(sender_id, async (entityClient) => {
+      await creditCap.holdUnderLock(entityClient, sendState); /* ACC-286: under the bill's lock, in this transaction, before anything is written */
       if (sendState.sourceCarry) await costWrite.verifySourceCarry(entityClient, sender_id, sendState.sourceId, sendState.sourceCarry, sendState.sourceOptions); /* RAIL-149: the draft's money is still what was carried, read under the lock */
       await mint.deliver(sender_id, chit_id, copies, { is_draft: !!promote_draft_id, client: entityClient });
       if (namedParty && !isRecipient) await trySavepoint(entityClient, () => require('../lib/crm').traded(entityClient, sender_id, namedParty, now), null);
@@ -2460,6 +2462,7 @@ async function sendWrite(sendState, req, res) {
 async function sendLegacyWrite(sendState) {
   const { promote_draft_id, chit_id, sender_id, suppressSentCopy, is_draft, receiverDetails } = sendState;
   await withTransaction(async (client) => {
+    await creditCap.holdUnderLock(client, sendState); /* ACC-286 */
     if (promote_draft_id) {
       // promoting/updating: clear the draft's own rows so this chit re-inserts cleanly under the SAME id
       await client.query('DELETE FROM state_log  WHERE chit_id = $1 AND entity_id = $2', [chit_id, sender_id]);
