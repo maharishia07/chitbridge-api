@@ -277,6 +277,11 @@ jobs:
           S41_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/isolation-s41.test.cjs
+      - name: CAT-264a · the commercial stamp (b845) on real Postgres as cb_app, RLS on — each key of the one list moves it; is_active, a rename and the CUR-1 backfill do not
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/cat-264a-commercial-stamp.realstack.cjs
       - name: SET-80 · the currency lock reads a store as the store (real Postgres, api role cb_app, RLS on) — a traded store is refused for a product, a chit and a books entry
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
