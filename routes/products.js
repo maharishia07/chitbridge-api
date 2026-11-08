@@ -1346,7 +1346,7 @@ router.post(
           // The SAME validation the single-add form runs. Without this a bulk upload could create products that
           // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
           // not a rule at all.
-          const verr = validateAgainst(ruleRows, merged);
+          const verr = validateAgainst(ruleRows, merged, prior?.item_data);
           if (verr) {
             outcome.push({ line, sku, action: 'failed', name: item.name, message: verr });
             continue;
@@ -1547,7 +1547,7 @@ async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
     item_data: read.bodyItem,
     stored: read.stored,
     ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-    validate: (data, rows) => validateAgainst(rows, data)
+    validate: (data, rows, stored) => validateAgainst(rows, data, stored)
   });
   if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
   /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
@@ -1658,7 +1658,7 @@ router.post('/:id/schedule', auth, ...checked('POST /:id/schedule'), async (req,
     if (!cur.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     /* CAT-317: the item as it will read once the change lands is judged by the SAME validator an edit answers to (catwrite.judgeItem), and parked changes are judged again when due (lib/schedule) */
     const next = Object.assign({}, cur.rows[0].item_data, decl.item_data);
-    const verdict = await catwrite.judgeItem(entity_id, next);
+    const verdict = await catwrite.judgeItem(entity_id, next, cur.rows[0].item_data);
     if (verdict) return problem(req, res, changeRefusal(req, verdict));
     itemstatus.stampInto(next, decl.item_data, cur.rows[0].item_data, whoOf(req)); /* a status that cannot be stamped (a redundant with no replaced_by) is refused now; the stamp itself is cut when the change lands */
     const patch = schedule.diff(cur.rows[0].item_data, money.stampItem(next, await regional.currencyFor(entity_id)));

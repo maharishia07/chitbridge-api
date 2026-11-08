@@ -10,7 +10,8 @@
  * CAT-316  every door that writes a status refuses an unknown word, and a changed one is recorded by itemstatus.stamp
  *   D-1  PATCH merge · PATCH replace · POST · POST /bulk · POST /bulk-update with status "banana" are refused with a sentence; the stored status is unchanged / nothing is created
  *   D-2  a valid change through PATCH merge and through bulk-update is stamped like PUT /:id/status (status_at · status_schema_org)
- * CAT-318  the storefront order refuses a price that is not zero-or-more
+ *   D-3  (CAT-323) an item holding a legacy word ("approved") can still have its name edited (200); setting "banana" is still refused
+CAT-318  the storefront order refuses a price that is not zero-or-more
  *   O-1  an order for 2 of a product whose live price is -5 (bare, or { amount, currency }) is a 422 ORDER_REJECTED with a plain sentence, no chit, no total
  *   O-2  the same order at a valid price is placed (control)
  * Run: API_BASE=http://127.0.0.1:3197 DATABASE_URL=postgres://cb_app:cblocal@127.0.0.1:55432/cb_local node tests/cat-316-money-doors.realstack.cjs   (CI: the S41 job's api on :3000, cb_app)
@@ -97,6 +98,19 @@ const readList = (shop) => j('/api/products', { token: shop.token }); /* a read:
     const e = await stored(A, id2);
     expect(e.status === 'retired' && e.status_at && e.status_schema_org, 'bulk-update ' + JSON.stringify(e).slice(0, 300));
     refused(await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { merge: true, item_data: { status: 'redundant' } } }), 'redundant with no replaced_by');
+  });
+
+  await kase('D-3', 'CAT-323: an item holding a legacy status word ("approved", raw insert) can still be edited on another field; setting an unknown word is still refused', async () => {
+    const id = await newProduct(A, { name: 'Legacy ' + RUN });
+    await withEntity(A.entity, (db) => db.query("UPDATE catalogue_items SET item_data = item_data || '{\"status\": \"approved\"}'::jsonb WHERE item_id=$1", [id]));
+    const r = await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { merge: true, item_data: { name: 'Legacy renamed ' + RUN } } });
+    expect(r.status === 200, 'PATCH name on a legacy-status item: HTTP ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+    const d = await stored(A, id);
+    expect(d.name === 'Legacy renamed ' + RUN && d.status === 'approved', 'stored ' + JSON.stringify(d).slice(0, 200));
+    const r2 = await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { item_data: { name: 'Legacy again ' + RUN, price: 60 } } });
+    expect(r2.status === 200, 'PATCH replace without a status: HTTP ' + r2.status);
+    refused(await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { merge: true, item_data: { status: 'banana' } } }), 'status banana on the same item');
+    expect((await stored(A, id)).status !== 'banana', 'banana was stored');
   });
 
   const door = '/api/catalogue/' + A.bridge, email = RUN + '-c@local.test';
