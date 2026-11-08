@@ -3,7 +3,7 @@
  * tests/cat-264a-commercial-stamp.test.cjs — CAT-264a: the SQL key list and the JS key lists cannot drift (offline, no database).
  *
  * migrations/b845 holds ONE list, cb_item_commercial_keys(). It must equal the till's RECHECK_FIELDS (tools/tally-connector/till.html) ∪ lib/rate-door.js RATE_KEYS,
- * plus `currency` (CRITIC F3: a currency change at the same amount is a move) and `unit` (a price is per unit; cb-catalogue review of #1035). Every key must also be produced by cb_item_fields, or the trigger would compare
+ * plus `currency` (CRITIC F3: a currency change at the same amount is a move); `unit` (a price is per unit) is in the till list since CAT-264b. Every key must also be produced by cb_item_fields, or the trigger would compare
  * nothing for it. lib/itemmatch.js STAMP_FIELDS (the books-replay hash, F7) is a different fact, but each of its keys must still be a key cb_item_fields makes.
  * The behaviour itself (each key moves the stamp, is_active does not, the CUR-1 backfill does not) is proven on real Postgres: tests/cat-264a-commercial-stamp.realstack.cjs.
  * CARD 06-catalogue-pim/README
@@ -25,8 +25,8 @@ const expected = [...new Set([...recheckFields, ...RATE_KEYS, 'currency', 'unit'
 let pass = 0;
 const ok = (what, fn) => { fn(); pass++; console.log('  ok   ' + what); };
 
-ok('the till list was read (10 keys) and RATE_KEYS has the three rate names', () => {
-  assert.strictEqual(recheckFields.length, 10, 'RECHECK_FIELDS in till.html: ' + recheckFields);
+ok('the till list was read (11 keys, unit added by CAT-264b) and RATE_KEYS has the three rate names', () => {
+  assert.strictEqual(recheckFields.length, 11, 'RECHECK_FIELDS in till.html: ' + recheckFields);
   assert.deepStrictEqual([...RATE_KEYS].sort(), ['gst_rate', 'tax_slab', 'tax_slab_name']);
 });
 ok('the trigger key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency ∪ unit (no key missing, none extra)', () => {

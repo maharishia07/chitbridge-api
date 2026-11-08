@@ -1651,11 +1651,11 @@
    "lifecycle": "stable"
   },
   "GET /api/till/engine/:name": {
-   "hash": "4a422f34f38b13a0",
+   "hash": "6188ec56258d1181",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
    "lifecycle": "stable"
   },
   "GET /api/till/match": {
@@ -3675,11 +3675,11 @@
    "lifecycle": "stable"
   },
   "POST /api/till/offer-item": {
-   "hash": "d6ad7fcb17c22003",
+   "hash": "247f38ec08cf16aa",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#354",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
    "lifecycle": "stable"
   },
   "POST /api/till/pair": {
