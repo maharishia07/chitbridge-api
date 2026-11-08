@@ -303,6 +303,11 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/set86-country-setup-merge.realstack.cjs
+      - name: NET-93 · a business joins and leaves a network tree through the approved edge (b843's root-immutable trigger, one consented door); a cycle answers 409 never 500 (real Postgres, api role cb_app)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/net-93-tree-approve.realstack.cjs
       - name: T2 · every area truth test (tests/*-truth.realstack.cjs) against the same seeded api, one file at a time (Q17, API-STANDARD R2-10)
         env:
           API_BASE: http://127.0.0.1:3000
