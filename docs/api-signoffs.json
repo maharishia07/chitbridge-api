@@ -1147,19 +1147,19 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/docs/:id": {
-   "hash": "597a2e449ca230ab",
+   "hash": "4c1714a8b02753ad",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/download/:id": {
-   "hash": "966e1a6d5ef10766",
+   "hash": "af7c9d3016789066",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit": {
@@ -1171,11 +1171,11 @@
    "lifecycle": "stable"
   },
   "GET /api/integrations/kit/*": {
-   "hash": "9f494cd2f4297967",
+   "hash": "348b9c92a4977ecb",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "GET /api/integrations/profile-map": {
@@ -4027,11 +4027,11 @@
    "lifecycle": "stable"
   },
   "PUT /api/integrations/streams": {
-   "hash": "1d8791f0df7ece41",
+   "hash": "9f7a6d4d41aa7697",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#332",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1059",
    "lifecycle": "stable"
   },
   "PUT /api/network-design": {

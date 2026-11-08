@@ -239,7 +239,11 @@ const SUCCESS = [
   OK('stock-second-page', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(3) }, { url: I + '/stock/shop-a?limit=2&page=2' }),
   OK('stock-capped', 'GET /api/integrations/stock/:handle', { handle: true, stockRows: stockRowsOf(201) }, { url: I + '/stock/shop-a?limit=500' }),
   OK('profile-map-empty', 'GET /api/integrations/profile-map', {}),
-  OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD })
+  OK('profile-map-held', 'GET /api/integrations/profile-map', { profileValues: HELD }),
+  /* the writers' success answers: a request that reaches each one's 200 is the example the generated output_allowlist case plays (S34) */
+  OK('approve-connector', 'POST /api/integrations/:actor_id/approve', { actor: { identity_id: A1, site: 'PC', connector_config: { key_jti: 'j1' } } }, { url: I + '/' + A1 + '/approve', body: {} }),
+  OK('putstreams-give', 'PUT /api/integrations/streams', {}, { body: { order: 'kit@pc', stock: null } }),
+  OK('profile-write', 'POST /api/integrations/profile', { asKey: true, profileValues: HELD }, { body: { source: 'tally', fields: { legal_name: 'Acme Pvt Ltd', state: 'Delhi' } } })
 ];
 
 function send(port, method, urlPath, body, headers) {
@@ -298,7 +302,7 @@ async function checkRoutes(port, recording) {
   const tested = {};
   for (const scenario of SCENARIOS.concat(SUCCESS)) {
     const answer = await runScenario(port, scenario);
-    recording[scenario.route + '|' + scenario.id] = Object.assign({ route: scenario.route, status: answer.status, body: answer.json }, scenario.ok ? { request: { url: scenario.url || scenario.route.split(' ')[1] } } : {});
+    recording[scenario.route + '|' + scenario.id] = Object.assign({ route: scenario.route, status: answer.status, body: answer.json }, scenario.ok ? { request: Object.assign({ url: scenario.url || scenario.route.split(' ')[1] }, scenario.body ? { body: scenario.body } : {}) } : {});
     const label = scenario.id;
     if (scenario.ok) {
       if (!argv.includes('--capture')) check(label + ': answers 200', answer.status === 200, answer.status);
