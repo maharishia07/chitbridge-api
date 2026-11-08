@@ -8528,7 +8528,8 @@
           "schema",
           "bound",
           "bound_schema",
-          "may"
+          "may",
+          "asked"
         ],
         "properties": {
           "flags": {
@@ -8550,6 +8551,9 @@
             "type": "object"
           },
           "may": {
+            "type": "object"
+          },
+          "asked": {
             "type": "object"
           }
         },

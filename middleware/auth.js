@@ -501,7 +501,7 @@ const KEY_ROUTES = {
     /* ⚠️ offer-item writes to a GOVERNED object (definition_version, append-only). It can only move ONE
                  product in or out of ONE live offer — never create, rename, retire or reprice one. See routes/till.js. */
     /* ⭐ a counter that is stuck reports itself — the one thing nobody can reach saying so in its own words */
-    ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state)$/],
+    ['POST', /^\/api\/till\/(stock|price|flags|offer-item|diagnostic|reconcile|close|state|recheck)$/],   /* CTR-212: recheck only READS the catalogue rows for the cart ids */
     /* ⭐ the same availability permission as /stock, batched — a selection on or off the shelf in ONE call.
                  It shipped (f2f2a9f) without this line, so on a till key it was a bare 403; tests/key-scopes caught it. */
     ['POST', /^\/api\/till\/stock\/bulk$/],
