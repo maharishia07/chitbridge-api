@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 179,
-  "meets": 458,
+  "partial": 172,
+  "meets": 465,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -49614,11 +49614,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e2e8bbb2e50fede2"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -49716,11 +49715,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d86df23c95c37d1d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -50023,11 +50021,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9f9dfe1002e8b7e5"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52608,11 +52605,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "802889fd8570fa57"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -57477,11 +57473,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "db720732b4da51d8"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -57581,11 +57576,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f06e00970724f9d6"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -60033,11 +60027,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8801009fddb9db3b"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
