@@ -24,7 +24,8 @@ const PRICED_LINE = { qty: 1, listPrice: 5, pricing: { kind: 'fixed', amount: 4 
 const PINS = [
   ['POST /api/adopt/:chit_id answers the standard 422', 'POST', '/api/adopt/' + ADOPT_ID, { accept: [], zz_unknown_field: 1 }, 422, true],
   ['PUT /api/catalogue-face keeps its old 400', 'PUT', '/api/catalogue-face', { face: {}, zz_unknown_field: 1 }, 400, true],
-  ['POST /api/pricing/price (S13 outward list, keyed) still ignores an extra key', 'POST', '/api/pricing/price', { lines: [PRICED_LINE], currency: 'INR' }, 200, false],
+  /* API-8 (S33): POST /api/pricing/price left the S13 outward list when its money body became an allow-list (tests/api-8-strict-money.test.cjs pins it closed), so an extra key now answers 422 naming it */
+  ['POST /api/pricing/price (money body closed, API-8) answers the standard 422', 'POST', '/api/pricing/price', { lines: [PRICED_LINE], zz_unknown_field: 1 }, 422, true],
   /* contract bulk pass, batch 1: each body is the valid one the callers send plus zz_unknown_field */
   ['POST /api/events/ticket (keyed, KEY_ROUTES: till, screen and connector scopes) still ignores an extra key', 'POST', '/api/events/ticket', { zz_unknown_field: 1 }, 200, false],
   ['POST /api/notifications/seen answers the standard 422', 'POST', '/api/notifications/seen', { zz_unknown_field: 1 }, 422, true],
@@ -128,6 +129,8 @@ function ask(port, token, [, method, url, body]) {
 
 (async () => {
   const app = cases.appForCases(path.join(__dirname, '..'));
+  /* the register is a per-shop capability (RAIL-90): a shop that already holds register rows has it on, so the case shop is one of those; without it the register routes answer 403 CAPABILITY_OFF before the body is read. Required AFTER appForCases: the gate must meet the stand-in database, not the real one */
+  require('../lib/register-gate').KNOWN_USERS.add(cases.CALLER_SHOP);
   const token = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
   const shopper = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'customer', bridge_id: 'CB-CASE', parent_entity_id: cases.CALLER_SHOP, display_name: 'Case shopper' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
   await cases.servedFor(app, async (port) => {

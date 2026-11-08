@@ -31,13 +31,15 @@ const src = require('fs').readFileSync(path.join(__dirname, '..', 'routes', 'ide
 const body = src.match(/async function resolveSubject\(req, wanted\) \{[\s\S]*?\n\}/);
 if (!body) { console.error('✗ could not find resolveSubject — the test is stale, fix it before trusting it'); process.exit(1); }
 const { query } = require('../db');
+/* CMP-22: the route reads the ONE uuid test from lib/trace (routes/identity-docs.js line 40); the lifted function needs the same name in scope */
+const { UUID_RE } = require('../lib/trace');
 const resolveSubject = eval('(' + body[0].replace(/^async function resolveSubject/, 'async function') + ')');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, extra) => { if (cond) { pass++; console.log('  ✓ ' + name); } else { fail++; console.error('  ✗ ' + name + (extra ? '\n      ' + extra : '')); } };
 
 const ENTITY = { identity_id: 'ent-1', identity_type: 'entity' };
-const ACTOR  = { identity_id: 'act-1', identity_type: 'actor', parent_entity_id: 'ent-1' };
+const ACTOR  = { identity_id: '11111111-1111-4111-8111-111111111111', identity_type: 'actor', parent_entity_id: 'ent-1' };
 
 async function attempt(identity, wanted) {
   try { return { ok: true, res: await resolveSubject({ identity }, wanted) }; }
@@ -48,8 +50,8 @@ async function attempt(identity, wanted) {
   console.log('\n── the subject defaults to the caller ──');
   ROWS = [];
   let r = await attempt(ACTOR, undefined);
-  ok('an actor with no identity_id gets themselves', r.ok && r.res.id === 'act-1' && r.res.onBehalf === false);
-  r = await attempt(ACTOR, 'act-1');
+  ok('an actor with no identity_id gets themselves', r.ok && r.res.id === '11111111-1111-4111-8111-111111111111' && r.res.onBehalf === false);
+  r = await attempt(ACTOR, '11111111-1111-4111-8111-111111111111');
   ok('naming YOURSELF is not "on behalf"', r.ok && r.res.onBehalf === false);
 
   console.log('\n── an actor may never name anyone else ──');
@@ -62,11 +64,11 @@ async function attempt(identity, wanted) {
 
   console.log('\n── an entity may name its OWN co-assist, and only its own ──');
   ROWS = [{ x: 1 }];
-  r = await attempt(ENTITY, 'act-1');
-  ok('entity naming its own co-assist is allowed', r.ok && r.res.id === 'act-1' && r.res.onBehalf === true);
+  r = await attempt(ENTITY, '11111111-1111-4111-8111-111111111111');
+  ok('entity naming its own co-assist is allowed', r.ok && r.res.id === '11111111-1111-4111-8111-111111111111' && r.res.onBehalf === true);
 
   ROWS = [];           // the parent-entity check finds nothing
-  r = await attempt(ENTITY, 'act-9');
+  r = await attempt(ENTITY, '99999999-9999-4999-8999-999999999999');
   ok('entity naming SOMEONE ELSE\'S staff is refused 403', !r.ok && r.status === 403, JSON.stringify(r));
   ok('  …and says so in words an owner can act on',
      !r.ok && /not one of your co-assists/i.test(r.message || ''), r.message);
