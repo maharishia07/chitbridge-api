@@ -32,7 +32,7 @@ const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { safeErr } = require('../lib/respond');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
+const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
@@ -1115,7 +1115,7 @@ async function addNetworkLines(entity_id, ownRead, items, network, project) {
 }
 
 /** resolve the adopted sources, read their lines the way the shopfront does, and push each priced, sellable one onto the counter's items */
-async function pushNetworkLines(entity_id, adoptedRows, items, network, project) {
+async function pushNetworkLines(entity_id, adoptedRows, items, network, project, resolvedSources) {
   const catalogueRead = require('../lib/catalogue-read');
   let container = null;
   try {
@@ -1123,7 +1123,7 @@ async function pushNetworkLines(entity_id, adoptedRows, items, network, project)
   } catch (e) {
     log.fellBack('till GET /snapshot: the helper failed — carried on without it', e);
   }
-  const sources = await resolveSources(entity_id, adoptedRows);
+  const sources = resolvedSources || (await resolveSources(entity_id, adoptedRows));
   const containers = await resolveContainers(container, sources);
   const lines = catalogueRead.lines({
     owned: [],
@@ -2195,6 +2195,111 @@ router.post('/price', auth, auth.requireScope('till'), ...checked('POST /price')
 function priceInput(body) {
   const given = body || {};
   return { item_id: String(given.item_id || ''), price: Number(given.price), sent: given.price, by: given.by || 'the counter' };
+}
+
+/**
+ * ── ⭐⭐ POST /api/till/recheck — WHAT IS THE CATALOGUE SAYING ABOUT THESE PRODUCTS, RIGHT NOW (CTR-212 S1) ──
+ * The counter asks before it takes a bill's number (and when a parked bill is picked up again): the item ids on the cart in, the shop's CURRENT rows out,
+ * through the SAME tillItem projection the snapshot uses, so a price, a rate, a status and a hsn mean here what they mean there.
+ * ⚠️ WHY NOT THE DELTA SNAPSHOT: a product DELETED from the catalogue is not late, it is gone — GET /snapshot?since never lists it (liveCountRead, above).
+ * This door answers every id it was asked: found:false is the answer for a row that no longer exists, never silence (and never a price of 0).
+ * ⚠️ IT ONLY READS. It computes no money: the counter refreshes its cart rows from this and runs its own engine (price → billMoney) once.
+ * ⚠️ WHAT THE TILL CHARGES IS NOT ONLY THE ROW (CTR-212 §11, cb-catalogue): a brand's published price, a store's "use", a slab / category / face rate edit move the
+ * charge with no write to the product row. So a NETWORK LINE ('src:<source>:<sku>') is read the way the snapshot reads it (addNetworkLines: found:false when the brand
+ * withdrew it or it is unpriced here), and the answer carries `slabs` · `categories` · `face` (taxBlock, the snapshot's own) so the counter resolves the rate with the same
+ * pack it resolves it with at sale. A SOFT-removed product is read as the row it is: active:false (a delta never sees that; this door does).
+ * An id that is no id at all is answered found:false.
+ * `stamp` = the row's own price_changed_at (null when no price change was ever stamped): only POST /price writes it today, so the counter compares the
+ * carried VALUES (price · rate · status) and does not rely on the stamp (CTR-212 R2; the writers that do not stamp are listed in docs/critique/CTR-212.md).
+ * Who: a till key (scope till). Trips: the rows (one transaction), the category master, the tax shelf, and the adoption read only when a network line is asked.
+ */
+const RECHECK_MAX = 200; /* item ids in one ask: a cart is a handful; 200 is a generous ceiling, as POST /stock/bulk's 500 is for a shelf edit */
+router.post('/recheck', auth, auth.requireScope('till'), ...checked('POST /recheck'), async (req, res) => {
+  try {
+    const entity_id = auth.entityOf(req);
+    const ids = recheckIds(req.body);
+    if (!ids.length) return refuseBad(req, res, 'item_ids required');
+    if (ids.length > RECHECK_MAX) return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + RECHECK_MAX + ' products in one check.') });
+    const shopIds = ids.filter((id) => UUID_RE.test(id));
+    const found = shopIds.length ? await withEntity(entity_id, (db) => db.query('SELECT item_id, item_data, is_active FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, shopIds])) : { rows: [] };
+    const master = await readCategoryMaster(entity_id);
+    const rows = new Map(found.rows.map((row) => [String(row.item_id), row]));
+    const reads = await recheckReads(entity_id, ids, master.catNames, req);
+    if (!reads) return problem(req, res, { status: 503, ...said('TILL_RECHECK_UNAVAILABLE', 'Unavailable', RECHECK_UNAVAILABLE) });
+    res.json({ at: new Date().toISOString(), items: ids.map((id) => recheckAnswer(id, rows.get(id), master.catNames, reads.network)), ...taxBlock(reads.shelf) });
+  } catch (e) {
+    problem(req, res, failed(e, req));
+  }
+});
+
+/** the sentence a counter shows when the check could not run: it must never read as "nothing moved" */
+const RECHECK_UNAVAILABLE = 'The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen.';
+/**
+ * the two reads beyond the rows (the brand's lines, the tax shelf) → { network, shelf }, or null when EITHER failed (logged with the request id): a door that cannot read the
+ * rate context must not answer 200 with empty slabs (the counter would read that as "nothing moved"); the counter treats the bill as unchecked. A shop with no tax number has a null
+ * shelf BY DESIGN (taxShelf.readShelf answers null), which is not a failure.
+ */
+async function recheckReads(entity_id, ids, catNames, req) {
+  try {
+    const network = await recheckNetwork(entity_id, ids, catNames);
+    const shelf = await taxShelf.readShelf(entity_id, shelfDeps(), { withItems: false });
+    if (!shelf && (await shopHasTaxNumber(entity_id))) throw new Error('the tax shelf could not be read'); /* readShelf answers null for a read that failed AND for a shop with no tax number; only the second is by design */
+    return { network, shelf };
+  } catch (e) {
+    log.warn('till.recheck.unreadable', { entity_id, request_id: req && req.id, why: String(e && e.message) });
+    return null;
+  }
+}
+/** does this shop hold a tax number? (a null tax shelf is by design only when it does not) */
+async function shopHasTaxNumber(entity_id) {
+  const found = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]);
+  return !!String((found.rows[0] || {}).gstn || '').trim();
+}
+/** the network lines among the asked ids, as the snapshot would send them now → Map(item_id → counter row), or null when none was asked (no adoption read then) */
+async function recheckNetwork(entity_id, ids, catNames) {
+  if (!ids.some((id) => /^src:/.test(id))) return null;
+  const lines = [];
+  const reads = ownReads(entity_id, null);
+  const ownRead = (name) => withEntity(entity_id, reads[name]);
+  const adopted = await ownRead('adoption'); /* ⚠️ not addNetworkLines: it swallows a failed read, and a brand line that could not be read must not be answered "gone" */
+  if (!adopted.rows.length) return new Map();
+  const sources = await resolveSources(entity_id, adopted.rows);
+  if (sources.length < adopted.rows.length) throw new Error('a brand source could not be read'); /* resolveSources leaves an unreadable source OUT: that must not read as "the line is gone" */
+  await pushNetworkLines(entity_id, adopted.rows, lines, { unpriced: 0 }, (id, data) => tillItem(id, data, [], catNames), sources);
+  return new Map(lines.map((line) => [line.item_id, line]));
+}
+
+/** POST /recheck input: the product ids asked about (text, blanks and repeats dropped, order kept) */
+function recheckIds(body) {
+  const given = body && typeof body === 'object' ? body : {};
+  const asked = Array.isArray(given.item_ids) ? given.item_ids.map((entry) => String(entry || '')).filter(Boolean) : [];
+  return Array.from(new Set(asked));
+}
+
+/** an answer cut to the closed key list the counter reads (lib/till-contract RECHECK_ITEM_KEYS): nothing else of the shelf row travels */
+function recheckPick(answer) {
+  const out = {};
+  for (const key of RECHECK_ITEM_KEYS) if (key in answer) out[key] = answer[key];
+  return out;
+}
+/** a network line's answer: its counter row as the snapshot would send it now, or found:false (withdrawn by the brand, unpriced here); a failed read throws, so the counter treats the whole check as failed, never as a deletion */
+function networkAnswer(item_id, network) {
+  if (!network) return { item_id, found: null, checked: false, why: 'network_not_read' };
+  const line = network.get(item_id);
+  if (!line) return { item_id, found: false, checked: true };
+  return recheckPick(Object.assign({}, line, { found: true, checked: true, active: true, stamp: null }));
+}
+
+/**
+ * one id's answer: the counter row (tillItem, so status is the snapshot's own word) with found · active · stamp beside it.
+ * A network line is read by networkAnswer; an id with no row is found:false; a row is found:true. Whether a retired or inactive row still bills is the counter's one rule, from status and active (S2a), not a second answer here.
+ */
+function recheckAnswer(item_id, row, catNames, network) {
+  if (/^src:/.test(item_id)) return networkAnswer(item_id, network);
+  if (!row) return { item_id, found: false, checked: true };
+  const data = row.item_data || {};
+  const projected = tillItem(item_id, data, [], catNames);
+  return recheckPick(Object.assign(projected, { found: true, checked: true, active: row.is_active !== false, stamp: data.price_changed_at || null }));
 }
 
 /**

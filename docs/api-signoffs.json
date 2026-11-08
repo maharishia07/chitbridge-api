@@ -3594,6 +3594,14 @@
    "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#741 stage2",
    "lifecycle": "stable"
   },
+  "POST /api/till/recheck": {
+   "hash": "dbafba055729b52d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-08 PR#995 head 576282a6: new till door re-read, 13 columns pass; 503 TILL_RECHECK_UNAVAILABLE right (read failed, nothing changed; not 409/422), registered with a shopkeeper sentence, closed RECHECK_ITEM_KEYS, strict body, till key via KEY_ROUTES",
+   "lifecycle": "stable"
+  },
   "POST /api/till/reconcile": {
    "hash": "fe056ad1a25bb4e7",
    "names_clear": true,
