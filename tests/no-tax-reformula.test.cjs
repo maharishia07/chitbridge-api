@@ -38,7 +38,7 @@ const SPLIT_SHAPE = /\*\s*100\s*\/\s*\(\s*100\s*\+/g;
 
 // ⭐ 2026-10-02: billMoney() lost its fallback — it IS CBTax.determine() now (the one computation; Athi: "the computation should
 // happen in only one place like billing"), and with no engine the counter refuses to sell rather than adding up its own.
-const PERMITTED_FALLBACKS = 2;   // the day-close report, rcvLineTax() — each beside its own CBTax.splitLineTax() call
+const PERMITTED_FALLBACKS = 0;   // CTR-191: the day-close report and rcvLineTax() call CBTax.splitLineTax() directly; no copy of the formula is left
 
 t('splitLineTax has exactly the permitted fallback copies of its own formula, and no new one crept in', () => {
   const hits = (src.match(SPLIT_SHAPE) || []).length;

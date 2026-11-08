@@ -93,5 +93,11 @@ function page(o) {
     assert.strictEqual(overrideBy({ api_key: 'k', till: { kind: 'key', counter: true } }, Object.assign({}, mine, { why: '' }), { needWhy: true }), null);
     assert.strictEqual(overrideBy({ api_key: 'k', till: { kind: 'key' } }, mine, { needWhy: true }), null);
   });
+  await ok('a queued bill the server stopped (409 MONEY_UNBALANCED) keeps its code and shows RED in the outbox; a re-send clears it', () => {
+    assert.ok(HTML.includes('bill._code = code;'), 'drain keeps the server code on the row');
+    assert.ok(HTML.includes("q._code === 'MONEY_UNBALANCED' ? ' stoprow'"), 'the waiting list marks that row stoprow');
+    assert.ok(HTML.includes('.t.warnrow.stoprow{color:var(--bad'), 'stoprow is red (--bad), not the amber warn');
+    assert.ok(HTML.includes('delete fresh._why; delete fresh._code') && HTML.includes('delete moved._why; delete moved._code'), 'a re-sent or renumbered row drops the old code');
+  });
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })();

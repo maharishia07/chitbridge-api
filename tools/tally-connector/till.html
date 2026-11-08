@@ -2169,6 +2169,7 @@
   /* the heads are the detail under Taxable — indented so the eye reads them as its parts, not as more totals */
   .t.head{color:var(--dim);font-size:.92em;padding-inline-start:12px}
   .t.warnrow{color:var(--warn);font-size:.9em}
+  .t.warnrow.stoprow{color:var(--bad,#a3261f);font-weight:700}   /* CTR-191: the server stopped this bill's money (409 MONEY_UNBALANCED): red, not amber */
   .row .x{border:none;background:none;color:var(--warn);font-size:1.2em;cursor:pointer}
   .save{color:var(--ok)}
   /* ⭐ the stacked line note (2026-09-16): the unit price on its own line, each offer below as name / −value */
@@ -5908,7 +5909,7 @@ var CloudHost = {
               var moved = await renumberBill(bill, said, rows);   /* H5: a row it moved leaves `rows`, so its old copy is never written back */
               if (moved) { if (!why) why = 'Bill ' + moved.from + ' shared a number with another counter — recorded as ' + moved.to + '.'; continue; }
             }
-            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status);
+            bill._status = r.status; bill._why = said || ('the shop answered ' + r.status); bill._code = code;
             bill._tries = (Number(bill._tries) || 0) + 1; bill._at = Date.now();
             /* ⭐ R2's ladder — 2s, 4s, 8s … to five minutes, then five minutes for ever. See qBackoff(). */
             bill._nextAt = bill._at + qBackoff(bill._tries);
@@ -21970,8 +21971,7 @@ function dayAddIssued(sheet, bill){
 /** an OLD bill's line (no by_rate): CBTax.splitLineTax(), the same formula the invoice used, not the report's own guess at it */
 function dayAddSplit(sheet, line){
   var rate = Number(line.gst_rate) || 0, lineNet = Number(line.net) || 0; if (!rate) return;
-  var split = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() })
-    : (function(){ var base = taxIncluded() ? r2(lineNet * 100 / (100 + rate)) : lineNet; return { assessable: base, tax: r2(base * rate / 100) }; })();
+  var split = CBTax.splitLineTax({ net: lineNet, rate: rate, priceIncludesTax: taxIncluded() });
   sheet.rate[rate] = sheet.rate[rate] || { base:0, tax:0 };
   sheet.rate[rate].base = r2(sheet.rate[rate].base + split.assessable);
   sheet.rate[rate].tax = r2(sheet.rate[rate].tax + split.tax);
@@ -22954,9 +22954,7 @@ function rcvLineTax(l){
   var rate = Number(l && l.gst_rate) || 0;
   if (!rate || !shopTax().charges) return { taxable: value, tax: 0, rate: 0 };
   /* ⚠️ CBTax.splitLineTax() — the same formula an invoice justifies itself by, not a second one for what we bought */
-  var sp = (window.CBTax && CBTax.splitLineTax) ? CBTax.splitLineTax({ net: value, rate: rate, priceIncludesTax: !!RCV.tax_inclusive })
-    : (RCV.tax_inclusive ? (function(){ var b2 = r2(value * 100 / (100 + rate)); return { assessable: b2, tax: r2(value - b2) }; })()
-                          : { assessable: value, tax: r2(value * rate / 100) });
+  var sp = CBTax.splitLineTax({ net: value, rate: rate, priceIncludesTax: !!RCV.tax_inclusive });
   return { taxable: sp.assessable, tax: sp.tax, rate: rate };
 }
 /**
@@ -23977,7 +23975,7 @@ async function renumberBill(bill, why, drainRows){   /* `drainRows` (optional): 
                   why: why || 'the number was already used by another counter' },
     _renum: tries + 1, _tries: 0
   });
-  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._verified; delete fresh.renumber_to;
+  delete fresh._sent; delete fresh._status; delete fresh._why; delete fresh._code; delete fresh._verified; delete fresh.renumber_to;
   await DB.put('bills', fresh);
   await DB.put('queue', fresh);
   var companions = await rekeyCompanions(from, to);
@@ -24001,7 +23999,7 @@ async function rekeyCompanions(from, to){
     var row = rows.filter(function(x){ return x && x.no === oldKey; })[0];
     if (!row) continue;
     var moved = Object.assign({}, row, { no: to + BILL_COMPANIONS[i], _tries: 0 });
-    delete moved._nextAt; delete moved._status; delete moved._why;
+    delete moved._nextAt; delete moved._status; delete moved._why; delete moved._code;
     if (moved.tillPost && moved.tillPost.body && moved.tillPost.body.ref === from)
       moved.tillPost = Object.assign({}, moved.tillPost, { body: Object.assign({}, moved.tillPost.body, { ref: to }) });
     await DB.put('queue', moved);
@@ -24468,7 +24466,7 @@ async function openStuck(){
         var waitW = qWaitWords(q);
         var why = (q._tries ? q._tries + ' tries · ' : '') + (q._why || 'not refused — not yet attempted')
                 + (waitW ? ' · ' + waitW : '');
-        h += '<div class="t' + (q._why ? ' warnrow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
+        h += '<div class="t' + (q._why ? ' warnrow' : '') + (q._code === 'MONEY_UNBALANCED' ? ' stoprow' : '') + '"><span>' + esc(q.no || '(unnumbered)') + '</span>'
           + '<span>' + esc(why)
           + ' <button class="pill" style="margin-inline-start:8px" data-testid="till-stuck-aside-' + esc(q.no)
           + '" onclick="setAside(\'' + esc(q.no) + '\')">set aside</button></span></div>';
