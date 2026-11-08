@@ -199,6 +199,17 @@ async function _askedChild({ childId, childHandle, childBridgeId }, parent, acto
  * requestConnect({ parentId?, parentHandle?, childBridgeId?, childId?, childHandle?, type }, actor)
  * The actor is one of the two ends: a network inviting (parent = actor) or a business asking to join (child = actor).
  */
+/**
+ * NET-93 · the ONE tree-place check, read by the ask (fail early, nothing saved) and by approve (the safety): is the parent already inside the child's own tree
+ * (a business cannot become the child of its own member)? Throws 409 CYCLE in a plain sentence; answers { deep }: the child is itself inside another tree.
+ */
+async function refuseCycle(client, parent, child) {
+  const {
+    rows: [{ bad, deep }]
+  } = await client.query(`select (($1::ltree) <@ ($2::ltree)) as bad, nlevel($2::ltree) > 1 as deep`, [parent.path, child.path]);
+  if (bad) throw err(409, 'That would put a network under one of its own members, which loops. Nothing was saved.', 'CYCLE');
+  return { deep };
+}
 async function requestConnect({ parentId, parentHandle, childBridgeId, childId, childHandle, type = TREE }, actor) {
   if (!actor) throw err(401, 'sign in as a business first', 'NO_ACTOR');
   if ([TREE, 'commercial'].indexOf(type) < 0) throw err(400, 'type must be governance or commercial', 'BAD_TYPE');
@@ -210,6 +221,7 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
   _check('request', { actorId: actor.id, parentId: parent.id, childId: child.id });
   await refuseRemoteNodes([parent, child]);
   if (type === TREE && (await hasLiveParent(child.id))) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
+  if (type === TREE) await refuseCycle(pool, parent, child);
   const {
     rows: [open]
   } = await pool.query(`select * from cb_edge where parent_id=$1 and child_id=$2 and type=$3 and state in ('requested','active','suspended') limit 1`, [
@@ -242,10 +254,7 @@ async function joinTree(dbClient, edge) {
   } = await dbClient.query(`select * from cb_entity where id=$1 for update`, [edge.child_id]);
   if (!child.claimed) throw err(409, 'child is an unclaimed stub — cannot consent', 'UNCLAIMED');
   if (await hasLiveParent(child.id, dbClient)) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
-  const {
-    rows: [{ bad, deep }]
-  } = await dbClient.query(`select (($1::ltree) <@ ($2::ltree)) as bad, nlevel($2::ltree) > 1 as deep`, [parent.path, child.path]);
-  if (bad) throw err(409, 'would create a cycle (parent under child)', 'CYCLE');
+  const { deep } = await refuseCycle(dbClient, parent, child);
   // NET-93: only a business that is its own network can join one; a node already inside a tree (a stale edge) never walks out of it by this door
   if (deep) throw err(409, 'child already in a network (tree-only)', 'HAS_PARENT');
   await reRootGuard(dbClient, child.path);

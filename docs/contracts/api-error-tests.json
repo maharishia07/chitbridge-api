@@ -2925,6 +2925,7 @@
   500
  ],
  "POST /api/network-offers/:id/withdraw": [
+  400,
   401,
   403,
   404,
