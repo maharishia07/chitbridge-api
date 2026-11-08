@@ -112,7 +112,7 @@ of file each thing is; this says what already does the job.
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
-| 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
+| 24 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 24 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `customer` | `mintuserid.js` | silently becomes a second identity. |
@@ -124,7 +124,7 @@ of file each thing is; this says what already does the job.
 | 22 | `governance` | `home-facts.js` |  |
 | 22 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 22 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
-| 22 | `keep` | `signin.js` | see. |
+| 23 | `keep` | `signin.js` | see. |
 | 21 | `says` | `adopt.js` |  |
 | 21 | `entries` | `books-store.js` |  |
 | 21 | `chart` | `fx-rates.js` |  |
