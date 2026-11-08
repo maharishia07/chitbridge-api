@@ -1208,12 +1208,39 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CREDIT_NOTE_NOT_CHECKED",
+   "status": "503",
+   "title": "Credit note not checked",
+   "shopkeeper": "This credit note could not be checked against its bill, so it was not saved.",
+   "hint": "Send it again; if it repeats, tell us.",
+   "owner_area": "chits",
+   "since": "2026-11-08"
+  },
+  {
    "code": "CREDIT_NOTE_NOT_ISSUED",
    "status": "409",
    "title": "Credit note not issued",
    "shopkeeper": "The note could not be issued, so the change was not applied on either side.",
    "hint": "Try again; if it repeats, tell us.",
    "owner_area": "accounting",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "CREDIT_NOTE_NOT_JUDGED",
+   "status": "200",
+   "title": "Credit note not checked against a bill",
+   "shopkeeper": "This credit note was not checked against a bill.",
+   "hint": "Check that the credit is not more than the bill.",
+   "owner_area": "chits",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "CREDIT_NOTE_OVER_BILL",
+   "status": "409",
+   "title": "Credit note too large",
+   "shopkeeper": "This credit note would credit more than the bill was for.",
+   "hint": "Credit no more than is left on the bill (the message says how much), or check the bill number.",
+   "owner_area": "chits",
    "since": "2026-11-08"
   },
   {
@@ -4293,6 +4320,15 @@
    "hint": "Wait a few seconds.",
    "owner_area": "verdict",
    "since": "2026-10-22"
+  },
+  {
+   "code": "SERVER_BUSY",
+   "status": "503",
+   "title": "Server busy",
+   "shopkeeper": "ChitBridge is very busy right now. Nothing was saved.",
+   "hint": "Wait a couple of seconds, then send it again.",
+   "owner_area": "limits",
+   "since": "2026-11-08"
   },
   {
    "code": "SERVER_OWNED",

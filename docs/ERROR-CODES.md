@@ -113,6 +113,9 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVOICE_LINE_ADDED | 409 | New line | A line that is not on the invoice is a new sale, not a change to this one. Raise a new invoice for it. | Raise a new invoice for the new line. | accounting | 2026-11-08 |
 | INVOICE_NOTE_NO_RULE | 409 | No note for this country | This country has no ruling here for a raised price on an issued bill, so no note was issued. Raise a new invoice for the extra amount. | Raise a new invoice for the extra amount. | accounting | 2026-11-08 |
 | CREDIT_NOTE_NOT_ISSUED | 409 | Credit note not issued | The note could not be issued, so the change was not applied on either side. | Try again; if it repeats, tell us. | accounting | 2026-11-08 |
+| CREDIT_NOTE_NOT_CHECKED | 503 | Credit note not checked | This credit note could not be checked against its bill, so it was not saved. | Send it again; if it repeats, tell us. | chits | 2026-11-08 |
+| CREDIT_NOTE_NOT_JUDGED | 200 | Credit note not checked against a bill | This credit note was not checked against a bill. | Check that the credit is not more than the bill. | chits | 2026-11-08 |
+| CREDIT_NOTE_OVER_BILL | 409 | Credit note too large | This credit note would credit more than the bill was for. | Credit no more than is left on the bill (the message says how much), or check the bill number. | chits | 2026-11-08 |
 | DEBIT_NOTE_NEEDS_ACCEPT | 409 | A debit note is issued on acceptance | A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then. | Propose the new price on the bill. | accounting | 2026-11-08 |
 | NOTE_NUMBER_INVALID | 409 | Note number not allowed | The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change. | Tell us; we change the note prefix. | accounting | 2026-11-08 |
 | PROPOSAL_NO_COUNTERPARTY | 409 | Nobody to propose to | This chit has no other party, so there is nothing to propose. | Change it directly. | rail | 2026-10-25 |
@@ -409,6 +412,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SCHEMA_UNKNOWN_TYPE | 400 | Unknown column type | A column is text, number, choice or date. | Pick one of those. | schemas | 2026-10-23 |
 | SELF | 400 | Cannot connect to itself | A business cannot connect to itself. | Choose another business. | network | 2026-10-23 |
 | SENDING | varies | Sending | Not an error. Bills are on their way to the shop. | Wait a few seconds. | verdict | 2026-10-22 |
+| SERVER_BUSY | 503 | Server busy | ChitBridge is very busy right now. Nothing was saved. | Wait a couple of seconds, then send it again. | limits | 2026-11-08 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | Your sign-in has ended. | Sign in again. | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | We could not sign you in just now. | Try again in a minute. | identity-auth | 2026-10-22 |
