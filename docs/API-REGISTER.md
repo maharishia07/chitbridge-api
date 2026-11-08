@@ -44,7 +44,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/actors/access-events | actors | routes/actors.js:1834 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/actors/check-login | actors | routes/actors.js:700 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | GET | /api/actors/settings | actors | routes/actors.js:1516 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/adopt/:chit_id | adopt | routes/adopt.js:156 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| GET | /api/adopt/:chit_id | adopt | routes/adopt.js:151 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:605 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | no | partial | yes | yes | yes |
 | GET | /api/assist/catalogue-sources | assist | routes/assist.js:186 | yes | yes | no | no | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
@@ -337,7 +337,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/actors/login | actors | routes/actors.js:809 | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/actors/set-pin | actors | routes/actors.js:703 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/actors/suggest-key | actors | routes/actors.js:194 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| POST | /api/adopt/:chit_id | adopt | routes/adopt.js:193 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
+| POST | /api/adopt/:chit_id | adopt | routes/adopt.js:188 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/assist | assist | routes/assist.js:72 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/assist/catalogue-adopt | assist | routes/assist.js:248 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | POST | /api/assist/catalogue-structure | assist | routes/assist.js:192 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -787,13 +787,13 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-adopt.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, chit_detail, chit_header, entity_profile, identities, supplier_list · writes (derived): - · callers: cap-adopt.js · actions: -
+- reads (derived): catalogue_items, chit_detail, chit_header, identities, supplier_list · writes (derived): - · callers: cap-adopt.js · actions: -
 
 **POST /api/adopt/:chit_id** · adopt · cb-operations · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-adopt.js 0/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): catalogue_items, chit_detail, chit_header, entity_profile, supplier_list · writes (derived): catalogue_items · callers: cap-adopt.js · actions: -
+- reads (derived): catalogue_items, chit_detail, chit_header, supplier_list · writes (derived): catalogue_items · callers: cap-adopt.js · actions: -
 
 ### assist (cb-ai, 0 of 22 with a description)
 
@@ -3196,31 +3196,31 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/kyb/position** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 6 (wire 4; share know-your-business.html 6/41) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 6 (wire 4; share know-your-business.html 6/42) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/risk** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money y (derived)
-- effect: offline online-only · round trips 11 (wire 24; share know-your-business.html 11/41) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 11 (wire 24; share know-your-business.html 11/42) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: know-your-business.html · actions: -
 
 **GET /api/kyb/yourself** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 500 · money n (derived)
-- effect: offline online-only · round trips 16 (wire 34; share know-your-business.html 16/41) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 17 (wire 35; share know-your-business.html 17/42) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **POST /api/kyb/credential** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 400, 401, 422, 500 · money n (derived)
-- effect: offline online-only · round trips 3 (wire null; share know-your-business.html 3/41) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 3 (wire null; share know-your-business.html 3/42) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: know-your-business.html · actions: -
 
 **POST /api/kyb/field** · kyb · cb-compliance · meets standard
 - does: _not yet written_
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money y (derived)
-- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/41) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 5 (wire 14; share know-your-business.html 5/42) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): kyb_field_cache · writes (derived): kyb_field_cache, usage_ledger · callers: know-your-business.html · actions: -
 
 ### marketing (cb-marketing, 0 of 1 with a description)
