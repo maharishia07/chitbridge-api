@@ -5,12 +5,12 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 153,
-  "meets": 485,
+  "partial": 154,
+  "meets": 484,
   "columns": {
    "strict_input": {
     "applies": 350,
-    "failing": 46
+    "failing": 47
    },
    "output_allowlist": {
     "applies": 638,
@@ -52532,7 +52532,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/pricing.js",
    "line": 58,
-   "hash": "802889fd8570fa57",
+   "hash": "1a7ce6f875846cf0",
    "does": "",
    "errors": {
     "count": 0,
@@ -52564,7 +52564,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -52604,10 +52604,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#989",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "1a7ce6f875846cf0"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

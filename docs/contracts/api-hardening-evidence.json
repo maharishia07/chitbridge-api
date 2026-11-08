@@ -313,7 +313,6 @@
    "output_allowlist": true
   },
   "POST /api/pricing/price": {
-   "strict_input": true,
    "output_allowlist": true
   },
   "POST /api/invoice/build": {
