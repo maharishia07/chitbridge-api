@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 169,
-  "meets": 469,
+  "partial": 168,
+  "meets": 470,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -60641,13 +60641,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent, not the builder) 2026-11-08 PR#995 head 576282a6: new till door re-read, 13 columns pass; 503 TILL_RECHECK_UNAVAILABLE right (read failed, nothing changed; not 409/422), registered with a shopkeeper sentence, closed RECHECK_ITEM_KEYS, strict body, till key via KEY_ROUTES",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
