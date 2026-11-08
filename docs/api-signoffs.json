@@ -50,6 +50,14 @@
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#907",
    "lifecycle": "stable"
   },
+  "DELETE /api/combo-templates/:id": {
+   "hash": "86df410a8511ad98",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "DELETE /api/crm/followups/:id": {
    "hash": "4684ff50ad88ec07",
    "names_clear": true,
@@ -283,11 +291,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/compare/:id/csv": {
-   "hash": "4c3448af6a2b5ce3",
+   "hash": "7ca455cbd821c7a8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/daybook": {
@@ -371,11 +379,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/packs/:id/file": {
-   "hash": "eab6f7f4c79c78d9",
+   "hash": "5ae00d5c8173ec3d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/party/:id/statement": {
@@ -443,11 +451,11 @@
    "lifecycle": "stable"
   },
   "GET /api/books/todo": {
-   "hash": "084f040c2a23476b",
+   "hash": "3cffdda5474f29a9",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/books/trial-balance": {
@@ -656,6 +664,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api 2026-10-29 PR#551 stage2 (B6 batch 1)",
+   "lifecycle": "stable"
+  },
+  "GET /api/combo-templates": {
+   "hash": "d066c4975f3d38a9",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/connections/list": {
@@ -1290,6 +1306,14 @@
    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
    "lifecycle": "stable"
   },
+  "GET /api/offers/openapi.json": {
+   "hash": "0fea4ab2374ff23d",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "GET /api/people": {
    "hash": "fab2df1560045606",
    "names_clear": true,
@@ -1419,11 +1443,11 @@
    "lifecycle": "stable"
   },
   "GET /api/tax/gstr": {
-   "hash": "13eb044abdeba057",
+   "hash": "3113f5dee04bf883",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#915",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "GET /api/tax/invoice/:chit_id": {
@@ -1778,6 +1802,14 @@
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
    "lifecycle": "stable"
   },
+  "PATCH /api/combo-templates/:id": {
+   "hash": "4cd3bd5191856987",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
   "PATCH /api/connectors/:actorId/connections/:connId": {
    "hash": "ea0e27d69ed819ff",
    "names_clear": true,
@@ -2051,11 +2083,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/check": {
-   "hash": "b732844b32a0b4c8",
+   "hash": "aabf384ec7ec5ff7",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#349",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/books/cheques/:id/status": {
@@ -2584,6 +2616,22 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#355",
+   "lifecycle": "stable"
+  },
+  "POST /api/combo-templates": {
+   "hash": "3111294cdf4c538b",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
+   "lifecycle": "stable"
+  },
+  "POST /api/combo-templates/:id/push": {
+   "hash": "b461b339dcb523ca",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/connections/request": {
@@ -3368,6 +3416,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#883",
+   "lifecycle": "stable"
+  },
+  "POST /api/supplies": {
+   "hash": "3b16aa55740768ab",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#1012 stage2: handler read, closed key list compared with the real answer (scenes re-run, shape pruned against handler literals), 13 columns pass, answers unchanged",
    "lifecycle": "stable"
   },
   "POST /api/tax/compute": {
