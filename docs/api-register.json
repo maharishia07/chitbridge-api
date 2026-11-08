@@ -50868,7 +50868,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -50978,7 +50978,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51083,7 +51083,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51186,7 +51186,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51292,7 +51292,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64813,7 +64813,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
