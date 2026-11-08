@@ -62,6 +62,22 @@ const OFFER_ROW = (status) => (sql) =>
     ? { rows: [{ definition_id: OFFER, name: 'Spring offer', status, current_version: 1 }], rowCount: 1 }
     : undefined;
 /** the extras: a refusal inside a handler the generic worlds cannot reach (they send an empty body, which is itself the handler's own 400/404) */
+/* NET-91: a staff login (an editor of the brand) is refused 403 OWNER_ONLY on the three writes that push to every store, and NOTHING is written or pushed: each stand-in records a call */
+const STAFF_WROTE = [];
+const RECORDS = (name, value) => async () => {
+  STAFF_WROTE.push(name);
+  return value;
+};
+const NETWORK_WRITES = { mergeFlag: RECORDS('mergeFlag', {}), setReleased: RECORDS('setReleased', {}), pushToNetwork: RECORDS('pushToNetwork', { stores: 0, clients: 0 }) };
+const CATALOGUE_WRITES = { publish: RECORDS('publish', {}), cancel: RECORDS('cancel', {}), answer: RECORDS('answer', {}) };
+const STAFF_REFUSED = [
+  X('staff-policy', 'PUT /api/network-offers/policy', 403, { after: true, setup: { who: STAFF }, body: { policy: 'opt_out' }, patch: { net: NETWORK_WRITES } }),
+  X('staff-release', 'POST /api/network-offers/:id/release', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
+  X('staff-withdraw', 'POST /api/network-offers/:id/withdraw', 403, { after: true, setup: { who: STAFF, sqlRows: OFFER_ROW('live') }, patch: { net: NETWORK_WRITES } }),
+  X('staff-publish', 'POST /api/network-offers/catalogue/publish', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-cancel', 'POST /api/network-offers/catalogue/cancel', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's' }, patch: { ncat: CATALOGUE_WRITES } }),
+  X('staff-price', 'POST /api/network-offers/catalogue/price', 403, { after: true, setup: { who: STAFF }, body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: CATALOGUE_WRITES } })
+];
 const EXTRAS = [
   X('network-read-breaks', 'GET /api/network-offers', 500, { patch: { net: { brandView: throwsLater } } }),
   X('members-not-read', 'GET /api/network-offers', 503, { patch: { net: { brandView: NOT_READ } } }),
@@ -122,7 +138,7 @@ function checkCodesRegistered(recording) {
   const capturing = lab.flagValue('--capture');
   const allowedBy = Object.assign({}, ...MOUNTS.map((one) => Object.fromEntries(Object.keys(contractOf(one).OPERATIONS).map((key) => [key, contractOf(one).allowedStatuses()(key)]))));
   const allowed = capturing ? () => [] : (route) => allowedBy[route] || [];
-  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS), { id: OFFER });
+  const scenarios = lab.scenariosOf(routes, WORLDS, EXTRAS.concat(SUCCESS, STAFF_REFUSED), { id: OFFER });
   const tested = await lab.checkRoutes(server.address().port, scenarios, recording, allowed, () => ({ net: require(path.join(HERE, 'lib', 'network-offers')), ncat: require(path.join(HERE, 'lib', 'network-catalogue')) }));
   server.close();
   if (capturing) {
@@ -131,6 +147,8 @@ function checkCodesRegistered(recording) {
     process.exit(0);
   }
   checkContracts(routes);
+  const staffAnswers = ['PUT /api/network-offers/policy|staff-policy', 'POST /api/network-offers/:id/release|staff-release', 'POST /api/network-offers/:id/withdraw|staff-withdraw', 'POST /api/network-offers/catalogue/publish|staff-publish', 'POST /api/network-offers/catalogue/cancel|staff-cancel', 'POST /api/network-offers/catalogue/price|staff-price'].map((key) => recording[key]);
+  check('a staff login is refused 403 OWNER_ONLY on policy, release, withdraw and the three catalogue writes, and nothing was written or pushed', staffAnswers.every((one) => one && one.status === 403 && one.body.code === 'OWNER_ONLY' && one.body.may === false) && STAFF_WROTE.length === 0, { staffAnswers, STAFF_WROTE });
   checkCodesRegistered(recording);
   check('a caller who is not signed in is refused with 401 on every route', Object.keys(recording).filter((key) => key.endsWith('|signed-out')).every((key) => recording[key].status === 401));
   const allowHeld = ALLOW.checkAllowList(recording, Object.assign({}, ...MOUNTS.map((one) => contractOf(one).OPERATIONS)), check);

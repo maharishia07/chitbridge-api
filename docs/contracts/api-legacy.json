@@ -62487,14 +62487,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -62587,14 +62593,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "Not found",
-      "message": "That is not one of your offers."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -62675,14 +62687,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 409,
+     "status": 403,
      "body_keys": {
-      "error": "none",
-      "message": "Nothing is waiting to be published."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "none",
-      "message": "Nothing is waiting to be published."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -62727,14 +62745,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "validation",
-      "message": "choice must be use, keep or ok"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "validation",
-      "message": "choice must be use, keep or ok"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -62791,14 +62815,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 404,
+     "status": 403,
      "body_keys": {
-      "error": "not_yours",
-      "message": "That catalogue is not one you publish."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "not_yours",
-      "message": "That catalogue is not one you publish."
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {
@@ -62843,14 +62873,20 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 400,
+     "status": 403,
      "body_keys": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      },
      "fixture": {
-      "error": "validation",
-      "message": "policy must be opt_in or opt_out"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner may change network offers and catalogue prices.",
+      "message": "Only the business owner may change network offers and catalogue prices."
      }
     },
     {

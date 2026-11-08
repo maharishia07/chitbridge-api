@@ -33,7 +33,7 @@ of file each thing is; this says what already does the job.
 | 63 | `adopt` | `remote-party.js` | local → the input names a business in THIS installation's namespace (or is an e-mail): |
 | 61 | `here` | `screen-id.js` |  |
 | 60 | `items` | `books-store.js` | PERF1: |
-| 60 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 61 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 55 | `record` | `access-events.js` |  |
@@ -60,7 +60,7 @@ of file each thing is; this says what already does the job.
 | 40 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 40 | `missing` | `variant.browser.js` | refusing with no reason. |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 39 | `gate` | `country-setup.js` | gate(h, entity): |
+| 40 | `gate` | `country-setup.js` | gate(h, entity): |
 | 39 | `live` | `receivables.js` | the allocations that still count: |
 | 38 | `host` | `chit-sheet.js` |  |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
@@ -132,7 +132,7 @@ of file each thing is; this says what already does the job.
 | 20 | `cblog` | `core.js` | const __cblog = []; |
 | 20 | `note` | `device-id.js` | note(where, problem) — |
 | 20 | `reason` | `lab-kit.js` | W9: |
-| 20 | `says` | `adopt.js` |  |
+| 21 | `says` | `adopt.js` |  |
 | 20 | `plan` | `crm-leads.js` | `existing`: |
 | 20 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 20 | `allowed` | `trips.js` | let _idsFrom = null, |
