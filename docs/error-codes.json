@@ -2733,7 +2733,7 @@
    "status": "409",
    "title": "The money does not add up",
    "shopkeeper": "The bill does not add up, so it was not sent.",
-   "hint": "Check the bill, or the owner can let it through and say why.",
+   "hint": "Two cases. If the answer names a pair (total, taxable or round-off) the engine wrote two different figures: the bill was refused, cannot be let through, and we have raised a ticket; make the bill again and tell us if it repeats. If it names a step instead, the bill did not add up: check it, or the owner can let it through and say why.",
    "owner_area": "chits",
    "since": "2026-10-30"
   },
