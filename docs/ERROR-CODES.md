@@ -100,6 +100,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CTP_CROSS_DISPUTE | 409 | Retired: not raised | RETIRED 25 Oct 2026 — disputes now cross installations (RAIL-106), so this refusal is no longer given. | - | ctp | 2026-10-25 |
 | CTP_EVENT_BAD | 400 | Change not readable | The change sent for this chit could not be read. | The sending installation must send a status or a message with its sequence. | ctp | 2026-10-25 |
 | CTP_EVENT_NO_DISPUTE | 404 | Dispute not held here | This installation holds no such dispute for that business, so the change was not applied. | The dispute must reach this side first; the sender tries again. | ctp | 2026-10-25 |
+| CURRENCY_MISMATCH | 409 | Wrong currency | One amount on this bill or entry is in a different money from the shop’s, so nothing was saved. | Use the shop’s own money, or leave the currency out; an amount is never converted. | chits | 2026-11-09 |
 | LOGIN_FAILED | 400 | Sign-in failed | That sign-in code could not be used. | Ask your admin for a new code and try again. | signin | 2026-11-07 |
 | LOGIN_FORMAT_INVALID | 400 | Sign-in name not in the right form | Type your sign-in as yourname@business. | Type your key, an @ sign and your business, then try again. | signin | 2026-11-07 |
 | MESSAGE_TOO_LONG | 413 | Message too long | That message is longer than one message can hold, so nothing was sent. | Shorten it, or attach it as a file. | rail | 2026-10-25 |

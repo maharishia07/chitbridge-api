@@ -1658,6 +1658,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "CURRENCY_MISMATCH",
+   "status": "409",
+   "title": "Wrong currency",
+   "shopkeeper": "One amount on this bill or entry is in a different money from the shop’s, so nothing was saved.",
+   "hint": "Use the shop’s own money, or leave the currency out; an amount is never converted.",
+   "owner_area": "chits",
+   "since": "2026-11-09"
+  },
+  {
    "code": "CURRENCY_NOT_ALLOWED",
    "status": "varies",
    "title": "Currency not available",
