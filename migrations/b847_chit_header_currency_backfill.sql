@@ -15,6 +15,10 @@
 -- WHAT HAPPENS TO EACH CHIT (named, never defaulted):
 --    stated                 one code across the chit's three stated places, details silent or equal          → that code,  'backfill_stated', no review row
 --    detail                 details agree on one code, nothing stated, no detail row NULL                    → that code,  'backfill_detail', no review row
+--    detail_inr_maybe_default  details say INR and nothing else is stated: chit_deliver writes COALESCE(currency_code,'INR') on the detail row (lib/mint.js:265), so that INR is often a
+--                           default, not a fact (critic, 9 Nov)                                                → NULL,       'backfill_review', a review row
+--    detail_inr_maybe_default  details say INR and nothing else is stated: chit_deliver writes COALESCE(currency_code,'INR') on the detail row (lib/mint.js:265), so that INR is often a
+--                           default, not a fact (critic, 9 Nov) → NULL, 'backfill_review', a review row
 --    none                   no money at all (a task, a message, a terms round)                               → NULL,       'backfill_none',   no review row
 --    stated_disagrees · detail_rows_disagree · detail_vs_stated · detail_partly_null · money_without_currency → NULL,       'backfill_review', a chit_currency_review row with both code lists
 --    copies_disagree        (second pass) the copies of one chit_id hold different codes                     → headers keep their own, a review row on every copy
@@ -40,6 +44,8 @@ decided AS (
     WHEN cardinality(coalesce(dcodes,'{}')) > 1                                    THEN 'detail_rows_disagree'
     WHEN cardinality(stated) = 1 AND cardinality(coalesce(dcodes,'{}')) = 1 AND stated[1] <> dcodes[1] THEN 'detail_vs_stated'
     WHEN cardinality(stated) = 1                                                   THEN 'stated'
+    WHEN cardinality(coalesce(dcodes,'{}')) = 1 AND NOT d_null AND dcodes[1] = 'INR' THEN 'detail_inr_maybe_default'
+    WHEN cardinality(coalesce(dcodes,'{}')) = 1 AND NOT d_null AND dcodes[1] = 'INR' THEN 'detail_inr_maybe_default'
     WHEN cardinality(coalesce(dcodes,'{}')) = 1 AND NOT d_null                     THEN 'detail'
     WHEN cardinality(coalesce(dcodes,'{}')) = 1                                    THEN 'detail_partly_null'
     WHEN has_money OR d_money                                                      THEN 'money_without_currency'

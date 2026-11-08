@@ -7,7 +7,8 @@
 --    own money (business_json.currency, summary_json.currency_code, summary_json.money.currency_code); money.js (the one Money type, engines). This file adds no calculation.
 -- WHAT IT IS. currency_code = what the chit's money is in; NULL means "not stated" and is NEVER defaulted (no 'INR'). currency_source says where the value came from, so every
 --    backfilled value can be undone:
---      written by the api:      'stated' (the chit said it) | 'setup' (the sender's stamped Country setup, the ONE rule, plan 3.0)
+--      written by the api:      'stated' (the chit said it) | 'setup' (the sender's stamped Country setup, the ONE rule, plan 3.0) | 'seller' (sendSeller overwrites the chit's
+--                               currency with the seller's money, routes/chits.js:1416, Athi 25 Oct; the value is allowed here, whether slice 4 refuses that flow is Athi's call)
 --      written by the backfill: 'backfill_stated' | 'backfill_detail' | 'backfill_none' (no money) | 'backfill_review' (in chit_currency_review)
 --      written by an owner resolving a review row: 'resolved'.      NULL = not yet processed (b847's batch picks these up).
 --    The two CHECKs are added NOT VALID (no table scan under lock) and validated by b847 after the backfill.
@@ -28,7 +29,7 @@ ALTER TABLE chit_header ADD  CONSTRAINT chit_header_currency_shape
 ALTER TABLE chit_header DROP CONSTRAINT IF EXISTS chit_header_currency_source_chk;
 ALTER TABLE chit_header ADD  CONSTRAINT chit_header_currency_source_chk CHECK (
   (currency_source IS NULL)
-  OR (currency_source IN ('stated','setup','backfill_stated','backfill_detail','resolved') AND currency_code IS NOT NULL)
+  OR (currency_source IN ('stated','setup','seller','backfill_stated','backfill_detail','resolved') AND currency_code IS NOT NULL)
   OR (currency_source IN ('backfill_none','backfill_review')                               AND currency_code IS NULL)) NOT VALID;
 
 CREATE TABLE IF NOT EXISTS chit_currency_review (
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS chit_currency_review (
   entity_id     uuid        NOT NULL,
   direction     varchar(10) NOT NULL,      -- chit_header's key is (chit_id, entity_id, direction): a sent and a received copy are listed separately
   reason        text        NOT NULL CHECK (reason IN ('stated_disagrees','detail_rows_disagree','detail_vs_stated',
-                                                       'detail_partly_null','copies_disagree','money_without_currency')),
+                                                       'detail_partly_null','copies_disagree','money_without_currency','detail_inr_maybe_default')),
   stated_codes  text[],
   detail_codes  text[],
   found_at      timestamptz NOT NULL DEFAULT now(),

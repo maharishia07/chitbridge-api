@@ -1025,8 +1025,8 @@ Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns o
 | column | type | meaning · written by · read by |
 |---|---|---|
 | `currency_code` | varchar(3), NULL = not stated | what the chit's money is in, fixed when the chit is written (D1); NEVER defaulted: NULL stays NULL and a chit with money and no currency goes to `chit_currency_review`. CHECK `^[A-Z]{3}$` · written by the b847 backfill now, by `routes/chits.js` from slice 4 · read by nobody until slice 4 |
-| `currency_source` | text | where `currency_code` came from: `stated` · `setup` (the api), `backfill_stated` · `backfill_detail` · `backfill_none` · `backfill_review` (b847), `resolved` (an owner settling a review row); NULL = not yet processed · same writers, same readers |
-| `chit_currency_review` (table) | one row per (chit_id, entity_id, direction) | the legacy list: `reason` (stated_disagrees · detail_rows_disagree · detail_vs_stated · detail_partly_null · copies_disagree · money_without_currency), the stated and detail code lists, `resolved_at/by`, `resolution` · written by b847 · read by the owner's review screen (a later slice) |
+| `currency_source` | text | where `currency_code` came from: `stated` · `setup` · `seller` (the api; seller = sendSeller overwrote it with the money of the seller), `backfill_stated` · `backfill_detail` · `backfill_none` · `backfill_review` (b847), `resolved` (an owner settling a review row); NULL = not yet processed · same writers, same readers |
+| `chit_currency_review` (table) | one row per (chit_id, entity_id, direction) | the legacy list: `reason` (stated_disagrees · detail_rows_disagree · detail_vs_stated · detail_partly_null · copies_disagree · money_without_currency · detail_inr_maybe_default), the stated and detail code lists, `resolved_at/by`, `resolution` · written by b847 · read by the owner's review screen (a later slice) |
 | `chit_currency_violation` (table) | bigserial | b847a's counter, every refusal b847b would make, recorded not raised · written by slice 8's functions · read by the ops metrics |
 
 ### `identities`

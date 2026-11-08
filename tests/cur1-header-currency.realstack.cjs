@@ -4,17 +4,17 @@
  * and the b847 backfill, seeded as cb_app (NOBYPASSRLS, through withEntity) in TWO entities; the backfill itself runs as the OWNER (production: Athi in the SQL editor).
  *
  * Keyed (chit_id, entity_id, DIRECTION): one entity holds a sent and a received copy, each judged on its own header and its own detail row (DB-79 gate, 9 Nov).
- * Hand-computed expectation (entity A has 17 headers, entity B 3; every row is made here, then deleted):
+ * Hand-computed expectation (entity A has 18 headers, entity B 3; every row is made here, then deleted):
  *   A  c1 stated AUD · c2 stated INR + detail INR · c3 money.currency_code AED · c4 detail AED only · c5 no money · c6 INR vs AUD stated · c8 stated AUD vs detail INR ·
  *      c9 detail with a NULL code (3.00) · c10 total_value 120.00 with no currency · c11 written by the api ('stated' JPY) · X (AUD) · Y (INR) · Z (silent, no detail) ·
  *      W sent AUD + W received INR (two headers, stated) · V sent (own detail AED) + V received (own detail USD), both silent
  *      B  X (INR) · Y (silent, detail AED) · Z (silent, detail AED)
- *   A: currency set on 11 (c1 c2 c3 c4 c11 X Y Wsent Wrecv Vsent Vrecv), NULL on 6 (c5 c6 c8 c9 c10 Z) · sources: backfill_stated 7 (c1 c2 c3 X Y Wsent Wrecv) · backfill_detail 3 (c4 Vsent Vrecv) ·
- *      backfill_none 2 (c5 Z) · backfill_review 4 (c6 c8 c9 c10) · stated 1 (c11, untouched)        B: backfill_stated 1 (X) · backfill_detail 2 (Y Z)
- *   review rows: A 10 = stated_disagrees 1 (c6) + detail_vs_stated 1 (c8) + money_without_currency 2 (c9 c10) + copies_disagree 6 (X, Y, W sent, W received, V sent, V received), B 2 (X, Y) = 12.
+ *   A: currency set on 11 (c1 c2 c3 c4 c11 X Y Wsent Wrecv Vsent Vrecv), NULL on 7 (c5 c6 c8 c9 c10 c12 Z) · sources: backfill_stated 7 (c1 c2 c3 X Y Wsent Wrecv) · backfill_detail 3 (c4 Vsent Vrecv) ·
+ *      backfill_none 2 (c5 Z) · backfill_review 5 (c6 c8 c9 c10 c12: INR in a detail with nothing else stated is maybe the chit_deliver default, critic 9 Nov) · stated 1 (c11, untouched)        B: backfill_stated 1 (X) · backfill_detail 2 (Y Z)
+ *   review rows: A 11 = stated_disagrees 1 (c6) + detail_vs_stated 1 (c8) + money_without_currency 2 (c9 c10) + detail_inr_maybe_default 1 (c12) + copies_disagree 6 (X, Y, W sent, W received, V sent, V received), B 2 (X, Y) = 13.
  *   Z: A has no money, B has AED: not a disagreement (a NULL is no currency). detail_rows_disagree and detail_partly_null cannot arise any more: one detail row per header key.
  *   DIRECTION: W sent AUD and W received INR keep their own code (the DB-79 case: one verdict for both would have said AUD with no review row); V's two silent headers read their OWN detail (AED, USD).
- *   NEVER 'INR' by default: c10, c9 and c5 stay NULL. chit_detail is never UPDATEd (9 detail rows, 1 with a NULL code, byte-identical before and after).
+ *   NEVER 'INR' by default: c10, c9 and c5 stay NULL. chit_detail is never UPDATEd (10 detail rows, 1 with a NULL code, byte-identical before and after).
  *   a second run changes nothing (idempotent) · the rollback file, run in a transaction, removes the columns and tables and leaves every other column of the rows as it was.
  *   MISMATCH IS REFUSED, NOT MERGED: INR on one place and AUD on another is never made one currency — it is a review row with both codes (c6: {AUD,INR}, c8: stated {AUD} detail {INR}).
  *   cb_app (RLS): sees only its own entity's review rows; cannot write the review table; the two CHECKs refuse 'aud', a source with the wrong NULL-ness.
@@ -71,7 +71,7 @@ async function refused(entity, text, args, code) {
   try {
     await owner_.connect();
     const A = await shop('a'), B = await shop('b');
-    for (const k of ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c8', 'c9', 'c10', 'c11', 'X', 'Y', 'Z', 'W', 'V']) ids[k] = uuid();
+    for (const k of ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c8', 'c9', 'c10', 'c11', 'c12', 'X', 'Y', 'Z', 'W', 'V']) ids[k] = uuid();
 
     await chit(A, ids.c1, { business: { currency: 'AUD' } });
     await chit(A, ids.c2, { summary: { currency_code: 'INR' }, details: [['10.00', 'INR']] });
@@ -83,6 +83,7 @@ async function refused(entity, text, args, code) {
     await chit(A, ids.c9, { details: [['3.00', null]] });
     await chit(A, ids.c10, { summary: { total_value: '120.00' } });
     await chit(A, ids.c11, { business: { currency: 'AUD' }, details: [['6.00', 'INR']], extra: ['JPY', 'stated'] });
+    await chit(A, ids.c12, { details: [['15.00', 'INR']] });
     await chit(A, ids.X, { business: { currency: 'AUD' } });
     await chit(A, ids.Y, { business: { currency: 'INR' } });
     await chit(A, ids.Z, { summary: {} });
@@ -95,8 +96,8 @@ async function refused(entity, text, args, code) {
     await chit(B, ids.Z, { summary: {}, details: [['2.50', 'AED']] });
 
     const beforeA = await headersOf(A), beforeB = await headersOf(B);
-    ok('S-1 before the batch every seeded header is "not yet processed" (A 17, B 3, source NULL, currency NULL except the api-written c11)',
-      beforeA.length === 17 && beforeB.length === 3 && beforeA.filter((r) => r.currency_source === null).length === 16 && beforeB.every((r) => r.currency_source === null && r.currency_code === null), JSON.stringify(tally(beforeA, 'currency_source')));
+    ok('S-1 before the batch every seeded header is "not yet processed" (A 18, B 3, source NULL, currency NULL except the api-written c11)',
+      beforeA.length === 18 && beforeB.length === 3 && beforeA.filter((r) => r.currency_source === null).length === 17 && beforeB.every((r) => r.currency_source === null && r.currency_code === null), JSON.stringify(tally(beforeA, 'currency_source')));
     ok('S-2 no review row exists yet', (await reviewOf(A)).length === 0 && (await reviewOf(B)).length === 0);
     const detailBefore = JSON.stringify([await detailsOf(A), await detailsOf(B)]);
     const headerOtherBefore = (await owner_.query(`SELECT md5(string_agg(chit_id::text || entity_id::text || direction || coalesce(business_json::text,'') || coalesce(summary_json::text,''), '|' ORDER BY chit_id, entity_id, direction)) AS h
@@ -111,7 +112,7 @@ async function refused(entity, text, args, code) {
     ok('B-3 c3 the key moneyOfInvoice writes (summary_json.money.currency_code AED) → AED, backfill_stated', want(hA, ids.c3, 'AED', 'backfill_stated'));
     ok('B-4 c4 nothing stated, detail AED → AED, backfill_detail', want(hA, ids.c4, 'AED', 'backfill_detail'));
     ok('B-5 c5 no money at all → NULL, backfill_none (no currency invented for a task)', want(hA, ids.c5, null, 'backfill_none'));
-    for (const [k, why] of [['c6', 'INR vs AUD stated'], ['c8', 'stated AUD vs detail INR'], ['c9', 'a detail with money 3.00 and a NULL code'], ['c10', 'money 120.00 with no currency']]) {
+    for (const [k, why] of [['c12', 'detail INR and nothing else stated (INR may be the chit_deliver default)'], ['c6', 'INR vs AUD stated'], ['c8', 'stated AUD vs detail INR'], ['c9', 'a detail with money 3.00 and a NULL code'], ['c10', 'money 120.00 with no currency']]) {
       ok('B-6 ' + k + ' ' + why + ' → NULL, backfill_review (never merged, never INR)', want(hA, ids[k], null, 'backfill_review'), JSON.stringify(by(hA, ids[k])));
     }
     const dirOf = (rows, id, d) => rows.find((r) => r.chit_id === id && r.direction === d);
@@ -123,20 +124,20 @@ async function refused(entity, text, args, code) {
     ok('B-8 X: each copy keeps its OWN currency (A AUD, B INR)', want(hA, ids.X, 'AUD', 'backfill_stated') && want(hB, ids.X, 'INR', 'backfill_stated'));
     ok('B-9 Y: A states INR; B is silent and its OWN detail says AED (A\'s INR is not read for B) → A INR, B AED backfill_detail', want(hA, ids.Y, 'INR', 'backfill_stated') && want(hB, ids.Y, 'AED', 'backfill_detail'));
     ok('B-10 Z: B\'s detail rows (AED) are not read for A\'s silent header → A none, B AED', want(hA, ids.Z, null, 'backfill_none') && want(hB, ids.Z, 'AED', 'backfill_detail'));
-    ok('B-11 A in numbers: currency set on 11, NULL on 6; sources stated 1 · backfill_stated 7 · backfill_detail 3 · backfill_none 2 · backfill_review 4',
-      hA.filter((r) => r.currency_code).length === 11 && hA.filter((r) => !r.currency_code).length === 6 && JSON.stringify(tally(hA, 'currency_source')) === JSON.stringify({ backfill_detail: 3, backfill_none: 2, backfill_review: 4, backfill_stated: 7, stated: 1 }), JSON.stringify(tally(hA, 'currency_source')));
+    ok('B-11 A in numbers: currency set on 11, NULL on 7; sources stated 1 · backfill_stated 7 · backfill_detail 3 · backfill_none 2 · backfill_review 5',
+      hA.filter((r) => r.currency_code).length === 11 && hA.filter((r) => !r.currency_code).length === 7 && JSON.stringify(tally(hA, 'currency_source')) === JSON.stringify({ backfill_detail: 3, backfill_none: 2, backfill_review: 5, backfill_stated: 7, stated: 1 }), JSON.stringify(tally(hA, 'currency_source')));
     ok('B-12 B in numbers: backfill_stated 1, backfill_detail 2', JSON.stringify(tally(hB, 'currency_source')) === JSON.stringify({ backfill_detail: 2, backfill_stated: 1 }), JSON.stringify(tally(hB, 'currency_source')));
     ok('B-13 no header got INR that did not state or evidence it: INR rows are exactly c2, Y, W received (A) and X (B)', [...hA, ...hB].filter((r) => r.currency_code === 'INR').length === 4);
 
     const rA = await reviewOf(A), rB = await reviewOf(B);
-    ok('R-1 A has 10 review rows: c6 c8 c9 c10 + copies_disagree on X, Y, W sent, W received, V sent, V received', rA.length === 10 && JSON.stringify(tally(rA, 'reason')) === JSON.stringify({ copies_disagree: 6, detail_vs_stated: 1, money_without_currency: 2, stated_disagrees: 1 }), JSON.stringify(tally(rA, 'reason')));
+    ok('R-1 A has 11 review rows: c6 c8 c9 c10 c12 + copies_disagree on X, Y, W sent, W received, V sent, V received', rA.length === 11 && JSON.stringify(tally(rA, 'reason')) === JSON.stringify({ copies_disagree: 6, detail_inr_maybe_default: 1, detail_vs_stated: 1, money_without_currency: 2, stated_disagrees: 1 }), JSON.stringify(tally(rA, 'reason')));
     ok('R-2 B has 2 review rows (copies_disagree on X and Y), none for Z (a NULL is no currency)', rB.length === 2 && rB.every((r) => r.reason === 'copies_disagree') && !rB.some((r) => r.chit_id === ids.Z));
     const r6 = rA.find((r) => r.chit_id === ids.c6), r8 = rA.find((r) => r.chit_id === ids.c8);
     ok('R-3 the mismatch is kept as both codes, not merged: c6 stated {AUD,INR}; c8 stated {AUD} detail {INR}',
       JSON.stringify(r6.stated_codes) === '["AUD","INR"]' && JSON.stringify(r8.stated_codes) === '["AUD"]' && JSON.stringify(r8.detail_codes) === '["INR"]', JSON.stringify([r6, r8]));
-    ok('R-4 RLS: the review rows entity A reads are only A\'s (10), B\'s are not visible to A', (await withEntity(A, async (db) => (await db.query('SELECT count(*)::int AS n FROM chit_currency_review')).rows[0].n)) === 10);
+    ok('R-4 RLS: the review rows entity A reads are only A\'s (11), B\'s are not visible to A', (await withEntity(A, async (db) => (await db.query('SELECT count(*)::int AS n FROM chit_currency_review')).rows[0].n)) === 11);
 
-    ok('D-1 chit_detail is never UPDATEd: 9 rows, 1 NULL code, identical before and after', JSON.stringify([await detailsOf(A), await detailsOf(B)]) === detailBefore && (await detailsOf(A)).concat(await detailsOf(B)).length === 9 && (await detailsOf(A)).filter((r) => r.currency_code === null).length === 1);
+    ok('D-1 chit_detail is never UPDATEd: 10 rows, 1 NULL code, identical before and after', JSON.stringify([await detailsOf(A), await detailsOf(B)]) === detailBefore && (await detailsOf(A)).concat(await detailsOf(B)).length === 10 && (await detailsOf(A)).filter((r) => r.currency_code === null).length === 1);
     const hOther = (await owner_.query(`SELECT md5(string_agg(chit_id::text || entity_id::text || direction || coalesce(business_json::text,'') || coalesce(summary_json::text,''), '|' ORDER BY chit_id, entity_id, direction)) AS h FROM chit_header WHERE entity_id = ANY($1)`, [[A, B]])).rows[0].h;
     ok('D-2 the backfill touched only the two new columns: business_json and summary_json are byte-identical', hOther === headerOtherBefore);
 
@@ -149,6 +150,8 @@ async function refused(entity, text, args, code) {
     ok('C-3 a source that says "stated" with no currency is refused', (await refused(A, 'UPDATE chit_header SET currency_code = NULL, currency_source = $2 WHERE chit_id = $1 AND entity_id = $3', [ids.c1, 'stated', A], '23514')) === true);
     ok('C-4 a source outside the list is refused', (await refused(A, 'UPDATE chit_header SET currency_source = $2 WHERE chit_id = $1 AND entity_id = $3', [ids.c1, 'guessed', A], '23514')) === true);
     ok('C-5 the owner resolving a review row (AUD, resolved) is accepted', (await withEntity(A, async (db) => (await db.query('UPDATE chit_header SET currency_code = $2, currency_source = $3 WHERE chit_id = $1 AND entity_id = $4', [ids.c6, 'AUD', 'resolved', A])).rowCount)) === 1);
+    ok('C-8 currency_source "seller" (sendSeller overwrote the chit currency with the money of the seller) is an allowed value', (await withEntity(A, async (db) => (await db.query('UPDATE chit_header SET currency_code = $2, currency_source = $3 WHERE chit_id = $1 AND entity_id = $4', [ids.c3, 'AUD', 'seller', A])).rowCount)) === 1);
+    ok('R-5 the INR-in-a-detail row (c12) is listed as detail_inr_maybe_default with detail codes {INR} and no header currency', (() => { const r = rA.find((x) => x.chit_id === ids.c12); return !!r && r.reason === 'detail_inr_maybe_default' && JSON.stringify(r.detail_codes) === '["INR"]'; })());
     ok('C-6 cb_app cannot write the review table (the owner and the definer functions do)', (await refused(A, `INSERT INTO chit_currency_review (chit_id, entity_id, reason) VALUES ($1, $2, 'stated_disagrees')`, [uuid(), A], '42501')) === true);
     ok('C-7 the NOT VALID checks were validated by b847 (convalidated)', (await owner_.query(`SELECT count(*)::int AS n FROM pg_constraint WHERE conname IN ('chit_header_currency_shape','chit_header_currency_source_chk') AND convalidated`)).rows[0].n === 2);
 
