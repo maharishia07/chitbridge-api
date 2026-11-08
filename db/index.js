@@ -67,7 +67,8 @@ async function createPool() {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      return armPool(new Pool({ ...a.config, max: 10, idleTimeoutMillis: 30000, connectionTimeoutMillis: 10000 }));
+      const { intFromEnv } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
+      return armPool(new Pool({ ...a.config, max: intFromEnv('DB_POOL_MAX', 10), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));

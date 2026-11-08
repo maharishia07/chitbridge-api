@@ -412,6 +412,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SCHEMA_UNKNOWN_TYPE | 400 | Unknown column type | A column is text, number, choice or date. | Pick one of those. | schemas | 2026-10-23 |
 | SELF | 400 | Cannot connect to itself | A business cannot connect to itself. | Choose another business. | network | 2026-10-23 |
 | SENDING | varies | Sending | Not an error. Bills are on their way to the shop. | Wait a few seconds. | verdict | 2026-10-22 |
+| SERVER_BUSY | 503 | Server busy | ChitBridge is very busy right now. Nothing was saved. | Wait a couple of seconds, then send it again. | limits | 2026-11-08 |
 | SERVER_OWNED | 400 | Pictures come from Media | Pictures and video are added from the product's Media, not by editing the product. | Open the product's Media to add or remove them. | products | 2026-10-23 |
 | SESSION_EXPIRED | 401 | Session expired | Your sign-in has ended. | Sign in again. | person-session | 2026-10-22 |
 | SESSION_NOT_LISTED | 503 | Session not listed | We could not sign you in just now. | Try again in a minute. | identity-auth | 2026-10-22 |
