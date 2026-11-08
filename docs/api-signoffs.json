@@ -834,6 +834,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
    "lifecycle": "stable"
   },
+  "GET /api/entities/routing/preview": {
+   "hash": "daf7f3e6e7033f84",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1047: handler and lib/raiseticket.js re-read; 200 allow-list holds, every fault path in why is the one fixed sentence DESK_FAULT (raw text to log via safeErr), kept b247 sentence carries only test/production, 13 columns pass",
+   "lifecycle": "stable"
+  },
   "GET /api/entities/search": {
    "hash": "92a7ca7003f7abd3",
    "names_clear": true,
