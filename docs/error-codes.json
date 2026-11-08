@@ -722,6 +722,15 @@
    "since": "2026-10-23"
   },
   {
+   "code": "CHIT_AMOUNT_TOO_LARGE",
+   "status": "400",
+   "title": "Amount too large",
+   "shopkeeper": "A total, quantity or price is larger than a chit can hold, so nothing was saved.",
+   "hint": "Lower the amount or split it into smaller chits; the sentence names the most a chit can hold.",
+   "owner_area": "chits",
+   "since": "2026-11-09"
+  },
+  {
    "code": "CHIT_AND_ACTION_REQUIRED",
    "status": "400",
    "title": "Task and action needed",
