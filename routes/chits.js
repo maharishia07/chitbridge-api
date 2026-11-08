@@ -66,6 +66,7 @@ const auth = require('../middleware/auth');
 const trace = require('../lib/trace');
 const mint = require('../lib/mint'); // ⚠️ the SHAPE of a chit — one place, four call sites
 const amend = require('../lib/amend');
+const chitCeiling = require('../lib/chit-ceiling'); /* RAIL-205: the largest total, quantity and price a chit's columns hold; the send and amend doors refuse past it */
 const invoiceIssued = require('../lib/invoice-issued'); // ACC-192 — an issued invoice's money is refused an amendment // ⚠️ b138 — corrections ride ALONGSIDE the reading; line_items never mutate
 const assign = require('../lib/assign');
 const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
@@ -490,6 +491,19 @@ async function sendDebitNoteGate(sendState, req, res) {
   return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
 }
 
+/**
+ * ⭐ RAIL-205 · RAIL-191: a total or a line past the width of the column it is written to is refused HERE, with its sentence, before the write transaction opens. chit_deliver's INSERT
+ * into chit_detail.total_value numeric(15,2) / chit_line.quantity numeric(18,3) / chit_line.price numeric(18,2) overflowed (22003) after the whole send had been built and answered 500.
+ * The ceiling is read off the columns (lib/chit-ceiling), on the total the engine just computed (moneyBlock.total) and on the lines as sent; the refusal carries the currency beside the maximum.
+ */
+async function sendCeiling(sendState, req, res) {
+  const { moneyBlock, line_items, currency_code } = sendState;
+  const over = chitCeiling.overOf({ total: moneyBlock && moneyBlock.total, lines: line_items });
+  if (!over) return;
+  res.locals.code = 'CHIT_AMOUNT_TOO_LARGE';
+  return problem(req, res, { status: 400, ...said(chitCeiling.bodyFor(over, currency_code), codeOfStatus(400)) });
+}
+
 const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
@@ -512,6 +526,7 @@ const SEND_STEPS = [
   sendSeller,
   sendOffers,
   sendMoney,
+  sendCeiling,
   sendIssued,
   sendPaper,
   sendCashStep,
@@ -4869,6 +4884,22 @@ async function logAmended(req, entity_id, chit_id, out) {
   }
 }
 
+/** amendSpecOf(err, req) → the spec of a refusal the amend door knows by name (knownAmendSpec, then the too-large one), or null */
+async function amendSpecOf(err, req) {
+  return knownAmendSpec(err) || (await amountTooLargeSpec(err, req));
+}
+/** amountTooLargeSpec(refusal, req) → the 400 spec with this chit's currency (chit_detail.currency_code) beside the maximum, or null for any other error; the read is made only now because amend.prepare is pure and shared (change orders), and a failed read is logged and answers without a currency */
+async function amountTooLargeSpec(refusal, req) {
+  if (!refusal || refusal.code !== 'CHIT_AMOUNT_TOO_LARGE') return null;
+  let currency = null;
+  try {
+    const row = await withEntity(entityId(req), (db) => db.query('SELECT currency_code FROM chit_detail WHERE chit_id = $1 AND entity_id = $2 LIMIT 1', [req.params.chit_id, entityId(req)]));
+    currency = (row.rows[0] && row.rows[0].currency_code) || null;
+  } catch (err) {
+    cbLog.warn('chits/amend: the chit currency was not read for the too-large refusal; it answers without one', { id: req.id, err: err.message });
+  }
+  return faultOf(chitCeiling.inCurrency(refusal, currency), req, 'Failed to amend', { words: true });
+}
 router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
@@ -4922,7 +4953,7 @@ router.post('/:chit_id/amend', auth, ...checked('POST /:chit_id/amend'), async (
      * From the screen it looked like the save button did nothing. Say which value the database refused, so the
      * next time the two lists drift the message points straight at the drift.
      */
-    const known = knownAmendSpec(err);
+    const known = await amendSpecOf(err, req);
     if (known) return problem(req, res, known);
     if (err && err.code === '23514') {
       cbLog.warn('chits/amend refused by a CHECK constraint', { id: req.id, constraint: err.constraint || '', err: err.detail || err.message });

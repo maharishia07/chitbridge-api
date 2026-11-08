@@ -156,7 +156,7 @@ async function updateLinkedProduct(entity_id, existing, wantedFields) {
     item_data: merged,
     stored: existing.item_data || {} /* C4: the product's own media rides through unchanged */,
     ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-    validate: (data, rows) => productsRouter.validateAgainst(rows, data)
+    validate: (data, rows, stored) => productsRouter.validateAgainst(rows, data, stored)
   });
   if (decl.error)
     return { refusal: { status: 400, code: 'PRODUCT_INVALID', body: { error: 'Invalid product', code: decl.code || undefined, message: decl.error } } };
