@@ -36,7 +36,8 @@
    "output_allowlist": true
   },
   "PATCH /api/entities/me/prefs/:kind": {
-   "strict_input": true
+   "strict_input": true,
+   "output_allowlist": true
   },
   "PATCH /api/entities/me/exposure": {
    "strict_input": true,
