@@ -469,8 +469,8 @@ router.get('/policy', auth, async (req, res) => {
   /* AU-WORDS: the schema is worded by the shop's COUNTRY PACK (policy.schemaFor — the registration kinds it offers, the tax's name, the records
      floor); the country comes in the same read as the flags (policy.read), still 1 trip. No country → neutral words, never India's. */
   try {
-    const { flags, country } = await policy.read(policyEntity(req));
-    res.json({ flags, country, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
+    const { flags, country, asked } = await policy.read(policyEntity(req));
+    res.json({ flags, country, asked: asked || {}, schema: policy.schemaFor(country), bound: policy.BOUND, bound_schema: policy.BOUND_SCHEMA, may: policyMay(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Policy read failed'));
   }
