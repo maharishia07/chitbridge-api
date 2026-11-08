@@ -478,9 +478,21 @@ router.post(
    validate · resolve parties · money · copies · write · after-commit · answer. The policy is unchanged and engine-locked:
    lib/mint.js gives the SHAPE (header · party · summary · deliver); every decision below is still this route's. ═══ */
 
+/**
+ * ⭐ ACC-192: A DEBIT NOTE IS NEVER SENT BY HAND. It is a raise of an issued invoice and exists only when the payer accepts the proposed change (lib/price-note.issue sends it over the shop's own
+ * loopback token, kind auto). Any other caller naming purpose debit_note is refused in words (409 DEBIT_NOTE_NEEDS_ACCEPT): nothing here can raise a bill the payer never confirmed.
+ */
+async function sendDebitNoteGate(sendState, req, res) {
+  if (String((req.body && req.body.purpose) || '') !== 'debit_note') return;
+  if (require('../lib/price-note').isShopOwnSend(req)) return;
+  res.locals.code = 'DEBIT_NOTE_NEEDS_ACCEPT';
+  return problem(req, res, { status: 409, ...said({ code: 'DEBIT_NOTE_NEEDS_ACCEPT', error: 'A debit note is issued on acceptance', message: 'A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.' }, 'CHIT_CONFLICT') });
+}
+
 const SEND_STEPS = [
   sendSender,
   sendMoneyStated,
+  sendDebitNoteGate,
   sendLab,
   sendNumberCheck,
   sendTillClaim,
@@ -6800,5 +6812,6 @@ router.releaseAfterResolve = releaseAfterResolve;
 router._autoAssignReceived = autoAssignReceived; /* tests: T1-RAIL proves auto-assign moves status through lib/rail-status */
 module.exports = router;
 module.exports.rollupGroups = rollupGroups; /* REP-50: for tests/rollup-currency.test.cjs */
+module.exports.sendDebitNoteGate = sendDebitNoteGate; /* ACC-192: tests/acc192-debit-note.test.cjs runs the real gate over express */
 module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route.test.cjs runs the real step over express */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
