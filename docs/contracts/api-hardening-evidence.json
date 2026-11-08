@@ -309,12 +309,6 @@
   "GET /api/offers/kinds": {
    "output_allowlist": true
   },
-  "POST /api/offers/evaluate": {
-   "strict_input": true
-  },
-  "POST /api/offers/explain": {
-   "strict_input": true
-  },
   "GET /api/offers/openapi.json": {
    "output_allowlist": true
   },

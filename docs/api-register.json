@@ -5,12 +5,12 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 153,
-  "meets": 485,
+  "partial": 150,
+  "meets": 488,
   "columns": {
    "strict_input": {
     "applies": 350,
-    "failing": 44
+    "failing": 46
    },
    "output_allowlist": {
     "applies": 638,
@@ -10277,13 +10277,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: stranger and unknown id answer 404 NOT_FOUND, held chit with no child keeps 200 count 0, one statement; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -52336,7 +52336,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 105,
-   "hash": "ce984632c8dfd572",
+   "hash": "c28a1c5efa74f6c4",
    "does": "",
    "errors": {
     "count": 1,
@@ -52368,7 +52368,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -52434,7 +52434,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/offers.js",
    "line": 106,
-   "hash": "4c32846515476914",
+   "hash": "8389ffdbe820ed19",
    "does": "",
    "errors": {
     "count": 1,
@@ -52466,7 +52466,7 @@
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": true,
+    "strict_input": false,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -57257,13 +57257,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: unknown or another shop id answers 404 NOT_FOUND like PATCH /:id; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
@@ -57363,13 +57363,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1020: Idempotency-Key required (422 IDEMPOTENCY_KEY_REQUIRED / IDEMPOTENCY_CONFLICT) via the one requireKey gate; api-strict-input-status now sends a key; all 13 columns read and true on the register row, tests re-run green, red on main",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-supplies.js"
    ],
