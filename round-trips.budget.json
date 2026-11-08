@@ -4098,10 +4098,21 @@
     },
     "POST /api/products/lists/adopt": {
       "file": "products.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 9,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "basis": "stub floor: the nothing-selected answer (200, no rows written); the full adoption reads and writes more; live measure on sit-in pending",
+      "fixture_body": {
+        "list": "veg",
+        "names": [
+          {
+            "name": "no such product",
+            "unit": "kg"
+          }
+        ]
+      }
     },
     "POST /api/products/starter-columns": {
       "file": "products.js",
