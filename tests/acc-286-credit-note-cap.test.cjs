@@ -20,8 +20,9 @@ const SHOP = '11111111-1111-4111-8111-286286286286', BILL = 'b0000000-0000-4000-
 const row = (chit_id, total, bill_no) => ({ chit_id, invoice_total: total, money_total: null, legacy_total: null, refund_total: null, bill_no: bill_no || null, currency_code: 'INR' });
 
 /** the shared "database" and one client per transaction: the lock waits for the holder's commit; the selects answer from the committed notes */
-function world(billTotal) {
-  const committed = []; const held = new Map(); const bill = billTotal === null ? null : row(BILL, billTotal, 'B-1');
+function world(billTotal, bills) {
+  const committed = []; const held = new Map();
+  const billRows = bills || (billTotal === null ? [] : [Object.assign(row(BILL, billTotal, 'B-1'), { till_id: 'C1' })]);
   async function transaction(fn) {
     const mine = [];
     const client = { query: async (sql, params) => {
@@ -31,8 +32,9 @@ function world(billTotal) {
         if (!held.has(key)) { let release; const done = new Promise((r) => { release = r; }); held.set(key, { owner: client, done, release }); mine.push(key); }
         return { rows: [] };
       }
-      if (/ANY\(\$4::text\[\]\)/.test(sql)) return { rows: bill ? [bill] : [] };
-      if (/DISTINCT ON/.test(sql)) { await new Promise((r) => setImmediate(r)); return { rows: committed.filter((n) => n.chit_id !== params[3]) }; }
+      /* the stand-in answers by the SQL's own parameter contract: $2 the bill's id (else $3 its number) */
+      if (/ANY\(\$4::text\[\]\)/.test(sql)) return { rows: billRows.filter((item) => (params[1] ? item.chit_id === params[1] : item.bill_no === params[2])) };
+      if (/DISTINCT ON/.test(sql)) { await new Promise((r) => setImmediate(r)); return { rows: committed.filter((n) => n.chit_id !== params[3] && (params[4] === null || n.client_ref !== params[4]) && (n.against_chit === params[1] || (params[2] && !n.against_chit && n.till_id === params[5] && n.against_no === params[2]))) }; }
       throw new Error('unexpected sql ' + sql.slice(0, 60));
     } };
     try { return await fn(client); }
@@ -44,7 +46,12 @@ function world(billTotal) {
     const id = 'c0000000-0000-4000-8000-' + String(++count).padStart(12, '0');
     const state = Object.assign({ sender_id: SHOP, chit_id: id, purpose: 'credit_note', currency_code: 'INR', is_draft: false,
       business_json: { till: { id: 'C1' }, against: { bill_no: 'B-1', chit_id: BILL }, refund: { total }, invoice: { ValDtls: { TotInvVal: total } } } }, extra || {});
-    return transaction(async (client) => { await cap.holdUnderLock(client, state); await new Promise((r) => setImmediate(r)); committed.push(row(id, total)); return id; });
+    const against = state.business_json.against || {}, till = String((state.business_json.till && state.business_json.till.id) || '').toUpperCase();
+    return transaction(async (client) => {
+      await cap.holdUnderLock(client, state); await new Promise((r) => setImmediate(r));
+      committed.push(Object.assign(row(id, total), { against_chit: against.chit_id || null, against_no: against.bill_no || null, till_id: till, client_ref: state.client_ref || null }));
+      return id;
+    });
   }
   return { sendNote, committed };
 }
@@ -85,6 +92,35 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   ok('not a counter credit note (no till) · a draft · another purpose: untouched', [noTill, draft, other].join() === 'ok,ok,ok', [noTill, draft, other].join());
   ok('against read three ways: an object with chit_id, an object with only bill_no, a bill number as text; a bad id is no id',
     cap.againstOf({ against: { chit_id: BILL } }).chit_id === BILL && cap.againstOf({ against: { bill_no: 'B-1' } }).bill_no === 'B-1' && cap.againstOf({ against: 'B-1' }).bill_no === 'B-1' && cap.againstOf({ against: { chit_id: 'not-an-id' } }).chit_id === null);
+
+  /* the same client_ref twice at once, the first filling the bill: the second must NOT count the first (the send route's raced-duplicate answer covers it), so the cap says nothing */
+  const dupe = world(1180);
+  const twice = await Promise.allSettled([dupe.sendNote(1180, { client_ref: 'cn-same' }), dupe.sendNote(1180, { client_ref: 'cn-same' })]);
+  ok('same client_ref twice at once on a bill the first fills: neither is refused by the cap', twice.every((item) => item.status === 'fulfilled'), JSON.stringify(twice.map((item) => item.status === 'fulfilled' ? 'ok' : item.reason.code)));
+  const others = world(1180);
+  const different = await Promise.allSettled([others.sendNote(1180, { client_ref: 'cn-a' }), others.sendNote(1180, { client_ref: 'cn-b' })]);
+  ok('control · two DIFFERENT refs at once on that bill: one accepted, one refused', tally(different).accepted === 1 && tally(different).refused === 1, JSON.stringify(tally(different)));
+
+  /* two bills sharing one number (two tills, both B-1): a note naming only the number is judged on the bill of ITS till */
+  const twoBills = [Object.assign(row('b0000000-0000-4000-8000-0000000000c1', 3540, 'B-1'), { till_id: 'C1' }), Object.assign(row('b0000000-0000-4000-8000-0000000000c2', 1180, 'B-1'), { till_id: 'C2' })];
+  const noteBy = (shop, till, total, bill) => shop.sendNote(total, { business_json: { till: { id: till }, against: bill, refund: { total }, invoice: { ValDtls: { TotInvVal: total } } } });
+  const shared = world(null, twoBills);
+  const sharedAnswers = [await verdict(noteBy(shared, 'C2', 1180, { bill_no: 'B-1' })), await verdict(noteBy(shared, 'C2', 1180, { bill_no: 'B-1' })), await verdict(noteBy(shared, 'C1', 1180, { bill_no: 'B-1' }))];
+  ok('two bills share B-1 (C1 3,540 and C2 1,180): a C2 note fills C2, a second C2 note is refused, a C1 note is judged on C1 and passes', sharedAnswers.join(',') === 'ok,CREDIT_NOTE_OVER_BILL,ok', sharedAnswers.join(','));
+  const sameTill = world(null, twoBills.map((item) => Object.assign({}, item, { till_id: 'C1' })));
+  ok('two bills share B-1 on the SAME till: ambiguous, not judged (logged), the note goes through', (await verdict(noteBy(sameTill, 'C1', 9999, { bill_no: 'B-1' }))) === 'ok');
+  const byId = world(null, twoBills);
+  ok('a note that carries the bill\'s own id is judged on that bill whatever the number says', (await verdict(noteBy(byId, 'C1', 2000, { bill_no: 'B-1', chit_id: 'b0000000-0000-4000-8000-0000000000c2' }))) === 'CREDIT_NOTE_OVER_BILL');
+
+  /* the SQL text never runs offline (no database here, no Docker on this laptop): only its parameter use is checked, one type per parameter (ACC-281); the SIT replay proves the rows */
+  const code = fs.readFileSync(path.join(__dirname, '..', 'lib', 'credit-cap.js'), 'utf8');
+  const statements = code.match(/`SELECT[^`]*`/g) || [];
+  const typed = statements.map((text) => {
+    const types = {};
+    (text.match(/\$\d(::\w+(\[\])?)?/g) || []).forEach((use) => { (types[use.slice(0, 2)] = types[use.slice(0, 2)] || new Set()).add(use.slice(2)); });
+    return Object.values(types).every((set) => set.size === 1 || (set.size === 2 && set.has('')));
+  });
+  ok('SQL shape · two statements, every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 2 && typed.every(Boolean), JSON.stringify(typed));
 
   const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
   const write = src.indexOf('async function sendWrite'), legacy = src.indexOf('async function sendLegacyWrite');
