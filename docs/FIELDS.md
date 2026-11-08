@@ -880,7 +880,7 @@ Both columns are written ONLY as an RFC 7386 merge-patch (`MERGE_PATCH_SQL`, rou
 | `GET /api/catalogue/:bridge_id/my-orders` · `my-documents` · `total` `page` `limit` (new, T1-ORD) | integers | Derived: the pager contract (DISCIPLINES §2); `limit` capped at 50; `count` stays = the rows on this page. Read by web shop.html shopMyOrders (Show more) and app.html's customer list (PG). |
 | `profile.invoiceParty().currency` (changed) | ISO-4217 or null | `identities.currency_code`, else the pack's, else null (was `INR`). |
 | books refusal `NO_MONEY` (new code) | 422 `{ code, error, message }` | `books.enable` / `books-store.saveSetting` when neither Country setup nor the pack states the money or the year start (was `INR` / April). The sentence is `country-setup.MONEY_UNSTATED`. |
-| `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted). |
+| `identities.currency_code` · `cb_entity.currency_code` (b400) | varchar(3) or NULL | DEFAULT 'INR' dropped (b400): a money nobody stated is NULL — registration names it (offerOf / acceptAtSignup), Country setup asks for it. Layer: entity, class chosen-then-fixed (fixed once constituted: ONE lock, `country-setup.currencyLockRefusal`, asked by country setup, PATCH /entities/profile and network-build updateNode, SET-80; a code outside ISO 4217 is refused 400 CURRENCY_MALFORMED, SET-81). |
 
 ## Pages · GET /api/testing/cases · results · runs · requirements · incidents (T2-PAGING, 2026-10-14 · no migration)
 

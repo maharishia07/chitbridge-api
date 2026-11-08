@@ -128,7 +128,7 @@ function ask(port, token, [, method, url, body]) {
 
 (async () => {
   const app = cases.appForCases(path.join(__dirname, '..'));
-  /* the register routes (raida, register/subjects, register/templates) answer 403 CAPABILITY_OFF to a shop with the register off (RAIL-90): the fixture shop has it on, as tests/register-gate.test.cjs does, so the rows test the 422 on a bad body */
+  /* the register is a per-shop capability (RAIL-90): a shop that already holds register rows has it on, so the case shop is one of those; without it the register routes answer 403 CAPABILITY_OFF before the body is read. Required AFTER appForCases: the gate must meet the stand-in database, not the real one */
   require('../lib/register-gate').KNOWN_USERS.add(cases.CALLER_SHOP);
   const token = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'entity', bridge_id: 'CB-CASE', display_name: 'Case shop' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });
   const shopper = jwt.sign({ identity_id: cases.CALLER_SHOP, identity_type: 'customer', bridge_id: 'CB-CASE', parent_entity_id: cases.CALLER_SHOP, display_name: 'Case shopper' }, process.env.JWT_SECRET, { algorithm: 'HS256', expiresIn: '1h' });

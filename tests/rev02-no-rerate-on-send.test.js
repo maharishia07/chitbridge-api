@@ -95,7 +95,8 @@ console.log('\n── the exact reproduction: Monday\'s plain line, Tuesday\'s n
   ok('the applyLiveOffers guard is gated on !alreadyBilled',
     /if\s*\(\s*!alreadyBilled\s*&&\s*\(businessJson\.customer/.test(chitsSrc));
   ok('the invoice summary\'s document date prefers billed_at over "now"',
-    /invAt\s*=\s*\(business_json\s*&&\s*business_json\.billed_at\)\s*\|\|\s*new Date/.test(chitsSrc));
+    /* the document date moved from the chits route into lib/send-money.js (the one send-money step), still `billed_at || now`, in that order */
+    /\bat\s*=\s*\(business_json\s*&&\s*business_json\.billed_at\)\s*\|\|\s*new Date/.test(chitsSrc + '\n' + require('fs').readFileSync(path.join(__dirname, '..', 'lib', 'send-money.js'), 'utf8')));
 
   console.log('\n' + (fail ? '✗ ' + fail + ' failed' : '✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
