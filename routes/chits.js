@@ -59,7 +59,7 @@ async function countryOfEntity(entity_id) {
 const schema = require('../lib/schema');
 const { copyRetention } = require('../lib/retention'); /* SET-26: one copy's retention days + source (the one MAX) */
 const { sanitise } = require('../middleware/validate'); // S9: a request is checked against the route's own schema, by routeChecks (lib/chits-contract)
-const { problem, uuidParam } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
+const { problem, uuidParam, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { said, failed, faultOf, codeOfStatus, railSaid, operationFor, pathsOf, routeChecks: checked } = require('../lib/chits-contract');
 const { PRIORITIES, trimmedBody, recipientsRule, LIST_MAX, LIST_PAGE } = require('../lib/chits-input'); // the inputs the express-validator chains used to check: the one list of priorities, the trim, the recipients rule // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
@@ -3603,7 +3603,7 @@ router.get('/pulse', auth, async (req, res) => {
      * watermark and, depending on how it reads that, either refreshing forever or never again. `null` is an
      * explicit "cannot tell" — the client falls back to refreshing, which is exactly today's behaviour.
      */
-    console.error('pulse:', e.message);
+    softFault(req, e); /* logged with the request id; the answer is still the 200 below */
     res.json({ w: null });
   }
 });

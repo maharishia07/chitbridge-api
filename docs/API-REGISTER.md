@@ -121,7 +121,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/chits/disputes/queue | chits | routes/chits.js:6169 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/chits/folder | chits | routes/chits.js:3201 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
 | GET | /api/chits/inbox | chits | routes/chits.js:3397 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | no | no |
-| GET | /api/chits/pulse | chits | routes/chits.js:3584 | yes | yes | no | no | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/chits/pulse | chits | routes/chits.js:3584 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/chits/raida/report | chits | routes/chits.js:4386 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/attachables | chits | routes/chits.js:4226 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/chits/register/subjects | chits | routes/chits.js:4236 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |

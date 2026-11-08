@@ -353,7 +353,7 @@ const strictOrTolerant = (scope, key, operation, leaf, facts, evidence) => (scop
 function machineColumns({ source, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
   const key = leaf.method + ' ' + leaf.path;
   const codes = codesWritten(source);
-  const usesProblem = /\bproblem\(|\bfromError\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
+  const usesProblem = /\bproblem\(|\bfromError\(|\bsoftFault\(|next\(\s*(?:err|e|error)\s*\)/.test(source);
   const legacyOk = !/legacy:/.test(source) || !!legacyEntry;
   return {
     schema_in: schemaInColumn(operation, leaf, facts),

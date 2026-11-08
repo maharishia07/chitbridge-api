@@ -537,6 +537,7 @@ const EXTRAS = [
   X('batch-chain-ready', 'GET ' + C + '/trace/by-batch', 200, { url: C + '/trace/by-batch?q=L7', setup: { sqlRows: answering(/l\.removed = false/, BATCH_ROWS) } }),
   X('networks-none', 'GET ' + C + '/trace/networks', 200, {}),
   /* ── S34 (API-8 output_allowlist, part 1): the READY answer of each write and chit-scoped read over the real libraries ── */
+  X('pulse-fails-and-says-it-cannot-tell', 'GET ' + C + '/pulse', 200, { setup: { db: 'fail' } }),
   X('pulse-with-rows', 'GET ' + C + '/pulse', 200, { setup: { sqlRows: answering(/MAX\(created_at\)/, [{ h: AT, s: null, c: AT, n: '3' }]) } }),
   X('reprice-previewed', 'POST ' + C + '/:chit_id/reprice', 200, { body: { preview: true, line_ids: [PARTY] }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) } }),
   X('reprice-applied', 'POST ' + C + '/:chit_id/reprice', 200, { body: { only_unpriced: true }, setup: { sqlRows: answeringAll([[/SELECT 1 FROM chit_header/, [COPY_ROW]], [/FROM chit_line WHERE/, [LINE_ROW]], [/FROM catalogue_items WHERE/, CATALOGUE_ROWS]]) }, patch: { amend: { record: async () => ({ amendments: [{ amendment_id: PARTY }] }) } } }),
