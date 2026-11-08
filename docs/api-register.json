@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 149,
-  "meets": 489,
+  "partial": 134,
+  "meets": 504,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -24513,13 +24513,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -24611,13 +24611,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -24709,13 +24709,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -55893,13 +55893,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56002,13 +56002,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56112,13 +56112,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56223,13 +56223,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56330,13 +56330,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
@@ -56429,11 +56429,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "662e39b351cedc07"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
@@ -56525,13 +56524,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -56619,13 +56618,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
@@ -56716,13 +56715,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -56818,13 +56817,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-settings.js"
    ],
@@ -56928,11 +56927,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1405487d7309082d"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: sign-in behaviour unchanged (enumeration, rate limits, OTP and tester-code paths untouched); output allow-lists match the handler keys, recording-closed ones never drop a key; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "signin-ui.js"
    ],
@@ -65279,13 +65277,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1028: every refusal is a problem() with the old body frozen in api-legacy.json, statuses and sentences identical to main, 5 SERVICE_* codes registered with a shopkeeper sentence; all 13 columns read and true on the register row, tests re-run green",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-service.js"
    ],
