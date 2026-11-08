@@ -2171,11 +2171,11 @@
    "lifecycle": "stable"
   },
   "POST /api/books/entries": {
-   "hash": "7f802d11b091f732",
+   "hash": "642ac0ba6bec7bb8",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#731 stage2",
+   "signed_off_by_date": "cb-api-reviewer 2026-11-09 PR#1060 stage2",
    "lifecycle": "stable"
   },
   "POST /api/books/entries/:id/reverse": {
