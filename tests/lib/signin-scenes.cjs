@@ -63,7 +63,7 @@ function extras() {
     X('revoke-my-session', 'POST ' + at('/sessions/revoke'), 200, { body: { jti: 'jti-of-this-session' }, setup: signedIn() }),
     X('revoke-a-session-not-listed', 'POST ' + at('/sessions/revoke'), 200, { body: { jti: 'gone' }, setup: signedIn() }),
     X('revoke-a-device', 'POST ' + at('/sessions/revoke'), 200, { body: { device_id: DEVICE }, setup: signedIn() }),
-    X('verify-opens-a-session', 'POST ' + at('/verify'), 200, { body: { email: 'a@x.com', otp: '123456' }, patch: opened, setup: KNOWN }),
+    X('verify-opens-a-session', 'POST ' + at('/verify'), 200, { body: { email: 'a@x.com', otp: '482915' }, patch: opened, setup: KNOWN }),
     /* renew */
     X('renew-legacy-token-names-no-device', 'POST ' + at('/renew'), 400, { body: {} }),
     X('renew-db-fails', 'POST ' + at('/renew'), 500, { body: {}, headers: { 'x-device-id': DEVICE }, setup: FAILING }),
