@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 114,
-  "meets": 524,
+  "partial": 110,
+  "meets": 528,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -40619,11 +40619,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b5bf1ff993c4dff3"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after RAIL-205 (new 400 CHIT_AMOUNT_TOO_LARGE for a replacement line whose quantity or price is past its column, naming the maximum and the chit currency, never echoing the value); the 400 is in the contract inline list [400, 409], has an error scene (amend-price-not-a-number, realstack A-1) and its code is in docs/error-codes.json; backward_compatible: it was a 500 (22003) after the build, no caller read it; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "workflow.js"
@@ -52943,11 +52942,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1bddfcabcbea24c6"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/317/318 (a changed status is stamped like PUT /:id/status; an unknown or unstampable status word and an over-large number are the existing 400 PRODUCT_BAD_REQUEST in the validator sentence); 400 declared inline, 400 scene present, code registered; backward_compatible: a legacy stored status word never blocks other edits, and a bad value that used to be written or 500 is now a 400; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catalogue.js",
@@ -53164,11 +53162,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "185af50f007a0f0f"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-317 (the parked change is judged by the PATCH validator when parked and again when due; refusals are the existing 400 in its words, a stamp refusal 400, a due change refused is cancelled and logged); 400, 409 declared inline, scenes present; backward_compatible: same statuses as before, a bad parked change is refused at the door instead of failing silently when due; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -53474,11 +53471,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a685f08236988712"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/323 (each item stamped like PUT /:id/status; the owner reads the stored rows so a status the row already holds is not a change; refusals are the existing 400 PRODUCT_BAD_REQUEST); 400 declared inline with a scene; backward_compatible: unchanged statuses, legacy words pass, only a bad new status word or number is refused; all 13 machine columns read yes",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
