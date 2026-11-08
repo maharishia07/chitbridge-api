@@ -109,6 +109,9 @@ const readList = (shop) => j('/api/products', { token: shop.token }); /* a read:
     expect(d.name === 'Legacy renamed ' + RUN && d.status === 'approved', 'stored ' + JSON.stringify(d).slice(0, 200));
     const r2 = await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { item_data: { name: 'Legacy again ' + RUN, price: 60 } } });
     expect(r2.status === 200, 'PATCH replace without a status: HTTP ' + r2.status);
+    await withEntity(A.entity, (db) => db.query("UPDATE catalogue_items SET item_data = item_data || '{\"status\": \"approved\"}'::jsonb WHERE item_id=$1", [id])); /* the replace above (no status) erased the legacy word: plant it again */
+    const rb = await j('/api/products/bulk-update', { method: 'POST', token: A.token, body: { items: [{ id, item_data: { name: 'Legacy bulk ' + RUN, price: 60, status: 'approved' } }] } });
+    expect(rb.status === 200, 'bulk-update resending the legacy word: HTTP ' + rb.status + ' ' + JSON.stringify(rb.b).slice(0, 200));
     refused(await j('/api/products/' + id, { method: 'PATCH', token: A.token, body: { merge: true, item_data: { status: 'banana' } } }), 'status banana on the same item');
     expect((await stored(A, id)).status !== 'banana', 'banana was stored');
   });

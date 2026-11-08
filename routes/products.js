@@ -310,9 +310,9 @@ async function defaultSchemaId(entity_id) {
  */
 const { schemaFieldsOf, validateAgainst } = catwrite;
 
-async function validateItem(schema_id, item_data) {
+async function validateItem(schema_id, item_data, stored) {
   if (!schema_id) return null;
-  return validateAgainst(await schemaFieldsOf(schema_id), item_data);
+  return validateAgainst(await schemaFieldsOf(schema_id), item_data, stored);
 }
 
 /** Pure: the same rules, against rows already in hand. No I/O. */
@@ -629,9 +629,8 @@ async function importRefusal(req, entity_id, applied, ident) {
   return blind ? { status: 403, ...words.costBlind(blind) } : null;
 }
 /** CAT-210/235: the stored rows a bulk edit is compared with — ONE read for the lot, shared by the rate check (an editor, CAT-210) and the erase check
- *  (a co-assist, CAT-235); null for the owner, who is never compared and never pays the read */
+ *  (a co-assist, CAT-235) and the status check (CAT-323: a word the row already holds is not a change, so the owner needs the row too) */
 async function storedForEdits(req, entity_id, items) {
-  if (rateDoor.setsRate(req) && !isActor(req)) return null;
   const found = await withEntity(entity_id, (db) =>
     db.query('SELECT item_id, item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY($2::uuid[])', [entity_id, items.map((item) => item.id).filter((id) => UUID.test(id))])
   );
@@ -670,7 +669,7 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
 
     const list = [];
     for (let i = 0; i < items.length; i++) {
-      const verr = await validateItem(schema_id, items[i].item_data);
+      const verr = await validateItem(schema_id, items[i].item_data, stored && stored.get(items[i].id));
       if (verr) list.push({ index: i, id: items[i].id, message: verr });
     }
     if (list.length) {
