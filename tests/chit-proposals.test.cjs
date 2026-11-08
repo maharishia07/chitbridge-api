@@ -153,6 +153,15 @@ function rowsFor(sql, p) {
   }
   /* ACC-192 1b (lib/credit-note): the notes the stand-in sender minted on this world, keyed 'chit_id:issuer' */
   if (/^SELECT chit_id FROM chit_header WHERE entity_id = \$1 AND purpose IN \('credit_note', 'debit_note', 'invoice'\)/.test(s)) return Object.entries(w.header).filter(([k, h]) => k.endsWith(':' + p[0]) && h.business_json.against.chit_id === p[1] && h.business_json.against.proposal_id === p[2]).map(([k]) => ({ chit_id: k.split(':')[0] }));
+  /* ACC-192 §10: the server's invoice counter row (books-store nextNo / giveBackNo), one per world */
+  if (/books_counter/.test(s)) {
+    w.counter = w.counter || { next: 1 };
+    if (/^UPDATE/.test(s)) {
+      if (w.counter.next === p[3] + 1) w.counter.next = p[3];
+      return [];
+    }
+    return [{ n: w.counter.next++ }];
+  }
   if (/^SELECT coalesce\(max\(substring/.test(s)) return [{ next: Object.entries(w.header).filter(([k, h]) => k.endsWith(':' + p[0]) && h.purpose === p[1] && String(h.business_json.printed_as).startsWith(p[2].replace('%', ''))).length + 1 }];
   if (/^SELECT entity_id FROM chit_participants/.test(s)) return Object.keys(w.header).map((entity_id) => ({ entity_id }));
   return [];

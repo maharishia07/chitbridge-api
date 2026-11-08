@@ -159,20 +159,22 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
   console.log('\n== D · the document ==\n');
   /* the note through issue() with an in-memory store of the issuer's notes: the number, the replay and the body the send gets */
   const ORIGINAL = { bill_no: 'INV-7', billed_at: '2025-06-01T00:00:00Z', invoice: { DocDtls: { Typ: 'INV', No: 'INV-7', Dt: '2025-06-01T00:00:00Z' } } };
-  async function issueTimes(country, edits, lines, times) {
+  async function issueTimes(country, edits, lines, times, failFirst, proposal) {
     const kept = [];
-    const store = { query: async (sql, args) => (/max\(substring/.test(sql) ? { rows: [{ next: kept.length + 1 }] } : { rows: kept.filter((n) => n.against.chit_id === args[1] && n.against.proposal_id === args[2]).map((n) => ({ chit_id: n.chit_id })) }) };
+    const counter = { next: 1, gaveBack: 0 };
+    const store = { query: async (sql, args) => (/books_counter/.test(sql) ? (/^UPDATE/.test(sql) ? (counter.next === args[3] + 1 && (counter.next = args[3], counter.gaveBack++), { rows: [] }) : { rows: [{ n: counter.next++ }] }) : /max\(substring/.test(sql) ? { rows: [{ next: kept.length + 1 }] } : { rows: kept.filter((n) => n.against.chit_id === args[1] && n.against.proposal_id === args[2]).map((n) => ({ chit_id: n.chit_id })) }) };
     Object.defineProperty(db, 'withEntity', { value: async (entity, fn) => fn(store), configurable: true, writable: true });
     delete require.cache[require.resolve('../lib/price-note')];
     const fresh = require('../lib/price-note');
-    fresh.useSender(async (issuer, body) => { const chit_id = 'n' + (kept.length + 1); kept.push({ chit_id, against: body.business_json.against, body }); return { ok: true, status: 200, body: { chit_id } }; });
+    let refusals = failFirst ? 1 : 0;
+    fresh.useSender(async (issuer, body) => { if (refusals > 0) { refusals--; return { ok: false, status: 409, body: { message: 'refused' } }; } const chit_id = 'n' + (kept.length + 1); kept.push({ chit_id, against: body.business_json.against, body }); return { ok: true, status: 200, body: { chit_id } }; });
     const copy = copyOf(lines);
     const delta = fresh.deltaOf(copy, edits);
     const invoice = await sendMoney.invoiceOfLines({ lines: delta.lines, sellerId: 's1', buyerId: 'b1', business_json: {}, currency_code: 'INR' });
-    const args = { issuer: 's1', buyer: 'b1', chit_id: 'orig-1', row: { proposal_id: 'p-1', edits, invoice, currency: 'INR' }, copy, original: ORIGINAL, issuerBridge: 'CBSEL00001', country };
+    const args = { issuer: 's1', buyer: 'b1', chit_id: 'orig-1', row: { proposal_id: proposal || 'p-1', edits, invoice, currency: 'INR' }, copy, original: ORIGINAL, issuerBridge: 'CBSEL00001', country };
     const answers = [];
-    for (let i = 0; i < times; i++) answers.push(await fresh.issue(args));
-    return { kept, answers };
+    for (let i = 0; i < times; i++) answers.push(await fresh.issue(args).catch((e) => ({ refused: e.code })));
+    return { kept, answers, counter };
   }
   const realWith = Object.getOwnPropertyDescriptor(db, 'withEntity');
   try {
@@ -202,6 +204,14 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
       PACK = PACKS.AE;
       const further = await issueTimes('AE', [edit(0, line('Pump', 1, 1100, 5))], [line('Pump', 1, 1000, 5)], 1);
       assert.deepStrictEqual([further.kept[0].body.purpose, further.kept[0].body.business_json.invoice.DocDtls.Typ, further.kept[0].body.business_json.printed_as], ['invoice', 'INV', '0001']);
+    });
+    await t('the AE further invoice draws from the SERVER counter: a refused send gives its number back (no gap), the next issue takes it; nothing is read from the till numbers', async () => {
+      PACK = PACKS.AE;
+      const out = await issueTimes('AE', [edit(0, line('Pump', 1, 1100, 5))], [line('Pump', 1, 1000, 5)], 2, true);
+      assert.deepStrictEqual(out.answers.map((x) => x.refused || x.duplicate), ['CREDIT_NOTE_NOT_ISSUED', false]);
+      assert.strictEqual(out.counter.gaveBack, 1, 'the refused number went back');
+      assert.strictEqual(out.kept[0].body.business_json.printed_as, '0001', 'and was used by the next issue: no gap');
+      assert.strictEqual(out.counter.next, 2);
     });
   } finally {
     if (realWith) Object.defineProperty(db, 'withEntity', realWith);
@@ -255,7 +265,7 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
   await t('numbers: IN DN/26-27/0001 (the FY label, docnumber.periodLabel) · AU, AE DN/0001 · AE further invoice in the INVOICE series (0001); one prefix per note document; the sequence is one past the highest over ALL years', async () => {
     const asked = [];
     const real = Object.getOwnPropertyDescriptor(db, 'withEntity');
-    const withEntity = async (entity, fn) => fn({ query: async (sql, args) => { asked.push([sql, args]); return { rows: [{ next: 7 }] }; } });
+    const withEntity = async (entity, fn) => fn({ query: async (sql, args) => { asked.push([sql, args]); return { rows: [{ next: 7, n: 7 }] }; } });
     Object.defineProperty(db, 'withEntity', { value: withEntity, configurable: true, writable: true });
     delete require.cache[require.resolve('../lib/price-note')];
     const fresh = require('../lib/price-note');
@@ -264,9 +274,9 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
       assert.strictEqual(await fresh.nextNumber('s1', 'debit_note', 'AU'), 'DN/0007');
       assert.strictEqual(await fresh.nextNumber('s1', 'invoice', 'AE'), '0007', 'the invoice series has no prefix of its own');
       assert.ok(/^CN\/\d{2}-\d{2}\/0007$/.test(await fresh.nextNumber('s1', 'credit_note', 'IN')));
-      assert.ok(asked.every(([sql]) => !/extract|year/i.test(sql)), 'the max is over every year');
-      assert.deepStrictEqual(asked.map(([sql, args]) => (/LIKE \$3/.test(sql) ? args[2] : 'invoice series')), ['DN/%', 'DN/%', 'invoice series', 'CN/%']);
-      assert.ok(/printed_as.*bill_no.*client_ref/.test(asked[2][0]), 'the invoice series reads the closing digits of every invoice number the issuer holds');
+      assert.ok(asked.filter(([sql]) => !/books_counter/.test(sql)).every(([sql]) => !/extract|year/i.test(sql)), 'the max is over every year');
+      assert.deepStrictEqual(asked.map(([sql, args]) => (/LIKE \$3/.test(sql) ? args[2] : 'counter:' + args[1])), ['DN/%', 'DN/%', 'counter:invoice', 'CN/%']);
+      assert.ok(/books_counter/.test(asked[2][0]), 'the invoice series is the server counter row, not a scan of invoice numbers');
     } finally {
       if (real) Object.defineProperty(db, 'withEntity', real);
     }
