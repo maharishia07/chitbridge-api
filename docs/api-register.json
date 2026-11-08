@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 127,
-  "meets": 511,
+  "partial": 125,
+  "meets": 513,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -27279,11 +27279,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6188ec56258d1181"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -59760,11 +59759,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "247f38ec08cf16aa"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1039 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; engine name is looked up in a fixed table), replay of the till refusals 475 of 475 identical against origin/main, trips re-fired on the stub and equal the budget line",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
