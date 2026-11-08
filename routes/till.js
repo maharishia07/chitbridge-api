@@ -30,8 +30,7 @@ const express = require('express');
 const pageLimit = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
-const { safeErr } = require('../lib/respond');
-const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer
+const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer
 const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
@@ -4088,7 +4087,7 @@ router.post('/listen', auth, ...checked('POST /listen'), async (req, res) => {
     const out = await speech.transcribe(buf, { mime: body.mime, format: body.format, lang: body.lang, hint: body.hint });
     res.json(out);
   } catch (e) {
-    res.json({ ok: false, why: safeErr(e) });
+    res.json({ ok: false, why: softFault(req, e) });
   } /* L2: ok:false in words (the counter falls back to the browser's recogniser), never the raw error text */
 });
 
