@@ -17378,7 +17378,7 @@ function dropParked(n){ PARKED.splice(n, 1); parkedSave(); }
  * ⚠️ Offline, or the door fails: the bill is NEVER blocked (TILL-41): it sells at the prices it has and price_basis says why (offline · recheck_failed).
  * price_basis → business_json.price_basis { checked, at, snapshot_at, parked_at, reason, kept[] }; each line carries catalogue_stamp (the row's price_changed_at when known; only a hint, see CTR-212 R2).
  */
-var RECHECK_FIELDS = ['price', 'mrp', 'hsn', 'tax_slab', 'tax_slab_name', 'gst_rate', 'cess_rate', 'categories', 'category', 'status'];
+var RECHECK_FIELDS = ['price', 'mrp', 'hsn', 'tax_slab', 'tax_slab_name', 'gst_rate', 'cess_rate', 'categories', 'category', 'status', 'unit'];
 /** the owner's answer to "check prices again before every bill?": 'on' | 'off' | null (nobody answered: the optional every-bill check is off, the parked-too-long check still runs) */
 function recheckSetting(){ return (S && S.policy && S.policy.recheck_prices) || null; }
 /** hours since a moment (0 when it is not a date) */
@@ -17426,16 +17426,22 @@ function recheckBaseOf(cartLine){ return r2((Number(cartLine.price) || 0) - (car
 /** what moved on one cart line against the catalogue's answer → { c, it, gone, price: [from, to]|null, rate: [from, to]|null } or null */
 function recheckLineChange(cartLine, answerRow, ctx){
   if (!answerRow || answerRow.checked === false) return null;
-  var gone = recheckGone(answerRow), change = { cartLine: cartLine, answerRow: answerRow, gone: gone, price: null, rate: null };
+  var gone = recheckGone(answerRow), change = { cartLine: cartLine, answerRow: answerRow, gone: gone, price: null, rate: null, unit: null };
   if (gone) return change;
   change.price = recheckPriceMove(cartLine, answerRow);
   change.rate = recheckRateMove(cartLine, answerRow, ctx);
-  return (change.price || change.rate) ? change : null;
+  change.unit = recheckUnitMove(cartLine, answerRow);
+  return (change.price || change.rate || change.unit) ? change : null;
 }
 /** the shelf price moved? → [from, to], or null (the same price, or the very price the owner already chose to keep) */
 function recheckPriceMove(cartLine, answerRow){
   var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
   return from === to || keptAt === to ? null : [from, to];
+}
+/** the unit the product is sold in moved (CAT-264b: a unit change is a commercial change like price)? → [was, now], or null; an answer that names no unit is "unknown", never a move */
+function recheckUnitMove(cartLine, answerRow){
+  var was = cartLine.unit || 'piece', now = answerRow.unit ? String(answerRow.unit) : null;
+  return now && now !== was ? [was, now] : null;
 }
 /** the rate in force moved? → [was, now] through CBTax.slab.resolve in the old and the new tax context, or null */
 function recheckRateMove(cartLine, answerRow, ctx){
@@ -17454,6 +17460,7 @@ function recheckRefresh(cartLine, answerRow){
   cartLine.price = r2((Number(answerRow.price) || 0) + (cartLine.mods && cartLine.mods.length ? Number(modAdd(cartLine.mods)) || 0 : 0));
   cartLine.mrp = Number(answerRow.mrp) > 0 ? Number(answerRow.mrp) : null;
   cartLine.hsn = answerRow.hsn || null;
+  if (answerRow.unit) cartLine.unit = String(answerRow.unit);
   cartLine.item_data = Object.assign({ name: answerRow.name }, taxInputOf(answerRow));
   cartLine.catalogue_stamp = answerRow.stamp || null;
   delete cartLine.kept;
@@ -17490,16 +17497,17 @@ function recheckWords(change){
   if (change.gone) return name + ': ' + (change.gone === 'deleted' ? 'no longer in your catalogue' : 'no longer sold');
   var bits = [];
   if (change.price) bits.push(money(change.price[0]) + ' → ' + money(change.price[1]));
+  if (change.unit) bits.push('sold per ' + change.unit[0] + ' → per ' + change.unit[1]);
   if (change.rate) bits.push(schemeWord() + ' ' + (change.rate[0] == null ? '?' : change.rate[0]) + '% → ' + (change.rate[1] == null ? '?' : change.rate[1]) + '%');
   return name + ': ' + bits.join(' · ');
 }
 /**
  * the popup → 'use' | 'keep' | 'remove' | 'back'. MONEY PROMISE: the bill before → after, this bill only, never silent.
- * A gone line: Remove or Go back. A rate move: Use or Go back (no Keep). Price only: Use, or Keep as quoted (owner PIN).
+ * A gone line: Remove or Go back. A rate or unit move: Use or Go back (no Keep). Price only: Use, or Keep as quoted (owner PIN).
  */
 async function recheckAsk(changes, trial){
   var gone = changes.some(function(change){ return change.gone; });
-  var keepAllowed = !gone && changes.every(function(change){ return change.price && !change.rate; });
+  var keepAllowed = !gone && changes.every(function(change){ return change.price && !change.rate && !change.unit; });
   var said = changes.map(recheckWords).join('\n') + '\n\nThis bill: ' + money(trial.before) + ' → ' + money(trial.after);
   var yes = await sure(said, gone ? 'Remove them' : 'Use new prices', gone ? 'No longer sold' : 'Prices changed', keepAllowed ? 'Keep as quoted' : 'Go back');
   if (yes) return gone ? 'remove' : 'use';

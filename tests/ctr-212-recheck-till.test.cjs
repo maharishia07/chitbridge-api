@@ -38,7 +38,7 @@ function fnText(src, sig) {
 const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'function walkInNote(',
   'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedAt(', 'function price(',
   'var RECHECK_FIELDS', 'function recheckSetting(', 'function parkHoursOf(', 'function parkedTooLong(', 'function cartParkedAt(', 'function recheckDue(', 'async function recheckRead(',
-  'function recheckGone(', 'function recheckContext(', 'function recheckRateOf(', 'function recheckBaseOf(', 'function recheckLineChange(', 'function recheckPriceMove(', 'function recheckRateMove(', 'function recheckChanges(', 'function recheckRefresh(',
+  'function recheckGone(', 'function recheckContext(', 'function recheckRateOf(', 'function recheckBaseOf(', 'function recheckLineChange(', 'function recheckPriceMove(', 'function recheckRateMove(', 'function recheckUnitMove(', 'function recheckChanges(', 'function recheckRefresh(',
   'function recheckApply(', 'function recheckTotal(', 'function recheckTrial(', 'function recheckWords(', 'async function recheckAsk(', 'async function recheckKeep(', 'function recheckStamp(',
   'function recheckRemoveGone(', 'async function recheckResolve(', 'function recheckBasis(', 'function recheckKeptList(', 'async function recheckBeforeBill(', 'async function recheckAfterUnpark('];
 
