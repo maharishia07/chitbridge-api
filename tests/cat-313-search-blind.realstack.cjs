@@ -9,7 +9,7 @@
  *   S-4  a field NAME ("cost", "supplier_name", "name") matches nothing; a hidden supplier value matches nothing
  *   W-1  routes/products.js GET / uses shelfWhere and no longer holds `item_data::text ILIKE`
  *   C-1  no search field is a cost key (cost.isCostKey)
- * Every row it makes is deleted at the end. Allow list: localhost, the compose db or a SIT host. Any role (it reads and writes its own rows only).
+ * Every row it makes is deleted at the end. Allow list: localhost, the compose db or a SIT host. Meant for cb_app (RLS on): every row goes through withEntity.
  * Run: DATABASE_URL=postgres://cb_app:cbapp@localhost:5432/cb_s41 node tests/cat-313-search-blind.realstack.cjs
  * CARD      06-catalogue-pim/README
  */
@@ -17,7 +17,7 @@ const url = process.env.DATABASE_URL || '';
 const parts = /^postgres(?:ql)?:\/\/([^:@/]+):[^@]*@([^:/]+)/.exec(url);
 if (!parts || !/^(localhost|127\.0\.0\.1|db|sit-[a-z]+(\.[a-z0-9.-]+)?)$/.test(parts[2])) { console.error('REFUSED: needs DATABASE_URL on localhost, the compose db or a SIT host'); process.exit(3); }
 const fs = require('fs'), path = require('path');
-const { Client } = require('pg');
+const { withEntity, query } = require('../db');
 const cost = require('../lib/cost');
 const { shelfWhere, SEARCH_FIELDS } = require('../lib/catalogue-search');
 let pass = 0, fail = 0;
@@ -26,12 +26,10 @@ const RUN = 'sb' + (Date.now() % 1e10).toString(36);
 
 (async () => {
   console.log('\n── CAT-313/314 search sees visible fields only · run ' + RUN + ' ──');
-  const db = new Client({ connectionString: url });
-  await db.connect();
   let shop = null;
   try {
-    shop = (await db.query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code) VALUES ($1, $2, 'entity', 'IN', 'INR') RETURNING identity_id`, ['CB' + RUN, 'Search ' + RUN])).rows[0].identity_id;
-    const add = async (data) => (await db.query('INSERT INTO catalogue_items (entity_id, item_data) VALUES ($1, $2::jsonb) RETURNING item_id', [shop, JSON.stringify(data)])).rows[0].item_id;
+    shop = (await query(`INSERT INTO identities (bridge_id, display_name, identity_type, country, currency_code) VALUES ($1, $2, 'entity', 'IN', 'INR') RETURNING identity_id`, ['CB' + RUN, 'Search ' + RUN])).rows[0].identity_id;
+    const add = (data) => withEntity(shop, async (db) => (await db.query('INSERT INTO catalogue_items (entity_id, item_data) VALUES ($1, $2::jsonb) RETURNING item_id', [shop, JSON.stringify(data)])).rows[0].item_id);
     const dosa = await add({ name: 'Masala Dosa ' + RUN, sku: 'DOSA-' + RUN, brand: 'Udupi', cost: 4242.5, unit_cost: 4242.5, supplier_name: 'Hidden Supplier ' + RUN, margin: 31.7, price: { amount: 70, currency: 'INR' } });
     const pure = await add({ name: '100% pure ghee ' + RUN, sku: 'GH_1-' + RUN });
     const BS = String.fromCharCode(92); /* one backslash */
@@ -40,7 +38,7 @@ const RUN = 'sb' + (Date.now() % 1e10).toString(36);
     /** ids found for q, among this run's four rows */
     const find = async (q) => {
       const f = shelfWhere(shop, q); /* the route's own fragment: entity_id $1, pattern $2 */
-      const r = await db.query('SELECT item_id FROM catalogue_items WHERE ' + f.where, f.params);
+      const r = await withEntity(shop, (db) => db.query('SELECT item_id FROM catalogue_items WHERE ' + f.where, f.params));
       return r.rows.map((x) => x.item_id);
     };
     const only = (got, ...want) => got.length === want.length && want.every((id) => got.includes(id));
@@ -64,8 +62,7 @@ const RUN = 'sb' + (Date.now() % 1e10).toString(36);
   } catch (e) {
     fail++; console.log('  FAIL threw: ' + (e && e.stack || e));
   } finally {
-    if (shop) { await db.query('DELETE FROM catalogue_items WHERE entity_id=$1', [shop]).catch(() => {}); await db.query('DELETE FROM identities WHERE identity_id=$1', [shop]).catch(() => {}); }
-    await db.end();
+    if (shop) { await withEntity(shop, (db) => db.query('DELETE FROM catalogue_items WHERE entity_id=$1', [shop])).catch((e) => console.log('  cleanup items: ' + e.message)); await query('DELETE FROM identities WHERE identity_id=$1', [shop]).catch((e) => console.log('  cleanup identity: ' + e.message)); }
   }
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
