@@ -1331,11 +1331,11 @@
    "lifecycle": "stable"
   },
   "GET /api/products": {
-   "hash": "a85c20451df4101f",
+   "hash": "c58e08fca2facb60",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#1038: whole handler, contract and lib/catalogue-search.js re-read after its hash moved; response shape, error shapes, status codes and sentences unchanged, caller-scoped (entity_id=$1), only change is the narrower search (named top-level scalar fields, cost keys excluded, LIKE-escaped; stated in PR); 13 columns pass",
    "lifecycle": "stable"
   },
   "GET /api/products/:id/versions": {
