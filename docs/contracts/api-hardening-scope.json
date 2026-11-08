@@ -161,6 +161,11 @@
    "reason": "a pulse that fails must not silence the screen: the route answers 200 with w null (\"cannot tell\") by design and logs the fault with the request id"
   },
   {
+   "route": "POST /api/till/listen",
+   "status": 500,
+   "reason": "a microphone must never be the reason a sale stops: every fault of the transcription answers 200 ok:false with a plain sentence (the counter falls back to the browser recogniser) and is logged with the request id, so there is no 500 to answer"
+  },
+  {
    "route": "GET /api/chits/:chit_id/diagnosis",
    "status": 404,
    "reason": "a chit this login holds no copy of (unknown or another shop's) answers 403 CHIT_NOT_PERMITTED today, the same for both; moving that to 404 is a behaviour change for cb-rail to decide (S35), so 404 cannot be answered yet"

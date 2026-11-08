@@ -64438,6 +64438,52 @@
      }
     }
    ]
+  },
+  "POST /api/till/listen": {
+   "answers": [
+    {
+     "scenario": "listen-body-not-an-object",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "(body) must be a object.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "(body) must be a object.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "(body) must be a object.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "(body) must be a object.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "(body)",
+      "errors": [
+       {
+        "field": "(body)",
+        "code": "WRONG_VALUE",
+        "detail": "(body) must be a object."
+       }
+      ]
+     }
+    }
+   ]
   }
  },
  "global": {

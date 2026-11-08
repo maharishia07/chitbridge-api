@@ -3493,6 +3493,7 @@
   500
  ],
  "POST /api/till/listen": [
+  400,
   401
  ],
  "POST /api/till/offer-item": [
