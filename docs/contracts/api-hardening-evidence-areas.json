@@ -66,7 +66,8 @@
    "output_allowlist": true
   },
   "DELETE /api/products/:id/schedule/:sid": {
-   "output_allowlist": true
+   "output_allowlist": true,
+   "foreign_id_404": true
   },
   "DELETE /api/quick-keys/groups/:id": {
    "output_allowlist_basis": "recordings",

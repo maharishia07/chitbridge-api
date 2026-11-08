@@ -155,6 +155,10 @@ function extras(tools) {
     /* CAT-234: a parked change the owner made carries a cost; a cost-blind co-assist reads the list without it */
     X('schedule-read-cost-blind', 'GET ' + P + '/:id/schedule', 200, { setup: costBlind, patch: { schema: scheduleOn.schema, schedule: { pending: async () => [{ schedule_id: PARTY, item_id: PARTY, effective_at: SOMEDAY, patch: { status: 'unavailable', cost: 3 }, created_at: SOMEDAY }] }, cost: costHidden.cost } }),
     X('schedule-read-fails', 'GET ' + P + '/:id/schedule', 500, { patch: { schedule: { pending: boom } } }),
+    /* K-1: a parked change that was cancelled answers true; one nobody holds (not a uuid, another shop's, already applied) answers false, both 200 */
+    X('schedule-cancel', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => true } } }),
+    X('schedule-cancel-none-held', 'DELETE ' + P + '/:id/schedule/:sid', 200, { patch: { schedule: { cancel: async () => false } } }),
+    X('schedule-cancel-fails', 'DELETE ' + P + '/:id/schedule/:sid', 500, { patch: { schedule: { cancel: boom } } }),
     X('schedule-needs-both', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY } }),
     X('schedule-cost-blind', 'POST ' + P + '/:id/schedule', 403, { body: { effective_at: SOMEDAY, item_data: { price: 5 } }, setup: costBlind, patch: costHidden }),
     X('schedule-server-owned-key', 'POST ' + P + '/:id/schedule', 400, { body: { effective_at: SOMEDAY, item_data: { image: 'x' } } }),

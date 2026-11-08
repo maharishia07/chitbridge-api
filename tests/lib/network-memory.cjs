@@ -90,7 +90,8 @@ function memory(options) {
     [/^update cb_edge set state='declined', approved_by=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === 'requested').map((one) => move(one, 'declined'))],
     [/^update cb_edge set state=\$3 where id=\$1 and state=\$2/, (p) => [edge(p[0])].filter((one) => one && one.state === p[1]).map((one) => move(one, p[2]))],
     [/^select 1 from cb_edge where child_id=\$1 and type = \$2/, (p) => data.edges.filter((one) => one.child_id === p[0] && one.type === p[1] && ['active', 'suspended'].includes(one.state)).map(() => ({ '?column?': 1 }))],
-    [/as bad$/, (p) => [{ bad: under(p[0], p[1]) }]],
+    [/as bad, nlevel\(\$2::ltree\) > 1 as deep$/, (p) => [{ bad: under(p[0], p[1]), deep: p[1].includes('.') }]],
+    [/^select set_config\('cb\.net_reroot'/, () =>[{ set_config: '' }]], // NET-93: the trigger's one door; a stand-in has no trigger
     [/^update cb_entity set path/, () => []],
     [/^update cb_edge set state='active', approved_by=\$2/, (p) => [move(edge(p[0]), 'active')].filter(Boolean)],
     [/^update cb_edge set state='declined', decided_at=now\(\)/, () => []],
