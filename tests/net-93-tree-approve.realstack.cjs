@@ -100,6 +100,20 @@ async function cycles() {
   ok('C4 a node already inside a tree cannot be taken out of it by approve: 409 HAS_PARENT', deep && deep.status === 409 && deep.code === 'HAS_PARENT', JSON.stringify(deep));
   ok('C5 and its path is unchanged', (await pathOf(stale)).path === `${label(x.bridgeId)}.${label(stale.bridgeId)}` || (await pathOf(stale)).path.startsWith(label(x.bridgeId)+'.'));
 }
+/** NET-93 at the ASK: once the member is under the brand, the brand asking to be the member's child is refused there (409 CYCLE, nothing saved), the same check approve keeps as its safety */
+async function askTime() {
+  const brand = await business('p'), shop = await business('r');
+  const joined = await treeAsk(brand, shop, brand);
+  await net.approve({ edgeId: joined.id }, shop.node);
+  const edgeCount = async () => Number((await query(`SELECT count(*) AS n FROM cb_edge WHERE parent_id = $1 AND child_id = $2`, [shop.node.id, brand.node.id])).rows[0].n);
+  const crossed = await refusal(() => treeAsk(shop, brand, shop));
+  ok('A1 the member asks to have the brand as ITS child: 409 CYCLE at the ask, never 200', crossed && crossed.status === 409 && crossed.code === 'CYCLE', JSON.stringify(crossed));
+  ok('A2 the refusal is a plain sentence that says nothing was saved', crossed && /loops. Nothing was saved./.test(crossed.message), JSON.stringify(crossed));
+  ok('A3 nothing was saved: no edge from the member to the brand', (await edgeCount()) === 0);
+  const byBrand = await refusal(() => treeAsk(shop, brand, brand));
+  ok('A4 the same crossing named from the brand side is refused the same way', byBrand && byBrand.status === 409 && byBrand.code === 'CYCLE', JSON.stringify(byBrand));
+  ok('A5 the tree is untouched: the shop is still under the brand', (await pathOf(shop)).root === label(brand.bridgeId));
+}
 async function cleanup() {
   const nodes = (await query(`SELECT e.id FROM cb_entity e JOIN identities i ON upper(i.bridge_id) = upper(e.bridge_id) WHERE i.identity_id = ANY($1::uuid[])`, [madeIdentities])).rows.map((r) => r.id);
   await query(`DELETE FROM cb_edge WHERE parent_id = ANY($1::uuid[]) OR child_id = ANY($1::uuid[])`, [nodes]);
@@ -113,6 +127,7 @@ async function cleanup() {
     await shopAsks();
     await guardHolds(brand, shop);
     await cycles();
+    await askTime();
   } catch (e) {
     ok('the run reached its end', false, e && e.stack);
   } finally {

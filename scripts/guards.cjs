@@ -224,6 +224,7 @@ const GUARDS = [
      the ones nobody will ever click. Athi: *"if we can figure out all the combination and a single helpdesk
      works for all, nothing like it."* This is what keeps it single. */
   'support-desks.test.cjs',
+  'raiseticket-why.test.cjs',
   /* ⭐ node -c parses, it does not resolve: a const declared in one function and read in the next compiles
      perfectly and throws on the first real request. Three times in one day's work. */
   'scope-leak.test.cjs',
@@ -807,6 +808,7 @@ const GUARDS = [
   'idem3-payment-clear.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idem3-payment-clear.test.cjs — DELETE /api/chits/:chit_id/payment ("Mark unpaid") is SAFE TO REPEAT (contract pass, 7 Nov 20
   'idem3-till-reward.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idem3-till-reward.test.cjs — the counter's two points writes are SAFE TO REPEAT (contract pass, 7 Nov 2026).
   'idoc-subject.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idoc-subject.test.cjs — who may file a document against whom.
+  'net-94-release-time.test.cjs', // NET-94/NET-87 (9 Nov): a GIVEN release time that is not a date is a 400 DATE_INVALID, never the next opening or no end
   'net-77-remote-dealer-409-mutation.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 mutation checks: break the refusal two ways and tests/net-77-remote-dealer-409.test.cjs MUST go red each time.
   'net-77-remote-dealer-409.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 (owner cb-network): asking to connect to a business on ANOTHER installation (a supplier stub here) is refused, nothing save
   'net-edge-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): NET-EDGE (owner cb-network): the five POST /api/network/connections/:id/{approve,decline,suspend,resume,disconnect} answers name t

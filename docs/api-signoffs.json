@@ -834,6 +834,14 @@
    "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
    "lifecycle": "stable"
   },
+  "GET /api/entities/routing/preview": {
+   "hash": "daf7f3e6e7033f84",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-09 PR#1047: handler and lib/raiseticket.js re-read; 200 allow-list holds, every fault path in why is the one fixed sentence DESK_FAULT (raw text to log via safeErr), kept b247 sentence carries only test/production, 13 columns pass",
+   "lifecycle": "stable"
+  },
   "GET /api/entities/search": {
    "hash": "92a7ca7003f7abd3",
    "names_clear": true,
@@ -2483,11 +2491,11 @@
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/amend": {
-   "hash": "cc87fa820d46eda1",
+   "hash": "b5bf1ff993c4dff3",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#961: handler re-read; 409 INVOICE_MONEY_LOCKED registered, one problem shape, shopkeeper sentence, error test in chit-proposals; non-money amends pass; 13 columns pass",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after RAIL-205 (new 400 CHIT_AMOUNT_TOO_LARGE for a replacement line whose quantity or price is past its column, naming the maximum and the chit currency, never echoing the value); the 400 is in the contract inline list [400, 409], has an error scene (amend-price-not-a-number, realstack A-1) and its code is in docs/error-codes.json; backward_compatible: it was a 500 (22003) after the build, no caller read it; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/archive": {
@@ -3203,11 +3211,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products": {
-   "hash": "914d6553a1cbbf4e",
+   "hash": "1bddfcabcbea24c6",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/317/318 (a changed status is stamped like PUT /:id/status; an unknown or unstampable status word and an over-large number are the existing 400 PRODUCT_BAD_REQUEST in the validator sentence); 400 declared inline, 400 scene present, code registered; backward_compatible: a legacy stored status word never blocks other edits, and a bad value that used to be written or 500 is now a 400; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/:id/media": {
@@ -3219,11 +3227,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/:id/schedule": {
-   "hash": "ec834b16142998da",
+   "hash": "185af50f007a0f0f",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-317 (the parked change is judged by the PATCH validator when parked and again when due; refusals are the existing 400 in its words, a stamp refusal 400, a due change refused is cancelled and logged); 400, 409 declared inline, scenes present; backward_compatible: same statuses as before, a bad parked change is refused at the door instead of failing silently when due; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/availability/bulk": {
@@ -3243,11 +3251,11 @@
    "lifecycle": "stable"
   },
   "POST /api/products/bulk-update": {
-   "hash": "366d97c351174a18",
+   "hash": "a685f08236988712",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder, 13-column stage-2) 2026-11-09 batch k86: re-signed after CAT-316/323 (each item stamped like PUT /:id/status; the owner reads the stored rows so a status the row already holds is not a change; refusals are the existing 400 PRODUCT_BAD_REQUEST); 400 declared inline with a scene; backward_compatible: unchanged statuses, legacy words pass, only a bad new status word or number is refused; all 13 machine columns read yes",
    "lifecycle": "stable"
   },
   "POST /api/products/import": {
@@ -4515,19 +4523,19 @@
    "lifecycle": "stable"
   },
   "POST /api/network-offers/:id/release": {
-   "hash": "541db4f71e91011d",
+   "hash": "9989f2ed55f8ee35",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
    "lifecycle": "stable"
   },
   "POST /api/network-offers/:id/withdraw": {
-   "hash": "82ef9190340340a4",
+   "hash": "bfdcb3d04502a11d",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
    "lifecycle": "stable"
   },
   "POST /api/network-offers/catalogue/cancel": {
@@ -4547,11 +4555,11 @@
    "lifecycle": "stable"
   },
   "POST /api/network-offers/catalogue/publish": {
-   "hash": "e8cfb81fec41c36b",
+   "hash": "49a8a895baf9860e",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+   "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
    "lifecycle": "stable"
   },
   "POST /api/notifications/dismiss": {

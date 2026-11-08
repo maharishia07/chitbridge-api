@@ -85,6 +85,11 @@ const EXTRAS = [
   X('price-answer-breaks', 'POST /api/network-offers/catalogue/price', 500, { body: { source_key: 's', name: 'n', choice: 'use' }, patch: { ncat: { answer: throwsLater } } }),
   X('offer-not-live', 'POST /api/network-offers/:id/release', 409, { setup: { sqlRows: OFFER_ROW('draft') } }),
   X('ends-before-start', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { at: 'now', until: '2000-01-01T00:00:00Z' } }),
+  /* NET-94 / NET-87: a GIVEN time that is not a date is a 400 DATE_INVALID, never the next opening */
+  X('release-until-not-a-date', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { until: 'abc' } }),
+  X('release-at-not-a-date', 'POST /api/network-offers/:id/release', 400, { setup: { sqlRows: OFFER_ROW('live') }, body: { at: '2026-13-45' } }),
+  X('publish-at-not-a-date', 'POST /api/network-offers/catalogue/publish', 400, { body: { source_key: 's', at: 'abc' }, patch: { ncat: { publish: async () => { throw Object.assign(new Error('"at" must be a date and time like 2026-12-31T00:00:00Z, or "now".'), { status: 400, code: 'DATE_INVALID', field: 'at' }); } } } }),
+  X('withdraw-at-not-a-date', 'POST /api/network-offers/:id/withdraw', 400, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: { network_offers: { released: { [OFFER]: { version: 1, at: '2026-11-09T04:00:00.000Z' } } } } }) } }, body: { at: 'abc' } }),
   X('release-breaks', 'POST /api/network-offers/:id/release', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
   X('never-released', 'POST /api/network-offers/:id/withdraw', 409, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: async () => ({ flags: {} }) } } }),
   X('withdraw-breaks', 'POST /api/network-offers/:id/withdraw', 500, { setup: { sqlRows: OFFER_ROW('live') }, patch: { net: { flagsOf: throwsLater } } }),
