@@ -736,8 +736,8 @@ const call = (method, url, id, body) =>
     assert.deepStrictEqual([note.business_json.against.chit_id, note.business_json.against.invoice_no], [CH, 'INV-7']);
     assert.deepStrictEqual(w.amend.filter((x) => x.entity_id === BUY).map((x) => x.line.price), [110], 'the live lines moved');
   });
-  await t('ACC-192 slice 2 · the document is chosen COUNTRY-FIRST from the seller’s pack: IN and AU a debit note, AE a further tax invoice (purpose invoice, AI/0001), no pack or no ruling is refused in words, never defaulted', async () => {
-    for (const [country, purpose, number] of [['AU', 'debit_note', /^DN\/0001$/], ['AE', 'invoice', /^AI\/0001$/]]) {
+  await t('ACC-192 slice 2 · the document is chosen COUNTRY-FIRST from the seller’s pack: IN and AU a debit note, AE a further tax invoice (purpose invoice, numbered in the invoice series: 0001), no pack or no ruling is refused in words, never defaulted', async () => {
+    for (const [country, purpose, number] of [['AU', 'debit_note', /^DN\/0001$/], ['AE', 'invoice', /^0001$/]]) {
       const w = oneInstallation(country);
       issueInvoice(w);
       const r = await as(w, () => proposals.propose(SELL, CH, price([{ line_id: L1, quantity: 12 }]), SELLER));

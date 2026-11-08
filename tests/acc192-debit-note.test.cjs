@@ -7,7 +7,8 @@
  *      a line issued at 12% stays at 12% · AU 110 (incl. 1210 → 100 + 10) · AE further tax invoice 100 + 5 = 105
  *   S  the series: DN/<FY label>/<n> from docnumber.periodLabel (IN 26-27; AU, AE no label) — one builder, over every year; the lock is per (purpose, issuer)
  *   B  the books: the seller's debit_note event (Dr party / Cr sales / Cr tax), the original entry untouched, the trial balance balances, the party item is kind debit_note, the buyer posts a purchase_bill from the same JSON
- *   R  the return: tax-lines files the note on side output_dn → GSTR-1 table 9B ntty 'D' (cdnr), table 13 "Debit Note", never table 4
+ *   D  the document: the note's OWN DocDtls (Typ CRN, DBN, INV; its number; its issue date) and the original in PrecDocDtls; the rate held as issued; replay = one note; the 16-character rule at issue; a direct send refused
+ *  R  the return: tax-lines files the note on side output_dn → GSTR-1 table 9B ntty 'D' (cdnr), table 13 "Debit Note", never table 4
  *
  * Run: node tests/acc192-debit-note.test.cjs   (CB_ENGINES_DIR = an engines worktree at v1.82.0)
  */
@@ -15,6 +16,7 @@
 const assert = require('assert');
 
 process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.DATABASE_URL = '';
 const H = require('./support/books-harness.cjs');
 
@@ -148,17 +150,109 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
     assert.throws(() => priceNote.refuseAddedLines({ lines }, [{ line_index: 2, price: 5, quantity: 1 }]), (e) => e.code === 'INVOICE_LINE_ADDED');
     assert.doesNotThrow(() => priceNote.refuseAddedLines({ lines }, [{ line_index: 1, price: 5 }]));
   });
-  await t('the original invoice’s date is the `at` the note is priced at: DocDtls.Dt, else billed_at, else none', async () => {
+  await t('the original invoice date is read for the note against (DocDtls.Dt, else billed_at, else none); the note own date is its own', async () => {
     assert.strictEqual(priceNote.issuedAtOf({ invoice: { DocDtls: { Dt: '2025-06-01' } }, billed_at: '2026-01-01' }), '2025-06-01');
     assert.strictEqual(priceNote.issuedAtOf({ billed_at: '2026-01-01' }), '2026-01-01');
     assert.strictEqual(priceNote.issuedAtOf({}), null);
+  });
+
+  console.log('\n== D · the document ==\n');
+  /* the note through issue() with an in-memory store of the issuer's notes: the number, the replay and the body the send gets */
+  const ORIGINAL = { bill_no: 'INV-7', billed_at: '2025-06-01T00:00:00Z', invoice: { DocDtls: { Typ: 'INV', No: 'INV-7', Dt: '2025-06-01T00:00:00Z' } } };
+  async function issueTimes(country, edits, lines, times) {
+    const kept = [];
+    const store = { query: async (sql, args) => (/max\(substring/.test(sql) ? { rows: [{ next: kept.length + 1 }] } : { rows: kept.filter((n) => n.against.chit_id === args[1] && n.against.proposal_id === args[2]).map((n) => ({ chit_id: n.chit_id })) }) };
+    Object.defineProperty(db, 'withEntity', { value: async (entity, fn) => fn(store), configurable: true, writable: true });
+    delete require.cache[require.resolve('../lib/price-note')];
+    const fresh = require('../lib/price-note');
+    fresh.useSender(async (issuer, body) => { const chit_id = 'n' + (kept.length + 1); kept.push({ chit_id, against: body.business_json.against, body }); return { ok: true, status: 200, body: { chit_id } }; });
+    const copy = copyOf(lines);
+    const delta = fresh.deltaOf(copy, edits);
+    const invoice = await sendMoney.invoiceOfLines({ lines: delta.lines, sellerId: 's1', buyerId: 'b1', business_json: {}, currency_code: 'INR' });
+    const args = { issuer: 's1', buyer: 'b1', chit_id: 'orig-1', row: { proposal_id: 'p-1', edits, invoice, currency: 'INR' }, copy, original: ORIGINAL, issuerBridge: 'CBSEL00001', country };
+    const answers = [];
+    for (let i = 0; i < times; i++) answers.push(await fresh.issue(args));
+    return { kept, answers };
+  }
+  const realWith = Object.getOwnPropertyDescriptor(db, 'withEntity');
+  try {
+    await t('the SAME accept decided twice (a replay) gives ONE note and ONE number: the second finds the first and sends nothing', async () => {
+      PACK = PACKS.IN;
+      const out = await issueTimes('IN', [edit(0, line('Pump', 1, 1100, 18))], [line('Pump', 1, 1000, 18)], 2);
+      assert.strictEqual(out.kept.length, 1, 'one note was sent');
+      assert.deepStrictEqual(out.answers.map((x) => x.duplicate), [false, true]);
+      assert.strictEqual(out.answers[0].chit_id, out.answers[1].chit_id);
+      assert.ok(/^DN\/\d{2}-\d{2}\/0001$/.test(out.kept[0].body.business_json.printed_as), out.kept[0].body.business_json.printed_as);
+    });
+    await t('the note is its OWN document: DocDtls = DBN, its own number, ITS issue date (not the original one); the original invoice (number, date) goes in PrecDocDtls; the money is carried untouched', async () => {
+      PACK = PACKS.IN;
+      const out = await issueTimes('IN', [edit(0, line('Pump', 1, 1100, 18))], [line('Pump', 1, 1000, 18)], 1);
+      const invoice = out.kept[0].body.business_json.invoice;
+      assert.strictEqual(invoice.DocDtls.Typ, 'DBN');
+      assert.strictEqual(invoice.DocDtls.No, out.kept[0].body.business_json.printed_as);
+      assert.strictEqual(invoice.DocDtls.Dt.slice(0, 10), new Date().toISOString().slice(0, 10), 'the note carries the day it is issued');
+      assert.notStrictEqual(invoice.DocDtls.Dt.slice(0, 10), '2025-06-01');
+      assert.deepStrictEqual(invoice.PrecDocDtls, [{ InvNo: 'INV-7', InvDt: '2025-06-01T00:00:00Z' }]);
+      assert.deepStrictEqual([invoice.ValDtls.AssVal, invoice.ValDtls.TotInvVal], [100, 118]);
+    });
+    await t('a credit note is typed CRN the same way (slice 1b had the same defect); the AE further invoice is typed INV and numbered in the INVOICE series (no prefix of its own)', async () => {
+      PACK = PACKS.IN;
+      const credit = await issueTimes('IN', [edit(0, line('Pump', 1, 900, 18))], [line('Pump', 1, 1000, 18)], 1);
+      assert.deepStrictEqual([credit.kept[0].body.purpose, credit.kept[0].body.business_json.invoice.DocDtls.Typ, credit.kept[0].body.business_json.invoice.PrecDocDtls[0].InvNo], ['credit_note', 'CRN', 'INV-7']);
+      PACK = PACKS.AE;
+      const further = await issueTimes('AE', [edit(0, line('Pump', 1, 1100, 5))], [line('Pump', 1, 1000, 5)], 1);
+      assert.deepStrictEqual([further.kept[0].body.purpose, further.kept[0].body.business_json.invoice.DocDtls.Typ, further.kept[0].body.business_json.printed_as], ['invoice', 'INV', '0001']);
+    });
+  } finally {
+    if (realWith) Object.defineProperty(db, 'withEntity', realWith);
+    delete require.cache[require.resolve('../lib/price-note')];
+  }
+  await t('the issued rate is HELD: a line issued at 12% whose slab now says 18% (the edit carries 18, or no rate at all) is noted at 12%; the rate is the issued line, never today slab', async () => {
     PACK = PACKS.IN;
-    const n = await noteOf([line('Pump', 1, 1000, 18)], [edit(0, line('Pump', 1, 1100, 18))], '2025-06-01T00:00:00Z');
-    assert.strictEqual(n.invoice.DocDtls.Dt, '2025-06-01T00:00:00Z');
+    const issued = [line('Pump', 1, 1000, 12)];
+    const noRate = Object.assign({}, line('Pump', 1, 1100, 18));
+    delete noRate.gst_rate;
+    for (const replacement of [line('Pump', 1, 1100, 18), noRate]) {
+      const n = await noteOf(issued, [edit(0, replacement)], '2025-06-01T00:00:00Z');
+      assert.deepStrictEqual([n.money.taxable, n.money.total, ...heads(n)], [100, 112, 6, 6, 0], JSON.stringify(replacement));
+    }
+    const later = await noteOf(issued, [edit(0, line('Pump', 1, 1100, 18))], '2027-01-01T00:00:00Z');
+    assert.strictEqual(later.money.total, 112, 'the date the engine is asked at does not move the rate');
+  });
+  await t('the 16-character rule is CHECKED at issue (docnumber.check): a number built on a long prefix, or one that overflows, is refused in words; nothing is printed', async () => {
+    assert.strictEqual(priceNote.numberOf({ country: 'IN', purpose: 'debit_note', prefix: 'DN', sequence: 1 }).length <= 16, true);
+    for (const prefix of ['DEBITNOTEPREFIX', 'DN SPACE']) assert.throws(() => priceNote.numberOf({ country: 'IN', purpose: 'debit_note', prefix, sequence: 1 }), (e) => e.code === 'NOTE_NUMBER_INVALID' && e.status === 409, prefix);
+    assert.throws(() => priceNote.numberOf({ country: 'IN', purpose: 'debit_note', prefix: 'DN', sequence: 123456789 }), (e) => e.code === 'NOTE_NUMBER_INVALID', 'a sequence that no longer fits');
+  });
+  await t('a DIRECT POST /api/chits/send with purpose debit_note is refused in words (409 DEBIT_NOTE_NEEDS_ACCEPT): only the shop own loopback token (the accept) may send one; other purposes pass the gate', async () => {
+    const express = require('express');
+    const jwt = require('jsonwebtoken');
+    const app = express();
+    app.use(express.json());
+    app.post('/send', async (req, res) => {
+      if (await chits.sendDebitNoteGate({}, req, res)) return;
+      if (!res.headersSent) res.json({ passed: true });
+    });
+    const server = await new Promise((resolve) => { const sv = require('http').createServer(app).listen(0, () => resolve(sv)); });
+    const post = async (token, body) => { const r = await fetch('http://127.0.0.1:' + server.address().port + '/send', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) }); return { status: r.status, body: await r.json() }; };
+    try {
+      const person = jwt.sign({ identity_id: 's1', identity_type: 'entity', jti: 'j1' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const own = jwt.sign({ identity_id: 's1', identity_type: 'entity', auto: true, kind: 'auto', jti: 'j2' }, process.env.JWT_SECRET, { expiresIn: '60s' });
+      const forged = jwt.sign({ identity_id: 's1', identity_type: 'entity', auto: true, kind: 'auto', jti: 'j3' }, 'another-secret', { expiresIn: '60s' });
+      const direct = await post(person, { purpose: 'debit_note', recipients: [], line_items: [] });
+      assert.strictEqual(direct.status, 409, JSON.stringify(direct.body));
+      assert.strictEqual(direct.body.code, 'DEBIT_NOTE_NEEDS_ACCEPT');
+      assert.ok(/Propose the new price/.test(JSON.stringify(direct.body)), 'in words');
+      assert.strictEqual((await post(forged, { purpose: 'debit_note' })).status, 409, 'a token signed with another secret is no loopback');
+      assert.deepStrictEqual((await post(own, { purpose: 'debit_note' })).body, { passed: true }, 'the accept own send passes');
+      assert.deepStrictEqual((await post(person, { purpose: 'invoice' })).body, { passed: true }, 'other purposes are not this gate');
+    } finally {
+      server.close();
+    }
   });
 
   console.log('\n== S · the series ==\n');
-  await t('numbers: IN DN/26-27/0001 (the FY label, docnumber.periodLabel) · AU, AE DN/0001 · AE further invoice AI/0001; one prefix per document; the sequence is one past the highest over ALL years', async () => {
+  await t('numbers: IN DN/26-27/0001 (the FY label, docnumber.periodLabel) · AU, AE DN/0001 · AE further invoice in the INVOICE series (0001); one prefix per note document; the sequence is one past the highest over ALL years', async () => {
     const asked = [];
     const real = Object.getOwnPropertyDescriptor(db, 'withEntity');
     const withEntity = async (entity, fn) => fn({ query: async (sql, args) => { asked.push([sql, args]); return { rows: [{ next: 7 }] }; } });
@@ -168,11 +262,11 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
     try {
       assert.ok(/^DN\/\d{2}-\d{2}\/0007$/.test(await fresh.nextNumber('s1', 'debit_note', 'IN')));
       assert.strictEqual(await fresh.nextNumber('s1', 'debit_note', 'AU'), 'DN/0007');
-      assert.strictEqual(await fresh.nextNumber('s1', 'invoice', 'AE'), 'AI/0007');
+      assert.strictEqual(await fresh.nextNumber('s1', 'invoice', 'AE'), '0007', 'the invoice series has no prefix of its own');
       assert.ok(/^CN\/\d{2}-\d{2}\/0007$/.test(await fresh.nextNumber('s1', 'credit_note', 'IN')));
-      assert.ok(asked.every(([sql]) => !/extract|year/i.test(sql) && /LIKE \$3/.test(sql)), 'the max is over every year, under the prefix only');
-      assert.deepStrictEqual(asked.map(([, args]) => args[2]), ['DN/%', 'DN/%', 'AI/%', 'CN/%']);
-      assert.ok(fresh.nextNumber && 'DN/26-27/0001'.length <= 16, 'inside the GSTR-1 16-character limit');
+      assert.ok(asked.every(([sql]) => !/extract|year/i.test(sql)), 'the max is over every year');
+      assert.deepStrictEqual(asked.map(([sql, args]) => (/LIKE \$3/.test(sql) ? args[2] : 'invoice series')), ['DN/%', 'DN/%', 'invoice series', 'CN/%']);
+      assert.ok(/printed_as.*bill_no.*client_ref/.test(asked[2][0]), 'the invoice series reads the closing digits of every invoice number the issuer holds');
     } finally {
       if (real) Object.defineProperty(db, 'withEntity', real);
     }
@@ -193,8 +287,14 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
     assert.deepStrictEqual(g.b2b.map((b) => b.inv.map((i) => i.inum)), [['INV-1']], 'table 4 holds the invoice only');
     assert.deepStrictEqual(g.doc_issue.doc_det.map((d) => d.doc_typ).sort(), ['Debit Note', 'Invoices for outward supply']);
     assert.strictEqual(taxLines.isDebitNote({ purpose: 'debit_note' }) && taxLines.isDebitNote({ invoice: { DocDtls: { Typ: 'DBN' } } }) && !taxLines.isDebitNote({ purpose: 'invoice' }), true);
-    const boxes = taxLines.outwardBoxes(led);
-    assert.ok(boxes && typeof boxes === 'object');
+    /* GSTR-3B: the seller 3.1(a) takes the note +100 taxable / +18 IGST; the buyer 4(A)(5) (all other ITC) takes +18 */
+    const seller3b = taxLines.gstr3b(taxLines.ledger([entry], ME), ME, '112026');
+    assert.deepStrictEqual([seller3b.sup_details.osup_det.txval, seller3b.sup_details.osup_det.iamt], [100, 18], '3.1(a) +100 / +18');
+    assert.deepStrictEqual(seller3b.itc_elg.itc_net, { iamt: 0, camt: 0, samt: 0, csamt: 0 }, 'the seller claims nothing');
+    const bought = Object.assign({}, entry, { direction: 'received', sells: false });
+    const buyer3b = taxLines.gstr3b(taxLines.ledger([bought], FAR), FAR, '112026');
+    assert.deepStrictEqual(buyer3b.itc_elg.itc_avl, [{ ty: 'OTH', iamt: 18, camt: 0, samt: 0, csamt: 0 }], '4(A)(5) +18');
+    assert.deepStrictEqual([buyer3b.sup_details.osup_det.txval, buyer3b.sup_details.osup_det.iamt], [0, 0], 'the buyer reports no outward supply');
   });
 
   console.log('\n== B · the books ==\n');
@@ -236,6 +336,39 @@ const heads = (n) => [n.invoice.ValDtls.CgstVal || 0, n.invoice.ValDtls.SgstVal 
       const buyer = K.classify({ chit, entry: { sells: false, seller: { entity_id: 's1' }, invoice: note.invoice }, setting });
       assert.deepStrictEqual([buyer.kind, buyer.event.type, buyer.event.party, buyer.event.against_ref], ['post', 'purchase_bill', 's1', chit.chit_id]);
       assert.deepStrictEqual(buyer.event.by_rate, verdict.event.by_rate, 'both sides post from the same carried invoice');
+    });
+    await t('a debit note that reaches the books BEFORE its original is queued in words (wait: original) and posts nothing; once the original is in the books the retry posts it, once', async () => {
+      PACK = PACKS.IN;
+      const SHOP = '33333333-3333-4333-8333-333333333333';
+      const CUST = '44444444-4444-4444-8444-444444444444';
+      const ORIG = 'c0000000-0000-4000-8000-0000000000a1';
+      const DN = 'c0000000-0000-4000-8000-0000000000a2';
+      const { B, T, db: bdb, store } = books;
+      T.parties.push({ owner: SHOP, party_id: CUST, name: 'Ravi Stores', customer: true, credit_days: 15 });
+      await store.saveSetting(bdb, SHOP, { enabled: false });
+      await B.enable(bdb, SHOP, { by: SHOP, today: '2026-11-08' });
+      K.forget(SHOP);
+      const lines = [line('Pump', 1, 1000, 18)];
+      const original = await sendMoney.invoiceOfLines({ lines, sellerId: 's1', buyerId: 'b1', business_json: { billed_at: '2026-11-08T00:00:00Z' }, currency_code: 'INR' });
+      const note = await noteOf(lines, [edit(0, line('Pump', 1, 1100, 18))], '2026-11-08T00:00:00Z', 'INR');
+      const TC = require('../lib/tax-copy');
+      const was = [TC.copyOf, TC.entryFor];
+      TC.copyOf = async () => ({ chit_id: DN, created_at: '2026-11-08T05:00:00Z', purpose: 'debit_note', currency_code: 'INR', business_json: { invoice: note.invoice, against: { chit_id: ORIG, invoice_no: 'INV-7', issuer: 'CBSEL00001' }, printed_as: 'DN/26-27/0001', customer: { entity_id: CUST } } });
+      TC.entryFor = async () => ({ sells: true, buyer: { entity_id: CUST }, invoice: note.invoice });
+      try {
+        const early = await K.postChit(SHOP, DN, {});
+        assert.deepStrictEqual([early.queued, early.wait], [true, 'original'], JSON.stringify(early));
+        assert.ok(/not in the books yet/.test(early.why), early.why);
+        assert.strictEqual(T.entries.filter((x) => x.source_ref === 'chit:' + DN).length, 0, 'nothing posted before the original');
+        const sale = await B.postEntry(bdb, SHOP, { type: 'sale_bill', date: '2026-11-08', currency: 'INR', party: CUST, source_chit_id: ORIG, source_ref: 'chit:' + ORIG, by_rate: K.byRateOf(original).rows, paid: {}, round_off: 0 });
+        assert.ok(sale.ok, JSON.stringify(sale));
+        const late = await K.postChit(SHOP, DN, { retry: true });
+        assert.ok(late.ok && !late.queued, JSON.stringify(late));
+        assert.strictEqual(T.entries.filter((x) => x.source_ref === 'chit:' + DN).length, 1, 'posted once, after the original');
+      } finally {
+        TC.copyOf = was[0];
+        TC.entryFor = was[1];
+      }
     });
     await t('a debit note with no buyer or no supplier on the rail queues in words; a credit note is still a return', async () => {
       const chit = { chit_id: 'c0000000-0000-4000-8000-0000000000d3', created_at: '2026-11-08T05:00:00Z', purpose: 'debit_note', business_json: { printed_as: 'DN/1' } };

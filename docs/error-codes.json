@@ -1676,6 +1676,15 @@
    "since": "2026-11-07"
   },
   {
+   "code": "DEBIT_NOTE_NEEDS_ACCEPT",
+   "status": "409",
+   "title": "A debit note is issued on acceptance",
+   "shopkeeper": "A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.",
+   "hint": "Propose the new price on the bill.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
+  },
+  {
    "code": "DEFINITIONS_NOT_MIGRATED",
    "status": "503",
    "title": "Definitions not set up",
@@ -2934,6 +2943,15 @@
    "hint": "Try again later.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "NOTE_NUMBER_INVALID",
+   "status": "409",
+   "title": "Note number not allowed",
+   "shopkeeper": "The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change.",
+   "hint": "Tell us; we change the note prefix.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
   },
   {
    "code": "NOTHING_TO_DO",
