@@ -78,6 +78,12 @@ async function scenario(country) {
   await payOf(X, 'IN', 'seq-1');
   const second = await payOf(X, 'IN', 'seq-2').then(() => null, (e) => e);
   ok('control · one after the other, the second is refused 409 ALREADY_PAID', !!second && second.code === 'ALREADY_PAID' && second.status === 409, String(second && (second.code || second.message)));
+  /* the same client_ref twice at once (a retry): one posts, the other is the REPLAY of it (duplicate: true), never refused */
+  const R = await shopWithDue('IN');
+  const twin = await Promise.allSettled([payOf(R, 'IN', 'same-ref'), payOf(R, 'IN', 'same-ref')]);
+  const dups = twin.filter((r) => r.status === 'fulfilled' && r.value.payment.duplicate === true).length;
+  ok('same client_ref twice at once: both answer, exactly one is the replay (duplicate: true), none refused', twin.every((r) => r.status === 'fulfilled') && dups === 1, JSON.stringify(twin.map((r) => r.status === 'fulfilled' ? r.value.payment : String(r.reason && r.reason.code))));
+  ok('…and one payment row, the buyer owes 0', R.T.payments.length === 1 && Number((R.E.receivables().outstanding(await R.B.partyItems(R.db, SHOP, BUYER, null)).by_party[BUYER]) || 0) === 0, String(R.T.payments.length));
   const src = fs.readFileSync(path.join(H.API, 'lib', 'books.js'), 'utf8');
   const at = src.indexOf('async function askDuplicateRule'), lockAt = src.indexOf('S.lockParty', at), askAt = src.indexOf('proposeFor(handle, entity, { party: payment.party_id', at);
   ok('source pin · askDuplicateRule (the payment question) takes S.lockParty BEFORE the duplicate question reads the party (proposeFor)', at > 0 && lockAt > at && askAt > lockAt, [at, lockAt, askAt].join(' '));
