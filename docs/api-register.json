@@ -24439,11 +24439,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 74,
-   "hash": "db15a671e7964c53",
+   "line": 79,
+   "hash": "52a1290b0254fe61",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 1,
     "statuses": [
      401,
      404,
@@ -24451,7 +24451,9 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND"
+    ]
    },
    "reads": [
     "chit_header",
@@ -24470,10 +24472,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -24497,7 +24499,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -55793,11 +55796,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 265,
-   "hash": "744dd2369f4e606a",
+   "line": 269,
+   "hash": "bf0d8392fdfe8dfd",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -55807,7 +55810,11 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_ALREADY_PAUSED",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header",
@@ -55825,10 +55832,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -55854,7 +55861,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -55899,11 +55907,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 347,
-   "hash": "2c312512a8db6bca",
+   "line": 351,
+   "hash": "48dc47a6c9199cc6",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -55913,7 +55921,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_OWN_CLAIM"
+    ]
    },
    "reads": [
     "chit_header"
@@ -55930,10 +55941,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -55959,7 +55970,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -56004,11 +56016,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 323,
-   "hash": "a8a3f837aa7c2033",
+   "line": 327,
+   "hash": "5daa1bf9f9753153",
    "does": "",
    "errors": {
-    "count": 1,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -56019,6 +56031,8 @@
      503
     ],
     "codes": [
+     "NOT_FOUND",
+     "SERVICE_PAUSE_ENDED",
      "VALIDATION_FAILED"
     ]
    },
@@ -56037,10 +56051,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56066,7 +56080,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -56111,11 +56126,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 236,
-   "hash": "2d63e20423489086",
+   "line": 240,
+   "hash": "e07f8ecdff81287f",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 3,
     "statuses": [
      400,
      401,
@@ -56124,7 +56139,11 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_NOT_TRACKED",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -56143,10 +56162,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56171,7 +56190,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "output_allowlist_basis": "recordings",
    "reported": {
@@ -56217,11 +56237,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 215,
-   "hash": "fdbc2231053356fa",
+   "line": 219,
+   "hash": "f8dd6871dea9f5fb",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      401,
      404,
@@ -56229,7 +56249,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "SERVICE_NOT_TRACKED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -56248,10 +56271,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -56275,7 +56298,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,
@@ -65155,11 +65179,11 @@
    "owner_area": "service",
    "owner_agent": "cb-rail",
    "file": "routes/service.js",
-   "line": 169,
-   "hash": "59627dd6cb6ae644",
+   "line": 174,
+   "hash": "4c3d96246619a71b",
    "does": "",
    "errors": {
-    "count": 0,
+    "count": 2,
     "statuses": [
      400,
      401,
@@ -65168,7 +65192,10 @@
      500,
      503
     ],
-    "codes": []
+    "codes": [
+     "NOT_FOUND",
+     "VALIDATION_FAILED"
+    ]
    },
    "reads": [
     "chit_header"
@@ -65187,10 +65214,10 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -65215,7 +65242,8 @@
     503
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,

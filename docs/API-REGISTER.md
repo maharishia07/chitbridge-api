@@ -260,7 +260,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | GET | /api/repeat/:id | repeat-supply | routes/repeat-supply.js:95 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/schemas/fields | schemas | routes/schemas.js:93 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | GET | /api/schemas/my | schemas | routes/schemas.js:32 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| GET | /api/service/:chit_id | service | routes/service.js:74 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| GET | /api/service/:chit_id | service | routes/service.js:79 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/signin/devices | signin | routes/signin.js:138 | no | no | yes | yes | no | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/signin/sessions | signin | routes/signin.js:111 | no | no | no | yes | no | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | GET | /api/simulator/content | simulator | routes/simulator.js:57 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
@@ -564,11 +564,11 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/repeat/:id/skip | repeat-supply | routes/repeat-supply.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/repeat/sweep | repeat-supply | routes/repeat-supply.js:86 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
 | POST | /api/schemas/create-default | schemas | routes/schemas.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause | service | routes/service.js:265 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:347 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:323 | yes | yes | no | yes | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/resolve | service | routes/service.js:236 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
-| POST | /api/service/:chit_id/respond | service | routes/service.js:215 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause | service | routes/service.js:269 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/answer | service | routes/service.js:351 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/pause/:pause_id/end | service | routes/service.js:327 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/resolve | service | routes/service.js:240 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| POST | /api/service/:chit_id/respond | service | routes/service.js:219 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/ask | signin | routes/signin.js:957 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
 | POST | /api/signin/logout | signin | routes/signin.js:101 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no |
 | POST | /api/signin/pin | signin | routes/signin.js:959 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | no | partial | yes | yes | yes |
@@ -654,7 +654,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | PUT | /api/products/:id/availability | products | routes/products.js:1723 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | PUT | /api/products/:id/status | products | routes/products.js:1753 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
 | PUT | /api/quick-keys/screen-config/default | quick-keys | routes/quick-keys.js:135 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no |
-| PUT | /api/service/:chit_id | service | routes/service.js:169 | yes | yes | no | no | yes | yes | no | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
+| PUT | /api/service/:chit_id | service | routes/service.js:174 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no |
 | PUT | /api/testing/cmdb/:ci | testing | routes/testing.js:1136 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | no |
 
 ## Endpoint cards
@@ -3945,43 +3945,43 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **GET /api/service/:chit_id** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
+- errors: 1 code(s) [NOT_FOUND] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, SERVICE_ALREADY_PAUSED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header, chit_sla_pause · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/answer** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 2 code(s) [NOT_FOUND, SERVICE_OWN_CLAIM] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/pause/:pause_id/end** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 1 code(s) [VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, SERVICE_PAUSE_ENDED, VALIDATION_FAILED] · statuses 400, 401, 404, 409, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): - · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/resolve** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, SERVICE_NOT_TRACKED, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 0 (wire 0; share cap-service.js 0/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **POST /api/service/:chit_id/respond** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 401, 404, 422, 500, 503 · money n (derived)
+- errors: 2 code(s) [NOT_FOUND, SERVICE_NOT_TRACKED] · statuses 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
 **PUT /api/service/:chit_id** · service · cb-rail · partial
 - does: _not yet written_
-- errors: 0 code(s) [-] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
+- errors: 2 code(s) [NOT_FOUND, VALIDATION_FAILED] · statuses 400, 401, 404, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-service.js 1/4) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): chit_header · writes (derived): chit_sla · callers: cap-service.js · actions: -
 
