@@ -1,12 +1,12 @@
 {
  "version": 1,
- "stage": "2",
+ "stage": "2b",
  "counts": {
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 110,
-  "meets": 528,
+  "partial": 111,
+  "meets": 527,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -39073,7 +39073,7 @@
     "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
     "lifecycle": "stable"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html"
    ],
