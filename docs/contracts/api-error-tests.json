@@ -3552,7 +3552,8 @@
  "POST /api/till/recheck": [
   400,
   401,
-  403
+  403,
+  500
  ],
  "POST /api/till/reconcile": [
   401,

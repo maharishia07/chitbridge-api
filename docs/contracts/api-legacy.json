@@ -63210,6 +63210,126 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "recheck-no-ids",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "item_ids required",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "item_ids required",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "recheck-unknown-key",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "price is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "price is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "price is not accepted here.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "price is not accepted here.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test",
+      "field": "price",
+      "errors": [
+       {
+        "field": "price",
+        "code": "UNKNOWN_FIELD",
+        "detail": "price is not accepted here."
+       }
+      ]
+     }
+    },
+    {
+     "scenario": "recheck-too-many",
+     "status": 400,
+     "body_keys": {
+      "error": "Too many",
+      "message": "At most 200 products in one check.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "At most 200 products in one check.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Too many",
+      "message": "At most 200 products in one check.",
+      "type": "https://chitbridge.com/problems/till_bad_request",
+      "title": "Counter request not valid",
+      "status": 400,
+      "code": "TILL_BAD_REQUEST",
+      "detail": "At most 200 products in one check.",
+      "hint": "Check what was entered and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "recheck-read-breaks",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
     }
    ]
   }

@@ -609,7 +609,7 @@ Three REPORTED columns (CAP-17 slice 1, `tools/api-reported.cjs`), counted on th
 | POST | /api/till/quick-keys/state | till | routes/till.js:1843 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/quick-keys/unhide | till | routes/till.js:1892 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/rate | till | routes/till.js:2365 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes |
-| POST | /api/till/recheck | till | routes/till.js:2217 | yes | yes | yes | yes | yes | no | yes | yes | no | yes | yes | yes | yes | partial | yes | no | yes |
+| POST | /api/till/recheck | till | routes/till.js:2217 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | no | yes |
 | POST | /api/till/reconcile | till | routes/till.js:2899 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/reward | till | routes/till.js:2465 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | yes | partial | yes | yes | yes |
 | POST | /api/till/reward/claim | till | routes/till.js:2537 | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | no | partial | yes | yes | yes |

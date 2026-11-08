@@ -142,6 +142,8 @@ const RATE_SHELF = (sql) =>
 const RATE_ITEM = (sql) =>
   RATE_SHELF(sql) ||
   (/SELECT item_data FROM catalogue_items/.test(sql) ? { rows: [{ item_data: { name: 'Poori', price: 40 } }], rowCount: 1 } : /^\s*UPDATE catalogue_items/.test(sql) ? { rows: [{ item_id: ITEM }], rowCount: 1 } : undefined);
+/* CTR-212 S1: the shop's one product row (ITEM) answered; ITEM2 has no row here, so it is answered found:false */
+const RECHECK_ROWS = (sql) => (/FROM catalogue_items WHERE entity_id = $1 AND item_id = ANY/.test(sql) ? { rows: [{ item_id: ITEM, item_data: { name: 'Pen', price: 120, gst_rate: 18, hsn: '9608' }, is_active: true }], rowCount: 1 } : undefined);
 /* API-8 (till): the stand-ins the success scenes below share */
 const ITEM2 = '33333333-3333-4333-8333-333333333333';
 const WHEN = new Date('2026-10-29T04:00:00Z');
@@ -237,6 +239,12 @@ const EXTRAS = [
   X('rate-item-not-there', 'POST /api/till/rate', 404, { body: RATE_BODY, setup: { sqlRows: RATE_SHELF } }),
   X('rate-write-breaks', 'POST /api/till/rate', 500, { body: RATE_BODY, setup: { db: 'fail', sqlRows: RATE_SHELF } }),
   X('rate-set', 'POST /api/till/rate', 200, { body: RATE_BODY, setup: { sqlRows: RATE_ITEM } }),
+  /* CTR-212 S1 · POST /recheck: no ids, a key beside item_ids, more than 200 ids, the read breaking; and the 200 (a product, one deleted, one that is another shop's) the output allow-list is derived from */
+  X('recheck-no-ids', 'POST /api/till/recheck', 400, { body: { item_ids: [] } }),
+  X('recheck-unknown-key', 'POST /api/till/recheck', 400, { body: { item_ids: [ITEM], price: 1 } }),
+  X('recheck-too-many', 'POST /api/till/recheck', 400, { body: { item_ids: Array.from({ length: 201 }, (_, i) => '7' + String(i).padStart(7, '0') + '-7777-4777-8777-777777777777') }, said: 'At most 200 products in one check.' }),
+  X('recheck-read-breaks', 'POST /api/till/recheck', 500, { body: { item_ids: [ITEM] }, setup: { db: 'fail' } }),
+  X('recheck-answers', 'POST /api/till/recheck', 200, { body: { item_ids: [ITEM, ITEM2] }, setup: { sqlRows: RECHECK_ROWS } }),
   X('alias-no-words', 'POST /api/till/alias', 400, { body: { item_id: ITEM } }),
   X('alias-too-long', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'x'.repeat(121) } }),
   X('alias-bad-factor', 'POST /api/till/alias', 400, { body: { item_id: ITEM, text: 'SUNFL OIL', factor: -2 } }),
