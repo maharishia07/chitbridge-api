@@ -66,11 +66,11 @@ of file each thing is; this says what already does the job.
 | 38 | `host` | `chit-sheet.js` |  |
 | 38 | `facts` | `bill-steps.js` | MY state_log — |
 | 38 | `status` | `books-engines.js` | what the health screen says about the engines — |
+| 38 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
 | 38 | `statement` | `receivables.js` | is LISTED (with why) but does not reduce the balance — |
 | 37 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
-| 37 | `verdict` | `db-role.js` | fatal everywhere except a local stack (production has carried NODE_ENV=" development", so only a local DB prov |
+| 36 | `rate` | `convert.js` | A rate, with its evidence. |
 | 35 | `modal` | `app.html` |  |
-| 35 | `rate` | `convert.js` | A rate, with its evidence. |
 | 35 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 34 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 34 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
@@ -89,9 +89,9 @@ of file each thing is; this says what already does the job.
 | 30 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 30 | `lines` | `cart.js` |  |
 | 30 | `sentence` | `one-person.js` |  |
+| 30 | `note` | `dbwatch.js` |  |
 | 30 | `account` | `home-facts.js` | OMITTED: |
 | 29 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 29 | `note` | `dbwatch.js` |  |
 | 29 | `hold` | `orders.js` |  |
 | 29 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 29 | `mine` | `crm.js` | the party must be on this shop's list (the same test the log uses) |
