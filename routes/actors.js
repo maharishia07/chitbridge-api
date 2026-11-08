@@ -966,19 +966,13 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
 }
 
 /**
- * clearDisputeHandler(entity_id, actor_id) → how many open disputes stopped being routed to this (gone) person — 0 when the write fails (said in the log).
- * B1 RLS (b68): chit_disputes is per-copy + FORCE RLS, so this MUST run under withEntity(me) — a plain query would fail closed and silently leave the gone actor as handler.
+ * clearDisputeHandlerIn(client, entity_id, actor_id) → 1 when this (gone) person was the shop's dispute handler and is now cleared, else 0 (the web reads it as > 0).
+ * PPL-45: the handler is identities.dispute_handler_actor_id of the shop's own row (chit_disputes has no such column). It runs inside the removal's
+ * transaction (the caller's withEntity client), so a failure rolls the removal back with a 500 instead of leaving a gone person as handler.
  */
-async function clearDisputeHandler(entity_id, actor_id) {
-  try {
-    const cleared = await withEntity(entity_id, (client) =>
-      client.query(`UPDATE chit_disputes SET dispute_handler_actor_id = NULL WHERE dispute_handler_actor_id = $1`, [actor_id])
-    );
-    return (cleared && cleared.rowCount) || 0;
-  } catch (e) {
-    logger.fellBack('actors PUT /:id/status: the write failed — carried on without it', e);
-    return 0;
-  }
+async function clearDisputeHandlerIn(client, entity_id, actor_id) {
+  const cleared = await client.query(`UPDATE identities SET dispute_handler_actor_id = NULL WHERE identity_id = $1 AND dispute_handler_actor_id = $2`, [entity_id, actor_id]);
+  return cleared.rowCount || 0;
 }
 
 // ── PUT /api/actors/:id/status ───────────────────────────────
@@ -1105,11 +1099,9 @@ router.put(
         }
         // Cover cleanup: a deactivated/removed actor can no longer be anyone's leave-cover — clear inbound
         // pointers too (its own cover pointer was cleared above). Leaves no dangling cover to a gone actor.
-        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [
-          actor_id,
-          entity_id
-        ]);
+        const _cc = await client.query(`UPDATE identities SET delegate_actor_id = NULL WHERE delegate_actor_id = $1 AND parent_entity_id = $2`, [actor_id, entity_id]);
         covers_removed = _cc.rowCount || 0;
+        disputes_cleared = await clearDisputeHandlerIn(client, entity_id, actor_id);
         // Default auto-assign assignee: if it points to this actor, clear it (would otherwise route to a gone actor).
         const _da = await client.query(
           `UPDATE entity_actor_settings SET default_assignee_actor_id = NULL WHERE entity_id = $1 AND default_assignee_actor_id = $2`,
@@ -1129,8 +1121,6 @@ router.put(
       /* after COMMIT: a request in between may have re-cached the old "listed" answer */
       endedJtis.forEach(personSession.forget);
       endedKeys.forEach(auth.forgetKey);
-
-      disputes_cleared = await clearDisputeHandler(entity_id, actor_id);
 
       /* PEOPLE-SRV1 (compliance): switched off / removed goes on the IAM trail — by whom, from what state */
       const audit = await recordBreak(entity_id, actor_id, a.break_status, action === 'remove' ? 'removed' : 'deactivated', req.identity.identity_id, action);

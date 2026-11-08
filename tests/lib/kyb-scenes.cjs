@@ -137,7 +137,8 @@ function extras(tools) {
     X('risk-spread', RISK, 200, { setup: withRows(tradeRows(SPREAD)) }),
     X('risk-expiring', RISK, 200, { setup: withRows(heldPapers()) }),
     X('risk-nothing-traded', RISK, 200, {}),
-    X('risk-reads-fail', RISK, 200, { setup: { db: 'fail' } }),
+    /* CMP-55: a failed trade read is a fault (500, the generic sentence), no longer a section that says "no trade" */
+    X('risk-reads-fail', RISK, 500, { setup: { db: 'fail' } }),
     X('risk-library-throws', RISK, 500, { patch: { kyb: { risk: thrown(SECRET_SQL) } } }),
     X('risk-bad-setting', RISK, 500, { env: { KYB_STRUCTURAL: '{ not json', KYB_CONCENTRATION_PCT: '30' } }),
     X('risk-answer-fails', RISK, 500, { setup: { jsonThrows: true } }),

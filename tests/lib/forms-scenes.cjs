@@ -96,7 +96,7 @@ function extras(tools) {
     if (/INSERT INTO form_instance/.test(String(sql)) && params[2] != null && !PG_UUID.test(String(params[2]))) throw sqlError('22P02');
     return null;
   };
-  const issuable = firstOf(uuidColumns, when(/INSERT INTO form_instance/, [{ form_id: INSTANCE, created_at: '2026-10-01T00:00:00Z' }]));
+  const issuable = firstOf(uuidColumns, when(/INSERT INTO form_instance/, [{ form_id: INSTANCE, created_at: '2026-10-01T00:00:00Z' }]), when(/FROM chit_header h[\s\S]*WHERE h\.entity_id/, []));
   const filed = { storage: { putForParticipants: async () => 'att-0001' } };
   return [
     /* GET / */
@@ -117,9 +117,10 @@ function extras(tools) {
     X('resolve-from-an-order', RESOLVE, 200, {
       url: at('/commercial-invoice/resolve'),
       body: { context_ref: CHIT },
-      setup: withRows(when(/FROM chit_header WHERE entity_id = \$1 AND chit_id = \$2/, [{ subject: 'INV-7', sender_entity_display_name: 'Test shop', all_recipients: [{ role: 'receiver', display_name: 'Buyer Co', legal_name: 'Buyer Co' }], total_value: 1200, summary_json: { currency_code: 'INR', invoice_date: '2026-10-01' } }]))
+      setup: withRows(when(/FROM chit_header h[\s\S]*WHERE h\.entity_id = \$1 AND h\.chit_id = \$2/, [{ subject: 'INV-7', sender_entity_display_name: 'Test shop', all_recipients: [{ role: 'receiver', display_name: 'Buyer Co', legal_name: 'Buyer Co' }], total_value: 1200, summary_json: { currency_code: 'INR', invoice_date: '2026-10-01' } }]))
     }),
-    X('resolve-order-read-fails', RESOLVE, 200, { url: at('/' + FORM + '/resolve'), body: { context_ref: CHIT }, setup: { db: 'fail' } }),
+    /* CMP-54: an unreadable order is a fault the shop is told of (500, the generic sentence), no longer an empty form that looks filled */
+    X('resolve-order-read-fails', RESOLVE, 500, { url: at('/' + FORM + '/resolve'), body: { context_ref: CHIT }, setup: { db: 'fail' } }),
     X('resolve-unknown-form', RESOLVE, 404, { url: at('/no-such-form/resolve'), body: {} }),
     X('resolve-name-of-an-object', RESOLVE, 500, { url: at('/constructor/resolve'), body: {} }),
     X('resolve-answer-fails', RESOLVE, 500, { url: at('/' + FORM + '/resolve'), body: {}, setup: { jsonThrows: true } }),
