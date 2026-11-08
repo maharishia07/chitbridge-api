@@ -24,7 +24,7 @@ const w = (c) => words.wordsFor(c);
 t('IN: GSTIN · GST · GST registration · GSTR-3B · INR', w('IN').taxId === 'GSTIN' && w('IN').taxName === 'GST' && w('IN').registration === 'GST registration' && w('IN').returnShort === 'GSTR-3B' && w('IN').currency === 'INR');
 t('AU: ABN · GST · BAS · AUD (the return name is the pack\'s returns.short)', w('AU').taxId === 'ABN' && w('AU').taxName === 'GST' && w('AU').returnShort === 'BAS' && w('AU').currency === 'AUD');
 t('AE: TRN · VAT · VAT registration · VAT return · AED', w('AE').taxId === 'TRN' && w('AE').taxName === 'VAT' && w('AE').registration === 'VAT registration' && w('AE').returnShort === 'VAT return' && w('AE').currency === 'AED');
-t('no country / unknown country / lower case: neutral words, never India\'s', [w(''), w(null), w('US')].every((x) => x.taxId === 'Tax number' && x.registration === 'Tax registration' && x.returnShort === null && !x.hasPack) && w('au').taxId === 'ABN');
+t('no country / unknown country (ZZ; US has its own pack now, EIN) / lower case: neutral words, never India\'s', [w(''), w(null), w('ZZ')].every((x) => x.taxId === 'Tax number' && x.registration === 'Tax registration' && x.returnShort === null && !x.hasPack) && w('au').taxId === 'ABN');
 t('a pack object may be handed in (what sides and the header hold)', w(require(path.join(API, 'lib', 'regulation')).packFor('AE')).taxId === 'TRN');
 
 /* ── registrationKindsFor: the stored enum never changes ── */

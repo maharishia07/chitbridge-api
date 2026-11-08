@@ -765,12 +765,76 @@ const GUARDS = [
   'trend-reads-books.test.cjs', // test sweep 7 Nov 2026: was in no runner, passes offline
   'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'vertical-readers-characterisation.test.cjs', // P1-14: the 21 trade-reader answers pinned; the 7 that change under the one resolver are listed
+  'acc-215-half-step.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-215 (Athi 2026-11-07, HALF step): an AU cash gap posts as round-off only up to ceil(step/2)-1
+  'acc-221-blank-rate-route.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-221-blank-rate-route.test.cjs — ACC-221/222 live fault (SIT part 6, 2026-11-07): a BLANK gst_rate with no shelf rate ans
+  'acc-230-expense-gst.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-230: AN EXPENSE CHIT WITH GST POSTS NET + INPUT TAX, NOT GROSS.
+  'acc-240-lock-trail.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-240 (AU-AUDITOR-READINESS §A7): A MONTH LOCK CAN BE LIFTED, BUT NEVER SILENTLY.
+  'acc-263-credit-refund.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-263: A TILL CREDIT NOTE REFUNDED "ON CREDIT" POSTS AGAINST THE CUSTOMER'S RECEIVABLE.
+  'acc-268-unread-bills.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-268-unread-bills.test.cjs — ACC-268: A RETURN NEVER GOES OUT WITH A BILL SILENTLY MISSING.
+  'acc-269-expense-itc.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-269-expense-itc.test.cjs — ACC-269: GSTR-3B 4A READS AN EXPENSE CHIT'S INPUT TAX (the tax ACC-230 posts to input_cgst / 
+  'acc-269-live-expense.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-269-live-expense.test.cjs — ACC-269 LIVE PATH: the till's REAL expense chit (SIT P1 run part 16) has NO summary_json.mon
+  'acc-270-reversed-named.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-270-reversed-named.test.cjs — ACC-270: A BILL THE BOOKS NO LONGER HOLD IS NAMED IN THE RETURN, AND THE FILED MONTH DOES 
+  'acc-273-send-reads-registration.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-273-send-reads-registration.test.cjs — ACC-273: THE PARTY A SEND PRICES READS THE SHOP'S OWN REGISTRATION (hand-computed
+  'acc-277-compute-said-no.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc-277-compute-said-no.test.cjs — ACC-277: AN AU SHOP WHOSE OWNER SAID "NOT REGISTERED" IS NOT CHARGED GST on POST /api/tax
+  'acc192-debit-note.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc192-debit-note.test.cjs — ACC-192 slice 2: a priced RAISE on an issued invoice is a DEBIT NOTE over the CHANGED LINES ONL
+  'api-47-closed-bodies.test.cjs', // U1 (8 Nov, was run by no CI job): API-47 (S33): the 12 doors only our web calls refuse an unknown body key, 400 by name, and still take every body the web sends.
+  'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
+  'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
+  'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
+  'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
+  'api-strict-input-status.test.cjs', // U1 (8 Nov, was run by no CI job): PINS what an unknown body key answers, per route, on the real app (the cases of tools/api-contract-tests.cjs: stand-in database, r
+  'bell-delivery.test.js', // U1 (8 Nov, was run by no CI job): A BELL IS WATCHED FOR DELIVERY, NOT FOR CONNECTION ([TILL-167], BACKLOG TILL-146).
+  'books-date-given.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-274: a date the caller GIVES is read once, by books-period.dateGiven (dateOf and routes/books.js dateQ both go through it).
+  'cat-258-unpriced-bands.test.cjs', // U1 (8 Nov, was run by no CI job): CAT-258: an UNPRICED tiered line is "no price set", never a free band, and no bill prices it at 0.
+  'ctp-query-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): API-7 (S34): the answer to a signed CTP question names its keys.
+  'ctr-186-till-deliver-to.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctr-186-till-deliver-to.test.cjs — CTR-186: THE COUNTER RECORDS WHERE THE GOODS GO.
+  'ctry-77-cash-step.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-cash-step.test.cjs — CTRY-77 / AU-02b: THE API REFUSES A CASH PART NO COIN CAN MAKE.
+  'ctry-77-send-route.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-send-route.test.cjs — CTRY-77: THE REAL SEND STEP, OVER A REAL EXPRESS APP, FOR AN AU SHOP.
+  'ctry-77-till-cash-parts.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-77-till-cash-parts.test.cjs — CTRY-77: THE TILL TAKES EVERY CASH PART ON THE PACK'S COIN STEP.
+  'ctry-81-send-stamp-delivery.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-81-send-stamp-delivery.test.cjs — CTRY-81 live fault (SIT part 6, 2026-11-07): the invoice STAMPED AT SEND reads the ch
+  'ctry-94-invoice-no-country.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry-94-invoice-no-country.test.cjs — POST /api/invoice/build for a shop with NO country answers 422 NO_COUNTRY, never a 500
+  'ctry75-regof-unknown.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry75-regof-unknown.test.cjs — CTRY-75 prerequisite: AN UNKNOWN TAX REGISTRATION IS ASKED, NEVER READ AS REGISTERED.
+  'ctry75-tax-registration-unknown.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ctry75-tax-registration-unknown.test.cjs — CTRY-75: b841 resets ONLY the tax answer migration b299 assumed, never an owner's
+  'customer-by-name.test.cjs', // U1 (8 Nov, was run by no CI job): POST /customers { name } adds a customer who is NOT on ChitBridge (Athi, 2026-10-02:
+  'dispute-audience.test.cjs', // U1 (8 Nov, was run by no CI job): tests/dispute-audience.test.cjs — RAIL-187: lib/dispute-audience.audienceOf, the ONE reading of who receives a dispute's message.
+  'docnumber-gate.test.js', // U1 (8 Nov, was run by no CI job): ── tests/docnumber-gate.test.js · THE SERVER CHECKS THE NUMBER, AND NEVER REFUSES IT ────────────────────────
+  'finance-terms.test.cjs', // U1 (8 Nov, was run by no CI job): CB FINANCE · TERMS (F2): shop default + per-party override (resolver), the limit check, one change event per
+  'idem3-payment-clear.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idem3-payment-clear.test.cjs — DELETE /api/chits/:chit_id/payment ("Mark unpaid") is SAFE TO REPEAT (contract pass, 7 Nov 20
+  'idem3-till-reward.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idem3-till-reward.test.cjs — the counter's two points writes are SAFE TO REPEAT (contract pass, 7 Nov 2026).
+  'idoc-subject.test.cjs', // U1 (8 Nov, was run by no CI job): tests/idoc-subject.test.cjs — who may file a document against whom.
+  'net-77-remote-dealer-409-mutation.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 mutation checks: break the refusal two ways and tests/net-77-remote-dealer-409.test.cjs MUST go red each time.
+  'net-77-remote-dealer-409.test.cjs', // U1 (8 Nov, was run by no CI job): NET-77 (owner cb-network): asking to connect to a business on ANOTHER installation (a supplier stub here) is refused, nothing save
+  'net-edge-answer-keys.test.cjs', // U1 (8 Nov, was run by no CI job): NET-EDGE (owner cb-network): the five POST /api/network/connections/:id/{approve,decline,suspend,resume,disconnect} answers name t
+  'not-migrated.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS the proof that lib/not-migrated.js words a "waiting for the update" answer in plain words with its required "meanwhile", and 
+  'ops-81-one-payable.test.cjs', // U1 (8 Nov, was run by no CI job): OPS-81 · A SUPPLIER BILL POSTS ONE PAYABLE, WHICHEVER PAPER ARRIVES FIRST.
+  'ops82-match-invoice.test.cjs', // U1 (8 Nov, was run by no CI job): tests/ops82-match-invoice.test.cjs — OPS-82: GET /api/till/match attaches to each purchase order the supplier invoice that BILLS i
+  'pack-words.test.cjs', // U1 (8 Nov, was run by no CI job): AU-WORDS (2026-10-15): the words a screen says for a shop's country come from ONE reader (lib/pack-words), per pack.
+  'plt86c-bills-inflight-503.test.cjs', // U1 (8 Nov, was run by no CI job): PLT-86c: a database connection killed under GET /api/till/bills answers 503 DB_CONNECTION_LOST.
+  'prove-session.test.cjs', // U1 (8 Nov, was run by no CI job): tests/prove-session.test.cjs — tools/tally-connector/prove.js session(): every write is ONE attempt with its OWN Idempotency-Key.
+  'reset-and-seed.test.cjs', // U1 (8 Nov, was run by no CI job): tests/reset-and-seed.test.cjs: the reset wipe clears the identity-owned tables before identities (SEC-130 residual). Fake db, no d
+  'rev01-price-includes-tax.test.js', // U1 (8 Nov, was run by no CI job): [REV-01] "Every server-side invoice is 18% too high, and it is frozen
+  'rev02-no-rerate-on-send.test.js', // U1 (8 Nov, was run by no CI job): ── ⭐⭐⭐ [REV-02] "A BILL THE CUSTOMER HAS PAID IS RE-PRICED AT TODAY'S OFFERS WHEN IT SYNCS" ─────────────────
+  'sec-149-soft-token.test.cjs', // U1 (8 Nov, was run by no CI job): tests/sec-149-soft-token.test.cjs — SEC-149: a public door that serves MORE to the owner (GET /api/catalogue/:bridge?preview=1, th
+  'testnews.test.cjs', // U1 (8 Nov, was run by no CI job): THE LOOP CLOSES, AND IT CLOSES ON THE RIGHT PERSON.
+  'till-no-country-boot.test.cjs', // U1 (8 Nov, was run by no CI job): CTRY-94 regression: a shop with no country must not abort the counter's boot. billMoney() (reached from paintTotals at load) calle
+  'change-pin-lock.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: change-pin counts a wrong current PIN and honours the lock (was named only in NEEDS_ENGINES, which skips and never runs)
+  'change-pin-lock-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: with the count-and-lock removed the test above goes red (was named only in NEEDS_ENGINES)
+  'db-error-survives.test.cjs', // U1 (8 Nov, in no GUARDS array): PLT-86: a database fault survives the mutation routes (was named only in NEEDS_ENGINES)
+  'db-error-survives-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PLT-86: with each handler removed the test above goes red (was named only in NEEDS_ENGINES)
+  'itemmatch-corpus.test.cjs', // U1 (8 Nov, in no GUARDS array): the item-match corpus (was named only in NEEDS_ENGINES)
+  'itemmatch-corpus-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): the corpus mutation set (was named only in NEEDS_ENGINES)
+  'every-test-is-enrolled.test.cjs', // U1 (8 Nov, the guard): U1 (8 Nov): every tests/*.test.(js|cjs) is run by a CI job or is on a named, ratcheted known list; the api half of the map measure tests_not_in_ci
 ];
 
 /** the number a guard proved: its last "<n> checks" or "<n> passed" (QA-79), else node:test's "pass <n>" line (spec reporter ℹ, TAP reporter #); 0 = it proved nothing */
 function countChecks(out) {
   const countMatches = out.match(/(\d+)\s+(?:checks|passed)/g) || out.match(/(?:ℹ|#) pass (\d+)/g); /* node:test: "ℹ pass n" on a terminal, "# pass n" (TAP) in CI */
-  return countMatches ? Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]) : 0;
+  if (countMatches) return Number(String(countMatches[countMatches.length - 1]).match(/\d+/)[0]);
+  /* U1 (8 Nov): two more honest shapes the enrolled files print, tried ONLY when the shapes above found nothing (so no old guard's count moves):
+     "<n> ok, <m> failed" and a file that prints one "ok …" / "✓ …" line per check and ends "all ok" with no number (a count of those lines; none = 0 = proved nothing) */
+  const okFailed = out.match(/(\d+) ok, \d+ failed/g);
+  if (okFailed) return Number(okFailed[okFailed.length - 1].match(/\d+/)[0]);
+  return (out.match(/^\s*(?:ok|✓)\s/gm) || []).length;
 }
 
 const all = process.argv.indexOf('--all') >= 0;

@@ -43,7 +43,8 @@ it('⭐⭐ the finding is written ON THE CHIT, not only into the reply', () => {
      person who pressed the key. A finding that lives only in an HTTP response is one nobody sees again. */
   assert.ok(/business_json\.number_check = number_check/.test(route),
     'the finding no longer lands on the chit');
-  assert.ok(/\.\.\.\(number_check \? \{ number_check \} : \{\}\)/.test(route),
+  /* the reply is now built in sendAnswer with `number_check: number_check || undefined` (RAIL-149 hideSendAnswer wraps it): still present only when something is wrong, absent otherwise */
+  assert.ok(/number_check: number_check \|\| undefined/.test(route),
     'the reply no longer carries the finding');
 });
 
