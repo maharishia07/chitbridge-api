@@ -2945,6 +2945,7 @@
   500
  ],
  "POST /api/network-offers/catalogue/publish": [
+  400,
   401,
   403,
   404,

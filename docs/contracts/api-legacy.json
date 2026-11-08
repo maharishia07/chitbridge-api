@@ -62916,6 +62916,34 @@
   "POST /api/network-offers/catalogue/publish": {
    "answers": [
     {
+     "scenario": "publish-at-not-a-date",
+     "status": 400,
+     "body_keys": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     },
+     "fixture": {
+      "error": "validation",
+      "message": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "type": "https://chitbridge.com/problems/date_invalid",
+      "title": "Date not valid",
+      "status": 400,
+      "code": "DATE_INVALID",
+      "detail": "\"at\" must be a date and time like 2026-12-31T00:00:00Z, or \"now\".",
+      "hint": "Use the day as YYYY-MM-DD, for example 2026-10-03.",
+      "request_id": "req-test",
+      "field": "at"
+     }
+    },
+    {
      "scenario": "key-asks",
      "status": 403,
      "body_keys": {
