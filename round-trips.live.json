@@ -264,7 +264,9 @@
   "PUT /api/identity/documents/:scheme": 4,
   "PATCH /api/supplies/:id": 3,
   "PUT /api/assist/catalogue-source": 4,
-  "PUT /api/assist/region-override": 4
+  "PUT /api/assist/region-override": 4,
+  "POST /api/books/gst/pay": 4,
+  "POST /api/books/payments/:id/confirm": 5
  },
  "measured": {
   "POST /api/network/entities": {
@@ -818,6 +820,18 @@
    "status": 200,
    "basis": "live from sit-in 2026-11-06",
    "at": "2026-11-06"
+  },
+  "POST /api/books/gst/pay": {
+   "trips": 4,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-08",
+   "at": "2026-11-08"
+  },
+  "POST /api/books/payments/:id/confirm": {
+   "trips": 5,
+   "status": 200,
+   "basis": "live from sit-in 2026-11-08",
+   "at": "2026-11-08"
   }
  },
  "_about": "Live counts of the routes the harness reached (tools/live-trips.cjs, SPD-39): measured[route] = { trips, status, basis, at }; routes[route] carries the same trips for tests/round-trips-all.test.cjs."

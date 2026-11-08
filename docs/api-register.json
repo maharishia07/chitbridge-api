@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 153,
-  "meets": 485,
+  "partial": 152,
+  "meets": 486,
   "columns": {
    "strict_input": {
     "applies": 350,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 36
+    "failing": 34
    }
   },
   "reported": {
@@ -35513,7 +35513,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -35559,10 +35559,10 @@
    ],
    "offline": "idempotent",
    "round_trips": {
-    "trips": 50,
+    "trips": 4,
     "wire": null,
     "screens": [
-     "cap-period.js 50/109"
+     "cap-period.js 4/109"
     ]
    },
    "measured": {
@@ -36937,7 +36937,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -36975,11 +36975,11 @@
     "signed_off_by_date": "cb-api-reviewer 2026-11-05 PR#747 stage2",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "idempotent",
    "round_trips": {
-    "trips": 50,
+    "trips": 5,
     "wire": null,
     "screens": []
    },
