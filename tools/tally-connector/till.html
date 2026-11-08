@@ -17411,8 +17411,10 @@ async function recheckRead(){
 function recheckGone(answerRow){ return answerRow.found === false ? 'deleted' : (answerRow.active === false || answerRow.status === 'retired' || answerRow.status === 'redundant') ? 'withdrawn' : null; }
 /** the tax context a rate is resolved in: the answer's own slabs / categories / face when it carried them (an empty set is "could not read", never "no slabs") */
 function recheckContext(answer){
+  var current = { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] };
   var carried = answer && Array.isArray(answer.slabs) && answer.slabs.length > 0;
-  return { face: carried ? (answer.face || S.face || {}) : (S.face || {}), slabs: carried ? answer.slabs : (S.slabs || []), categories: carried && Array.isArray(answer.categories) ? answer.categories : (S.categories || []) };
+  if (!carried) return current;
+  return { face: answer.face || current.face, slabs: answer.slabs, categories: Array.isArray(answer.categories) ? answer.categories : current.categories };
 }
 /** the rate CBTax.slab.resolve gives a product's tax facts in a context (the same call price() makes at sale), or null */
 function recheckRateOf(itemData, ctx){
@@ -17426,12 +17428,20 @@ function recheckLineChange(cartLine, answerRow, ctx){
   if (!answerRow || answerRow.checked === false) return null;
   var gone = recheckGone(answerRow), change = { cartLine: cartLine, answerRow: answerRow, gone: gone, price: null, rate: null };
   if (gone) return change;
-  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
-  if (from !== to && !(keptAt != null && keptAt === to)) change.price = [from, to];
-  var oldRate = recheckRateOf(cartLine.item_data, { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] });
-  var newRate = recheckRateOf(Object.assign({ name: answerRow.name }, taxInputOf(answerRow)), ctx);
-  if (oldRate !== newRate) change.rate = [oldRate, newRate];
+  change.price = recheckPriceMove(cartLine, answerRow);
+  change.rate = recheckRateMove(cartLine, answerRow, ctx);
   return (change.price || change.rate) ? change : null;
+}
+/** the shelf price moved? → [from, to], or null (the same price, or the very price the owner already chose to keep) */
+function recheckPriceMove(cartLine, answerRow){
+  var keptAt = cartLine.kept && Number(cartLine.kept.current), from = recheckBaseOf(cartLine), to = r2(Number(answerRow.price) || 0);
+  return from === to || keptAt === to ? null : [from, to];
+}
+/** the rate in force moved? → [was, now] through CBTax.slab.resolve in the old and the new tax context, or null */
+function recheckRateMove(cartLine, answerRow, ctx){
+  var rateWas = recheckRateOf(cartLine.item_data, { face: S.face || {}, slabs: S.slabs || [], categories: S.categories || [] });
+  var rateNow = recheckRateOf(Object.assign({ name: answerRow.name }, taxInputOf(answerRow)), ctx);
+  return rateWas === rateNow ? null : [rateWas, rateNow];
 }
 /** every line that moved: the changes, in cart order */
 function recheckChanges(answer){
@@ -22034,28 +22044,7 @@ async function finish(){
   var body = {
     /* ⚠️ price is what was CHARGED per unit (after the structure, before offers); list_price and priced_by say what
        decided it, so a reprint next year explains itself without the definition — the same reason a slab travels. */
-    lines: CART.map(function(c){ return { item_id:c.item_id, name:c.name, unit:c.unit,
-                                          price:(c.unitPrice != null ? c.unitPrice : c.price), list_price:c.price,
-                                          priced_by:(c.priced && c.priced.kind) || null,
-                                          priced_why:(c.priced && c.priced.why) || null, qty:c.qty,
-                                          mrp:c.mrp || null,
-                                          /* ⭐ the line's own taxable value and tax, so a reprint prints the same
-                                             breakdown without recomputing it against today's slabs */
-                                          taxable:c.taxable != null ? c.taxable : null, tax:c.tax != null ? c.tax : null,
-                                          gross:c.gross, save:c.save, net:c.net, off:c.off, off_label:c.off_label,
-                                          /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over
-                                             a `save` that is the sum of all of them — tolerable on a screen you
-                                             can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a
-                                             reprint, a dispute and the shop all read a year later, and by then
-                                             nobody can re-derive which offers applied. Kept beside off_label
-                                             rather than replacing it, so every existing reader keeps working. */
-                                          offers:(c.offs||[]).map(function(a){
-                                            return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
-                                                     off:r2(Math.abs(a.amount)), why:a.why||null }; }),
-                                          save_unnamed:c.save_unnamed || 0,
-                                          /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
-                                          mods:(c.mods && c.mods.length ? c.mods : null),
-                                          hsn:c.hsn, gst_rate:c.gst_rate, catalogue_stamp:c.catalogue_stamp || null }; }),
+    lines: CART.map(billLineOf),   /* CTR-212: each line as the bill records it, one function (billLineOf, below) */
     payments: parts, paid: paid,
     /* ⚠️ RECORDED, NOT INFERRED. The day close counts the bills nobody answered this for; working it out afterwards
        from the shape of a bill would be a guess dressed as a finding. */
@@ -22073,14 +22062,7 @@ async function finish(){
     /* ⭐ the rate-wise summary the printed bill shows at the foot — recorded with the bill for the same reason
        the heads are, so a reprint states what was issued rather than what today's slabs would say */
     by_rate: m.byRate || {},
-    customer: Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
-                            cust ? { identity_id: cust.identity_id } : {},
-                            /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
-                               the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
-                            cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
-                            /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
-                               The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
-                            cust && cust.gstin && invoiceRule(m.net, cust.gstin) ? { gstin: cust.gstin } : {}),
+    customer: billCustomerOf(cust, m.net),   /* CTR-212: the buyer as the bill records it, one function (billCustomerOf, below) */
     /* ⭐ BOOKS v2 — the terms travel on the chit, so both copies carry the same due date (SPEC-credit-lifecycle §3) */
     terms: credit && cust ? { credit_days: creditDaysOf(cust), due_date: dueDateFor(cust) } : null,
     credit_override: override, price_basis: basis, money_override: moneyOver || undefined,   /* ACC-206 H: the owner let a bill that does not add up through */
@@ -22123,6 +22105,39 @@ async function finish(){
   menuFresh();
   load(); loadQuick();
   stepGo('pick'); return { ok: true, bill: r.bill };   /* the next customer starts at Items */
+}
+/** the buyer as the bill stores it: name and phone as typed (Walk-in when blank), the known customer by id, a business on the rail by entity, and the buyer's ABN / TRN where the pack's tax invoice names it */
+function billCustomerOf(cust, billTotal){
+  return Object.assign({ name:(document.getElementById('cname').value||'').trim() || 'Walk-in', phone:(document.getElementById('cphone').value||'').trim() },
+  cust ? { identity_id: cust.identity_id } : {},
+  /* ⭐ a business on the rail: the bill is SENT to them too (billRecipients) — stamped now, from
+     the snapshot this bill was rung up against, so a queued bill keeps whom it was for */
+  cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
+  /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
+     The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
+  cust && cust.gstin && invoiceRule(billTotal, cust.gstin) ? { gstin: cust.gstin } : {});
+}
+/** one cart line as the bill stores it: who it is and what decided its price (billLineFigures), every offer on the record, the chosen modifiers, hsn · rate · catalogue_stamp */
+function billLineOf(cartLine){
+  return Object.assign({ item_id:cartLine.item_id, name:cartLine.name, unit:cartLine.unit }, billLineFigures(cartLine), {
+    /* ⭐⭐ EVERY OFFER, ON THE RECORD. `off_label` names only the first, over a `save` that is the sum of all of them — tolerable on a screen you
+       can re-read, wrong on a bill. A stored line is EVIDENCE: it is what a reprint, a dispute and the shop all read a year later, and by then
+       nobody can re-derive which offers applied. Kept beside off_label rather than replacing it, so every existing reader keeps working. */
+    offers:(cartLine.offs||[]).map(function(a){
+      return { id:a.offer_id||null, label:a.label||a.kind||'Offer',
+               off:r2(Math.abs(a.amount)), why:a.why||null }; }),
+    save_unnamed:cartLine.save_unnamed || 0,
+    /* ⭐ the CHOSEN modifiers ride the line (BF3) — the paper and the kitchen both name them */
+    mods:(cartLine.mods && cartLine.mods.length ? cartLine.mods : null),
+    hsn:cartLine.hsn, gst_rate:cartLine.gst_rate, catalogue_stamp:cartLine.catalogue_stamp || null });
+}
+/** a line's charge and what decided it: price (after the structure, before offers), list_price, priced_by · priced_why, qty, mrp, and the line's own taxable value and tax so a reprint prints the same breakdown without recomputing it against today's slabs */
+function billLineFigures(cartLine){
+  return { price:(cartLine.unitPrice != null ? cartLine.unitPrice : cartLine.price), list_price:cartLine.price,
+    priced_by:(cartLine.priced && cartLine.priced.kind) || null, priced_why:(cartLine.priced && cartLine.priced.why) || null,
+    qty:cartLine.qty, mrp:cartLine.mrp || null,
+    taxable:cartLine.taxable != null ? cartLine.taxable : null, tax:cartLine.tax != null ? cartLine.tax : null,
+    gross:cartLine.gross, save:cartLine.save, net:cartLine.net, off:cartLine.off, off_label:cartLine.off_label };
 }
 
 /**
