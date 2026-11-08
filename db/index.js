@@ -67,8 +67,8 @@ async function createPool() {
     try {
       await tryConnect(a.config);
       console.log(`DB connected via ${a.label}: ${a.where}`);
-      const { intFromEnv } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
-      return armPool(new Pool({ ...a.config, max: intFromEnv('DB_POOL_MAX', 10), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
+      const { intFromEnv, poolMax } = require('../lib/limits');   /* PLT-85: the pool's size and its wait are settings, defaults unchanged (10 connections, 10 s) */
+      return armPool(new Pool({ ...a.config, max: poolMax(), idleTimeoutMillis: 30000, connectionTimeoutMillis: intFromEnv('DB_POOL_WAIT_MS', 10000) }));
     } catch (e) {
       why.push(`${a.label} ${a.where}: ${e.message}`);
       console.log(`${a.label} connect failed (${a.where}: ${e.message})` + (a === plan[plan.length - 1] ? '' : ' — trying the next configured URL'));
@@ -190,7 +190,8 @@ function rlsGuardCheck(text) {
 }
 
 const query = async (text, params) => {
-  if (!pool) await ensurePool();          // cold start: wait for the pool instead of failing the request
+  if (!pool) await ensurePool();
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: a GET/HEAD whose client has gone takes no pool connection */          // cold start: wait for the pool instead of failing the request
   try { require('../lib/trips').tick('query'); } catch (_) {}   /* counts only when CB_TRIPS=1 — lib/trips.js */
   rlsGuardCheck(text);
   const start = Date.now();
@@ -224,6 +225,7 @@ const withTransaction = async (fn) => {
   if (!pool) await ensurePool();
   /* a transaction is four trips of its own — BEGIN, the set_config, the work, COMMIT — which is the whole reason this is counted */
   try { require('../lib/trips').tick('tx'); } catch (_) {}
+  require('../lib/limits').refuseIfReaderGone();   /* PLT-85: same door for a read inside a transaction (GET/HEAD only; a mutating request is never refused) */
   const client = await pool.connect();
   /* PLT-86: while a client is checked out pg-pool has no listener on it; a connection that dies now (database restart, killed backend) emits 'error' on the
      CLIENT and, unhandled, kills the process. Log it once and release the client WITH the error so the pool destroys it; the running query rejects on its own. */

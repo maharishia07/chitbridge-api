@@ -252,6 +252,8 @@ function runUnverified(req, res, next, claim, why) {
 
 /** the key is ours to hold: the durable store, or the memory when the store is off. `req.idempotencyHeld` says so to a gate further down the chain (FIN-63) */
 function holdKey(req, res, next, claim) {
+  /* ⭐ PLT-85: the client left before the claim: claim nothing and run nothing (nobody can read the answer, and a retry is a first try). After the claim the route always runs to COMMIT. */
+  if (res.locals && res.locals.clientGone) return log.info('idempotency: the client left before the claim — nothing claimed, nothing run', { id: req.id, method: req.method, path: req.path });
   req.idempotencyHeld = claim.key;
   if (!claim.hash) return runUnverified(req, res, next, claim, 'the body could not be fingerprinted');
   return dbStore
