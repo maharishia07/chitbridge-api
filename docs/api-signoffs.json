@@ -2431,7 +2431,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#339",
+   "signed_off_by_date": "cb-security (independent re-sign at stage 2b, not the builder) 2026-11-09 PR#1064: handler and contract re-read; one 400 sentence for unknown contact, wrong, expired-lock; code spent on use; 5-miss lock + catalogue limiter; names_clear, sentence_plain, backward_compatible pass; residual: unknown contact skips the attempt UPDATE (ms timing, follow-up)",
    "lifecycle": "stable"
   },
   "POST /api/catalogue/:bridge_id/order/confirm": {
