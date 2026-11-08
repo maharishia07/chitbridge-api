@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 110,
-  "meets": 528,
+  "partial": 111,
+  "meets": 527,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -41067,13 +41067,14 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 4564,
-   "hash": "4896e7d335ee37ca",
+   "hash": "2230812987fb9ca7",
    "does": "",
    "errors": {
     "count": 0,
     "statuses": [
      401,
      404,
+     409,
      422,
      500
     ],
@@ -41118,6 +41119,7 @@
    "declared": [
     401,
     404,
+    409,
     422,
     500
    ],
@@ -41139,10 +41141,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#769 chits strict_input",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "2230812987fb9ca7"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",

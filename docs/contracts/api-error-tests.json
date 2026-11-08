@@ -2268,6 +2268,7 @@
   401,
   403,
   404,
+  409,
   500
  ],
  "POST /api/chits/:chit_id/disputes": [
