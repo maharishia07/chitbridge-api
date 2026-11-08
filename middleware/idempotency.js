@@ -36,6 +36,7 @@ const { problem } = require('../lib/problem');
 const MUTATING = ['POST', 'PUT', 'PATCH', 'DELETE'];
 const KEY_MAX_LENGTH = 200;
 const { intFromEnv } = require('../lib/limits');
+const { isPoolBusy } = require('../lib/knownerr');
 const DEFAULT_WINDOW_HOURS = 48;
 /* L3 (PAY-FIX): a request that crashed mid-flight leaves its key 'in_progress'. A live request finishes in seconds, so
    after this many minutes the key is STALE and a retry may claim it — before, it blocked the retry for the whole window. */
@@ -256,7 +257,18 @@ function holdKey(req, res, next, claim) {
   return dbStore
     .begin(claim.entity, claim.key, req, claim.hash, claim.windowHrs)
     .then((outcome) => (outcome.existing ? answerAfterAuth(req, res, next, outcome.existing, claim, true) : runAndRecord(req, res, next, dbStore, claim)))
-    .catch((e) => runUnverified(req, res, next, claim, storeWhy(e)));
+    .catch((e) => (isPoolBusy(e) ? answerBusyStore(req, res, e) : runUnverified(req, res, next, claim, storeWhy(e))));
+}
+
+/**
+ * ⭐ PLT-85: A BUSY POOL IS NOT A MISSING TABLE. The memory-only path (LIM2) is for a store that is not there (b109 not run); when the pool simply had no free
+ * connection the claim never reached the database, and running the handler on process memory let a crash or a second instance forget the key and make a
+ * second bill on the retry. Nothing ran and nothing was claimed: answer 503 SERVER_BUSY (Retry-After) and the till retries the same key as a first try.
+ */
+function answerBusyStore(req, res, err) {
+  log.warn('idempotency: the database pool is busy — the request is turned away before it runs, nothing is claimed', { id: req.id, path: req.path, err: err && err.message });
+  const refusal = require('../lib/knownerr').known(err);
+  return problem(req, res, { status: refusal.status, code: refusal.body.code, detail: refusal.body.message, hint: refusal.body.hint, params: refusal.body.params, legacy: refusal.body });
 }
 /** the replay window in hours (IDEMPOTENCY_WINDOW_HOURS, 48 by default) */
 const windowHours = () => intFromEnv('IDEMPOTENCY_WINDOW_HOURS', DEFAULT_WINDOW_HOURS);
