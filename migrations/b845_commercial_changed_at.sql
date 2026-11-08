@@ -10,7 +10,7 @@
 --    item_data.price_changed_at (kept, not compared), catalogue_items.updated_at (set by the app, lib/catalogue-write.js:196/230/254; NO trigger on it; this file does not touch it).
 --    OWNER module: lib/catalogue-write.js (the one writer of the row); the stamp itself is written only by cb_catalogue_stamp_commercial() below. FIELDS: docs/FIELDS.md (row added).
 -- THE ONE KEY LIST: cb_item_commercial_keys() = till.html RECHECK_FIELDS (price mrp hsn tax_slab tax_slab_name gst_rate cess_rate categories category status) ∪ lib/rate-door.js RATE_KEYS
---    (tax_slab tax_slab_name gst_rate) plus currency (F3). tests/cat-264a-commercial-stamp.test.cjs fails when the list and those two JS lists drift (F7: lib/itemmatch.js STAMP_FIELDS
+--    (tax_slab tax_slab_name gst_rate) plus currency (F3) and unit (a price is per unit; kg to piece at the same number changes what is charged). tests/cat-264a-commercial-stamp.test.cjs fails when the list and those two JS lists drift (F7: lib/itemmatch.js STAMP_FIELDS
 --    name/variant/unit/price/sku/status is the books-replay hash, a different fact; it is not a stamp key, so it stays as is).
 -- RULES (cb_item_fields_differ): a key moves when its text differs after normalising. A number is compared as a NUMBER (100, "100.00", {amount:100} are one price: price, mrp, gst_rate,
 --    cess_rate; F4). Absent, null and '' are one. Currency going from missing to present is NOT a move (the CUR-1 {amount,currency} backfill stamps nothing, cuts no version); a currency that
@@ -28,12 +28,14 @@
 --    migrations/000_baseline_2026-10-21.sql:253 and :310, and DROP FUNCTION IF EXISTS cb_item_fields_differ(jsonb,jsonb,text[]), cb_item_commercial_keys(), cb_item_num(text).
 -- CHECK (read-only): SELECT count(*) FROM catalogue_items WHERE commercial_changed_at IS NULL;   Expect 0 (NOT NULL).
 --    SELECT tgname FROM pg_trigger WHERE tgrelid = 'catalogue_items'::regclass AND tgname = 'catalogue_commercial_stamp_trg';   Expect 1 row.
---    SELECT cb_item_commercial_keys();   Expect the 11 keys in this header.
+--    SELECT cb_item_commercial_keys();   Expect the 12 keys in this header.
 
 -- ── 1 · the column (added with a default, so every row has a value; the backfill below makes it truthful) ──
+-- lock_timeout: the ALTER takes ACCESS EXCLUSIVE; fail fast instead of queueing behind a long read. A failed run changed nothing and is safe to run again.
 DO $$
 DECLARE fresh boolean;
 BEGIN
+  SET LOCAL lock_timeout = '5s';
   fresh := NOT EXISTS (SELECT 1 FROM pg_attribute WHERE attrelid = 'catalogue_items'::regclass AND attname = 'commercial_changed_at' AND NOT attisdropped);
   IF fresh THEN
     ALTER TABLE catalogue_items ADD COLUMN commercial_changed_at timestamptz NOT NULL DEFAULT now();
@@ -48,7 +50,7 @@ BEGIN
 END $$;
 
 COMMENT ON COLUMN catalogue_items.commercial_changed_at IS
-  'When anything a sale is charged by last moved on this row (price, currency, mrp, hsn, tax slab and rate, category, status): set only by the trigger catalogue_commercial_stamp_trg, never by application code. A bill line carries the value it read; a later, larger value says the catalogue moved.';
+  'When anything a sale is charged by last moved on this row (price, currency, unit, mrp, hsn, tax slab and rate, category, status): set only by the trigger catalogue_commercial_stamp_trg, never by application code. A bill line carries the value it read; a later, larger value says the catalogue moved.';
 
 -- ── 2 · helpers: a number as a number, the one key list, the one compare ──
 CREATE OR REPLACE FUNCTION cb_item_num(t text) RETURNS text
@@ -60,7 +62,7 @@ $$;
 
 CREATE OR REPLACE FUNCTION cb_item_commercial_keys() RETURNS text[]
 LANGUAGE sql IMMUTABLE AS $$
-  SELECT ARRAY['price','currency','mrp','hsn','tax_slab','tax_slab_name','gst_rate','cess_rate','categories','category','status']::text[];
+  SELECT ARRAY['price','currency','mrp','hsn','tax_slab','tax_slab_name','gst_rate','cess_rate','categories','category','status','unit']::text[];
 $$;
 
 -- ── 3 · cb_item_fields widened (baseline 000:310): the six old keys, a canonical price, and the commercial keys ──
@@ -146,7 +148,11 @@ SET search_path TO 'public', 'pg_temp'
 AS $$
 BEGIN
   IF TG_OP = 'UPDATE' THEN
-    IF cb_item_fields_differ(cb_item_fields(OLD.item_data), cb_item_fields(NEW.item_data), cb_item_commercial_keys()) THEN
+    -- the stamp reads unit trimmed and case-folded ("Kg" to "kg" is not a move, "kg" to "piece" is); the version brake keeps its raw compare
+    IF cb_item_fields_differ(
+         cb_item_fields(OLD.item_data) || jsonb_build_object('unit', lower(btrim(COALESCE(OLD.item_data->>'unit', '')))),
+         cb_item_fields(NEW.item_data) || jsonb_build_object('unit', lower(btrim(COALESCE(NEW.item_data->>'unit', '')))),
+         cb_item_commercial_keys()) THEN
       NEW.commercial_changed_at := now();
     ELSE
       NEW.commercial_changed_at := OLD.commercial_changed_at;

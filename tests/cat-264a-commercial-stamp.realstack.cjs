@@ -4,10 +4,10 @@
  *
  * One shop, one item per case, every write through withEntity (RLS on). The stamp is catalogue_items.commercial_changed_at, set by ONE BEFORE trigger:
  *   K-*   each key of the ONE list (cb_item_commercial_keys) moves the stamp when its value changes
- *   N-*   what must NOT move it: a rename, a unit, a sku, is_active alone (also: updated_at stays), "100.00" / {amount:100} for 100, 100 to 100.0 in a rate
+ *   N-*   what must NOT move it: a rename, "Kg" for "kg", a sku, is_active alone (also: updated_at stays), "100.00" / {amount:100} for 100, 100 to 100.0 in a rate
  *   C-*   currency: INR to AUD at the same amount moves it (and cuts a version); the CUR-1 backfill (bare price to {amount,currency}, same value) stamps nothing and cuts no version
  *   R-*   a whole-document REPLACE of item_data keeps the stamp it earned; writing the stamp column directly is pinned; another shop cannot read the column
- *   L-*   the SQL key list equals the JS lists (till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency)
+ *   L-*   the SQL key list equals the JS lists (till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency ∪ unit)
  * Every row it makes is deleted at the end. Allow list: it runs only as cb_app on localhost, the compose db or a SIT host.
  * Run: DATABASE_URL=postgres://cb_app:cbapp@localhost:5432/cb_s41 node tests/cat-264a-commercial-stamp.realstack.cjs   (CI: the integration S41 job; SIT: inside the api container)
  * CARD      06-catalogue-pim/README
@@ -24,11 +24,11 @@ const RUN = 'cs' + (Date.now() % 1e10).toString(36);
 const made = [];
 const BASE = () => ({ name: 'Tea ' + RUN, price: { amount: 100, currency: 'INR' }, mrp: 150, hsn: '0902', tax_slab: 'gst-18', tax_slab_name: 'GST 18', gst_rate: 18, cess_rate: 0, categories: ['beverage'], category: 'beverage', status: 'available', unit: 'kg', sku: 'T-1' });
 /** a different value for each key of the ONE list (currency is its own case C-1) */
-const CHANGED = { price: { amount: 120, currency: 'INR' }, mrp: 160, hsn: '0903', tax_slab: 'gst-12', tax_slab_name: 'GST 12', gst_rate: 12, cess_rate: 1, categories: ['beverage', 'hot'], category: 'hot', status: 'sold_out' };
+const CHANGED = { price: { amount: 120, currency: 'INR' }, mrp: 160, hsn: '0903', tax_slab: 'gst-12', tax_slab_name: 'GST 12', gst_rate: 12, cess_rate: 1, categories: ['beverage', 'hot'], category: 'hot', status: 'sold_out', unit: 'piece' };
 const readJsLists = () => {
   const till = fs.readFileSync(path.join(__dirname, '..', 'tools/tally-connector/till.html'), 'utf8');
   const recheck = [...(/var RECHECK_FIELDS = \[([^\]]+)\]/.exec(till)[1]).matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
-  return [...new Set([...recheck, ...require('../lib/rate-door').RATE_KEYS, 'currency'])].sort();
+  return [...new Set([...recheck, ...require('../lib/rate-door').RATE_KEYS, 'currency', 'unit'])].sort();
 };
 
 async function shop(tag) {
@@ -58,7 +58,7 @@ async function moves(id, item, data) {
     const A = await shop('a'), B = await shop('b');
 
     const keys = (await query('SELECT cb_item_commercial_keys() AS k')).rows[0].k;
-    ok('L-1 the SQL key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency', JSON.stringify([...keys].sort()) === JSON.stringify(readJsLists()), keys.join(','));
+    ok('L-1 the SQL key list equals till RECHECK_FIELDS ∪ RATE_KEYS ∪ currency ∪ unit', JSON.stringify([...keys].sort()) === JSON.stringify(readJsLists()), keys.join(','));
     const made_ = Object.keys((await query(`SELECT cb_item_fields('{}'::jsonb) AS f`)).rows[0].f);
     ok('L-2 cb_item_fields makes every key of the list', keys.every((key) => made_.includes(key)), made_.join(','));
 
@@ -71,7 +71,7 @@ async function moves(id, item, data) {
     ok('K-all every key of the list but currency has a case (' + keyless + ' of ' + (keys.length - 1) + ')', keyless === keys.length - 1, keys.join(','));
 
     const quiet = await add(A, BASE());
-    for (const [what, patch] of [['a rename', { name: 'Tea 2' }], ['a unit', { unit: 'g' }], ['a sku', { sku: 'T-2' }], ['a stock count', { stock: 7 }], ['an alias and offers_excluded', { alias: 'chai', offers_excluded: true }]]) {
+    for (const [what, patch] of [['a rename', { name: 'Tea 2' }], ['"Kg" for "kg" (case and spaces)', { unit: ' Kg ' }], ['a sku', { sku: 'T-2' }], ['a stock count', { stock: 7 }], ['an alias and offers_excluded', { alias: 'chai', offers_excluded: true }]]) {
       const r = await moves(A, quiet, { ...BASE(), ...patch });
       ok('N-' + what + ' does not move the stamp', !r.moved, JSON.stringify(r));
     }
