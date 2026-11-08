@@ -101,6 +101,14 @@ const _422 = (m) => {
   e.status = 422;
   return e;
 };
+/**
+ * CAT-318: a line is orderable only at a price that is a number, zero or more. A missing price is "not set"; a negative one (a bad stored value, a change that landed before
+ * the doors judged) is "not valid" — refused in words (ORDER_REJECTED, 422), never clamped to 0 and never carried as a negative line total.
+ */
+function throwIfUnpriced(rec) {
+  if (!Number.isFinite(rec.price)) throw _422(`Price for "${rec.name}" is not set — order cannot be placed`);
+  if (rec.price < 0) throw _422(`The price of "${rec.name}" is not valid, so it cannot be ordered right now — the shop needs to correct it.`);
+}
 // ── SPEC-negotiation-position — the shop's order method + the buyer's POSITION on a line ──────────────────────────
 // A negotiation is two parties holding divergent values on ONE co-held record until one settles it — the same shape as
 // a dispute, one lifecycle stage earlier. So the buyer's push-back is a generic `proposal` object, not a price column:
@@ -394,7 +402,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
           fref = nb ? nb.rec : null;
         }
         if (!fref) throw _422(`"${fname || 'item ' + (idx + 1)}" is not an available finish in this shop`);
-        if (!Number.isFinite(fref.price)) throw _422(`Price for "${fref.name}" is not set — order cannot be placed`);
+        throwIfUnpriced(fref);
         // T2.5 · `combination` used to be stored RAW: when the resolved item declared no combinations the guard was
         // skipped entirely, so an arbitrary nested object of any size rode onto BOTH chit copies — flatly contradicting
         // "an undeclared field is rejected, never carried", which holds on the payload path but did not here.
@@ -459,7 +467,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
         ref = byName.get(k);
       }
       if (!ref) throw _422(`"${name || 'item ' + (idx + 1)}" is not available in this shop's catalogue`);
-      if (!Number.isFinite(ref.price)) throw _422(`Price for "${ref.name}" is not set — order cannot be placed`);
+      throwIfUnpriced(ref);
       const qty = Number(li.quantity ?? li.qty);
       if (!Number.isFinite(qty) || qty <= 0 || qty > MAX_QTY) throw _422(`Invalid quantity for "${ref.name}"`);
       /* ⭐ THE PRICING STRUCTURE THE PRODUCT CITES prices the unit at this quantity (lib/pricing-engine.js, vendored from
