@@ -35,7 +35,7 @@ of file each thing is; this says what already does the job.
 | 61 | `here` | `screen-id.js` |  |
 | 60 | `items` | `books-store.js` | PERF1: |
 | 60 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
-| 59 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
+| 60 | `refusal` | `employee-code.js` | for a person who has one (no "mail failed, show it instead"). |
 | 57 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 54 | `record` | `access-events.js` |  |
 | 54 | `pack` | `books-store.js` |  |
