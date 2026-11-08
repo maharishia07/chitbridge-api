@@ -35,7 +35,7 @@
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 31,
+    "applies": 37,
     "failing": 0
    },
    "parameterised_query": {
@@ -1777,7 +1777,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1777,
+   "line": 1783,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1885,7 +1885,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1927,
+   "line": 1933,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1989,7 +1989,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1658,
+   "line": 1664,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -20905,7 +20905,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 216,
+   "line": 219,
    "hash": "86729110d085f141",
    "does": "",
    "errors": {
@@ -22252,7 +22252,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1608,
+   "line": 1614,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22350,7 +22350,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1963,
+   "line": 1969,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22556,7 +22556,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2078,
+   "line": 2084,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22653,7 +22653,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1822,
+   "line": 1828,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -30634,8 +30634,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1528,
-   "hash": "2b44e4f050d7693b",
+   "line": 1555,
+   "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
     "count": 0,
@@ -30715,7 +30715,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2b44e4f050d7693b"
+    "stale_since": "6a5797d12ad93b40"
    },
    "status": "partial",
    "callers": [
@@ -50677,7 +50677,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 400,
+   "line": 403,
    "hash": "9b205221f9671f4f",
    "does": "",
    "errors": {
@@ -50784,7 +50784,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 360,
+   "line": 363,
    "hash": "541db4f71e91011d",
    "does": "",
    "errors": {
@@ -50860,7 +50860,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -50868,7 +50868,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -50897,7 +50897,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 382,
+   "line": 385,
    "hash": "82ef9190340340a4",
    "does": "",
    "errors": {
@@ -50970,7 +50970,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": true,
     "rate_limited": true
    },
@@ -50978,7 +50978,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51007,7 +51007,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 311,
+   "line": 314,
    "hash": "cf6a90fd7197dad6",
    "does": "",
    "errors": {
@@ -51075,7 +51075,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51083,7 +51083,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51112,7 +51112,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 321,
+   "line": 324,
    "hash": "a15d2437c4075e3a",
    "does": "",
    "errors": {
@@ -51178,7 +51178,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51186,7 +51186,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51215,7 +51215,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 293,
+   "line": 296,
    "hash": "e8cfb81fec41c36b",
    "does": "",
    "errors": {
@@ -51284,7 +51284,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -51292,7 +51292,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -52943,7 +52943,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1862,
+   "line": 1868,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53050,7 +53050,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1626,
+   "line": 1632,
    "hash": "ec834b16142998da",
    "does": "",
    "errors": {
@@ -53161,7 +53161,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1672,
+   "line": 1678,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53691,7 +53691,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2180,
+   "line": 2186,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -64738,7 +64738,7 @@
    "owner_area": "network-offers",
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
-   "line": 274,
+   "line": 277,
    "hash": "a63f82874ea89e8f",
    "does": "",
    "errors": {
@@ -64805,7 +64805,7 @@
     "rate_limited": false
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true
    },
@@ -64813,7 +64813,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#984",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -64842,7 +64842,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1717,
+   "line": 1723,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -64944,7 +64944,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1747,
+   "line": 1753,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {

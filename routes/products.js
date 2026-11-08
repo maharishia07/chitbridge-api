@@ -1490,11 +1490,11 @@ const actorReplace = (req, payload) => payload.merge !== true && isActor(req);
 /** does this edit need the stored row? a merge, a server-owned key, an editor (whose rate is compared with the stored one, CAT-210) or a co-assist's replace (CAT-237) */
 const needsStored = (req, payload) => payload.merge === true || !rateDoor.setsRate(req) || catcols.hasServerOwned(payload.item_data) || actorReplace(req, payload);
 /** the stored row, read only when merge:true, a server-owned key or an editor (to compare the rate, CAT-210) asks for it → { refusal } (404 or the rate 403) or { stored, bodyItem } */
-async function readStoredForEdit(req, entity_id, item_id, payload) {
+async function readStoredForEdit(db, req, entity_id, item_id, payload) {
   if (!needsStored(req, payload)) return { stored: null, bodyItem: payload.item_data };
-  const current = await withEntity(entity_id, (db) =>
-    db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2`, [item_id, entity_id])
-  );
+  /* CAT-282: FOR UPDATE on the caller's own transaction (the row lock the sibling doors take), so a second edit of this product waits here and merges onto
+     what the first one WROTE; read in one transaction and written in another, parallel merges lost each other with 200 answers */
+  const current = await db.query(`SELECT item_data FROM catalogue_items WHERE item_id=$1 AND entity_id=$2 FOR UPDATE`, [item_id, entity_id]);
   if (!current.rows.length) return { refusal: { status: 404, ...words.notFound() } };
   const stored = current.rows[0].item_data || {};
   const bodyItem = payload.merge === true ? mergePatch(stored, payload.item_data) : payload.item_data;
@@ -1523,6 +1523,33 @@ router.mergePatch = mergePatch;
 router.gtinCheck = gtinCheck; /* T3-FIXES: the preflight's code check, for tests/t3-fixes */
 router.defaultSchemaId = defaultSchemaId;
 router.validateAgainst = validateAgainst;
+/**
+ * CAT-282: read (FOR UPDATE) → merge → refuse or declare → write, ALL on one transaction, so parallel edits of one product queue on the row instead of overwriting
+ * each other. → { refusal } (a problem body) or { result } (the patchItems answer).
+ */
+async function editProductLocked(db, req, { entity_id, schema_id, currency }) {
+  const read = await readStoredForEdit(db, req, entity_id, req.params.id, req.body);
+  if (read.refusal) return { refusal: read.refusal };
+  /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the SAME gate as the keys the body
+     names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such a caller is refused in words, naming the keys it would have
+     wiped. The owner and a cost-allowed caller never enter (writeRefusal answers null for them). */
+  const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
+  if (erased) return { refusal: { status: 403, ...words.costBlindErase(erased) } };
+  /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN: an EDIT declares what it stores like POST, /bulk and the import (same writer, same rule) */
+  const decl = await catcols.ensureDeclared({
+    query: (text, params) => db.query(text, params),
+    entity_id,
+    schema_id,
+    item_data: read.bodyItem,
+    stored: read.stored,
+    ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
+    validate: (data, rows) => validateAgainst(rows, data)
+  });
+  if (decl.error) return { refusal: { status: 400, ...words.declined('Invalid product', decl) } };
+  /* STAMP on edit too: a round-trip of `{amount,currency}` is accepted only while the currency agrees with the entity's (money.stampPrice) */
+  const item_data = money.stampItem(decl.item_data, currency);
+  return { result: await catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }) };
+}
 /* [OFFR-04] what a cost-blind actor may touch (the availability flag) and the refusal live in lib/cost.writeRefusal —
    one gate for this PATCH, the schedule below, POST /till/price and the combo push (T3-FIXES, CAT-FIX1) */
 router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
@@ -1546,33 +1573,12 @@ router.patch('/:id', auth, ...checked('PATCH /:id'), async (req, res) => {
     /* ⭐ C4: media/image are SERVER-OWNED (catalogue-columns.SERVER_OWNED). The stored row is read when merge:true asks for
        it, or when the body names a server-owned key (an unchanged echo passes, a change is refused) — an ordinary edit costs
        no extra trip. */
-    const read = await readStoredForEdit(req, entity_id, req.params.id, req.body);
-    if (read.refusal) return problem(req, res, read.refusal);
-    /* CAT-237: a replace (no merge:true) also writes every stored key the body leaves out: it ERASES them. Those keys go through the
-       SAME gate as the keys the body names (one rule: a cost-blind co-assist may touch status only), so a status-only replace by such
-       a caller is refused in words, naming the keys it would have wiped, instead of quietly emptying the row. The owner and a
-       cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
-    const erased = await cost.writeRefusal(req, entity_id, erasedKeys(req.body, read.stored));
-    if (erased) return problem(req, res, { status: 403, ...words.costBlindErase(erased) });
-    const stored = read.stored,
-      bodyItem = read.bodyItem;
-    /* ⚠️ THE ONE DOOR FIX-1 LEFT OPEN. POST, /bulk and the import all declared what they store; an EDIT still
-       validated and wrote the raw body, so a key added on edit — through the API, or through a form that renders
-       declared columns and will one day render one more — could land undeclared again. Same writer, same rule. */
-    const decl = await catcols.ensureDeclared({
-      query,
-      entity_id,
-      schema_id: await defaultSchemaId(entity_id),
-      item_data: bodyItem,
-      stored,
-      ensureSchema: (e) => require('../lib/schema-bootstrap').ensureDefaultSchema(e),
-      validate: (data, rows) => validateAgainst(rows, data)
-    });
-    if (decl.error) return problem(req, res, { status: 400, ...words.declined('Invalid product', decl) });
-    // STAMP on edit too — a round-trip that read `{amount,currency}` and writes it back is accepted only while the
-    // currency still agrees with the entity's; a different one is refused (see money.stampPrice).
-    const item_data = money.stampItem(decl.item_data, await regional.currencyFor(entity_id));
-    const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, [{ item_id: req.params.id, replace: item_data }], { returning: '*' }));
+    /* CAT-282: the schema and currency are read BEFORE the transaction (they use the pool; a transaction that holds a connection while it waits for a second one can starve the pool) */
+    const schema_id = await defaultSchemaId(entity_id),
+      currency = await regional.currencyFor(entity_id);
+    const done = await withEntity(entity_id, (db) => editProductLocked(db, req, { entity_id, schema_id, currency }));
+    if (done.refusal) return problem(req, res, done.refusal);
+    const r = done.result;
     if (!r.rows.length) return problem(req, res, { status: 404, ...words.notFound() });
     shopChanged(entity_id, 'product updated');
     /* CAT-234: the answer is the stored row — a cost-blind co-assist, who may flip status, gets it without cost, as GET / strips it */
