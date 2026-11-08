@@ -778,6 +778,9 @@ const GUARDS = [
   'acc192-debit-note.test.cjs', // U1 (8 Nov, was run by no CI job): tests/acc192-debit-note.test.cjs — ACC-192 slice 2: a priced RAISE on an issued invoice is a DEBIT NOTE over the CHANGED LINES ONL
   'api-47-closed-bodies.test.cjs', // U1 (8 Nov, was run by no CI job): API-47 (S33): the 12 doors only our web calls refuse an unknown body key, 400 by name, and still take every body the web sends.
   'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
+  'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
+  'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
+  'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
   'api-strict-input-status.test.cjs', // U1 (8 Nov, was run by no CI job): PINS what an unknown body key answers, per route, on the real app (the cases of tools/api-contract-tests.cjs: stand-in database, r
   'bell-delivery.test.js', // U1 (8 Nov, was run by no CI job): A BELL IS WATCHED FOR DELIVERY, NOT FOR CONNECTION ([TILL-167], BACKLOG TILL-146).
   'books-date-given.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-274: a date the caller GIVES is read once, by books-period.dateGiven (dateOf and routes/books.js dateQ both go through it).
