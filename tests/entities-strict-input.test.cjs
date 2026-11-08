@@ -8,7 +8,7 @@
  * CALLED BY scripts/guards.cjs · CI. No database, no network: the app is loaded offline and the route's schema check (middleware/validate.js schemaValidate) runs alone.
  * FLOW      tools/load-app.cjs → the route's operation (its own schema check, with its own refusal words) → a body → accepted, or refused with the field named
  * CARD      28-platform-and-operations/api-standard
- * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): PATCH /api/entities/policy (keys are the policy flags) · PATCH /api/entities/me/prefs/:kind and /me/locale (keys depend on the preference set) · POST /api/entities/register and /verify (public sign-up doors, no schema yet)
+ * Open on purpose (listed in PM/API-30-STRICT-PASS-2026-11-06.md): POST /api/entities/register and /verify (public sign-up doors, no schema yet). Closed 8 Nov 2026 (round 2): PATCH /policy (the policy flags), PATCH /me/prefs/:kind and /me/locale (the two preference sets' keys); the lists are compared with the handlers' own at the foot
  * What it cannot see (each stays a review question): a key read through a computed name; a body handed to another function; nested keys.
  *
  *   node tests/entities-strict-input.test.cjs
@@ -25,6 +25,10 @@ const OPERATIONS = register.operationsOfApp();
 const UUID = '11111111-1111-4111-8111-111111111111';
 /** [route, the file its handler is in, [bodies a real caller sends]] */
 const CASES = [
+  /* round 2 (8 Nov 2026): the keys are the web's own (avatar.js sends the eight ui keys, locale.js the ten locale keys, cap-admin the policy flags the server lists) */
+  ['PATCH /api/entities/policy', 'routes/entities.js', [{ gst_registration: 'regular' }, { system_folders: true }]],
+  ['PATCH /api/entities/me/prefs/:kind', 'routes/entities.js', [{ theme: 'slate', fs: 'xl', motion: 'reduce', stripes: '', edition: 'a', font: 'serif', weight: 'bold', kural: 'on' }, { lang: 'ta', langs: 'ta,en', region: 'IN', locale: 'ta-IN', nu: '', hc: '', ca: '', fw: '', tz: 'Asia/Kolkata', workdays: '1,2,3' }]],
+  ['PATCH /api/entities/me/locale', 'routes/entities.js', [{ lang: 'en', tz: 'Asia/Kolkata', workdays: '1,2,3,4,5,6' }]],
   ['PATCH /api/entities/me/exposure', 'routes/entities.js', [{ tax: true }, { offers: false, stock: true }]],
   ['PATCH /api/entities/profile', 'routes/entities.js', [{ business_status: 'active' }, { ui_prefs: { product_rows: 3 } }, { display_name: 'Shop', gstn: '27AAAAA0000A1Z5', address: 'x', user_id: 'shop1', catalogue_visibility: 'all', storefront_access: 'open' }]],
   ['PATCH /api/entities/:id/erase', 'routes/entities.js', [{}]],
@@ -71,6 +75,8 @@ for (const [route, file, bodies] of CASES) {
   ok(route + ': an unknown key is refused (400/422) and named', (refused.status === 400 || refused.status === 422) && JSON.stringify(refused.json).includes('zz_unknown_field'), JSON.stringify(refused));
   const bad = bodies.map((body) => answerTo(operation, body, route)).filter((got) => got.status !== 200);
   ok(route + ': ' + bodies.length + ' real caller body(ies) still accepted', !bad.length, JSON.stringify(bad));
+  /* the two preference doors share ONE handler (prefSetRoute): their keys are compared with PREF_SETS below, not read from a route body */
+  if (route.includes('/me/prefs/') || route.includes('/me/locale')) continue;
   /* every key the handler reads is declared */
   const [method, apiPath] = route.split(' ');
   const L = linesOf(file);
