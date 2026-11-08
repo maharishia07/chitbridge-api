@@ -184,6 +184,7 @@ of file each thing is; this says what already does the job.
 | 15 | `series` | `gst-returns.js` | `paid_on`: |
 | 15 | `where` | `istest.js` | READING is_test is fine and stays — |
 | 15 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
+| 15 | `applies` | `credit-cap.js` | does the cap judge this send? a counter credit note (a till, an against) that is not a draft |
 | 14 | `cols` | `cap-catalogue.js` |  |
 | 14 | `standards` | `catalogue-model.js` | cap-standards.js has loaded, or the array passed in); an id the register lacks comes back { id, where, missing |
 | 14 | `chips` | `country-profiles.js` | words as chips; null when there are none |
