@@ -369,7 +369,7 @@ router.post('/:id/release', auth, sessionOnly, brandOwnerOnly, ...contract.check
       return refuse(req, res, { status: 409, code: 'OFFER_NOT_LIVE', error: 'Not live', message: 'Make the offer live before releasing it to your stores.' });
     const b = req.body || {};
     const at = net.whenOf(b.at, await net.nextOpeningFor(me));
-    const until = b.until ? net.whenOf(b.until, null) : null;
+    const until = net.whenOf(b.until, null, 'until');
     if (until && until <= at)
       return refuse(req, res, { status: 400, code: 'OFFER_ENDS_BEFORE_START', error: 'validation', message: 'The offer would end before it starts.' });
     const rec = await releaseRecord(me, o, at, until, req);
@@ -391,7 +391,7 @@ router.post('/:id/withdraw', auth, sessionOnly, brandOwnerOnly, ...contract.chec
     const cur = ((flags.network_offers || {}).released || {})[o.definition_id];
     if (!cur)
       return refuse(req, res, { status: 409, code: 'OFFER_NOT_RELEASED', error: 'Not released', message: 'That offer was never released to your stores.' });
-    const until = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me));
+    const until = net.whenOf((req.body || {}).at, await net.nextOpeningFor(me), 'at');
     await net.setReleased(me, o.definition_id, Object.assign({}, cur, { until, withdrawn_at: new Date().toISOString() }));
     const pushed = await net.pushToNetwork(me, 'network offer withdrawn');
     res.json({ ok: true, id: o.definition_id, until, pushed });

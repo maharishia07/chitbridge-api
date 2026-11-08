@@ -3373,7 +3373,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/network-offers/:id/withdraw** · network-offers · cb-network · meets standard
 - does: _not yet written_
-- errors: 3 code(s) [NOT_FOUND, OFFER_NOT_RELEASED, SESSION_ONLY] · statuses 401, 403, 404, 409, 422, 500 · money n (derived)
+- errors: 3 code(s) [NOT_FOUND, OFFER_NOT_RELEASED, SESSION_ONLY] · statuses 400, 401, 403, 404, 409, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 4; share cap-admin.js 1/106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, identities · writes (derived): - · callers: cap-admin.js · actions: -
 
@@ -3391,7 +3391,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 
 **POST /api/network-offers/catalogue/publish** · network-offers · cb-network · meets standard
 - does: _not yet written_
-- errors: 1 code(s) [SESSION_ONLY] · statuses 401, 403, 422, 500 · money n (derived)
+- errors: 1 code(s) [SESSION_ONLY] · statuses 400, 401, 403, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share cap-admin.js 1/106) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): catalogue_adoption, identities · writes (derived): catalogue_adoption · callers: cap-admin.js · actions: -
 

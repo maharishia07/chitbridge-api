@@ -50804,7 +50804,7 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 363,
-   "hash": "541db4f71e91011d",
+   "hash": "9989f2ed55f8ee35",
    "does": "",
    "errors": {
     "count": 4,
@@ -50887,7 +50887,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -50917,11 +50917,12 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 385,
-   "hash": "82ef9190340340a4",
+   "hash": "bfdcb3d04502a11d",
    "does": "",
    "errors": {
     "count": 3,
     "statuses": [
+     400,
      401,
      403,
      404,
@@ -50971,6 +50972,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     404,
@@ -50997,7 +50999,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51235,11 +51237,12 @@
    "owner_agent": "cb-network",
    "file": "routes/network-offers.js",
    "line": 296,
-   "hash": "e8cfb81fec41c36b",
+   "hash": "49a8a895baf9860e",
    "does": "",
    "errors": {
     "count": 1,
     "statuses": [
+     400,
      401,
      403,
      422,
@@ -51287,6 +51290,7 @@
     "trips_budgeted": true
    },
    "declared": [
+    400,
     401,
     403,
     422,
@@ -51311,7 +51315,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-08 PR#1006: re-signed after the owner gate; all 13 machine columns read yes at head f139507; backward_compatible: a non-owner staff login now gets 403 OWNER_ONLY where it got 400 (policy) or 404 (release/withdraw) or was let through (publish/cancel/price); no web caller reads those statuses",
+    "signed_off_by_date": "cb-api (non-builder reviewer, 13-column stage-2) 2026-11-09 PR#1054: re-signed after NET-94 (a GIVEN release time that is not a date is 400 DATE_INVALID naming at/until, reused code, absent still = next opening); all 13 machine columns read yes at head after the review commit; backward_compatible: the web sends only \"now\" or no time, so no caller reads the new 400, and a malformed time that used to be dropped or defaulted silently is now refused",
     "lifecycle": "stable"
    },
    "status": "meets standard",
