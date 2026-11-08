@@ -4250,6 +4250,15 @@
    "since": "2026-10-22"
   },
   {
+   "code": "SERVER_BUSY",
+   "status": "503",
+   "title": "Server busy",
+   "shopkeeper": "ChitBridge is very busy right now. Nothing was saved.",
+   "hint": "Wait a couple of seconds, then send it again.",
+   "owner_area": "limits",
+   "since": "2026-11-08"
+  },
+  {
    "code": "SERVER_OWNED",
    "status": "400",
    "title": "Pictures come from Media",

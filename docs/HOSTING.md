@@ -121,6 +121,9 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `ASSIST_RATE_LIMIT_MAX` | optional | `40` | no | Assistant calls per window. |
 | `BODY_LIMIT_DEFAULT` / `BODY_LIMIT_LARGE` | optional | `256kb` / `8mb` | no | Request body caps. |
 | `REQUEST_TIMEOUT_MS` | optional | `30000` | no | Request deadline. |
+| `API_MAX_INFLIGHT` | optional | `64` | no | Requests inside the api at once; over it the answer is 503 SERVER_BUSY + Retry-After before any work (0 = off). |
+| `API_SHED_RETRY_AFTER_S` | optional | `2` | no | Seconds the busy answer asks the caller to wait. |
+| `DB_POOL_MAX` / `DB_POOL_WAIT_MS` | optional | `10` / `10000` | no | Database pool size and how long a request waits for a connection. |
 | `IDEMPOTENCY_WINDOW_HOURS` | optional | `48` | no | How long an idempotency key is remembered. |
 | `IDEMPOTENCY_STALE_MINUTES` | optional | `10` | no | Minutes after which a crashed request's in-progress key may be claimed by a retry. |
 | `IDEMPOTENCY_TOKEN_MINUTES` | optional | `15` | no | Minutes a recorded answer that carries a token may be replayed. |
