@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 155 | `list` | `amend.js` |  |
 | 124 | `rows` | `crm.js` | still in them: |
-| 116 | `words` | `variant.browser.js` |  |
+| 117 | `words` | `variant.browser.js` |  |
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 109 | `read` | `books-cashflow.js` | Trips: |
@@ -24,7 +24,7 @@ of file each thing is; this says what already does the job.
 | 74 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 69 | `register` | `regulation.js` | register(pack) → the pack — |
 | 68 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 68 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
+| 69 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 67 | `list` | `cap-settings.js` |  |
 | 66 | `entry` | `books-store.js` |  |
 | 65 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
@@ -109,7 +109,7 @@ of file each thing is; this says what already does the job.
 | 25 | `open` | `cap-dispute.js` | a row → the chit sheet, with this dispute's room open (the sheet's dispute section reads the focus) |
 | 25 | `view` | `country-ready.js` |  |
 | 25 | `guard` | `amend.js` | would disturb what has gone out. |
-| 25 | `note` | `dbwatch.js` |  |
+| 26 | `note` | `dbwatch.js` |  |
 | 24 | `call` | `cap-assist.js` |  |
 | 24 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 24 | `profile` | `country-setup.js` | skips the EXISTS read — |
@@ -208,5 +208,6 @@ of file each thing is; this says what already does the job.
 | 13 | `payment` | `books-store.js` |  |
 | 13 | `minted` | `handle.js` | `ownerHandle` is the minting entity's user_id — |
 | 13 | `agree` | `repeat-supply.js` | the seller AGREES to the counter: |
+| 13 | `minor` | `ledger.js` | minor(v, where) → the stored amount as a safe integer, or a refusal naming where — |
 | 12 | `units` | `cart.js` |  |
 | 12 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
