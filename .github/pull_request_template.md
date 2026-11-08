@@ -7,3 +7,5 @@
 - [ ] Pass 3 · structure: module header present · CARD line · TRACE row: spec `<doc>` · design `<doc>` · unit `<file>` · walks `<files>`
 - [ ] Guard green: `readability --changed --ratchet`
 - [ ] Touch rule (report, warn mode until the switch date in the web tool): `node tools/touched-routes.cjs --md` and the Touch line of the readability checklist: touched files at 0 failures, touched routes at 13/13
+
+<!-- Gate record (REL-22): add a "### Gate record" block with one line per gate G0-G7. Make it in the docs repo: node toolset/gate-evidence.cjs <web|api|engines> <pr number> --write-body . CI pr-checklist fails without the heading. -->
