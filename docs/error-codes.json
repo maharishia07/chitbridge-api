@@ -1211,7 +1211,7 @@
    "code": "CREDIT_NOTE_NOT_ISSUED",
    "status": "409",
    "title": "Credit note not issued",
-   "shopkeeper": "The credit note could not be issued, so the change was not applied on either side.",
+   "shopkeeper": "The note could not be issued, so the change was not applied on either side.",
    "hint": "Try again; if it repeats, tell us.",
    "owner_area": "accounting",
    "since": "2026-11-08"
@@ -1674,6 +1674,15 @@
    "hint": "Try again in a moment.",
    "owner_area": "platform",
    "since": "2026-11-07"
+  },
+  {
+   "code": "DEBIT_NOTE_NEEDS_ACCEPT",
+   "status": "409",
+   "title": "A debit note is issued on acceptance",
+   "shopkeeper": "A debit note cannot be sent by hand. Propose the new price on the bill; the one who pays accepts it, and the note is issued then.",
+   "hint": "Propose the new price on the bill.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
   },
   {
    "code": "DEFINITIONS_NOT_MIGRATED",
@@ -2407,9 +2416,27 @@
   {
    "code": "INVOICE_INCREASE_REFUSED",
    "status": "409",
-   "title": "Not a decrease",
-   "shopkeeper": "This change does not lower a bill that is already invoiced. A raise needs a debit note, which is not available yet.",
-   "hint": "Ask for the same or a lower price.",
+   "title": "Nothing to change",
+   "shopkeeper": "Nothing in this change moves the bill, so there is no note to issue.",
+   "hint": "Change a price or a quantity.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "INVOICE_LINE_ADDED",
+   "status": "409",
+   "title": "New line",
+   "shopkeeper": "A line that is not on the invoice is a new sale, not a change to this one. Raise a new invoice for it.",
+   "hint": "Raise a new invoice for the new line.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
+  },
+  {
+   "code": "INVOICE_MIXED_ROUND",
+   "status": "409",
+   "title": "One direction only",
+   "shopkeeper": "This change raises one line and lowers another. A note goes one way only, so make two changes: one that lowers, one that raises.",
+   "hint": "Send the lowering and the raising as two changes.",
    "owner_area": "accounting",
    "since": "2026-11-08"
   },
@@ -2417,10 +2444,19 @@
    "code": "INVOICE_MONEY_LOCKED",
    "status": "409",
    "title": "Already invoiced",
-   "shopkeeper": "This bill is already invoiced. A change in price needs a credit or debit note.",
+   "shopkeeper": "This bill is already invoiced. A change in price needs a credit or debit note. Propose the change; the note is issued when the other side accepts.",
    "hint": "Ask for a credit or debit note instead of changing the bill.",
    "owner_area": "accounting",
    "since": "2026-11-07"
+  },
+  {
+   "code": "INVOICE_NOTE_NO_RULE",
+   "status": "409",
+   "title": "No note for this country",
+   "shopkeeper": "This country has no ruling here for a raised price on an issued bill, so no note was issued. Raise a new invoice for the extra amount.",
+   "hint": "Raise a new invoice for the extra amount.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
   },
   {
    "code": "IN_FLIGHT",
@@ -2907,6 +2943,15 @@
    "hint": "Try again later.",
    "owner_area": "network",
    "since": "2026-10-23"
+  },
+  {
+   "code": "NOTE_NUMBER_INVALID",
+   "status": "409",
+   "title": "Note number not allowed",
+   "shopkeeper": "The note number would not fit this country’s rule for a document number, so no note was issued. Tell us; the note prefix needs a change.",
+   "hint": "Tell us; we change the note prefix.",
+   "owner_area": "accounting",
+   "since": "2026-11-08"
   },
   {
    "code": "NOTHING_TO_DO",
