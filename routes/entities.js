@@ -1107,7 +1107,8 @@ router.patch(
       }
       if (req.body.address) idFields.address = req.body.address;
       const idSql = P.shopIdentitySql(idFields, 10);
-      await query(
+      const _write = (q) =>
+        q(
         `UPDATE identities SET display_name=COALESCE($7,display_name), logo_url=COALESCE($1,logo_url)${idSql.sql ? ', ' + idSql.sql : ''},
                 business_status=COALESCE($2,business_status),
                 user_id=COALESCE(user_id,$3),
@@ -1130,6 +1131,17 @@ router.patch(
           req.body.supplies || null
         ].concat(idSql.params)
       );
+      /* ⭐ SET-80: a currency sent is asked of THE ONE LOCK (country-setup.currencyLockRefusal) in the same transaction as the write — a product added
+         between the read and the UPDATE cannot slip through. Same currency re-sent = no change = 200. After the actor 403 and the validity check, before the UPDATE. */
+      if (_cur) {
+        const CS = require("../lib/country-setup");
+        const locked = await withEntity(id, async (h) => {
+          const refused = await CS.currencyLockRefusal(h, id, _cur);
+          if (!refused) await _write((sql, params) => h.query(sql, params));
+          return refused;
+        });
+        if (locked) return problem(req, res, { status: locked.status, ...contract.words.currencyLocked(locked) });
+      } else await _write(query);
       // b77 (self-healing): storefront access saved separately so a normal profile save works even before b77 is applied.
       if (req.body.storefront_access) {
         try {
