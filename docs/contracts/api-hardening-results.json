@@ -1592,8 +1592,7 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 400"
+    "pass": true
    }
   },
   "POST /api/network-offers/catalogue/publish": {
@@ -1620,7 +1619,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 400"
+    "why": "not reached: answered 409"
    }
   },
   "POST /api/network-offers/:id/release": {
@@ -3169,13 +3168,12 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/network/entities/lookup": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    }
   },
   "POST /api/network/entities/:id/claim": {
@@ -3184,37 +3182,34 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/network/place": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    }
   },
   "GET /api/network/entities/:id/subtree": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/network/entities/:id/connections": {
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "the answer holds leak_canary, a column the answer schema does not list"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections": {
@@ -3223,7 +3218,7 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 409"
    }
   },
   "POST /api/network/connections/:id/approve": {
@@ -3232,11 +3227,10 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 403"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/decline": {
@@ -3244,12 +3238,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/suspend": {
@@ -3257,12 +3249,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/resume": {
@@ -3270,12 +3260,10 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 500"
+    "pass": true
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/disconnect": {
@@ -3284,11 +3272,10 @@
    },
    "output_allowlist": {
     "pass": false,
-    "why": "not reached: answered 500"
+    "why": "not reached: answered 409"
    },
    "foreign_id_404": {
-    "pass": false,
-    "why": "an unknown id answered 500, not 404"
+    "pass": true
    }
   },
   "GET /api/simulator/content": {

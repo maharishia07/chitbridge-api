@@ -6,6 +6,7 @@
  * CARD      28-platform-and-operations/api-standard
  */
 const path = require('path');
+const fs = require('fs');
 
 const API = path.join(__dirname, '..');
 const BACKSLASH = String.fromCharCode(92);
@@ -40,6 +41,15 @@ function stubDatabase(root, answer) {
       }
     }
   };
+  stubServicePool(root, unscoped, client);
+}
+
+/** the services layer's own pool (src/db.js: pool + withTx, used by src/services/*): the same stand-in, so no statement of the network routes reaches a real connection */
+function stubServicePool(root, unscoped, client) {
+  const servicePath = path.join(root || API, 'src', 'db.js');
+  if (!fs.existsSync(servicePath)) return;
+  const resolved = require.resolve(servicePath);
+  require.cache[resolved] = { id: resolved, filename: resolved, loaded: true, exports: { pool: { query: unscoped, connect: async () => Object.assign({ release() {} }, client) }, withTx: async (body) => body(client) } };
 }
 
 /** server.js without listening and without its start-up lines */
