@@ -5,8 +5,8 @@
   "routes": 637,
   "no_does": 627,
   "not_started": 0,
-  "partial": 173,
-  "meets": 464,
+  "partial": 172,
+  "meets": 465,
   "columns": {
    "strict_input": {
     "applies": 349,
@@ -14541,11 +14541,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0485b6f18b7c36fc"
+    "signed_off_by_date": "cb-api 2026-11-08 PR#996 stage2 (CTR-212 S0: asked map added, additive)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",

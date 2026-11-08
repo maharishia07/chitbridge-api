@@ -795,11 +795,11 @@
    "lifecycle": "stable"
   },
   "GET /api/entities/policy": {
-   "hash": "b266e6cd0e2948a9",
+   "hash": "0485b6f18b7c36fc",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api 2026-10-29 PR#565 stage2 (B6 batch 2)",
+   "signed_off_by_date": "cb-api 2026-11-08 PR#996 stage2 (CTR-212 S0: asked map added, additive)",
    "lifecycle": "stable"
   },
   "GET /api/entities/populations": {
