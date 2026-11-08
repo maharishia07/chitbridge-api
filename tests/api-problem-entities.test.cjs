@@ -71,6 +71,7 @@ const sources = () => ({
   plans: require(path.join(HERE, 'lib', 'plans')),
   govresolve: require(path.join(HERE, 'lib', 'govresolve')),
   identityAuth: require(path.join(HERE, 'lib', 'identity-auth')),
+  countrySetup: require(path.join(HERE, 'lib', 'country-setup')), /* the sign-up choices: its installation read, so the 500 of GET /constitutions can be shown */
   search: require(path.join(HERE, 'lib', 'network-search')) /* NET-39: the Where picker's places, so its 500 can be shown */
 });
 const ALLOW = require('./lib/allowlist-world.cjs');

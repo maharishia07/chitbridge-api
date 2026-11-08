@@ -1021,6 +1021,15 @@ No migration: the version IS `entity_profile.updated_at` (b96), read as whole mi
 Columns, not response keys: SCHEMA-ASSESSMENT-2026-10-16 §7 found 134 columns of these six tables that no row here named. Each row is the column as the database holds it (type from the schema built out of `migrations/`; the meaning is the schema's own `COMMENT ON COLUMN` where one exists). **Written by* lists the lib/ routes/ middleware files that hold an INSERT/UPDATE of the table AND name the column (a file that also reads it is listed here once); *read by* lists the other files that name it. Both lists are a grep, not a trace: a file that builds the column name at run time is not in them. The one writer per column is the open question of SCHEMA-ASSESSMENT fix 6/7.
 
 
+### `chit_header` · CUR-1 slice 3 (b846, 8 Nov 2026)
+
+| column | type | meaning · written by · read by |
+|---|---|---|
+| `currency_code` | varchar(3), NULL = not stated | what the chit's money is in, fixed when the chit is written (D1); NEVER defaulted: NULL stays NULL and a chit with money and no currency goes to `chit_currency_review`. CHECK `^[A-Z]{3}$` · written by the b847 backfill now, by `routes/chits.js` from slice 4 · read by nobody until slice 4 |
+| `currency_source` | text | where `currency_code` came from: `stated` · `setup` · `seller` (the api; seller = sendSeller overwrote it with the money of the seller), `backfill_stated` · `backfill_detail` · `backfill_none` · `backfill_review` (b847), `resolved` (an owner settling a review row); NULL = not yet processed · same writers, same readers |
+| `chit_currency_review` (table) | one row per (chit_id, entity_id, direction) | the legacy list: `reason` (stated_disagrees · detail_rows_disagree · detail_vs_stated · detail_partly_null · copies_disagree · money_without_currency · detail_inr_maybe_default), the stated and detail code lists, `resolved_at/by`, `resolution` · written by b847 · read by the owner's review screen (a later slice) |
+| `chit_currency_violation` (table) | bigserial | b847a's counter, every refusal b847b would make, recorded not raised · written by slice 8's functions · read by the ops metrics |
+
 ### `identities`
 
 | column | type | meaning · written by · read by |
