@@ -232,10 +232,12 @@
     },
     "GET /api/assist/catalogue-source/:key": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 404 (a floor); needs a live measure on sit-in"
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/catalogue-source/beta-royale-play@v1"
     },
     "GET /api/assist/catalogue-sources": {
       "file": "assist.js",
@@ -304,10 +306,30 @@
     },
     "GET /api/assist/resolve": {
       "file": "assist.js",
-      "trips": 50,
-      "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "trips": 3,
+      "wire": 3,
+      "fired": true,
+      "status": 200,
+      "registered_only": true,
+      "fixture_path": "/api/assist/resolve?container=a%2Fb&region=AU",
+      "fixture_row": {
+        "container_id": "a/b",
+        "owner_entity_id": "00000000-0000-4000-8000-000000000001",
+        "source_key": "s",
+        "name": "N",
+        "current_version": 1,
+        "version": 1,
+        "content": {},
+        "schema": {},
+        "schema_version": null,
+        "minted_at": "2026-10-01T00:00:00.000Z",
+        "overrides": {},
+        "region_code": "AU",
+        "currency": "AUD",
+        "units": "metric",
+        "language": "en",
+        "jurisdiction": {}
+      }
     },
     "GET /api/assist/standards": {
       "file": "assist.js",

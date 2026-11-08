@@ -155,7 +155,10 @@ function extras(tools) {
     X('penetration-fault', 'GET ' + at('/penetration'), 500, { setup: { jsonThrows: true }, throws: true }),
     X('questions-listed', 'GET ' + at('/questions'), 200, { setup: { sqlRows: answering(/FROM assist_qa/, [{ id: '1', q: 'x?', a: 'y.', topics: [], context: ['*'], fit: null, media: null }]) } }),
     X('questions-for-a-screen', 'GET ' + at('/questions'), 200, { url: at('/questions?context=compose,network') }),
-    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true })
+    X('questions-unread', 'GET ' + at('/questions'), 500, { setup: failing, throws: true }),
+    /* a fault in the two pickers' own libraries: before, an uncaught throw (no answer at all); now the route's 500 in its own two keys, nothing of the cause */
+    N('standards-fault', 'GET ' + at('/standards'), 500, { throws: true, patch: { compliance: { listTemplates: boom } } }),
+    N('catalogue-sources-fault', 'GET ' + at('/catalogue-sources'), 500, { throws: true, patch: { catalogueBuild: { listSources: boomLater } } })
   ];
 
   const helpDesk_ = [

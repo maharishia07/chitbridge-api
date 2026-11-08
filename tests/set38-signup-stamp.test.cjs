@@ -29,7 +29,7 @@ const h = { query: async (sql, params) => {
   if (/^UPDATE identities SET country = \$2, currency_code = \$3/.test(t.trim())) { ROW.country = params[1]; ROW.currency_code = params[2]; return { rowCount: 1, rows: [] }; }
   if (/SET setup_source = COALESCE/.test(t)) { GOV.setup_source = Object.assign({}, GOV.setup_source, { country: params[1] }); return { rowCount: 1, rows: [] }; }
   if (/^UPDATE entity_governance SET fy_start_month/.test(t.trim())) {
-    STAMPS++; GOV = { fy_start_month: params[1], tax_registration: JSON.parse(params[2]), setup_source: JSON.parse(params[3]), country_setup_at: new Date() };
+    STAMPS++; GOV = { fy_start_month: params[1], tax_registration: params[3] == null ? null : JSON.parse(params[3]), setup_source: JSON.parse(params[2]), country_setup_at: new Date() }; /* SET-86: source is $3, the tax answer $4 when written */
     return { rowCount: 1, rows: [] };
   }
   return { rows: [], rowCount: 0 };

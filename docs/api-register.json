@@ -5,8 +5,8 @@
   "routes": 638,
   "no_does": 628,
   "not_started": 0,
-  "partial": 124,
-  "meets": 514,
+  "partial": 114,
+  "meets": 524,
   "columns": {
    "strict_input": {
     "applies": 347,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 638,
-    "failing": 25
+    "failing": 23
    }
   },
   "reported": {
@@ -1778,7 +1778,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1783,
+   "line": 1784,
    "hash": "65c79891d0d65e2b",
    "does": "",
    "errors": {
@@ -1886,7 +1886,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1933,
+   "line": 1934,
    "hash": "4b7298a6835be858",
    "does": "",
    "errors": {
@@ -1990,7 +1990,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1664,
+   "line": 1665,
    "hash": "287f08d2f52034c4",
    "does": "",
    "errors": {
@@ -3100,7 +3100,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 327,
+   "line": 339,
    "hash": "0c2c7c81bc7f741b",
    "does": "",
    "errors": {
@@ -3202,7 +3202,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 605,
+   "line": 617,
    "hash": "ac97e40e210c820c",
    "does": "",
    "errors": {
@@ -3239,7 +3239,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -3269,18 +3269,18 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 1,
+    "wire": 1,
     "screens": []
    },
    "measured": {
@@ -3297,8 +3297,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 186,
-   "hash": "89e9e2e28d556f48",
+   "line": 192,
+   "hash": "23a86ac3e2eae4f4",
    "does": "",
    "errors": {
     "count": 0,
@@ -3322,9 +3322,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -3356,13 +3356,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catsetup.js"
    ],
@@ -3388,7 +3388,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 478,
+   "line": 490,
    "hash": "4800ee1d9af92ecc",
    "does": "",
    "errors": {
@@ -3482,7 +3482,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 490,
+   "line": 502,
    "hash": "748b83451499c0b2",
    "does": "",
    "errors": {
@@ -3578,8 +3578,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 727,
-   "hash": "d8cba703bbee9a55",
+   "line": 739,
+   "hash": "ce58ab833cb528f2",
    "does": "",
    "errors": {
     "count": 0,
@@ -3602,8 +3602,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -3639,13 +3639,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -3667,7 +3667,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 572,
+   "line": 584,
    "hash": "eb2cb4eb1a353c68",
    "does": "",
    "errors": {
@@ -3762,7 +3762,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 619,
+   "line": 631,
    "hash": "8808b7d84df68a0c",
    "does": "",
    "errors": {
@@ -3861,7 +3861,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 538,
+   "line": 550,
    "hash": "1bf6dc5f485082e6",
    "does": "",
    "errors": {
@@ -3950,7 +3950,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 556,
+   "line": 568,
    "hash": "c6cf6f259a29b007",
    "does": "",
    "errors": {
@@ -3990,7 +3990,7 @@
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -4020,18 +4020,18 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
-    "wire": null,
+    "trips": 3,
+    "wire": 3,
     "screens": []
    },
    "measured": {
@@ -4049,7 +4049,7 @@
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
    "line": 183,
-   "hash": "b36c489344b0d879",
+   "hash": "37abe18e7e11e8b6",
    "does": "",
    "errors": {
     "count": 0,
@@ -4071,9 +4071,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
-    "error_tests": false,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -4105,13 +4105,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -4137,8 +4137,8 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 740,
-   "hash": "330f509bff08f482",
+   "line": 756,
+   "hash": "b094a46a4bad0c35",
    "does": "",
    "errors": {
     "count": 0,
@@ -4163,8 +4163,8 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
-    "codes_registered": false,
+    "error_shape": true,
+    "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
@@ -4200,13 +4200,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-assist.js"
@@ -13931,13 +13931,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "register-form.js"
    ],
@@ -22142,8 +22142,8 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 696,
-   "hash": "a85c20451df4101f",
+   "line": 697,
+   "hash": "c58e08fca2facb60",
    "does": "",
    "errors": {
     "count": 0,
@@ -22211,7 +22211,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 PR#837: whole handler and contract re-read after its hash moved (response schema closed from recordings, no behaviour change); caller-scoped, shapes and sentences as registered, 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-08 PR#1038: whole handler, contract and lib/catalogue-search.js re-read after its hash moved; response shape, error shapes, status codes and sentences unchanged, caller-scoped (entity_id=$1), only change is the narrower search (named top-level scalar fields, cost keys excluded, LIKE-escaped; stated in PR); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -22252,7 +22252,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1614,
+   "line": 1615,
    "hash": "b60cfb49dec01200",
    "does": "",
    "errors": {
@@ -22350,7 +22350,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1969,
+   "line": 1970,
    "hash": "80271132220845aa",
    "does": "",
    "errors": {
@@ -22456,7 +22456,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1055,
+   "line": 1056,
    "hash": "e6c365a0051bb1fc",
    "does": "",
    "errors": {
@@ -22556,7 +22556,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2084,
+   "line": 2085,
    "hash": "53042587c8e14b98",
    "does": "",
    "errors": {
@@ -22653,7 +22653,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1828,
+   "line": 1829,
    "hash": "37dfa7e57774ac5a",
    "does": "",
    "errors": {
@@ -22755,7 +22755,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1386,
+   "line": 1387,
    "hash": "40bea3f52459651d",
    "does": "",
    "errors": {
@@ -22855,7 +22855,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1084,
+   "line": 1085,
    "hash": "450991b1787aac03",
    "does": "",
    "errors": {
@@ -22955,7 +22955,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 984,
+   "line": 985,
    "hash": "f926495a5d767afd",
    "does": "",
    "errors": {
@@ -29904,13 +29904,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -30101,11 +30101,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8c7f8667671d7623"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -30198,11 +30197,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "667cb4fea86280f3"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1046 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence), replay of the entities refusals 303 of 303 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "avatar.js",
     "core.js"
@@ -30655,7 +30653,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1555,
+   "line": 1556,
    "hash": "6a5797d12ad93b40",
    "does": "",
    "errors": {
@@ -32620,7 +32618,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 248,
+   "line": 260,
    "hash": "89946324f32549b9",
    "does": "",
    "errors": {
@@ -32726,7 +32724,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 192,
+   "line": 204,
    "hash": "2cf1be4ee2eeae1f",
    "does": "",
    "errors": {
@@ -32928,7 +32926,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 655,
+   "line": 667,
    "hash": "f35cc44639c74477",
    "does": "",
    "errors": {
@@ -33017,7 +33015,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 672,
+   "line": 684,
    "hash": "e2ec4b3294857387",
    "does": "",
    "errors": {
@@ -33125,7 +33123,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 734,
+   "line": 750,
    "hash": "9f02935797a24cbc",
    "does": "",
    "errors": {
@@ -52868,7 +52866,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 425,
+   "line": 426,
    "hash": "914d6553a1cbbf4e",
    "does": "",
    "errors": {
@@ -52972,7 +52970,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1868,
+   "line": 1869,
    "hash": "ed53688af3eee973",
    "does": "",
    "errors": {
@@ -53079,7 +53077,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1632,
+   "line": 1633,
    "hash": "ec834b16142998da",
    "does": "",
    "errors": {
@@ -53190,7 +53188,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1678,
+   "line": 1679,
    "hash": "a768421e9f8b3239",
    "does": "",
    "errors": {
@@ -53291,7 +53289,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 489,
+   "line": 490,
    "hash": "d01d6bef91d31044",
    "does": "",
    "errors": {
@@ -53394,7 +53392,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 643,
+   "line": 644,
    "hash": "366d97c351174a18",
    "does": "",
    "errors": {
@@ -53500,7 +53498,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1181,
+   "line": 1182,
    "hash": "666b6537800e318e",
    "does": "",
    "errors": {
@@ -53615,7 +53613,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1108,
+   "line": 1109,
    "hash": "39622ebf11654c79",
    "does": "",
    "errors": {
@@ -53720,7 +53718,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2186,
+   "line": 2187,
    "hash": "dba1915afac8678d",
    "does": "",
    "errors": {
@@ -53825,7 +53823,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1397,
+   "line": 1398,
    "hash": "2eaff1d170a6af28",
    "does": "",
    "errors": {
@@ -53928,7 +53926,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 540,
+   "line": 541,
    "hash": "b194b999878fae7b",
    "does": "",
    "errors": {
@@ -62397,7 +62395,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 386,
+   "line": 398,
    "hash": "e8f1198436967af4",
    "does": "",
    "errors": {
@@ -62500,7 +62498,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 448,
+   "line": 460,
    "hash": "0a70997c357d3b62",
    "does": "",
    "errors": {
@@ -62597,7 +62595,7 @@
    "owner_area": "assist",
    "owner_agent": "cb-ai",
    "file": "routes/assist.js",
-   "line": 516,
+   "line": 528,
    "hash": "5899c1359da94cf9",
    "does": "",
    "errors": {
@@ -62669,13 +62667,13 @@
     "rate_limited": true
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1043 stage2: handler read, all 13 columns read true in the register row, no leak in any answer (failed() gives the one safe sentence; the public reads are declared in public_ids), replay of the assist refusals 210 of 210 identical against origin/main, trips re-fired on the stub and equal the budget lines",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -64148,7 +64146,7 @@
    "owner_agent": "cb-settings",
    "file": "routes/governance.js",
    "line": 534,
-   "hash": "9727085818d155d3",
+   "hash": "dec2d5f5962bac59",
    "does": "",
    "errors": {
     "count": 1,
@@ -64221,10 +64219,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#1030 stage2",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "dec2d5f5962bac59"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-country.js"
    ],
@@ -64894,7 +64893,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1723,
+   "line": 1724,
    "hash": "fc5e543be6478abb",
    "does": "",
    "errors": {
@@ -64996,7 +64995,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1753,
+   "line": 1754,
    "hash": "b2a20c518803f776",
    "does": "",
    "errors": {

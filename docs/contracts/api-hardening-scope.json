@@ -228,7 +228,7 @@
   {
    "route": "GET /api/entities/routing/preview",
    "status": 500,
-   "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault is never a 500 (a preview never red-boxes a form)"
+   "reason": "always 200 by design: the whole read (the caller, the identity row, lib/raiseticket.preview) sits in one try whose catch answers 200 ok:false with the fixed safe sentence, so a fault of the route is never a 500 (a preview never red-boxes a form); KNOWN GAP, not closed: lib/raiseticket.js resolveDesk (line 150) turns a database fault into why with the raw code and message, and the route returns it in that 200, so the route stays partial until the raise-a-ticket owner gives that why one plain sentence"
   }
  ],
  "tolerant_outward_about": "API-43: keyed-outward doors that ignore an unknown body key until a /v2 path with notice. The register reads strict_input as exempt (never yes), only while the route still checks the fields it reads. The length may only go down (tools/api-ratchet.cjs).",
