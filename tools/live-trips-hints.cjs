@@ -31,6 +31,15 @@ async function newPayment(api) {
   const out = await must(api, 'POST', '/api/books/payments', { party_id: await customerId(api), direction: 'in', amount: 1 + Math.floor(Math.random() * 9000) / 100, mode: 'cash', client_ref: 'lt-pay-' + randomHex() });
   return out.payment.payment_id;
 }
+/** the reference of an open bill of the load customer with at least 1.00 left (read from the payment preview, the list the confirm screen shows) */
+async function openBillRef(api) {
+  const preview = await must(api, 'POST', '/api/books/payments/preview', { party_id: await customerId(api), direction: 'in', amount: 1, mode: 'cash' });
+  const open = (preview.proposal || []).filter((bill) => bill.open_minor >= 100 && !bill.disputed).sort((left, right) => right.open_minor - left.open_minor)[0];
+  if (!open) throw new Error('no open bill with 1.00 left for the load customer: seed a credit bill first (SPD-46)');
+  return open.against_ref;
+}
+/** the India fiscal period (April = 1) of today, the month the load shop's sales are in */
+const shopPeriodNow = () => ((new Date().getUTCMonth() + 9) % 12) + 1;
 /** the key of an open lt- counter of the load shop (a till session): created once, released again when the run ends (cleanup below) */
 async function counterKey(api, fresh) {
   if (api.seeds.ckey && !fresh) return api.seeds.ckey;
@@ -203,12 +212,12 @@ module.exports = {
     'POST /api/books/assets/:id/dispose': { fresh: true, make: async (api) => { const asset = await must(api, 'POST', '/api/books/assets', { name: 'lt-asset-' + randomHex(), class: 'furniture', cost: 1000, date: todayIso(), how: 'cash' }); const id = asset.asset_id || (asset.asset && asset.asset.asset_id); return { params: { id }, body: { date: todayIso(), proceeds: 0, client_ref: 'lt-' + randomHex() } }; } },
     'POST /api/books/loans/:ref/emi': { fresh: true, make: async (api) => { const ref = 'lt-LOAN-' + randomHex(); await must(api, 'POST', '/api/books/loans', { ref, lender: 'lt-bank', amount: 1000, into: 'bank', rate: 10, date: todayIso() }); return { params: { ref }, body: { principal: 10, interest: 1, date: todayIso(), client_ref: 'lt-' + randomHex() } }; } },
     'POST /api/books/payments/:id/propose': { make: async (api) => ({ params: { id: await newPayment(api) }, body: {} }) },
-    'POST /api/books/payments/:id/confirm': { skip: ['fixture', 'allocates a payment to an open bill; a manual journal bill (Dr 1300 with the party) is refused as "there is no bill" by the confirm route (3 tries): needs a bill made by a real sale (counter/invoice chit), not a journal'] },
+    'POST /api/books/payments/:id/confirm': { fresh: true, make: async (api) => { const id = await newPayment(api); return { params: { id }, body: { allocations: [{ against_ref: await openBillRef(api), amount_minor: 100 }] } }; } },
     'POST /api/books/recurring/:id/post': { fresh: true, make: async (api) => { const template = await must(api, 'POST', '/api/books/recurring', { name: 'lt-rec-' + randomHex(), event: { kind: 'expense', class: 'rent', amount: 100, how: 'cash' }, frequency: 'monthly', next_on: '2026-11-01' }); return { params: { id: template.recurring_id }, body: {} }; } },
     'POST /api/books/recurring/:id/skip': { fresh: true, make: async (api) => { const template = await must(api, 'POST', '/api/books/recurring', { name: 'lt-rec-' + randomHex(), event: { kind: 'expense', class: 'rent', amount: 100, how: 'cash' }, frequency: 'monthly', next_on: '2026-11-01' }); return { params: { id: template.recurring_id }, body: {} }; } },
     'POST /api/books/write-off': { fresh: true, make: async (api) => ({ body: { party_id: await customerId(api), amount: 1, reason: 'lt- live-trips probe', client_ref: 'lt-wo-' + randomHex() } }) },
     'POST /api/books/gst/close': { make: async (api) => { api.seeds.periods = true; api.save && api.save(); return ({ body: { fy: OLD_FY, period: 1 } }); } },
-    'POST /api/books/gst/pay': { skip: ['precondition', 'a challan can only pay tax OWED (422: more than the tax owed - CGST owed 0); the old empty period 2026-27/1 owes nothing and a period with tax owed is not an empty one (no tax posted on the load shop before November)'] },
+    'POST /api/books/gst/pay': { fresh: true, make: async () => ({ body: { fy: OLD_FY, period: shopPeriodNow(), amounts: { cgst_minor: 100 }, bank: 'bank', challan_no: 'lt-challan-' + randomHex() } }) },
     'POST /api/books/periods/:fy/:p/:act': { make: async (api) => { api.seeds.periods = true; api.save && api.save(); return { params: { fy: OLD_FY, p: '2', act: 'lock' }, body: { reason: 'lt- live-trips (unlocked again after the run)' } }; } },
     'GET /api/books/packs/:id/file': { make: async (api) => { if (!api.seeds.pack) api.seeds.pack = (await must(api, 'POST', '/api/books/packs', { kind: 'month', fiscal_year: OLD_FY, period: 1 })).pack.pack_id; return { params: { id: api.seeds.pack } }; } },
     'GET /api/assist/resolve': { query: '?region=IN' },
