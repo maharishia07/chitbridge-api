@@ -1827,11 +1827,11 @@
    "lifecycle": "stable"
   },
   "PATCH /api/entities/policy": {
-   "hash": "e190a37baf2cd8ee",
+   "hash": "19d19443442b003b",
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (laptop1, non-builder) 2026-10-23 PR#372",
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
    "lifecycle": "stable"
   },
   "PATCH /api/entities/profile": {
@@ -2000,6 +2000,14 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-06 batch k16 strict_input (API-30 bulk pass): body closed through the declared schema; every key the handler reads and every key the web sends is declared",
+   "lifecycle": "stable"
+  },
+  "POST /api/attachments": {
+   "hash": "07ac7405642c8930",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
    "lifecycle": "stable"
   },
   "POST /api/books/accounts": {
@@ -2479,7 +2487,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/accept": {
@@ -2487,7 +2495,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#960: handler and 13 machine columns read; answer allow-list holds, no behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/counter": {
@@ -2495,7 +2503,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/proposals/:proposal_id/reject": {
@@ -2503,7 +2511,7 @@
    "names_clear": true,
    "sentence_plain": true,
    "backward_compatible": true,
-   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-07 PR#876: handler and contract read; output allow-list holds, no peer-visible behaviour changed",
+   "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-08 PR#990: ACC-192 slice 2 re-sign at the same hash; note rounds (lower = credit, raise = debit, payer-only accept) re-read; 409 INVOICE_MIXED_ROUND, INVOICE_LINE_ADDED, NOTE_NUMBER_INVALID registered with shopkeeper sentences, 403 PROPOSAL_NOT_YOURS kept, error tests in chit-proposals (35 pass); 13 columns pass",
    "lifecycle": "stable"
   },
   "POST /api/chits/:chit_id/raida": {
@@ -2768,6 +2776,22 @@
    "sentence_plain": true,
    "backward_compatible": true,
    "signed_off_by_date": "cb-api (laptop2, non-builder) 2026-11-06 PR#777",
+   "lifecycle": "stable"
+  },
+  "POST /api/definitions": {
+   "hash": "7cd7dd1fcd6963bc",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
+   "lifecycle": "stable"
+  },
+  "POST /api/definitions/freeze": {
+   "hash": "0ecdb82b18aa5e62",
+   "names_clear": true,
+   "sentence_plain": true,
+   "backward_compatible": true,
+   "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-08 PR#993 API-30 round 2 strict_input",
    "lifecycle": "stable"
   },
   "POST /api/entities/populations": {

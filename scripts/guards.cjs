@@ -250,6 +250,7 @@ const GUARDS = [
   'money-check.test.cjs', // ACC-206 B: the one pick of a bill's total, the raise that reaches us (ticket, counter, mail, digest), no money arithmetic outside the engine
   'money-no-arithmetic.test.cjs', // ACC-206: no sum, difference, reduce or rounding on money between the engine and the chit (send-money, money-check, chit-proposal, the send steps); named exceptions carry a backlog id
   'money-paths.test.cjs', // ACC-206 A: the engine's total on every path (purpose x how made x country x copy x reader), the stop, the override, the refusals
+  'ctr-211-send-recheck.test.cjs', // CTR-211: at send the bridge step and its ValDtls figure are compared (total, taxable, round_off); a disagreement is 409 + one ticket, never overridable
   'fin58-upi-waiting.test.cjs', // FIN-58: an unconfirmed UPI part waits as a receivable from the system party "UPI waiting"; the flip is a payment
   'rollup-currency.test.cjs', // REP-50
   'ctp-internal-wire.test.cjs', // RAIL-98..101: a chit between our own installations: envelope id, worded far-end refusals, manifest domain, add by address
@@ -324,6 +325,8 @@ const GUARDS = [
   'acc-198-tax-unknown.test.cjs', // ⭐ ACC-198 (S5-1, R13): tax registration nobody stated is a QUESTION — country-setup.registrationOf answers unknown + TAX_REGISTRATION_UNKNOWN; a freshShop's sale (IN, AU) waits with the question, never posts at a guessed rate
   'acc-221-unreadable-number.test.cjs', // ⭐ ACC-221 (+222): a figure the caller sent that is not a number (abc, NaN, Infinity, blank, null price) is NAMED and refused (BAD_QTY / BAD_PRICE / BAD_RATE, thrown as line_unreadable), never priced at 0 and said ok; engines num() follow-up
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
+  'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
+  'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
   'acc-272-unknown-registration.test.cjs', // ⭐ ACC-272: POST /api/tax/compute and /api/invoice/build ask a shop with no tax number that never said it is registered (409 TAX_REGISTRATION_UNKNOWN, the till's own code), never price it at no tax; confirmed unregistered still 0%
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
   'acc-200-cash-rounding.test.cjs', // ⭐ ACC-200: a counter bill's payment gap posts as round-off only inside the books pack's cash step (AU 5c on cash); none = exact, so an IN bill 50p short waits, named
