@@ -15,7 +15,7 @@ of file each thing is; this says what already does the job.
 | 115 | `withEntity` | `books-hooks.js` |  |
 | 113 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 110 | `read` | `books-cashflow.js` | Trips: |
-| 100 | `answer` | `availability.js` | from March; then nearest. |
+| 101 | `answer` | `availability.js` | from March; then nearest. |
 | 93 | `money` | `bill-privacy.js` |  |
 | 83 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 76 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -55,8 +55,8 @@ of file each thing is; this says what already does the job.
 | 43 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 43 | `open` | `ctpenvelope.js` | a 500 on a protocol endpoint tells the sender to retry something that will never work. |
 | 43 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 42 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 41 | `rules` | `docnumber.js` | the rule set for a country — |
-| 41 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 40 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 40 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 40 | `gate` | `country-setup.js` | gate(h, entity): |
